@@ -1,0 +1,31 @@
+@use '../../../../../shared/styles/colors' as *;
+
+.segments-container {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  .CodeMirror {
+    min-height: 66px;
+    height: max-content;
+    //  height: unset;
+    //   min-height: 88px;
+  }
+  .segment-editor-container:nth-child(2n) {
+    .CodeMirror-scroll {
+      .CodeMirror-gutters {
+        background: $gray-60;
+      }
+    }
+  }
+  .segment-editor-container:nth-child(2n + 1) {
+    .CodeMirror-scroll {
+      .CodeMirror-gutters {
+        background: $gray-50;
+      }
+    }
+  }
+}

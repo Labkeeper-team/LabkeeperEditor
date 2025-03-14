@@ -1,0 +1,51 @@
+{
+  "id": 0,
+  "type": "computational",
+  "statements": [
+    {
+      "type": "assignment",
+      "variable": "cominLen",
+      "array": {
+        "array": [
+          {
+            "value": "10",
+            "infl": "1"
+          }
+        ]
+      }
+    },
+    {
+      "type": "assignment",
+      "variable": "biba_boba",
+      "array": {
+        "array": [
+          {
+            "value": "20",
+            "infl": "2"
+          }
+        ]
+      }
+    },
+    {
+      "type": "calculation",
+      "variable": "result",
+      "array": {
+        "array": [
+          {
+            "value": "0.5",
+            "infl": "0.07"
+          }
+        ]
+      },
+      "assignment": "cominLen/biba_boba",
+      "assignmentWithValues": [
+        "10/20"
+      ],
+      "inflAssignmentGeneralFormula": "sqrt(((partial(result))/(partial(biba_boba))*sigma(biba_boba))^2+((partial(result))/(partial(cominLen))*sigma(cominLen))^2)",
+      "inflAssignment": "sqrt((cominLen^2*sigma(biba_boba)^2)/biba_boba^4+sigma(cominLen)^2/biba_boba^2)",
+      "inflAssignmentWithValues": [
+        "sqrt((10^2*2^2)/20^4+1^2/20^2)"
+      ]
+    }
+  ]
+}

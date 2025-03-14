@@ -1,0 +1,144 @@
+import { Translations } from ".";
+import { CompileError } from "../../../shared/models/project"
+
+export const ru: Translations = {
+    or: 'или',
+    login: 'Войти',
+    exit: 'Выход',
+    delete: 'Удалить',
+    run: 'Выполнить',
+    loading: 'Выполнение',
+    yes: 'Да',
+    no: 'Нет',
+
+    warning_dontuselongvarioables: 'Не используйте длинные имена переменных',
+
+    label_add_markdown: 'Добавить маркдаун',
+    label_add_code: 'Добавить код',
+    label_save_to_pdf: 'Сохранить в PDF',
+    label_problems: 'Проблемы',
+
+    interface_tour: {
+        label: 'Тур по интерфейсу',
+        info_history_button: 'Кнопки истории необходимы для перехода на более старые версии кода',
+        info_computed_segment: 'Вы можете добавить вычислительный сегмент.\nВ нем можно создавать переменные, выполнять функции и считать выражения.\nРезультат вычислений будет в сегментах справа.',
+        info_project_settings: 'Настройте свой проект, выбирая из предлагаемых параметров',
+        info_run: 'Кнопка запускает вычислительный процесс.\nФормулы и функции из ваших сегментов слева вычисляются и отрисовываются справа.',
+        info_result: 'Результат выполнения и прорисовки вашего кода.\nТут располагаются результаты вычислений, формулы, графики.',
+        info_pdf: 'Если вы хотите сохранить или распечатать результат вычислений, вы можете конвертировать его в pdf.',
+        info_error: 'Список ошибок, которые были обнаружены в вашем коде во время компиляции.',
+        info_add_markdown: 'Можно добавить сегмент с markdown-текстом.\nТакже доступны вставки значений переменных через \${NAME}.',
+        info_canvas: 'Здесь располагаются сегменты, из которых состоит ваша программа.',
+    },
+    label_no_result_part1: 'Добавьте код или маркдаун',
+    label_no_result_part2: 'и нажмите "Выполнить"',  //Add the code or markdown and click "RUN"
+    delete_modal: 'Вы уверены, что хотите удалить',
+    create_modal: {
+        label: 'Создать новый проект',
+        create: 'Создать',
+        name: 'Имя проекта',
+        error: {
+            empty_name: 'Введите имя проекта',
+            too_many_projects: 'Слишком много проектов',
+        }
+    },
+    rounding_mode: {
+        label: 'Режим округления',
+        without_round: 'Без округления',
+        first_digit: 'Первые значащие числа',
+        fixed_number: 'Фиксированное число',
+    },
+    label_syntax_highlight: 'Подсветка синтаксиса',
+    label_autocompilation: 'Автокомпиляция',
+
+    placeholder_search: 'Введите текст для поиска',
+    projects: {
+        label: 'Проекты',
+        title: 'Имя',
+        last_modified: 'Последнее изменение',
+        add: 'Добавить',
+        errors: {
+            empty_name: 'Имя не должно быть пустым или состоять только из пробелов',
+        }
+    },
+    segment: {
+        code: 'код',
+        markdown: 'маркдаун',
+        visible: 'Показывать',
+        hide_assignment_with_values: 'Скрыть формулу со значениями',
+        hide_array: 'Скрыть массив',
+        hide_general_formula: 'Скрыть общую формулу',
+        hide_infl_assignment: 'Скрыть формулу погрешности',
+        hide_infl_assignment_with_values: 'Скрыть формулу погрешности со значениями',
+        errors: {
+            non_authorized_paste_image: 'Что бы вставить изображение вам необходимо авторизоваться'
+        }
+    },
+
+    instructions: {
+        label: 'Инструкции',
+        adding_segment: 'Добавить сегмент',
+    },
+    
+    compile_error: {
+        [CompileError.CODE_NO_END_QUOTES]: 'Нет закрывающих кавычек',
+        [CompileError.UNKNOWN_SYMBOL]: 'Неизвестный символ',
+        [CompileError.QUOTA_EXCEEDED]: 'Превышена квота',
+        [CompileError.OPERATOR_EXPECTED]: 'Ожидался оператор',
+        [CompileError.NUMBER_EXPECTED]: 'Ожидалось число',
+        [CompileError.NAME_EXPECTED]: 'Ожидалось имя переменной',
+        [CompileError.NO_SUCH_VARIABLE]: 'Несуществующая переменная',
+        [CompileError.STRING_ARGUMENT_EXPECTED]: 'Ожидался аргумент в виде строки',
+        [CompileError.ARRAY_ARGUMENT_EXPECTED]: 'Ожидался аргумент в виде массива',
+        [CompileError.NO_SUCH_FUNCTION]: 'Функция несуществует',
+        [CompileError.ARITHMETIC_ERROR]: 'Арифметическая ошибка',
+        [CompileError.CANCELED]: 'Вычисления отменены',
+        [CompileError.NOT_ENOUGH_WORKERS]: 'На серверах не хватает вычислительной мощности для компиляции',
+        [CompileError.INCORRECT_LEAST_SQUARES_ARGUMENT_SIZE]: 'неправильное количество аргументов в функции',
+        [CompileError.VARIABLE_INSERT_ERROR]: 'ошибка подстановки переменной в md текст',
+    },
+    error_common: {
+        segment: 'Сегмент',
+        line: 'строка',
+        operator_expected: 'Ожидался оператор',
+        now: 'Сейчас',
+        max: 'Максимум',
+        new_line: 'Новая линия',
+        variable: 'Переменная',
+    },
+    authorization: {
+        title: 'Авторизация',
+        loginVia: 'Войти с помощью',
+        loginAndPasswoord: 'Логин и пароль',
+    },
+    loginModal: {
+        submit: 'Войти',
+        loginToProceed: 'Войдите, чтобы продолжить',
+        description: 'Вы вышли из системы, поскольку срок вашей сессии истек.',
+    },
+    quota_definition: {
+        '1': 'Cлишком много сегментов',
+        '2': 'Cлишком много операторов экспоненты',
+        '3': 'Cлишком много символов',
+        '4': 'Cлишком много функций',
+        '5': 'Cлишком большие константы',
+        '6': 'Превышено время выполнения программы'
+    },
+    
+    filemanager: {
+        title: 'Файлы',
+        add: 'Добавить файл',
+        dropzoneTitle: 'Переместите файл сюда',
+        delete: 'Удалить',
+        edit: 'Редактировать',
+        your_files: 'Ваши файлы',
+        system_files: 'Системные файлы',
+        errors: {
+            tooMuchFiles: 'Слишком много файлов для одного проекта.',
+            sessionExpired: 'Сессия истекла',
+            internalError: 'Внутренняя ошибка.\nМы обязательно исправим ее в ближайшее время!',
+            tooBigFile: 'Файл слишком большой.Максимум ${replace1} Мб',
+            notSupported: 'Формат файла не поддерживается',
+        }
+    }
+}

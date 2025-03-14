@@ -1,0 +1,107 @@
+{
+  "id": 0,
+  "type": "computational",
+  "statements": [
+    {
+      "type": "assignment",
+      "variable": "a",
+      "array": {
+        "array": [
+          {
+            "value": "10",
+            "infl": "1"
+          },
+          {
+            "value": "11",
+            "infl": "1"
+          },
+          {
+            "value": "12",
+            "infl": "1"
+          },
+          {
+            "value": "13",
+            "infl": "1"
+          },
+          {
+            "value": "11",
+            "infl": "1"
+          }
+        ]
+      }
+    },
+    {
+      "type": "assignment",
+      "variable": "a",
+      "array": {
+        "array": [
+          {
+            "value": "10",
+            "infl": "1.0"
+          },
+          {
+            "value": "11",
+            "infl": "1.0"
+          },
+          {
+            "value": "12",
+            "infl": "1.0"
+          },
+          {
+            "value": "13",
+            "infl": "1.0"
+          },
+          {
+            "value": "11",
+            "infl": "1.0"
+          }
+        ]
+      }
+    },
+    {
+      "type": "calculation",
+      "variable": "b",
+      "array": {
+        "array": [
+          {
+            "value": "100",
+            "infl": "20.0"
+          },
+          {
+            "value": "121",
+            "infl": "22.0"
+          },
+          {
+            "value": "144",
+            "infl": "24.0"
+          },
+          {
+            "value": "169",
+            "infl": "26.0"
+          },
+          {
+            "value": "121",
+            "infl": "22.0"
+          }
+        ]
+      },
+      "assignment": "a^2",
+      "assignmentWithValues": [
+        "10^2",
+        "11^2",
+        "12^2",
+        "13^2",
+        "11^2"
+      ],
+      "inflAssignmentGeneralFormula": "sqrt(((partial b)/(partial a)*sigma(a))^2)",
+      "inflAssignment": "sqrt(4*a^2*sigma(a)^2)",
+      "inflAssignmentWithValues": [
+        "sqrt(4*10^2*1.0^2)",
+        "sqrt(4*11^2*1.0^2)",
+        "sqrt(4*12^2*1.0^2)",
+        "sqrt(4*13^2*1.0^2)",
+        "sqrt(4*11^2*1.0^2)"
+      ]
+    }
+  ]
+}

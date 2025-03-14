@@ -1,0 +1,42 @@
+@use '../../../../shared/styles/colors' as *;
+
+.labkeeper-instruction-container {
+  position: relative;
+  border-radius: 8px;
+  background-color: $gray-60;
+  min-height: 26px;
+  .swiper {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    margin-left: 16px;
+    margin-right: 16px;
+  }
+  .swiper-wrapper {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 450px;
+  }
+  .swiper-slide {
+    max-width: 193px;
+    display: flex;
+    align-items: center;
+  }
+  .nav-button {
+    position: absolute;
+    z-index: 12;
+    top: 85px;
+    &.left {
+      left: 16px;
+    }
+    &.right {
+      right: 16px;
+    }
+
+    .image-button {
+      height: 42px;
+      width: 42px;
+    }
+  }
+}

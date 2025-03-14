@@ -1,0 +1,327 @@
+{
+  "id": 0,
+  "type": "computational",
+  "statements": [
+    {
+      "type": "assignment",
+      "variable": "h_g",
+      "array": {
+        "array": [
+          {
+            "value": "23.3",
+            "infl": "0"
+          },
+          {
+            "value": "65.3",
+            "infl": "0"
+          },
+          {
+            "value": "103.2",
+            "infl": "0"
+          },
+          {
+            "value": "139.2",
+            "infl": "0"
+          },
+          {
+            "value": "184.1",
+            "infl": "0"
+          },
+          {
+            "value": "218.3",
+            "infl": "0"
+          },
+          {
+            "value": "258.7",
+            "infl": "0"
+          },
+          {
+            "value": "23.3",
+            "infl": "0"
+          },
+          {
+            "value": "65.3",
+            "infl": "0"
+          },
+          {
+            "value": "103.2",
+            "infl": "0"
+          },
+          {
+            "value": "139.2",
+            "infl": "0"
+          },
+          {
+            "value": "184.1",
+            "infl": "0"
+          },
+          {
+            "value": "218.3",
+            "infl": "0"
+          },
+          {
+            "value": "258.7",
+            "infl": "0"
+          },
+          {
+            "value": "23.3",
+            "infl": "0"
+          },
+          {
+            "value": "65.3",
+            "infl": "0"
+          },
+          {
+            "value": "103.2",
+            "infl": "0"
+          },
+          {
+            "value": "139.2",
+            "infl": "0"
+          },
+          {
+            "value": "184.1",
+            "infl": "0"
+          },
+          {
+            "value": "218.3",
+            "infl": "0"
+          },
+          {
+            "value": "258.7",
+            "infl": "0"
+          },
+          {
+            "value": "23.3",
+            "infl": "0"
+          },
+          {
+            "value": "65.3",
+            "infl": "0"
+          },
+          {
+            "value": "103.2",
+            "infl": "0"
+          },
+          {
+            "value": "139.2",
+            "infl": "0"
+          },
+          {
+            "value": "184.1",
+            "infl": "0"
+          },
+          {
+            "value": "218.3",
+            "infl": "0"
+          },
+          {
+            "value": "258.7",
+            "infl": "0"
+          }
+        ]
+      }
+    },
+    {
+      "type": "assignment",
+      "variable": "b",
+      "array": {
+        "array": [
+          {
+            "value": "0.002",
+            "infl": "0"
+          },
+          {
+            "value": "0.0015",
+            "infl": "0"
+          },
+          {
+            "value": "0.001",
+            "infl": "0"
+          },
+          {
+            "value": "0.0005",
+            "infl": "0"
+          },
+          {
+            "value": "0",
+            "infl": "0"
+          },
+          {
+            "value": "-0.0005",
+            "infl": "0"
+          },
+          {
+            "value": "-0.001",
+            "infl": "0"
+          },
+          {
+            "value": "0.002",
+            "infl": "0"
+          },
+          {
+            "value": "0.0015",
+            "infl": "0"
+          },
+          {
+            "value": "0.001",
+            "infl": "0"
+          },
+          {
+            "value": "0.0005",
+            "infl": "0"
+          },
+          {
+            "value": "0",
+            "infl": "0"
+          },
+          {
+            "value": "-0.0005",
+            "infl": "0"
+          },
+          {
+            "value": "-0.001",
+            "infl": "0"
+          },
+          {
+            "value": "0.002",
+            "infl": "0"
+          },
+          {
+            "value": "0.0015",
+            "infl": "0"
+          },
+          {
+            "value": "0.001",
+            "infl": "0"
+          },
+          {
+            "value": "0.0005",
+            "infl": "0"
+          },
+          {
+            "value": "0",
+            "infl": "0"
+          },
+          {
+            "value": "-0.0005",
+            "infl": "0"
+          },
+          {
+            "value": "-0.001",
+            "infl": "0"
+          },
+          {
+            "value": "0.002",
+            "infl": "0"
+          },
+          {
+            "value": "0.0015",
+            "infl": "0"
+          },
+          {
+            "value": "0.001",
+            "infl": "0"
+          },
+          {
+            "value": "0.0005",
+            "infl": "0"
+          },
+          {
+            "value": "0",
+            "infl": "0"
+          },
+          {
+            "value": "-0.0005",
+            "infl": "0"
+          },
+          {
+            "value": "-0.001",
+            "infl": "0"
+          }
+        ]
+      }
+    },
+    {
+      "type": "assignment",
+      "variable": "a",
+      "array": {
+        "array": [
+          {
+            "value": "0.002314",
+            "infl": "0.000005"
+          }
+        ]
+      }
+    },
+    {
+      "type": "assignment",
+      "variable": "b",
+      "array": {
+        "array": [
+          {
+            "value": "-0.0000128",
+            "infl": "0.00000006"
+          }
+        ]
+      }
+    },
+    {
+      "type": "assignment",
+      "variable": "g",
+      "array": {
+        "array": [
+          {
+            "value": "9.81",
+            "infl": "0.01"
+          }
+        ]
+      }
+    },
+    {
+      "type": "assignment",
+      "variable": "p",
+      "array": {
+        "array": [
+          {
+            "value": "10.23",
+            "infl": "0.01"
+          }
+        ]
+      }
+    },
+    {
+      "type": "assignment",
+      "variable": "n",
+      "array": {
+        "array": [
+          {
+            "value": "4",
+            "infl": "0"
+          }
+        ]
+      }
+    },
+    {
+      "type": "calculation",
+      "variable": "rel",
+      "array": {
+        "array": [
+          {
+            "value": "6810",
+            "infl": "20"
+          }
+        ]
+      },
+      "assignment": "sqrt(g*p^4/a)",
+      "assignmentWithValues": [
+        "sqrt(9.81*10.23^4/0.002314)"
+      ],
+      "inflAssignmentGeneralFormula": "sqrt(((partial(rel))/(partial p)*sigma(p))^2+((partial(rel))/(partial a)*sigma(a))^2+((partial(rel))/(partial g)*sigma(g))^2)",
+      "inflAssignment": "sqrt((sigma(g)^2*p^4)/(4*a*g)+(4*p^2*sigma(p)^2*g)/a+(p^4*g*sigma(a)^2)/(4*a^3))",
+      "inflAssignmentWithValues": [
+        "sqrt((0.01^2*10.23^4)/(4*0.002314*9.81)+(4*10.23^2*0.01^2*9.81)/0.002314+(10.23^4*9.81*0.000005^2)/(4*0.002314^3))"
+      ]
+    }
+  ]
+}

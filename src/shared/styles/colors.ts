@@ -1,0 +1,20 @@
+export const colors = {
+  white: '#FFFFFF',
+  black: '#000000',
+  blue10: '#4469E0',
+  blue20: '#9AB2FF',
+  buttonActionBlue: '#1F3B97',
+  green: '#1CA852',
+  buttonActionGreen: '#0F7436',
+  gray10: '#0E1621',
+  gray20: '#4A5365',
+  gray30: '#8C98B0',
+  gray40: '#D4DEF6',
+  gray50: '#D4DEF6',
+  gray60: '#F1F5FF',
+  red10: '#6F1919',
+  red20: '#FDD2D2',
+
+  errorLine: '#747F94',
+  disabledInputType: '#BFC8DE',
+};

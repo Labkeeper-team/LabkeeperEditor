@@ -1,0 +1,75 @@
+@use '../../shared/styles/colors' as *;
+
+.labkeeper-radio {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  label {
+    user-select: none;
+  }
+  .radio-custom {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+    width: 11px;
+    height: 11px;
+    background-color: $white;
+    border-radius: 45px;
+    border: 1px solid $gray-40;
+    .point {
+      height: 5px;
+      width: 5px;
+      border-radius: 45px;
+    }
+  }
+  &:hover {
+    cursor: pointer !important;
+    label {
+      color: $gray-30;
+      cursor: pointer;
+    }
+    .radio-custom {
+      cursor: pointer;
+      border-color: $blue-10;
+    }
+  }
+  &:active {
+    .radio-custom {
+      box-shadow: 0px 0px 4px 0px #4469e0;
+
+      &::before {
+        content: '';
+        background: $blue-20;
+        border-radius: 45px;
+        height: 5px;
+        width: 5px;
+      }
+    }
+  }
+
+  &.checked {
+    .radio-custom {
+      .point {
+        background: $blue-10;
+      }
+    }
+    &:hover {
+      .radio-custom {
+        cursor: pointer;
+        border-color: $blue-10;
+      }
+    }
+    &:active {
+      .radio-custom {
+        box-shadow: 0px 0px 4px 0px #4469e0;
+        &::before {
+          content: '';
+          height: 0px;
+          width: 0px;
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,15 @@
+@use '../../../../shared/styles/colors' as *;
+
+.result-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: $white;
+  overflow: auto;
+  border-radius: 8px;
+  .save-to-pdf-button {
+    width: 100%;
+    position: sticky;
+    bottom: 0;
+  }
+}

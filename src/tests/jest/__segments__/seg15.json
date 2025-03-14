@@ -1,0 +1,81 @@
+{
+  "id": 0,
+  "type": "computational",
+  "statements": [
+    {
+      "type": "assignment",
+      "variable": "a",
+      "array": {
+        "array": [
+          {
+            "value": "1",
+            "infl": "0.2"
+          },
+          {
+            "value": "2",
+            "infl": "0.2"
+          },
+          {
+            "value": "3",
+            "infl": "0.2"
+          },
+          {
+            "value": "4",
+            "infl": "0.2"
+          }
+        ]
+      }
+    },
+    {
+      "type": "assignment",
+      "variable": "factt_go",
+      "array": {
+        "array": [
+          {
+            "value": "10",
+            "infl": "0"
+          }
+        ]
+      }
+    },
+    {
+      "type": "calculation",
+      "variable": "b",
+      "array": {
+        "array": [
+          {
+            "value": "8",
+            "infl": "1"
+          },
+          {
+            "value": "9.1",
+            "infl": "0.8"
+          },
+          {
+            "value": "1",
+            "infl": "2"
+          },
+          {
+            "value": "-7",
+            "infl": "1"
+          }
+        ]
+      },
+      "assignment": "sin(a)*factt_go",
+      "assignmentWithValues": [
+        "sin(1)*10",
+        "sin(2)*10",
+        "sin(3)*10",
+        "sin(4)*10"
+      ],
+      "inflAssignmentGeneralFormula": "sqrt(((partial b)/(partial a)*sigma(a))^2+((partial b)/(partial(factt_go))*sigma(factt_go))^2)",
+      "inflAssignment": "sqrt(factt_go^2*sigma(a)^2*cos(a)^2+sigma(factt_go)^2*sin(a)^2)",
+      "inflAssignmentWithValues": [
+        "sqrt(10^2*0.2^2*cos(1)^2+0^2*sin(1)^2)",
+        "sqrt(10^2*0.2^2*cos(2)^2+0^2*sin(2)^2)",
+        "sqrt(10^2*0.2^2*cos(3)^2+0^2*sin(3)^2)",
+        "sqrt(10^2*0.2^2*cos(4)^2+0^2*sin(4)^2)"
+      ]
+    }
+  ]
+}

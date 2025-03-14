@@ -1,0 +1,48 @@
+@use '../../../../../../shared/styles/colors' as *;
+
+.history-button {
+    display: flex;
+    align-items: center;
+    position: relative;
+    svg {
+        path {
+            fill: $gray-10;
+        }
+    }
+    &.revert {
+      transform: rotateY(180deg);
+    }
+    &:hover {
+      cursor: pointer;
+      svg {
+        path {  
+          fill: $gray-20;
+        }
+      }
+    }
+
+    &:active:not(.disabled) {
+        svg {
+            path {
+            --webkit-filter: drop-shadow( 0px 0px 3px  #4A5365CC);
+            filter: drop-shadow( 0px 0px 3px #4A5365CC);
+            }
+            /* Similar syntax to box-shadow */
+        }
+    }
+    &.disabled {
+        opacity: 30%;
+      &:hover {
+        cursor: initial;
+        svg {
+          path {
+            fill: initial;
+            stroke: initial;
+          }
+          circle {
+            stroke: initial;
+          }
+        }
+      }
+    }
+  }

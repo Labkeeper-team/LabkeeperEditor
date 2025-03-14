@@ -1,0 +1,60 @@
+{
+  "id": 0,
+  "type": "computational",
+  "statements": [
+    {
+      "type": "assignment",
+      "variable": "a",
+      "array": {
+        "array": [
+          {
+            "value": "1000",
+            "infl": "1"
+          }
+        ]
+      }
+    },
+    {
+      "type": "calculation",
+      "variable": "b",
+      "array": {
+        "array": [
+          {
+            "value": "1000000",
+            "infl": "2000"
+          }
+        ]
+      },
+      "assignment": "a^2",
+      "assignmentWithValues": [
+        "1000^2"
+      ],
+      "inflAssignmentGeneralFormula": "sqrt(((partial b)/(partial a)*sigma(a))^2)",
+      "inflAssignment": "sqrt(4*a^2*sigma(a)^2)",
+      "inflAssignmentWithValues": [
+        "sqrt(4*1000^2*1^2)"
+      ]
+    },
+    {
+      "type": "calculation",
+      "variable": "c",
+      "array": {
+        "array": [
+          {
+            "value": "13.816",
+            "infl": "0.002"
+          }
+        ]
+      },
+      "assignment": "ln(b)",
+      "assignmentWithValues": [
+        "ln(1000000)"
+      ],
+      "inflAssignmentGeneralFormula": "sqrt(((partial c)/(partial b)*sigma(b))^2)",
+      "inflAssignment": "sqrt(sigma(b)^2/b^2)",
+      "inflAssignmentWithValues": [
+        "sqrt(2000^2/1000000^2)"
+      ]
+    }
+  ]
+}

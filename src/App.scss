@@ -1,0 +1,30 @@
+@use './shared/styles/colors' as *;
+@import './assets/fonts/fonts.css';
+
+@import 'codemirror/lib/codemirror.css';
+@import 'codemirror/theme/material.css';
+
+:root {
+  font-family: Inter !important;
+}
+
+body {
+  margin: 0;
+  overflow:hidden;
+  background-color: #0e1621;
+  ::-webkit-scrollbar {
+    background-color: $gray-60; /* Цвет ползунка */
+    width: 8px;
+    @media print {
+      width: 0px;
+    }
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: #9cabcf; /* Цвет ползунка */
+    width: 6px;
+    border-radius: 10px; /* Закругление ползунка */
+    @media print {
+      width: 0px;
+    }
+  }
+}

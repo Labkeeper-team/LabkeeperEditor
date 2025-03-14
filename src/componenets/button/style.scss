@@ -1,0 +1,90 @@
+@use '../../shared/styles/colors' as *;
+
+.labkeeper-button {
+  font-family: inherit;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  gap: 6px;
+  background-color: $white;
+  border: none;
+  padding: 16px 20px 16px 20px;
+  color: $white;
+  height: 50px;
+  font-size: 15px;
+  line-height: 18px;
+  transition-duration: 0.3s;
+  &:hover:not(:disabled) {
+    cursor: pointer;
+  }
+  &.rounded {
+    border-radius: 100px;
+  }
+  &.minimize {
+    height: 30px;
+    padding: 6px 21px 6px 21px;
+    font-size: 13px;
+    line-height: 15px;
+  }
+  &.gray-color {
+    background-color: $gray-60;
+    color: $blue-10;
+    &.minimize {
+      background-color: $white;
+    }
+    &:hover:not(:disabled) {
+      background-color: $gray-50;
+      &.minimize {
+        background-color: $gray-40;
+      }
+    }
+    &:active {
+      background-color: $gray-50;
+      box-shadow: 0px 0px 10px 0px $gray-40;
+      &.minimize {
+        background-color: $gray-50;
+        box-shadow: 0px 0px 10px 0px $gray-40;
+      }
+    }
+  }
+  &.blue-color {
+    background-color: $blue-10;
+    &:hover:not(:disabled) {
+      background-color: $button-action-blue;
+    }
+    &:active:not(:disabled) {
+      background-color: $button-action-blue;
+      box-shadow: 0px 0px 10px 0px $blue-10;
+    }
+    &:disabled {
+      opacity: 30%;
+    }
+  }
+  &.green-color {
+    background-color: $green;
+    &:hover:not(:disabled) {
+      background-color: $button-action-green;
+    }
+    &:active:not(:disabled) {
+      background-color: $button-action-green;
+      box-shadow: 0px 0px 10px 0px $green;
+    }
+    &:disabled {
+      opacity: 30%;
+    }
+  }
+
+  &.inherit-color {
+    background-color: inherit;
+    border: 1px solid $white;
+    &:hover:not(:disabled) {
+      border: 1px solid $gray-40;
+    }
+    &:active:not(:disabled) {
+      border: 1px solid $gray-40;
+      box-shadow: 0px 0px 10px 0px $blue-10;
+    }
+  }
+}

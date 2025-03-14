@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "files": [],
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "allowImportingTsExtensions": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "lib": ["es2021"]
+  }
+}

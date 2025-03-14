@@ -1,0 +1,16 @@
+@use '../../../styles/colors' as *;
+
+.hint-container {
+  position: absolute;
+  height: 15px;
+  width: 15px;
+  border: 6.5px solid $blue-20;
+  border-radius: 45px;
+  background: white;
+  opacity: 1;
+  &:hover {
+    cursor: pointer;
+    background: $gray-60;
+    border: 6.5px solid $blue-10;
+  }
+}
