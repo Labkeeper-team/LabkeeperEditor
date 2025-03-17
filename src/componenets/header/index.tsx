@@ -16,10 +16,8 @@ import { useCurrentLanguge, useDictionary } from '../../store/selectors/translat
 import { setLanguage } from '../../store/slices/settings';
 import { Select } from '../select';
 import { ProjectTitle } from './projectTitle';
-import { Modal } from '../../shared/components/modal';
-import { colors } from '../../shared/styles/colors';
-import { Login1Icon, Login2Icon } from '../../shared/icons';
 import { Language } from '../../store/shared/dictionaries';
+import {AuthModal} from "../../pages/project/auth";
 
 const languageOptions = [
   {
@@ -43,14 +41,6 @@ export const Header = () => {
   const onLoginClick = useCallback(async () => {
     setShowAuthModal(true);
   }, []);
-
-  const onPressYandexAuthClick = async () => {
-    window.location = Routes.Login as any;
-  }
-
-  const onPressSimpleAuthClick = async () => {
-    window.location = Routes.Login as any;
-  }
 
   const onPress = (lang: Language) => {
     dispatch(setLanguage(lang))
@@ -100,16 +90,7 @@ export const Header = () => {
         ) : null}
       </div>
     </div>
-    <Modal showModal={showAuthModal} onClose={() => setShowAuthModal(false)}>
-      <div className='auth-modal' style={{display: 'flex', flexDirection: 'column', padding: '30px 40px'}}>
-          <Typography className='auth-header' color={colors.gray10} type='h2' text={dictionary.authorization.title} />
-          <div style={{display: 'flex', flexDirection: 'column', gap: 8, marginTop: 28, justifyContent: 'center', alignItems: 'center'}}>
-            <Button classname='full-width ' title={`${dictionary.authorization.loginVia} @phystech.edu`} color='blue' rounded type='rounded' titleIcon={Login2Icon} minimize={false} onPress={onPressYandexAuthClick} />
-            <Typography color={colors.gray10} type='body-large' text={dictionary.or} />
-            <Button classname='full-width ' title={dictionary.authorization.loginAndPasswoord}  color='blue' rounded type='rounded' titleIcon={Login1Icon} minimize={false} onPress={onPressSimpleAuthClick}/>
-          </div>
-      </div>
-    </Modal>
+      <AuthModal showAuthModal={showAuthModal} setShowAuthModal={setShowAuthModal}/>
     </>
   );
 };

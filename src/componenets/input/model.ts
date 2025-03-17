@@ -12,4 +12,5 @@ export interface InputProps {
   placeholder?: string;
   className?: string;
   onClear?: (e) => void;
+  type?: 'text' | 'password';
 }

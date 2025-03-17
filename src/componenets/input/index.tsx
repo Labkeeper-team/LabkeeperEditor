@@ -20,6 +20,7 @@ export const Input = forwardRef((props: InputProps, ref) => {
         ref={ref as any}
         maxLength={60}
         value={props.value}
+        type={props.type || 'text'}
         className={classNames('input-base', { error: props.error })}
         onChange={props.onChange}
         onBlur={props.onBlur}
