@@ -15,47 +15,24 @@ const LoginView = () => {
     const dictionary = useSelector(useDictionary);
     const [login, setLogin] = useState('');
     const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
+    const [error] = useState('');
     const dispatch = useDispatch();
 
     const onPressYandexAuthClick = async () => {
         window.location = Routes.Login as any;
     }
 
-    const handleLoginChange = (e: ChangeEvent<HTMLInputElement>) => {
-        setLogin(e.target.value);
-    };
-
-    const handlePasswordChange = (e: ChangeEvent<HTMLInputElement>) => {
-        setPassword(e.target.value);
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!login || !password) {
-            setError('Пожалуйста, заполните все поля');
-            return;
-        }
-
-        try {
-            // Здесь должен быть запрос к API
-            setError('Неверный логин или пароль');
-        } catch (e) {
-            setError('Произошла ошибка при входе');
-        }
-    }
-
     return <div style={{display: 'flex', flexDirection: 'column', gap: 16, marginTop: 28}}>
-        <form onSubmit={handleSubmit} style={{display: 'flex', flexDirection: 'column', gap: 16}}>
+        <form method="POST" action="/login" style={{display: 'flex', flexDirection: 'column', gap: 16}}>
             <Input
                 value={login}
-                onChange={handleLoginChange}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setLogin(e.target.value)}
                 placeholder="Логин"
                 type="text"
             />
             <Input
                 value={password}
-                onChange={handlePasswordChange}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                 placeholder="Пароль"
                 type="password"
             />
@@ -98,13 +75,22 @@ const LoginView = () => {
             backgroundColor: colors.gray40,
             margin: '8px 0'
         }} />
-        <Button classname='full-width' title={`${dictionary.authorization.loginVia} @phystech.edu`} color='blue' rounded type='rounded' titleIcon={Login2Icon} minimize={false} onPress={onPressYandexAuthClick} />
+        <Button classname='full-width'
+                title={`${dictionary.authorization.loginVia} @phystech.edu`}
+                color='blue'
+                rounded
+                type='rounded'
+                titleIcon={Login2Icon}
+                minimize={false}
+                onPress={onPressYandexAuthClick} />
         <div style={{display: 'flex', justifyContent: 'center', width: '100%'}}>
             <Typography color={colors.gray10} type='body-large' text={dictionary.or} />
         </div>
-        <form onSubmit={handleSubmit}>
-            <Button classname='full-width' title={dictionary.authorization.loginAndPasswoord} color='blue' rounded type='rounded' titleIcon={Login1Icon} minimize={false} buttonType="submit"/>
-        </form>
+        <Button classname='full-width'
+                title={dictionary.authorization.loginAndPasswoord}
+                color='blue' rounded type='rounded'
+                titleIcon={Login1Icon} minimize={false}
+                onPress={onPressYandexAuthClick}/>
     </div>
 }
 
