@@ -7,6 +7,7 @@ import { projectSlice } from '../slices/project';
 import { settingsSlice } from '../slices/settings';
 import { userSlice } from '../slices/user';
 import { ideSlice } from '../slices/ide';
+import { authSlice } from '../slices/auth';
 
 export const createRootReducer = () => {
   const appReducer = combineReducers({
@@ -22,6 +23,7 @@ export const createRootReducer = () => {
       settingsSlice.reducer
     ),
     user: userSlice.reducer,
+      auth: authSlice.reducer
   });
 
   return appReducer;
