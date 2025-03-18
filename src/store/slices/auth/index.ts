@@ -3,7 +3,7 @@ import {LOGOUT_TYPE} from "../../actions";
 import {userRPI} from "../../../rpi/user";
 import {StorageState} from "../../index";
 
-export type AuthView = 'login' | 'email' | 'code' | 'password'
+export type AuthView = 'login' | 'email' | 'code' | 'password' | 'success'
 export type EmailRequestState = 'unknown' | 'loading' | 'ok' | 'userNotFound' | 'userExists' | 'validationError'
 export type CodeRequestState = 'unknown' | 'loading' | 'ok' | 'invalid'
 export type PasswordRequestState = 'unknown' | 'loading' | 'ok' | 'userNotFound' | 'userExists' | 'validationError'

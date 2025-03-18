@@ -120,16 +120,18 @@ export const en: Translations = {
         confirmPassword: 'Confirm password',
         alreadyHaveAccount: 'Already have an account?',
         createAccount: 'Create account',
+        continue: 'Continue',
         views: {
             email: 'Enter your email',
             code: 'Enter confirmation code',
-            password: 'Set new password'
+            password: 'Set new password',
+            success: 'Password successfully changed'
         },
         errors: {
             userExists: 'User with this email already exists',
             userNotFound: 'User not found',
             invalidEmail: 'Invalid email format',
-            invalidCode: 'Invalid confirmation code',
+            invalidCode: 'Invalid code',
             passwordsDontMatch: 'Passwords do not match',
             fillAllFields: 'Please fill in all fields',
             passwordSetError: 'Error setting password'

@@ -113,7 +113,7 @@ export interface Translations {
     }
     authorization: {
         title: string;
-        loginVia: string; 
+        loginVia: string;
         loginAndPasswoord: string;
         login: string;
         password: string;
@@ -126,11 +126,13 @@ export interface Translations {
         confirmPassword: string;
         alreadyHaveAccount: string;
         createAccount: string;
+        continue: string;
         views: {
             email: string;
             code: string;
             password: string;
-        }
+            success: string;
+        };
         errors: {
             userExists: string;
             userNotFound: string;
@@ -139,7 +141,7 @@ export interface Translations {
             passwordsDontMatch: string;
             fillAllFields: string;
             passwordSetError: string;
-        }
+        };
     },
     loginModal: {
         submit: string;

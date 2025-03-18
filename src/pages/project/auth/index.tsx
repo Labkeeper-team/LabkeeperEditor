@@ -233,7 +233,7 @@ const PasswordView = () => {
 
     useEffect(() => {
         if (status === 'ok') {
-            dispatch(setCurrentView('login'))
+            dispatch(setCurrentView('success'))
         }
     }, [status]);
 
@@ -302,6 +302,28 @@ const PasswordView = () => {
     </div>
 }
 
+const SuccessView = () => {
+    const dictionary = useSelector(useDictionary);
+    const dispatch = useDispatch();
+
+    return <div className='auth-modal' style={{display: 'flex', flexDirection: 'column', padding: '30px 40px'}}>
+        <div style={{textAlign: 'center'}}>
+            <Typography className='auth-header' color={colors.gray10} type='h2' text={dictionary.authorization.views.success} />
+        </div>
+        <div style={{display: 'flex', flexDirection: 'column', gap: 16, marginTop: 28, alignItems: 'center'}}>
+            <Button
+                classname='full-width'
+                title={dictionary.authorization.continue}
+                color='blue'
+                rounded
+                type='rounded'
+                minimize={false}
+                onPress={() => dispatch(setCurrentView('login'))}
+            />
+        </div>
+    </div>
+}
+
 export const AuthModal = () => {
     const currentView = useSelector((state: StorageState) => state.auth.currentView);
     const dispatch = useDispatch();
@@ -324,6 +346,8 @@ export const AuthModal = () => {
                 return <CodeView />;
             case 'password':
                 return <PasswordView/>;
+            case 'success':
+                return <SuccessView/>;
             default:
                 return <LoginView />;
         }
