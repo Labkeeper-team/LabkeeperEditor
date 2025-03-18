@@ -31,10 +31,12 @@ const LoginView = () => {
         window.location = Routes.Login as any;
     }
 
-    return <div className='auth-modal' style={{display: 'flex', flexDirection: 'column', padding: '30px 40px'}}>
-        <Typography className='auth-header' color={colors.gray10} type='h2' text={dictionary.authorization.title} />
-        <div style={{display: 'flex', flexDirection: 'column', gap: 16, marginTop: 28}}>
-            <form method="POST" action="/formlogin" style={{display: 'flex', flexDirection: 'column', gap: 16}}>
+    return <div className='auth-modal' style={{display: 'flex', flexDirection: 'column', padding: '40px'}}>
+        <div style={{textAlign: 'center', marginBottom: '32px'}}>
+            <Typography className='auth-header' color={colors.gray10} type='h2' text={dictionary.authorization.title} />
+        </div>
+        <div style={{display: 'flex', flexDirection: 'column', gap: '20px'}}>
+            <form method="POST" action="/formlogin" style={{display: 'flex', flexDirection: 'column', gap: '20px'}}>
                 <Input
                     name={"username"}
                     value={login}
@@ -50,7 +52,9 @@ const LoginView = () => {
                     type="password"
                 />
                 {error && (
-                    <Typography color={colors.gray10} type='body' text={error} />
+                    <div style={{textAlign: 'center'}}>
+                        <Typography color={colors.gray10} type='body' text={error} />
+                    </div>
                 )}
                 <Button
                     classname='full-width'
@@ -62,7 +66,7 @@ const LoginView = () => {
                     buttonType="submit"
                 />
             </form>
-            <div style={{display: 'flex', gap: 8, justifyContent: 'center', width: '100%'}}>
+            <div style={{display: 'flex', gap: '12px', justifyContent: 'center', width: '100%'}}>
                 <Button
                     classname='full-width'
                     title={dictionary.authorization.registration}
@@ -92,26 +96,44 @@ const LoginView = () => {
             </div>
             <div style={{
                 width: '100%',
-                height: 1,
+                height: '1px',
                 backgroundColor: colors.gray40,
-                margin: '8px 0'
-            }} />
-            <Button classname='full-width'
+                margin: '16px 0',
+                position: 'relative'
+            }}>
+                <div style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    backgroundColor: '#fff',
+                    padding: '0 16px'
+                }}>
+                    <Typography color={colors.gray40} type='body' text={dictionary.or} />
+                </div>
+            </div>
+            <div style={{display: 'flex', flexDirection: 'column', gap: '12px'}}>
+                <Button 
+                    classname='full-width'
                     title={`${dictionary.authorization.loginVia} @phystech.edu`}
                     color='blue'
                     rounded
                     type='rounded'
                     titleIcon={Login2Icon}
                     minimize={false}
-                    onPress={onPressYandexAuthClick} />
-            <div style={{display: 'flex', justifyContent: 'center', width: '100%'}}>
-                <Typography color={colors.gray10} type='body-large' text={dictionary.or} />
-            </div>
-            <Button classname='full-width'
+                    onPress={onPressYandexAuthClick}
+                />
+                <Button 
+                    classname='full-width'
                     title={dictionary.authorization.loginAndPasswoord}
-                    color='blue' rounded type='rounded'
-                    titleIcon={Login1Icon} minimize={false}
-                    onPress={onPressYandexAuthClick}/>
+                    color='blue' 
+                    rounded 
+                    type='rounded'
+                    titleIcon={Login1Icon} 
+                    minimize={false}
+                    onPress={onPressYandexAuthClick}
+                />
+            </div>
         </div>
     </div>
 }
