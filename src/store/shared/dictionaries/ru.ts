@@ -130,7 +130,7 @@ export const ru: Translations = {
             emailSubtitle: 'Мы отправим код подтверждения на ваш email',
             codeSubtitle: 'Введите код, который мы отправили на ваш email',
             passwordSubtitle: 'Придумайте надежный пароль для вашего аккаунта',
-            successSubtitle: 'Ваш аккаунт успешно создан'
+            successSubtitle: 'Пароль успешно установлен'
         },
         errors: {
             userExists: 'Пользователь с таким email уже существует',

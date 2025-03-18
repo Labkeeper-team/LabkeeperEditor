@@ -129,7 +129,7 @@ export const en: Translations = {
             emailSubtitle: 'We will send a verification code to your email',
             codeSubtitle: 'Enter the code we sent to your email',
             passwordSubtitle: 'Create a strong password for your account',
-            successSubtitle: 'Your account has been successfully created'
+            successSubtitle: 'Your password has been successfully changed'
         },
         errors: {
             userExists: 'User with this email already exists',
