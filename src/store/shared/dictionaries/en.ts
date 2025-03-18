@@ -109,6 +109,31 @@ export const en: Translations = {
         title: 'Authorization',
         loginVia: 'Login via',
         loginAndPasswoord: 'Login and password',
+        login: 'Login',
+        password: 'Password',
+        registration: 'Registration',
+        forgotPassword: 'Forgot password?',
+        sendCode: 'Send code',
+        confirmCode: 'Confirm code',
+        resendCode: 'Resend code',
+        save: 'Save',
+        confirmPassword: 'Confirm password',
+        alreadyHaveAccount: 'Already have an account?',
+        createAccount: 'Create account',
+        views: {
+            email: 'Enter your email',
+            code: 'Enter confirmation code',
+            password: 'Set new password'
+        },
+        errors: {
+            userExists: 'User with this email already exists',
+            userNotFound: 'User not found',
+            invalidEmail: 'Invalid email format',
+            invalidCode: 'Invalid confirmation code',
+            passwordsDontMatch: 'Passwords do not match',
+            fillAllFields: 'Please fill in all fields',
+            passwordSetError: 'Error setting password'
+        }
     },
     loginModal: {
         submit: 'Login',

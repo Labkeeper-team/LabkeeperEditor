@@ -5,7 +5,7 @@ interface CodeValidationResponse {
     valid: boolean;
 }
 
-const debug = false
+const debug = true
 
 export const userRPI = {
     sendEmailWithCode: async (email: string, registration: boolean): Promise<RequestResult> => {

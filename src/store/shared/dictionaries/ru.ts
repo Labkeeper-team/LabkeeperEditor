@@ -110,6 +110,31 @@ export const ru: Translations = {
         title: 'Авторизация',
         loginVia: 'Войти с помощью',
         loginAndPasswoord: 'Логин и пароль',
+        login: 'Войти',
+        password: 'Пароль',
+        registration: 'Регистрация',
+        forgotPassword: 'Забыли пароль?',
+        sendCode: 'Отправить код',
+        confirmCode: 'Подтвердить код',
+        resendCode: 'Отправить код повторно',
+        save: 'Сохранить',
+        confirmPassword: 'Подтвердите пароль',
+        alreadyHaveAccount: 'Уже есть аккаунт?',
+        createAccount: 'Создать аккаунт',
+        views: {
+            email: 'Введите ваш email',
+            code: 'Введите код подтверждения',
+            password: 'Установите новый пароль'
+        },
+        errors: {
+            userExists: 'Пользователь с таким email уже существует',
+            userNotFound: 'Пользователь не найден',
+            invalidEmail: 'Неправильный формат почты',
+            invalidCode: 'Неверный код подтверждения',
+            passwordsDontMatch: 'Пароли не совпадают',
+            fillAllFields: 'Пожалуйста, заполните все поля',
+            passwordSetError: 'Произошла ошибка при установке пароля'
+        }
     },
     loginModal: {
         submit: 'Войти',

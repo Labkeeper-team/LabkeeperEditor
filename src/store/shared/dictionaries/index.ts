@@ -115,6 +115,31 @@ export interface Translations {
         title: string;
         loginVia: string; 
         loginAndPasswoord: string;
+        login: string;
+        password: string;
+        registration: string;
+        forgotPassword: string;
+        sendCode: string;
+        confirmCode: string;
+        resendCode: string;
+        save: string;
+        confirmPassword: string;
+        alreadyHaveAccount: string;
+        createAccount: string;
+        views: {
+            email: string;
+            code: string;
+            password: string;
+        }
+        errors: {
+            userExists: string;
+            userNotFound: string;
+            invalidEmail: string;
+            invalidCode: string;
+            passwordsDontMatch: string;
+            fillAllFields: string;
+            passwordSetError: string;
+        }
     },
     loginModal: {
         submit: string;

@@ -14,7 +14,8 @@ import {
     checkCode,
     setPassword as setPasswordAction,
     resetRequestStates,
-    setRegistration, setShowAuthModal
+    setRegistration,
+    setShowAuthModal
 } from "../../../store/slices/auth";
 import {StorageState} from "../../../store";
 import {AppDispatch} from "../../../store";
@@ -38,14 +39,14 @@ const LoginView = () => {
                     name={"username"}
                     value={login}
                     onChange={(e: ChangeEvent<HTMLInputElement>) => setLogin(e.target.value)}
-                    placeholder="Логин"
+                    placeholder={dictionary.authorization.login}
                     type="text"
                 />
                 <Input
                     name={"password"}
                     value={password}
                     onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
-                    placeholder="Пароль"
+                    placeholder={dictionary.authorization.password}
                     type="password"
                 />
                 {error && (
@@ -53,7 +54,7 @@ const LoginView = () => {
                 )}
                 <Button
                     classname='full-width'
-                    title="Войти"
+                    title={dictionary.authorization.login}
                     color='blue'
                     rounded
                     type='rounded'
@@ -64,27 +65,27 @@ const LoginView = () => {
             <div style={{display: 'flex', gap: 8, justifyContent: 'center', width: '100%'}}>
                 <Button
                     classname='full-width'
-                    title="Регистрация"
+                    title={dictionary.authorization.registration}
                     color='blue'
                     rounded
                     type='rounded'
                     minimize={true}
                     onPress={() => {
                         dispatch(resetRequestStates());
-                        dispatch(setRegistration(true))
+                        dispatch(setRegistration(true));
                         dispatch(setCurrentView('email'));
                     }}
                 />
                 <Button
                     classname='full-width'
-                    title="Забыли пароль?"
+                    title={dictionary.authorization.forgotPassword}
                     color='blue'
                     rounded
                     type='rounded'
                     minimize={true}
                     onPress={() => {
                         dispatch(resetRequestStates());
-                        dispatch(setRegistration(false))
+                        dispatch(setRegistration(false));
                         dispatch(setCurrentView('email'));
                     }}
                 />
@@ -119,6 +120,7 @@ const EmailView = () => {
     const [email, setEmail] = useState('');
     const dispatch = useDispatch<AppDispatch>();
     const status = useSelector((state: StorageState) => state.auth.emailRequest);
+    const dictionary = useSelector(useDictionary);
 
     useEffect(() => {
         if (status === 'ok') {
@@ -135,18 +137,19 @@ const EmailView = () => {
 
     const getErrorMessage = () => {
         if (status === 'userExists') {
-            return "Пользователь с таким email уже существует";
+            return dictionary.authorization.errors.userExists;
         }
         if (status === 'userNotFound') {
-            return "Пользователь не найден";
+            return dictionary.authorization.errors.userNotFound;
         }
         if (status === 'validationError') {
-            return "Неправильный формат почты";
+            return dictionary.authorization.errors.invalidEmail;
         }
         return "";
     }
 
     return <div className='auth-modal' style={{display: 'flex', flexDirection: 'column', padding: '30px 40px'}}>
+        <Typography className='auth-header' color={colors.gray10} type='h2' text={dictionary.authorization.views.email} />
         <div style={{display: 'flex', flexDirection: 'column', gap: 16, marginTop: 28}}>
             <Input
                 value={email}
@@ -160,7 +163,7 @@ const EmailView = () => {
             )}
             <Button
                 classname='full-width'
-                title="Отправить код"
+                title={dictionary.authorization.sendCode}
                 color='blue'
                 rounded
                 type='rounded'
@@ -176,6 +179,7 @@ const CodeView = () => {
     const [code, setCode] = useState('');
     const dispatch = useDispatch<AppDispatch>();
     const status = useSelector((state: StorageState) => state.auth.codeCheckRequest);
+    const dictionary = useSelector(useDictionary);
 
     useEffect(() => {
         if (status === 'ok') {
@@ -191,20 +195,21 @@ const CodeView = () => {
     }
 
     return <div className='auth-modal' style={{display: 'flex', flexDirection: 'column', padding: '30px 40px'}}>
+        <Typography className='auth-header' color={colors.gray10} type='h2' text={dictionary.authorization.views.code} />
         <div style={{display: 'flex', flexDirection: 'column', gap: 16, marginTop: 28}}>
             <Input
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
-                placeholder="Код подтверждения"
+                placeholder={dictionary.authorization.confirmCode}
                 type="text"
                 disabled={status === 'loading'}
             />
             {status === 'invalid' && (
-                <Typography color={colors.gray10} type='body' text="Неверный код подтверждения" />
+                <Typography color={colors.gray10} type='body' text={dictionary.authorization.errors.invalidCode} />
             )}
             <Button
                 classname='full-width'
-                title="Подтвердить"
+                title={dictionary.authorization.confirmCode}
                 color='blue'
                 rounded
                 type='rounded'
@@ -224,6 +229,7 @@ const PasswordView = () => {
     const status = useSelector((state: StorageState) => state.auth.passwordSetRequest);
     const currentEmail = useSelector((state: StorageState) => state.auth.currentEmail);
     const verifiedCode = useSelector((state: StorageState) => state.auth.lastVerifiedCode);
+    const dictionary = useSelector(useDictionary);
 
     useEffect(() => {
         if (status === 'ok') {
@@ -233,11 +239,11 @@ const PasswordView = () => {
 
     const handleSubmit = async () => {
         if (!password || !confirmPassword || !currentEmail || !verifiedCode) {
-            setLocalError('Пожалуйста, заполните все поля');
+            setLocalError(dictionary.authorization.errors.fillAllFields);
             return;
         }
         if (password !== confirmPassword) {
-            setLocalError('Пароли не совпадают');
+            setLocalError(dictionary.authorization.errors.passwordsDontMatch);
             return;
         }
         setLocalError('');
@@ -251,30 +257,31 @@ const PasswordView = () => {
     const getErrorMessage = () => {
         if (localError) return localError;
         if (status === 'userExists') {
-            return "Пользователь с таким email уже существует";
+            return dictionary.authorization.errors.userExists;
         }
         if (status === 'userNotFound') {
-            return "Пользователь не найден";
+            return dictionary.authorization.errors.userNotFound;
         }
         if (status === 'validationError') {
-            return "Произошла ошибка при установке пароля";
+            return dictionary.authorization.errors.passwordSetError;
         }
         return "";
     }
 
     return <div className='auth-modal' style={{display: 'flex', flexDirection: 'column', padding: '30px 40px'}}>
+        <Typography className='auth-header' color={colors.gray10} type='h2' text={dictionary.authorization.views.password} />
         <div style={{display: 'flex', flexDirection: 'column', gap: 16, marginTop: 28}}>
             <Input
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Новый пароль"
+                placeholder={dictionary.authorization.password}
                 type="password"
                 disabled={status === 'loading'}
             />
             <Input
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Подтвердите пароль"
+                placeholder={dictionary.authorization.confirmPassword}
                 type="password"
                 disabled={status === 'loading'}
             />
@@ -283,7 +290,7 @@ const PasswordView = () => {
             )}
             <Button
                 classname='full-width'
-                title="Сохранить"
+                title={dictionary.authorization.save}
                 color='blue'
                 rounded
                 type='rounded'
