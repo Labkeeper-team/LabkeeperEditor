@@ -1,4 +1,4 @@
-import {Outlet, useLocation, useNavigate, useParams} from 'react-router-dom';
+import {Outlet, useLocation, useNavigate, useParams, useSearchParams} from 'react-router-dom';
 import { Header } from '../header';
 import { InterfaceTour } from '../../shared/components/tour';
 import { useEffect, useRef } from 'react';
@@ -11,10 +11,12 @@ import { setNeedLogin } from '../../store/slices/ide';
 import {setUser} from "../../store/slices/user";
 import { setisFileDraggedToFileManager } from '../../store/slices/settings';
 import { StorageState } from '../../store';
+import {setErrorMessage} from "../../store/slices/auth";
 
 export const BaseLayout = () => {
   const user = useSelector(useUser);
   const id = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const needLogin = useSelector(useNeedLogin);
@@ -50,6 +52,12 @@ export const BaseLayout = () => {
     }
   };
 
+    useEffect(() => {
+        const error = searchParams.get('error')
+        if (error) {
+            dispatch(setErrorMessage(error || ''))
+        }
+    }, [searchParams]);
     useEffect(() => {
         fetch('/user-info')
             .then(re => re.json())

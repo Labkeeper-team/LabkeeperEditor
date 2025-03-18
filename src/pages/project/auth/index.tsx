@@ -14,7 +14,7 @@ import {
     checkCode,
     setPassword as setPasswordAction,
     resetRequestStates,
-    setRegistration
+    setRegistration, setShowAuthModal
 } from "../../../store/slices/auth";
 import {StorageState} from "../../../store";
 import {AppDispatch} from "../../../store";
@@ -23,15 +23,15 @@ const LoginView = () => {
     const dictionary = useSelector(useDictionary);
     const [login, setLogin] = useState('');
     const [password, setPassword] = useState('');
-    const [error] = useState('');
     const dispatch = useDispatch();
+    const error = useSelector((state: StorageState) => state.auth.authErrorMessage);
 
     const onPressYandexAuthClick = async () => {
         window.location = Routes.Login as any;
     }
 
     return <div style={{display: 'flex', flexDirection: 'column', gap: 16, marginTop: 28}}>
-        <form method="POST" action="/login" style={{display: 'flex', flexDirection: 'column', gap: 16}}>
+        <form method="POST" action="/formlogin" style={{display: 'flex', flexDirection: 'column', gap: 16}}>
             <Input
                 value={login}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setLogin(e.target.value)}
@@ -284,10 +284,11 @@ const PasswordView = () => {
     </div>
 }
 
-export const AuthModal = ({showAuthModal, setShowAuthModal}) => {
+export const AuthModal = () => {
     const dictionary = useSelector(useDictionary);
     const currentView = useSelector((state: StorageState) => state.auth.currentView);
     const dispatch = useDispatch();
+    const showAuthModal = useSelector((state: StorageState) => state.auth.showAuthModal);
 
     useEffect(() => {
         if (showAuthModal) {
@@ -312,7 +313,7 @@ export const AuthModal = ({showAuthModal, setShowAuthModal}) => {
     }
 
     return <Modal showModal={showAuthModal} onClose={() => {
-        setShowAuthModal(false);
+        dispatch(setShowAuthModal(false));
         dispatch(resetRequestStates());
     }}>
         <div className='auth-modal' style={{display: 'flex', flexDirection: 'column', padding: '30px 40px'}}>

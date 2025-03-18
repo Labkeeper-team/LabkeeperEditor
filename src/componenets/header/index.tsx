@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { Typography } from '../typography';
@@ -18,6 +18,7 @@ import { Select } from '../select';
 import { ProjectTitle } from './projectTitle';
 import { Language } from '../../store/shared/dictionaries';
 import {AuthModal} from "../../pages/project/auth";
+import {setShowAuthModal} from "../../store/slices/auth";
 
 const languageOptions = [
   {
@@ -32,14 +33,13 @@ const languageOptions = [
 
 export const Header = () => {
   const dispatch = useDispatch();
-  const [showAuthModal, setShowAuthModal ] = useState(false);
   const location = useLocation();
   const dictionary = useSelector(useDictionary);
   const language = useSelector(useCurrentLanguge);
   const { isAuthenticated, email } = useSelector(useUser);
 
   const onLoginClick = useCallback(async () => {
-    setShowAuthModal(true);
+    dispatch(setShowAuthModal(true));
   }, []);
 
   const onPress = (lang: Language) => {
@@ -90,7 +90,7 @@ export const Header = () => {
         ) : null}
       </div>
     </div>
-      <AuthModal showAuthModal={showAuthModal} setShowAuthModal={setShowAuthModal}/>
+      <AuthModal/>
     </>
   );
 };

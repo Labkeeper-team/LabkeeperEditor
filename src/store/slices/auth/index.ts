@@ -16,6 +16,8 @@ export interface AuthState {
     emailRequest: EmailRequestState;
     codeCheckRequest: CodeRequestState;
     passwordSetRequest: PasswordRequestState;
+    authErrorMessage: string | null;
+    showAuthModal: boolean;
 }
 
 const initialState: AuthState = {
@@ -25,7 +27,9 @@ const initialState: AuthState = {
     lastVerifiedCode: null,
     emailRequest: 'unknown',
     codeCheckRequest: 'unknown',
-    passwordSetRequest: 'unknown'
+    passwordSetRequest: 'unknown',
+    authErrorMessage: null,
+    showAuthModal: false
 }
 
 // Async thunks
@@ -81,6 +85,16 @@ export const authSlice = createSlice({
             state.emailRequest = 'unknown'
             state.codeCheckRequest = 'unknown';
             state.passwordSetRequest = 'unknown';
+        },
+        setErrorMessage(state, {payload}: PayloadAction<string>) {
+            state.showAuthModal = true
+            state.authErrorMessage = payload
+        },
+        setShowAuthModal(state, {payload}: PayloadAction<boolean>) {
+            state.showAuthModal = payload
+            if (!payload) {
+                state.authErrorMessage = ''
+            }
         }
     },
     extraReducers: (builder) => {
@@ -93,6 +107,7 @@ export const authSlice = createSlice({
             .addCase(sendEmailWithCode.pending, (state) => {
                 state.emailRequest = 'loading'
                 state.currentEmail = null
+                state.authErrorMessage = ''
             })
             .addCase(sendEmailWithCode.fulfilled, (state, action) => {
                 state.emailRequest = 'ok'
@@ -113,6 +128,7 @@ export const authSlice = createSlice({
             .addCase(checkCode.pending, (state) => {
                 state.codeCheckRequest = 'loading'
                 state.lastVerifiedCode = null
+                state.authErrorMessage = ''
             })
             .addCase(checkCode.fulfilled, (state, action) => {
                 state.codeCheckRequest = 'ok'
@@ -128,6 +144,7 @@ export const authSlice = createSlice({
             // Password set
             .addCase(setPassword.pending, (state) => {
                 state.passwordSetRequest = 'loading'
+                state.authErrorMessage = ''
             })
             .addCase(setPassword.fulfilled, (state) => {
                 state.passwordSetRequest = 'ok'
@@ -145,4 +162,4 @@ export const authSlice = createSlice({
     }
 })
 
-export const {setCurrentView, setCurrentEmail, resetRequestStates, setRegistration} = authSlice.actions
+export const {setCurrentView, setShowAuthModal, setErrorMessage, setCurrentEmail, resetRequestStates, setRegistration} = authSlice.actions
