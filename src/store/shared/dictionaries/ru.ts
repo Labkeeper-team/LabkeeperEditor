@@ -139,7 +139,9 @@ export const ru: Translations = {
             invalidCode: 'Неверный код',
             passwordsDontMatch: 'Пароли не совпадают',
             fillAllFields: 'Пожалуйста, заполните все поля',
-            passwordSetError: 'Ошибка установки пароля'
+            passwordSetError: 'Ошибка установки пароля',
+            credentialsError: 'Неправильный логин или пароль',
+            oauthError: 'Ошибка входа через сторонний провайдер'
         }
     },
     loginModal: {

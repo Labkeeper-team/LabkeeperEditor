@@ -138,7 +138,9 @@ export const en: Translations = {
             invalidCode: 'Invalid code',
             passwordsDontMatch: 'Passwords do not match',
             fillAllFields: 'Please fill in all fields',
-            passwordSetError: 'Error setting password'
+            passwordSetError: 'Error setting password',
+            credentialsError: "Incorrect login or password",
+            oauthError: "Error while authenticating via third party provider"
         }
     },
     loginModal: {

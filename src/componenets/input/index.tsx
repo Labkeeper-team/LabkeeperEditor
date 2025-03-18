@@ -17,6 +17,7 @@ export const Input = forwardRef((props: InputProps, ref) => {
         />
       ) : null}
       <input
+          required={props.required}
         ref={ref as any}
         maxLength={60}
         value={props.value}

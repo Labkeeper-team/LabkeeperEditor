@@ -27,6 +27,17 @@ const LoginView = () => {
     const dispatch = useDispatch();
     const error = useSelector((state: StorageState) => state.auth.authErrorMessage);
 
+    const getErrorMessage = (): string => {
+        if (!error) return '';
+        if (error === 'bad_credentials') {
+            return dictionary.authorization.errors.credentialsError;
+        }
+        if (error === 'oauth_error') {
+            return dictionary.authorization.errors.oauthError;
+        }
+        return error;
+    }
+
     const onPressYandexAuthClick = async () => {
         window.location = Routes.Login as any;
     }
@@ -38,6 +49,7 @@ const LoginView = () => {
         <div style={{display: 'flex', flexDirection: 'column', gap: '20px'}}>
             <form method="POST" action="/formlogin" style={{display: 'flex', flexDirection: 'column', gap: '20px'}}>
                 <Input
+                    required={true}
                     name={"username"}
                     value={login}
                     onChange={(e: ChangeEvent<HTMLInputElement>) => setLogin(e.target.value)}
@@ -45,6 +57,7 @@ const LoginView = () => {
                     type="text"
                 />
                 <Input
+                    required={true}
                     name={"password"}
                     value={password}
                     onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
@@ -53,7 +66,7 @@ const LoginView = () => {
                 />
                 {error && (
                     <div style={{textAlign: 'center'}}>
-                        <Typography color={colors.gray10} type='body' text={error} />
+                        <Typography color={colors.gray10} type='body' text={getErrorMessage()} />
                     </div>
                 )}
                 <Button

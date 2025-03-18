@@ -145,6 +145,8 @@ export interface Translations {
             passwordsDontMatch: string;
             fillAllFields: string;
             passwordSetError: string;
+            credentialsError: string;
+            oauthError: string;
         };
     },
     loginModal: {
