@@ -30,85 +30,88 @@ const LoginView = () => {
         window.location = Routes.Login as any;
     }
 
-    return <div style={{display: 'flex', flexDirection: 'column', gap: 16, marginTop: 28}}>
-        <form method="POST" action="/formlogin" style={{display: 'flex', flexDirection: 'column', gap: 16}}>
-            <Input
-                name={"username"}
-                value={login}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => setLogin(e.target.value)}
-                placeholder="Логин"
-                type="text"
-            />
-            <Input
-                name={"password"}
-                value={password}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
-                placeholder="Пароль"
-                type="password"
-            />
-            {error && (
-                <Typography color={colors.gray10} type='body' text={error} />
-            )}
-            <Button
-                classname='full-width'
-                title="Войти"
-                color='blue'
-                rounded
-                type='rounded'
-                minimize={false}
-                buttonType="submit"
-            />
-        </form>
-        <div style={{display: 'flex', gap: 8, justifyContent: 'center', width: '100%'}}>
-            <Button
-                classname='full-width'
-                title="Регистрация"
-                color='blue'
-                rounded
-                type='rounded'
-                minimize={true}
-                onPress={() => {
-                    dispatch(resetRequestStates());
-                    dispatch(setRegistration(true))
-                    dispatch(setCurrentView('email'));
-                }}
-            />
-            <Button
-                classname='full-width'
-                title="Забыли пароль?"
-                color='blue'
-                rounded
-                type='rounded'
-                minimize={true}
-                onPress={() => {
-                    dispatch(resetRequestStates());
-                    dispatch(setRegistration(false))
-                    dispatch(setCurrentView('email'));
-                }}
-            />
+    return <div className='auth-modal' style={{display: 'flex', flexDirection: 'column', padding: '30px 40px'}}>
+        <Typography className='auth-header' color={colors.gray10} type='h2' text={dictionary.authorization.title} />
+        <div style={{display: 'flex', flexDirection: 'column', gap: 16, marginTop: 28}}>
+            <form method="POST" action="/formlogin" style={{display: 'flex', flexDirection: 'column', gap: 16}}>
+                <Input
+                    name={"username"}
+                    value={login}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => setLogin(e.target.value)}
+                    placeholder="Логин"
+                    type="text"
+                />
+                <Input
+                    name={"password"}
+                    value={password}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+                    placeholder="Пароль"
+                    type="password"
+                />
+                {error && (
+                    <Typography color={colors.gray10} type='body' text={error} />
+                )}
+                <Button
+                    classname='full-width'
+                    title="Войти"
+                    color='blue'
+                    rounded
+                    type='rounded'
+                    minimize={false}
+                    buttonType="submit"
+                />
+            </form>
+            <div style={{display: 'flex', gap: 8, justifyContent: 'center', width: '100%'}}>
+                <Button
+                    classname='full-width'
+                    title="Регистрация"
+                    color='blue'
+                    rounded
+                    type='rounded'
+                    minimize={true}
+                    onPress={() => {
+                        dispatch(resetRequestStates());
+                        dispatch(setRegistration(true))
+                        dispatch(setCurrentView('email'));
+                    }}
+                />
+                <Button
+                    classname='full-width'
+                    title="Забыли пароль?"
+                    color='blue'
+                    rounded
+                    type='rounded'
+                    minimize={true}
+                    onPress={() => {
+                        dispatch(resetRequestStates());
+                        dispatch(setRegistration(false))
+                        dispatch(setCurrentView('email'));
+                    }}
+                />
+            </div>
+            <div style={{
+                width: '100%',
+                height: 1,
+                backgroundColor: colors.gray40,
+                margin: '8px 0'
+            }} />
+            <Button classname='full-width'
+                    title={`${dictionary.authorization.loginVia} @phystech.edu`}
+                    color='blue'
+                    rounded
+                    type='rounded'
+                    titleIcon={Login2Icon}
+                    minimize={false}
+                    onPress={onPressYandexAuthClick} />
+            <div style={{display: 'flex', justifyContent: 'center', width: '100%'}}>
+                <Typography color={colors.gray10} type='body-large' text={dictionary.or} />
+            </div>
+            <Button classname='full-width'
+                    title={dictionary.authorization.loginAndPasswoord}
+                    color='blue' rounded type='rounded'
+                    titleIcon={Login1Icon} minimize={false}
+                    onPress={onPressYandexAuthClick}/>
         </div>
-        <div style={{
-            width: '100%',
-            height: 1,
-            backgroundColor: colors.gray40,
-            margin: '8px 0'
-        }} />
-        <Button classname='full-width'
-                title={`${dictionary.authorization.loginVia} @phystech.edu`}
-                color='blue'
-                rounded
-                type='rounded'
-                titleIcon={Login2Icon}
-                minimize={false}
-                onPress={onPressYandexAuthClick} />
-        <div style={{display: 'flex', justifyContent: 'center', width: '100%'}}>
-            <Typography color={colors.gray10} type='body-large' text={dictionary.or} />
-        </div>
-        <Button classname='full-width'
-                title={dictionary.authorization.loginAndPasswoord}
-                color='blue' rounded type='rounded'
-                titleIcon={Login1Icon} minimize={false}
-                onPress={onPressYandexAuthClick}/>
     </div>
 }
 
@@ -143,27 +146,29 @@ const EmailView = () => {
         return "";
     }
 
-    return <div style={{display: 'flex', flexDirection: 'column', gap: 16, marginTop: 28}}>
-        <Input
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email"
-            type="text"
-            disabled={status === 'loading'}
-        />
-        {getErrorMessage() && (
-            <Typography color={colors.gray10} type='body' text={getErrorMessage()} />
-        )}
-        <Button
-            classname='full-width'
-            title="Отправить код"
-            color='blue'
-            rounded
-            type='rounded'
-            minimize={false}
-            onPress={handleSubmit}
-            disabled={status === 'loading'}
-        />
+    return <div className='auth-modal' style={{display: 'flex', flexDirection: 'column', padding: '30px 40px'}}>
+        <div style={{display: 'flex', flexDirection: 'column', gap: 16, marginTop: 28}}>
+            <Input
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Email"
+                type="text"
+                disabled={status === 'loading'}
+            />
+            {getErrorMessage() && (
+                <Typography color={colors.gray10} type='body' text={getErrorMessage()} />
+            )}
+            <Button
+                classname='full-width'
+                title="Отправить код"
+                color='blue'
+                rounded
+                type='rounded'
+                minimize={false}
+                onPress={handleSubmit}
+                disabled={status === 'loading'}
+            />
+        </div>
     </div>
 }
 
@@ -185,27 +190,29 @@ const CodeView = () => {
         dispatch(checkCode({ code }));
     }
 
-    return <div style={{display: 'flex', flexDirection: 'column', gap: 16, marginTop: 28}}>
-        <Input
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            placeholder="Код подтверждения"
-            type="text"
-            disabled={status === 'loading'}
-        />
-        {status === 'invalid' && (
-            <Typography color={colors.gray10} type='body' text="Неверный код подтверждения" />
-        )}
-        <Button
-            classname='full-width'
-            title="Подтвердить"
-            color='blue'
-            rounded
-            type='rounded'
-            minimize={false}
-            onPress={handleSubmit}
-            disabled={status === 'loading'}
-        />
+    return <div className='auth-modal' style={{display: 'flex', flexDirection: 'column', padding: '30px 40px'}}>
+        <div style={{display: 'flex', flexDirection: 'column', gap: 16, marginTop: 28}}>
+            <Input
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                placeholder="Код подтверждения"
+                type="text"
+                disabled={status === 'loading'}
+            />
+            {status === 'invalid' && (
+                <Typography color={colors.gray10} type='body' text="Неверный код подтверждения" />
+            )}
+            <Button
+                classname='full-width'
+                title="Подтвердить"
+                color='blue'
+                rounded
+                type='rounded'
+                minimize={false}
+                onPress={handleSubmit}
+                disabled={status === 'loading'}
+            />
+        </div>
     </div>
 }
 
@@ -255,39 +262,40 @@ const PasswordView = () => {
         return "";
     }
 
-    return <div style={{display: 'flex', flexDirection: 'column', gap: 16, marginTop: 28}}>
-        <Input
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Новый пароль"
-            type="password"
-            disabled={status === 'loading'}
-        />
-        <Input
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="Подтвердите пароль"
-            type="password"
-            disabled={status === 'loading'}
-        />
-        {getErrorMessage() && (
-            <Typography color={colors.gray10} type='body' text={getErrorMessage()} />
-        )}
-        <Button
-            classname='full-width'
-            title="Сохранить"
-            color='blue'
-            rounded
-            type='rounded'
-            minimize={false}
-            onPress={handleSubmit}
-            disabled={status === 'loading'}
-        />
+    return <div className='auth-modal' style={{display: 'flex', flexDirection: 'column', padding: '30px 40px'}}>
+        <div style={{display: 'flex', flexDirection: 'column', gap: 16, marginTop: 28}}>
+            <Input
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Новый пароль"
+                type="password"
+                disabled={status === 'loading'}
+            />
+            <Input
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Подтвердите пароль"
+                type="password"
+                disabled={status === 'loading'}
+            />
+            {getErrorMessage() && (
+                <Typography color={colors.gray10} type='body' text={getErrorMessage()} />
+            )}
+            <Button
+                classname='full-width'
+                title="Сохранить"
+                color='blue'
+                rounded
+                type='rounded'
+                minimize={false}
+                onPress={handleSubmit}
+                disabled={status === 'loading'}
+            />
+        </div>
     </div>
 }
 
 export const AuthModal = () => {
-    const dictionary = useSelector(useDictionary);
     const currentView = useSelector((state: StorageState) => state.auth.currentView);
     const dispatch = useDispatch();
     const showAuthModal = useSelector((state: StorageState) => state.auth.showAuthModal);
@@ -318,9 +326,6 @@ export const AuthModal = () => {
         dispatch(setShowAuthModal(false));
         dispatch(resetRequestStates());
     }}>
-        <div className='auth-modal' style={{display: 'flex', flexDirection: 'column', padding: '30px 40px'}}>
-            <Typography className='auth-header' color={colors.gray10} type='h2' text={dictionary.authorization.title} />
-            {renderView()}
-        </div>
+        {renderView()}
     </Modal>
 }
