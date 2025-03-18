@@ -123,10 +123,14 @@ export const ru: Translations = {
         createAccount: 'Создать аккаунт',
         continue: 'Продолжить',
         views: {
-            email: 'Введите ваш email',
-            code: 'Введите код подтверждения',
-            password: 'Установите новый пароль',
-            success: 'Пароль успешно изменен'
+            email: 'Введите email',
+            code: 'Введите код',
+            password: 'Установите пароль',
+            success: 'Успешно',
+            emailSubtitle: 'Мы отправим код подтверждения на ваш email',
+            codeSubtitle: 'Введите код, который мы отправили на ваш email',
+            passwordSubtitle: 'Придумайте надежный пароль для вашего аккаунта',
+            successSubtitle: 'Ваш аккаунт успешно создан'
         },
         errors: {
             userExists: 'Пользователь с таким email уже существует',

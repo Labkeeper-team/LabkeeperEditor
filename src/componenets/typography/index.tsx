@@ -7,7 +7,7 @@ export const Typography = (props: TypographyProps) => {
   return (
     <div
       className={classNames('typography', props.type || 'body', props.className)}
-      style={{ color: props.color || 'white' }}
+      style={{ color: props.color || 'white', ...props.style }}
     >
       {props.text}
     </div>

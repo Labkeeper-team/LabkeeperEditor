@@ -132,6 +132,10 @@ export interface Translations {
             code: string;
             password: string;
             success: string;
+            emailSubtitle: string;
+            codeSubtitle: string;
+            passwordSubtitle: string;
+            successSubtitle: string;
         };
         errors: {
             userExists: string;

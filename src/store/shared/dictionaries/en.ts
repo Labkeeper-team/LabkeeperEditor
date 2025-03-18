@@ -123,9 +123,13 @@ export const en: Translations = {
         continue: 'Continue',
         views: {
             email: 'Enter your email',
-            code: 'Enter confirmation code',
-            password: 'Set new password',
-            success: 'Password successfully changed'
+            code: 'Enter the code',
+            password: 'Set password',
+            success: 'Success',
+            emailSubtitle: 'We will send a verification code to your email',
+            codeSubtitle: 'Enter the code we sent to your email',
+            passwordSubtitle: 'Create a strong password for your account',
+            successSubtitle: 'Your account has been successfully created'
         },
         errors: {
             userExists: 'User with this email already exists',

@@ -172,7 +172,8 @@ const EmailView = () => {
 
     return <div className='auth-modal' style={{display: 'flex', flexDirection: 'column', padding: '30px 40px'}}>
         <Typography className='auth-header' color={colors.gray10} type='h2' text={dictionary.authorization.views.email} />
-        <div style={{display: 'flex', flexDirection: 'column', gap: 16, marginTop: 28}}>
+        <Typography color={colors.gray20} type='body' text={dictionary.authorization.views.emailSubtitle} style={{marginTop: '16px'}} />
+        <div style={{display: 'flex', flexDirection: 'column', gap: 16, marginTop: 16}}>
             <Input
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -218,7 +219,8 @@ const CodeView = () => {
 
     return <div className='auth-modal' style={{display: 'flex', flexDirection: 'column', padding: '30px 40px'}}>
         <Typography className='auth-header' color={colors.gray10} type='h2' text={dictionary.authorization.views.code} />
-        <div style={{display: 'flex', flexDirection: 'column', gap: 16, marginTop: 28}}>
+        <Typography color={colors.gray20} type='body' text={dictionary.authorization.views.codeSubtitle} style={{marginTop: '16px'}} />
+        <div style={{display: 'flex', flexDirection: 'column', gap: 16, marginTop: 16}}>
             <Input
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
@@ -292,7 +294,8 @@ const PasswordView = () => {
 
     return <div className='auth-modal' style={{display: 'flex', flexDirection: 'column', padding: '30px 40px'}}>
         <Typography className='auth-header' color={colors.gray10} type='h2' text={dictionary.authorization.views.password} />
-        <div style={{display: 'flex', flexDirection: 'column', gap: 16, marginTop: 28}}>
+        <Typography color={colors.gray20} type='body' text={dictionary.authorization.views.passwordSubtitle} style={{marginTop: '16px'}} />
+        <div style={{display: 'flex', flexDirection: 'column', gap: 16, marginTop: 16}}>
             <Input
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -331,8 +334,9 @@ const SuccessView = () => {
     return <div className='auth-modal' style={{display: 'flex', flexDirection: 'column', padding: '30px 40px'}}>
         <div style={{textAlign: 'center'}}>
             <Typography className='auth-header' color={colors.gray10} type='h2' text={dictionary.authorization.views.success} />
+            <Typography color={colors.gray20} type='body' text={dictionary.authorization.views.successSubtitle} style={{marginTop: '16px'}} />
         </div>
-        <div style={{display: 'flex', flexDirection: 'column', gap: 16, marginTop: 28, alignItems: 'center'}}>
+        <div style={{display: 'flex', flexDirection: 'column', gap: 16, marginTop: 16, alignItems: 'center'}}>
             <Button
                 classname='full-width'
                 title={dictionary.authorization.continue}
