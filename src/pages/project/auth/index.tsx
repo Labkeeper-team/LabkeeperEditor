@@ -33,12 +33,14 @@ const LoginView = () => {
     return <div style={{display: 'flex', flexDirection: 'column', gap: 16, marginTop: 28}}>
         <form method="POST" action="/formlogin" style={{display: 'flex', flexDirection: 'column', gap: 16}}>
             <Input
+                name={"username"}
                 value={login}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setLogin(e.target.value)}
                 placeholder="Логин"
                 type="text"
             />
             <Input
+                name={"password"}
                 value={password}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                 placeholder="Пароль"
