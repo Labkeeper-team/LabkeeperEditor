@@ -19,7 +19,7 @@ import { setEditModeForFilename, setEditModeForProjectTitle, setExpandProblemVie
 import { setSearch } from '../../store/slices/ide';
 import {getDefaultProjectRequest, getProjectRequest} from "../../rpi/project.tsx";
 import {toast} from "react-toastify";
-import {useDictionary} from "../../store/selectors/translations.ts";
+import {useCurrentLanguge, useDictionary} from "../../store/selectors/translations.ts";
 import {logoutAction} from "../../store/actions";
 
 
@@ -36,6 +36,7 @@ export const ProjectPage = () => {
   const editModeForProjectTitle = useSelector((state: StorageState) => state.settings.editModeForProjectTitle);
   const globalEditFileMode = useSelector((state: StorageState) => state.settings.editModeForFilename);
   const dictionary = useSelector(useDictionary)
+  const language = useSelector(useCurrentLanguge)
 
   const navigate = useNavigate();
 
@@ -77,7 +78,7 @@ export const ProjectPage = () => {
     if (isNaN(projectId)) {
       if (user.isAuthenticated && !project) {
         const createDefaultProject = async () => {
-            const result = await getDefaultProjectRequest(); // TODO send program
+            const result = await getDefaultProjectRequest(language); // TODO send program
             if (result.isOk) {
               dispatch(setProject(result.body as any));
               dispatch(setNewProgram(result.body.program));

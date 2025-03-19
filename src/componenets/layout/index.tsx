@@ -59,7 +59,7 @@ export const BaseLayout = () => {
         }
     }, [searchParams]);
     useEffect(() => {
-        fetch('/user-info')
+        fetch(Routes.UserInfo)
             .then(re => re.json())
             .then(user => dispatch(setUser(user)))
     }, [location]);

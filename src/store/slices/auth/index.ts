@@ -37,7 +37,7 @@ export const sendEmailWithCode = createAsyncThunk(
     'auth/sendEmailWithCode',
     async ({ email }: { email: string }, { rejectWithValue, getState }) => {
         const state = getState() as StorageState;
-        const result = await userRPI.sendEmailWithCode(email, state.auth.isRegistration);
+        const result = await userRPI.sendEmailWithCode(email, state.auth.isRegistration, state.settings.language);
         if (!result.isOk) {
             return rejectWithValue({ code: result.code, email });
         }

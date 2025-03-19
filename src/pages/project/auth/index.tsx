@@ -47,7 +47,7 @@ const LoginView = () => {
             <Typography className='auth-header' color={colors.gray10} type='h2' text={dictionary.authorization.title} />
         </div>
         <div style={{display: 'flex', flexDirection: 'column', gap: '20px'}}>
-            <form method="POST" action="/formlogin" style={{display: 'flex', flexDirection: 'column', gap: '20px'}}>
+            <form method="POST" action={Routes.FormLogin} style={{display: 'flex', flexDirection: 'column', gap: '20px'}}>
                 <Input
                     required={true}
                     name={"username"}
