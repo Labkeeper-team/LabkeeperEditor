@@ -19,6 +19,7 @@ import {
 } from "../../../store/slices/auth";
 import {StorageState} from "../../../store";
 import {AppDispatch} from "../../../store";
+import {SmartCaptcha} from "@yandex/smart-captcha";
 
 const LoginView = () => {
     const dictionary = useSelector(useDictionary);
@@ -26,6 +27,9 @@ const LoginView = () => {
     const [password, setPassword] = useState('');
     const dispatch = useDispatch();
     const error = useSelector((state: StorageState) => state.auth.authErrorMessage);
+    const [token, setToken] = useState('');
+    const language = useSelector((state: StorageState) => state.settings.language)
+    const yandexCaptchaSiteKey = useSelector((state: StorageState) => state.user.yandexCaptchaSiteKey)
 
     const getErrorMessage = (): string => {
         if (!error) return '';
@@ -64,15 +68,18 @@ const LoginView = () => {
                     placeholder={dictionary.authorization.password}
                     type="password"
                 />
+                <input required hidden value={token} name="captcha"/>
                 {error && (
                     <div style={{textAlign: 'center'}}>
                         <Typography color={colors.gray10} type='body' text={getErrorMessage()} />
                     </div>
                 )}
+                {(password && yandexCaptchaSiteKey) && <SmartCaptcha language={language} sitekey={yandexCaptchaSiteKey} onSuccess={setToken}/>}
                 <Button
                     classname='full-width'
                     title={dictionary.authorization.login}
                     color='blue'
+                    disabled={!token}
                     rounded
                     type='rounded'
                     minimize={false}
@@ -156,6 +163,9 @@ const EmailView = () => {
     const dispatch = useDispatch<AppDispatch>();
     const status = useSelector((state: StorageState) => state.auth.emailRequest);
     const dictionary = useSelector(useDictionary);
+    const [token, setToken] = useState('');
+    const language = useSelector((state: StorageState) => state.settings.language)
+    const yandexCaptchaSiteKey = useSelector((state: StorageState) => state.user.yandexCaptchaSiteKey)
 
     useEffect(() => {
         if (status === 'ok') {
@@ -167,7 +177,7 @@ const EmailView = () => {
         if (!email) {
             return;
         }
-        dispatch(sendEmailWithCode({ email }));
+        dispatch(sendEmailWithCode({ email, captcha: token }));
     }
 
     const getErrorMessage = () => {
@@ -194,6 +204,7 @@ const EmailView = () => {
                 type="text"
                 disabled={status === 'loading'}
             />
+            {yandexCaptchaSiteKey && <SmartCaptcha language={language} sitekey={yandexCaptchaSiteKey} onSuccess={setToken}/>}
             {getErrorMessage() && (
                 <Typography color={colors.gray10} type='body' text={getErrorMessage()} />
             )}
@@ -205,7 +216,7 @@ const EmailView = () => {
                 type='rounded'
                 minimize={false}
                 onPress={handleSubmit}
-                disabled={status === 'loading'}
+                disabled={status === 'loading' || !token}
             />
         </div>
     </div>

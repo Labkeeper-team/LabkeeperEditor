@@ -9,7 +9,7 @@ interface CodeValidationResponse {
 const debug = false
 
 export const userRPI = {
-    sendEmailWithCode: async (email: string, registration: boolean, lang: string): Promise<RequestResult> => {
+    sendEmailWithCode: async (email: string, registration: boolean, lang: string, captcha: string): Promise<RequestResult> => {
         if (debug) {
             console.log('sendEmailWithCode', email, registration)
             return {
@@ -22,7 +22,7 @@ export const userRPI = {
         }
         return requestWrapper(() => 
             axios.post(Routes.Email, null, {
-                params: { email, registration },
+                params: { email, registration, captcha },
                 headers: {"Accept-Language": lang || 'en'}
             })
         );

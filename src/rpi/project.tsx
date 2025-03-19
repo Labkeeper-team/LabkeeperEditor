@@ -9,7 +9,7 @@ export async function setTitleRequest(projectId, title) : Promise<RequestResult>
 }
 
 export async function getDefaultProjectRequest(lang: string) : Promise<RequestResult> {
-    return requestWrapper(async () => axios.post(URLS.getDefaultProject, {}, {headers: {
+    return requestWrapper(async () => axios.post(URLS.getDefaultProject, undefined, {headers: {
         "Accept-Language": lang || 'en'
         }}))
 }

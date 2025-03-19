@@ -4,13 +4,15 @@ import { LOGOUT_TYPE } from '../../actions';
 export interface UserInfo {
   email: string,
   id: number,
-  isAuthenticated?: boolean
+  isAuthenticated?: boolean,
+  yandexCaptchaSiteKey?: string;
 }
 
 const initialState: UserInfo = {
   isAuthenticated: false,
   email: "",
-  id: 0
+  id: 0,
+  yandexCaptchaSiteKey: ""
 };
 
 export const userSlice = createSlice({
@@ -26,6 +28,7 @@ export const userSlice = createSlice({
       state.email = payload.email;
       state.isAuthenticated = payload.isAuthenticated
       state.id = payload.id
+      state.yandexCaptchaSiteKey = payload.yandexCaptchaSiteKey
     },
     clearUser: (state) => {
       state = initialState;
