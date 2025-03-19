@@ -20,7 +20,7 @@ export const SegmentDivider: React.FC<SegmentDividerProps> = ({ onAddComputation
           className={`divider-button ${isOpen ? 'active' : ''}`}
           onClick={() => setIsOpen(!isOpen)}
         >
-          {dictionary.segment_divider.add} ▼
+          {dictionary.segment_divider.add}
         </button>
         {isOpen && (
           <div 
