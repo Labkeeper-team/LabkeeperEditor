@@ -1,14 +1,17 @@
-import { useSelector } from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import { SegmentEditor } from './segment';
 import { SegmentDivider } from './segment-divider';
 
 import './style.scss';
 import { useCurrentProgram } from '../../../../../store/selectors/program';
 import { useEffect, useRef } from 'react';
+import {Segment} from "../../../../../shared/models/project.ts";
+import {addSegmentAfter} from "../../../../../store/slices/project";
 
 export const Segments = () => {
   const program = useSelector(useCurrentProgram);
   const ref = useRef(null);
+  const dispatch = useDispatch()
 
   useEffect(() => {
     if (ref.current) {
@@ -20,13 +23,25 @@ export const Segments = () => {
   }, [program.segments.length, ref.current]);
 
   const handleAddComputation = (index: number) => {
-    console.log(index)
-    // TODO
+    const newSegment: Segment = {
+      type: 'computational',
+      parameters: {
+        visible: true,
+      },
+      text: '',
+    };
+    dispatch(addSegmentAfter({segment: newSegment, after: index}))
   };
 
   const handleAddText = (index: number) => {
-    console.log(index)
-    // TODO
+    const newSegment: Segment = {
+      type: 'md',
+      parameters: {
+        visible: true,
+      },
+      text: '',
+    };
+    dispatch(addSegmentAfter({segment: newSegment, after: index}))
   };
 
   return (

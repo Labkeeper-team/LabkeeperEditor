@@ -115,6 +115,25 @@ export const projectSlice = createSlice({
       state.historyAcitveIndex = state.history.length - 1;
     },
 
+    addSegmentAfter: (state, { payload }: PayloadAction<{segment: Segment, after: number}>) => {
+      const oldProgram: Program = JSON.parse(
+          JSON.stringify(state.history[state.historyAcitveIndex])
+      );
+      const newProgram = { ...oldProgram };
+      const segmentIds = newProgram.segments.map(s =>s.id ?? 0);
+      const maxSegmentId = segmentIds.length ? (Math.max(...segmentIds) ?? 0) : 0;
+      payload.segment.id = maxSegmentId + 1;
+      
+      // Вставляем новый сегмент после указанной позиции
+      newProgram.segments.splice(payload.after + 1, 0, payload.segment);
+      
+      state.history = state.history.filter((_, index) => {
+        return index <= state.historyAcitveIndex;
+      });
+      state.history.push(newProgram);
+      state.historyAcitveIndex = state.history.length - 1;
+    },
+
     changeSegmentPosition: (state, {payload}: PayloadAction<{
       currentPosition: number;
       direction: 'up' | 'down'
@@ -233,4 +252,5 @@ export const {
   setSegmentVisibility,
   changeSegmentPosition,
   changeCompileErrorForSegment,
+  addSegmentAfter
 } = projectSlice.actions;
