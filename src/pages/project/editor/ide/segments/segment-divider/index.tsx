@@ -17,15 +17,15 @@ export const SegmentDivider: React.FC<SegmentDividerProps> = ({ onAddComputation
           className={`divider-button ${isOpen ? 'active' : ''}`}
           onClick={() => setIsOpen(!isOpen)}
         >
-          Add
+          Add computation ▼
         </button>
         {isOpen && (
           <div className="divider-dropdown">
+            <button onClick={() => { onAddText(); setIsOpen(false); }}>
+              Add markdown
+            </button>
             <button onClick={() => { onAddComputation(); setIsOpen(false); }}>
               Add computation
-            </button>
-            <button onClick={() => { onAddText(); setIsOpen(false); }}>
-              Add text
             </button>
           </div>
         )}
