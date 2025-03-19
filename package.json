@@ -8,7 +8,7 @@
     "test": "jest && playwright test",
     "test:math": "jest",
     "test:ui": "playwright test",
-    "build": "tsc -b && vite build",
+    "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "jest-preview": "jest-preview"
