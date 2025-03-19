@@ -1,4 +1,3 @@
-
 import CodeMirror, {Decoration, EditorView, ReactCodeMirrorRef, StateEffect, StateField} from "@uiw/react-codemirror";
 import { langs } from '@uiw/codemirror-extensions-langs';
 import {content, dom} from '@uiw/codemirror-extensions-events';
@@ -12,6 +11,7 @@ import {CompileErrorResult, Program, Segment} from '../../../../../../shared/mod
 import './style.scss';
 
 import {
+  addSegmentAfter,
   changeSegmentPosition,
   changeSegmentText,
   deleteSegment,
@@ -39,6 +39,7 @@ import {saveProgramRequest} from "../../../../../../rpi/project.tsx";
 import {logoutAction} from "../../../../../../store/actions";
 import { compileProject } from "../../../../../../store/thunk";
 import { checkFile } from "../../../../../../utils/file";
+import {SegmentDivider} from "../segment-divider";
 
 
 const shortTypeMap = {
@@ -67,6 +68,7 @@ const decorationsField = StateField.define<any>({
 export const SegmentEditor = memo((props: { segment: Segment; index: number, segmentCount: number }) => {
   const editor = useRef<ReactCodeMirrorRef | undefined>();
   const dispatch = useDispatch();
+  const [isLoaded, setIsLoaded] = useState(false);
 
   const dictionary = useSelector(useDictionary);
   const compileErrors = useSelector((state: StorageState) => state.project.compileErrorResult?.errors)
@@ -94,6 +96,14 @@ export const SegmentEditor = memo((props: { segment: Segment; index: number, seg
     console.log(segmentErrors, props.segment.id);
     setTempSegmentErrors(segmentErrors);
   }, [segmentErrors])
+
+  // Проблема с мерцанием редактора кода
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    });
+    return () => clearTimeout(timer);
+  }, []);
 
   const debounceCompile = useCallback(
     debounce(
@@ -326,7 +336,33 @@ export const SegmentEditor = memo((props: { segment: Segment; index: number, seg
     debounceCompile(value, projectId);
   };
 
-  return (
+  const handleAddComputation = (index: number) => {
+    const newSegment: Segment = {
+      type: 'computational',
+      parameters: {
+        visible: true,
+      },
+      text: '',
+    };
+    dispatch(addSegmentAfter({segment: newSegment, after: index}))
+  };
+
+  const handleAddText = (index: number) => {
+    const newSegment: Segment = {
+      type: 'md',
+      parameters: {
+        visible: true,
+      },
+      text: '',
+    };
+    dispatch(addSegmentAfter({segment: newSegment, after: index}))
+  };
+
+  if (!isLoaded) {
+    return <div/>;
+  }
+
+  return (<div>
     <div
       className={classNames('segment-editor-container',  {
         'is-active': isActiveSegment,
@@ -345,7 +381,7 @@ export const SegmentEditor = memo((props: { segment: Segment; index: number, seg
           EditorView.lineWrapping,
           lineNumbers({
             formatNumber: (lineNo) => {
-              return `${props.index + 1}.${lineNo}`
+              return `${props.segment.id || '' + 1}.${lineNo}`
             },
           })
         ]
@@ -430,5 +466,13 @@ export const SegmentEditor = memo((props: { segment: Segment; index: number, seg
         </DropdownMenu>
       </div>
     </div>
+  <div style={{ flex: 1, marginTop: -10 }}>
+    {props.index + 1 !== props.segmentCount && (
+        <SegmentDivider
+            onAddComputation={() => handleAddComputation(props.index)}
+            onAddText={() => handleAddText(props.index)}
+        />
+    )}
+  </div></div>
   );
 });
