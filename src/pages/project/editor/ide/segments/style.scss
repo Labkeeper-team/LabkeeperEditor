@@ -2,12 +2,10 @@
 
 .segments-container {
   display: flex;
-  flex: 1;
   flex-direction: column;
-  gap: 10px;
-  padding: 10px;
   overflow-y: auto;
-  overflow-x: hidden;
+  height: 100%;
+  padding: 20px;
   .CodeMirror {
     min-height: 66px;
     height: max-content;
