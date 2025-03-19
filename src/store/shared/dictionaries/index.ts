@@ -22,6 +22,12 @@ export interface Translations {
     label_save_to_pdf: string;
     label_problems: string;
 
+    segment_divider: {
+        add: string;
+        computation: string;
+        markdown: string;
+    };
+
     interface_tour: {
         label: string;
         info_history_button: string;

@@ -18,6 +18,12 @@ export const ru: Translations = {
     label_save_to_pdf: 'Сохранить в PDF',
     label_problems: 'Проблемы',
 
+    segment_divider: {
+        add: 'Добавить',
+        computation: 'вычисления',
+        markdown: 'маркдаун',
+    },
+
     interface_tour: {
         label: 'Тур по интерфейсу',
         info_history_button: 'Кнопки истории необходимы для перехода на более старые версии кода',

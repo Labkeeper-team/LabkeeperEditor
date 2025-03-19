@@ -17,6 +17,12 @@ export const en: Translations = {
     label_save_to_pdf: 'Save to PDF',
     label_problems: 'Problems',
 
+    segment_divider: {
+        add: 'Add',
+        computation: 'computation',
+        markdown: 'markdown',
+    },
+
     interface_tour: {
         label: 'Interface tour',
         info_history_button: 'History buttons are necessary to navigate to older versions of the code',

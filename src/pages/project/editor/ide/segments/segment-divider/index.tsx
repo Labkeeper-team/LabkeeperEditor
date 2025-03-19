@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useSelector } from 'react-redux';
+import { useDictionary } from '../../../../../../store/selectors/translations';
 import './style.scss';
 
 interface SegmentDividerProps {
@@ -8,6 +10,7 @@ interface SegmentDividerProps {
 
 export const SegmentDivider: React.FC<SegmentDividerProps> = ({ onAddComputation, onAddText }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const dictionary = useSelector(useDictionary);
 
   return (
     <div className="segment-divider">
@@ -17,7 +20,7 @@ export const SegmentDivider: React.FC<SegmentDividerProps> = ({ onAddComputation
           className={`divider-button ${isOpen ? 'active' : ''}`}
           onClick={() => setIsOpen(!isOpen)}
         >
-          +
+          {dictionary.segment_divider.add} ▼
         </button>
         {isOpen && (
           <div 
@@ -25,10 +28,10 @@ export const SegmentDivider: React.FC<SegmentDividerProps> = ({ onAddComputation
             onMouseLeave={() => setIsOpen(false)}
           >
             <button onClick={() => { onAddText(); setIsOpen(false); }}>
-              markdown
+              {dictionary.segment_divider.markdown}
             </button>
             <button onClick={() => { onAddComputation(); setIsOpen(false); }}>
-              computation
+              {dictionary.segment_divider.computation}
             </button>
           </div>
         )}
