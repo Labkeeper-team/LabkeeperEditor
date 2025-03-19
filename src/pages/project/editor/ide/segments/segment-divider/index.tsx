@@ -17,7 +17,7 @@ export const SegmentDivider: React.FC<SegmentDividerProps> = ({ onAddComputation
           className={`divider-button ${isOpen ? 'active' : ''}`}
           onClick={() => setIsOpen(!isOpen)}
         >
-          +
+          Add
         </button>
         {isOpen && (
           <div className="divider-dropdown">
