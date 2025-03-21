@@ -68,18 +68,18 @@ const LoginView = () => {
                     placeholder={dictionary.authorization.password}
                     type="password"
                 />
-                <input required hidden value={token} name="captcha"/>
+                {!!yandexCaptchaSiteKey && <input required hidden value={token} name="captcha"/>}
                 {error && (
                     <div style={{textAlign: 'center'}}>
                         <Typography color={colors.gray10} type='body' text={getErrorMessage()} />
                     </div>
                 )}
-                {(password && yandexCaptchaSiteKey) && <SmartCaptcha language={language} sitekey={yandexCaptchaSiteKey} onSuccess={setToken}/>}
+                {(password && !!yandexCaptchaSiteKey) && <SmartCaptcha language={language} sitekey={yandexCaptchaSiteKey} onSuccess={setToken}/>}
                 <Button
                     classname='full-width'
                     title={dictionary.authorization.login}
                     color='blue'
-                    disabled={!token}
+                    disabled={!token && !!yandexCaptchaSiteKey}
                     rounded
                     type='rounded'
                     minimize={false}
