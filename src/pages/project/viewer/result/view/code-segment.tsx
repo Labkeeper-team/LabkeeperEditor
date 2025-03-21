@@ -5,6 +5,7 @@ import { forwardRef, useMemo, useRef } from 'react';
 import { AssignStatement } from './segments/assignment-segment.tsx';
 import { DetailedStatement } from './segments/calculation-segment.tsx';
 import { FileSegment } from './segments/file-segment.tsx';
+import {TableSegment} from "./segments/table-segment.tsx";
 
 /**
  * Стили дяя отображения fontsize
@@ -55,6 +56,8 @@ export const CodeSegment = forwardRef<HTMLDivElement, any>(
               );
             case 'file':
               return (<FileSegment key={index} url={statement.url}/>)
+              case 'table':
+              return <TableSegment items={statement.table}/>
             default:
               return <div />;
           }
