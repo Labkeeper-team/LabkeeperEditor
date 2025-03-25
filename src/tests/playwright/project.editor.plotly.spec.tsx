@@ -75,7 +75,9 @@ test('plotly-line', async ({ page }) => {
         y: [1, 2, 1, 3, 1],
         type: "line",
         color: "red",
-        name: "MyLine"
+        name: "MyLine",
+        xInfl: [],
+        yInfl: [],
     }, page)
 
     await expect(page).toHaveScreenshot('plotly-line.png');
@@ -90,7 +92,9 @@ test('plotly-scatter', async ({ page }) => {
         y: [1, 2, 1, 3, 1],
         type: "scatter",
         color: "blue",
-        name: "MyLine"
+        name: "MyLine",
+        xInfl: [],
+        yInfl: [],
     }, page)
 
     await expect(page).toHaveScreenshot('plotly-scatter.png');
@@ -111,35 +115,45 @@ test('plotly-histogram', async ({ page }) => {
                 y: [1],
                 type: "histogram",
                 color: "blue",
-                name: "MyLine1"
+                name: "MyLine1",
+                xInfl: [],
+                yInfl: [],
             },
             {
                 x: [2, 2],
                 y: [1, 1],
                 type: "histogram",
                 color: "red",
-                name: "MyLine2"
+                name: "MyLine2",
+                xInfl: [],
+                yInfl: [],
             },
             {
                 x: [3, 3, 3],
                 y: [1, 1, 1],
                 type: "histogram",
                 color: "green",
-                name: "MyLine3"
+                name: "MyLine3",
+                xInfl: [],
+                yInfl: [],
             },
             {
                 x: [4, 4, 4, 4],
                 y: [1, 1, 1, 1],
                 type: "histogram",
                 color: "orange",
-                name: "MyLine4"
+                name: "MyLine4",
+                xInfl: [],
+                yInfl: [],
             },
             {
                 x: [5, 5, 5, 5, 5],
                 y: [1, 1, 1, 1, 1],
                 type: "histogram",
                 color: "black",
-                name: "MyLine5"
+                name: "MyLine5",
+                xInfl: [],
+                yInfl: [],
             }
         ]
     }, page)
@@ -160,8 +174,27 @@ test('plotly-histogram-single', async ({ page }) => {
                 x: x,
                 type: "histogram",
                 color: "blue",
-                name: "MyLine1"
+                name: "MyLine1",
+                xInfl: [],
+                yInfl: [],
             }, page)
 
     await expect(page).toHaveScreenshot('plotly-histogram-single.png');
+})
+
+/*
+Тест на рисование погрешностей в plotly
+ */
+test('plotly-scatter-error', async ({ page }) => {
+    await plotlyTestWithSingleCurve({
+        x: [1, 2, 3, 4, 5],
+        y: [1, 2, 1, 3, 1],
+        type: "scatter",
+        color: "blue",
+        name: "MyLine",
+        xInfl: [0.1, 0.1, 0.1, 0.1, 0.1],
+        yInfl: [0.1, 0.1, 0.1, 0.1, 0.1]
+    }, page)
+
+    await expect(page).toHaveScreenshot('plotly-scatter-error.png');
 })

@@ -1,30 +1,42 @@
 import Plot from 'react-plotly.js';
 
-interface Curve {
+interface PlotItem {
     x: number[],
     y: number[],
     type: 'scatter' | 'histogram' | 'line',
     color: string,
-    name: string
+    name: string,
+    xInfl: number[],
+    yInfl: number[]
 }
 
 interface PlotSegmentProps {
     title: string;
     xAxis: string;
     yAxis: string;
-    curves: Curve[];
+    plots: PlotItem[];
 }
 
-export const PlotSegment = ({title, xAxis, yAxis, curves}: PlotSegmentProps) => {
-    const traces = curves.map(curve => ({
-        x: curve.x,
-        y: curve.type !== 'histogram' ? curve.y : undefined,
-        type: curve.type,
-        name: curve.name,
-        text: curve.type === 'scatter' ? curve.name : undefined,
-        mode: curve.type === 'scatter' ? 'markers' : (curve.type === 'line' ? 'lines' : undefined),
+export const PlotSegment = ({title, xAxis, yAxis, plots}: PlotSegmentProps) => {
+    const traces = plots.map(plot => ({
+        x: plot.x,
+        y: plot.type !== 'histogram' ? plot.y : undefined,
+        type: plot.type,
+        name: plot.name,
+        text: plot.type === 'scatter' ? plot.name : undefined,
+        mode: plot.type === 'scatter' ? 'markers' : (plot.type === 'line' ? 'lines' : undefined),
         line: {
-            color: curve.color
+            color: plot.color
+        },
+        error_y: {
+            type: 'data',
+            array: plot.yInfl,
+            visible: plot.yInfl.length > 0 && plot.type === 'scatter'
+        },
+        error_x: {
+            type: 'data',
+            array: plot.xInfl,
+            visible: plot.xInfl.length > 0 && plot.type === 'scatter'
         }
     }));
 
