@@ -6,6 +6,7 @@ import { AssignStatement } from './segments/assignment-segment.tsx';
 import { DetailedStatement } from './segments/calculation-segment.tsx';
 import { FileSegment } from './segments/file-segment.tsx';
 import {TableSegment} from "./segments/table-segment.tsx";
+import {PlotSegment} from "./segments/plot-segment.tsx";
 
 /**
  * Стили дяя отображения fontsize
@@ -58,6 +59,11 @@ export const CodeSegment = forwardRef<HTMLDivElement, any>(
               return (<FileSegment key={index} url={statement.url}/>)
               case 'table':
               return <TableSegment items={statement.table}/>
+            case 'plot':
+              return <PlotSegment title={statement.plotName}
+                                  xAxis={statement.plotXAxisName}
+                                  yAxis={statement.plotYAxisName}
+                                  curves={statement.plots}/>
             default:
               return <div />;
           }

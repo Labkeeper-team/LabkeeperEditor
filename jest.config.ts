@@ -14,6 +14,7 @@ module.exports = {
     "^react-markdown$": "<rootDir>/src/tests/jest/__mocks__/emptyMock.ts",
     "^remark-breaks$": "<rootDir>/src/tests/jest/__mocks__/emptyMock.ts",
     "^remark-math$": "<rootDir>/src/tests/jest/__mocks__/emptyMock.ts",
-    "^remark-gfm$": "<rootDir>/src/tests/jest/__mocks__/emptyMock.ts"
+    "^remark-gfm$": "<rootDir>/src/tests/jest/__mocks__/emptyMock.ts",
+    "^react-plotly.js$": "<rootDir>/src/tests/jest/__mocks__/emptyMock.ts"
   }
 }
