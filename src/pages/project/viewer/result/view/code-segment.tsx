@@ -63,7 +63,8 @@ export const CodeSegment = forwardRef<HTMLDivElement, any>(
               return <PlotSegment title={statement.plotName}
                                   xAxis={statement.plotXAxisName}
                                   yAxis={statement.plotYAxisName}
-                                  plots={statement.plots}/>
+                                  plots={statement.plots}
+                                  legendVisible={statement.legendVisible}/>
             default:
               return <div />;
           }

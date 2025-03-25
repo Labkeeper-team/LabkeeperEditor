@@ -15,9 +15,10 @@ interface PlotSegmentProps {
     xAxis: string;
     yAxis: string;
     plots: PlotItem[];
+    legendVisible: boolean;
 }
 
-export const PlotSegment = ({title, xAxis, yAxis, plots}: PlotSegmentProps) => {
+export const PlotSegment = ({title, xAxis, yAxis, plots, legendVisible}: PlotSegmentProps) => {
     const traces = plots.map(plot => ({
         x: plot.x,
         y: plot.type !== 'histogram' ? plot.y : undefined,
@@ -44,7 +45,7 @@ export const PlotSegment = ({title, xAxis, yAxis, plots}: PlotSegmentProps) => {
         title: {
             text: title
         },
-        showlegend: true,
+        showlegend: legendVisible,
         xaxis: {
             title: {
                 text: xAxis

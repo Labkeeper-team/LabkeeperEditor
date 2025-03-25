@@ -60,6 +60,7 @@ async function plotlyTestWithSingleCurve(curve, page) {
         "plotName": "MyTitle",
         "plotXAxisName": "MyX",
         "plotYAxisName": "MyY",
+        "legendVisible": true,
         "plots": [
             curve
         ]
@@ -109,6 +110,7 @@ test('plotly-histogram', async ({ page }) => {
         "plotName": "MyTitle",
         "plotXAxisName": "MyX",
         "plotYAxisName": "MyY",
+        "legendVisible": false,
         "plots": [
             {
                 x: [1],
