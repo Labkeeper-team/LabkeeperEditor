@@ -159,7 +159,7 @@ export function renderArrayOfValuedFormulasToLatex(formulas, initialGap, maySpli
   const isArray = formulasCutted.length > 1;
   let currentLineLength = 0;
   formulasCutted.forEach((formula, index) => {
-    let parsedFormula = parser.parse(formula);
+    let parsedFormula = parser.parse(customizeSpecialSymbolsBeforeParsing(formula));
     if (maySplit) {
       parsedFormula = tryToSplitFormulaByPlusesInSqrt(parsedFormula)
     }
@@ -233,7 +233,7 @@ function isAlphabetic(s: string) {
 }
 
 export function renderFormulaToLatex(str, variables, maySplitBySqrt=false) {
-  let aliased_equation = str
+  let aliased_equation = customizeSpecialSymbolsBeforeParsing(str)
   variables.forEach((v) => {
     const presentation = renderVariableToLatex(v)
     const sigma = `sigma(${v})`
@@ -327,4 +327,20 @@ function tryToSplitFormulaByPlusesInSqrt(formula) {
   ${result}
   \\end{array}
   }`
+}
+
+function customizeSpecialSymbolsBeforeParsing(formula: string) {
+  /*
+  TODO
+  Это можно трактовать как специальные символы. В будущем можно добавить специальное выделение цветом.
+   */
+  return formula
+      .replaceAll('sum', '\\text{sum}')
+      .replaceAll('to', '\\text{to}')
+      .replaceAll('from', '\\text{from}')
+      .replaceAll('slice', '\\text{slice}')
+      .replaceAll('array', '\\text{array}')
+      .replaceAll('value', '\\text{value}')
+      .replaceAll('count', '\\text{count}')
+      .replaceAll('range', '\\text{range}')
 }

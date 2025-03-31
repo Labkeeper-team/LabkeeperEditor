@@ -1,0 +1,29 @@
+{
+  "id": 1,
+  "type": "computational",
+  "statements": [
+    {
+      "type": "calculation",
+      "assignment": "slice(array=[1,2,3],from=0,to=2)",
+      "assignmentWithValues": [
+        "1",
+        "2"
+      ],
+      "variable": "c",
+      "array": {
+        "array": [
+          {
+            "value": "1",
+            "infl": "0"
+          },
+          {
+            "value": "2",
+            "infl": "0"
+          }
+        ]
+      },
+      "legendVisible": false
+    }
+  ],
+  "text": null
+}

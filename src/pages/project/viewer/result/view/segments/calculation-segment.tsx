@@ -35,7 +35,7 @@ export const DetailedStatement = ({
         \\end{equation}`
         }
       </MathJax>
-      {!!statement.assignmentWithValues &&
+      {(!!statement.assignmentWithValues && (!hasSameValuedAssignmentAndValue(statement) || !statement.array)) &&
         <MathJax>
         {`
         \\begin{equation}
@@ -99,3 +99,15 @@ export const DetailedStatement = ({
     </div>
   );
 };
+
+function hasSameValuedAssignmentAndValue(statement: CalcStatement) {
+    if (statement?.array?.array?.length === statement?.assignmentWithValues?.length) {
+        for (let i = 0; i < statement.array.array.length; i++) {
+            if ((statement?.array?.array[i]?.value + "") !== statement?.assignmentWithValues[i]) {
+                return false
+            }
+        }
+        return true
+    }
+    return true
+}

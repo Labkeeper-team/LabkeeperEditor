@@ -17,6 +17,12 @@ import seg11 from './__segments__/seg11.json'
 import seg12 from './__segments__/seg12.json'
 import seg13 from './__segments__/seg13.json'
 import seg15 from './__segments__/seg15.json'
+import seg16 from './__segments__/seg16.json'
+import seg17 from './__segments__/seg17.json'
+import seg18 from './__segments__/seg18.json'
+import seg19 from './__segments__/seg19.json'
+import seg20 from './__segments__/seg20.json'
+import seg21 from './__segments__/seg21.json'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let testSegment: any = {
@@ -338,6 +344,48 @@ test('hidden 15', () => {
 
 test('hidden 16', () => {
     testSegment = hiddenSegment(true, false, false, false, true)
+    const segment = render((<TestSegment/>));
+    preview.debug()
+    expect(segment).toMatchSnapshot()
+});
+
+test('sum with skipped valued assignment', () => {
+    testSegment = seg16
+    const segment = render((<TestSegment/>));
+    preview.debug()
+    expect(segment).toMatchSnapshot()
+});
+
+test('sum2', () => {
+    testSegment = seg17
+    const segment = render((<TestSegment/>));
+    preview.debug()
+    expect(segment).toMatchSnapshot()
+});
+
+test('max function render', () => {
+    testSegment = seg18
+    const segment = render((<TestSegment/>));
+    preview.debug()
+    expect(segment).toMatchSnapshot()
+});
+
+test('least_squares', () => {
+    testSegment = seg19
+    const segment = render((<TestSegment/>));
+    preview.debug()
+    expect(segment).toMatchSnapshot()
+});
+
+test('range', () => {
+    testSegment = seg20
+    const segment = render((<TestSegment/>));
+    preview.debug()
+    expect(segment).toMatchSnapshot()
+});
+
+test('slice', () => {
+    testSegment = seg21
     const segment = render((<TestSegment/>));
     preview.debug()
     expect(segment).toMatchSnapshot()
