@@ -41,21 +41,38 @@ export interface ProjectShort {
 }
 
 export enum CompileError {
+  // TOKENIZER
   CODE_NO_END_QUOTES = 100,
   UNKNOWN_SYMBOL = 102,
   QUOTA_EXCEEDED = 103,
+
+  // PARSER
   OPERATOR_EXPECTED = 202,
   NUMBER_EXPECTED = 203,
   NAME_EXPECTED = 204,
+
+  // INTERPRETER
   NO_SUCH_VARIABLE = 301,
-  STRING_ARGUMENT_EXPECTED = 302,
-  ARRAY_ARGUMENT_EXPECTED = 303,
-  NO_SUCH_FUNCTION = 304,
   ARITHMETIC_ERROR = 305,
   CANCELED = 306,
   NOT_ENOUGH_WORKERS = 307,
-  INCORRECT_LEAST_SQUARES_ARGUMENT_SIZE = 401,
+  FILE_USAGE_NOT_ALLOWED = 308,
+  TOO_MUCH_FILES = 310,
+
+  // FUNCTIONS
+  INCORRECT_ARGUMENT_SIZE = 401,
+  INCORRECT_ARGUMENTS_COUNT = 402,
+  INCORRECT_ARGUMENT = 403,
+  STRING_ARGUMENT_EXPECTED = 302,
+  ARRAY_ARGUMENT_EXPECTED = 303,
+  NO_SUCH_FUNCTION = 304,
+  FUNCTION_HAS_NO_RETURN_VALUE = 407,
+
+  // MD
   VARIABLE_INSERT_ERROR = 501,
+
+  // OTHER
+  MULTIPLE_ERROR = 600
 }
 
 interface Statement {
@@ -91,14 +108,15 @@ export interface QuotaPayload {
     value: string;
 }
 
-export interface QuotaCompileError extends Omit<CompileErrorResult, 'payload'> {
-  payload: QuotaPayload;
+export interface NoSuchVariablePayload {
+  variable: string;
+}
+
+export interface FunctionErrorPayload {
+  functionName: string;
 }
 
 export interface OperatorExcepctedpayload {
   operators: string[]
 }
 
-export interface OperatorExcepctedError extends Omit<CompileErrorResult, 'payload'> {
-  payload: OperatorExcepctedpayload;
-}

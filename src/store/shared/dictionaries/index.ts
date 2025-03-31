@@ -104,8 +104,14 @@ export interface Translations {
         [CompileError.ARITHMETIC_ERROR]: string;
         [CompileError.CANCELED]: string;
         [CompileError.NOT_ENOUGH_WORKERS]: string;
-        [CompileError.INCORRECT_LEAST_SQUARES_ARGUMENT_SIZE]: string;
+        [CompileError.INCORRECT_ARGUMENTS_COUNT]: string;
         [CompileError.VARIABLE_INSERT_ERROR]: string;
+        [CompileError.FILE_USAGE_NOT_ALLOWED]: string;
+        [CompileError.TOO_MUCH_FILES]: string;
+        [CompileError.INCORRECT_ARGUMENT_SIZE]: string;
+        [CompileError.INCORRECT_ARGUMENT]: string;
+        [CompileError.FUNCTION_HAS_NO_RETURN_VALUE]: string;
+        [CompileError.MULTIPLE_ERROR]: string;
     }
 
     error_common: {
