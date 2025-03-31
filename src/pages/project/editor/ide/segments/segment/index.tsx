@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { debounce } from 'throttle-debounce';
 
 import {CompileErrorResult, Program, Segment} from '../../../../../../shared/models/project';
+import { customLanguageSupport } from './customLanguage';
 
 import './style.scss';
 
@@ -375,7 +376,9 @@ export const SegmentEditor = memo((props: { segment: Segment; index: number, seg
         onChange={onChange}
         extensions={[
           decorationsField,
-          isHightlight ? props.segment.type === 'md' ?  langs.markdown() : langs.python() : undefined,
+          isHightlight ? props.segment.type === 'md' ? langs.markdown() : 
+            props.segment.type === 'computational' ? customLanguageSupport :
+            langs.python() : undefined,
           eventsExt,
           eventsDom,
           EditorView.lineWrapping,
