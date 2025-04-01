@@ -9,8 +9,8 @@ export enum Routes {
   Login = '/oauth2/authorization/sso',
   Logout = '/logout',
   FormLogin = '/formlogin',
-  UserInfo = '/user-info',
-  Email = '/email',
-  Code = '/code',
-  Password = '/password'
+  UserInfo = '/api/v2/public/user-info',
+  Email = '/api/v2/public/email',
+  Code = '/api/v2/public/code',
+  Password = '/api/v2/public/password'
 }
