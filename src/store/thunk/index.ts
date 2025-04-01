@@ -29,11 +29,11 @@ export const compileProject = createAsyncThunk(
       thunkAPI.dispatch(setAutoCompleteLoading(false));
 
       if (result.code >= 500) {
-          toast(dictionary[state.settings.language].filemanager.errors.internalError, {type: 'error'});
+          toast(dictionary[state.persistence.language].filemanager.errors.internalError, {type: 'error'});
           thunkAPI.dispatch(logoutAction)
       }
       if (result.code === 401 || result.code === 403) {
-          toast(dictionary[state.settings.language].filemanager.errors.sessionExpired, {type: 'error'});
+          toast(dictionary[state.persistence.language].filemanager.errors.sessionExpired, {type: 'error'});
           thunkAPI.dispatch(logoutAction)
       }
       if (result.code === 200) {

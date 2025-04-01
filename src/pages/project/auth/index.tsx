@@ -28,7 +28,7 @@ const LoginView = () => {
     const dispatch = useDispatch();
     const error = useSelector((state: StorageState) => state.auth.authErrorMessage);
     const [token, setToken] = useState('');
-    const language = useSelector((state: StorageState) => state.settings.language)
+    const language = useSelector((state: StorageState) => state.persistence.language)
     const yandexCaptchaSiteKey = useSelector((state: StorageState) => state.user.yandexCaptchaSiteKey)
 
     const getErrorMessage = (): string => {
@@ -164,7 +164,7 @@ const EmailView = () => {
     const status = useSelector((state: StorageState) => state.auth.emailRequest);
     const dictionary = useSelector(useDictionary);
     const [token, setToken] = useState('');
-    const language = useSelector((state: StorageState) => state.settings.language)
+    const language = useSelector((state: StorageState) => state.persistence.language)
     const yandexCaptchaSiteKey = useSelector((state: StorageState) => state.user.yandexCaptchaSiteKey)
 
     useEffect(() => {

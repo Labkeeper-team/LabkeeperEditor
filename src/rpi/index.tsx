@@ -10,11 +10,11 @@ export async function requestWrapper(request) : Promise<RequestResult> {
         }
     } catch (error: any) {
         return {
-            code: error.response.status,
-            body: error.response.data,
+            code: error.response?.status || 500,
+            body: error.response?.data || null,
             isOk: false,
-            isUnauth: error.response.status === 401,
-            isForbidden: error.response.status === 403
+            isUnauth: error.response?.status === 401,
+            isForbidden: error.response?.status === 403
         }
     }
 }

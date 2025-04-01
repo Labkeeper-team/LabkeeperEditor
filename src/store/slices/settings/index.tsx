@@ -1,6 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { LOGOUT_TYPE } from '../../actions';
-import { Language } from '../../shared/dictionaries';
 
 
 export interface SettingsState {
@@ -10,7 +9,6 @@ export interface SettingsState {
   showSearch: boolean;
   editModeForProjectTitle: boolean;
   editModeForFilename: boolean;
-  language: Language;
   isFileDraggedToManager: boolean;
   isAutompleteLoading: boolean;
 }
@@ -23,7 +21,6 @@ const initialState: SettingsState = {
   editModeForFilename: false,
   expandProblemViewer: false,
   isFileDraggedToManager: false,
-  language: 'ru',
   isAutompleteLoading: false,
 };
 
@@ -43,9 +40,6 @@ export const settingsSlice = createSlice({
     setTourVisibility: (state, { payload }: PayloadAction<boolean>) => {
       state.showTour = payload;
     },
-    setLanguage: (state, {payload}: PayloadAction<Language>) => {
-      state.language = payload;
-    },
     setExpandProblemViewer: (state, {payload}: PayloadAction<boolean>) => {
       state.expandProblemViewer = payload;
     },
@@ -62,10 +56,9 @@ export const settingsSlice = createSlice({
   extraReducers: (b) => {
     b.addCase(LOGOUT_TYPE, (state) => {
       const newLogoutState = {...initialState};
-      newLogoutState.language = state.language;
       state = newLogoutState;
       return state;
     });
   },
 });
-export const { setEditModeForProjectTitle, setAutoCompleteLoading, setEditModeForFilename, setShowSearch, setExpandProblemViewer, setTourVisibility, setLanguage, setShoFileManager, setisFileDraggedToFileManager } = settingsSlice.actions;
+export const { setEditModeForProjectTitle, setAutoCompleteLoading, setEditModeForFilename, setShowSearch, setExpandProblemViewer, setTourVisibility, setShoFileManager, setisFileDraggedToFileManager } = settingsSlice.actions;

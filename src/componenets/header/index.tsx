@@ -13,7 +13,7 @@ import { useLocation } from 'react-router-dom';
 import { useUser } from '../../store/selectors/program';
 import {Routes} from "../../routing/routes.ts";
 import { useCurrentLanguge, useDictionary } from '../../store/selectors/translations';
-import { setLanguage } from '../../store/slices/settings';
+import { setLanguage } from '../../store/slices/persistence';
 import { Select } from '../select';
 import { ProjectTitle } from './projectTitle';
 import { Language } from '../../store/shared/dictionaries';
