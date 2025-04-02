@@ -1,5 +1,6 @@
 import _LogoIcon from '../../assets/logo.svg?react';
 import _InterfaceTour from '../../assets/interface_tour.svg?react';
+import _ShareIcon from '../../assets/share.svg?react';
 import _PlusIcon from '../../assets/plus.svg?react';
 import _FolderIcon from '../../assets/folder.svg?react';
 import _FileIcon from '../../assets/file.svg?react';
@@ -44,3 +45,4 @@ export const CloseIcon = _CloseIcon;
 export const CloseModalIcon = _CloseModalIcon;
 export const Login1Icon = _Login1Icon;
 export const Login2Icon = _Login2Icon;
+export const ShareIcon = _ShareIcon;

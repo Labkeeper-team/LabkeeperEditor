@@ -6,6 +6,7 @@ import { Button } from '../button';
 
 import { HeaderLogo } from './logo';
 import { InterfaceTour } from './tour';
+import { ShareButton } from './share';
 import './style.scss';
 
 import { Back } from './back';
@@ -60,7 +61,10 @@ export const Header = () => {
         />
         </div>
       </div>
-      <ProjectTitle />
+      <div className="labkeeper_header__center">
+        <ProjectTitle />
+        <ShareButton />
+      </div>
       <div className="labkeeper_header__right">
         {location.pathname.startsWith('/project/') ? <InterfaceTour /> : null}
         {!isAuthenticated ? (

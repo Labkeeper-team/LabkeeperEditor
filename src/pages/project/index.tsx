@@ -73,7 +73,17 @@ export const ProjectPage = () => {
     if (!id) {
       return;
     }
-
+    dispatch(setProject({
+      projectId: 1,
+      title: "biba",
+      lastModified: "10.01.2022",
+      program: {
+        segments: [],
+        parameters: {
+          roundStrategy: "noRound"
+        }
+      }
+    }))
     const projectId = +id;
     if (isNaN(projectId)) {
       if (user.isAuthenticated && !project) {
