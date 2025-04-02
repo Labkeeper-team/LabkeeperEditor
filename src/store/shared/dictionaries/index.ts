@@ -192,6 +192,12 @@ export interface Translations {
         }
     }
 
+    share_modal: {
+        title: string;
+        private_access: string;
+        public_access: string;
+        copy_link: string;
+    }
 }
 
 export const dictionary: Record<Language, Translations> = {

@@ -48,7 +48,7 @@ export const ShareModal = () => {
     <Modal showModal={showModal} onClose={() => dispatch(setShowShareModal(false))}>
       <div className="share-modal">
         <Typography 
-          text="Share to 'The earliest fish appeared during the Cambria...'" 
+          text={dictionary.share_modal.title}
           className="share-modal__title"
           color="gray20"
         />
@@ -56,7 +56,7 @@ export const ShareModal = () => {
           <div className={`radio-wrapper ${selectedOption === 'private' ? 'checked' : ''}`}>
             <Radio
               id="private-access"
-              title="Access is only for me"
+              title={dictionary.share_modal.private_access}
               checked={selectedOption === 'private'}
               onChange={() => handleVisibilityChange('private')}
             />
@@ -64,7 +64,7 @@ export const ShareModal = () => {
           <div className={`radio-wrapper ${selectedOption === 'public' ? 'checked' : ''}`}>
             <Radio
               id="public-access"
-              title="Access for everyone"
+              title={dictionary.share_modal.public_access}
               checked={selectedOption === 'public'}
               onChange={() => handleVisibilityChange('public')}
             />
@@ -72,7 +72,7 @@ export const ShareModal = () => {
         </div>
         <div className="share-modal__footer">
           <Button
-            title="Copy the link for sharing"
+            title={dictionary.share_modal.copy_link}
             color="blue"
             minimize={false}
             rounded={true}

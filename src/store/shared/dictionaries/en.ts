@@ -183,5 +183,11 @@ export const en: Translations = {
             internalError: 'Internal error.\nWe are working on it!',
             notSupported: 'Media type is not supported'
         }
+    },
+    share_modal: {
+        title: "Share to",
+        private_access: "Access is only for me",
+        public_access: "Access for everyone",
+        copy_link: "Copy the link for sharing"
     }
 };

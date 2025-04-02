@@ -185,5 +185,11 @@ export const ru: Translations = {
             tooBigFile: 'Файл слишком большой.Максимум ${replace1} Мб',
             notSupported: 'Формат файла не поддерживается',
         }
+    },
+    share_modal: {
+        title: "Поделиться",
+        private_access: "Доступ только для меня",
+        public_access: "Доступ для всех",
+        copy_link: "Копировать ссылку для шаринга"
     }
 }
