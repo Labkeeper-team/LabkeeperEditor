@@ -21,6 +21,7 @@ import { Language } from '../../store/shared/dictionaries';
 import {AuthModal} from "../../pages/project/auth";
 import {setShowAuthModal} from "../../store/slices/auth";
 import { ShareModal } from './share/modal';
+import {StorageState} from "../../store";
 
 const languageOptions = [
   {
@@ -39,6 +40,7 @@ export const Header = () => {
   const dictionary = useSelector(useDictionary);
   const language = useSelector(useCurrentLanguge);
   const { isAuthenticated, email } = useSelector(useUser);
+  const projectIsReadonly = useSelector((state: StorageState) => state.project.projectIsReadonly)
 
   const onLoginClick = useCallback(async () => {
     dispatch(setShowAuthModal(true));
@@ -64,7 +66,7 @@ export const Header = () => {
       </div>
       <div className="labkeeper_header__center">
         <ProjectTitle />
-        <ShareButton />
+        {!projectIsReadonly && <ShareButton />}
       </div>
       <div className="labkeeper_header__right">
         {location.pathname.startsWith('/project/') ? <InterfaceTour /> : null}

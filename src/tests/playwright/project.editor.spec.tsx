@@ -80,7 +80,7 @@ test('ESC-test', async ({ page }) => {
     });
 
     // Перехватываем запрос user-info
-    await page.route('/user-info', async route => {
+    await page.route('/api/v2/public/user-info', async route => {
         await route.fulfill({
             status: 200,
             contentType: 'application/json',
@@ -165,7 +165,7 @@ test('ESC-test', async ({ page }) => {
 */
 test('Search-test', async ({ page }) => {
     // Перехватываем запрос user-info
-    await page.route('/user-info', async route => {
+    await page.route('/api/v2/public/user-info', async route => {
         await route.fulfill({
             status: 200,
             contentType: 'application/json',
@@ -412,7 +412,7 @@ test('rename-project-in-editor-via-enter', async ({page}) => {
     });
 
     // Перехватываем запрос user-info
-    await page.route('/user-info', async route => {
+    await page.route('/api/v2/public/user-info', async route => {
         await route.fulfill({
             status: 200,
             contentType: 'application/json',
@@ -499,7 +499,7 @@ test('rename-project-in-editor-via-press', async ({page}) => {
     });
 
     // Перехватываем запрос user-info
-    await page.route('/user-info', async route => {
+    await page.route('/api/v2/public/user-info', async route => {
         await route.fulfill({
             status: 200,
             contentType: 'application/json',
@@ -753,7 +753,7 @@ test('remove-lines-with-errors-test', async ({ page }) => {
 test('default-project-401-test', async ({ page }) => {
     let auth = true
     // Перехватываем запрос user-info
-    await page.route('/user-info', async route => {
+    await page.route('/api/v2/public/user-info', async route => {
         await route.fulfill({
             status: 200,
             contentType: 'application/json',
@@ -808,7 +808,7 @@ test('default-project-401-test', async ({ page }) => {
 test('project-401-test', async ({ page }) => {
     let auth = true
     // Перехватываем запрос user-info
-    await page.route('/user-info', async route => {
+    await page.route('/api/v2/public/user-info', async route => {
         await route.fulfill({
             status: 200,
             contentType: 'application/json',
@@ -881,7 +881,7 @@ test('project-401-test', async ({ page }) => {
 test('compilation-401-test', async ({ page }) => {
     let auth = true
     // Перехватываем запрос user-info
-    await page.route('/user-info', async route => {
+    await page.route('/api/v2/public/user-info', async route => {
         await route.fulfill({
             status: 200,
             contentType: 'application/json',
@@ -992,7 +992,7 @@ test('compilation-401-test', async ({ page }) => {
 test('file-manager-401-test', async ({ page }) => {
     let auth = true
     // Перехватываем запрос user-info
-    await page.route('/user-info', async route => {
+    await page.route('/api/v2/public/user-info', async route => {
         await route.fulfill({
             status: 200,
             contentType: 'application/json',
@@ -1090,7 +1090,7 @@ test('file-manager-401-test', async ({ page }) => {
  */
 test('compilation-500-test', async ({ page }) => {
     // Перехватываем запрос user-info
-    await page.route('/user-info', async route => {
+    await page.route('/api/v2/public/user-info', async route => {
         await route.fulfill({
             status: 200,
             contentType: 'application/json',

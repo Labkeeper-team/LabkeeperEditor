@@ -21,6 +21,7 @@ export const ProjectTitle = () => {
     const dictionary = useSelector(useDictionary);
     const dispatch = useDispatch();
     const inputRef = useRef<HTMLInputElement>();
+    const projectIsReadonly = useSelector((state: StorageState) => state.project.projectIsReadonly)
     const setEditMode = (value: boolean) => {
       dispatch(setEditModeForProjectTitle(value))
     }
@@ -115,8 +116,10 @@ export const ProjectTitle = () => {
             disabled={!editMode}
             className={`${classNames('change-title-input', {disabled: !editMode})}`}
         />
-        <div onClick={onPressPencil} className={classNames('change-titlepress-button', {'edit-mode-on': editMode})}>
-            <PencilIcon />
-        </div>
+        {!projectIsReadonly &&
+            <div onClick={onPressPencil} className={classNames('change-titlepress-button', {'edit-mode-on': editMode})}>
+                <PencilIcon />
+            </div>
+        }
     </div>
 }

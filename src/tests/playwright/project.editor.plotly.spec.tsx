@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 async function plotlyTest(statement, page) {
     // Перехватываем запрос user-info
-    await page.route('/user-info', async route => {
+    await page.route('/api/v2/public/user-info', async route => {
         await route.fulfill({
             status: 200,
             contentType: 'application/json',

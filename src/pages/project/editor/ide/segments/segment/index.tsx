@@ -73,6 +73,7 @@ export const SegmentEditor = memo((props: { segment: Segment; index: number, seg
 
   const dictionary = useSelector(useDictionary);
   const compileErrors = useSelector((state: StorageState) => state.project.compileErrorResult?.errors)
+  const projectIsReadonly = useSelector((state: StorageState) => state.project.projectIsReadonly)
   const segmentErrors = useMemo(() => {
     return (compileErrors ?? []).filter(e => e.payload.segmentId === props.segment.id);
   }, [compileErrors,  props.segment.id]);
@@ -374,6 +375,7 @@ export const SegmentEditor = memo((props: { segment: Segment; index: number, seg
         ref={editor as any}
         value={tempText}
         onChange={onChange}
+        readOnly={projectIsReadonly}
         extensions={[
           decorationsField,
           isHightlight ? props.segment.type === 'md' ? langs.markdown() : 
@@ -394,10 +396,12 @@ export const SegmentEditor = memo((props: { segment: Segment; index: number, seg
         }}
       />
       <div className="editor-rules">
-        <div style={{display: 'flex', flexDirection: 'row', gap: 2, alignItems: 'center'}}>
-          {props.index ? <div onClick={() => onChangePosition('up')} className="change-position-button"><ArrowUp /></div> : null}
-          {(props.index !== props.segmentCount -1) ? <div onClick={() => onChangePosition('down')} className="change-position-button rotate"><ArrowUp /></div> : null}
-        </div>
+        {!projectIsReadonly &&
+            <div style={{display: 'flex', flexDirection: 'row', gap: 2, alignItems: 'center'}}>
+              {props.index ? <div onClick={() => onChangePosition('up')} className="change-position-button"><ArrowUp /></div> : null}
+              {(props.index !== props.segmentCount -1) ? <div onClick={() => onChangePosition('down')} className="change-position-button rotate"><ArrowUp /></div> : null}
+            </div>
+        }
         <div className='segment-type-container'>
           <Typography
             color={colors.gray10}
@@ -407,66 +411,68 @@ export const SegmentEditor = memo((props: { segment: Segment; index: number, seg
         <div className="segment-position">
           <Typography type={(props.segment.id ?? 0) < 10 ? 'body' : 'label-small'} text={`${props.segment.id}`} color={colors.white} />
         </div>
-        <DropdownMenu containerClassname="dropdown-content-contanier-additional">
-          <div onClick={onDeleteSegment} className="delete-segment-container">
-            <div className="delete-icon">
-              <PlusIcon />
-            </div>
-            <Typography color={colors.gray10} text={dictionary.delete} />
-          </div>
-          <Checkbox
-            className="full-width-checkbox"
-            id={`visibility-segment-${props.index}`}
-            checked={!!props.segment.parameters.visible}
-            onChange={v => onChangeVisible(v, "visible")}
-            title={dictionary.segment.visible}
-          />
-          { props.segment.type === 'computational' &&
-          <Checkbox
-            className="full-width-checkbox"
-            id={`valued-assignment-${props.index}`}
-            checked={!!props.segment.parameters.hideAssignmentWithValues}
-            onChange={v => onChangeVisible(v, "hideAssignmentWithValues")}
-            title={dictionary.segment.hide_assignment_with_values}
-          />
-          }
-          { props.segment.type === 'computational' &&
-          <Checkbox
-            className="full-width-checkbox"
-            id={`array-${props.index}`}
-            checked={!!props.segment.parameters.hideArray}
-            onChange={v => onChangeVisible(v, "hideArray")}
-            title={dictionary.segment.hide_array}
-          />
-          }
-          { props.segment.type === 'computational' &&
-          <Checkbox
-            className="full-width-checkbox"
-            id={`general-${props.index}`}
-            checked={!!props.segment.parameters.hideGeneralFormula}
-            onChange={v => onChangeVisible(v, "hideGeneralFormula")}
-            title={dictionary.segment.hide_general_formula}
-          />
-          }
-          { props.segment.type === 'computational' &&
-          <Checkbox
-            className="full-width-checkbox"
-            id={`infl-assig-${props.index}`}
-            checked={!!props.segment.parameters.hideInflAssignment}
-            onChange={v => onChangeVisible(v, "hideInflAssignment")}
-            title={dictionary.segment.hide_infl_assignment}
-          />
-          }
-          { props.segment.type === 'computational' &&
-          <Checkbox
-            className="full-width-checkbox"
-            id={`infl-assig-${props.index}`}
-            checked={!!props.segment.parameters.hideInflAssignmentWithValues}
-            onChange={v => onChangeVisible(v, "hideInflAssignmentWithValues")}
-            title={dictionary.segment.hide_infl_assignment_with_values}
-          />
-          }
-        </DropdownMenu>
+        {!projectIsReadonly &&
+            <DropdownMenu containerClassname="dropdown-content-contanier-additional">
+              <div onClick={onDeleteSegment} className="delete-segment-container">
+                <div className="delete-icon">
+                  <PlusIcon />
+                </div>
+                <Typography color={colors.gray10} text={dictionary.delete} />
+              </div>
+              <Checkbox
+                className="full-width-checkbox"
+                id={`visibility-segment-${props.index}`}
+                checked={!!props.segment.parameters.visible}
+                onChange={v => onChangeVisible(v, "visible")}
+                title={dictionary.segment.visible}
+              />
+              { props.segment.type === 'computational' &&
+              <Checkbox
+                className="full-width-checkbox"
+                id={`valued-assignment-${props.index}`}
+                checked={!!props.segment.parameters.hideAssignmentWithValues}
+                onChange={v => onChangeVisible(v, "hideAssignmentWithValues")}
+                title={dictionary.segment.hide_assignment_with_values}
+              />
+              }
+              { props.segment.type === 'computational' &&
+              <Checkbox
+                className="full-width-checkbox"
+                id={`array-${props.index}`}
+                checked={!!props.segment.parameters.hideArray}
+                onChange={v => onChangeVisible(v, "hideArray")}
+                title={dictionary.segment.hide_array}
+              />
+              }
+              { props.segment.type === 'computational' &&
+              <Checkbox
+                className="full-width-checkbox"
+                id={`general-${props.index}`}
+                checked={!!props.segment.parameters.hideGeneralFormula}
+                onChange={v => onChangeVisible(v, "hideGeneralFormula")}
+                title={dictionary.segment.hide_general_formula}
+              />
+              }
+              { props.segment.type === 'computational' &&
+              <Checkbox
+                className="full-width-checkbox"
+                id={`infl-assig-${props.index}`}
+                checked={!!props.segment.parameters.hideInflAssignment}
+                onChange={v => onChangeVisible(v, "hideInflAssignment")}
+                title={dictionary.segment.hide_infl_assignment}
+              />
+              }
+              { props.segment.type === 'computational' &&
+              <Checkbox
+                className="full-width-checkbox"
+                id={`infl-assig-${props.index}`}
+                checked={!!props.segment.parameters.hideInflAssignmentWithValues}
+                onChange={v => onChangeVisible(v, "hideInflAssignmentWithValues")}
+                title={dictionary.segment.hide_infl_assignment_with_values}
+              />
+              }
+            </DropdownMenu>
+        }
       </div>
     </div>
   <div style={{ flex: 1, marginTop: -10 }}>

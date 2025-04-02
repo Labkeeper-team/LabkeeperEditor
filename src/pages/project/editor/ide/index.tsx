@@ -35,7 +35,7 @@ export const Ide = () => {
     if (program) {
       try {
         setIsLoading(true);
-        if (user.isAuthenticated && projectId && !isNaN(+projectId)) {
+        if (user.isAuthenticated && projectId && !isNaN(+projectId) && !isReadonly) {
           const result = await saveProgramRequest(projectId.toString(), program);
           if (result.isUnauth || result.isForbidden) {
             toast(dictionary.filemanager.errors.sessionExpired, {type: 'error'});

@@ -41,7 +41,7 @@ test('rename-project-via-enter', async ({ page }) => {
     });
 
     // Перехватываем запрос user-info
-    await page.route('/user-info', async route => {
+    await page.route('/api/v2/public/user-info', async route => {
         await route.fulfill({
             status: 200,
             contentType: 'application/json',
@@ -144,7 +144,7 @@ test('rename-project-via-press', async ({ page }) => {
     });
 
     // Перехватываем запрос user-info
-    await page.route('/user-info', async route => {
+    await page.route('/api/v2/public/user-info', async route => {
         await route.fulfill({
             status: 200,
             contentType: 'application/json',
@@ -248,7 +248,7 @@ test('list-projects-401', async ({ page }) => {
     });
 
     // Перехватываем запрос user-info
-    await page.route('/user-info', async route => {
+    await page.route('/api/v2/public/user-info', async route => {
         await route.fulfill({
             status: 200,
             contentType: 'application/json',
