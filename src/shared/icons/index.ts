@@ -10,6 +10,7 @@ import _RightArrowIcon from '../../assets/right-arrow.svg?react';
 import _SavePdfIcon from '../../assets/save-pdf.svg?react';
 import _ExpandIcon from '../../assets/expand.svg?react';
 import _PencilIcon from '../../assets/pencil.svg?react';
+import _LinkIcon from '../../assets/link.svg?react';
 
 import _HistoryChangerIcon from '../../assets/history_changer.svg?react';
 import _SearchIcon from '../../assets/search.svg?react';
@@ -46,3 +47,4 @@ export const CloseModalIcon = _CloseModalIcon;
 export const Login1Icon = _Login1Icon;
 export const Login2Icon = _Login2Icon;
 export const ShareIcon = _ShareIcon;
+export const LinkIcon = _LinkIcon;
