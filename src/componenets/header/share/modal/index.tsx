@@ -5,14 +5,44 @@ import { Radio } from '../../../radiobutton';
 import { Button } from '../../../button';
 import { LinkIcon } from '../../../../shared/icons';
 import './style.scss';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { setShowShareModal } from "../../../../store/slices/settings";
 import { StorageState } from "../../../../store";
+import { useCurrentProject, useCurrentProjectId } from '../../../../store/selectors/program';
+import { setProjectVisibilityRequest } from '../../../../rpi/project';
+import { toast } from 'react-toastify';
+import { useDictionary } from '../../../../store/selectors/translations';
+import { logoutAction } from '../../../../store/actions';
 
 export const ShareModal = () => {
   const dispatch = useDispatch();
+  const project = useSelector(useCurrentProject);
+  const projectId = useSelector(useCurrentProjectId);
+  const dictionary = useSelector(useDictionary);
   const [selectedOption, setSelectedOption] = useState('private');
   const showModal = useSelector((state: StorageState) => state.settings.showShareModal);
+
+  useEffect(() => {
+    if (project?.isPublic !== undefined) {
+      setSelectedOption(project.isPublic ? 'public' : 'private');
+    }
+  }, [project?.isPublic]);
+
+  const handleVisibilityChange = async (option: string) => {
+    if (!projectId) return;
+    
+    const result = await setProjectVisibilityRequest(projectId.toString(), option === 'public');
+    
+    if (result.isUnauth) {
+      toast(dictionary.filemanager.errors.sessionExpired, {type: 'error'});
+      dispatch(logoutAction);
+      return;
+    }
+    
+    if (result.isOk) {
+      setSelectedOption(option);
+    }
+  };
 
   return (
     <Modal showModal={showModal} onClose={() => dispatch(setShowShareModal(false))}>
@@ -28,7 +58,7 @@ export const ShareModal = () => {
               id="private-access"
               title="Access is only for me"
               checked={selectedOption === 'private'}
-              onChange={() => setSelectedOption('private')}
+              onChange={() => handleVisibilityChange('private')}
             />
           </div>
           <div className={`radio-wrapper ${selectedOption === 'public' ? 'checked' : ''}`}>
@@ -36,7 +66,7 @@ export const ShareModal = () => {
               id="public-access"
               title="Access for everyone"
               checked={selectedOption === 'public'}
-              onChange={() => setSelectedOption('public')}
+              onChange={() => handleVisibilityChange('public')}
             />
           </div>
         </div>

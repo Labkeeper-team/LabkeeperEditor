@@ -43,3 +43,9 @@ export async function saveProgramRequest(projectId, program) {
         projectId
     ), program))
 }
+
+export async function setProjectVisibilityRequest(projectId: string, visibility: boolean) : Promise<RequestResult> {
+    return requestWrapper(async () => axios.post(
+        `${URLS.setVisibility.replace('{id}', projectId)}?public=${visibility}`
+    ));
+}

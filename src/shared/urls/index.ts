@@ -8,6 +8,7 @@ export const URLS = {
   getProject: '/api/v2/public/project/{id}/get',
   setProgram: '/api/v2/public/project/{id}/program',
   setTitle: '/api/v2/public/project/{id}/title',
+  setVisibility: '/api/v2/public/project/{id}/visibility',
 
   filesGetList: '/api/v2/public/project/{id}/file/list',
   uploadFile: '/api/v2/public/project/{id}/file/upload',

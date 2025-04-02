@@ -31,6 +31,7 @@ export interface Project {
   title: string;
   lastModified?: string;
   program: Program;
+  isPublic: boolean;
 }
 
 export interface ProjectShort {
