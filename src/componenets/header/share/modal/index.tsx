@@ -18,20 +18,25 @@ export const ShareModal = () => {
         <Typography 
           text="Share to 'The earliest fish appeared during the Cambria...'" 
           className="share-modal__title"
+          color="gray20"
         />
         <div className="share-modal__content">
-          <Radio
-            id="private-access"
-            title="Access is only for me"
-            checked={selectedOption === 'private'}
-            onChange={() => setSelectedOption('private')}
-          />
-          <Radio
-            id="public-access"
-            title="Access for everyone"
-            checked={selectedOption === 'public'}
-            onChange={() => setSelectedOption('public')}
-          />
+          <div className={`radio-wrapper ${selectedOption === 'private' ? 'checked' : ''}`}>
+            <Radio
+              id="private-access"
+              title="Access is only for me"
+              checked={selectedOption === 'private'}
+              onChange={() => setSelectedOption('private')}
+            />
+          </div>
+          <div className={`radio-wrapper ${selectedOption === 'public' ? 'checked' : ''}`}>
+            <Radio
+              id="public-access"
+              title="Access for everyone"
+              checked={selectedOption === 'public'}
+              onChange={() => setSelectedOption('public')}
+            />
+          </div>
         </div>
       </div>
     </Modal>
