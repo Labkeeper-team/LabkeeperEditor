@@ -20,6 +20,7 @@ import { ProjectTitle } from './projectTitle';
 import { Language } from '../../store/shared/dictionaries';
 import {AuthModal} from "../../pages/project/auth";
 import {setShowAuthModal} from "../../store/slices/auth";
+import { ShareModal } from './share/modal';
 
 const languageOptions = [
   {
@@ -95,6 +96,7 @@ export const Header = () => {
       </div>
     </div>
       <AuthModal/>
+      <ShareModal/>
     </>
   );
 };

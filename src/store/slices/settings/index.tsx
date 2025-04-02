@@ -11,6 +11,7 @@ export interface SettingsState {
   editModeForFilename: boolean;
   isFileDraggedToManager: boolean;
   isAutompleteLoading: boolean;
+  showShareModal: boolean;
 }
 
 const initialState: SettingsState = {
@@ -22,6 +23,7 @@ const initialState: SettingsState = {
   expandProblemViewer: false,
   isFileDraggedToManager: false,
   isAutompleteLoading: false,
+  showShareModal: false,
 };
 
 export const settingsSlice = createSlice({
@@ -51,6 +53,9 @@ export const settingsSlice = createSlice({
     },
     setisFileDraggedToFileManager: (state, {payload}: PayloadAction<boolean>) => {
       state.isFileDraggedToManager = payload;
+    },
+    setShowShareModal: (state, {payload}: PayloadAction<boolean>) => {
+      state.showShareModal = payload;
     }
   },
   extraReducers: (b) => {
@@ -61,4 +66,14 @@ export const settingsSlice = createSlice({
     });
   },
 });
-export const { setEditModeForProjectTitle, setAutoCompleteLoading, setEditModeForFilename, setShowSearch, setExpandProblemViewer, setTourVisibility, setShoFileManager, setisFileDraggedToFileManager } = settingsSlice.actions;
+export const { 
+  setEditModeForProjectTitle, 
+  setAutoCompleteLoading, 
+  setEditModeForFilename, 
+  setShowSearch, 
+  setExpandProblemViewer, 
+  setTourVisibility, 
+  setShoFileManager, 
+  setisFileDraggedToFileManager,
+  setShowShareModal 
+} = settingsSlice.actions;

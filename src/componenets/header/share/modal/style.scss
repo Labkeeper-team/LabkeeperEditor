@@ -1,0 +1,21 @@
+@use '../../../../shared/styles/colors' as *;
+
+.share-modal {
+  padding: 24px;
+  background-color: $gray-10;
+  border-radius: 12px;
+  min-width: 400px;
+
+  &__title {
+    color: $white;
+    margin-bottom: 24px;
+    font-size: 24px;
+    font-weight: 600;
+  }
+
+  &__content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+} 

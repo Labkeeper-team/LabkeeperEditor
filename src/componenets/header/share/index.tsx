@@ -1,18 +1,22 @@
+import { useSelector, useDispatch } from 'react-redux';
 import { ShareIcon } from '../../../shared/icons';
+import { useCurrentProject } from '../../../store/selectors/program';
+import { setShowShareModal } from '../../../store/slices/settings';
 import './style.scss';
-import {useCurrentProject} from "../../../store/selectors/program.ts";
-import {useSelector} from "react-redux";
-
 
 export const ShareButton = () => {
-  const project = useSelector(useCurrentProject)
+  const dispatch = useDispatch();
+  const project = useSelector(useCurrentProject);
 
   if (!project || !project.title) {
     return null;
   }
 
   return (
-    <button className="share-button" onClick={() => {}}>
+    <button 
+      className="share-button" 
+      onClick={() => dispatch(setShowShareModal(true))}
+    >
       <ShareIcon />
     </button>
   );

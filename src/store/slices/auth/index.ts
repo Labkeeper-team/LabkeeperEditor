@@ -37,7 +37,7 @@ export const sendEmailWithCode = createAsyncThunk(
     'auth/sendEmailWithCode',
     async ({ email, captcha }: { email: string, captcha: string }, { rejectWithValue, getState }) => {
         const state = getState() as StorageState;
-        const result = await userRPI.sendEmailWithCode(email, state.auth.isRegistration, state.settings.language, captcha);
+        const result = await userRPI.sendEmailWithCode(email, state.auth.isRegistration, state.persistence.language, captcha);
         if (!result.isOk) {
             return rejectWithValue({ code: result.code, email });
         }
