@@ -97,7 +97,7 @@ export const ProjectPage = () => {
 
     const getProject = async () => {
       const result = await getProjectRequest(projectId.toString())
-      if (result.isUnauth) {
+      if (result.isForbidden) {
         toast(dictionary.filemanager.errors.sessionExpired, {type: 'error'});
         dispatch(logoutAction)
       }
@@ -106,9 +106,6 @@ export const ProjectPage = () => {
         dispatch(setNewProgram(result.body.program));
       }
     };
-    if (!user.isAuthenticated) {
-      return;
-    }
     getProject();
   }, [id, user.isAuthenticated]);
 

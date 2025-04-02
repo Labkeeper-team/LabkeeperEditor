@@ -1,9 +1,9 @@
-import {Outlet, useLocation, useNavigate, useParams, useSearchParams} from 'react-router-dom';
+import {Outlet, useLocation, useSearchParams} from 'react-router-dom';
 import { Header } from '../header';
 import { InterfaceTour } from '../../shared/components/tour';
 import { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNeedLogin, useUser } from '../../store/selectors/program';
+import { useNeedLogin } from '../../store/selectors/program';
 import { Routes } from '../../routing/routes';
 import { LoginModal } from '../loginModal';
 import { Modal } from '../../shared/components/modal';
@@ -14,10 +14,7 @@ import { StorageState } from '../../store';
 import {setErrorMessage} from "../../store/slices/auth";
 
 export const BaseLayout = () => {
-  const user = useSelector(useUser);
-  const id = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
   const dispatch = useDispatch();
   const needLogin = useSelector(useNeedLogin);
 
@@ -63,16 +60,6 @@ export const BaseLayout = () => {
             .then(re => re.json())
             .then(user => dispatch(setUser(user)))
     }, [location]);
-  useEffect(() => {
-    if (!user.isAuthenticated) {
-      navigate(Routes.ProjectDefault);
-    } else {
-      if (id) {
-        return;
-      }
-      navigate(Routes.Projects);
-    }
-  }, [user.isAuthenticated]);
 
   return (
     <div  onDragEnter={handleDragEnter} onDrop={handleDrageEnd} onDragEnd={handleDrageEnd} onDragLeave={handleDragLeave} onDragOver={handleDragOver}>
