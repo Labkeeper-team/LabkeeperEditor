@@ -5,32 +5,30 @@ import { Radio } from '../../../radiobutton';
 import './style.scss';
 import { useState } from 'react';
 import { setShowShareModal } from "../../../../store/slices/settings";
-import {StorageState} from "../../../../store";
-
+import { StorageState } from "../../../../store";
 
 export const ShareModal = () => {
   const dispatch = useDispatch();
   const [selectedOption, setSelectedOption] = useState('private');
-    const showModal = useSelector((state: StorageState) => state.settings.showShareModal);
+  const showModal = useSelector((state: StorageState) => state.settings.showShareModal);
 
   return (
     <Modal showModal={showModal} onClose={() => dispatch(setShowShareModal(false))}>
       <div className="share-modal">
         <Typography 
-          color="white"
-          text="Поделиться проектом" 
+          text="Share to 'The earliest fish appeared during the Cambria...'" 
           className="share-modal__title"
         />
         <div className="share-modal__content">
           <Radio
             id="private-access"
-            title="Доступ только для меня"
+            title="Access is only for me"
             checked={selectedOption === 'private'}
             onChange={() => setSelectedOption('private')}
           />
           <Radio
             id="public-access"
-            title="Доступ для всех"
+            title="Access for everyone"
             checked={selectedOption === 'public'}
             onChange={() => setSelectedOption('public')}
           />

@@ -1,21 +1,59 @@
 @use '../../../../shared/styles/colors' as *;
 
 .share-modal {
-  padding: 24px;
-  background-color: $gray-10;
-  border-radius: 12px;
-  min-width: 400px;
+  background-color: $white;
+  border-radius: 16px;
+  min-width: 460px;
+  overflow: hidden;
 
   &__title {
-    color: $white;
-    margin-bottom: 24px;
-    font-size: 24px;
+    font-size: 20px;
     font-weight: 600;
+    color: $gray-10;
+    padding: 16px 32px;
+    background-color: $gray-60;
+    margin-bottom: 0;
   }
 
   &__content {
     display: flex;
-    flex-direction: column;
-    gap: 16px;
+    flex-direction: row;
+    gap: 32px;
+    padding: 24px 32px;
+
+    .labkeeper-radio {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      transition: all 0.2s ease;
+
+      .radio-custom {
+        width: 20px;
+        height: 20px;
+        margin-right: 12px;
+        border: 2px solid $gray-30;
+        border-radius: 50%;
+
+        .point {
+          width: 10px;
+          height: 10px;
+          background-color: $blue-10;
+        }
+      }
+
+      .labkeeper-typography {
+        color: $gray-30;
+      }
+
+      &.checked {
+        .radio-custom {
+          border-color: $blue-10;
+        }
+
+        .labkeeper-typography {
+          color: $gray-10;
+        }
+      }
+    }
   }
 } 
