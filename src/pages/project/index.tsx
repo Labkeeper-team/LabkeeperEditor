@@ -5,7 +5,7 @@ import { Editor } from './editor';
 import { Viewer } from './viewer';
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { setCompileError, setCompileResult, setNewProgram, setProject } from '../../store/slices/project';
+import {setCompileError, setCompileResult, setNewProgram, setProject, setReadOnly} from '../../store/slices/project';
 import { Project } from '../../shared/models/project';
 import {
   useCurrentProject,
@@ -103,6 +103,7 @@ export const ProjectPage = () => {
       }
       if (result.isOk) {
         dispatch(setProject(result.body as Project));
+        dispatch(setReadOnly(user.id !== (result.body as Project).userId))
         dispatch(setNewProgram(result.body.program));
       }
     };

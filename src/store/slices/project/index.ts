@@ -15,20 +15,26 @@ export interface ProjectState {
   compileErrorResult?: CompileErrorResultList;
   historyAcitveIndex: number;
   history: Program[];
+  projectIsReadonly: boolean;
 }
 
 const initialState: ProjectState = {
   compileErrorResult: {errors: []},
   history: [],
   historyAcitveIndex: -1,
+  projectIsReadonly: false
 };
 
 export const projectSlice = createSlice({
   name: 'projectSlice',
   initialState,
   reducers: {
+    setReadOnly: (state, {payload}: PayloadAction<boolean>) => {
+      state.projectIsReadonly = payload
+    },
     setProject: (state, { payload }: PayloadAction<Project>) => {
       state.project = payload;
+      state.projectIsReadonly = false;
     },
     setProjectName: (state, {payload}: PayloadAction<string>) => {
       if (!state.project?.title) {
@@ -252,5 +258,6 @@ export const {
   setSegmentVisibility,
   changeSegmentPosition,
   changeCompileErrorForSegment,
+  setReadOnly,
   addSegmentAfter
 } = projectSlice.actions;

@@ -29,6 +29,7 @@ export const Ide = () => {
   const user = useSelector(useUser);
   const projectId = useSelector(useCurrentProjectId);
   const dictionary = useSelector(useDictionary);
+  const isReadonly = useSelector((state: StorageState) => state.project.projectIsReadonly);
   const dispatch = useDispatch();
   const onClickRun = useCallback(async () => {
     if (program) {
@@ -45,7 +46,9 @@ export const Ide = () => {
           }
         }
         await dispatch(compileProject() as any);
-        dispatch(setUpdateFiles(true));
+        if (user.isAuthenticated) {
+          dispatch(setUpdateFiles(true));
+        }
 
       } finally {
         setTimeout(() => setIsLoading(false), 1000);
@@ -70,7 +73,7 @@ export const Ide = () => {
       <IdeHeader />
 
       <div className={classNames('ide-flexibility-conainer', {[InterfaceTourAnchorClassnames.Ide]: true})}>
-        {!program?.segments.length ? (
+        {(!program?.segments.length && !isReadonly) ? (
           <AddBlock isFirst />
         ) : (
           <Segments/>

@@ -13,6 +13,7 @@ export const IdeHeader = () => {
   const {isAuthenticated} = useSelector(useUser);
   const dispatch = useDispatch();
   const showFileManager = useSelector((state: StorageState) => state.settings.showFileManager);
+  const isReadonly = useSelector((state: StorageState) => state.project.projectIsReadonly);
   const onPressFolder = () => {
     dispatch(setShoFileManager(true))
   }
@@ -22,10 +23,10 @@ export const IdeHeader = () => {
       {isAuthenticated ? !showFileManager  ?<div className='file-manager-button ' onClick={onPressFolder}>
         <FolderIcon />
       </div> : null : null}
-      <HistoryButtons />
+          {!isReadonly && <HistoryButtons />}
       </div>
-      {program?.segments.length ? <AddBlock isFirst={false} /> : <div />}
-      <SettingsButton />
+      {(program?.segments.length && !isReadonly)  ? <AddBlock isFirst={false} /> : <div />}
+        {!isReadonly && <SettingsButton />}
     </div>
   );
 };
