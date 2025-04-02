@@ -2,6 +2,8 @@ import { useSelector, useDispatch } from 'react-redux';
 import { Modal } from '../../../../shared/components/modal';
 import { Typography } from '../../../typography';
 import { Radio } from '../../../radiobutton';
+import { Button } from '../../../button';
+import { LinkIcon } from '../../../../shared/icons';
 import './style.scss';
 import { useState } from 'react';
 import { setShowShareModal } from "../../../../store/slices/settings";
@@ -37,6 +39,19 @@ export const ShareModal = () => {
               onChange={() => setSelectedOption('public')}
             />
           </div>
+        </div>
+        <div className="share-modal__footer">
+          <Button
+            title="Copy the link for sharing"
+            color="blue"
+            minimize={false}
+            rounded={true}
+            titleIcon={() => <LinkIcon />}
+            onPress={() => {
+              // TODO: Add copy link logic
+              console.log('Copy link clicked');
+            }}
+          />
         </div>
       </div>
     </Modal>
