@@ -4,7 +4,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  padding: 8px;
+  padding: 0;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -13,6 +13,7 @@
   height: 30px;
   position: relative;
   transition: all 0.2s ease;
+  margin-left: 6px;
 
   &::before {
     content: '';
@@ -22,13 +23,13 @@
     right: 0;
     bottom: 0;
     border-radius: 50%;
-    border: 1px solid transparent;
+    border: 1px solid $gray-30;
     transition: all 0.2s ease;
   }
 
   svg {
-    width: 30px;
-    height: 30px;
+    width: 28px;
+    height: 28px;
     color: $gray-30;
     transition: color 0.2s ease;
   }
