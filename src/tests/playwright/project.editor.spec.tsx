@@ -806,14 +806,13 @@ test('default-project-401-test', async ({ page }) => {
 401 при получении проекта
  */
 test('project-401-test', async ({ page }) => {
-    let auth = true
     // Перехватываем запрос user-info
     await page.route('/api/v2/public/user-info', async route => {
         await route.fulfill({
             status: 200,
             contentType: 'application/json',
             body: JSON.stringify({
-                isAuthenticated: auth,
+                isAuthenticated: true,
                 email: 'a@gmail.com',
                 id: 1
             })
@@ -840,7 +839,6 @@ test('project-401-test', async ({ page }) => {
         });
     });
     await page.route('/api/v2/public/project/1/get', async route => {
-        auth = false
         await route.fulfill({
             status: 401,
             contentType: 'application/json'
@@ -864,15 +862,13 @@ test('project-401-test', async ({ page }) => {
         });
     });
 
-    await page.goto('/');
+    await page.goto('/project/1');
 
     // Ждем загрузки страницы
     await page.waitForLoadState('networkidle');
-    // Ждем редиректа на конкретный проект
-    await expect(page).toHaveURL('/project/default');
 
     // ждем появления toast с ошибкой
-    await expect(page.locator('div.Toastify__toast')).toBeVisible();
+    await expect(page.locator('div.Toastify__toast').first()).toBeVisible();
 })
 
 /*

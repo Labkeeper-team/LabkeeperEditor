@@ -97,7 +97,7 @@ export const ProjectPage = () => {
 
     const getProject = async () => {
       const result = await getProjectRequest(projectId.toString())
-      if (result.isForbidden) {
+      if (result.isUnauth) {
         toast(dictionary.filemanager.errors.sessionExpired, {type: 'error'});
         dispatch(logoutAction)
       }
