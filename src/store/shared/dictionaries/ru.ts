@@ -184,6 +184,8 @@ export const ru: Translations = {
             internalError: 'Внутренняя ошибка.\nМы обязательно исправим ее в ближайшее время!',
             tooBigFile: 'Файл слишком большой.Максимум ${replace1} Мб',
             notSupported: 'Формат файла не поддерживается',
+            notEnoughRights: "Не хватает прав для просмотра проекта",
+            notFound: "Такого проекта не существует"
         }
     },
     share_modal: {

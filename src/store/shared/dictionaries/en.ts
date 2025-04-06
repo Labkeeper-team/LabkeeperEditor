@@ -180,8 +180,10 @@ export const en: Translations = {
             tooMuchFiles: 'Too much files for one project',
             tooBigFile: 'Too big file.Maximum is ${replace1} mb`',
             sessionExpired: 'Session has expired',
+            notEnoughRights: 'You don\'t have enough rights to view the project',
             internalError: 'Internal error.\nWe are working on it!',
-            notSupported: 'Media type is not supported'
+            notSupported: 'Media type is not supported',
+            notFound: "Project not found"
         }
     },
     share_modal: {

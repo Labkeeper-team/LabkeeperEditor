@@ -189,6 +189,8 @@ export interface Translations {
             sessionExpired: string,
             internalError: string
             notSupported: string;
+            notEnoughRights: string;
+            notFound: string;
         }
     }
 
