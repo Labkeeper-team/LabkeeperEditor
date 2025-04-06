@@ -101,6 +101,12 @@ export const ProjectPage = () => {
         toast(dictionary.filemanager.errors.sessionExpired, {type: 'error'});
         dispatch(logoutAction)
       }
+      if (result.isForbidden) {
+        toast(dictionary.filemanager.errors.notEnoughRights, {type: 'error'});
+      }
+      if (result.code === 404) {
+        toast(dictionary.filemanager.errors.notFound, {type: 'error'});
+      }
       if (result.isOk) {
         dispatch(setProject(result.body as Project));
         dispatch(setReadOnly(user.id !== (result.body as Project).userId))
