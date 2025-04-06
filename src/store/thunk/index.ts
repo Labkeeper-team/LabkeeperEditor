@@ -8,19 +8,19 @@ import {RequestResult} from "../../rpi";
 import {toast} from "react-toastify";
 import {dictionary} from "../shared/dictionaries";
 import {logoutAction} from "../actions";
+import {setShowAuthModal} from "../slices/auth";
 
 export const compileProject = createAsyncThunk(
   'project/compileProject',
   async (_, thunkAPI) => {
       const state = thunkAPI.getState() as StorageState;
-      const isAuthenticated = state.user.isAuthenticated;
       const projectId = state.project.project?.projectId;
       const program = state.project.history[state.project.historyAcitveIndex];
 
       thunkAPI.dispatch(setAutoCompleteLoading(true));
 
       let result: RequestResult;
-      if (projectId && isAuthenticated) {
+      if (projectId) {
           result = await compileProjectRequest(projectId)
       } else {
           result = await compilationRequest(program)
@@ -41,6 +41,11 @@ export const compileProject = createAsyncThunk(
       }
       if (result.code === 203) {
           thunkAPI.dispatch(setCompileError(result.body));
+          result.body.errors.map(error => {
+              if (error.code === 308) {
+                  thunkAPI.dispatch(setShowAuthModal(true))
+              }
+          })
       }
       if (result.code === 425) {
           thunkAPI.dispatch(setNeedLogin(true));
