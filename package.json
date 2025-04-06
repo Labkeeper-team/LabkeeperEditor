@@ -8,6 +8,7 @@
     "test": "jest && playwright test",
     "test:math": "jest",
     "test:ui": "playwright test",
+    "test:ui:silent": "playwright test --reporter=line",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
