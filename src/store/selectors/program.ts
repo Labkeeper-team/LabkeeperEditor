@@ -31,7 +31,7 @@ export const useProgramHistoryActiveIndex = createSelector(
 export const useSegment = (id: number) =>
   createSelector(
     (state: StorageState) => state.project,
-    (state) => state.history[state.historyAcitveIndex].segments[id]
+    (state) => state.history[state.historyAcitveIndex]?.segments[id]
   );
 export const useActiveSegment = (segmentId: number) =>
   createSelector(

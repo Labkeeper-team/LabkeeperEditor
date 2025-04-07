@@ -16,11 +16,11 @@ export const Segments = () => {
         behavior: "smooth",
       });
     }
-  }, [program.segments.length, ref.current]);
+  }, [program?.segments?.length, ref.current]);
 
   return (
     <div ref={ref} className="segments-container">
-      {program.segments.map((s, i, ar) => (
+      {program?.segments.map((s, i, ar) => (
         <div key={s.id}>
           <SegmentEditor segment={s} index={i} segmentCount={ar.length} />
         </div>
