@@ -7,17 +7,20 @@ import { setTourVisibility } from '../../../store/slices/settings';
 import { useDictionary } from '../../../store/selectors/translations';
 
 export const InterfaceTour = () => {
-  const dispatch = useDispatch();
-  const dictionary = useSelector(useDictionary);
+    const dispatch = useDispatch();
+    const dictionary = useSelector(useDictionary);
 
-  const onClick = () => {
-    dispatch(setTourVisibility(true));
-  };
+    const onClick = () => {
+        dispatch(setTourVisibility(true));
+    };
 
-  return (
-    <div onClick={onClick} className="interface_tour_container">
-      <Typography type="body-large" text={dictionary.interface_tour.label} />
-      <InterfaceTourLogo />
-    </div>
-  );
+    return (
+        <div onClick={onClick} className="interface_tour_container">
+            <Typography
+                type="body-large"
+                text={dictionary.interface_tour.label}
+            />
+            <InterfaceTourLogo />
+        </div>
+    );
 };

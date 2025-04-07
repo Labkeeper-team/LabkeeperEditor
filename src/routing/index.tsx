@@ -6,22 +6,22 @@ import { HomePage } from '../pages/home';
 import { ProjectsPage } from '../pages/projects';
 
 export const appRouter = createBrowserRouter([
-  {
-    path: Routes.Home,
-    element: <BaseLayout></BaseLayout>,
-    children: [
-      {
+    {
         path: Routes.Home,
-        element: <HomePage />,
-      },
-      {
-        path: Routes.Project,
-        element: <ProjectPage />,
-      },
-      {
-        path: Routes.Projects,
-        element: <ProjectsPage />,
-      }
-    ],
-  },
+        element: <BaseLayout></BaseLayout>,
+        children: [
+            {
+                path: Routes.Home,
+                element: <HomePage />,
+            },
+            {
+                path: Routes.Project,
+                element: <ProjectPage />,
+            },
+            {
+                path: Routes.Projects,
+                element: <ProjectsPage />,
+            },
+        ],
+    },
 ]);

@@ -1,54 +1,50 @@
 {
-  "id": 1,
-  "type": "computational",
-  "statements": [
-    {
-      "type": "assignment",
-      "variable": "a",
-      "array": {
-        "array": [
-          {
-            "value": "1",
-            "infl": "1"
-          },
-          {
-            "value": "2",
-            "infl": "1"
-          },
-          {
-            "value": "3",
-            "infl": "1"
-          },
-          {
-            "value": "4",
-            "infl": "1"
-          }
-        ]
-      },
-      "legendVisible": false
-    },
-    {
-      "type": "calculation",
-      "assignment": "sum(a)",
-      "assignmentWithValues": [
-        "10"
-      ],
-      "inflAssignmentGeneralFormula": "sqrt(((partial b)/(partial(sum))*sigma(sum))^2)",
-      "inflAssignment": "sqrt(sigma(sum)^2)",
-      "inflAssignmentWithValues": [
-        "sqrt(2^2)"
-      ],
-      "variable": "b",
-      "array": {
-        "array": [
-          {
-            "value": "10",
-            "infl": "2"
-          }
-        ]
-      },
-      "legendVisible": false
-    }
-  ],
-  "text": null
+    "id": 1,
+    "type": "computational",
+    "statements": [
+        {
+            "type": "assignment",
+            "variable": "a",
+            "array": {
+                "array": [
+                    {
+                        "value": "1",
+                        "infl": "1"
+                    },
+                    {
+                        "value": "2",
+                        "infl": "1"
+                    },
+                    {
+                        "value": "3",
+                        "infl": "1"
+                    },
+                    {
+                        "value": "4",
+                        "infl": "1"
+                    }
+                ]
+            },
+            "legendVisible": false
+        },
+        {
+            "type": "calculation",
+            "assignment": "sum(a)",
+            "assignmentWithValues": ["10"],
+            "inflAssignmentGeneralFormula": "sqrt(((partial b)/(partial(sum))*sigma(sum))^2)",
+            "inflAssignment": "sqrt(sigma(sum)^2)",
+            "inflAssignmentWithValues": ["sqrt(2^2)"],
+            "variable": "b",
+            "array": {
+                "array": [
+                    {
+                        "value": "10",
+                        "infl": "2"
+                    }
+                ]
+            },
+            "legendVisible": false
+        }
+    ],
+    "text": null
 }

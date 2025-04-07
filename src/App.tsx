@@ -7,14 +7,14 @@ import { RouterProvider } from 'react-router-dom';
 import { appRouter } from './routing';
 
 function App() {
-  return (
-    <StoreProvider store={store}>
-      <PersistGate loading={undefined} persistor={persist}>
-        <RouterProvider router={appRouter} />
-      </PersistGate>
-      <ToastContainer />
-    </StoreProvider>
-  );
+    return (
+        <StoreProvider store={store}>
+            <PersistGate loading={undefined} persistor={persist}>
+                <RouterProvider router={appRouter} />
+            </PersistGate>
+            <ToastContainer />
+        </StoreProvider>
+    );
 }
 
 export default App;

@@ -1,39 +1,35 @@
 {
-  "id": 0,
-  "type": "computational",
-  "statements": [
-    {
-      "type": "assignment",
-      "variable": "a",
-      "array": {
-        "array": [
-          {
-            "value": "10",
-            "infl": "1"
-          }
-        ]
-      }
-    },
-    {
-      "type": "calculation",
-      "variable": "b",
-      "array": {
-        "array": [
-          {
-            "value": "100",
-            "infl": "20"
-          }
-        ]
-      },
-      "assignment": "a^2",
-      "assignmentWithValues": [
-        "10^2"
-      ],
-      "inflAssignmentGeneralFormula": "sqrt(((partial b)/(partial a)*sigma(a))^2)",
-      "inflAssignment": "sqrt(4*a^2*sigma(a)^2)",
-      "inflAssignmentWithValues": [
-        "sqrt(4*10^2*1^2)"
-      ]
-    }
-  ]
+    "id": 0,
+    "type": "computational",
+    "statements": [
+        {
+            "type": "assignment",
+            "variable": "a",
+            "array": {
+                "array": [
+                    {
+                        "value": "10",
+                        "infl": "1"
+                    }
+                ]
+            }
+        },
+        {
+            "type": "calculation",
+            "variable": "b",
+            "array": {
+                "array": [
+                    {
+                        "value": "100",
+                        "infl": "20"
+                    }
+                ]
+            },
+            "assignment": "a^2",
+            "assignmentWithValues": ["10^2"],
+            "inflAssignmentGeneralFormula": "sqrt(((partial b)/(partial a)*sigma(a))^2)",
+            "inflAssignment": "sqrt(4*a^2*sigma(a)^2)",
+            "inflAssignmentWithValues": ["sqrt(4*10^2*1^2)"]
+        }
+    ]
 }

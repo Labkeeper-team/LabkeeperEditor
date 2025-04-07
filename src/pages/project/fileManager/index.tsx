@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { LegacyRef, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 import { PlusIcon } from '../../../shared/icons';
 import './style.scss';
 import { useDispatch, useSelector } from 'react-redux';
-import {useCurrentProject, useUser} from '../../../store/selectors/program';
-import { IFile } from './models/file';
+import { useCurrentProject, useUser } from '../../../store/selectors/program';
+import { IFile, IFilesResponse } from './models/file';
 import { setShoFileManager } from '../../../store/slices/settings';
 import { StorageState } from '../../../store';
 import { FileGroup } from './components/fileGroup';
@@ -12,48 +12,57 @@ import { FileManagerDragZone } from './components/dragZone';
 import { Button } from '../../../componenets/button';
 import { useDictionary } from '../../../store/selectors/translations';
 import { setUpdateFiles } from '../../../store/slices/ide';
-import {listFilesRequest, uploadFileRequest} from "../../../rpi/files.tsx";
-import {logoutAction} from "../../../store/actions";
+import { listFilesRequest, uploadFileRequest } from '../../../rpi/files.tsx';
+import { logoutAction } from '../../../store/actions';
 import { checkFile } from '../../../utils/file';
-
 
 export const FileManager = () => {
     const inputRef = useRef<HTMLInputElement>();
     const dictionary = useSelector(useDictionary);
     //TOOO after run refresh
     const project = useSelector(useCurrentProject);
-    const showFileManager = useSelector((state: StorageState) => state.settings.showFileManager);
-    const isDragged = useSelector((state: StorageState) => state.settings.isFileDraggedToManager);
-    const updateFiles = useSelector((state: StorageState) => state.ide.updateFiles);
-    const {isAuthenticated} = useSelector(useUser)
-    const isReadonly = useSelector((state: StorageState) => state.project.projectIsReadonly);
+    const showFileManager = useSelector(
+        (state: StorageState) => state.settings.showFileManager
+    );
+    const isDragged = useSelector(
+        (state: StorageState) => state.settings.isFileDraggedToManager
+    );
+    const updateFiles = useSelector(
+        (state: StorageState) => state.ide.updateFiles
+    );
+    const { isAuthenticated } = useSelector(useUser);
+    const isReadonly = useSelector(
+        (state: StorageState) => state.project.projectIsReadonly
+    );
 
     const [files, setFiles] = useState<IFile[]>([]);
     const dispatch = useDispatch();
 
     const onPressFolder = () => {
-      dispatch(setShoFileManager(false))
-    }
+        dispatch(setShoFileManager(false));
+    };
 
     const fetchData = async () => {
         if (!project || !project.projectId) {
             return;
         }
 
-        const result = await listFilesRequest(project?.projectId?.toString())
+        const result = await listFilesRequest(project?.projectId?.toString());
 
         if (result.isOk) {
-            setFiles(result.body.files)
+            setFiles((result.body as IFilesResponse).files);
         }
         if (result.isUnauth) {
-            toast(dictionary.filemanager.errors.sessionExpired, {type: 'error'});
-            dispatch(logoutAction)
+            toast(dictionary.filemanager.errors.sessionExpired, {
+                type: 'error',
+            });
+            dispatch(logoutAction);
         }
-    }
+    };
 
     useEffect(() => {
         if (!isAuthenticated) {
-            dispatch(setShoFileManager(false))
+            dispatch(setShoFileManager(false));
         }
     }, [isAuthenticated]);
     useEffect(() => {
@@ -62,23 +71,24 @@ export const FileManager = () => {
         }
 
         fetchData();
-        dispatch(setUpdateFiles(false))
-    }, [updateFiles])
+        dispatch(setUpdateFiles(false));
+    }, [updateFiles]);
 
     useEffect(() => {
         if (!showFileManager) {
             return;
         }
-        
+
         fetchData();
     }, [project, showFileManager]);
 
-
     const onErrorLoading = (e) => {
         if (e.message?.includes('409')) {
-            toast(dictionary.filemanager.errors.tooMuchFiles, {type: 'error'});
+            toast(dictionary.filemanager.errors.tooMuchFiles, {
+                type: 'error',
+            });
         }
-    }
+    };
     const onSelectFile = async (e) => {
         if (!project?.projectId) {
             return;
@@ -94,26 +104,32 @@ export const FileManager = () => {
             const formData = new FormData();
             formData.append('file', fileToUpload);
 
-            const result = await uploadFileRequest(formData, project?.projectId?.toString(), name)
+            const result = await uploadFileRequest(
+                formData,
+                project?.projectId?.toString(),
+                name
+            );
             if (result.isUnauth) {
-                toast(dictionary.filemanager.errors.sessionExpired, {type: 'error'});
-                dispatch(logoutAction)
+                toast(dictionary.filemanager.errors.sessionExpired, {
+                    type: 'error',
+                });
+                dispatch(logoutAction);
             }
             if (!result.isOk) {
                 onErrorLoading(e);
             } else {
-                await fetchData()
+                await fetchData();
             }
             e.target.value = null;
 
             // Обработка файла
         }
-     }
+    };
     const [autogenerated, usergenerated] = useMemo(() => {
         const a: IFile[] = [];
         const u: IFile[] = [];
 
-        files.forEach(f => {
+        files.forEach((f) => {
             if (f.autogenerated) {
                 a.push(f);
             } else {
@@ -128,35 +144,73 @@ export const FileManager = () => {
         if (inputRef.current) {
             inputRef.current.click();
         }
-    }
+    };
     if (!showFileManager) {
         return <></>;
     }
-    return <div className="manager-container">
-        <div className="manager-header">
-            <div>{dictionary.filemanager.title}</div>
-            <div onClick={(onPressFolder)} className='close-icon-container'>
-                <PlusIcon style={{rotate: '45deg'}} />
+    return (
+        <div className="manager-container">
+            <div className="manager-header">
+                <div>{dictionary.filemanager.title}</div>
+                <div onClick={onPressFolder} className="close-icon-container">
+                    <PlusIcon style={{ rotate: '45deg' }} />
+                </div>
             </div>
+            {
+                <div
+                    style={{
+                        display: 'flex',
+                        margin: 14,
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        overflowY: 'auto',
+                        overflowX: 'hidden',
+                        gap: 14,
+                        height: '100%',
+                    }}
+                >
+                    {isDragged ? (
+                        <FileManagerDragZone
+                            onSuccess={fetchData}
+                            onError={onErrorLoading}
+                        />
+                    ) : null}
+                    {!isDragged && usergenerated.length ? (
+                        <FileGroup
+                            onAfterSuccessChange={fetchData}
+                            files={usergenerated}
+                            autogenerated={false}
+                        />
+                    ) : null}
+                    {!isDragged && autogenerated.length ? (
+                        <FileGroup
+                            onAfterSuccessChange={fetchData}
+                            files={autogenerated}
+                            autogenerated
+                        />
+                    ) : null}
+                </div>
+            }
+            {!isReadonly && (
+                <div className="button-container">
+                    <input
+                        onChange={onSelectFile}
+                        ref={inputRef as LegacyRef<HTMLInputElement>}
+                        style={{ display: 'none' }}
+                        type="file"
+                        accept=".png, .jpg, .jpeg, .svg, .txt, .csv"
+                    />
+                    <Button
+                        title={dictionary.filemanager.add}
+                        titleIcon={PlusIcon}
+                        onPress={onPressButton}
+                        minimize={false}
+                        rounded
+                        classname="button-add-file"
+                        color="inherit"
+                    />
+                </div>
+            )}
         </div>
-        {<div style={{display: 'flex', margin: 14, flexDirection: 'column', alignItems: 'center', overflowY: 'auto', overflowX: 'hidden', gap: 14, height: '100%'}}>
-            { isDragged ? <FileManagerDragZone onSuccess={fetchData} onError={onErrorLoading} /> : null}
-            { !isDragged && usergenerated.length ? <FileGroup onAfterSuccessChange={fetchData} files={usergenerated} autogenerated={false} /> : null}
-            { !isDragged && autogenerated.length ? <FileGroup onAfterSuccessChange={fetchData} files={autogenerated} autogenerated /> : null}
-        </div>}
-        {!isReadonly &&
-            <div className='button-container'>
-                <input onChange={onSelectFile} ref={inputRef as any} style={{display: 'none'}} type='file' accept=".png, .jpg, .jpeg, .svg, .txt, .csv" />
-                <Button
-                    title={dictionary.filemanager.add}
-                    titleIcon={PlusIcon}
-                    onPress={onPressButton}
-                    minimize={false}
-                    rounded
-                    classname='button-add-file'
-                    color='inherit'
-                />
-            </div>
-        }
-    </div>
-}
+    );
+};

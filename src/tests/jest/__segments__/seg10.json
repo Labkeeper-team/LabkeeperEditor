@@ -1,39 +1,35 @@
 {
-  "id": 0,
-  "type": "computational",
-  "statements": [
-    {
-      "type": "assignment",
-      "variable": "a",
-      "array": {
-        "array": [
-          {
-            "value": "10000000",
-            "infl": "10000000"
-          }
-        ]
-      }
-    },
-    {
-      "type": "calculation",
-      "variable": "b",
-      "array": {
-        "array": [
-          {
-            "value": "0",
-            "infl": "10^71"
-          }
-        ]
-      },
-      "assignment": "a^10",
-      "assignmentWithValues": [
-        "10000000^10"
-      ],
-      "inflAssignmentGeneralFormula": "sqrt(((partial b)/(partial a)*sigma(a))^2)",
-      "inflAssignment": "sqrt(100*a^18*sigma(a)^2)",
-      "inflAssignmentWithValues": [
-        "sqrt(100*10000000^18*10000000^2)"
-      ]
-    }
-  ]
+    "id": 0,
+    "type": "computational",
+    "statements": [
+        {
+            "type": "assignment",
+            "variable": "a",
+            "array": {
+                "array": [
+                    {
+                        "value": "10000000",
+                        "infl": "10000000"
+                    }
+                ]
+            }
+        },
+        {
+            "type": "calculation",
+            "variable": "b",
+            "array": {
+                "array": [
+                    {
+                        "value": "0",
+                        "infl": "10^71"
+                    }
+                ]
+            },
+            "assignment": "a^10",
+            "assignmentWithValues": ["10000000^10"],
+            "inflAssignmentGeneralFormula": "sqrt(((partial b)/(partial a)*sigma(a))^2)",
+            "inflAssignment": "sqrt(100*a^18*sigma(a)^2)",
+            "inflAssignmentWithValues": ["sqrt(100*10000000^18*10000000^2)"]
+        }
+    ]
 }

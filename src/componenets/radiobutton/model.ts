@@ -1,6 +1,6 @@
 export interface RadioProps {
-  checked: boolean;
-  onChange: (newValue: boolean) => any;
-  id: string;
-  title?: string;
+    checked: boolean;
+    onChange: (newValue: boolean) => unknown;
+    id: string;
+    title?: string;
 }

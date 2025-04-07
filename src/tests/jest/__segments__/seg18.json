@@ -1,45 +1,43 @@
 {
-  "id": 1,
-  "type": "computational",
-  "statements": [
-    {
-      "type": "assignment",
-      "variable": "a",
-      "array": {
-        "array": [
-          {
-            "value": "1",
-            "infl": "0"
-          },
-          {
-            "value": "2",
-            "infl": "0"
-          },
-          {
-            "value": "3",
-            "infl": "0"
-          }
-        ]
-      },
-      "legendVisible": false
-    },
-    {
-      "type": "calculation",
-      "assignment": "max(a)",
-      "assignmentWithValues": [
-        "3"
-      ],
-      "variable": "b",
-      "array": {
-        "array": [
-          {
-            "value": "3",
-            "infl": "0"
-          }
-        ]
-      },
-      "legendVisible": false
-    }
-  ],
-  "text": null
+    "id": 1,
+    "type": "computational",
+    "statements": [
+        {
+            "type": "assignment",
+            "variable": "a",
+            "array": {
+                "array": [
+                    {
+                        "value": "1",
+                        "infl": "0"
+                    },
+                    {
+                        "value": "2",
+                        "infl": "0"
+                    },
+                    {
+                        "value": "3",
+                        "infl": "0"
+                    }
+                ]
+            },
+            "legendVisible": false
+        },
+        {
+            "type": "calculation",
+            "assignment": "max(a)",
+            "assignmentWithValues": ["3"],
+            "variable": "b",
+            "array": {
+                "array": [
+                    {
+                        "value": "3",
+                        "infl": "0"
+                    }
+                ]
+            },
+            "legendVisible": false
+        }
+    ],
+    "text": null
 }

@@ -1,28 +1,28 @@
 .typography {
-  user-select: none;
-  &.h1 {
-    line-height: 50px;
-    font-size: 50px;
-    font-weight: 400;
-  }
-  &.h2 {
-    font-size: 20px;
-    line-height: 22px;
-  }
-  &.body {
-    font-size: 13px;
-    line-height: 16px;
-  }
-  &.label-small {
-    font-size: 11px;
-    line-height: 12px;
-  }
-  &.body-large {
-    font-size: 15px;
-    line-height: 18px;
-  }
-  &.button-fullsize {
-    font-size: 15px;
-    line-height: 18px;
-  }
+    user-select: none;
+    &.h1 {
+        line-height: 50px;
+        font-size: 50px;
+        font-weight: 400;
+    }
+    &.h2 {
+        font-size: 20px;
+        line-height: 22px;
+    }
+    &.body {
+        font-size: 13px;
+        line-height: 16px;
+    }
+    &.label-small {
+        font-size: 11px;
+        line-height: 12px;
+    }
+    &.body-large {
+        font-size: 15px;
+        line-height: 18px;
+    }
+    &.button-fullsize {
+        font-size: 15px;
+        line-height: 18px;
+    }
 }

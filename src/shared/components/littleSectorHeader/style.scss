@@ -1,53 +1,53 @@
 @use '../../../shared/styles/colors' as *;
 
 .sector-header-container {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  border-top-left-radius: 8px;
-  border-top-right-radius: 8px;
-  align-items: center;
-  height: 26px;
-  background: $gray-50;
-  padding: 0px 18px 0px 18px;
-  .expnad-container {
     display: flex;
-    justify-content: center;
+    flex-direction: row;
+    justify-content: space-between;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
     align-items: center;
     height: 26px;
-    width: 26px;
-    &.expanded {
-      rotate: 180deg;
-    }
-    &:hover {
-      cursor: pointer;
-      svg {
-        path {
-          stroke: $gray-10;
+    background: $gray-50;
+    padding: 0px 18px 0px 18px;
+    .expnad-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 26px;
+        width: 26px;
+        &.expanded {
+            rotate: 180deg;
         }
-      }
-    }
-  }
-  .typography {
-    &.body {
-      color: $gray-20 !important;
-    }
-  }
-  &:hover {
-    cursor: pointer;
-    background: $gray-40;
-    &:hover {
-      cursor: pointer;
-      svg {
-        path {
-          stroke: $gray-10;
+        &:hover {
+            cursor: pointer;
+            svg {
+                path {
+                    stroke: $gray-10;
+                }
+            }
         }
-      }
     }
     .typography {
-      &.body {
-        color: $gray-10 !important;
-      }
+        &.body {
+            color: $gray-20 !important;
+        }
     }
-  }
+    &:hover {
+        cursor: pointer;
+        background: $gray-40;
+        &:hover {
+            cursor: pointer;
+            svg {
+                path {
+                    stroke: $gray-10;
+                }
+            }
+        }
+        .typography {
+            &.body {
+                color: $gray-10 !important;
+            }
+        }
+    }
 }

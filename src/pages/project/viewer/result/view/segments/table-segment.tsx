@@ -2,7 +2,7 @@ interface TableSegmentProps {
     items: string[][];
 }
 
-export const TableSegment = ({items}: TableSegmentProps) => {
+export const TableSegment = ({ items }: TableSegmentProps) => {
     if (!items || items.length === 0) {
         return null;
     }
@@ -14,9 +14,7 @@ export const TableSegment = ({items}: TableSegmentProps) => {
                     {items.map((row, rowIndex) => (
                         <tr key={rowIndex}>
                             {row.map((cell, cellIndex) => (
-                                <td key={`${rowIndex}-${cellIndex}`}>
-                                    {cell}
-                                </td>
+                                <td key={`${rowIndex}-${cellIndex}`}>{cell}</td>
                             ))}
                         </tr>
                     ))}
@@ -24,4 +22,4 @@ export const TableSegment = ({items}: TableSegmentProps) => {
             </table>
         </div>
     );
-}
+};

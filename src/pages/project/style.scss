@@ -2,13 +2,13 @@
 @use '../../shared/styles/common' as *;
 
 .project-container {
-  display: flex;
-  flex-direction: row;
-  height: calc(100vh - $header-height - $main-margin);
-  width: 100%;
-  gap: 8px;
+    display: flex;
+    flex-direction: row;
+    height: calc(100vh - $header-height - $main-margin);
+    width: 100%;
+    gap: 8px;
 
-  @media screen and (max-width: 900px) {
-    flex-direction: column;
-  }
+    @media screen and (max-width: 900px) {
+        flex-direction: column;
+    }
 }

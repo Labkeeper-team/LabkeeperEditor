@@ -7,18 +7,27 @@ import { Typography } from '../../../componenets/typography';
 import { colors } from '../../styles/colors';
 
 export const SectorHeader = (props: SectorHeaderProps) => {
-  return (
-    <div onClick={props.onPressExpanded} className="sector-header-container">
-      {typeof props.title === 'string' ? (
-        <Typography text={props.title} type="body" color={colors.gray20} />
-      ) : (
-        props.title
-      )}
-      <div
-        className={classNames('expnad-container', { expanded: props.expanded })}
-      >
-        <ExpandIcon />
-      </div>
-    </div>
-  );
+    return (
+        <div
+            onClick={props.onPressExpanded}
+            className="sector-header-container"
+        >
+            {typeof props.title === 'string' ? (
+                <Typography
+                    text={props.title}
+                    type="body"
+                    color={colors.gray20}
+                />
+            ) : (
+                props.title
+            )}
+            <div
+                className={classNames('expnad-container', {
+                    expanded: props.expanded,
+                })}
+            >
+                <ExpandIcon />
+            </div>
+        </div>
+    );
 };

@@ -5,19 +5,19 @@ import { setShowShareModal } from '../../../store/slices/settings';
 import './style.scss';
 
 export const ShareButton = () => {
-  const dispatch = useDispatch();
-  const project = useSelector(useCurrentProject);
+    const dispatch = useDispatch();
+    const project = useSelector(useCurrentProject);
 
-  if (!project || !project.title) {
-    return null;
-  }
+    if (!project || !project.title) {
+        return null;
+    }
 
-  return (
-    <button 
-      className="share-button" 
-      onClick={() => dispatch(setShowShareModal(true))}
-    >
-      <ShareIcon />
-    </button>
-  );
-}; 
+    return (
+        <button
+            className="share-button"
+            onClick={() => dispatch(setShowShareModal(true))}
+        >
+            <ShareIcon />
+        </button>
+    );
+};

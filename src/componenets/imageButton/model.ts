@@ -1,5 +1,5 @@
 export interface ImageButtonProps {
-  rotate?: boolean;
-  type: 'primary' | 'outline';
-  onClick: () => any;
+    rotate?: boolean;
+    type: 'primary' | 'outline';
+    onClick: () => unknown;
 }

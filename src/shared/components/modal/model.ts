@@ -1,5 +1,5 @@
 export interface ModalProps {
-  showModal: boolean;
-  children?: any;
-  onClose: () => any;
+    showModal: boolean;
+    children?: unknown;
+    onClose: () => unknown;
 }

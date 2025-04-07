@@ -1,3 +1,3 @@
 export interface AddBlockProps {
-  isFirst: boolean;
+    isFirst: boolean;
 }

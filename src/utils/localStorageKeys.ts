@@ -1,3 +1,3 @@
 export const LocalStorageKeys = {
-  persistence: 'PERSISTENCE'
+    persistence: 'PERSISTENCE',
 };

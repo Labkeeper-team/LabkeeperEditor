@@ -1,124 +1,124 @@
 @use '../../../../../../shared/styles/colors' as *;
 
 .segment-editor-container {
-  position: relative;
-  border: 1px solid $gray-40;
-  background-color: $gray-60;
-  width: 100%;
-  /*height: max-content;
-  min-height: 80px;*/
-  &.is-active {
-    border: 1px solid $blue-10;
-  }
-  &.is-non-visible {
-    //background: rgba($gray-60, 0.1);
-    opacity: 0.4;
-    z-index: 1;
-  }
-  .full-width-checkbox {
+    position: relative;
+    border: 1px solid $gray-40;
+    background-color: $gray-60;
     width: 100%;
-  }
-  .dropdown-content-contanier-additional {
-    // padding: 10px 12px;
-  }
-  .cm-panels {
-    display: none;
-  }
-  .cm-editor {
-    background: none !important;
-    min-height: 80px;
-    .cm-foldGutter {
-      width: 0px;
+    /*height: max-content;
+  min-height: 80px;*/
+    &.is-active {
+        border: 1px solid $blue-10;
     }
-  }
-  .highlight-text-editor {
-    background: yellow;
-  }
-  .highlight-text-editor-error {
-    text-decoration:underline;
-    text-decoration-line: spelling-error;
-    text-decoration-color: red;
-  }
-  .editor-rules {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 6px;
-    position: absolute;
-    right: 4px;
-    top: 6px;
-    background: $gray-50;
-    padding-left: 5px;
-    border-radius: 15px;
-    .change-position-button {
-      display: flex;
-      align-items: center;
-      &:hover {
-        cursor: pointer;
-        color: $gray-10;
-        svg {
-          path {
-            fill: $gray-30;
-          }
-        }
-      }
-      &.rotate {
-        rotate: 180deg;
-      }
+    &.is-non-visible {
+        //background: rgba($gray-60, 0.1);
+        opacity: 0.4;
+        z-index: 1;
     }
-    .segment-type-container {
-        user-select: none;
-        padding-left: 3px;
-        text-align: center;
-        .typography {
-        color: $gray-30 !important;
+    .full-width-checkbox {
+        width: 100%;
+    }
+    .dropdown-content-contanier-additional {
+        // padding: 10px 12px;
+    }
+    .cm-panels {
+        display: none;
+    }
+    .cm-editor {
+        background: none !important;
+        min-height: 80px;
+        .cm-foldGutter {
+            width: 0px;
         }
     }
-    .segment-position {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: $gray-30;
-      border-radius: 30px;
-      color: $white;
-      height: 18px;
-      width: 18px;
+    .highlight-text-editor {
+        background: yellow;
     }
-    .delete-segment-container {
-      width: 100%;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      gap: 6px;
-      .delete-icon {
-        transition-duration: 0.3s;
-      }
-
-      &:hover {
-        cursor: pointer;
-        color: $gray-30;
-        .delete-icon {
-          border: 1px solid $red-10;
-          height: 15px;
-          width: 15px;
-        }
-      }
-      .delete-icon {
-        background-color: $red-20;
-        border: 1px solid $red-20;
-        border-radius: 45px;
-        height: 15px;
-        width: 15px;
+    .highlight-text-editor-error {
+        text-decoration: underline;
+        text-decoration-line: spelling-error;
+        text-decoration-color: red;
+    }
+    .editor-rules {
         display: flex;
-        justify-content: center;
+        flex-direction: row;
         align-items: center;
-        rotate: 45deg;
-        svg {
-          path {
-            fill: $red-10;
-          }
+        gap: 6px;
+        position: absolute;
+        right: 4px;
+        top: 6px;
+        background: $gray-50;
+        padding-left: 5px;
+        border-radius: 15px;
+        .change-position-button {
+            display: flex;
+            align-items: center;
+            &:hover {
+                cursor: pointer;
+                color: $gray-10;
+                svg {
+                    path {
+                        fill: $gray-30;
+                    }
+                }
+            }
+            &.rotate {
+                rotate: 180deg;
+            }
         }
-      }
+        .segment-type-container {
+            user-select: none;
+            padding-left: 3px;
+            text-align: center;
+            .typography {
+                color: $gray-30 !important;
+            }
+        }
+        .segment-position {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: $gray-30;
+            border-radius: 30px;
+            color: $white;
+            height: 18px;
+            width: 18px;
+        }
+        .delete-segment-container {
+            width: 100%;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 6px;
+            .delete-icon {
+                transition-duration: 0.3s;
+            }
+
+            &:hover {
+                cursor: pointer;
+                color: $gray-30;
+                .delete-icon {
+                    border: 1px solid $red-10;
+                    height: 15px;
+                    width: 15px;
+                }
+            }
+            .delete-icon {
+                background-color: $red-20;
+                border: 1px solid $red-20;
+                border-radius: 45px;
+                height: 15px;
+                width: 15px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                rotate: 45deg;
+                svg {
+                    path {
+                        fill: $red-10;
+                    }
+                }
+            }
+        }
     }
-  }
 }

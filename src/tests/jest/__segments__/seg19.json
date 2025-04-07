@@ -1,37 +1,37 @@
 {
-  "id": 1,
-  "type": "computational",
-  "statements": [
-    {
-      "type": "calculation",
-      "assignment": "(Sigma_i^n (x_i * y_i) - Sigma_i^n (x_i) * Sigma_j^n (y_j)) / (Sigma_i^n (x_i^2) - (Sigma_i^n (x_i))^2)",
-      "inflAssignment": "sqrt(abs((Sigma_i^n (y_i^2) - (Sigma_i^n (y_i))^2) / (Sigma_i^n (x_i^2) - (Sigma_i^n (x_i))^2))) / n",
-      "variable": "a",
-      "array": {
-        "array": [
-          {
-            "value": "1",
-            "infl": "0"
-          }
-        ]
-      },
-      "legendVisible": false
-    },
-    {
-      "type": "calculation",
-      "assignment": "Sigma_j^n (y_j) - a Sigma_i^n (x_i)",
-      "inflAssignment": "sqrt(abs(Sigma_i^n (x_i^2) - (Sigma_i^n (x_i))^2)) sigma(b)",
-      "variable": "b",
-      "array": {
-        "array": [
-          {
-            "value": "-1",
-            "infl": "0"
-          }
-        ]
-      },
-      "legendVisible": false
-    }
-  ],
-  "text": null
+    "id": 1,
+    "type": "computational",
+    "statements": [
+        {
+            "type": "calculation",
+            "assignment": "(Sigma_i^n (x_i * y_i) - Sigma_i^n (x_i) * Sigma_j^n (y_j)) / (Sigma_i^n (x_i^2) - (Sigma_i^n (x_i))^2)",
+            "inflAssignment": "sqrt(abs((Sigma_i^n (y_i^2) - (Sigma_i^n (y_i))^2) / (Sigma_i^n (x_i^2) - (Sigma_i^n (x_i))^2))) / n",
+            "variable": "a",
+            "array": {
+                "array": [
+                    {
+                        "value": "1",
+                        "infl": "0"
+                    }
+                ]
+            },
+            "legendVisible": false
+        },
+        {
+            "type": "calculation",
+            "assignment": "Sigma_j^n (y_j) - a Sigma_i^n (x_i)",
+            "inflAssignment": "sqrt(abs(Sigma_i^n (x_i^2) - (Sigma_i^n (x_i))^2)) sigma(b)",
+            "variable": "b",
+            "array": {
+                "array": [
+                    {
+                        "value": "-1",
+                        "infl": "0"
+                    }
+                ]
+            },
+            "legendVisible": false
+        }
+    ],
+    "text": null
 }

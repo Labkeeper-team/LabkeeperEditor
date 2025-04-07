@@ -1,12 +1,24 @@
-import {createSlice, PayloadAction, createAsyncThunk} from "@reduxjs/toolkit";
-import {LOGOUT_TYPE} from "../../actions";
-import {userRPI} from "../../../rpi/user";
-import {StorageState} from "../../index";
+import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
+import { LOGOUT_TYPE } from '../../actions';
+import { userRPI } from '../../../rpi/user';
+import { StorageState } from '../../index';
 
-export type AuthView = 'login' | 'email' | 'code' | 'password' | 'success'
-export type EmailRequestState = 'unknown' | 'loading' | 'ok' | 'userNotFound' | 'userExists' | 'validationError'
-export type CodeRequestState = 'unknown' | 'loading' | 'ok' | 'invalid'
-export type PasswordRequestState = 'unknown' | 'loading' | 'ok' | 'userNotFound' | 'userExists' | 'validationError'
+export type AuthView = 'login' | 'email' | 'code' | 'password' | 'success';
+export type EmailRequestState =
+    | 'unknown'
+    | 'loading'
+    | 'ok'
+    | 'userNotFound'
+    | 'userExists'
+    | 'validationError';
+export type CodeRequestState = 'unknown' | 'loading' | 'ok' | 'invalid';
+export type PasswordRequestState =
+    | 'unknown'
+    | 'loading'
+    | 'ok'
+    | 'userNotFound'
+    | 'userExists'
+    | 'validationError';
 
 export interface AuthState {
     currentView: AuthView;
@@ -29,15 +41,23 @@ const initialState: AuthState = {
     codeCheckRequest: 'unknown',
     passwordSetRequest: 'unknown',
     authErrorMessage: null,
-    showAuthModal: false
-}
+    showAuthModal: false,
+};
 
 // Async thunks
 export const sendEmailWithCode = createAsyncThunk(
     'auth/sendEmailWithCode',
-    async ({ email, captcha }: { email: string, captcha: string }, { rejectWithValue, getState }) => {
+    async (
+        { email, captcha }: { email: string; captcha: string },
+        { rejectWithValue, getState }
+    ) => {
         const state = getState() as StorageState;
-        const result = await userRPI.sendEmailWithCode(email, state.auth.isRegistration, state.persistence.language, captcha);
+        const result = await userRPI.sendEmailWithCode(
+            email,
+            state.auth.isRegistration,
+            state.persistence.language,
+            captcha
+        );
         if (!result.isOk) {
             return rejectWithValue({ code: result.code, email });
         }
@@ -49,19 +69,31 @@ export const checkCode = createAsyncThunk(
     'auth/checkCode',
     async ({ code }: { code: string }, { rejectWithValue, getState }) => {
         const state = getState() as StorageState;
-        const result = await userRPI.checkCode(state.auth.currentEmail || '', code);
+        const result = await userRPI.checkCode(
+            state.auth.currentEmail || '',
+            code
+        );
         if (!result.isOk) {
             return rejectWithValue(result.code);
         }
-        return { valid: result.body.valid, code };
+        const body = result.body as { valid: boolean };
+        return { valid: body.valid, code };
     }
 );
 
 export const setPassword = createAsyncThunk(
     'auth/setPassword',
-    async ({ password }: { email: string, code: string, password: string }, { rejectWithValue, getState }) => {
+    async (
+        { password }: { email: string; code: string; password: string },
+        { rejectWithValue, getState }
+    ) => {
         const state = getState() as StorageState;
-        const result = await userRPI.setPassword(state.auth.currentEmail || '', state.auth.lastVerifiedCode || '', password, state.auth.isRegistration);
+        const result = await userRPI.setPassword(
+            state.auth.currentEmail || '',
+            state.auth.lastVerifiedCode || '',
+            password,
+            state.auth.isRegistration
+        );
         if (!result.isOk) {
             return rejectWithValue(result.code);
         }
@@ -72,30 +104,30 @@ export const authSlice = createSlice({
     name: 'authSlice',
     initialState,
     reducers: {
-        setCurrentView(state, {payload}: PayloadAction<AuthView>) {
-            state.currentView = payload
+        setCurrentView(state, { payload }: PayloadAction<AuthView>) {
+            state.currentView = payload;
         },
-        setCurrentEmail(state, {payload}: PayloadAction<string | null>) {
-            state.currentEmail = payload
+        setCurrentEmail(state, { payload }: PayloadAction<string | null>) {
+            state.currentEmail = payload;
         },
-        setRegistration(state, {payload}: PayloadAction<boolean>) {
-            state.isRegistration = payload
+        setRegistration(state, { payload }: PayloadAction<boolean>) {
+            state.isRegistration = payload;
         },
         resetRequestStates(state) {
-            state.emailRequest = 'unknown'
+            state.emailRequest = 'unknown';
             state.codeCheckRequest = 'unknown';
             state.passwordSetRequest = 'unknown';
         },
-        setErrorMessage(state, {payload}: PayloadAction<string>) {
-            state.showAuthModal = true
-            state.authErrorMessage = payload
+        setErrorMessage(state, { payload }: PayloadAction<string>) {
+            state.showAuthModal = true;
+            state.authErrorMessage = payload;
         },
-        setShowAuthModal(state, {payload}: PayloadAction<boolean>) {
-            state.showAuthModal = payload
+        setShowAuthModal(state, { payload }: PayloadAction<boolean>) {
+            state.showAuthModal = payload;
             if (!payload) {
-                state.authErrorMessage = ''
+                state.authErrorMessage = '';
             }
-        }
+        },
     },
     extraReducers: (builder) => {
         builder
@@ -105,61 +137,71 @@ export const authSlice = createSlice({
             })
             // Email request
             .addCase(sendEmailWithCode.pending, (state) => {
-                state.emailRequest = 'loading'
-                state.currentEmail = null
-                state.authErrorMessage = ''
+                state.emailRequest = 'loading';
+                state.currentEmail = null;
+                state.authErrorMessage = '';
             })
             .addCase(sendEmailWithCode.fulfilled, (state, action) => {
-                state.emailRequest = 'ok'
+                state.emailRequest = 'ok';
                 state.currentEmail = action.payload.email;
             })
             .addCase(sendEmailWithCode.rejected, (state, action) => {
-                const payload = action.payload as { code: number, email: string };
+                const payload = action.payload as {
+                    code: number;
+                    email: string;
+                };
                 state.currentEmail = null;
-                state.emailRequest = 'validationError'
+                state.emailRequest = 'validationError';
                 if (payload.code === 404) {
-                    state.emailRequest = 'userNotFound'
+                    state.emailRequest = 'userNotFound';
                 }
                 if (payload.code === 409) {
-                    state.emailRequest = 'userExists'
+                    state.emailRequest = 'userExists';
                 }
             })
             // Code check
             .addCase(checkCode.pending, (state) => {
-                state.codeCheckRequest = 'loading'
-                state.lastVerifiedCode = null
-                state.authErrorMessage = ''
+                state.codeCheckRequest = 'loading';
+                state.lastVerifiedCode = null;
+                state.authErrorMessage = '';
             })
             .addCase(checkCode.fulfilled, (state, action) => {
-                state.codeCheckRequest = 'ok'
+                state.codeCheckRequest = 'ok';
                 if (!action.payload.valid) {
-                    state.codeCheckRequest = 'invalid'
+                    state.codeCheckRequest = 'invalid';
                 }
-                state.lastVerifiedCode = action.payload.code
+                state.lastVerifiedCode = action.payload.code;
             })
-            .addCase(checkCode.rejected, (state, _) => {
-                state.codeCheckRequest = 'invalid'
-                state.lastVerifiedCode = null
+            .addCase(checkCode.rejected, (state) => {
+                state.codeCheckRequest = 'invalid';
+                state.lastVerifiedCode = null;
             })
             // Password set
             .addCase(setPassword.pending, (state) => {
-                state.passwordSetRequest = 'loading'
-                state.authErrorMessage = ''
+                state.passwordSetRequest = 'loading';
+                state.authErrorMessage = '';
             })
             .addCase(setPassword.fulfilled, (state) => {
-                state.passwordSetRequest = 'ok'
+                state.passwordSetRequest = 'ok';
             })
             .addCase(setPassword.rejected, (state, action) => {
                 const code = action.payload as number;
-                state.passwordSetRequest = 'validationError'
+                state.passwordSetRequest = 'validationError';
                 if (code === 404) {
-                    state.passwordSetRequest = 'userNotFound'
+                    state.passwordSetRequest = 'userNotFound';
                 }
                 if (code === 409) {
-                    state.passwordSetRequest = 'userExists'
+                    state.passwordSetRequest = 'userExists';
                 }
             });
-    }
-})
+    },
+});
 
-export const {setCurrentView, setShowAuthModal, setErrorMessage, setCurrentEmail, resetRequestStates, setRegistration} = authSlice.actions
+export const {
+    setCurrentView,
+    setShowAuthModal,
+    setErrorMessage,
+    setCurrentEmail,
+    resetRequestStates,
+    setRegistration,
+} = authSlice.actions;

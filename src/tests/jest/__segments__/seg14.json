@@ -1,93 +1,86 @@
 {
-  "id": 0,
-  "type": "computational",
-  "statements": [
-    {
-      "type": "assignment",
-      "variable": "a",
-      "array": {
-        "array": [
-          {
-            "value": "1",
-            "infl": "0"
-          },
-          {
-            "value": "2",
-            "infl": "0"
-          },
-          {
-            "value": "3",
-            "infl": "0"
-          },
-          {
-            "value": "4",
-            "infl": "0"
-          },
-          {
-            "value": "5",
-            "infl": "0"
-          },
-          {
-            "value": "6",
-            "infl": "0"
-          }
-        ]
-      }
-    },
-    {
-      "type": "calculation",
-      "variable": "b",
-      "array": {
-        "array": [
-          {
-            "value": "1",
-            "infl": "0"
-          },
-          {
-            "value": "4",
-            "infl": "0"
-          },
-          {
-            "value": "9",
-            "infl": "0"
-          },
-          {
-            "value": "16",
-            "infl": "0"
-          },
-          {
-            "value": "25",
-            "infl": "0"
-          },
-          {
-            "value": "36",
-            "infl": "0"
-          }
-        ]
-      },
-      "assignment": "a^2",
-      "assignmentWithValues": [
-        "1^2",
-        "2^2",
-        "3^2",
-        "4^2",
-        "5^2",
-        "6^2"
-      ],
-      "inflAssignmentGeneralFormula": "sqrt(((partial b)/(partial a)*sigma(a))^2)",
-      "inflAssignment": "sqrt(4*a^2*sigma(a)^2)",
-      "inflAssignmentWithValues": [
-        "sqrt(4*1^2*0^2)",
-        "sqrt(4*2^2*0^2)",
-        "sqrt(4*3^2*0^2)",
-        "sqrt(4*4^2*0^2)",
-        "sqrt(4*5^2*0^2)",
-        "sqrt(4*6^2*0^2)"
-      ]
-    },
-    {
-      "type": "file",
-      "url": "./../../../../src/tests/jest/__assets__/img.png"
-    }
-  ]
+    "id": 0,
+    "type": "computational",
+    "statements": [
+        {
+            "type": "assignment",
+            "variable": "a",
+            "array": {
+                "array": [
+                    {
+                        "value": "1",
+                        "infl": "0"
+                    },
+                    {
+                        "value": "2",
+                        "infl": "0"
+                    },
+                    {
+                        "value": "3",
+                        "infl": "0"
+                    },
+                    {
+                        "value": "4",
+                        "infl": "0"
+                    },
+                    {
+                        "value": "5",
+                        "infl": "0"
+                    },
+                    {
+                        "value": "6",
+                        "infl": "0"
+                    }
+                ]
+            }
+        },
+        {
+            "type": "calculation",
+            "variable": "b",
+            "array": {
+                "array": [
+                    {
+                        "value": "1",
+                        "infl": "0"
+                    },
+                    {
+                        "value": "4",
+                        "infl": "0"
+                    },
+                    {
+                        "value": "9",
+                        "infl": "0"
+                    },
+                    {
+                        "value": "16",
+                        "infl": "0"
+                    },
+                    {
+                        "value": "25",
+                        "infl": "0"
+                    },
+                    {
+                        "value": "36",
+                        "infl": "0"
+                    }
+                ]
+            },
+            "assignment": "a^2",
+            "assignmentWithValues": ["1^2", "2^2", "3^2", "4^2", "5^2", "6^2"],
+            "inflAssignmentGeneralFormula": "sqrt(((partial b)/(partial a)*sigma(a))^2)",
+            "inflAssignment": "sqrt(4*a^2*sigma(a)^2)",
+            "inflAssignmentWithValues": [
+                "sqrt(4*1^2*0^2)",
+                "sqrt(4*2^2*0^2)",
+                "sqrt(4*3^2*0^2)",
+                "sqrt(4*4^2*0^2)",
+                "sqrt(4*5^2*0^2)",
+                "sqrt(4*6^2*0^2)"
+            ]
+        },
+        {
+            "type": "file",
+            "url": "./../../../../src/tests/jest/__assets__/img.png"
+        }
+    ]
 }

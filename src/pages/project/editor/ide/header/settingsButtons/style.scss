@@ -1,23 +1,23 @@
 .code-settings-header-container {
-  .input-hide {
-    position: absolute;
-    width: 21px;
-    height: 45px;
-    right: 130px;
-    top: 0px;
-    pointer-events: none;
-    input {
-      display: none;
+    .input-hide {
+        position: absolute;
+        width: 21px;
+        height: 45px;
+        right: 130px;
+        top: 0px;
+        pointer-events: none;
+        input {
+            display: none;
+        }
+        //transition: width 0.4s;
     }
-    //transition: width 0.4s;
-  }
-  .input-show {
-    right: 5px;
-    top: 0px;
-    height: 45px;
-    width: 98%;
-    position: absolute;
-    transition: width 0.4s;
-    //width: 100px;
-  }
+    .input-show {
+        right: 5px;
+        top: 0px;
+        height: 45px;
+        width: 98%;
+        position: absolute;
+        transition: width 0.4s;
+        //width: 100px;
+    }
 }

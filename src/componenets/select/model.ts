@@ -1,8 +1,8 @@
 export interface ISelectOptions {
     options: {
         label: string;
-        value: any;
+        value: unknown;
     }[];
-    onChange: (value: any) => void;
-    value: any;
+    onChange: (value: unknown) => void;
+    value: unknown;
 }

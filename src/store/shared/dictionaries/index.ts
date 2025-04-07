@@ -1,6 +1,6 @@
-import { CompileError } from "../../../shared/models/project";
-import { en } from "./en";
-import { ru } from "./ru";
+import { CompileError } from '../../../shared/models/project';
+import { en } from './en';
+import { ru } from './ru';
 
 export type Language = 'ru' | 'en';
 
@@ -13,7 +13,6 @@ export interface Translations {
     loading: string;
     yes: string;
     no: string;
-
 
     warning_dontuselongvarioables: string;
 
@@ -39,9 +38,9 @@ export interface Translations {
         info_error: string;
         info_add_markdown: string;
         info_canvas: string;
-    },
+    };
     label_no_result_part1: string;
-    label_no_result_part2: string;  //Add the code or markdown and click "RUN"
+    label_no_result_part2: string; //Add the code or markdown and click "RUN"
     delete_modal: string;
     create_modal: {
         label: string;
@@ -51,13 +50,13 @@ export interface Translations {
             empty_name: string;
             too_many_projects: string;
         };
-    }
+    };
     rounding_mode: {
         label: string;
         without_round: string;
         first_digit: string;
         fixed_number: string;
-    }
+    };
     label_syntax_highlight: string;
     label_autocompilation: string;
 
@@ -69,8 +68,8 @@ export interface Translations {
         add: string;
         errors: {
             empty_name: string;
-        }
-    }
+        };
+    };
     segment: {
         code: string;
         markdown: string;
@@ -82,14 +81,14 @@ export interface Translations {
         hide_infl_assignment_with_values: string;
         errors: {
             non_authorized_paste_image: string;
-        }
+        };
     };
 
     instructions: {
         label: string;
         adding_segment: string;
-    },
-    
+    };
+
     compile_error: {
         [CompileError.CODE_NO_END_QUOTES]: string;
         [CompileError.UNKNOWN_SYMBOL]: string;
@@ -112,7 +111,7 @@ export interface Translations {
         [CompileError.INCORRECT_ARGUMENT]: string;
         [CompileError.FUNCTION_HAS_NO_RETURN_VALUE]: string;
         [CompileError.MULTIPLE_ERROR]: string;
-    }
+    };
 
     error_common: {
         segment: string;
@@ -122,7 +121,7 @@ export interface Translations {
         max: string;
         new_line: string;
         variable: string;
-    }
+    };
     authorization: {
         title: string;
         loginVia: string;
@@ -160,12 +159,12 @@ export interface Translations {
             credentialsError: string;
             oauthError: string;
         };
-    },
+    };
     loginModal: {
         submit: string;
         loginToProceed: string;
         description: string;
-    }
+    };
     quota_definition: {
         1: string;
         2: string;
@@ -173,7 +172,7 @@ export interface Translations {
         4: string;
         5: string;
         6: string;
-    }
+    };
 
     filemanager: {
         title: string;
@@ -186,13 +185,13 @@ export interface Translations {
         errors: {
             tooMuchFiles: string;
             tooBigFile: string;
-            sessionExpired: string,
-            internalError: string
+            sessionExpired: string;
+            internalError: string;
             notSupported: string;
             notEnoughRights: string;
             notFound: string;
-        }
-    }
+        };
+    };
 
     share_modal: {
         title: string;
@@ -201,10 +200,10 @@ export interface Translations {
         copy_link: string;
         link_copied: string;
         copy_error: string;
-    }
+    };
 }
 
 export const dictionary: Record<Language, Translations> = {
-    'ru': ru,
-    'en': en,
-}
+    ru: ru,
+    en: en,
+};

@@ -14,13 +14,13 @@ export const persistenceSlice = createSlice({
     name: 'persistenceSlice',
     initialState,
     reducers: {
-        setLanguage: (state, {payload}: PayloadAction<Language>) => {
+        setLanguage: (state, { payload }: PayloadAction<Language>) => {
             state.language = payload;
         },
     },
     extraReducers: (b) => {
         b.addCase(LOGOUT_TYPE, (state) => {
-            const newLogoutState = {...initialState};
+            const newLogoutState = { ...initialState };
             newLogoutState.language = state.language;
             state = newLogoutState;
             return state;

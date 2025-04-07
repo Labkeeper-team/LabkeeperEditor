@@ -1,44 +1,38 @@
 {
-  "id": 1,
-  "type": "computational",
-  "statements": [
-    {
-      "type": "calculation",
-      "assignment": "range(end=5)",
-      "assignmentWithValues": [
-        "0",
-        "1",
-        "2",
-        "3",
-        "4"
-      ],
-      "variable": "c",
-      "array": {
-        "array": [
-          {
-            "value": "0",
-            "infl": "0"
-          },
-          {
-            "value": "1",
-            "infl": "0"
-          },
-          {
-            "value": "2",
-            "infl": "0"
-          },
-          {
-            "value": "3",
-            "infl": "0"
-          },
-          {
-            "value": "4",
-            "infl": "0"
-          }
-        ]
-      },
-      "legendVisible": false
-    }
-  ],
-  "text": null
+    "id": 1,
+    "type": "computational",
+    "statements": [
+        {
+            "type": "calculation",
+            "assignment": "range(end=5)",
+            "assignmentWithValues": ["0", "1", "2", "3", "4"],
+            "variable": "c",
+            "array": {
+                "array": [
+                    {
+                        "value": "0",
+                        "infl": "0"
+                    },
+                    {
+                        "value": "1",
+                        "infl": "0"
+                    },
+                    {
+                        "value": "2",
+                        "infl": "0"
+                    },
+                    {
+                        "value": "3",
+                        "infl": "0"
+                    },
+                    {
+                        "value": "4",
+                        "infl": "0"
+                    }
+                ]
+            },
+            "legendVisible": false
+        }
+    ],
+    "text": null
 }
