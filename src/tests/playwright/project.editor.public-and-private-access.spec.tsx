@@ -189,7 +189,7 @@ test('public-project-unauth-user-compilation-ok', async ({ page }) => {
     await page.getByRole('button', { name: /Выполнить/i }).waitFor({state: "attached"})
 
     // проверяем, что элементы отображаются корректно
-    //await expect(page).toHaveScreenshot('public-compile-ok.png');
+    await expect(page).toHaveScreenshot('public-compile-ok.png');
 
     // Проверяем, что не было отклоненных запросов
     expect(rejectedRequests).toBe(0);
@@ -393,7 +393,7 @@ test('public-project-different-user-compilation-ok', async ({ page }) => {
     await page.getByRole('button', { name: /Выполнить/i }).waitFor({state: "attached"})
 
     // проверяем, что элементы отображаются корректно
-    await expect(page).toHaveScreenshot('public-compile-ok.png');
+    await expect(page).toHaveScreenshot('different-user-public-compile-ok.png');
 
     // Проверяем, что не было отклоненных запросов
     expect(rejectedRequests).toBe(0);

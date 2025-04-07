@@ -12,6 +12,7 @@ export const Checkbox = (props: CheckboxProps) => {
   };
   return (
     <div
+        hidden={props.hidden || false}
       className={classNames('labkeeper-checkbox', { checked: props.checked }, props.className)}
       onClick={onClick}
     >
