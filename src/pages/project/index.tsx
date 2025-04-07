@@ -75,6 +75,7 @@ export const ProjectPage = () => {
     }
     const projectId = +id;
     if (isNaN(projectId)) {
+      dispatch(setReadOnly(false))
       if (user.isAuthenticated && !project) {
         const createDefaultProject = async () => {
             const result = await getDefaultProjectRequest(language); // TODO send program
@@ -103,9 +104,11 @@ export const ProjectPage = () => {
       }
       if (result.isForbidden) {
         toast(dictionary.filemanager.errors.notEnoughRights, {type: 'error'});
+        dispatch(setReadOnly(true))
       }
       if (result.code === 404) {
         toast(dictionary.filemanager.errors.notFound, {type: 'error'});
+        dispatch(setReadOnly(true))
       }
       if (result.isOk) {
         dispatch(setProject(result.body as Project));

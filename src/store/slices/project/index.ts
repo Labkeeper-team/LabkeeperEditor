@@ -22,7 +22,7 @@ const initialState: ProjectState = {
   compileErrorResult: {errors: []},
   history: [],
   historyAcitveIndex: -1,
-  projectIsReadonly: false
+  projectIsReadonly: true
 };
 
 export const projectSlice = createSlice({
