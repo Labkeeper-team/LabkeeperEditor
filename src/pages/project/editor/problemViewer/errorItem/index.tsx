@@ -31,7 +31,11 @@ export const ErrorItem = ({code, payload}: ErrorItemProps) => {
       <Typography color={colors.gray10} text={
           dictionary.compile_error[code]
           + (code === CompileError.QUOTA_EXCEEDED ? `. ${dictionary.quota_definition[quotaPayload.quotaIndex]}. ${dictionary.error_common.now}: ${quotaPayload.value}; ${dictionary.error_common.max}: ${quotaPayload.limit}` : '')
-          + (code === CompileError.OPERATOR_EXPECTED ? ' ' + operatorExpectedPayload.operators.join(' ') : '')
+          + (code === CompileError.OPERATOR_EXPECTED ? ' ' + (
+                  (typeof operatorExpectedPayload.operators === "string") ?
+                  operatorExpectedPayload.operators
+              : operatorExpectedPayload.operators.join(' ')
+          ) : '')
           + (code === CompileError.NO_SUCH_VARIABLE ? ' ' + noSuchVariablePayload.variable : '')
           + ((code === CompileError.INCORRECT_ARGUMENT_SIZE ||
               code === CompileError.INCORRECT_ARGUMENTS_COUNT ||
