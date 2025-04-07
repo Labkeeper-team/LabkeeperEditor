@@ -190,6 +190,8 @@ export const en: Translations = {
         title: "Share to",
         private_access: "Access is only for me",
         public_access: "Access for everyone",
-        copy_link: "Copy the link for sharing"
+        copy_link: "Copy the link for sharing",
+        link_copied: "Link copied to clipboard",
+        copy_error: "Failed to copy link"
     }
 };

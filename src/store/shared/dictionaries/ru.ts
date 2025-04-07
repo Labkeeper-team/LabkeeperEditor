@@ -192,6 +192,8 @@ export const ru: Translations = {
         title: "Поделиться",
         private_access: "Доступ только для меня",
         public_access: "Доступ для всех",
-        copy_link: "Копировать ссылку для шаринга"
+        copy_link: "Копировать ссылку для шаринга",
+        link_copied: "Ссылка скопирована в буфер обмена",
+        copy_error: "Не удалось скопировать ссылку"
     }
 }

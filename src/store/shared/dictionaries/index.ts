@@ -199,6 +199,8 @@ export interface Translations {
         private_access: string;
         public_access: string;
         copy_link: string;
+        link_copied: string;
+        copy_error: string;
     }
 }
 
