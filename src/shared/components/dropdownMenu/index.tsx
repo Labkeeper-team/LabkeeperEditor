@@ -5,7 +5,12 @@ import './style.scss';
 import classNames from 'classnames';
 import { useHotkeys } from 'react-hotkeys-hook';
 
-export const DropdownMenu = (props: PropsWithChildren<{ icon?: ReactNode; inherit?: boolean, containerClassname?: string }>) => {
+export const DropdownMenu = (props: PropsWithChildren<{
+    icon?: ReactNode;
+    inherit?: boolean,
+    containerClassname?: string,
+    clickable?: boolean;
+}>) => {
   const [showMenu, setShowMenu] = useState(false);
   const [widthOfStopDefaulKistener, setWidth] = useState(0);
   const ref = useRef<any>(null);
@@ -36,7 +41,11 @@ export const DropdownMenu = (props: PropsWithChildren<{ icon?: ReactNode; inheri
       </div>
       <div
         className={classNames('dropdown-menu-container', {active: showMenu && !props.inherit,'active-inherit': showMenu && props.inherit})}
-        onClick={() => setShowMenu(!showMenu)}
+        onClick={() => {
+            if (props.clickable === undefined || props.clickable) {
+                setShowMenu(!showMenu)
+            }
+        }}
       >
         {props.icon ? props.icon : <DotssIcon />}
       </div>

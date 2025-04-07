@@ -70,7 +70,7 @@ export const ShareModal = () => {
             />
           </div>
         </div>
-        <div className="share-modal__footer">
+        {selectedOption !== 'private' && <div className="share-modal__footer">
           <Button
             title={dictionary.share_modal.copy_link}
             color="blue"
@@ -78,11 +78,16 @@ export const ShareModal = () => {
             rounded={true}
             titleIcon={() => <LinkIcon />}
             onPress={() => {
-              // TODO: Add copy link logic
-              console.log('Copy link clicked');
+              navigator.clipboard.writeText(window.location.href)
+                .then(() => {
+                  toast(dictionary.share_modal.link_copied, { type: 'success' });
+                })
+                .catch(() => {
+                  toast(dictionary.share_modal.copy_error, { type: 'error' });
+                });
             }}
           />
-        </div>
+        </div>}
       </div>
     </Modal>
   );

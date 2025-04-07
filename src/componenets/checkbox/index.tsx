@@ -10,9 +10,11 @@ export const Checkbox = (props: CheckboxProps) => {
   const onClick = () => {
     props.onChange(!props.checked);
   };
+  if (props.hidden) {
+    return <></>
+  }
   return (
     <div
-        hidden={props.hidden || false}
       className={classNames('labkeeper-checkbox', { checked: props.checked }, props.className)}
       onClick={onClick}
     >
