@@ -9,15 +9,17 @@ import {uploadFileRequest} from "../../../../rpi/files.tsx";
 import {logoutAction} from "../../../../store/actions";
 import {toast} from "react-toastify";
 import { checkFile } from '../../../../utils/file';
+import {StorageState} from "../../../../store";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const FileManagerDragZone = (props: {onSuccess?: () => unknown, onError?: (e: any) => unknown}) => {
     const dispatch = useDispatch();
     const project = useSelector(useCurrentProject);
     const dictionary = useSelector(useDictionary);
+    const isReadonly = useSelector((state: StorageState) => state.project.projectIsReadonly);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const onDrop = async (e: EventHandler<DragEvent<any>>) => {
-        if (!project || !project?.projectId) {
+        if (!project || !project?.projectId || isReadonly) {
             return;
         }
         dispatch(setisFileDraggedToFileManager(false));

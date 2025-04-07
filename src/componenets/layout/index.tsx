@@ -17,6 +17,7 @@ export const BaseLayout = () => {
   const [searchParams] = useSearchParams();
   const dispatch = useDispatch();
   const needLogin = useSelector(useNeedLogin);
+  const isReadonly = useSelector((state: StorageState) => state.project.projectIsReadonly);
 
   const location = useLocation()
 
@@ -62,7 +63,11 @@ export const BaseLayout = () => {
     }, [location]);
 
   return (
-    <div  onDragEnter={handleDragEnter} onDrop={handleDrageEnd} onDragEnd={handleDrageEnd} onDragLeave={handleDragLeave} onDragOver={handleDragOver}>
+    <div  onDragEnter={isReadonly ? undefined : handleDragEnter}
+          onDrop={isReadonly ? undefined : handleDrageEnd}
+          onDragEnd={isReadonly ? undefined : handleDrageEnd}
+          onDragLeave={isReadonly ? undefined : handleDragLeave}
+          onDragOver={isReadonly ? undefined : handleDragOver}>
       <Header />
       <div
         style={{
