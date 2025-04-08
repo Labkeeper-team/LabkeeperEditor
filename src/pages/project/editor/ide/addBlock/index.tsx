@@ -53,8 +53,8 @@ export const AddBlock = (props: AddBlockProps) => {
     );
 
     const selectOptions = [
-        { value: 'computational', label: 'Computation' },
-        { value: 'latex', label: 'Latex' },
+        { value: 'computational', label: dictionary.label_add_code },
+        { value: 'latex', label: dictionary.label_add_latex },
     ];
 
     return (
@@ -73,7 +73,7 @@ export const AddBlock = (props: AddBlockProps) => {
             )}
             <Select
                 options={selectOptions}
-                title="Add more"
+                title={dictionary.label_add_more}
                 value="computational"
                 onChange={(value) =>
                     value && onClick(value as 'computational' | 'latex')

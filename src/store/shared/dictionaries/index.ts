@@ -16,7 +16,9 @@ export interface Translations {
 
     warning_dontuselongvarioables: string;
 
+    label_add_latex: string;
     label_add_markdown: string;
+    label_add_more: string;
     label_add_code: string;
     label_save_to_pdf: string;
     label_problems: string;

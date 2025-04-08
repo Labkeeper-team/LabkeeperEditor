@@ -14,9 +14,11 @@ export const ru: Translations = {
     warning_dontuselongvarioables: 'Не используйте длинные имена переменных',
 
     label_add_markdown: 'Добавить маркдаун',
-    label_add_code: 'Добавить код',
     label_save_to_pdf: 'Сохранить в PDF',
     label_problems: 'Проблемы',
+    label_add_code: 'Вычисление',
+    label_add_latex: 'Latex',
+    label_add_more: 'Добавить еще',
 
     segment_divider: {
         add: 'Добавить',
