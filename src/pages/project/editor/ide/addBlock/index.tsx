@@ -52,8 +52,8 @@ export const AddBlock = (props: AddBlockProps) => {
     );
 
     const selectOptions = [
-        { value: 'computational', label: 'Add computation' },
-        { value: 'latex', label: 'Add latex' }
+        { value: 'computational', label: 'Computation' },
+        { value: 'latex', label: 'Latex' }
     ];
 
     return (
@@ -70,6 +70,7 @@ export const AddBlock = (props: AddBlockProps) => {
             {props.isFirst && (<Typography text={dictionary.or} color={colors.black} />)}
             <Select
                 options={selectOptions}
+                title="Add more"
                 value="computational"
                 onChange={(value) => value && onClick(value as 'computational' | 'md')}
                 className={SelectClassNames.Computation}

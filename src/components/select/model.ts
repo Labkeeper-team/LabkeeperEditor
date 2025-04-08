@@ -4,6 +4,7 @@ export interface ISelectOptions {
     onChange: (value: string | number) => void;
     className?: SelectClassNames;
     minimize?: boolean;
+    title?: string;
 }
 
 export enum SelectClassNames {

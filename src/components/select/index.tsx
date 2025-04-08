@@ -5,7 +5,7 @@ import classNames from 'classnames';
 import './style.scss';
 import { useHotkeys } from 'react-hotkeys-hook';
 
-export const Select = ({ options, value, onChange, className = SelectClassNames.Default, minimize = false }: ISelectOptions) => {
+export const Select = ({ title, options, value, onChange, className = SelectClassNames.Default, minimize = false }: ISelectOptions) => {
     const [isOpen, setIsOpen] = useState(false); // Состояние открытия/закрытия списка
     const selectRef = useRef<HTMLDivElement>(null); // Ссылка на контейнер
     const selectedValue = useMemo(() => {
@@ -59,7 +59,7 @@ export const Select = ({ options, value, onChange, className = SelectClassNames.
             })}
         >
             <div className="select-header" onClick={toggleDropdown}>
-                <span className="selected-value">{selectedValue?.label}</span>
+                <span className="selected-value">{title || selectedValue?.label}</span>
             </div>
             {isOpen && (
                 <ul className="select-options">
