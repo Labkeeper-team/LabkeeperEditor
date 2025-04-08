@@ -1,4 +1,5 @@
 import Plot from 'react-plotly.js';
+import './plot-segment.scss';
 
 interface PlotItem {
     x: number[];
@@ -76,7 +77,10 @@ export const PlotSegment = ({
     };
 
     return (
-        <div style={{ height: '100%', width: '100%' }}>
+        <div
+            className="plot-container"
+            style={{ height: '100%', width: '100%' }}
+        >
             <Plot
                 config={{
                     displayModeBar: false,
