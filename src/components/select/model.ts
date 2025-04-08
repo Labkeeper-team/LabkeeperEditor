@@ -9,5 +9,5 @@ export interface ISelectOptions {
 
 export enum SelectClassNames {
     Default = 'default',
-    Computation = 'computation'
+    Computation = 'computation',
 }

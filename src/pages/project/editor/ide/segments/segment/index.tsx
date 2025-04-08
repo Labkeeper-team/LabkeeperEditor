@@ -27,6 +27,7 @@ import {
     Segment,
 } from '../../../../../../shared/models/project';
 import { customLanguageSupport } from './customLanguage';
+import { latexLanguageSupport } from './latexLanguage';
 
 import './style.scss';
 
@@ -490,7 +491,9 @@ export const SegmentEditor = memo(
                                     ? langs.markdown()
                                     : props.segment.type === 'computational'
                                       ? customLanguageSupport
-                                      : props.segment.type === 'latex' ? langs.stex() : undefined
+                                      : props.segment.type === 'latex'
+                                        ? [langs.stex(), latexLanguageSupport]
+                                        : undefined
                                 : undefined,
                             eventsExt,
                             eventsDom,
