@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Input } from '../../../componenets/input';
-import { Typography } from '../../../componenets/typography';
+import { Input } from '../../../components/input';
+import { Typography } from '../../../components/typography';
 import './style.scss';
-import { Button } from '../../../componenets/button';
+import { Button } from '../../../components/button';
 import { RightArrowIcon } from '../../../shared/icons';
 import { useNavigate } from 'react-router-dom';
 import { Routes } from '../../../routing/routes';

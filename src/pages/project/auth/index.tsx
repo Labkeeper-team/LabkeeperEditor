@@ -1,12 +1,12 @@
-import { Typography } from '../../../componenets/typography';
+import { Typography } from '../../../components/typography';
 import { colors } from '../../../shared/styles/colors.ts';
-import { Button } from '../../../componenets/button';
+import { Button } from '../../../components/button';
 import { Login1Icon, Login2Icon } from '../../../shared/icons';
 import { Modal } from '../../../shared/components/modal';
 import { Routes } from '../../../routing/routes.ts';
 import { useSelector, useDispatch } from 'react-redux';
 import { useDictionary } from '../../../store/selectors/translations.ts';
-import { Input } from '../../../componenets/input';
+import { Input } from '../../../components/input';
 import { useState, ChangeEvent, useEffect } from 'react';
 import {
     setCurrentView,

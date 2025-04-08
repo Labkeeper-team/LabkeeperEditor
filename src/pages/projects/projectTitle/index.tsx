@@ -1,10 +1,10 @@
 import { useRef, useState } from 'react';
-import { Typography } from '../../../componenets/typography';
+import { Typography } from '../../../components/typography';
 import { PencilIcon } from '../../../shared/icons';
 import { ProjectTItleProps } from './model';
 
 import './style.scss';
-import { Input } from '../../../componenets/input';
+import { Input } from '../../../components/input';
 import { colors } from '../../../shared/styles/colors';
 
 import { useHotkeys } from 'react-hotkeys-hook';

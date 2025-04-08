@@ -1,6 +1,6 @@
 import { useDispatch, useSelector } from 'react-redux';
-import { Button } from '../../../../../componenets/button';
-import { Typography } from '../../../../../componenets/typography';
+import { Button } from '../../../../../components/button';
+import { Typography } from '../../../../../components/typography';
 import { PlusIcon } from '../../../../../shared/icons';
 import './style.scss';
 import { Program, Segment } from '../../../../../shared/models/project';

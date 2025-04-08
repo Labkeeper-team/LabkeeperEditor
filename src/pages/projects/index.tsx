@@ -7,8 +7,8 @@ import { Routes } from '../../routing/routes';
 import { setProjects } from '../../store/slices/projects';
 
 import './style.scss';
-import { Typography } from '../../componenets/typography';
-import { Button } from '../../componenets/button';
+import { Typography } from '../../components/typography';
+import { Button } from '../../components/button';
 import { PlusIcon } from '../../shared/icons';
 import { Modal } from '../../shared/components/modal';
 import { AddProjectModal } from './addProjectModal';

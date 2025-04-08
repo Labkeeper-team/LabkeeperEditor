@@ -8,14 +8,14 @@ import { setProgramRoundStrategy } from '../../../../../../../store/slices/proje
 
 import './style.scss';
 import { ProgramRoundStrategy } from '../../../../../../../shared/models/project';
-import { Checkbox } from '../../../../../../../componenets/checkbox';
-import { Typography } from '../../../../../../../componenets/typography';
+import { Checkbox } from '../../../../../../../components/checkbox';
+import { Typography } from '../../../../../../../components/typography';
 import {
     setAutocompilation,
     setHighlight,
 } from '../../../../../../../store/slices/ide';
 import { colors } from '../../../../../../../shared/styles/colors';
-import { Radio } from '../../../../../../../componenets/radiobutton';
+import { Radio } from '../../../../../../../components/radiobutton';
 import { useDictionary } from '../../../../../../../store/selectors/translations';
 
 export const ProjectSettings = () => {

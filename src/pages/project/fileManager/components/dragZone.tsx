@@ -1,5 +1,5 @@
 import { useDispatch, useSelector } from 'react-redux';
-import { Typography } from '../../../../componenets/typography';
+import { Typography } from '../../../../components/typography';
 import './drag-zone.style.scss';
 import { setisFileDraggedToFileManager } from '../../../../store/slices/settings';
 import { DragEvent } from 'react';

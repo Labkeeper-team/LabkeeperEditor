@@ -37,10 +37,10 @@ import {
     deleteSegment,
     setSegmentVisibility,
 } from '../../../../../../store/slices/project';
-import { Typography } from '../../../../../../componenets/typography';
+import { Typography } from '../../../../../../components/typography';
 import { DropdownMenu } from '../../../../../../shared/components/dropdownMenu';
 import { ArrowUp, PlusIcon } from '../../../../../../shared/icons';
-import { Checkbox } from '../../../../../../componenets/checkbox';
+import { Checkbox } from '../../../../../../components/checkbox';
 import { StorageState, store } from '../../../../../../store';
 import {
     useCurrentProjectId,

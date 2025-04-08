@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import './style.scss';
 import { EmptyResultContainer } from './empty';
 import { ViewResult } from './view';
-import { Button } from '../../../../componenets/button';
+import { Button } from '../../../../components/button';
 import { SavePdfIcon } from '../../../../shared/icons';
 import { InterfaceTourAnchorClassnames } from '../../../../shared/components/tour/helpers';
 import {

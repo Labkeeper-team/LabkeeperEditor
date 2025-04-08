@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { CompileErrorResult } from '../../../../../shared/models/project';
-import { Typography } from '../../../../../componenets/typography';
+import { Typography } from '../../../../../components/typography';
 import { ErrorItem } from '../errorItem';
 import { colors } from '../../../../../shared/styles/colors';
 import { ExpandIcon } from '../../../../../shared/icons';

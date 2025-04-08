@@ -1,5 +1,5 @@
-import { Typography } from '../../../componenets/typography';
-import { Button } from '../../../componenets/button';
+import { Typography } from '../../../components/typography';
+import { Button } from '../../../components/button';
 
 import './style.scss';
 import { useDispatch, useSelector } from 'react-redux';

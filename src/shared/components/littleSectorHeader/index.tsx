@@ -3,7 +3,7 @@ import { ExpandIcon } from '../../icons';
 import { SectorHeaderProps } from './model';
 
 import './style.scss';
-import { Typography } from '../../../componenets/typography';
+import { Typography } from '../../../components/typography';
 import { colors } from '../../styles/colors';
 
 export const SectorHeader = (props: SectorHeaderProps) => {

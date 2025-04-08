@@ -2,7 +2,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Ref, useEffect, useRef, useState } from 'react';
 import classNames from 'classnames';
 
-import { Typography } from '../../../../componenets/typography';
+import { Typography } from '../../../../components/typography';
 import { DropdownMenu } from '../../../../shared/components/dropdownMenu';
 import { FileIcon, PencilIcon, PlusIcon } from '../../../../shared/icons';
 import { colors } from '../../../../shared/styles/colors';

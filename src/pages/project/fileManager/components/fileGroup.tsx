@@ -1,5 +1,5 @@
 import { useSelector } from 'react-redux';
-import { Typography } from '../../../../componenets/typography';
+import { Typography } from '../../../../components/typography';
 import { IFile } from '../models/file';
 import { FileItem } from './fileItem';
 import { useDictionary } from '../../../../store/selectors/translations';

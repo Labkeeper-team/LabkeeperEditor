@@ -9,7 +9,7 @@ import { setShoFileManager } from '../../../store/slices/settings';
 import { StorageState } from '../../../store';
 import { FileGroup } from './components/fileGroup';
 import { FileManagerDragZone } from './components/dragZone';
-import { Button } from '../../../componenets/button';
+import { Button } from '../../../components/button';
 import { useDictionary } from '../../../store/selectors/translations';
 import { setUpdateFiles } from '../../../store/slices/ide';
 import { listFilesRequest, uploadFileRequest } from '../../../rpi/files.tsx';

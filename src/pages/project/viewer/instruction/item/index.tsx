@@ -1,4 +1,4 @@
-import { Typography } from '../../../../../componenets/typography';
+import { Typography } from '../../../../../components/typography';
 import { colors } from '../../../../../shared/styles/colors';
 
 export const InstructionItem = (props: { index: number; title: string }) => {

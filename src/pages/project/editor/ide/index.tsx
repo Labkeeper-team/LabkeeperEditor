@@ -4,7 +4,7 @@ import './style.scss';
 import { IdeHeader } from './header';
 import { AddBlock } from './addBlock';
 import { Segments } from './segments';
-import { Button } from '../../../../componenets/button';
+import { Button } from '../../../../components/button';
 import { RightArrowIcon } from '../../../../shared/icons';
 import {
     useCurrentProgram,

@@ -1,6 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { Routes } from './routes';
-import { BaseLayout } from '../componenets/layout';
+import { BaseLayout } from '../components/layout';
 import { ProjectPage } from '../pages/project';
 import { HomePage } from '../pages/home';
 import { ProjectsPage } from '../pages/projects';

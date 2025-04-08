@@ -1,5 +1,5 @@
 import { useSelector } from 'react-redux';
-import { Typography } from '../../../../../componenets/typography';
+import { Typography } from '../../../../../components/typography';
 import { WarningIcon } from '../../../../../shared/icons';
 import {
     CompileError,

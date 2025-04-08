@@ -13,7 +13,7 @@ import 'swiper/css/navigation';
 
 import { Navigation, Pagination } from 'swiper/modules';
 import { InstructionItem } from './item';
-import { ImageButton } from '../../../../componenets/imageButton';
+import { ImageButton } from '../../../../components/imageButton';
 import { useSelector } from 'react-redux';
 import { useDictionary } from '../../../../store/selectors/translations';
 

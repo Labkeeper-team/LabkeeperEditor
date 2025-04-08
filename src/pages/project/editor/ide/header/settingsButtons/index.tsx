@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import './style.scss';
 
-import { Input } from '../../../../../../componenets/input';
+import { Input } from '../../../../../../components/input';
 import { InterfaceTourAnchorClassnames } from '../../../../../../shared/components/tour/helpers';
 import {
     BookIcon,
