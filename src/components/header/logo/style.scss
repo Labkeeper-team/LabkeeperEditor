@@ -4,4 +4,24 @@
     align-items: center;
     gap: 5px;
     user-select: none;
+
+    .version-tooltip {
+        cursor: help;
+        display: inline-flex;
+        position: relative;
+
+        &[data-tooltip]:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            left: 0;
+            top: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+            white-space: nowrap;
+            z-index: 1000;
+        }
+    }
 }
