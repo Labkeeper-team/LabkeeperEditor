@@ -111,9 +111,8 @@
             color: $blue-10;
             font-family: inherit;
             font-size: 15px;
-            line-height: 18px;
-            padding: 16px 20px;
-            height: 50px;
+            padding: 16px 20px 16px 20px;
+            height: 18.5px;
             border-radius: 100px;
             border: none;
             background-image:
@@ -141,7 +140,7 @@
 
         &.minimize {
             .select-header {
-                height: 30px;
+                height: 20px;
                 padding: 6px 21px;
                 font-size: 13px;
                 line-height: 15px;
