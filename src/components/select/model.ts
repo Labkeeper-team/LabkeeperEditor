@@ -1,8 +1,11 @@
 export interface ISelectOptions {
-    options: {
-        label: string;
-        value: unknown;
-    }[];
-    onChange: (value: unknown) => void;
-    value: unknown;
+    options: Array<{ value: string | number; label: string }>;
+    value: string | number;
+    onChange: (value: string | number) => void;
+    className?: SelectClassNames;
+}
+
+export enum SelectClassNames {
+    Default = 'default',
+    Computation = 'computation'
 }

@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { ISelectOptions } from './model';
+import { Key, useEffect, useMemo, useRef, useState } from 'react';
+import { ISelectOptions, SelectClassNames } from './model';
+import classNames from 'classnames';
 
 import './style.scss';
 import { useHotkeys } from 'react-hotkeys-hook';
 
-export const Select = ({ options, value, onChange }: ISelectOptions) => {
+export const Select = ({ options, value, onChange, className = SelectClassNames.Default }: ISelectOptions) => {
     const [isOpen, setIsOpen] = useState(false); // Состояние открытия/закрытия списка
     const selectRef = useRef<HTMLDivElement>(null); // Ссылка на контейнер
     const selectedValue = useMemo(() => {
@@ -52,7 +53,9 @@ export const Select = ({ options, value, onChange }: ISelectOptions) => {
     return (
         <div
             ref={selectRef}
-            className={`labkeeper_select ${isOpen ? 'open' : ''}`}
+            className={classNames('labkeeper_select', className, {
+                'open': isOpen
+            })}
         >
             <div className="select-header" onClick={toggleDropdown}>
                 <span className="selected-value">{selectedValue?.label}</span>
@@ -61,7 +64,7 @@ export const Select = ({ options, value, onChange }: ISelectOptions) => {
                 <ul className="select-options">
                     {options.map((option) => (
                         <li
-                            key={option.value}
+                            key={option.value as Key}
                             onClick={() => handleOptionClick(option)}
                         >
                             {option.label}

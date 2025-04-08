@@ -21,6 +21,7 @@ export const AddBlock = (props: AddBlockProps) => {
     const onClick = useCallback(
         (type: 'computational' | 'md') => {
             const newSegment: Segment = {
+                id: 1,
                 type,
                 parameters: {
                     visible: true,
