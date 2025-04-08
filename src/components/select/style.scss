@@ -145,12 +145,18 @@
                 border-bottom-right-radius: 0;
                 background-color: $white;
                 color: $blue-10;
+                margin-right: -1.5px;
                 background-image:
                     linear-gradient(-45deg, $blue-10 50%, transparent 50%),
                     linear-gradient(-135deg, transparent 50%, $blue-10 50%);
             }
             .select-options {
                 display: block;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                width: 100%;
+                margin-top: -1px;
                 border: 1px solid $blue-10;
                 border-top: none;
                 border-bottom-left-radius: 4px;
@@ -160,10 +166,6 @@
         .select-options {
             display: none;
             z-index: 1;
-            position: absolute;
-            top: 100%;
-            left: 0;
-            width: 100%;
             background-color: $white;
             list-style: none;
             margin: 0;
