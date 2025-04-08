@@ -28,6 +28,7 @@ import {
 } from '../../../../../../shared/models/project';
 import { customLanguageSupport } from './customLanguage';
 import { latexLanguageSupport } from './latexLanguage';
+import { notVisibleLanguageSupport } from './notVisibleLanguage';
 
 import './style.scss';
 
@@ -475,26 +476,26 @@ export const SegmentEditor = memo(
                 <div
                     className={classNames('segment-editor-container', {
                         'is-active': isActiveSegment,
-                        'is-non-visible':
-                            props.segment.parameters.visible === false,
                     })}
                 >
                     <CodeMirror
                         ref={editor as LegacyRef<ReactCodeMirrorRef>}
                         value={tempText}
                         onChange={onChange}
-                        readOnly={projectIsReadonly}
+                        readOnly={projectIsReadonly || !props.segment.parameters.visible}
                         extensions={[
                             decorationsField,
-                            isHightlight
-                                ? props.segment.type === 'md'
-                                    ? langs.markdown()
-                                    : props.segment.type === 'computational'
-                                      ? customLanguageSupport
-                                      : props.segment.type === 'latex'
-                                        ? [langs.stex(), latexLanguageSupport]
-                                        : undefined
-                                : undefined,
+                            !props.segment.parameters.visible
+                                ? notVisibleLanguageSupport
+                                : isHightlight
+                                  ? props.segment.type === 'md'
+                                      ? langs.markdown()
+                                      : props.segment.type === 'computational'
+                                        ? customLanguageSupport
+                                        : props.segment.type === 'latex'
+                                          ? [langs.stex(), latexLanguageSupport]
+                                          : undefined
+                                  : undefined,
                             eventsExt,
                             eventsDom,
                             EditorView.lineWrapping,
