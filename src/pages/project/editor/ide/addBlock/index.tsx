@@ -12,6 +12,8 @@ import { useCurrentProgram } from '../../../../../store/selectors/program';
 import { colors } from '../../../../../shared/styles/colors';
 import { useDictionary } from '../../../../../store/selectors/translations';
 import { setActiveSegmentIndex } from '../../../../../store/slices/ide';
+import { Select } from '../../../../../components/select';
+import { SelectClassNames } from '../../../../../components/select/model';
 
 export const AddBlock = (props: AddBlockProps) => {
     const dispatch = useDispatch();
@@ -49,6 +51,11 @@ export const AddBlock = (props: AddBlockProps) => {
         [program, dispatch]
     );
 
+    const selectOptions = [
+        { value: 'computational', label: 'Add computation' },
+        { value: 'latex', label: 'Add latex' }
+    ];
+
     return (
         <div className="empty-project-placeholder-container">
             <Button
@@ -60,17 +67,12 @@ export const AddBlock = (props: AddBlockProps) => {
                 titleIcon={PlusIcon}
                 rounded
             />
-            {props.isFirst ? (
-                <Typography text={dictionary.or} color={colors.black} />
-            ) : null}
-            <Button
-                classname={InterfaceTourAnchorClassnames.AddMarkdown}
-                title={dictionary.label_add_markdown}
-                color="gray"
-                onPress={() => onClick('md')}
-                minimize={!props.isFirst}
-                titleIcon={PlusIcon}
-                rounded
+            {props.isFirst && (<Typography text={dictionary.or} color={colors.black} />)}
+            <Select
+                options={selectOptions}
+                value="computational"
+                onChange={(value) => value && onClick(value as 'computational' | 'md')}
+                className={SelectClassNames.Computation}
             />
         </div>
     );
