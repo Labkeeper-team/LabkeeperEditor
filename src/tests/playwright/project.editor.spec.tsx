@@ -574,6 +574,17 @@ test('rename-project-in-editor-via-press', async ({ page }) => {
 Тест на создание, перемещение и удаление большого количества сегментов
  */
 test('many-segments-move', async ({ page }) => {
+    const addCode = async () => {
+        await page
+            .locator('div.labkeeper_select.computation')
+            .first()
+            .click();
+        await page
+            .locator('li')
+            .first()
+            .click()
+    }
+
     await page.goto('/');
 
     // Ждем загрузки страницы и проверяем URL
@@ -590,7 +601,7 @@ test('many-segments-move', async ({ page }) => {
     await editor1.click();
 
     // adding second segment
-    await page.getByRole('button', { name: /Добавить код/i }).click();
+    await addCode()
 
     // inserting text in second segment
     const editor2 = page.locator('.cm-content').nth(1);
@@ -608,7 +619,7 @@ test('many-segments-move', async ({ page }) => {
     await editor3.click();
 
     // adding fourth segment
-    await page.getByRole('button', { name: /Добавить код/i }).click();
+    await addCode()
 
     // inserting text in fourth segment
     const editor4 = page.locator('.cm-content').nth(3);
@@ -620,11 +631,11 @@ test('many-segments-move', async ({ page }) => {
     await expect(page).toHaveScreenshot('many-segs1.png');
 
     // more
-    await page.getByRole('button', { name: /Добавить код/i }).click();
+    await addCode()
     await page.getByRole('button', { name: /Добавить маркдаун/i }).click();
-    await page.getByRole('button', { name: /Добавить код/i }).click();
+    await addCode()
     await page.getByRole('button', { name: /Добавить маркдаун/i }).click();
-    await page.getByRole('button', { name: /Добавить код/i }).click();
+    await addCode()
     await page.getByRole('button', { name: /Добавить маркдаун/i }).click();
 
     // проверяем, что элементы отображаются корректно

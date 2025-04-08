@@ -23,9 +23,13 @@ async function plotlyTest(statement, page) {
 
     // Добавляем код
     await page
-        .getByRole('button', { name: /Добавить код/i })
+        .locator('div.labkeeper_select.computation')
         .first()
         .click();
+    await page
+        .locator('li')
+        .first()
+        .click()
     const editor = page.locator('.cm-content').nth(0);
     await editor.click();
     await editor.fill('a = 10');
