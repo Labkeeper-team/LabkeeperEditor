@@ -110,11 +110,11 @@
             background: $gray-60;
             color: $blue-10;
             font-family: inherit;
-            font-size: 13px;
-            line-height: 15px;
+            font-size: 15px;
+            line-height: 18px;
             font-weight: 400;
-            padding: 6px 21px;
-            height: 30px;
+            padding: 16px 20px;
+            height: 50px;
             border-radius: 100px;
             border: none;
             background-image:
@@ -139,6 +139,22 @@
                 padding: 0 10px;
             }
         }
+
+        &.minimize {
+            .select-header {
+                height: 30px;
+                padding: 6px 21px;
+                font-size: 13px;
+                line-height: 15px;
+            }
+            .select-options li {
+                height: 30px;
+                padding: 6px 21px;
+                font-size: 13px;
+                line-height: 15px;
+            }
+        }
+
         &.open {
             .select-header {
                 border: 1px solid $blue-10;
@@ -176,11 +192,11 @@
 
             li {
                 user-select: none;
-                padding: 6px 21px;
-                height: 30px;
+                padding: 16px 20px;
+                height: 50px;
                 font-family: inherit;
-                font-size: 13px;
-                line-height: 15px;
+                font-size: 15px;
+                line-height: 18px;
                 font-weight: 400;
                 color: $blue-20;
                 text-align: center;

@@ -3,6 +3,7 @@ export interface ISelectOptions {
     value: string | number;
     onChange: (value: string | number) => void;
     className?: SelectClassNames;
+    minimize?: boolean;
 }
 
 export enum SelectClassNames {

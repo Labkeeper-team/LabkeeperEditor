@@ -73,6 +73,7 @@ export const AddBlock = (props: AddBlockProps) => {
                 value="computational"
                 onChange={(value) => value && onClick(value as 'computational' | 'md')}
                 className={SelectClassNames.Computation}
+                minimize={!props.isFirst}
             />
         </div>
     );
