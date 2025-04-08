@@ -67,6 +67,7 @@ import { SegmentDivider } from '../segment-divider';
 const shortTypeMap = {
     computational: 'code',
     md: 'markdown',
+    latex: 'latex',
 };
 
 const setDecorationsEffect = StateEffect.define();
@@ -442,6 +443,7 @@ export const SegmentEditor = memo(
 
         const handleAddComputation = (index: number) => {
             const newSegment: Segment = {
+                id: -1,
                 type: 'computational',
                 parameters: {
                     visible: true,
@@ -453,6 +455,7 @@ export const SegmentEditor = memo(
 
         const handleAddText = (index: number) => {
             const newSegment: Segment = {
+                id: -1,
                 type: 'md',
                 parameters: {
                     visible: true,
@@ -487,7 +490,7 @@ export const SegmentEditor = memo(
                                     ? langs.markdown()
                                     : props.segment.type === 'computational'
                                       ? customLanguageSupport
-                                      : langs.python()
+                                      : props.segment.type === 'latex' ? langs.stex() : undefined
                                 : undefined,
                             eventsExt,
                             eventsDom,

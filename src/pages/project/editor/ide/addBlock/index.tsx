@@ -21,7 +21,8 @@ export const AddBlock = (props: AddBlockProps) => {
     const dictionary = useSelector(useDictionary);
 
     const onClick = useCallback(
-        (type: 'computational' | 'md') => {
+        (type: 'computational' | 'md' | 'latex') => {
+            console.log(type);
             const newSegment: Segment = {
                 id: 1,
                 type,
@@ -53,26 +54,30 @@ export const AddBlock = (props: AddBlockProps) => {
 
     const selectOptions = [
         { value: 'computational', label: 'Computation' },
-        { value: 'latex', label: 'Latex' }
+        { value: 'latex', label: 'Latex' },
     ];
 
     return (
         <div className="empty-project-placeholder-container">
             <Button
                 classname={InterfaceTourAnchorClassnames.AddCode}
-                title={dictionary.label_add_code}
+                title={dictionary.label_add_markdown}
                 color="gray"
-                onPress={() => onClick('computational')}
+                onPress={() => onClick('md')}
                 minimize={!props.isFirst}
                 titleIcon={PlusIcon}
                 rounded
             />
-            {props.isFirst && (<Typography text={dictionary.or} color={colors.black} />)}
+            {props.isFirst && (
+                <Typography text={dictionary.or} color={colors.black} />
+            )}
             <Select
                 options={selectOptions}
                 title="Add more"
                 value="computational"
-                onChange={(value) => value && onClick(value as 'computational' | 'md')}
+                onChange={(value) =>
+                    value && onClick(value as 'computational' | 'latex')
+                }
                 className={SelectClassNames.Computation}
                 minimize={!props.isFirst}
             />
