@@ -107,12 +107,12 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: $white;
+            background: $gray-60;
             color: $blue-10;
             font-size: 15px;
             padding: 6px 20px;
-            border-radius: 4px;
-            border: none;
+            border-radius: 40px;
+            border: 1px solid $blue-10;
             background-image:
                 linear-gradient(45deg, transparent 50%, $blue-10 50%),
                 linear-gradient(135deg, $blue-10 50%, transparent 50%);
@@ -124,7 +124,11 @@
             transition-duration: 0.3s;
             &:hover {
                 cursor: pointer;
-                background-color: $gray-60;
+                background-color: $gray-50;
+            }
+            &:active {
+                background-color: $gray-50;
+                box-shadow: 0px 0px 10px 0px $gray-40;
             }
             .selected-value {
                 width: 100%;
@@ -135,12 +139,17 @@
             .select-header {
                 border-bottom-left-radius: 0;
                 border-bottom-right-radius: 0;
+                background-color: $white;
+                color: $blue-10;
+                border-bottom: none;
                 background-image:
                     linear-gradient(-45deg, $blue-10 50%, transparent 50%),
                     linear-gradient(-135deg, transparent 50%, $blue-10 50%);
             }
             .select-options {
                 display: block;
+                border: 1px solid $blue-10;
+                border-top: none;
             }
         }
         .select-options {
@@ -159,11 +168,12 @@
             li {
                 user-select: none;
                 padding: 8px 20px;
-                color: $blue-10;
+                color: $blue-20;
                 text-align: center;
                 transition-duration: 0.3s;
                 &:hover {
                     cursor: pointer;
+                    color: $blue-10;
                     background-color: $gray-60;
                 }
             }
