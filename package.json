@@ -11,7 +11,7 @@
         "test:ui:silent": "playwright test --reporter=line",
         "build": "vite build",
         "jest-preview": "jest-preview",
-        "check": "eslint . && prettier --check --log-level=debug --error-on-unmatched-pattern .",
+        "check": "eslint . && prettier --check --error-on-unmatched-pattern .",
         "prettier": "prettier",
         "reformat": "prettier --write ."
     },
