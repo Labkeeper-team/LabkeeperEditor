@@ -12,7 +12,6 @@
         "build": "vite build",
         "jest-preview": "jest-preview",
         "check": "eslint . && prettier --check --error-on-unmatched-pattern .",
-        "prettier": "prettier",
         "reformat": "prettier --write ."
     },
     "dependencies": {
