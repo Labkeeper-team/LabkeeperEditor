@@ -18,13 +18,7 @@ export default defineConfig({
     /* Это странная настройка, из-за нее многие тесты падают в случайный момент*/
     fullyParallel: false,
     retries: 0,
-    reporter: [
-        ['list'],
-        [
-            '@estruyf/github-actions-reporter',
-            { quiet: true } as GitHubActionOptions,
-        ],
-    ],
+    reporter: 'list',
     use: {
         baseURL: 'http://localhost:3000',
         trace: 'on-first-retry',
