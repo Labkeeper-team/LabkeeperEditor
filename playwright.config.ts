@@ -1,5 +1,4 @@
 import { defineConfig, devices } from '@playwright/test';
-import { GitHubActionOptions } from '@estruyf/github-actions-reporter';
 
 /**
  * Read environment variables from file.
