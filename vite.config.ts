@@ -8,7 +8,7 @@ export default defineConfig(({ mode }) => {
     const revision = mode as string;
     let major = DEFAULT_MAJOR;
     let minor = DEFAULT_MINOR;
-    if (revision && revision.includes(".")) {
+    if (revision && revision.includes('.')) {
         try {
             const divs: string[] = revision.split('.');
             major = divs[0];
@@ -29,9 +29,9 @@ export default defineConfig(({ mode }) => {
         css: {
             preprocessorOptions: {
                 scss: {
-                    api: 'modern-compiler' // or "modern"
-                }
-            }
-        }
+                    api: 'modern-compiler', // or "modern"
+                },
+            },
+        },
     };
 });
