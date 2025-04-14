@@ -52,7 +52,7 @@ test('project-403-test', async ({ page }) => {
     await page.goto('/project/1');
 
     // Ждем загрузки страницы
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // ждем появления toast с ошибкой
     await expect(page.locator('div.Toastify__toast').first()).toBeVisible();
@@ -96,7 +96,7 @@ test('project-404-test', async ({ page }) => {
     await page.goto('/project/1');
 
     // Ждем загрузки страницы
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // ждем появления toast с ошибкой
     await expect(page.locator('div.Toastify__toast').first()).toBeVisible();
@@ -161,7 +161,7 @@ test('public-project-unauth-user-compilation-ok', async ({ page }) => {
     await page.goto('/project/1');
 
     // Ждем загрузки страницы
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Перехватываем запрос на компиляцию
     await page.route('/api/v2/public/project/1/compile', async (route) => {
@@ -252,7 +252,7 @@ test('public-project-unauth-user-compilation-308', async ({ page }) => {
     await page.goto('/project/1');
 
     // Ждем загрузки страницы
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Перехватываем запрос на компиляцию
     await page.route('/api/v2/public/project/1/compile', async (route) => {
@@ -367,7 +367,7 @@ test('public-project-different-user-compilation-ok', async ({ page }) => {
     await page.goto('/project/1');
 
     // Ждем загрузки страницы
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // перехватываем запрос на компиляцию
     await page.route('/api/v2/public/project/1/compile', async (route) => {

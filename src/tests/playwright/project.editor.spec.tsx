@@ -7,7 +7,7 @@ test('many-segments', async ({ page }) => {
     await page.goto('/');
 
     // Ждем загрузки страницы и проверяем URL
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await expect(page).toHaveURL(/.*\/project/);
 
     // Генерируем текст
@@ -98,7 +98,7 @@ test('ESC-test', async ({ page }) => {
     await page.goto('/');
 
     // Ждем загрузки страницы
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     // Ждем редиректа на конкретный проект
     await expect(page).toHaveURL('/project/1');
 
@@ -187,7 +187,7 @@ test('Search-test', async ({ page }) => {
     await page.goto('/');
 
     // Ждем загрузки страницы
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     // Ждем редиректа на конкретный проект
     await expect(page).toHaveURL('/project/default');
 
@@ -239,7 +239,7 @@ test('many-errors-test', async ({ page }) => {
     await page.goto('/');
 
     // Ждем загрузки страницы
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     // Ждем редиректа на конкретный проект
     await expect(page).toHaveURL('/project/default');
 
@@ -313,7 +313,7 @@ test('md2pdf-test', async ({ page }) => {
     await page.goto('/');
 
     // Ждем загрузки страницы
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     // Ждем редиректа на конкретный проект
     await expect(page).toHaveURL('/project/default');
 
@@ -449,7 +449,7 @@ test('rename-project-in-editor-via-enter', async ({ page }) => {
     await page.goto('/');
 
     // Ждем загрузки страницы
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     // Ждем редиректа на конкретный проект
     await expect(page).toHaveURL('/project/1');
 
@@ -539,7 +539,7 @@ test('rename-project-in-editor-via-press', async ({ page }) => {
     await page.goto('/');
 
     // Ждем загрузки страницы
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     // Ждем редиректа на конкретный проект
     await expect(page).toHaveURL('/project/1');
 
@@ -582,7 +582,7 @@ test('many-segments-move', async ({ page }) => {
     await page.goto('/');
 
     // Ждем загрузки страницы и проверяем URL
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await expect(page).toHaveURL(/.*\/project/);
 
     // первый сегмент
@@ -682,7 +682,7 @@ test('remove-lines-with-errors-test', async ({ page }) => {
     await page.goto('/');
 
     // Ждем загрузки страницы
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     // Ждем редиректа на конкретный проект
     await expect(page).toHaveURL('/project/default');
 
@@ -832,7 +832,7 @@ test('default-project-401-test', async ({ page }) => {
     await page.goto('/');
 
     // Ждем загрузки страницы
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     // Ждем редиректа на конкретный проект
     await expect(page).toHaveURL('/project/default');
 
@@ -903,7 +903,7 @@ test('project-401-test', async ({ page }) => {
     await page.goto('/project/1');
 
     // Ждем загрузки страницы
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // ждем появления toast с ошибкой
     await expect(page.locator('div.Toastify__toast').first()).toBeVisible();
@@ -1001,7 +1001,7 @@ test('compilation-401-test', async ({ page }) => {
     await page.goto('/');
 
     // Ждем загрузки страницы
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     // Ждем редиректа на конкретный проект
     await expect(page).toHaveURL('/project/1');
 
@@ -1107,7 +1107,7 @@ test('file-manager-401-test', async ({ page }) => {
     await page.goto('/');
 
     // Ждем загрузки страницы
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     // Ждем редиректа на конкретный проект
     await expect(page).toHaveURL('/project/1');
 
@@ -1208,7 +1208,7 @@ test('compilation-500-test', async ({ page }) => {
     await page.goto('/');
 
     // Ждем загрузки страницы
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     // Ждем редиректа на конкретный проект
     await expect(page).toHaveURL('/project/1');
 

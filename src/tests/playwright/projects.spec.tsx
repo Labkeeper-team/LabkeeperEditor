@@ -77,7 +77,7 @@ test('rename-project-via-enter', async ({ page }) => {
     await page.goto('/');
 
     // Ждем загрузки страницы
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     // Ждем редиректа на конкретный проект
     await expect(page).toHaveURL('/project/1');
 
@@ -183,7 +183,7 @@ test('rename-project-via-press', async ({ page }) => {
     await page.goto('/');
 
     // Ждем загрузки страницы
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     // Ждем редиректа на конкретный проект
     await expect(page).toHaveURL('/project/1');
 
@@ -281,7 +281,7 @@ test('list-projects-401', async ({ page }) => {
     await page.goto('/');
 
     // Ждем загрузки страницы
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     // Ждем редиректа на конкретный проект
     await expect(page).toHaveURL('/project/1');
 

@@ -3,17 +3,19 @@ import react from '@vitejs/plugin-react';
 import svgr from 'vite-plugin-svgr';
 
 export default defineConfig(({ mode }) => {
-    const DEFAULT = 'unknown';
+    const DEFAULT_MAJOR = '2';
+    const DEFAULT_MINOR = '';
     const revision = mode as string;
-    let major = DEFAULT;
-    let minor = DEFAULT;
-    if (revision) {
+    let major = DEFAULT_MAJOR;
+    let minor = DEFAULT_MINOR;
+    if (revision && revision.includes(".")) {
         try {
             const divs: string[] = revision.split('.');
             major = divs[0];
             minor = divs.slice(1).join('.');
         } catch {
-            // ignored
+            major = DEFAULT_MAJOR;
+            minor = DEFAULT_MINOR;
         }
     }
     return {
@@ -24,5 +26,12 @@ export default defineConfig(({ mode }) => {
         define: {
             __BUILD_INFO__: JSON.stringify({ major: major, minor: minor }),
         },
+        css: {
+            preprocessorOptions: {
+                scss: {
+                    api: 'modern-compiler' // or "modern"
+                }
+            }
+        }
     };
 });

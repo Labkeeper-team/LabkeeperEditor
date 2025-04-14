@@ -5,7 +5,7 @@ async function testError(page, error, name) {
     await page.goto('/');
 
     // Ждем загрузки страницы
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     // Ждем редиректа на конкретный проект
     await expect(page).toHaveURL('/project/default');
 
