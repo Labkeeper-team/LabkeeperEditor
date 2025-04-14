@@ -387,7 +387,9 @@ Hello();
         .waitFor({ state: 'attached' });
 
     // проверяем, что элементы отображаются корректно
-    await expect(page.locator('div.result-markdown')).toHaveScreenshot('md2pdf.png');
+    await expect(page.locator('div.result-markdown')).toHaveScreenshot(
+        'md2pdf.png'
+    );
 });
 
 /*
