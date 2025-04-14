@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import { GitHubActionOptions } from '@estruyf/github-actions-reporter';
 
 /**
  * Read environment variables from file.
@@ -17,7 +18,13 @@ export default defineConfig({
     /* Это странная настройка, из-за нее многие тесты падают в случайный момент*/
     fullyParallel: false,
     retries: 0,
-    reporter: 'list',
+    reporter: [
+        ['list'],
+        [
+            '@estruyf/github-actions-reporter',
+            { quiet: true } as GitHubActionOptions,
+        ],
+    ],
     use: {
         baseURL: 'http://localhost:3000',
         trace: 'on-first-retry',
