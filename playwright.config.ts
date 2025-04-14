@@ -22,8 +22,6 @@ export default defineConfig({
         baseURL: 'http://localhost:3000',
         trace: 'on-first-retry',
     },
-
-    /* Configure projects for major browsers */
     projects: [
         {
             name: 'chromium',
