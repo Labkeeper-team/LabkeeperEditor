@@ -13,17 +13,20 @@ export const ru: Translations = {
 
     warning_dontuselongvarioables: 'Не используйте длинные имена переменных',
 
+    label_add_asciimath: 'Простая формула',
     label_add_markdown: 'Добавить маркдаун',
     label_save_to_pdf: 'Сохранить в PDF',
     label_problems: 'Проблемы',
     label_add_code: 'Вычисление',
-    label_add_latex: 'Latex',
+    label_add_latex: 'Latex-формула',
     label_add_more: 'Добавить еще',
 
     segment_divider: {
         add: 'Добавить',
         computation: 'вычисления',
         markdown: 'маркдаун',
+        latex: 'Latex-формула',
+        asciimath: 'Простая формула',
     },
 
     interface_tour: {
@@ -93,6 +96,8 @@ export const ru: Translations = {
             non_authorized_paste_image:
                 'Что бы вставить изображение вам необходимо авторизоваться',
         },
+        latex: 'latex-формула',
+        asciimath: 'простая формула',
     },
 
     instructions: {

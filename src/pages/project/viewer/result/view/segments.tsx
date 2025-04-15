@@ -12,6 +12,7 @@ import {
     TextOutputSegment,
 } from '../../../../../shared/models/project.ts';
 import { LatexSegment } from './latex-segment.tsx';
+import { AsciimathSegment } from './asciimath-segment.tsx';
 
 export const Segments = memo(() => {
     const segments = useSelector(useCompiledSegments);
@@ -65,6 +66,16 @@ export const Segments = memo(() => {
                         const text = segment as TextOutputSegment;
                         return (
                             <LatexSegment
+                                ref={refs[segment.id]}
+                                key={`${segment.id}_${index}_${text.text}`}
+                                segment={text}
+                            />
+                        );
+                    }
+                    case 'asciimath': {
+                        const text = segment as TextOutputSegment;
+                        return (
+                            <AsciimathSegment
                                 ref={refs[segment.id]}
                                 key={`${segment.id}_${index}_${text.text}`}
                                 segment={text}

@@ -12,9 +12,10 @@ export const en: Translations = {
 
     warning_dontuselongvarioables: 'Do not use long name variables',
 
+    label_add_asciimath: 'Simple-math',
     label_add_markdown: 'Add markdown',
     label_add_code: 'Computation',
-    label_add_latex: 'Latex',
+    label_add_latex: 'Latex-math',
     label_add_more: 'Add more',
     label_save_to_pdf: 'Save to PDF',
     label_problems: 'Problems',
@@ -23,6 +24,8 @@ export const en: Translations = {
         add: 'Add',
         computation: 'computation',
         markdown: 'markdown',
+        latex: 'latex-math',
+        asciimath: 'simple-math',
     },
 
     interface_tour: {
@@ -88,6 +91,8 @@ export const en: Translations = {
         errors: {
             non_authorized_paste_image: 'You need authorize to paste images',
         },
+        latex: 'latex-math',
+        asciimath: 'simple-math',
     },
 
     instructions: {

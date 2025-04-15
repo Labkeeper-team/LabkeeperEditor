@@ -2,7 +2,7 @@ export type ProgramRoundStrategy =
     | 'noRound'
     | 'fixedDigits'
     | 'firstMeaningDigit';
-export type SegmentType = 'md' | 'computational' | 'latex';
+export type SegmentType = 'md' | 'computational' | 'latex' | 'asciimath';
 export type StatementType =
     | 'assignment'
     | 'calculation'

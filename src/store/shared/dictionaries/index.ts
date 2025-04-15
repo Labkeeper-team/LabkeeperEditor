@@ -17,6 +17,7 @@ export interface Translations {
     warning_dontuselongvarioables: string;
 
     label_add_latex: string;
+    label_add_asciimath: string;
     label_add_markdown: string;
     label_add_more: string;
     label_add_code: string;
@@ -27,6 +28,8 @@ export interface Translations {
         add: string;
         computation: string;
         markdown: string;
+        latex: string;
+        asciimath: string;
     };
 
     interface_tour: {
@@ -75,6 +78,8 @@ export interface Translations {
     segment: {
         code: string;
         markdown: string;
+        latex: string;
+        asciimath: string;
         visible: string;
         hide_assignment_with_values: string;
         hide_array: string;

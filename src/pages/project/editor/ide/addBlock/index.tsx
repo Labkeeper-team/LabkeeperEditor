@@ -21,8 +21,7 @@ export const AddBlock = (props: AddBlockProps) => {
     const dictionary = useSelector(useDictionary);
 
     const onClick = useCallback(
-        (type: 'computational' | 'md' | 'latex') => {
-            console.log(type);
+        (type: 'computational' | 'md' | 'latex' | 'asciimath') => {
             const newSegment: Segment = {
                 id: 1,
                 type,
@@ -55,6 +54,7 @@ export const AddBlock = (props: AddBlockProps) => {
     const selectOptions = [
         { value: 'computational', label: dictionary.label_add_code },
         { value: 'latex', label: dictionary.label_add_latex },
+        { value: 'asciimath', label: dictionary.label_add_asciimath },
     ];
 
     return (

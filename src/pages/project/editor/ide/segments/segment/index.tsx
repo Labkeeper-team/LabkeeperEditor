@@ -25,6 +25,7 @@ import {
     CompileErrorResult,
     Program,
     Segment,
+    SegmentType,
 } from '../../../../../../shared/models/project';
 import { customLanguageSupport } from './customLanguage';
 import { latexLanguageSupport } from './latexLanguage';
@@ -70,6 +71,7 @@ const shortTypeMap = {
     computational: 'code',
     md: 'markdown',
     latex: 'latex',
+    asciimath: 'formula',
 };
 
 const setDecorationsEffect = StateEffect.define();
@@ -443,22 +445,10 @@ export const SegmentEditor = memo(
             debounceCompile(value, projectId);
         };
 
-        const handleAddComputation = (index: number) => {
+        const handleAdd = (type: SegmentType, index: number) => {
             const newSegment: Segment = {
                 id: -1,
-                type: 'computational',
-                parameters: {
-                    visible: true,
-                },
-                text: '',
-            };
-            dispatch(addSegmentAfter({ segment: newSegment, after: index }));
-        };
-
-        const handleAddText = (index: number) => {
-            const newSegment: Segment = {
-                id: -1,
-                type: 'md',
+                type: type,
                 parameters: {
                     visible: true,
                 },
@@ -660,10 +650,9 @@ export const SegmentEditor = memo(
                 <div style={{ flex: 1, marginTop: -10 }}>
                     {props.index + 1 !== props.segmentCount && (
                         <SegmentDivider
-                            onAddComputation={() =>
-                                handleAddComputation(props.index)
-                            }
-                            onAddText={() => handleAddText(props.index)}
+                            onAdd={(type) => {
+                                handleAdd(type, props.index);
+                            }}
                         />
                     )}
                 </div>

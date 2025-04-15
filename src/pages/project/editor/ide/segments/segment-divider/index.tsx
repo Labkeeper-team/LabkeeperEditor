@@ -2,16 +2,13 @@ import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useDictionary } from '../../../../../../store/selectors/translations';
 import './style.scss';
+import { SegmentType } from '../../../../../../shared/models/project.ts';
 
 interface SegmentDividerProps {
-    onAddComputation: () => void;
-    onAddText: () => void;
+    onAdd: (type: SegmentType) => void;
 }
 
-export const SegmentDivider: React.FC<SegmentDividerProps> = ({
-    onAddComputation,
-    onAddText,
-}) => {
+export const SegmentDivider: React.FC<SegmentDividerProps> = ({ onAdd }) => {
     const [isOpen, setIsOpen] = useState(false);
     const dictionary = useSelector(useDictionary);
 
@@ -32,7 +29,7 @@ export const SegmentDivider: React.FC<SegmentDividerProps> = ({
                     >
                         <button
                             onClick={() => {
-                                onAddText();
+                                onAdd('md');
                                 setIsOpen(false);
                             }}
                         >
@@ -40,7 +37,23 @@ export const SegmentDivider: React.FC<SegmentDividerProps> = ({
                         </button>
                         <button
                             onClick={() => {
-                                onAddComputation();
+                                onAdd('latex');
+                                setIsOpen(false);
+                            }}
+                        >
+                            {dictionary.segment_divider.latex}
+                        </button>
+                        <button
+                            onClick={() => {
+                                onAdd('asciimath');
+                                setIsOpen(false);
+                            }}
+                        >
+                            {dictionary.segment_divider.asciimath}
+                        </button>
+                        <button
+                            onClick={() => {
+                                onAdd('computational');
                                 setIsOpen(false);
                             }}
                         >

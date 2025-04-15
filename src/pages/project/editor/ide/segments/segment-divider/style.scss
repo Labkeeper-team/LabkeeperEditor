@@ -52,8 +52,8 @@
         border-radius: 8px;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
         z-index: 1000;
-        min-width: 180px;
-        padding: 0;
+        min-width: 200px;
+        padding: 4px 0;
 
         button {
             width: 100%;
@@ -69,15 +69,8 @@
             display: flex;
             align-items: center;
 
-            &:first-child {
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-            }
-
-            &:last-child {
-                margin-top: 32px;
+            &:not(:last-child) {
+                margin-bottom: 4px;
             }
 
             &:hover {

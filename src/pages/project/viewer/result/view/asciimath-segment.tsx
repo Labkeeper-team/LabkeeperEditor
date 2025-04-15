@@ -2,10 +2,13 @@ import classNames from 'classnames';
 import { useIsSegmentIsActive } from '../../../../../store/selectors/program';
 import { useSelector } from 'react-redux';
 import { forwardRef, useRef } from 'react';
-import { TextOutputSegment } from '../../../../../shared/models/project.ts';
 import { MathJax } from 'better-react-mathjax';
+import { TextOutputSegment } from '../../../../../shared/models/project.ts';
+import AsciiMathParser from 'asciimath2tex';
 
-export const LatexSegment = forwardRef<
+export const parser = new AsciiMathParser();
+
+export const AsciimathSegment = forwardRef<
     HTMLDivElement,
     { segment: TextOutputSegment }
 >(({ segment }, ref) => {
@@ -21,9 +24,7 @@ export const LatexSegment = forwardRef<
                 'result-segment': true,
             })}
         >
-            <MathJax>{`\\begin{equation}${segment.text
-                .replaceAll('\\begin{equation}', '')
-                .replaceAll('\\end{equation}', '')}\\end{equation}`}</MathJax>
+            <MathJax>{`\\begin{equation}${parser.parse(segment.text)}\\end{equation}`}</MathJax>
         </div>
     );
 });
