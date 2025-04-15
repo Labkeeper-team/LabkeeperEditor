@@ -17,6 +17,7 @@ import {
     useCurrentProject,
     useUser,
     useShowTour,
+    useCurrentProgram,
 } from '../../store/selectors/program';
 import { Routes } from '../../routing/routes';
 import { FileManager } from './fileManager';
@@ -41,12 +42,20 @@ import {
     useDictionary,
 } from '../../store/selectors/translations.ts';
 import { logoutAction } from '../../store/actions';
+import {
+    clearLastProgram,
+    setLastProgram,
+} from '../../store/slices/persistence';
 
 export const ProjectPage = () => {
     const { id } = useParams<{ id: string }>();
     const user = useSelector(useUser);
     const project = useSelector(useCurrentProject);
     const dispatch = useDispatch();
+    const lastProgram = useSelector(
+        (state: StorageState) => state.persistence.lastProgram
+    );
+    const program = useSelector(useCurrentProgram);
 
     const showTour = useSelector(useShowTour);
     const expandedProblemViewer = useSelector(
@@ -103,6 +112,12 @@ export const ProjectPage = () => {
     });
 
     useEffect(() => {
+        if (!user.isAuthenticated) {
+            dispatch(setLastProgram(program));
+        }
+    }, [program]);
+
+    useEffect(() => {
         if (!id) {
             return;
         }
@@ -111,8 +126,12 @@ export const ProjectPage = () => {
             dispatch(setReadOnly(false));
             if (user.isAuthenticated && !project) {
                 const createDefaultProject = async () => {
-                    const result = await getDefaultProjectRequest(language); // TODO send program
+                    const result = await getDefaultProjectRequest(
+                        language,
+                        lastProgram
+                    );
                     if (result.isOk) {
+                        dispatch(clearLastProgram());
                         const project = result.body as Project;
                         dispatch(setProject(project));
                         dispatch(setNewProgram(project.program));
@@ -133,6 +152,9 @@ export const ProjectPage = () => {
                     }
                 };
                 createDefaultProject();
+            } else {
+                // on default uri but unauth
+                dispatch(setNewProgram(lastProgram));
             }
             return;
         }
@@ -167,6 +189,7 @@ export const ProjectPage = () => {
             }
         };
         getProject();
+        dispatch(clearLastProgram());
     }, [id, user.isAuthenticated]);
 
     return (

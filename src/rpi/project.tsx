@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { URLS } from '../shared/urls';
 import { RequestResult, requestWrapper } from './index.tsx';
+import { Program } from '../shared/models/project.ts';
 
 export async function setTitleRequest(
     projectId,
@@ -14,10 +15,11 @@ export async function setTitleRequest(
 }
 
 export async function getDefaultProjectRequest(
-    lang: string
+    lang: string,
+    program: Program
 ): Promise<RequestResult> {
     return requestWrapper(async () =>
-        axios.post(URLS.getDefaultProject, undefined, {
+        axios.post(URLS.getDefaultProject, program, {
             headers: {
                 'Accept-Language': lang || 'en',
             },
