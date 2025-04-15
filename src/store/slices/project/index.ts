@@ -55,8 +55,10 @@ export const projectSlice = createSlice({
             state.history[state.historyAcitveIndex].parameters.roundStrategy =
                 payload;
         },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        setCompileResult: (state, { payload }: PayloadAction<any>) => {
+        setCompileResult: (
+            state,
+            { payload }: PayloadAction<CompileSuccessResult>
+        ) => {
             state.compileSuccessResult = payload;
             state.compileErrorResult = { errors: [] };
         },
@@ -119,6 +121,9 @@ export const projectSlice = createSlice({
                 : 0;
             payload.id = maxSegmentId + 1;
             newProgram.segments.push(payload);
+            newProgram.segments.forEach((segment, index) => {
+                segment.id = index + 1;
+            });
             state.history = state.history.filter((_, index) => {
                 return index <= state.historyAcitveIndex;
             });
@@ -142,6 +147,9 @@ export const projectSlice = createSlice({
 
             // Вставляем новый сегмент после указанной позиции
             newProgram.segments.splice(payload.after + 1, 0, payload.segment);
+            newProgram.segments.forEach((segment, index) => {
+                segment.id = index + 1;
+            });
 
             state.history = state.history.filter((_, index) => {
                 return index <= state.historyAcitveIndex;
@@ -191,6 +199,10 @@ export const projectSlice = createSlice({
             newProgram.segments[payload.currentPosition] = changesSegment;
             newProgram.segments[changePositionIndex] = currentSegment;
 
+            newProgram.segments.forEach((segment, index) => {
+                segment.id = index + 1;
+            });
+
             state.history = state.history.filter(
                 (_, index) => index <= state.historyAcitveIndex
             );
@@ -207,6 +219,9 @@ export const projectSlice = createSlice({
                     return i !== payload;
                 }
             );
+            newProgram.segments.forEach((segment, index) => {
+                segment.id = index + 1;
+            });
             state.history = state.history.filter((_, index) => {
                 return index <= state.historyAcitveIndex;
             });
