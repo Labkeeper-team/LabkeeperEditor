@@ -12,6 +12,10 @@ import { toast } from 'react-toastify';
 import { dictionary } from '../shared/dictionaries';
 import { logoutAction } from '../actions';
 import { setShowAuthModal } from '../slices/auth';
+import {
+    CompileErrorResultList,
+    CompileSuccessResult,
+} from '../../shared/models/project.ts';
 
 export const compileProject = createAsyncThunk(
     'project/compileProject',
@@ -48,11 +52,14 @@ export const compileProject = createAsyncThunk(
             thunkAPI.dispatch(logoutAction);
         }
         if (result.code === 200) {
-            thunkAPI.dispatch(setCompileResult(result.body));
+            thunkAPI.dispatch(
+                setCompileResult(result.body as CompileSuccessResult)
+            );
         }
         if (result.code === 203) {
-            thunkAPI.dispatch(setCompileError(result.body));
-            result.body.errors.map((error) => {
+            const compileResult = result.body as CompileErrorResultList;
+            thunkAPI.dispatch(setCompileError(compileResult));
+            compileResult.errors.map((error) => {
                 if (error.code === 308) {
                     thunkAPI.dispatch(setShowAuthModal(true));
                 }

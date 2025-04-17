@@ -11,7 +11,7 @@ export const HomePage = () => {
 
     useEffect(() => {
         if (!user.isAuthenticated) {
-            if (id && id !== 'default' && isNaN(+id)) {
+            if (id && id !== 'default') {
                 return;
             }
             navigate(Routes.ProjectDefault);

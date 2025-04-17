@@ -56,7 +56,7 @@ export interface Program {
 }
 
 export interface Project {
-    projectId: number;
+    projectId: string;
     userId: number;
     title: string;
     lastModified?: string;

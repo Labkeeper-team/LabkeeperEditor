@@ -121,8 +121,7 @@ export const ProjectPage = () => {
         if (!id) {
             return;
         }
-        const projectId = +id;
-        if (isNaN(projectId)) {
+        if (id === 'default') {
             dispatch(setReadOnly(false));
             if (user.isAuthenticated && !project) {
                 const createDefaultProject = async () => {
@@ -160,7 +159,7 @@ export const ProjectPage = () => {
         }
 
         const getProject = async () => {
-            const result = await getProjectRequest(projectId.toString());
+            const result = await getProjectRequest(id);
             if (result.isUnauth) {
                 toast(dictionary.filemanager.errors.sessionExpired, {
                     type: 'error',

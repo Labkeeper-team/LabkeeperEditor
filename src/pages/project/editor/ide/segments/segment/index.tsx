@@ -194,7 +194,7 @@ export const SegmentEditor = memo(
             if (!savedProgram) {
                 return;
             }
-            if (projectId && !isNaN(+projectId)) {
+            if (projectId && projectId !== 'default') {
                 await saveProgramRequest(projectId.toString(), savedProgram);
             }
         }, [isAutocompete, projectId]);
