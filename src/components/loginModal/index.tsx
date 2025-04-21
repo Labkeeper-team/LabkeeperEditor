@@ -1,11 +1,9 @@
-import { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 import './style.scss';
-import { Button } from '../button';
 import { Typography } from '../typography';
 import { useSelector } from 'react-redux';
 import { colors } from '../../shared/styles/colors';
 import { useNeedLogin } from '../../store/selectors/program';
-import { Routes } from '../../routing/routes.ts';
 import { useDictionary } from '../../store/selectors/translations';
 
 export const LoginModal = () => {
@@ -20,23 +18,12 @@ export const LoginModal = () => {
         [dictionary]
     );
 
-    const onLoginClick = useCallback(async () => {
-        window.location = Routes.Login as unknown as Location;
-    }, []);
-
     return (
         <div className="login-modal">
             <Typography
                 color={colors.gray10}
                 text={modalText.get(loginModalType) || ''}
                 type="h2"
-            />
-            <Button
-                rounded
-                color="blue"
-                minimize={false}
-                title={dictionary.loginModal.submit}
-                onPress={onLoginClick}
             />
         </div>
     );

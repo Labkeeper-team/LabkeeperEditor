@@ -24,6 +24,7 @@ import _WarningIcon from '../../assets/warning.svg?react';
 
 import _Login1Icon from '../../assets/login1.svg?react';
 import _Login2Icon from '../../assets/login2.svg?react';
+import _MiptLogo from '../../assets/mipt_logo.svg?react';
 
 export const LogoIcon = _LogoIcon;
 export const FolderIcon = _FolderIcon;
@@ -46,5 +47,6 @@ export const CloseIcon = _CloseIcon;
 export const CloseModalIcon = _CloseModalIcon;
 export const Login1Icon = _Login1Icon;
 export const Login2Icon = _Login2Icon;
+export const MiptLogo = _MiptLogo;
 export const ShareIcon = _ShareIcon;
 export const LinkIcon = _LinkIcon;

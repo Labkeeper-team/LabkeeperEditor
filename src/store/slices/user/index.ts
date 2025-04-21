@@ -6,6 +6,7 @@ export interface UserInfo {
     id: number;
     isAuthenticated?: boolean;
     yandexCaptchaSiteKey?: string;
+    oauthProviders?: string[];
 }
 
 const initialState: UserInfo = {
@@ -13,6 +14,7 @@ const initialState: UserInfo = {
     email: '',
     id: 0,
     yandexCaptchaSiteKey: '',
+    oauthProviders: [],
 };
 
 export const userSlice = createSlice({
@@ -29,6 +31,7 @@ export const userSlice = createSlice({
             state.isAuthenticated = payload.isAuthenticated;
             state.id = payload.id;
             state.yandexCaptchaSiteKey = payload.yandexCaptchaSiteKey;
+            state.oauthProviders = payload.oauthProviders;
         },
         clearUser: (state) => {
             state = initialState;

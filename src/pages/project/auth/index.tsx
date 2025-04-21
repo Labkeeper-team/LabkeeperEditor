@@ -1,7 +1,7 @@
 import { Typography } from '../../../components/typography';
 import { colors } from '../../../shared/styles/colors.ts';
 import { Button } from '../../../components/button';
-import { Login1Icon, Login2Icon } from '../../../shared/icons';
+import { Login2Icon } from '../../../shared/icons';
 import { Modal } from '../../../shared/components/modal';
 import { Routes } from '../../../routing/routes.ts';
 import { useSelector, useDispatch } from 'react-redux';
@@ -29,6 +29,9 @@ const LoginView = () => {
     const error = useSelector(
         (state: StorageState) => state.auth.authErrorMessage
     );
+    const providers = useSelector(
+        (state: StorageState) => state.user.oauthProviders
+    );
     const [token, setToken] = useState('');
     const language = useSelector(
         (state: StorageState) => state.persistence.language
@@ -46,10 +49,6 @@ const LoginView = () => {
             return dictionary.authorization.errors.oauthError;
         }
         return error;
-    };
-
-    const onPressYandexAuthClick = async () => {
-        window.location = Routes.Login as unknown as Location;
     };
 
     return (
@@ -203,26 +202,25 @@ const LoginView = () => {
                         gap: '12px',
                     }}
                 >
-                    <Button
-                        classname="full-width"
-                        title={`${dictionary.authorization.loginVia} @phystech.edu`}
-                        color="blue"
-                        rounded
-                        type="rounded"
-                        titleIcon={Login2Icon}
-                        minimize={false}
-                        onPress={onPressYandexAuthClick}
-                    />
-                    <Button
-                        classname="full-width"
-                        title={dictionary.authorization.loginAndPasswoord}
-                        color="blue"
-                        rounded
-                        type="rounded"
-                        titleIcon={Login1Icon}
-                        minimize={false}
-                        onPress={onPressYandexAuthClick}
-                    />
+                    {providers?.map((provider) => (
+                        <Button
+                            classname="full-width"
+                            title={`${dictionary.authorization.loginVia} ${provider}`}
+                            color="blue"
+                            rounded
+                            type="rounded"
+                            titleIcon={
+                                provider.toLowerCase() === 'yandex'
+                                    ? Login2Icon
+                                    : undefined
+                            }
+                            minimize={false}
+                            onPress={() => {
+                                window.location = (Routes.OauthLoginPrefix +
+                                    provider) as unknown as Location;
+                            }}
+                        />
+                    ))}
                 </div>
             </div>
         </div>
