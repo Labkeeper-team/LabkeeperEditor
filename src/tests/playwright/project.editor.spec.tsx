@@ -3,6 +3,114 @@ import { test, expect } from '@playwright/test';
 const uuid = '2cd18704-6c3f-48cb-96f1-9a923930f8cb';
 
 /*
+Тест на авторизацию
+ */
+test('auth-error', async ({ page }) => {
+    await page.goto('/?error=bad_credentials');
+
+    // Ждем загрузки страницы
+    await page.waitForLoadState('domcontentloaded');
+
+    await expect(page).toHaveURL('/project/default');
+
+    await expect(page).toHaveScreenshot(`auth_error_form.png`);
+
+    await page.goto('/?error=oauth_error');
+
+    // Ждем загрузки страницы
+    await page.waitForLoadState('domcontentloaded');
+
+    await expect(page).toHaveURL('/project/default');
+
+    await expect(page).toHaveScreenshot(`auth_error_oauth.png`);
+});
+
+/*
+Тест на добавление и удаление сегментов разными способами
+ */
+test('insert-segment-between', async ({ page }) => {
+    await page.goto('/');
+
+    // Ждем загрузки страницы
+    await page.waitForLoadState('domcontentloaded');
+    // Ждем редиректа на конкретный проект
+    await expect(page).toHaveURL('/project/default');
+
+    // добавляем вычислительный
+    await page
+        .locator('div')
+        .filter({ hasText: /^Добавить еще$/ })
+        .first()
+        .click();
+    await page.getByRole('listitem').filter({ hasText: 'Вычисление' }).click();
+
+    // пишем в него
+    let editor = page.locator('.cm-content').nth(0);
+    await editor.click();
+    await editor.fill('computation');
+    await editor.click();
+
+    // добавляем simple math
+    await page
+        .locator('div')
+        .filter({ hasText: /^Добавить еще$/ })
+        .first()
+        .click();
+    await page
+        .getByRole('listitem')
+        .filter({ hasText: 'Простая формула' })
+        .click();
+
+    // пишем в него
+    editor = page.locator('.cm-content').nth(1);
+    await editor.click();
+    await editor.fill('asciimath');
+    await editor.click();
+
+    // Добавляем маркдаун между
+    await page.getByText('Добавить', { exact: true }).click();
+    await page.getByText('Маркдаун', { exact: true }).click();
+
+    // пишем в него
+    editor = page.locator('.cm-content').nth(1);
+    await editor.click();
+    await editor.fill('md');
+    await editor.click();
+
+    // Добавляем latex
+    await page.getByText('Добавить', { exact: true }).nth(1).click();
+    await page.getByText('Latex-формула', { exact: true }).click();
+
+    // пишем в него
+    editor = page.locator('.cm-content').nth(2);
+    await editor.click();
+    await editor.fill('latex');
+    await editor.click();
+
+    await expect(page).toHaveScreenshot(`insert-segment-between1.png`);
+
+    // удаляем latex
+    await page.locator('div.dropdown-menu-container').nth(4).click();
+    await page.getByText('Удалить').click();
+
+    // удаляем md
+    await page.locator('div.dropdown-menu-container').nth(3).click();
+    await page.getByText('Удалить').click();
+
+    await expect(page).toHaveScreenshot(`insert-segment-between2.png`);
+
+    // удаляем asciimath
+    // поскольку плашка с удалением не закрывается, можно ее заново не нажимать
+    await page.getByText('Удалить').click();
+
+    // удаляем computation
+    await page.locator('div.dropdown-menu-container').nth(2).click();
+    await page.getByText('Удалить').click();
+
+    expect(await page.locator('.cm-content').count()).toBe(0);
+});
+
+/*
 Тест на большое количество сегментов с текстом.
  */
 test('many-segments', async ({ page }) => {

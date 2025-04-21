@@ -194,12 +194,27 @@ export const SegmentEditor = memo(
             if (!isAutocompete) {
                 //   return;
             }
+            if (projectIsReadonly) {
+                return;
+            }
             const savedProgram = store.getState().project.history.at(-1);
             if (!savedProgram) {
                 return;
             }
             if (projectId && projectId !== 'default') {
-                await saveProgramRequest(projectId.toString(), savedProgram);
+                const result = await saveProgramRequest(
+                    projectId.toString(),
+                    savedProgram
+                );
+                if (result.isUnauth) {
+                    toast(dictionary.filemanager.errors.sessionExpired, {
+                        type: 'error',
+                    });
+                    dispatch(logoutAction);
+                }
+                if (!result.isOk) {
+                    return;
+                }
             }
         }, [isAutocompete, projectId]);
 

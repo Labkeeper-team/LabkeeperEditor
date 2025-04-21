@@ -55,6 +55,9 @@ export const ProjectPage = () => {
     const lastProgram = useSelector(
         (state: StorageState) => state.persistence.lastProgram
     );
+    const projectIsReadonly = useSelector(
+        (state: StorageState) => state.project.projectIsReadonly
+    );
     const program = useSelector(useCurrentProgram);
 
     const showTour = useSelector(useShowTour);
@@ -112,7 +115,7 @@ export const ProjectPage = () => {
     });
 
     useEffect(() => {
-        if (!user.isAuthenticated) {
+        if (!user.isAuthenticated && !projectIsReadonly) {
             dispatch(setLastProgram(program));
         }
     }, [program]);
