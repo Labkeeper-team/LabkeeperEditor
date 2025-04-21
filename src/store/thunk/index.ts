@@ -16,6 +16,7 @@ import {
     CompileErrorResultList,
     CompileSuccessResult,
 } from '../../shared/models/project.ts';
+import { EVENT_ERROR, onEvent } from '../../shared/yandex-metrika';
 
 export const compileProject = createAsyncThunk(
     'project/compileProject',
@@ -67,6 +68,9 @@ export const compileProject = createAsyncThunk(
         }
         if (result.code === 425) {
             thunkAPI.dispatch(setNeedLogin(true));
+        }
+        if (!result.isOk) {
+            onEvent(EVENT_ERROR);
         }
     }
 );

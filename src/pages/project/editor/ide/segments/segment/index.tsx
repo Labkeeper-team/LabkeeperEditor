@@ -66,6 +66,10 @@ import { logoutAction } from '../../../../../../store/actions';
 import { compileProject } from '../../../../../../store/thunk';
 import { checkFile } from '../../../../../../utils/file';
 import { SegmentDivider } from '../segment-divider';
+import {
+    EVENT_MOVE_SEGMENT,
+    onEvent,
+} from '../../../../../../shared/yandex-metrika';
 
 const shortTypeMap = {
     computational: 'code',
@@ -200,6 +204,7 @@ export const SegmentEditor = memo(
         }, [isAutocompete, projectId]);
 
         const onChangePosition = async (direction: 'up' | 'down') => {
+            onEvent(EVENT_MOVE_SEGMENT);
             dispatch(
                 changeSegmentPosition({
                     currentPosition: props.index,

@@ -22,6 +22,7 @@ import { saveProgramRequest } from '../../../../rpi/project.tsx';
 import { logoutAction } from '../../../../store/actions';
 import { toast } from 'react-toastify';
 import { UnknownAction } from '@reduxjs/toolkit';
+import { EVENT_RUN, onEvent } from '../../../../shared/yandex-metrika';
 
 export const Ide = () => {
     const [isLoading, setIsLoading] = useState(false);
@@ -57,6 +58,7 @@ export const Ide = () => {
                         return;
                     }
                 }
+                onEvent(EVENT_RUN);
                 await dispatch(compileProject() as never as UnknownAction);
                 if (user.isAuthenticated) {
                     dispatch(setUpdateFiles(true));

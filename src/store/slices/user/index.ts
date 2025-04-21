@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { LOGOUT_TYPE } from '../../actions';
+import { setUserState, STATE_ONLINE } from '../../../shared/yandex-metrika';
 
 export interface UserInfo {
     email: string;
@@ -32,6 +33,12 @@ export const userSlice = createSlice({
             state.id = payload.id;
             state.yandexCaptchaSiteKey = payload.yandexCaptchaSiteKey;
             state.oauthProviders = payload.oauthProviders;
+
+            if (state.isAuthenticated) {
+                setUserState(STATE_ONLINE, 'online');
+            } else {
+                setUserState(STATE_ONLINE, 'anonymous');
+            }
         },
         clearUser: (state) => {
             state = initialState;

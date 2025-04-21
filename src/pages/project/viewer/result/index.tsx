@@ -15,6 +15,7 @@ import { useReactToPrint } from 'react-to-print';
 import { useRef } from 'react';
 import { setActiveSegmentIndex } from '../../../../store/slices/ide';
 import { useDictionary } from '../../../../store/selectors/translations';
+import { EVENT_PRINT, onEvent } from '../../../../shared/yandex-metrika';
 
 declare global {
     interface Window {
@@ -38,6 +39,7 @@ export const Result = () => {
     });
 
     const onPress = () => {
+        onEvent(EVENT_PRINT);
         dispatch(setActiveSegmentIndex(-1));
         setTimeout(() => {
             const print = async () => {

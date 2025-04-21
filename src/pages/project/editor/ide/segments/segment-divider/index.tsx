@@ -3,6 +3,14 @@ import { useSelector } from 'react-redux';
 import { useDictionary } from '../../../../../../store/selectors/translations';
 import './style.scss';
 import { SegmentType } from '../../../../../../shared/models/project.ts';
+import {
+    EVENT_CREATE_ASCIIMATH_SEGMENT,
+    EVENT_CREATE_COMP_SEGMENT,
+    EVENT_CREATE_LATEX_SEGMENT,
+    EVENT_CREATE_MD_SEGMENT,
+    EVENT_INSERT_SEGMENT_BETWEEN,
+    onEvent,
+} from '../../../../../../shared/yandex-metrika';
 
 interface SegmentDividerProps {
     onAdd: (type: SegmentType) => void;
@@ -29,6 +37,8 @@ export const SegmentDivider: React.FC<SegmentDividerProps> = ({ onAdd }) => {
                     >
                         <button
                             onClick={() => {
+                                onEvent(EVENT_INSERT_SEGMENT_BETWEEN);
+                                onEvent(EVENT_CREATE_MD_SEGMENT);
                                 onAdd('md');
                                 setIsOpen(false);
                             }}
@@ -37,6 +47,8 @@ export const SegmentDivider: React.FC<SegmentDividerProps> = ({ onAdd }) => {
                         </button>
                         <button
                             onClick={() => {
+                                onEvent(EVENT_CREATE_LATEX_SEGMENT);
+                                onEvent(EVENT_INSERT_SEGMENT_BETWEEN);
                                 onAdd('latex');
                                 setIsOpen(false);
                             }}
@@ -45,6 +57,8 @@ export const SegmentDivider: React.FC<SegmentDividerProps> = ({ onAdd }) => {
                         </button>
                         <button
                             onClick={() => {
+                                onEvent(EVENT_CREATE_ASCIIMATH_SEGMENT);
+                                onEvent(EVENT_INSERT_SEGMENT_BETWEEN);
                                 onAdd('asciimath');
                                 setIsOpen(false);
                             }}
@@ -53,6 +67,8 @@ export const SegmentDivider: React.FC<SegmentDividerProps> = ({ onAdd }) => {
                         </button>
                         <button
                             onClick={() => {
+                                onEvent(EVENT_CREATE_COMP_SEGMENT);
+                                onEvent(EVENT_INSERT_SEGMENT_BETWEEN);
                                 onAdd('computational');
                                 setIsOpen(false);
                             }}

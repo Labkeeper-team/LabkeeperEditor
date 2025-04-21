@@ -14,6 +14,13 @@ import { useDictionary } from '../../../../../store/selectors/translations';
 import { setActiveSegmentIndex } from '../../../../../store/slices/ide';
 import { Select } from '../../../../../components/select';
 import { SelectClassNames } from '../../../../../components/select/model';
+import {
+    EVENT_CREATE_ASCIIMATH_SEGMENT,
+    EVENT_CREATE_COMP_SEGMENT,
+    EVENT_CREATE_LATEX_SEGMENT,
+    EVENT_CREATE_MD_SEGMENT,
+    onEvent,
+} from '../../../../../shared/yandex-metrika';
 
 export const AddBlock = (props: AddBlockProps) => {
     const dispatch = useDispatch();
@@ -22,6 +29,20 @@ export const AddBlock = (props: AddBlockProps) => {
 
     const onClick = useCallback(
         (type: 'computational' | 'md' | 'latex' | 'asciimath') => {
+            switch (type) {
+                case 'md':
+                    onEvent(EVENT_CREATE_MD_SEGMENT);
+                    break;
+                case 'asciimath':
+                    onEvent(EVENT_CREATE_ASCIIMATH_SEGMENT);
+                    break;
+                case 'latex':
+                    onEvent(EVENT_CREATE_LATEX_SEGMENT);
+                    break;
+                case 'computational':
+                    onEvent(EVENT_CREATE_COMP_SEGMENT);
+                    break;
+            }
             const newSegment: Segment = {
                 id: 1,
                 type,
