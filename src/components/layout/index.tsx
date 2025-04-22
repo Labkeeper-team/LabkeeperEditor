@@ -3,11 +3,7 @@ import { Header } from '../header';
 import { InterfaceTour } from '../../shared/components/tour';
 import { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNeedLogin } from '../../store/selectors/program';
 import { Routes } from '../../routing/routes';
-import { LoginModal } from '../loginModal';
-import { Modal } from '../../shared/components/modal';
-import { setNeedLogin } from '../../store/slices/ide';
 import { setUser } from '../../store/slices/user';
 import { setisFileDraggedToFileManager } from '../../store/slices/settings';
 import { StorageState } from '../../store';
@@ -16,7 +12,6 @@ import { setErrorMessage } from '../../store/slices/auth';
 export const BaseLayout = () => {
     const [searchParams] = useSearchParams();
     const dispatch = useDispatch();
-    const needLogin = useSelector(useNeedLogin);
     const isReadonly = useSelector(
         (state: StorageState) => state.project.projectIsReadonly
     );
@@ -85,12 +80,6 @@ export const BaseLayout = () => {
                 <Outlet />
             </div>
             <InterfaceTour />
-            <Modal
-                onClose={() => dispatch(setNeedLogin(false))}
-                showModal={!!needLogin}
-            >
-                <LoginModal />
-            </Modal>
         </div>
     );
 };

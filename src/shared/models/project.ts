@@ -104,6 +104,7 @@ export enum CompileError {
 
     // OTHER
     MULTIPLE_ERROR = 600,
+    LOGIN_REQUIRED = 700, // USED ONLY AT FRONTEND
 }
 
 export interface CalcStatement extends Statement {

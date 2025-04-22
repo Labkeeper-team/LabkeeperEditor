@@ -8,7 +8,6 @@ export interface IdeState {
     activeSegmentIndex: number;
     previousActiveSegmentIndex: number;
     showHIntAboutVariables: boolean;
-    needLogin: boolean | 'Force logout';
     updateFiles: boolean;
 }
 
@@ -17,7 +16,6 @@ const initialState: IdeState = {
     isAutocompilation: false,
     isHighlighntingCode: true,
     showHIntAboutVariables: true,
-    needLogin: false,
     activeSegmentIndex: -1,
     previousActiveSegmentIndex: -1,
     updateFiles: false,
@@ -36,12 +34,6 @@ export const ideSlice = createSlice({
         setActiveSegmentIndex: (state, { payload }: PayloadAction<number>) => {
             state.previousActiveSegmentIndex = state.activeSegmentIndex;
             state.activeSegmentIndex = payload;
-        },
-        setNeedLogin: (
-            state,
-            { payload }: PayloadAction<boolean | 'Force logout'>
-        ) => {
-            state.needLogin = payload;
         },
         setAutocompilation: (state, { payload }: PayloadAction<boolean>) => {
             state.isAutocompilation = payload;
@@ -72,7 +64,6 @@ export const {
     setHighlight,
     setShowHintAboutVariables,
     setActiveSegmentIndex,
-    setNeedLogin,
     clear,
     setAutocompilation,
     setUpdateFiles,

@@ -118,6 +118,7 @@ export interface Translations {
         [CompileError.INCORRECT_ARGUMENT]: string;
         [CompileError.FUNCTION_HAS_NO_RETURN_VALUE]: string;
         [CompileError.MULTIPLE_ERROR]: string;
+        [CompileError.LOGIN_REQUIRED]: string;
     };
 
     error_common: {

@@ -129,6 +129,7 @@ export const en: Translations = {
         [CompileError.FUNCTION_HAS_NO_RETURN_VALUE]:
             'No return value in function',
         [CompileError.MULTIPLE_ERROR]: 'Multiple error',
+        [CompileError.LOGIN_REQUIRED]: 'Login is required to proceed',
     },
     error_common: {
         segment: 'Segment',

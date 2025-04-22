@@ -66,10 +66,6 @@ export const useUser = createSelector(
     (state: StorageState) => state.user,
     (state) => state
 );
-export const useNeedLogin = createSelector(
-    (state: StorageState) => state.ide.needLogin,
-    (nL) => nL
-);
 
 // Ide editor
 export const useActiveElement = createSelector(

@@ -3,6 +3,44 @@ import { test, expect } from '@playwright/test';
 const uuid = '2cd18704-6c3f-48cb-96f1-9a923930f8cb';
 
 /*
+Тест на получение кода 425 после компиляции
+ */
+test('425-display', async ({ page }) => {
+    await page.goto('/');
+
+    // Ждем загрузки страницы
+    await page.waitForLoadState('domcontentloaded');
+    // Ждем редиректа на конкретный проект
+    await expect(page).toHaveURL('/project/default');
+
+    // Добавляем маркдаун
+    await page.getByRole('button', { name: /Добавить маркдаун/i }).click();
+    const editor = page.locator('.cm-content').nth(0);
+    await editor.click();
+    await editor.pressSequentially('biba', { delay: 20 });
+    await editor.click();
+
+    // Перехватываем запрос на компиляцию
+    await page.route('/api/v2/public/compile', async (route) => {
+        await route.fulfill({
+            status: 425,
+            contentType: 'application/json',
+        });
+    });
+
+    // компилируем
+    await page.getByRole('button', { name: /Выполнить/i }).click();
+
+    // ждем, когда кнопка снова станет нажимаемой
+    await page
+        .getByRole('button', { name: /Выполнить/i })
+        .waitFor({ state: 'attached' });
+
+    // проверяем, что ошибки отображаются корректно
+    await expect(page).toHaveScreenshot('425-display.png');
+});
+
+/*
 Тест на авторизацию
  */
 test('auth-error', async ({ page }) => {

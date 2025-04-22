@@ -1,7 +1,6 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { StorageState } from '..';
 import { setCompileError, setCompileResult } from '../slices/project';
-import { setNeedLogin } from '../slices/ide';
 import { setAutoCompleteLoading } from '../slices/settings';
 import {
     compilationRequest,
@@ -13,6 +12,7 @@ import { dictionary } from '../shared/dictionaries';
 import { logoutAction } from '../actions';
 import { setShowAuthModal } from '../slices/auth';
 import {
+    CompileError,
     CompileErrorResultList,
     CompileSuccessResult,
 } from '../../shared/models/project.ts';
@@ -67,7 +67,21 @@ export const compileProject = createAsyncThunk(
             });
         }
         if (result.code === 425) {
-            thunkAPI.dispatch(setNeedLogin(true));
+            thunkAPI.dispatch(
+                setCompileError({
+                    errors: [
+                        {
+                            payload: {
+                                line: NaN,
+                                position: NaN,
+                                segmentId: 1,
+                            },
+                            code: CompileError.LOGIN_REQUIRED,
+                        },
+                    ],
+                })
+            );
+            thunkAPI.dispatch(setShowAuthModal(true));
         }
         if (!result.isOk) {
             onEvent(EVENT_ERROR);

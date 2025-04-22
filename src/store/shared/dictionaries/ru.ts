@@ -135,6 +135,8 @@ export const ru: Translations = {
         [CompileError.FUNCTION_HAS_NO_RETURN_VALUE]:
             'Отсутствует возвращаемое значение в функции',
         [CompileError.MULTIPLE_ERROR]: 'Множественные ошибки',
+        [CompileError.LOGIN_REQUIRED]:
+            'Необходимо авторизироваться, чтобы продолжить',
     },
     error_common: {
         segment: 'Сегмент',
