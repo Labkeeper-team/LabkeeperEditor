@@ -226,4 +226,5 @@ export const ru: Translations = {
         link_copied: 'Ссылка скопирована в буфер обмена',
         copy_error: 'Не удалось скопировать ссылку',
     },
+    wiki: 'вики',
 };

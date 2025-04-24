@@ -82,7 +82,7 @@ export const instructions: LocalizedInstructionItem[] = [
                 'Нажмите кнопку Выполнить',
             ],
             image: '/instructions/quick_start.png',
-            ending: 'Больше информации доступно на вики',
+            ending: 'Больше информации доступно на {wiki}',
             wikiLink: wikiRuUrl,
         },
         en: {
@@ -92,7 +92,7 @@ export const instructions: LocalizedInstructionItem[] = [
                 "Write some text in it",
                 "Press the run button"
             ],
-            ending: 'More information on wiki',
+            ending: 'More information on {wiki}',
             wikiLink: wikiEnUrl,
             image: "/instructions/quick_start.png"
         },

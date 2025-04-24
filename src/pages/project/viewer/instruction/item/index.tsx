@@ -63,7 +63,37 @@ export const InstructionItemComponent = ({item}: {item : InstructionItem}) => {
                             />
                         </div>
                     ))}
-                    // TODO
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', flexWrap: 'nowrap' }}>
+                        <div style={{ 
+                            width: '6px', 
+                            height: '6px', 
+                            borderRadius: '50%', 
+                            backgroundColor: colors.buttonActionBlue,
+                            marginTop: '8px',
+                            flexShrink: 0,
+                        }} />
+                        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                            <Typography
+                                text={item.ending}
+                                color={colors.gray10}
+                                type="body"
+                            />
+                            <a 
+                                href={item.wikiLink} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                style={{ 
+                                    color: colors.buttonActionBlue, 
+                                    textDecoration: 'none',
+                                    whiteSpace: 'nowrap',
+                                    fontWeight: 'bold',
+                                    fontSize: '14px'
+                                }}
+                            >
+                                {dictionary.wiki}
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div style={{ 
