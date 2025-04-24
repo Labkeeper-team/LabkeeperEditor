@@ -1,13 +1,11 @@
 import { Typography } from '../../../../../components/typography';
 import { colors } from '../../../../../shared/styles/colors';
+import { useSelector } from 'react-redux';
+import { useDictionary } from '../../../../../store/selectors/translations.ts';
+import {InstructionItem} from '../../../../../shared/help'
 
-interface InstructionItemProps {
-    title: string;
-    points: string[];
-    imageUrl: string;
-}
-
-export const InstructionItem = ({ title, points, imageUrl }: InstructionItemProps) => {
+export const InstructionItemComponent = ({item}: {item : InstructionItem}) => {
+    const dictionary = useSelector(useDictionary);
     return (
         <div
             style={{
@@ -37,7 +35,7 @@ export const InstructionItem = ({ title, points, imageUrl }: InstructionItemProp
                     marginBottom: '0'
                 }}>
                     <Typography
-                        text={title}
+                        text={item.title}
                         color={colors.gray10}
                         type="body-large"
                     />
@@ -48,7 +46,7 @@ export const InstructionItem = ({ title, points, imageUrl }: InstructionItemProp
                     gap: '12px',
                     overflow: 'hidden',
                 }}>
-                    {points.map((point, idx) => (
+                    {item.points.map((point, idx) => (
                         <div key={idx} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
                             <div style={{ 
                                 width: '6px', 
@@ -65,6 +63,7 @@ export const InstructionItem = ({ title, points, imageUrl }: InstructionItemProp
                             />
                         </div>
                     ))}
+                    // TODO
                 </div>
             </div>
             <div style={{ 
@@ -75,7 +74,7 @@ export const InstructionItem = ({ title, points, imageUrl }: InstructionItemProp
                 overflow: 'hidden',
             }}>
                 <img 
-                    src={imageUrl}
+                    src={item.image}
                     style={{
                         maxWidth: '100%',
                         maxHeight: '160px',

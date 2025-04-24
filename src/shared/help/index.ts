@@ -17,6 +17,19 @@ export interface EditorHelpItem {
     text: string;
 }
 
+export interface LocalizedInstructionItem {
+    ru: InstructionItem;
+    en: InstructionItem;
+}
+
+export interface InstructionItem {
+    title: string;
+    points: string[];
+    image: string;
+    ending: string;
+    wikiLink: string;
+}
+
 export const headerHelpItems: HeaderHelpItem[] = [
     {
         description: {
@@ -50,5 +63,38 @@ export const editorHelpItems: EditorHelpItem[] = [
     {
         description: "Variable with error",
         text: "a = 10 # 1"
+    }
+];
+
+const wikiRuUrl = 'https://github.com/labkeeper-team/docs/wiki/ru';
+const wikiEnUrl = 'https://github.com/labkeeper-team/docs/wiki/en';
+
+export const instructions: LocalizedInstructionItem[] = [
+    {
+        ru: {
+            title: 'Быстрый старт',
+            points: [
+                `
+                Создайте сегмент нужного типа.
+                Markdown нужен для текста.
+                Вычисление позволяет считать выражения.`,
+                'Напишите что-нибудь',
+                'Нажмите кнопку Выполнить',
+            ],
+            image: '/instructions/quick_start.png',
+            ending: 'Больше информации доступно на вики',
+            wikiLink: wikiRuUrl,
+        },
+        en: {
+            title: "Quick start",
+            points: [
+                "Create a segment",
+                "Write some text in it",
+                "Press the run button"
+            ],
+            ending: 'More information on wiki',
+            wikiLink: wikiEnUrl,
+            image: "/instructions/quick_start.png"
+        },
     }
 ];

@@ -12,41 +12,22 @@ import 'swiper/css/pagination';
 import 'swiper/css/navigation';
 
 import { Navigation, Pagination } from 'swiper/modules';
-import { InstructionItem } from './item';
+import { InstructionItemComponent } from './item';
 import { ImageButton } from '../../../../components/imageButton';
 import { useSelector } from 'react-redux';
 import { useDictionary } from '../../../../store/selectors/translations';
+import { instructions } from '../../../../shared/help';
+import { StorageState } from '../../../../store';
 
 export const Instruction = () => {
     const swiperRef = useRef<SwiperType | null>(null);
     const [expanded, setExpanded] = useState(false);
     const dictionary = useSelector(useDictionary);
+    const language = useSelector((state: StorageState) => state.persistence.language)
 
     const onClick = () => {
         setExpanded(!expanded);
     };
-
-    const instructions = [
-        {
-            title: dictionary.instructions.adding_segment,
-            points: [
-                'Выберите тип сегмента из выпадающего списка',
-                'Укажите необходимые параметры сегмента',
-                'Нажмите кнопку "Добавить" для создания сегмента',
-                'Нажмите кнопку "Добавить" для создания сегмента'
-            ],
-            imageUrl: '/instructions/instruction_1.png'
-        },
-        {
-            title: dictionary.label_save_to_pdf,
-            points: [
-                'Нажмите на кнопку "Сохранить в PDF"',
-                'Выберите место для сохранения файла',
-                'Дождитесь завершения процесса сохранения'
-            ],
-            imageUrl: '/instructions/instruction_2.png'
-        }
-    ];
 
     return (
         <div className={classNames('labkeeper-instruction-container')}>
@@ -82,11 +63,7 @@ export const Instruction = () => {
                     >
                         {instructions.map((instruction, index) => (
                             <SwiperSlide key={index}>
-                                <InstructionItem
-                                    title={instruction.title}
-                                    points={instruction.points}
-                                    imageUrl={instruction.imageUrl}
-                                />
+                                <InstructionItemComponent item={instruction[language]} />
                             </SwiperSlide>
                         ))}
                     </Swiper>
