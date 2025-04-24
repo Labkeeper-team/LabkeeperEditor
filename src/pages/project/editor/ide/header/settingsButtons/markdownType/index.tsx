@@ -8,7 +8,7 @@ import {
 
 import './style.scss';
 import { StorageState } from '../../../../../../../store';
-import { HeaderHelpItem, items } from '../help';
+import { HeaderHelpItem, headerHelpItems } from '../../../../../../../shared/help';
 
 export const HeaderHelperItems = () => {
     const language = useSelector(
@@ -73,7 +73,7 @@ export const HeaderHelperItems = () => {
 
     return (
         <div className="markdown-select-dropdown">
-            {items.map((item) => (
+            {headerHelpItems.map((item) => (
                 <span onClick={() => onClick(item)}>
                     {item.description[language]}
                 </span>

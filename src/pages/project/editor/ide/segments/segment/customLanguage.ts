@@ -8,6 +8,7 @@ import {
     CompletionResult,
     Completion,
 } from '@codemirror/autocomplete';
+import { editorHelpItems } from '../../../../../../shared/help';
 
 // Определяем математические функции
 const mathFunctions = [
@@ -88,9 +89,7 @@ const customCompletion = autocompletion({
             if (!word) return null;
 
             /*
-            TODO
-            https://github.com/timattt/TypeThree/issues/167
-            Нужно добавить паттерны для customFunction и мини-документацию
+            TODO https://github.com/Labkeeper-team/TypeThree/issues/167
              */
             const options: Completion[] = [
                 ...mathFunctions.map((func) => ({
@@ -105,6 +104,12 @@ const customCompletion = autocompletion({
                     boost: 1.5,
                     apply: func + '()',
                 })),
+                ...editorHelpItems.map(item => ({
+                    label: item.description,
+                    type: 'hint',
+                    boost: 2,
+                    apply: item.text,
+                }))
             ];
 
             return {

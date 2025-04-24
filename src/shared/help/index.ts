@@ -1,4 +1,4 @@
-import { SegmentType } from '../../../../../../../shared/models/project.ts';
+import { SegmentType } from '../models/project.ts';
 
 export interface HeaderHelpItem {
     description: {
@@ -12,7 +12,12 @@ export interface HeaderHelpItem {
     };
 }
 
-export const items: HeaderHelpItem[] = [
+export interface EditorHelpItem {
+    description: string;
+    text: string;
+}
+
+export const headerHelpItems: HeaderHelpItem[] = [
     {
         description: {
             ru: 'Массив',
@@ -35,4 +40,15 @@ export const items: HeaderHelpItem[] = [
             en: 'My formula with integral: $\\int f(x) dx = F(x)$',
         },
     },
+];
+
+export const editorHelpItems: EditorHelpItem[] = [
+    {
+        description: "Array",
+        text: "a = [1, 2, 3, 4, 5]"
+    },
+    {
+        description: "Variable with error",
+        text: "a = 10 # 1"
+    }
 ];
