@@ -25,6 +25,29 @@ export const Instruction = () => {
     const onClick = () => {
         setExpanded(!expanded);
     };
+
+    const instructions = [
+        {
+            title: dictionary.instructions.adding_segment,
+            points: [
+                'Выберите тип сегмента из выпадающего списка',
+                'Укажите необходимые параметры сегмента',
+                'Нажмите кнопку "Добавить" для создания сегмента',
+                'Нажмите кнопку "Добавить" для создания сегмента'
+            ],
+            imageUrl: '/instructions/instruction_1.png'
+        },
+        {
+            title: dictionary.label_save_to_pdf,
+            points: [
+                'Нажмите на кнопку "Сохранить в PDF"',
+                'Выберите место для сохранения файла',
+                'Дождитесь завершения процесса сохранения'
+            ],
+            imageUrl: '/instructions/instruction_2.png'
+        }
+    ];
+
     return (
         <div className={classNames('labkeeper-instruction-container')}>
             <SectorHeader
@@ -39,31 +62,33 @@ export const Instruction = () => {
                         display: 'flex',
                         flexDirection: 'column',
                         position: 'relative',
+                        padding: '0 16px',
                     }}
                 >
                     <Swiper
                         style={{ height: '100%' }}
                         spaceBetween={50}
-                        slidesPerView={3}
+                        slidesPerView={1}
                         onSwiper={(swiper) => (swiperRef.current = swiper)}
                         cssMode
-                        pagination={true}
+                        pagination={{
+                            clickable: true,
+                            bulletClass: 'swiper-pagination-bullet',
+                            bulletActiveClass: 'swiper-pagination-bullet-active',
+                        }}
                         navigation={false}
                         onSlideChange={(sw) => sw.activeIndex}
                         modules={[Pagination, Navigation]}
                     >
-                        <SwiperSlide>
-                            <InstructionItem
-                                title={dictionary.instructions.adding_segment}
-                                index={1}
-                            />
-                        </SwiperSlide>
-                        <SwiperSlide>
-                            <InstructionItem
-                                title={dictionary.label_save_to_pdf}
-                                index={2}
-                            />
-                        </SwiperSlide>
+                        {instructions.map((instruction, index) => (
+                            <SwiperSlide key={index}>
+                                <InstructionItem
+                                    title={instruction.title}
+                                    points={instruction.points}
+                                    imageUrl={instruction.imageUrl}
+                                />
+                            </SwiperSlide>
+                        ))}
                     </Swiper>
                     <div className="nav-button left">
                         <ImageButton
