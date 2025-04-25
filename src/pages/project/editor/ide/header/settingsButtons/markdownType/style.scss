@@ -3,13 +3,15 @@
 .markdown-select-dropdown {
     display: flex;
     flex-direction: column;
-    width: 100px;
-    align-items: end;
+    min-width: 200px;
+    align-items: flex-start;
     gap: 5px;
     span {
         width: 100%;
-        text-align: end;
-        padding: 2px;
+        text-align: left;
+        padding: 4px 8px;
+        white-space: normal;
+        word-wrap: break-word;
         &:hover {
             color: $white;
             cursor: pointer;
