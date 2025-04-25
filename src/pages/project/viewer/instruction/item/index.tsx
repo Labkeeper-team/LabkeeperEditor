@@ -15,8 +15,9 @@ export const InstructionItemComponent = ({
             style={{
                 display: 'flex',
                 flexDirection: 'row',
-                gap: 32,
-                padding: '24px',
+                gap: 5,
+                marginTop: '-20px',
+                paddingLeft: '24px',
                 height: '100%',
                 alignItems: 'center',
                 backgroundColor: colors.gray60,
@@ -28,24 +29,16 @@ export const InstructionItemComponent = ({
                 style={{
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: 16,
+                    gap: 7,
                     flex: 1,
                     overflow: 'hidden',
                 }}
             >
-                <div
-                    style={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        marginBottom: '0',
-                    }}
-                >
-                    <Typography
-                        text={item.title}
-                        color={colors.gray10}
-                        type="body-large"
-                    />
-                </div>
+                <Typography
+                    text={item.title}
+                    color={colors.gray10}
+                    type="body-large"
+                />
                 <div
                     style={{
                         display: 'flex',
