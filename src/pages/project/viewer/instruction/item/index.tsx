@@ -16,6 +16,7 @@ export const InstructionItemComponent = ({
                 display: 'flex',
                 flexDirection: 'row',
                 gap: 5,
+                marginTop: '-28px',
                 paddingLeft: '24px',
                 height: '100%',
                 alignItems: 'center',
@@ -37,7 +38,7 @@ export const InstructionItemComponent = ({
                     style={{
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: '12px',
+                        gap: '8px',
                         overflow: 'auto',
                         maxHeight: '160px',
                     }}
