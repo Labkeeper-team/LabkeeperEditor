@@ -41,7 +41,10 @@ export const InstructionItemComponent = ({
                         gap: '8px',
                         overflow: 'auto',
                         maxHeight: '160px',
+                        scrollbarWidth: 'thin',
+                        scrollbarColor: `${colors.gray40} transparent`,
                     }}
+                    className="custom-scrollbar"
                 >
                     <Typography
                         text={item.title}
