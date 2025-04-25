@@ -7,6 +7,7 @@ import { Button } from '../button';
 import { HeaderLogo } from './logo';
 import { InterfaceTour } from './tour';
 import { ShareButton } from './share';
+import { WikiButton } from './wiki';
 import './style.scss';
 
 import { Back } from './back';
@@ -80,6 +81,7 @@ export const Header = () => {
                     {location.pathname.startsWith('/project/') ? (
                         <InterfaceTour />
                     ) : null}
+                    <WikiButton />
                     {!isAuthenticated ? (
                         <Button
                             title={dictionary.login}
