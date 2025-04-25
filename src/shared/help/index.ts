@@ -328,7 +328,9 @@ export const instructions: LocalizedInstructionItem[] = [
             ],
             image: '/instructions/simple_formula.png',
             ending: basicEndingRu,
-            wikiLink: wikiRuUrl + '#примеры-разнообразных-механизмов-отрисовки-математики',
+            wikiLink:
+                wikiRuUrl +
+                '#примеры-разнообразных-механизмов-отрисовки-математики',
         },
         en: {
             title: 'Simple formulas segment usage',
