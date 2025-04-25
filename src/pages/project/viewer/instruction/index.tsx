@@ -23,7 +23,9 @@ export const Instruction = () => {
     const swiperRef = useRef<SwiperType | null>(null);
     const [expanded, setExpanded] = useState(false);
     const dictionary = useSelector(useDictionary);
-    const language = useSelector((state: StorageState) => state.persistence.language)
+    const language = useSelector(
+        (state: StorageState) => state.persistence.language
+    );
 
     const onClick = () => {
         setExpanded(!expanded);
@@ -55,7 +57,8 @@ export const Instruction = () => {
                         pagination={{
                             clickable: true,
                             bulletClass: 'swiper-pagination-bullet',
-                            bulletActiveClass: 'swiper-pagination-bullet-active',
+                            bulletActiveClass:
+                                'swiper-pagination-bullet-active',
                         }}
                         navigation={false}
                         onSlideChange={(sw) => sw.activeIndex}
@@ -63,7 +66,9 @@ export const Instruction = () => {
                     >
                         {instructions.map((instruction, index) => (
                             <SwiperSlide key={index}>
-                                <InstructionItemComponent item={instruction[language]} />
+                                <InstructionItemComponent
+                                    item={instruction[language]}
+                                />
                             </SwiperSlide>
                         ))}
                     </Swiper>

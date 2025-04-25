@@ -8,7 +8,10 @@ import {
 
 import './style.scss';
 import { StorageState } from '../../../../../../../store';
-import { HeaderHelpItem, headerHelpItems } from '../../../../../../../shared/help';
+import {
+    HeaderHelpItem,
+    headerHelpItems,
+} from '../../../../../../../shared/help';
 
 export const HeaderHelperItems = () => {
     const language = useSelector(

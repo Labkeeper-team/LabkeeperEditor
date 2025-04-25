@@ -2,9 +2,13 @@ import { Typography } from '../../../../../components/typography';
 import { colors } from '../../../../../shared/styles/colors';
 import { useSelector } from 'react-redux';
 import { useDictionary } from '../../../../../store/selectors/translations.ts';
-import {InstructionItem} from '../../../../../shared/help'
+import { InstructionItem } from '../../../../../shared/help';
 
-export const InstructionItemComponent = ({item}: {item : InstructionItem}) => {
+export const InstructionItemComponent = ({
+    item,
+}: {
+    item: InstructionItem;
+}) => {
     const dictionary = useSelector(useDictionary);
     return (
         <div
@@ -29,33 +33,46 @@ export const InstructionItemComponent = ({item}: {item : InstructionItem}) => {
                     overflow: 'hidden',
                 }}
             >
-                <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'center', 
-                    marginBottom: '0'
-                }}>
+                <div
+                    style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        marginBottom: '0',
+                    }}
+                >
                     <Typography
                         text={item.title}
                         color={colors.gray10}
                         type="body-large"
                     />
                 </div>
-                <div style={{ 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    gap: '12px',
-                    overflow: 'hidden',
-                }}>
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '12px',
+                        overflow: 'hidden',
+                    }}
+                >
                     {item.points.map((point, idx) => (
-                        <div key={idx} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                            <div style={{ 
-                                width: '6px', 
-                                height: '6px', 
-                                borderRadius: '50%', 
-                                backgroundColor: colors.buttonActionBlue,
-                                marginTop: '8px',
-                                flexShrink: 0,
-                            }} />
+                        <div
+                            key={idx}
+                            style={{
+                                display: 'flex',
+                                gap: '8px',
+                                alignItems: 'flex-start',
+                            }}
+                        >
+                            <div
+                                style={{
+                                    width: '6px',
+                                    height: '6px',
+                                    borderRadius: '50%',
+                                    backgroundColor: colors.buttonActionBlue,
+                                    marginTop: '8px',
+                                    flexShrink: 0,
+                                }}
+                            />
                             <Typography
                                 text={point}
                                 color={colors.gray10}
@@ -63,31 +80,46 @@ export const InstructionItemComponent = ({item}: {item : InstructionItem}) => {
                             />
                         </div>
                     ))}
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', flexWrap: 'nowrap' }}>
-                        <div style={{ 
-                            width: '6px', 
-                            height: '6px', 
-                            borderRadius: '50%', 
-                            backgroundColor: colors.buttonActionBlue,
-                            marginTop: '8px',
-                            flexShrink: 0,
-                        }} />
-                        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                    <div
+                        style={{
+                            display: 'flex',
+                            gap: '8px',
+                            alignItems: 'flex-start',
+                            flexWrap: 'nowrap',
+                        }}
+                    >
+                        <div
+                            style={{
+                                width: '6px',
+                                height: '6px',
+                                borderRadius: '50%',
+                                backgroundColor: colors.buttonActionBlue,
+                                marginTop: '8px',
+                                flexShrink: 0,
+                            }}
+                        />
+                        <div
+                            style={{
+                                display: 'flex',
+                                gap: '4px',
+                                alignItems: 'center',
+                            }}
+                        >
                             <Typography
                                 text={item.ending}
                                 color={colors.gray10}
                                 type="body"
                             />
-                            <a 
-                                href={item.wikiLink} 
-                                target="_blank" 
+                            <a
+                                href={item.wikiLink}
+                                target="_blank"
                                 rel="noopener noreferrer"
-                                style={{ 
-                                    color: colors.buttonActionBlue, 
+                                style={{
+                                    color: colors.buttonActionBlue,
                                     textDecoration: 'none',
                                     whiteSpace: 'nowrap',
                                     fontWeight: 'bold',
-                                    fontSize: '14px'
+                                    fontSize: '14px',
                                 }}
                             >
                                 {dictionary.wiki}
@@ -96,19 +128,21 @@ export const InstructionItemComponent = ({item}: {item : InstructionItem}) => {
                     </div>
                 </div>
             </div>
-            <div style={{ 
-                flex: 1, 
-                display: 'flex', 
-                justifyContent: 'center', 
-                alignItems: 'center',
-                overflow: 'hidden',
-            }}>
-                <img 
+            <div
+                style={{
+                    flex: 1,
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    overflow: 'hidden',
+                }}
+            >
+                <img
                     src={item.image}
                     style={{
                         maxWidth: '100%',
                         maxHeight: '160px',
-                        objectFit: 'contain'
+                        objectFit: 'contain',
                     }}
                 />
             </div>

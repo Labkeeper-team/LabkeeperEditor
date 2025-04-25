@@ -104,12 +104,12 @@ const customCompletion = autocompletion({
                     boost: 1.5,
                     apply: func + '()',
                 })),
-                ...editorHelpItems.map(item => ({
+                ...editorHelpItems.map((item) => ({
                     label: item.description,
                     type: 'hint',
                     boost: 2,
                     apply: item.text,
-                }))
+                })),
             ];
 
             return {
