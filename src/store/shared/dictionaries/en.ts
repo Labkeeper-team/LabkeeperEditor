@@ -217,4 +217,5 @@ export const en: Translations = {
         link_copied: 'Link copied to clipboard',
         copy_error: 'Failed to copy link',
     },
+    wiki: 'wiki',
 };

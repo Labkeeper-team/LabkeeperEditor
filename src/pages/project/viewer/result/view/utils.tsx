@@ -416,5 +416,6 @@ function customizeSpecialSymbolsBeforeParsing(formula: string) {
         .replaceAll('array', '\\text{array}')
         .replaceAll('value', '\\text{value}')
         .replaceAll('count', '\\text{count}')
+        .replaceAll('step', '\\text{step}')
         .replaceAll('range', '\\text{range}');
 }

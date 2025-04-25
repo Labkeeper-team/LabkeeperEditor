@@ -12,7 +12,7 @@ import {
 } from '../../../../../../shared/icons';
 import { setSearch } from '../../../../../../store/slices/ide';
 import { DropdownMenu } from '../../../../../../shared/components/dropdownMenu';
-import { MarkdownTypes } from './markdownType';
+import { HeaderHelperItems } from './markdownType';
 import { ProjectSettings } from './projectSettings';
 import { useSearch } from '../../../../../../store/selectors/program';
 import { useDictionary } from '../../../../../../store/selectors/translations';
@@ -50,7 +50,7 @@ export const SettingsButton = () => {
             </div>
             <div className="action-button">
                 <DropdownMenu icon={<BookIcon />}>
-                    {showSearch ? null : <MarkdownTypes />}
+                    {showSearch ? null : <HeaderHelperItems />}
                 </DropdownMenu>
             </div>
             <div

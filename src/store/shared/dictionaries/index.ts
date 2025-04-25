@@ -209,6 +209,7 @@ export interface Translations {
         link_copied: string;
         copy_error: string;
     };
+    wiki: string;
 }
 
 export const dictionary: Record<Language, Translations> = {

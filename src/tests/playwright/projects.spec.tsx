@@ -83,7 +83,7 @@ test('rename-project-via-enter', async ({ page }) => {
     // Ждем редиректа на конкретный проект
     await expect(page).toHaveURL(`/project/${uuid}`);
 
-    await page.locator('button.image-button').click();
+    await page.locator('button.image-button').first().click();
 
     await page.locator('div.change-icon-container').first().click();
 
@@ -189,7 +189,7 @@ test('rename-project-via-press', async ({ page }) => {
     // Ждем редиректа на конкретный проект
     await expect(page).toHaveURL(`/project/${uuid}`);
 
-    await page.locator('button.image-button').click();
+    await page.locator('button.image-button').first().click();
 
     await page.locator('div.change-icon-container').first().click();
 
@@ -287,7 +287,7 @@ test('list-projects-401', async ({ page }) => {
     // Ждем редиректа на конкретный проект
     await expect(page).toHaveURL(`/project/${uuid}`);
 
-    await page.locator('button.image-button').click();
+    await page.locator('button.image-button').first().click();
 
     // ждем появления toast с ошибкой
     await expect(page.locator('div.Toastify__toast').first()).toBeVisible();
