@@ -64,6 +64,30 @@ export const editorHelpItems: EditorHelpItem[] = [
         description: 'Variable with error',
         text: 'a = 10 # 1',
     },
+    {
+        description: 'Array with error',
+        text: 'a = [1, 2, 3] # 0.5',
+    },
+    {
+        description: 'Array from range',
+        text: 'a = range(from = 1, to = 10, step = 1)',
+    },
+    {
+        description: 'Plot',
+        text: 'plot(x1 = [1, 2, 3], y1 = [2, 1, 3], type1="line", x2=[1, 2, 3], y2=[3, 4, 5])',
+    },
+    {
+        description: 'Table',
+        text: 'table([1, 2, 3], [4, 5, 6])',
+    },
+    {
+        description: 'Save csv',
+        text: 'save_csv([1, 2, 3])',
+    },
+    {
+        description: 'Load csv',
+        text: 'load_csv(file_name = "default.csv")',
+    },
 ];
 
 const wikiRuUrl = 'https://github.com/labkeeper-team/docs/wiki/ru';
