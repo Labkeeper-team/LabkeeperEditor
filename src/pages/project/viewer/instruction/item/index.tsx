@@ -103,12 +103,15 @@ export const InstructionItemComponent = ({
                                 display: 'flex',
                                 gap: '4px',
                                 alignItems: 'center',
+                                flexWrap: 'nowrap',
+                                whiteSpace: 'nowrap',
                             }}
                         >
                             <Typography
                                 text={item.ending}
                                 color={colors.gray10}
                                 type="body"
+                                style={{ whiteSpace: 'nowrap' }}
                             />
                             <a
                                 href={item.wikiLink}
@@ -120,6 +123,7 @@ export const InstructionItemComponent = ({
                                     whiteSpace: 'nowrap',
                                     fontWeight: 'bold',
                                     fontSize: '14px',
+                                    flexShrink: 0,
                                 }}
                             >
                                 {dictionary.wiki}
