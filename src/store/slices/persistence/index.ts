@@ -6,6 +6,7 @@ import { Program } from '../../../shared/models/project.ts';
 export interface PersistenceState {
     language: Language;
     lastProgram: Program;
+    instructionExpanded: boolean;
 }
 
 const initialProgram: Program = {
@@ -18,12 +19,16 @@ const initialProgram: Program = {
 const initialState: PersistenceState = {
     language: 'ru',
     lastProgram: initialProgram,
+    instructionExpanded: true,
 };
 
 export const persistenceSlice = createSlice({
     name: 'persistenceSlice',
     initialState,
     reducers: {
+        setInstructionExpanded(state, { payload }: PayloadAction<boolean>) {
+            state.instructionExpanded = payload;
+        },
         setLanguage: (state, { payload }: PayloadAction<Language>) => {
             state.language = payload;
         },
@@ -43,5 +48,9 @@ export const persistenceSlice = createSlice({
         });
     },
 });
-export const { setLanguage, clearLastProgram, setLastProgram } =
-    persistenceSlice.actions;
+export const {
+    setLanguage,
+    setInstructionExpanded,
+    clearLastProgram,
+    setLastProgram,
+} = persistenceSlice.actions;
