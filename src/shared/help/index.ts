@@ -344,6 +344,33 @@ export const instructions: LocalizedInstructionItem[] = [
     },
     {
         ru: {
+            title: 'Погрешности',
+            points: [
+                `
+                Для любой сложной формулы автоматически вычисляется сложная
+                погрешность на основе погрешностей входящих в нее переменных`,
+                'Изначально у любой переменной погрешность 0',
+                'Все вычисления погрешности рисуются автоматически. В настройках сегмента отображение можно выключить',
+            ],
+            image: '/instructions/error.png',
+            ending: basicEndingRu,
+            wikiLink: wikiRuUrl,
+        },
+        en: {
+            title: 'Errors',
+            points: [
+                `For any complex formula, an error is automatically calculated.
+                This error is based on the errors of the variables included in it`,
+                'By default, any variable has an error of 0',
+                'All error calculations are drawn automatically. You can turn off the display in the segment settings.',
+            ],
+            image: '/instructions/simple_formula.png',
+            ending: basicEndingEn,
+            wikiLink: wikiEnUrl,
+        },
+    },
+    {
+        ru: {
             title: 'Рисование графиков',
             points: [
                 'Создайте вычислительный сегмент и используйте функцию plot',
