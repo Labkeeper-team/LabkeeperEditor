@@ -252,7 +252,7 @@ export const instructions: LocalizedInstructionItem[] = [
             ],
             image: '/instructions/quick_start.png',
             ending: basicEndingRu,
-            wikiLink: wikiRuUrl,
+            wikiLink: wikiRuUrl + '#примеры',
         },
         en: {
             title: 'Quick start',
@@ -280,7 +280,7 @@ export const instructions: LocalizedInstructionItem[] = [
             ],
             image: '/instructions/md_insert.png',
             ending: basicEndingRu,
-            wikiLink: wikiRuUrl,
+            wikiLink: wikiRuUrl + '#подстановка-значений-в-текстовые-сегменты',
         },
         en: {
             title: 'Insert computation result into text',
@@ -304,7 +304,7 @@ export const instructions: LocalizedInstructionItem[] = [
             ],
             image: '/instructions/image_insert.png',
             ending: basicEndingRu,
-            wikiLink: wikiRuUrl,
+            wikiLink: wikiRuUrl + '#сегменты',
         },
         en: {
             title: 'Add an image into markdown',
@@ -328,7 +328,7 @@ export const instructions: LocalizedInstructionItem[] = [
             ],
             image: '/instructions/simple_formula.png',
             ending: basicEndingRu,
-            wikiLink: wikiRuUrl,
+            wikiLink: wikiRuUrl + '#примеры-разнообразных-механизмов-отрисовки-математики',
         },
         en: {
             title: 'Simple formulas segment usage',
@@ -354,7 +354,7 @@ export const instructions: LocalizedInstructionItem[] = [
             ],
             image: '/instructions/error.png',
             ending: basicEndingRu,
-            wikiLink: wikiRuUrl,
+            wikiLink: wikiRuUrl + '#оператор-погрешности',
         },
         en: {
             title: 'Errors',
@@ -379,7 +379,7 @@ export const instructions: LocalizedInstructionItem[] = [
             ],
             image: '/instructions/draw_plot.png',
             ending: basicEndingRu,
-            wikiLink: wikiRuUrl,
+            wikiLink: wikiRuUrl + '#прорисовка',
         },
         en: {
             title: 'Drawing plots',
