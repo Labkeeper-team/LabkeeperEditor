@@ -72,7 +72,7 @@ export const headerHelpItems: HeaderHelpItem[] = [
         segmentType: 'computational',
         text: {
             ru: `my_var = [3, 4, 5]\ntable(my_var, [1, 2, 3])`,
-            en: `my_var = [3, 4, 5]\ntable(my_var, [1, 2, 3])`
+            en: `my_var = [3, 4, 5]\ntable(my_var, [1, 2, 3])`,
         },
     },
     {
@@ -83,7 +83,7 @@ export const headerHelpItems: HeaderHelpItem[] = [
         segmentType: 'computational',
         text: {
             ru: `s = sum([1, 2, 3])`,
-            en: `s = sum([1, 2, 3])`
+            en: `s = sum([1, 2, 3])`,
         },
     },
     {
@@ -106,7 +106,7 @@ export const headerHelpItems: HeaderHelpItem[] = [
             least_squares(x, y)
             Y = a * x + b
             plot(x_1 = x, y_1 = y, color="blue", x_2 = x, y_2 = Y, color="red", type="line")
-            `
+            `,
         },
     },
     {
@@ -145,7 +145,7 @@ export const headerHelpItems: HeaderHelpItem[] = [
             en: `
             // Add file with such via file manager
             load_csv(file_name = "myfile.csv")
-            `
+            `,
         },
     },
     {
@@ -162,7 +162,7 @@ export const headerHelpItems: HeaderHelpItem[] = [
             en: `
             a = [1, 2, 3] // your data
             save_csv(a)
-            `
+            `,
         },
     },
 ];
