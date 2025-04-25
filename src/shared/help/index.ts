@@ -44,13 +44,125 @@ export const headerHelpItems: HeaderHelpItem[] = [
     },
     {
         description: {
+            ru: 'Переменная с погрешностью',
+            en: 'Variable with error',
+        },
+        segmentType: 'computational',
+        text: {
+            ru: `my_var = 10 # 1`,
+            en: `my_var = 10 # 1`,
+        },
+    },
+    {
+        description: {
+            ru: 'Нарисовать график',
+            en: 'Draw plot',
+        },
+        segmentType: 'computational',
+        text: {
+            ru: `plot(x1=[1, 2, 3], y1=[2, 3, 1], type="line", color="red", x2=[1, 2, 3], y2=[3,4,1], type="scatter", color="blue")`,
+            en: `plot(x1=[1, 2, 3], y1=[2, 3, 1], type="line", color="red", x2=[1, 2, 3], y2=[3,4,1], type="scatter", color="blue")`,
+        },
+    },
+    {
+        description: {
+            ru: 'Нарисовать таблицу',
+            en: 'Draw table',
+        },
+        segmentType: 'computational',
+        text: {
+            ru: `my_var = [3, 4, 5]\ntable(my_var, [1, 2, 3])`,
+            en: `my_var = [3, 4, 5]\ntable(my_var, [1, 2, 3])`
+        },
+    },
+    {
+        description: {
+            ru: 'Сумма',
+            en: 'Sum',
+        },
+        segmentType: 'computational',
+        text: {
+            ru: `s = sum([1, 2, 3])`,
+            en: `s = sum([1, 2, 3])`
+        },
+    },
+    {
+        description: {
+            ru: 'МНК',
+            en: 'LSM',
+        },
+        segmentType: 'computational',
+        text: {
+            ru: `
+            x = [1, 2, 3] // ваши значения
+            y = [3, 2, 3] // ваши значения
+            least_squares(x, y)
+            Y = a * x + b
+            plot(x_1 = x, y_1 = y, color="blue", x_2 = x, y_2 = Y, color="red", type="line")
+            `,
+            en: `
+            x = [1, 2, 3] // your values
+            y = [3, 2, 3] // your values
+            least_squares(x, y)
+            Y = a * x + b
+            plot(x_1 = x, y_1 = y, color="blue", x_2 = x, y_2 = Y, color="red", type="line")
+            `
+        },
+    },
+    {
+        description: {
             ru: 'Формула',
             en: 'Formula',
         },
         segmentType: 'md',
         text: {
+            ru: '$$\n\\int f(x) dx = F(x)\n$$',
+            en: '$$\n\\int f(x) dx = F(x)\n$$',
+        },
+    },
+    {
+        description: {
+            ru: 'Строчная формула',
+            en: 'Inline formula',
+        },
+        segmentType: 'md',
+        text: {
             ru: 'Формула с интегралом: $\\int f(x) dx = F(x)$',
             en: 'My formula with integral: $\\int f(x) dx = F(x)$',
+        },
+    },
+    {
+        description: {
+            ru: 'Загрузить csv',
+            en: 'Load csv',
+        },
+        segmentType: 'computational',
+        text: {
+            ru: `
+            // Добавьте файл с таким названием через файловый менеджер
+            load_csv(file_name = "myfile.csv")
+            `,
+            en: `
+            // Add file with such via file manager
+            load_csv(file_name = "myfile.csv")
+            `
+        },
+    },
+    {
+        description: {
+            ru: 'Сохранить csv',
+            en: 'Save csv',
+        },
+        segmentType: 'computational',
+        text: {
+            ru: `
+            a = [1, 2, 3] // ваши данные
+            save_csv(a)
+            `,
+            en: `
+            a = [1, 2, 3] // your data
+            save_csv(a)
+            `
         },
     },
 ];
