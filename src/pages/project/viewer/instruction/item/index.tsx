@@ -16,7 +16,6 @@ export const InstructionItemComponent = ({
                 display: 'flex',
                 flexDirection: 'row',
                 gap: 5,
-                marginTop: '-20px',
                 paddingLeft: '24px',
                 height: '100%',
                 alignItems: 'center',
@@ -29,24 +28,25 @@ export const InstructionItemComponent = ({
                 style={{
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: 7,
+                    gap: 3,
                     flex: 1,
                     overflow: 'hidden',
                 }}
             >
-                <Typography
-                    text={item.title}
-                    color={colors.gray10}
-                    type="body-large"
-                />
                 <div
                     style={{
                         display: 'flex',
                         flexDirection: 'column',
                         gap: '12px',
-                        overflow: 'hidden',
+                        overflow: 'auto',
+                        maxHeight: '160px',
                     }}
                 >
+                    <Typography
+                        text={item.title}
+                        color={colors.gray10}
+                        type="body-large"
+                    />
                     {item.points.map((point, idx) => (
                         <div
                             key={idx}
