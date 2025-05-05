@@ -14,7 +14,7 @@ test('425-display', async ({ page }) => {
     await expect(page).toHaveURL('/project/default');
 
     // Добавляем маркдаун
-    await page.getByRole('button', { name: /Добавить маркдаун/i }).click();
+    await page.getByRole('button', { name: /Add markdown/i }).click();
     const editor = page.locator('.cm-content').nth(0);
     await editor.click();
     await editor.pressSequentially('biba', { delay: 20 });
@@ -29,11 +29,11 @@ test('425-display', async ({ page }) => {
     });
 
     // компилируем
-    await page.getByRole('button', { name: /Выполнить/i }).click();
+    await page.getByRole('button', { name: /Run/i }).click();
 
     // ждем, когда кнопка снова станет нажимаемой
     await page
-        .getByRole('button', { name: /Выполнить/i })
+        .getByRole('button', { name: /Run/i })
         .waitFor({ state: 'attached' });
 
     // проверяем, что ошибки отображаются корректно
@@ -77,10 +77,10 @@ test('insert-segment-between', async ({ page }) => {
     // добавляем вычислительный
     await page
         .locator('div')
-        .filter({ hasText: /^Добавить еще$/ })
+        .filter({ hasText: /^Add more$/ })
         .first()
         .click();
-    await page.getByRole('listitem').filter({ hasText: 'Вычисление' }).click();
+    await page.getByRole('listitem').filter({ hasText: 'Computation' }).click();
 
     // пишем в него
     let editor = page.locator('.cm-content').nth(0);
@@ -91,13 +91,10 @@ test('insert-segment-between', async ({ page }) => {
     // добавляем simple math
     await page
         .locator('div')
-        .filter({ hasText: /^Добавить еще$/ })
+        .filter({ hasText: /^Add more$/ })
         .first()
         .click();
-    await page
-        .getByRole('listitem')
-        .filter({ hasText: 'Простая формула' })
-        .click();
+    await page.getByRole('listitem').filter({ hasText: 'Simple-math' }).click();
 
     // пишем в него
     editor = page.locator('.cm-content').nth(1);
@@ -106,8 +103,8 @@ test('insert-segment-between', async ({ page }) => {
     await editor.click();
 
     // Добавляем маркдаун между
-    await page.getByText('Добавить', { exact: true }).click();
-    await page.getByText('Маркдаун', { exact: true }).click();
+    await page.getByText('Add', { exact: true }).click();
+    await page.getByText('markdown', { exact: true }).click();
 
     // пишем в него
     editor = page.locator('.cm-content').nth(1);
@@ -116,8 +113,8 @@ test('insert-segment-between', async ({ page }) => {
     await editor.click();
 
     // Добавляем latex
-    await page.getByText('Добавить', { exact: true }).nth(1).click();
-    await page.getByText('Latex-формула', { exact: true }).click();
+    await page.getByText('Add', { exact: true }).nth(1).click();
+    await page.getByText('latex-math', { exact: true }).click();
 
     // пишем в него
     editor = page.locator('.cm-content').nth(2);
@@ -129,21 +126,21 @@ test('insert-segment-between', async ({ page }) => {
 
     // удаляем latex
     await page.locator('div.dropdown-menu-container').nth(4).click();
-    await page.getByText('Удалить').click();
+    await page.getByText('Delete').click();
 
     // удаляем md
     await page.locator('div.dropdown-menu-container').nth(3).click();
-    await page.getByText('Удалить').click();
+    await page.getByText('Delete').click();
 
     await expect(page).toHaveScreenshot(`insert-segment-between2.png`);
 
     // удаляем asciimath
     // поскольку плашка с удалением не закрывается, можно ее заново не нажимать
-    await page.getByText('Удалить').click();
+    await page.getByText('Delete').click();
 
     // удаляем computation
     await page.locator('div.dropdown-menu-container').nth(2).click();
-    await page.getByText('Удалить').click();
+    await page.getByText('Delete').click();
 
     expect(await page.locator('.cm-content').count()).toBe(0);
 });
@@ -170,7 +167,7 @@ test('many-segments', async ({ page }) => {
 
     // Добавляем 10 MD сегментов
     for (let i = 0; i < 10; i++) {
-        await page.getByRole('button', { name: /Добавить маркдаун/i }).click();
+        await page.getByRole('button', { name: /Add markdown/i }).click();
     }
 
     // Пишем текст в первый сегмент
@@ -269,7 +266,7 @@ test('ESC-test', async ({ page }) => {
     await expect(page).toHaveURL(`/project/${uuid}`);
 
     // Добавляем маркдаун
-    await page.getByRole('button', { name: /Добавить маркдаун/i }).click();
+    await page.getByRole('button', { name: /Add markdown/i }).click();
     const editor = page.locator('.cm-content').nth(0);
     await editor.click();
     await editor.pressSequentially('aaa\n\n${a}\n', { delay: 100 });
@@ -314,7 +311,7 @@ test('ESC-test', async ({ page }) => {
     );
 
     // компилируем
-    await page.getByRole('button', { name: /Выполнить/i }).click();
+    await page.getByRole('button', { name: /Run/i }).click();
 
     // Открываем файловый менеджер
     await page.locator('div.file-manager-button').click();
@@ -322,9 +319,9 @@ test('ESC-test', async ({ page }) => {
     // Открываем поиск
     await page.locator('div.action-button').last().click();
 
-    // Ждем, пока кнопка 'Выполнить' станет доступной для нажатия
+    // Ждем, пока кнопка 'Run' станет доступной для нажатия
     await page
-        .getByRole('button', { name: /Выполнить/i })
+        .getByRole('button', { name: /Run/i })
         .waitFor({ state: 'attached' });
 
     await expect(page).toHaveScreenshot('ESC-test/snapshot0.png');
@@ -364,7 +361,7 @@ test('Search-test', async ({ page }) => {
     await expect(page).toHaveURL('/project/default');
 
     // Добавляем маркдаун
-    await page.getByRole('button', { name: /Добавить маркдаун/i }).click();
+    await page.getByRole('button', { name: /Add markdown/i }).click();
     const editor = page.locator('.cm-content').nth(0);
     await editor.click();
     await editor.pressSequentially('aaa\n\n${a}\n', { delay: 100 });
@@ -374,11 +371,9 @@ test('Search-test', async ({ page }) => {
     await page.locator('div.action-button').last().click();
 
     // Вводим текст в строку поиска
+    await page.getByRole('textbox', { name: /Enter text to search/i }).click();
     await page
-        .getByRole('textbox', { name: /Введите текст для поиска/i })
-        .click();
-    await page
-        .getByRole('textbox', { name: /Введите текст для поиска/i })
+        .getByRole('textbox', { name: /Enter text to search/i })
         .pressSequentially('aa');
 
     // выходим из поиска нажатием ESC
@@ -390,11 +385,9 @@ test('Search-test', async ({ page }) => {
     await page.locator('div.action-button').last().click();
 
     // Вводим текст в строку поиска
+    await page.getByRole('textbox', { name: /Enter text to search/i }).click();
     await page
-        .getByRole('textbox', { name: /Введите текст для поиска/i })
-        .click();
-    await page
-        .getByRole('textbox', { name: /Введите текст для поиска/i })
+        .getByRole('textbox', { name: /Enter text to search/i })
         .pressSequentially('aa');
 
     // Нажимаем на кнопку крестик, чтобы закрыть поисковую строку
@@ -422,7 +415,7 @@ test('many-errors-test', async ({ page }) => {
     }
 
     // Добавляем маркдаун
-    await page.getByRole('button', { name: /Добавить маркдаун/i }).click();
+    await page.getByRole('button', { name: /Add markdown/i }).click();
     const editor = page.locator('.cm-content').nth(0);
     await editor.click();
     await editor.pressSequentially(text, { delay: 20 });
@@ -460,11 +453,11 @@ test('many-errors-test', async ({ page }) => {
     });
 
     // компилируем
-    await page.getByRole('button', { name: /Выполнить/i }).click();
+    await page.getByRole('button', { name: /Run/i }).click();
 
     // ждем, когда кнопка снова станет нажимаемой
     await page
-        .getByRole('button', { name: /Выполнить/i })
+        .getByRole('button', { name: /Run/i })
         .waitFor({ state: 'attached' });
 
     // проверяем, что ошибки отображаются корректно
@@ -526,7 +519,7 @@ Hello();
     `;
 
     // Добавляем маркдаун
-    await page.getByRole('button', { name: /Добавить маркдаун/i }).click();
+    await page.getByRole('button', { name: /Add markdown/i }).click();
     const editor = page.locator('.cm-content').nth(0);
     await editor.click();
     await editor.fill(text);
@@ -551,13 +544,14 @@ Hello();
     });
 
     // компилируем
-    await page.getByRole('button', { name: /Выполнить/i }).click();
+    await page.getByRole('button', { name: /Run/i }).click();
 
     // ждем, когда кнопка снова станет нажимаемой
     await page
-        .getByRole('button', { name: /Выполнить/i })
+        .getByRole('button', { name: /Run/i })
         .waitFor({ state: 'attached' });
 
+    // хорошо бы заставить эту проверку работать
     // проверяем, что элементы отображаются корректно
     //await expect(page.locator('div.result-markdown')).toHaveScreenshot(
     //    'md2pdf.png'
@@ -796,7 +790,7 @@ test('many-segments-move', async ({ page }) => {
     await expect(page).toHaveURL(/.*\/project/);
 
     // первый сегмент
-    await page.getByRole('button', { name: /Добавить маркдаун/i }).click();
+    await page.getByRole('button', { name: /Add markdown/i }).click();
 
     // Пишем текст в первый сегмент
     const editor1 = page.locator('.cm-content').nth(0);
@@ -814,7 +808,7 @@ test('many-segments-move', async ({ page }) => {
     await editor2.click();
 
     // adding third segment
-    await page.getByRole('button', { name: /Добавить маркдаун/i }).click();
+    await page.getByRole('button', { name: /Add markdown/i }).click();
 
     // inserting text in third segment
     const editor3 = page.locator('.cm-content').nth(2);
@@ -836,11 +830,11 @@ test('many-segments-move', async ({ page }) => {
 
     // more
     await addCode();
-    await page.getByRole('button', { name: /Добавить маркдаун/i }).click();
+    await page.getByRole('button', { name: /Add markdown/i }).click();
     await addCode();
-    await page.getByRole('button', { name: /Добавить маркдаун/i }).click();
+    await page.getByRole('button', { name: /Add markdown/i }).click();
     await addCode();
-    await page.getByRole('button', { name: /Добавить маркдаун/i }).click();
+    await page.getByRole('button', { name: /Add markdown/i }).click();
 
     // проверяем, что элементы отображаются корректно
     await expect(page).toHaveScreenshot('many-segs2.png');
@@ -897,7 +891,7 @@ test('remove-lines-with-errors-test', async ({ page }) => {
     await expect(page).toHaveURL('/project/default');
 
     // Добавляем маркдаун
-    await page.getByRole('button', { name: /Добавить маркдаун/i }).click();
+    await page.getByRole('button', { name: /Add markdown/i }).click();
     const editor = page.locator('.cm-content').nth(0);
     await editor.click();
     await editor.pressSequentially('aaaaa\n\n${a}\n', { delay: 20 });
@@ -929,11 +923,11 @@ test('remove-lines-with-errors-test', async ({ page }) => {
     });
 
     // компилируем
-    await page.getByRole('button', { name: /Выполнить/i }).click();
+    await page.getByRole('button', { name: /Run/i }).click();
 
     // ждем, когда кнопка снова станет нажимаемой
     await page
-        .getByRole('button', { name: /Выполнить/i })
+        .getByRole('button', { name: /Run/i })
         .waitFor({ state: 'attached' });
 
     // нажимаем delete
@@ -948,19 +942,19 @@ test('remove-lines-with-errors-test', async ({ page }) => {
     await editor.fill('aaaaa\n\n${a}\n');
 
     // компилируем
-    await page.getByRole('button', { name: /Выполнить/i }).click();
+    await page.getByRole('button', { name: /Run/i }).click();
 
     // ждем, когда кнопка снова станет нажимаемой
     await page
-        .getByRole('button', { name: /Выполнить/i })
+        .getByRole('button', { name: /Run/i })
         .waitFor({ state: 'attached' });
 
     // компилируем
-    await page.getByRole('button', { name: /Выполнить/i }).click();
+    await page.getByRole('button', { name: /Run/i }).click();
 
     // ждем, когда кнопка снова станет нажимаемой
     await page
-        .getByRole('button', { name: /Выполнить/i })
+        .getByRole('button', { name: /Run/i })
         .waitFor({ state: 'attached' });
 
     // Выделяем весь текст через ctrl+A
@@ -975,11 +969,11 @@ test('remove-lines-with-errors-test', async ({ page }) => {
     await editor.fill('aaaaa\n\n${a}\n');
 
     // компилируем
-    await page.getByRole('button', { name: /Выполнить/i }).click();
+    await page.getByRole('button', { name: /Run/i }).click();
 
     // ждем, когда кнопка снова станет нажимаемой
     await page
-        .getByRole('button', { name: /Выполнить/i })
+        .getByRole('button', { name: /Run/i })
         .waitFor({ state: 'attached' });
 
     // Выделяем часть текста через нажатие и удерживание Shift
@@ -1231,14 +1225,14 @@ test('compilation-401-test', async ({ page }) => {
     await expect(page).toHaveURL(`/project/${uuid}`);
 
     // Добавляем маркдаун
-    await page.getByRole('button', { name: /Добавить маркдаун/i }).click();
+    await page.getByRole('button', { name: /Add markdown/i }).click();
     const editor = page.locator('.cm-content').nth(0);
     await editor.click();
     await editor.pressSequentially('aaa\n\n${a}\n', { delay: 100 });
     await editor.click();
 
     // компилируем
-    await page.getByRole('button', { name: /Выполнить/i }).click();
+    await page.getByRole('button', { name: /Run/i }).click();
 
     // ждем появления toast с ошибкой
     await expect(page.locator('div.Toastify__toast')).toBeVisible();
@@ -1453,14 +1447,150 @@ test('compilation-500-test', async ({ page }) => {
     await expect(page).toHaveURL(`/project/${uuid}`);
 
     // Добавляем маркдаун
-    await page.getByRole('button', { name: /Добавить маркдаун/i }).click();
+    await page.getByRole('button', { name: /Add markdown/i }).click();
     const editor = page.locator('.cm-content').nth(0);
     await editor.click();
     await editor.pressSequentially('aaa\n\n${a}\n', { delay: 100 });
     await editor.click();
 
     // компилируем
-    await page.getByRole('button', { name: /Выполнить/i }).click();
+    await page.getByRole('button', { name: /Run/i }).click();
+
+    // ждем появления toast с ошибкой
+    await expect(page.locator('div.Toastify__toast')).toBeVisible();
+});
+
+/*
+413 when uploading file
+ */
+test('upload-file-413', async ({ page }) => {
+    let auth = true;
+    // Перехватываем запрос user-info
+    await page.route('/api/v2/public/user-info', async (route) => {
+        await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({
+                isAuthenticated: auth,
+                email: 'a@gmail.com',
+                id: 1,
+            }),
+        });
+    });
+
+    // Перехватываем запрос default project и get project
+    await page.route('/api/v2/public/project/default', async (route) => {
+        await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({
+                projectId: uuid,
+                userId: 1,
+                title: 'Default Project',
+                lastModified: new Date().toISOString(),
+                program: {
+                    segments: [],
+                    parameters: {
+                        roundStrategy: 'noRound',
+                    },
+                },
+            }),
+        });
+    });
+    await page.route(`/api/v2/public/project/${uuid}/get`, async (route) => {
+        await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({
+                projectId: uuid,
+                userId: 1,
+                title: 'Default Project',
+                lastModified: new Date().toISOString(),
+                program: {
+                    segments: [],
+                    parameters: {
+                        roundStrategy: 'noRound',
+                    },
+                },
+            }),
+        });
+    });
+
+    // Перехватываем запрос на сохранение программы
+    await page.route(
+        `/api/v2/public/project/${uuid}/program`,
+        async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({
+                    projectId: uuid,
+                    userId: 1,
+                    title: 'Default Project',
+                    lastModified: new Date().toISOString(),
+                    program: {
+                        segments: [],
+                        parameters: {
+                            roundStrategy: 'noRound',
+                        },
+                    },
+                }),
+            });
+        }
+    );
+
+    // Перехватываем запрос на список файлов
+    await page.route(
+        `/api/v2/public/project/${uuid}/file/list`,
+        async (route) => {
+            auth = false;
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({
+                    files: [
+                        {
+                            autogenerated: false,
+                            fileName: 'example.txt',
+                            url: '/files/example.txt',
+                        },
+                    ],
+                }),
+            });
+        }
+    );
+
+    // Перехватываем запрос на загрузку файла
+    await page.route(
+        `/api/v2/public/project/${uuid}/file/upload?name=test.csv`,
+        async (route) => {
+            await route.fulfill({
+                status: 413,
+            });
+        }
+    );
+
+    await page.goto('/');
+
+    // Ждем загрузки страницы
+    await page.waitForLoadState('domcontentloaded');
+    // Ждем редиректа на конкретный проект
+    await expect(page).toHaveURL(`/project/${uuid}`);
+
+    // Открываем файловый менеджер
+    const fileManagerButton = page.locator('div.file-manager-button');
+    await fileManagerButton.waitFor({ state: 'visible' });
+    await fileManagerButton.click();
+
+    // Создаем временный файл для загрузки
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    await page.getByText('Add files').click();
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles({
+        name: 'test.csv',
+        mimeType: 'text/csv',
+        buffer: Buffer.from('a\n1\n2\n'),
+    });
 
     // ждем появления toast с ошибкой
     await expect(page.locator('div.Toastify__toast')).toBeVisible();

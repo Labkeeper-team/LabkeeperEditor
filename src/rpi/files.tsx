@@ -5,12 +5,15 @@ import { URLS } from '../shared/urls';
 export async function uploadFileRequest(formData, projectId, name) {
     return requestWrapper(async () =>
         axios.put(
-            `${URLS.uploadFile.replace('{id}', projectId || '')}?name=${name}`,
+            `${URLS.uploadFile.replace('{id}', projectId || '')}`,
             formData,
             {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                     Accept: '*/*',
+                },
+                params: {
+                    name: name,
                 },
             }
         )

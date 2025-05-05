@@ -10,7 +10,7 @@ async function testError(page, error, name) {
     await expect(page).toHaveURL('/project/default');
 
     // Добавляем маркдаун
-    await page.getByRole('button', { name: /Добавить маркдаун/i }).click();
+    await page.getByRole('button', { name: /Add markdown/i }).click();
     const editor = page.locator('.cm-content').nth(0);
     await editor.click();
     await editor.pressSequentially('biba\nboba\n', { delay: 20 });
@@ -28,11 +28,11 @@ async function testError(page, error, name) {
     });
 
     // компилируем
-    await page.getByRole('button', { name: /Выполнить/i }).click();
+    await page.getByRole('button', { name: /Run/i }).click();
 
     // ждем, когда кнопка снова станет нажимаемой
     await page
-        .getByRole('button', { name: /Выполнить/i })
+        .getByRole('button', { name: /Run/i })
         .waitFor({ state: 'attached' });
 
     await expect(page).toHaveScreenshot(name + '.png');

@@ -17,7 +17,7 @@ const initialProgram: Program = {
 };
 
 const initialState: PersistenceState = {
-    language: 'ru',
+    language: navigator.language.includes('ru') ? 'ru' : 'en',
     lastProgram: initialProgram,
     instructionExpanded: true,
 };

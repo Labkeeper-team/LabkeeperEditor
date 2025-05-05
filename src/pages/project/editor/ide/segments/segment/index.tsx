@@ -311,6 +311,16 @@ export const SegmentEditor = memo(
                                         name
                                     );
 
+                                    if (res.code === 413) {
+                                        toast(
+                                            dictionary.filemanager.errors.tooBigFile.replace(
+                                                '${replace1}',
+                                                '10Mb'
+                                            ),
+                                            { type: 'error' }
+                                        );
+                                        reslv(null);
+                                    }
                                     if (res.code === 409) {
                                         toast(
                                             dictionary.filemanager.errors

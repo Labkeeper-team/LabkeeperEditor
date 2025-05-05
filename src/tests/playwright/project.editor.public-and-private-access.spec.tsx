@@ -190,11 +190,11 @@ test('public-project-unauth-user-compilation-ok', async ({ page }) => {
     );
 
     // компилируем
-    await page.getByRole('button', { name: /Выполнить/i }).click();
+    await page.getByRole('button', { name: /Run/i }).click();
 
     // ждем, когда кнопка снова станет нажимаемой
     await page
-        .getByRole('button', { name: /Выполнить/i })
+        .getByRole('button', { name: /Run/i })
         .waitFor({ state: 'attached' });
 
     // проверяем, что элементы отображаются корректно
@@ -291,11 +291,11 @@ test('public-project-unauth-user-compilation-308', async ({ page }) => {
     );
 
     // компилируем
-    await page.getByRole('button', { name: /Выполнить/i }).click();
+    await page.getByRole('button', { name: /Run/i }).click();
 
     // ждем, когда кнопка снова станет нажимаемой
     await page
-        .getByRole('button', { name: /Выполнить/i })
+        .getByRole('button', { name: /Run/i })
         .waitFor({ state: 'attached' });
 
     // проверяем, что элементы отображаются корректно
@@ -408,11 +408,11 @@ test('public-project-different-user-compilation-ok', async ({ page }) => {
     await page.locator('div.file-manager-button').click();
 
     // компилируем
-    await page.getByRole('button', { name: /Выполнить/i }).click();
+    await page.getByRole('button', { name: /Run/i }).click();
 
     // ждем, когда кнопка снова станет нажимаемой
     await page
-        .getByRole('button', { name: /Выполнить/i })
+        .getByRole('button', { name: /Run/i })
         .waitFor({ state: 'attached' });
 
     // проверяем, что элементы отображаются корректно

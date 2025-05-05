@@ -109,6 +109,20 @@ export const FileManager = () => {
                 project?.projectId?.toString(),
                 name
             );
+            if (result.code === 413) {
+                toast(
+                    dictionary.filemanager.errors.tooBigFile.replace(
+                        '${replace1}',
+                        '10Mb'
+                    ),
+                    { type: 'error' }
+                );
+            }
+            if (result.code === 409) {
+                toast(dictionary.filemanager.errors.tooMuchFiles, {
+                    type: 'error',
+                });
+            }
             if (result.isUnauth) {
                 toast(dictionary.filemanager.errors.sessionExpired, {
                     type: 'error',

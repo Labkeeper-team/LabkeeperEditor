@@ -47,11 +47,11 @@ async function plotlyTest(statement, page) {
     });
 
     // компилируем
-    await page.getByRole('button', { name: /Выполнить/i }).click();
+    await page.getByRole('button', { name: /Run/i }).click();
 
     // ждем, когда кнопка снова станет нажимаемой
     await page
-        .getByRole('button', { name: /Выполнить/i })
+        .getByRole('button', { name: /Run/i })
         .waitFor({ state: 'attached' });
 }
 

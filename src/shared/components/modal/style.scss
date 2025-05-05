@@ -1,16 +1,18 @@
 @use '../../styles/colors' as *;
 
 .modal-container-overlay {
-    position: absolute;
+    position: fixed;
     z-index: 100;
     flex: 1;
     background: rgba(14, 22, 33, 0.7);
     width: 100%;
     height: 100%;
     top: 0;
+    left: 0;
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
+    padding-top: 17.5vh;
     .modal-contaier {
         min-width: 400px;
         min-height: 100px;
@@ -28,6 +30,13 @@
         display: flex;
         justify-content: center;
         align-items: center;
+
+        @media screen and (max-width: 767px) {
+            right: 15px;
+            top: 15px;
+            position: fixed;
+        }
+
         &:hover {
             cursor: pointer;
             border-color: $gray-40;
