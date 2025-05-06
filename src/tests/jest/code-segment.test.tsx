@@ -23,6 +23,8 @@ import seg18 from './__segments__/seg18.json';
 import seg19 from './__segments__/seg19.json';
 import seg20 from './__segments__/seg20.json';
 import seg21 from './__segments__/seg21.json';
+import seg22 from './__segments__/seg22.json';
+import seg23 from './__segments__/seg23.json';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let testSegment: any = {
@@ -351,6 +353,20 @@ test('hidden 15', () => {
 
 test('hidden 16', () => {
     testSegment = hiddenSegment(true, false, false, false, true);
+    const segment = render(<TestSegment />);
+    preview.debug();
+    expect(segment).toMatchSnapshot();
+});
+
+test('hidden-17', () => {
+    testSegment = seg22;
+    const segment = render(<TestSegment />);
+    preview.debug();
+    expect(segment).toMatchSnapshot();
+});
+
+test('hidden-18', () => {
+    testSegment = seg23;
     const segment = render(<TestSegment />);
     preview.debug();
     expect(segment).toMatchSnapshot();

@@ -82,7 +82,7 @@ export const DetailedStatement = ({
                     {`
         \\begin{equation}
         \\displaystyle
-        \\ = \\ ${renderArrayOfValuedFormulasToLatex(statement.inflAssignmentWithValues, 0, true)} ${statement.array ? '\\ = \\' : ''}
+        ${!statement.inflAssignmentGeneralFormula && !statement.inflAssignment ? `\\sigma(${renderVariableToLatex(statement.variable)}) ` : ''}\\ = \\ ${renderArrayOfValuedFormulasToLatex(statement.inflAssignmentWithValues, 0, true)} ${statement.array ? '\\ = \\' : ''}
         \\end{equation}`}
                 </MathJax>
             )}
@@ -94,7 +94,7 @@ export const DetailedStatement = ({
                         {`
         \\begin{equation}
         \\displaystyle
-        = ${renderArrayWithoutInflToLatex(statement.array.array)}
+        ${!statement.inflAssignmentGeneralFormula && !statement.inflAssignment && !statement.inflAssignmentWithValues ? `\\sigma(${renderVariableToLatex(statement.variable)}) ` : ''}= ${renderArrayWithoutInflToLatex(statement.array.array)}
         \\end{equation}`}
                     </MathJax>
                 )}

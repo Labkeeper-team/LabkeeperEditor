@@ -152,7 +152,7 @@ export const FileManager = () => {
         });
 
         return [a, u];
-    }, [files.length]);
+    }, [files]);
 
     const onPressButton = () => {
         if (inputRef.current) {
