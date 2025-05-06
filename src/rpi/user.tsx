@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { requestWrapper, RequestResult } from './index';
-import { Routes } from '../routing/routes.ts';
+import { URLS } from '../shared/urls';
 
 interface CodeValidationResponse {
     valid: boolean;
@@ -26,7 +26,7 @@ export const userRPI = {
             };
         }
         return requestWrapper(() =>
-            axios.post(Routes.Email, null, {
+            axios.post(URLS.Email, null, {
                 params: { email, registration, captcha },
                 headers: { 'Accept-Language': lang || 'en' },
             })
@@ -47,7 +47,7 @@ export const userRPI = {
             };
         }
         return requestWrapper(() =>
-            axios.post<CodeValidationResponse>(Routes.Code, null, {
+            axios.post<CodeValidationResponse>(URLS.Code, null, {
                 params: { email, code },
             })
         );
@@ -70,7 +70,7 @@ export const userRPI = {
             };
         }
         return requestWrapper(() =>
-            axios.post(Routes.Password, null, {
+            axios.post(URLS.Password, null, {
                 params: { email, code, password, registration },
             })
         );

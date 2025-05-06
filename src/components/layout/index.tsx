@@ -3,11 +3,11 @@ import { Header } from '../header';
 import { InterfaceTour } from '../../shared/components/tour';
 import { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Routes } from '../../routing/routes';
 import { setUser } from '../../store/slices/user';
 import { setisFileDraggedToFileManager } from '../../store/slices/settings';
 import { StorageState } from '../../store';
 import { setErrorMessage } from '../../store/slices/auth';
+import { URLS } from '../../shared/urls';
 
 export const BaseLayout = () => {
     const [searchParams] = useSearchParams();
@@ -56,7 +56,7 @@ export const BaseLayout = () => {
         }
     }, [searchParams]);
     useEffect(() => {
-        fetch(Routes.UserInfo)
+        fetch(URLS.UserInfo)
             .then((re) => re.json())
             .then((user) => dispatch(setUser(user)));
     }, [location]);
