@@ -1,5 +1,8 @@
 export type ProgramRoundStrategy =
     | 'noRound'
+    | 'threeDigits'
+    | 'twoDigits'
+    | 'oneDigit'
     | 'fixedDigits'
     | 'firstMeaningDigit';
 export type SegmentType = 'md' | 'computational' | 'latex' | 'asciimath';

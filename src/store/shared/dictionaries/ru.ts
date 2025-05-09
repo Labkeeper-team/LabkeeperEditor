@@ -65,8 +65,11 @@ export const ru: Translations = {
     rounding_mode: {
         label: 'Режим округления',
         without_round: 'Без округления',
-        first_digit: 'Первые значащие числа',
-        fixed_number: 'Фиксированное число',
+        first_digit: 'Первая значащая цифра погрешности',
+        fixed_digits: '5 знаков',
+        one_digit: '1 знак',
+        two_digits: '2 знака',
+        three_digits: '3 знака',
     },
     label_syntax_highlight: 'Подсветка синтаксиса',
     label_autocompilation: 'Автокомпиляция',

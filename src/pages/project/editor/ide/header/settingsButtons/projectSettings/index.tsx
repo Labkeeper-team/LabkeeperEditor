@@ -62,6 +62,40 @@ export const ProjectSettings = () => {
                     title={dictionary.rounding_mode.without_round}
                 />
                 <Radio
+                    id="oneDigit"
+                    checked={
+                        activeProgram?.parameters.roundStrategy === 'oneDigit'
+                    }
+                    onChange={() => onClick('oneDigit')}
+                    title={dictionary.rounding_mode.one_digit}
+                />
+                <Radio
+                    id="twoDigits"
+                    checked={
+                        activeProgram?.parameters.roundStrategy === 'twoDigits'
+                    }
+                    onChange={() => onClick('twoDigits')}
+                    title={dictionary.rounding_mode.two_digits}
+                />
+                <Radio
+                    id="threeDigits"
+                    checked={
+                        activeProgram?.parameters.roundStrategy ===
+                        'threeDigits'
+                    }
+                    onChange={() => onClick('threeDigits')}
+                    title={dictionary.rounding_mode.three_digits}
+                />
+                <Radio
+                    id="fixedNumber"
+                    checked={
+                        activeProgram?.parameters.roundStrategy ===
+                        'fixedDigits'
+                    }
+                    onChange={() => onClick('fixedDigits')}
+                    title={dictionary.rounding_mode.fixed_digits}
+                />
+                <Radio
                     id="firstMeaningDigit"
                     checked={
                         activeProgram?.parameters.roundStrategy ===
@@ -69,15 +103,6 @@ export const ProjectSettings = () => {
                     }
                     onChange={() => onClick('firstMeaningDigit')}
                     title={dictionary.rounding_mode.first_digit}
-                />
-                <Radio
-                    id="fixedDigits"
-                    checked={
-                        activeProgram?.parameters.roundStrategy ===
-                        'fixedDigits'
-                    }
-                    onChange={() => onClick('fixedDigits')}
-                    title={dictionary.rounding_mode.fixed_number}
                 />
             </div>
             <div

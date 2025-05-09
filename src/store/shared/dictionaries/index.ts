@@ -60,7 +60,10 @@ export interface Translations {
         label: string;
         without_round: string;
         first_digit: string;
-        fixed_number: string;
+        fixed_digits: string;
+        one_digit: string;
+        two_digits: string;
+        three_digits: string;
     };
     label_syntax_highlight: string;
     label_autocompilation: string;
