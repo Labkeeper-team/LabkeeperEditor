@@ -1,0 +1,32 @@
+@use '../../../../styles/colors' as *;
+
+.labkeeper-problem-viewer-container {
+    background-color: $gray-60;
+    // min-height: 26px;
+    .problem-list {
+        height: 0px;
+        transition: height 0.4s;
+        &.problem-list-container-expanded {
+            padding: 6px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            height: max-content;
+            max-height: 33vh;
+            overflow: auto;
+            padding-bottom: 6px;
+        }
+    }
+    .sector-header-container {
+        .header-problem-title {
+            font-size: 13px;
+            font-weight: 16px;
+            color: $gray-20;
+        }
+        &:hover {
+            .header-problem-title {
+                color: $gray-10;
+            }
+        }
+    }
+}

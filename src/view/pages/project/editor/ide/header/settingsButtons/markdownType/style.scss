@@ -1,0 +1,21 @@
+@use '../../../../../../../styles/colors' as *;
+
+.markdown-select-dropdown {
+    display: flex;
+    flex-direction: column;
+    min-width: 200px;
+    align-items: flex-start;
+    gap: 5px;
+    span {
+        width: 100%;
+        text-align: left;
+        padding: 4px 8px;
+        white-space: normal;
+        word-wrap: break-word;
+        &:hover {
+            color: $white;
+            cursor: pointer;
+            background: $gray-30;
+        }
+    }
+}

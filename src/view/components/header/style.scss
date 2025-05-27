@@ -1,0 +1,50 @@
+@use '../../styles/colors' as *;
+
+.labkeeper_header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    background-color: $gray-10;
+    padding: 10px;
+
+    &__center {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    &__right {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 30px;
+    }
+    &__left {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 15px;
+    }
+    .login-button {
+        font-size: 15px;
+        line-height: 18px;
+        width: 200px;
+    }
+    .exit-button {
+        font-size: 15px;
+        line-height: 18px;
+        width: 130px;
+    }
+}
+.auth-modal {
+    .auth-header {
+        text-align: center;
+    }
+    .labkeeper-button {
+        justify-content: space-evenly;
+        &.full-width {
+            width: 100%;
+        }
+    }
+}

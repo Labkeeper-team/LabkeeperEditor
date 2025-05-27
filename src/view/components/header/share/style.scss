@@ -1,0 +1,61 @@
+@use '../../../styles/colors' as *;
+
+.share-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    position: relative;
+    transition: all 0.2s ease;
+    margin-left: 6px;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border-radius: 50%;
+        border: 1px solid $gray-30;
+        transition: all 0.2s ease;
+    }
+
+    svg {
+        width: 28px;
+        height: 28px;
+        color: $gray-30;
+        transition: color 0.2s ease;
+    }
+
+    &:hover {
+        background-color: $gray-10;
+
+        &::before {
+            border-color: $gray-40;
+        }
+
+        svg {
+            color: $gray-40;
+        }
+    }
+
+    &:active {
+        background-color: $gray-10;
+
+        &::before {
+            border-color: $gray-40;
+            box-shadow: 0 0 10px rgba($gray-40, 0.5);
+        }
+
+        svg {
+            color: $gray-40;
+        }
+    }
+}

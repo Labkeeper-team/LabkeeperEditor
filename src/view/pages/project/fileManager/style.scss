@@ -1,0 +1,81 @@
+@use '../../../styles/colors' as *;
+
+.manager-container {
+    height: 100%;
+    min-width: 160px;
+    max-width: 160px;
+
+    background: $gray-60;
+    display: flex;
+    flex-direction: column;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    .manager-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: relative;
+        height: 50px;
+        min-height: 50px;
+        background: $gray-50;
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+        padding-left: 14px;
+        padding-right: 14px;
+        .close-icon-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 22px;
+            width: 22px;
+            border: 1px solid $gray-10;
+            border-radius: 45px;
+            transition-duration: 0.3s;
+            svg {
+                path {
+                    fill: $gray-10;
+                    stroke-width: 1px;
+                    transition-duration: 0.3s;
+                }
+            }
+            &:hover {
+                cursor: pointer;
+                border-color: $gray-20;
+                svg {
+                    path {
+                        fill: $gray-20;
+                    }
+                }
+                // background: white;
+            }
+            &:active {
+                cursor: pointer;
+                border-color: $gray-20;
+                box-shadow: 0px 0px 3px 0px rgba($color: $gray-20, $alpha: 0.7);
+                svg {
+                    path {
+                        fill: $gray-20;
+                        -webkit-filter: drop-shadow(
+                            0px 0px 3px 0px rgba($color: $gray-20, $alpha: 0.8)
+                        );
+                        filter: drop-shadow(
+                            0px 0px 3px 0px rgba($color: $gray-20, $alpha: 0.8)
+                        );
+                    }
+                }
+                // background: white;
+            }
+        }
+    }
+    .button-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px;
+        .button-add-file {
+            width: 100%;
+            color: $blue-10;
+            border-color: $blue-10;
+        }
+    }
+}

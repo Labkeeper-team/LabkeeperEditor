@@ -1,0 +1,26 @@
+@use '../../../../styles/colors' as *;
+
+.ide-container {
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    height: inherit;
+    background-color: $white;
+    .ide-flexibility-conainer {
+        display: flex;
+        flex-direction: column;
+        overflow-x: auto;
+        position: relative;
+        flex: 1;
+        .run-button {
+            position: sticky;
+            bottom: 0;
+        }
+        .hint-code-container {
+            background: $gray-50;
+            margin: 10px;
+            padding: 5px;
+            border-radius: 8px;
+        }
+    }
+}

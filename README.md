@@ -9,7 +9,7 @@ Typescript<br/>
 ### Добавление в "Инструкцию"
 
 Добавить в папку public/instructions файл instruction\_{№ инструкции}
-Добавить новый элемент SwiperSlide в `src\pages\project\viewer\instruction\index.tsx`
+Добавить новый элемент SwiperSlide в `src\pages\project\viewer\instruction\index.ts`
 
 ```javascript
     <SwiperSlide>

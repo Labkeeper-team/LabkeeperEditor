@@ -1,0 +1,88 @@
+@use '../../../../../styles/colors' as *;
+
+.ide-container {
+    .ide-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: relative;
+        height: 50px;
+        min-height: 50px;
+        background: $gray-50;
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+        padding-left: 14px;
+        padding-right: 14px;
+        .history-code-header-container {
+            display: flex;
+            flex-direction: row;
+            gap: 14px;
+        }
+        .code-settings-header-container {
+            display: flex;
+            flex-direction: row;
+            gap: 20px;
+        }
+        .file-manager-button {
+            height: 24px;
+            &:hover {
+                cursor: pointer;
+                opacity: 70%;
+            }
+            &:active {
+                svg {
+                    path {
+                        opacity: 100%;
+                        filter: url(#folder_shadow);
+                    }
+                }
+            }
+        }
+        .action-button {
+            display: flex;
+            align-items: center;
+            position: relative;
+            transition-duration: 0.3s;
+            svg {
+                path {
+                    transition-duration: 0.3s;
+                }
+                circle {
+                    transition-duration: 0.3s;
+                }
+            }
+            &.revert {
+                transform: rotateY(180deg);
+            }
+            &:hover {
+                cursor: pointer;
+                svg {
+                    path {
+                        // fill: $gray-60;
+                        //  stroke: $gray-60;
+                    }
+                    circle {
+                        stroke: $gray-10;
+                    }
+                }
+            }
+            &:active {
+                // opacity: 70%;
+            }
+            &.disabled {
+                &:hover {
+                    cursor: initial;
+                    svg {
+                        path {
+                            fill: initial;
+                            stroke: initial;
+                        }
+                        circle {
+                            stroke: initial;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

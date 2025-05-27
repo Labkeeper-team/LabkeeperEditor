@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { CompileError } from '../../shared/models/project.ts';
+import { CompileError } from '../../model/domain.ts';
 
 async function testError(page, error, name) {
     await page.goto('/');
@@ -15,6 +15,14 @@ async function testError(page, error, name) {
     await editor.click();
     await editor.pressSequentially('biba\nboba\n', { delay: 20 });
     await editor.click();
+
+    // добавляем вычислительный
+    await page
+        .locator('div')
+        .filter({ hasText: /^Add more$/ })
+        .first()
+        .click();
+    await page.getByRole('listitem').filter({ hasText: 'Computation' }).click();
 
     // Перехватываем запрос на компиляцию
     await page.route('/api/v2/public/compile', async (route) => {

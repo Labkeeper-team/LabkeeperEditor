@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react';
 import preview from 'jest-preview';
-import { ViewResult } from '../../pages/project/viewer/result/view';
-import { useCompiledSegments } from '../../store/selectors/program.ts';
+import { ViewResult } from '../../view/pages/project/viewer/result/view';
+import { useCompiledSegments } from '../../viewModel/store/selectors/program.ts';
 
 import seg1 from './__segments__/seg1.json';
 import seg2 from './__segments__/seg2.json';

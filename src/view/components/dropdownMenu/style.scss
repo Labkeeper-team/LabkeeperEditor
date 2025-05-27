@@ -1,0 +1,77 @@
+@use '../../styles/colors' as *;
+
+.dropdown-menu-container {
+    display: flex;
+    align-items: center;
+    position: relative;
+    padding: 4px;
+
+    &.active {
+        z-index: 101;
+        background-color: $gray-60;
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+        background: white;
+        &:before {
+            z-index: 99;
+            content: '';
+            position: absolute;
+            height: 15px;
+            width: 10px;
+            left: -10px;
+            bottom: 0px;
+            //background:red;
+            border-bottom: 4px solid black;
+            border-right: 4px solid black;
+            border-radius: 45px;
+            border-bottom-left-radius: 0px;
+            border-top-right-radius: 0px;
+
+            // border-width: 4px;
+            border-color: white;
+        }
+    }
+
+    &.active-inherit {
+        background-color: inherit;
+    }
+
+    &:hover {
+        cursor: pointer;
+        svg {
+            path {
+                fill: $gray-10;
+            }
+        }
+    }
+}
+
+.dropdown-menu-content-container {
+    background-color: white;
+    height: max-content;
+    padding: 10px 12px;
+    z-index: 100;
+    padding-right: 10px;
+    box-shadow: 0px 0px 14px 0px #004c3233;
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    position: absolute;
+    top: 24px;
+    right: 0px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: start;
+    gap: 6px;
+    white-space: nowrap;
+    &:before {
+        content: '';
+        position: absolute;
+        top: -1px;
+        right: 0px;
+        height: 2px;
+        background-color: white;
+        width: 28px;
+    }
+}

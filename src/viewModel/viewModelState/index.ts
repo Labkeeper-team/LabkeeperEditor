@@ -1,0 +1,441 @@
+import {
+    CompileErrorResultList,
+    CompileSuccessResult,
+    LabkeeperFile,
+    Program,
+    Project,
+    ProjectShort,
+} from '../../model/domain.ts';
+import {
+    AuthView,
+    CodeRequestState,
+    EmailRequestState,
+    PasswordRequestState,
+    setShowAuthModal,
+} from '../store/slices/auth';
+import {
+    dictionary,
+    Language,
+    Translations,
+} from '../store/shared/dictionaries';
+import { setUser, UserInfo } from '../store/slices/user';
+import { EnhancedStore } from '@reduxjs/toolkit';
+import {
+    clearLastProgram,
+    setInstructionExpanded,
+    setLanguage,
+    setLastProgram,
+} from '../store/slices/persistence';
+import { setNavigateTo, setShowToast } from '../store/slices/callback';
+import {
+    clearProject,
+    setCompileError,
+    setCompileResult,
+    setCurrentProgram,
+    setFiles,
+    setProject,
+    setReadOnly,
+} from '../store/slices/project';
+import { TypeOptions } from 'react-toastify';
+import { logoutAction } from '../store/actions';
+import {
+    setIsCompiling,
+    setEditModeForFilename,
+    setEditModeForProjectTitle,
+    setExpandProblemViewer,
+    setIsFileDraggedToFileManager,
+    setShoFileManager,
+    setShowSearch,
+    setTourVisibility,
+} from '../store/slices/settings';
+import {
+    setActiveSegmentIndex,
+    setPreviousActiveSegmentIndex,
+    setSearch,
+} from '../store/slices/ide';
+import { setProjects } from '../store/slices/projects';
+import { appRouter } from '../../view/routing';
+import { store } from '../store';
+
+export const createViewModelStateFromStore = (
+    store: EnhancedStore
+): ViewModelState => {
+    return {
+        location: () => appRouter.state.location.pathname,
+        authViewModelState: {
+            authErrorMessage: () => store.getState().auth.authErrorMessage,
+            codeCheckRequest: () => store.getState().auth.codeCheckRequest,
+            currentEmail: () => store.getState().auth.currentEmail,
+            currentView: () => store.getState().auth.currentView,
+            emailRequest: () => store.getState().auth.emailRequest,
+            isRegistration: () => store.getState().auth.isRegistration,
+            lastVerifiedCode: () => store.getState().auth.lastVerifiedCode,
+            passwordSetRequest: () => store.getState().auth.passwordSetRequest,
+            showAuthModal: () => store.getState().auth.showAuthModal,
+
+            setShowAuthModal: (value: boolean) =>
+                store.dispatch(setShowAuthModal(value)),
+        },
+        ideViewModelState: {
+            activeSegmentIndex: () => store.getState().ide.activeSegmentIndex,
+            search: () => store.getState().ide.search,
+            previousActiveSegmentIndex: () =>
+                store.getState().ide.previousActiveSegmentIndex,
+
+            setSearch: (search: string) => store.dispatch(setSearch(search)),
+            setActiveSegmentIndex: (index: number) =>
+                store.dispatch(setActiveSegmentIndex(index)),
+            setPreviousActiveSegmentIndex: (index: number) =>
+                store.dispatch(setPreviousActiveSegmentIndex(index)),
+        },
+        persistenceViewModelState: {
+            instructionExpanded: () =>
+                store.getState().persistence.instructionExpanded,
+            language: () => store.getState().persistence.language,
+            lastProgram: () => store.getState().persistence.lastProgram,
+
+            setInstructionExpanded: (instructionExpanded) =>
+                store.dispatch(setInstructionExpanded(instructionExpanded)),
+            setLanguage: (language) => store.dispatch(setLanguage(language)),
+            setLastProgram: (lastProgram) =>
+                store.dispatch(setLastProgram(lastProgram)),
+            clearLastProgram: () => store.dispatch(clearLastProgram()),
+        },
+        projectViewModelState: {
+            compileErrorResult: () =>
+                store.getState().project.compileErrorResult,
+            compileSuccessResult: () =>
+                store.getState().project.compileSuccessResult,
+            project: () => store.getState().project.project,
+            projectIsReadonly: () => store.getState().project.projectIsReadonly,
+            currentProgram: () => store.getState().project.currentProgram,
+            files: () => store.getState().project.files,
+
+            setReadOnly: (value: boolean) => store.dispatch(setReadOnly(value)),
+            setProject: (project: Project) =>
+                store.dispatch(setProject(project)),
+            setCompileResult: (compileResult: CompileSuccessResult) =>
+                store.dispatch(setCompileResult(compileResult)),
+            setCompileErrorResult: (
+                compileErrorResultList: CompileErrorResultList
+            ) => store.dispatch(setCompileError(compileErrorResultList)),
+            setFiles: (files: LabkeeperFile[]) =>
+                store.dispatch(setFiles(files)),
+            resetToInitialState: () => store.dispatch(clearProject()),
+            setCurrentProgram: (program) =>
+                store.dispatch(setCurrentProgram(program)),
+        },
+        projectsViewModelState: {
+            projects: () => store.getState().projects.projects,
+
+            setProjects: (projects: ProjectShort[]) =>
+                store.dispatch(setProjects(projects)),
+        },
+        settingsViewModelState: {
+            isAutocompleteLoading: () => store.getState().settings.isCompiling,
+            editModeForFilename: () =>
+                store.getState().settings.editModeForFilename,
+            editModeForProjectTitle: () =>
+                store.getState().settings.editModeForProjectTitle,
+            expandProblemViewer: () =>
+                store.getState().settings.expandProblemViewer,
+            isFileDraggedToManager: () =>
+                store.getState().settings.isFileDraggedToManager,
+            showFileManager: () => store.getState().settings.showFileManager,
+            showSearch: () => store.getState().settings.showSearch,
+            showShareModal: () => store.getState().settings.showShareModal,
+            showTour: () => store.getState().settings.showTour,
+
+            setShowSearch: (show: boolean) =>
+                store.dispatch(setShowSearch(show)),
+            setShowFileManager: (show: boolean) =>
+                store.dispatch(setShoFileManager(show)),
+            setExpandProblemViewer: (expand: boolean) =>
+                store.dispatch(setExpandProblemViewer(expand)),
+            setTourVisibility: (visible: boolean) =>
+                store.dispatch(setTourVisibility(visible)),
+            setEditModeForFilename: (edit: boolean) =>
+                store.dispatch(setEditModeForFilename(edit)),
+            setEditModeForProjectTitle: (edit: boolean) =>
+                store.dispatch(setEditModeForProjectTitle(edit)),
+            setIsCompiling: (value: boolean) =>
+                store.dispatch(setIsCompiling(value)),
+            setIsFileDraggedToFileManager: (edit: boolean) =>
+                store.dispatch(setIsFileDraggedToFileManager(edit)),
+        },
+        userViewModelState: {
+            email: () => store.getState().user.email,
+            id: () => store.getState().user.id,
+            isAuthenticated: () => store.getState().user.isAuthenticated,
+
+            setUserInfo: (userInfo) => store.dispatch(setUser(userInfo)),
+        },
+
+        navigate: (url: string) => store.dispatch(setNavigateTo(url)),
+        dictionary: dictionary[store.getState().persistence.language],
+        toast: (message: string, type: TypeOptions) =>
+            store.dispatch(setShowToast({ message, type })),
+        resetToInitialState: () => store.dispatch(logoutAction),
+    };
+};
+
+export const mockViewModelState = (): ViewModelState => {
+    let location = '/';
+    let showAuthModal = false;
+
+    let activeSegmentIndex = -1;
+    let search: string | undefined = undefined;
+    let previousActiveSegmentIndex = -1;
+
+    let instructionExpanded = false;
+    let language: 'ru' | 'en' = 'ru';
+    let lastProgram: Program = {
+        segments: [],
+        parameters: {
+            roundStrategy: 'firstMeaningDigit',
+        },
+    };
+
+    let compileErrorResult: CompileErrorResultList | undefined = undefined;
+    let compileSuccessResult: CompileSuccessResult | undefined = undefined;
+    let project: Project | undefined = undefined;
+    let projectIsReadonly = false;
+    let currentProgram: Program = {
+        segments: [],
+        parameters: { roundStrategy: 'firstMeaningDigit' },
+    };
+    let files: LabkeeperFile[] = [];
+
+    let projects: ProjectShort[] = [];
+
+    let isAutocompleteLoading = false;
+    let editModeForFilename = false;
+    let editModeForProjectTitle = false;
+    let expandProblemViewer = false;
+    let isFileDraggedToManager = false;
+    let showFileManager = false;
+    let showSearch = false;
+    const showShareModal = false;
+    let showTour = false;
+
+    let email: string = '';
+    let id: number = -1;
+    let isAuthenticated: boolean = false;
+    return {
+        location: () => location,
+        authViewModelState: {
+            authErrorMessage: () => '',
+            codeCheckRequest: () => 'unknown',
+            currentEmail: () => '',
+            currentView: () => 'login',
+            emailRequest: () => 'unknown',
+            isRegistration: () => false,
+            lastVerifiedCode: () => '',
+            passwordSetRequest: () => 'unknown',
+            showAuthModal: () => showAuthModal,
+
+            setShowAuthModal: (value: boolean) => (showAuthModal = value),
+        },
+        ideViewModelState: {
+            activeSegmentIndex: () => activeSegmentIndex,
+            search: () => search,
+            previousActiveSegmentIndex: () => previousActiveSegmentIndex,
+
+            setSearch: (v: string) => (search = v),
+            setActiveSegmentIndex: (index: number) =>
+                (activeSegmentIndex = index),
+            setPreviousActiveSegmentIndex: (index: number) =>
+                (previousActiveSegmentIndex = index),
+        },
+        persistenceViewModelState: {
+            instructionExpanded: () => instructionExpanded,
+            language: () => language,
+            lastProgram: () => lastProgram,
+
+            setInstructionExpanded: (v) => (instructionExpanded = v),
+            setLanguage: (v) => (language = v),
+            setLastProgram: (v) => (lastProgram = v),
+            clearLastProgram: () =>
+                (lastProgram = {
+                    segments: [],
+                    parameters: { roundStrategy: 'firstMeaningDigit' },
+                }),
+        },
+        projectViewModelState: {
+            compileErrorResult: () => compileErrorResult,
+            compileSuccessResult: () => compileSuccessResult,
+            project: () => project,
+            projectIsReadonly: () => projectIsReadonly,
+            currentProgram: () => currentProgram,
+            files: () => files,
+
+            setReadOnly: (v: boolean) => (projectIsReadonly = v),
+            setProject: (v: Project) => (project = v),
+            setCompileResult: (v: CompileSuccessResult) =>
+                (compileSuccessResult = v),
+            setCompileErrorResult: (v: CompileErrorResultList) =>
+                (compileErrorResult = v),
+            setFiles: (v: LabkeeperFile[]) => (files = v),
+            resetToInitialState: () => {
+                compileErrorResult = undefined;
+                compileSuccessResult = undefined;
+                project = undefined;
+                projectIsReadonly = false;
+                currentProgram = {
+                    segments: [],
+                    parameters: { roundStrategy: 'firstMeaningDigit' },
+                };
+                files = [];
+            },
+            setCurrentProgram: (v) => (currentProgram = v),
+        },
+        projectsViewModelState: {
+            projects: () => projects,
+
+            setProjects: (v: ProjectShort[]) => (projects = v),
+        },
+        settingsViewModelState: {
+            isAutocompleteLoading: () => isAutocompleteLoading,
+            editModeForFilename: () => editModeForFilename,
+            editModeForProjectTitle: () => editModeForProjectTitle,
+            expandProblemViewer: () => expandProblemViewer,
+            isFileDraggedToManager: () => isFileDraggedToManager,
+            showFileManager: () => showFileManager,
+            showSearch: () => showSearch,
+            showShareModal: () => showShareModal,
+            showTour: () => showTour,
+
+            setShowSearch: (v: boolean) => (showSearch = v),
+            setShowFileManager: (v: boolean) => (showFileManager = v),
+            setExpandProblemViewer: (v: boolean) => (expandProblemViewer = v),
+            setTourVisibility: (v: boolean) => (showTour = v),
+            setEditModeForFilename: (v: boolean) => (editModeForFilename = v),
+            setEditModeForProjectTitle: (v: boolean) =>
+                (editModeForProjectTitle = v),
+            setIsCompiling: (v: boolean) => (isAutocompleteLoading = v),
+            setIsFileDraggedToFileManager: (v: boolean) =>
+                (isFileDraggedToManager = v),
+        },
+        userViewModelState: {
+            email: () => email,
+            id: () => id,
+            isAuthenticated: () => isAuthenticated,
+
+            setUserInfo: (userInfo) => {
+                email = userInfo.email;
+                isAuthenticated = userInfo.isAuthenticated;
+                id = userInfo.id;
+            },
+        },
+
+        navigate: (url: string) => (location = url),
+        dictionary: dictionary[store.getState().persistence.language],
+        toast: (message: string, type: TypeOptions) =>
+            console.log('Show toast:', message, type),
+        resetToInitialState: () => console.log('resetToInitialState'),
+    };
+};
+
+export interface ProjectViewModelState {
+    project: () => Project | undefined;
+    compileSuccessResult: () => CompileSuccessResult | undefined;
+    compileErrorResult: () => CompileErrorResultList | undefined;
+    projectIsReadonly: () => boolean;
+    currentProgram: () => Program;
+    files: () => LabkeeperFile[];
+
+    setReadOnly: (value: boolean) => void;
+    setProject: (project: Project) => void;
+    setCompileResult: (compileResult: CompileSuccessResult) => void;
+    setCompileErrorResult: (
+        compileErrorResultList: CompileErrorResultList
+    ) => void;
+    setFiles: (files: LabkeeperFile[]) => void;
+    resetToInitialState: () => void;
+    setCurrentProgram: (program: Program) => void;
+}
+
+export interface IdeViewModelState {
+    search: () => string | undefined;
+    activeSegmentIndex: () => number;
+    previousActiveSegmentIndex: () => number;
+
+    setSearch: (search: string) => void;
+    setActiveSegmentIndex: (index: number) => void;
+    setPreviousActiveSegmentIndex: (index: number) => void;
+}
+
+export interface SettingsViewModelState {
+    showTour: () => boolean;
+    showFileManager: () => boolean;
+    expandProblemViewer: () => boolean;
+    showSearch: () => boolean;
+    editModeForProjectTitle: () => boolean;
+    editModeForFilename: () => boolean;
+    isFileDraggedToManager: () => boolean;
+    isAutocompleteLoading: () => boolean;
+    showShareModal: () => boolean;
+
+    setTourVisibility: (visible: boolean) => void;
+    setEditModeForFilename: (edit: boolean) => void;
+    setEditModeForProjectTitle: (edit: boolean) => void;
+    setShowSearch: (show: boolean) => void;
+    setExpandProblemViewer: (expandProblemViewer: boolean) => void;
+    setShowFileManager: (showFileManager: boolean) => void;
+    setIsCompiling: (value: boolean) => void;
+    setIsFileDraggedToFileManager: (value: boolean) => void;
+}
+
+export interface ProjectsViewModelState {
+    projects: () => ProjectShort[];
+
+    setProjects: (projects: ProjectShort[]) => void;
+}
+
+export interface AuthViewModelState {
+    currentView: () => AuthView;
+    currentEmail: () => string | null;
+    lastVerifiedCode: () => string | null;
+    isRegistration: () => boolean;
+    emailRequest: () => EmailRequestState;
+    codeCheckRequest: () => CodeRequestState;
+    passwordSetRequest: () => PasswordRequestState;
+    authErrorMessage: () => string | null;
+    showAuthModal: () => boolean;
+
+    setShowAuthModal: (showAuthModal: boolean) => void;
+}
+
+export interface UserViewModelState {
+    email: () => string;
+    id: () => number;
+    isAuthenticated: () => boolean;
+
+    setUserInfo: (userInfo: UserInfo) => void;
+}
+
+export interface PersistenceViewModelState {
+    language: () => Language;
+    lastProgram: () => Program;
+    instructionExpanded: () => boolean;
+
+    setLanguage: (language: Language) => void;
+    setInstructionExpanded: (instructionExpanded: boolean) => void;
+    setLastProgram: (lastProgram: Program) => void;
+    clearLastProgram: () => void;
+}
+
+export interface ViewModelState {
+    projectViewModelState: ProjectViewModelState;
+    ideViewModelState: IdeViewModelState;
+    persistenceViewModelState: PersistenceViewModelState;
+    userViewModelState: UserViewModelState;
+    authViewModelState: AuthViewModelState;
+    projectsViewModelState: ProjectsViewModelState;
+    settingsViewModelState: SettingsViewModelState;
+    navigate: (url: string) => void;
+    toast: (message: string, type: TypeOptions) => void;
+    dictionary: Translations;
+    resetToInitialState: () => void;
+    location: () => string;
+}

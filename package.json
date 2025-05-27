@@ -17,6 +17,7 @@
     "dependencies": {
         "@estruyf/github-actions-reporter": "^1.10.0",
         "@reduxjs/toolkit": "2.3.0",
+        "@sentry/react": "^9.22.0",
         "@uiw/codemirror-extensions-events": "^4.23.6",
         "@uiw/codemirror-extensions-langs": "^4.23.6",
         "@uiw/react-codemirror": "4.23.9",

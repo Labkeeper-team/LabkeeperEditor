@@ -154,6 +154,14 @@ test('public-project-unauth-user-compilation-ok', async ({ page }) => {
                             },
                             text: '# biba\n\n',
                         },
+                        {
+                            id: 2,
+                            type: 'computational',
+                            parameters: {
+                                visible: true,
+                            },
+                            text: 'a = 10\n\n',
+                        },
                     ],
                     parameters: {
                         roundStrategy: 'noRound',
@@ -247,6 +255,14 @@ test('public-project-unauth-user-compilation-308', async ({ page }) => {
                                 visible: true,
                             },
                             text: '# biba\n\n',
+                        },
+                        {
+                            id: 2,
+                            type: 'computational',
+                            parameters: {
+                                visible: true,
+                            },
+                            text: 'a = 10\n\n',
                         },
                     ],
                     parameters: {
@@ -348,6 +364,14 @@ test('public-project-different-user-compilation-ok', async ({ page }) => {
                                 visible: true,
                             },
                             text: '# biba\n\n',
+                        },
+                        {
+                            id: 2,
+                            type: 'computational',
+                            parameters: {
+                                visible: true,
+                            },
+                            text: 'a = 10\n\n',
                         },
                     ],
                     parameters: {

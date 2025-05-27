@@ -1,5 +1,5 @@
-import { useCompiledSegments } from '../../store/selectors/program.ts';
-import { ViewResult } from '../../pages/project/viewer/result/view';
+import { useCompiledSegments } from '../../viewModel/store/selectors/program.ts';
+import { ViewResult } from '../../view/pages/project/viewer/result/view';
 import { render } from '@testing-library/react';
 import preview from 'jest-preview';
 
