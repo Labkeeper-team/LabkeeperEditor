@@ -267,7 +267,7 @@ export class SystemService {
                                         )
                                             ? 'image'
                                             : 'csv';
-                                        itemToInsert = `${prefunction}(${filename})`;
+                                        itemToInsert = `${prefunction}("${url}")`;
                                         break;
                                     }
                                 }

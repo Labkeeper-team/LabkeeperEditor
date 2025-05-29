@@ -4,8 +4,7 @@ export const FileSegment = ({ url }) => {
             <img
                 src={`${url}?t=${Date.now()}`}
                 alt="generated-image"
-                width="750px"
-                height="750px"
+                width="500px"
                 style={{
                     display: 'block',
                     marginLeft: 'auto',
