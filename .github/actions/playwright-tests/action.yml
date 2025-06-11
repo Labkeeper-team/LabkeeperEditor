@@ -1,0 +1,37 @@
+name: 'Playwright Tests'
+description: 'Run Playwright tests on Windows'
+
+inputs:
+  node-version:
+    description: 'Node.js version'
+    required: true
+    default: '20'
+  github-token:
+    description: 'GitHub token for deployment'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: 'npm'
+        cache-dependency-path: '**/package.json'
+
+    - name: Install dependencies
+      shell: pwsh
+      run: |
+        cd Web/Frontend/src/main/react
+        npm install
+        npx playwright install --with-deps
+
+    - name: Run Playwright tests
+      shell: pwsh
+      run: |
+        cd Web/Frontend/src/main/react
+        npx playwright test --reporter=@estruyf/github-actions-reporter,list --retries=10
