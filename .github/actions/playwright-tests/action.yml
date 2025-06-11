@@ -27,11 +27,19 @@ runs:
       shell: pwsh
       run: |
         npm install
-        npm run test:math
         npx playwright install --with-deps
+
+    - name: Run linter checks
+      shell: pwsh
+      run: |
+        npm run check
+
+    - name: Run jest tests
+      shell: pwsh
+      run: |
+        npm run test:math
 
     - name: Run Playwright tests
       shell: pwsh
       run: |
-        cd Web/Frontend/src/main/react
         npx playwright test --reporter=@estruyf/github-actions-reporter,list --retries=10
