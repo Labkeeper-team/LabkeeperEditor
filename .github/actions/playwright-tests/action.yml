@@ -26,7 +26,6 @@ runs:
     - name: Install dependencies
       shell: pwsh
       run: |
-        cd Web/Frontend/src/main/react
         npm install
         npx playwright install --with-deps
 
