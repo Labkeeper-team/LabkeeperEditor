@@ -1,0 +1,19 @@
+name: run-all-checks
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+  push:
+    branches: [master, release]
+    paths-ignore:
+      - "**.md"
+
+jobs:
+  playwright-tests:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/playwright-tests
+        with:
+          node-version: '20'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
