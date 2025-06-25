@@ -26,7 +26,11 @@ import {
     setLanguage,
     setLastProgram,
 } from '../store/slices/persistence';
-import { setNavigateTo, setShowToast } from '../store/slices/callback';
+import {
+    setNavigateTo,
+    setScrollEditorToBottom,
+    setShowToast,
+} from '../store/slices/callback';
 import {
     clearProject,
     setCompileError,
@@ -175,6 +179,8 @@ export const createViewModelStateFromStore = (
         dictionary: dictionary[store.getState().persistence.language],
         toast: (message: string, type: TypeOptions) =>
             store.dispatch(setShowToast({ message, type })),
+        scrollEditorToBottom: () =>
+            store.dispatch(setScrollEditorToBottom(true)),
         resetToInitialState: () => store.dispatch(logoutAction),
     };
 };
@@ -222,6 +228,7 @@ export const mockViewModelState = (): ViewModelState => {
     let id: number = -1;
     let isAuthenticated: boolean = false;
     return {
+        scrollEditorToBottom: () => ({}),
         location: () => location,
         authViewModelState: {
             authErrorMessage: () => '',
@@ -438,4 +445,5 @@ export interface ViewModelState {
     dictionary: Translations;
     resetToInitialState: () => void;
     location: () => string;
+    scrollEditorToBottom: () => void;
 }

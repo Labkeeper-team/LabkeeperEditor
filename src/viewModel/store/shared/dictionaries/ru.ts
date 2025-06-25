@@ -143,6 +143,8 @@ export const ru: Translations = {
         [CompileError.MULTIPLE_ERROR]: 'Множественные ошибки',
         [CompileError.LOGIN_REQUIRED]:
             'Необходимо авторизироваться, чтобы продолжить',
+        [CompileError.NAME_RESERVED]:
+            'E и PI нельзя использовать в названии переменной',
     },
     error_common: {
         segment: 'Сегмент',

@@ -291,6 +291,7 @@ export class SystemService {
 
     onSegmentAddedViaDivider = async (segment: Segment, after: number) => {
         this.programService.addSegmentAfterIndex(segment, after);
+        this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(after + 1);
         await this.segmentEditorSaveProgram();
     };
 
@@ -350,6 +351,7 @@ export class SystemService {
         this.vms.ideViewModelState.setActiveSegmentIndex(
             this.programService.getCurrentProgram().segments.length
         );
+        this.vms.scrollEditorToBottom();
     };
 
     onFolderButtonClicked = async () => {

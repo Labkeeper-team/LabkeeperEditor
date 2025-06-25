@@ -14,6 +14,7 @@ import {
     PlotStatement,
     TableStatement,
 } from '../../../../../../model/domain.ts';
+import { LatexSegment } from './segments/latex-segment.tsx';
 
 /**
  * Стили дяя отображения fontsize
@@ -56,6 +57,13 @@ export const CodeSegment = forwardRef<
                             <AssignStatement
                                 key={`${i}-${JSON.stringify(statement)}`}
                                 statement={statement}
+                            />
+                        );
+                    case 'latex':
+                        return (
+                            <LatexSegment
+                                statement={statement}
+                                key={`${i}-${JSON.stringify(statement)}`}
                             />
                         );
                     case 'calculation':

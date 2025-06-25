@@ -77,4 +77,5 @@ export const callbackInitialState: CallbackState = {
     navigateTo: undefined,
     showToastMessage: undefined,
     toastType: undefined,
+    scrollEditorToBottom: false,
 };
