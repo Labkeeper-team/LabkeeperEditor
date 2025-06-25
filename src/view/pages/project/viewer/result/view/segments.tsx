@@ -17,8 +17,8 @@ import { AsciimathSegment } from './asciimath-segment.tsx';
 export const Segments = memo(() => {
     const segments = useSelector(useCompiledSegments);
     const activeIndex = useSelector(useActiveElement);
-    const refs = (segments || []).reduce((prv, seg) => {
-        prv[seg.id] = createRef();
+    const refs = (segments || []).reduce((prv, _, index) => {
+        prv[index] = createRef();
         return prv;
     }, {});
 
@@ -45,7 +45,7 @@ export const Segments = memo(() => {
                         const comp = segment as ComputationalOutputSegment;
                         return (
                             <CodeSegment
-                                ref={refs[segment.id]}
+                                ref={refs[index]}
                                 index={index}
                                 key={`${segment.id}_${index}_${JSON.stringify(comp.statements)}`}
                                 segment={comp}
@@ -56,7 +56,7 @@ export const Segments = memo(() => {
                         const text = segment as TextOutputSegment;
                         return (
                             <MdSegment
-                                ref={refs[segment.id]}
+                                ref={refs[index]}
                                 key={`${segment.id}_${index}_${text.text}`}
                                 segment={text}
                                 index={index}
@@ -67,7 +67,7 @@ export const Segments = memo(() => {
                         const text = segment as TextOutputSegment;
                         return (
                             <LatexSegment
-                                ref={refs[segment.id]}
+                                ref={refs[index]}
                                 key={`${segment.id}_${index}_${text.text}`}
                                 segment={text}
                                 index={index}
@@ -78,7 +78,7 @@ export const Segments = memo(() => {
                         const text = segment as TextOutputSegment;
                         return (
                             <AsciimathSegment
-                                ref={refs[segment.id]}
+                                ref={refs[index]}
                                 key={`${segment.id}_${index}_${text.text}`}
                                 segment={text}
                                 index={index}

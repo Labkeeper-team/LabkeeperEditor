@@ -7,6 +7,7 @@ export interface CallbackState {
     navigateTo?: string;
     showToastMessage?: string;
     toastType?: TypeOptions;
+    scrollEditorToBottom: boolean;
 }
 
 export const callbackSlice = createSlice({
@@ -31,6 +32,12 @@ export const callbackSlice = createSlice({
             state.showToastMessage = undefined;
             state.toastType = undefined;
         },
+        setScrollEditorToBottom: (
+            state,
+            { payload }: PayloadAction<boolean>
+        ) => {
+            state.scrollEditorToBottom = payload;
+        },
     },
     extraReducers: (b) => {
         b.addCase(LOGOUT_TYPE, (state) => {
@@ -40,5 +47,10 @@ export const callbackSlice = createSlice({
         });
     },
 });
-export const { setNavigateTo, navigateSuccess, setShowToast, toastSuccess } =
-    callbackSlice.actions;
+export const {
+    setNavigateTo,
+    setScrollEditorToBottom,
+    navigateSuccess,
+    setShowToast,
+    toastSuccess,
+} = callbackSlice.actions;

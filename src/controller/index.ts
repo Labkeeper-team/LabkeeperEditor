@@ -337,6 +337,7 @@ const wrapper = (method: () => void) => {
     try {
         method();
     } catch (error) {
+        console.error(error);
         Sentry.captureException(error);
     }
 };

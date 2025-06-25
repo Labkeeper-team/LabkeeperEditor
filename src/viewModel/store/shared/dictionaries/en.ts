@@ -135,6 +135,8 @@ export const en: Translations = {
             'No return value in function',
         [CompileError.MULTIPLE_ERROR]: 'Multiple error',
         [CompileError.LOGIN_REQUIRED]: 'Login is required to proceed',
+        [CompileError.NAME_RESERVED]:
+            'E and PI can not be used as variable name',
     },
     error_common: {
         segment: 'Segment',

@@ -1,22 +1,29 @@
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { SegmentEditor } from './segment';
 
 import './style.scss';
 import { useCurrentProgram } from '../../../../../../viewModel/store/selectors/program';
 import { useEffect, useRef } from 'react';
+import { StorageState } from '../../../../../../viewModel/store';
+import { setScrollEditorToBottom } from '../../../../../../viewModel/store/slices/callback';
 
 export const Segments = () => {
     const program = useSelector(useCurrentProgram);
+    const scrollEditorToBottom = useSelector(
+        (state: StorageState) => state.callback.scrollEditorToBottom
+    );
     const ref = useRef(null);
+    const dispatch = useDispatch();
 
     useEffect(() => {
-        if (ref.current) {
+        if (ref.current && scrollEditorToBottom) {
             (ref.current as HTMLElement).scrollTo({
-                top: 100000,
+                top: 10000000,
                 behavior: 'smooth',
             });
+            dispatch(setScrollEditorToBottom(false));
         }
-    }, [program.segments.length]);
+    }, [scrollEditorToBottom]);
 
     return (
         <div ref={ref} className="segments-container">

@@ -10,12 +10,7 @@ jest.mock('../../view/routing', () => {});
 import { mockViewModelState } from '../../viewModel/viewModelState';
 import { headerHelpItems } from '../../model/help';
 import { Program } from '../../model/domain.ts';
-import { SystemService } from '../../viewModel';
-import { ProgramService } from '../../model/service/program.ts';
-import { LoaderService } from '../../viewModel/project.ts';
-import { StartupService } from '../../viewModel/init.ts';
-import { CompilationService } from '../../viewModel/compile.ts';
-import { IdeService } from '../../viewModel/ide.ts';
+import { setupContext } from '../../viewModel/context.ts';
 import { mockObserver, ObserverService } from '../../model/service/observer.ts';
 
 const defaultParams = {
@@ -28,46 +23,11 @@ const defaultParams = {
 };
 
 const mockContext = () => {
-    const repository = mockViewModelState();
-    const programService: ProgramService = new ProgramService();
+    const mvs = mockViewModelState();
     const rpi: Rpi = mockRpi();
-    const loaderService: LoaderService = new LoaderService(rpi, repository);
     const observerService: ObserverService = mockObserver();
-    const startupService: StartupService = new StartupService(
-        rpi,
-        programService,
-        loaderService,
-        repository
-    );
-    const compilationService: CompilationService = new CompilationService(
-        repository,
-        rpi,
-        programService,
-        loaderService,
-        observerService
-    );
-    const ideService: IdeService = new IdeService(repository);
-    const systemService: SystemService = new SystemService(
-        repository,
-        rpi,
-        programService,
-        loaderService,
-        ideService,
-        startupService,
-        compilationService,
-        observerService
-    );
 
-    return {
-        systemService,
-        ideService,
-        compilationService,
-        startupService,
-        loaderService,
-        rpi,
-        programService,
-        repository,
-    };
+    return setupContext(rpi, mvs, observerService);
 };
 
 test('help-items-add-test', () => {
@@ -134,4 +94,34 @@ test('help-items-add-test', () => {
             },
         ],
     } as Program);
+});
+
+test('add-segment-between-active-index-test', () => {
+    const { mvs, systemService } = mockContext();
+
+    systemService.onAddSegmentClicked('md');
+    systemService.onAddSegmentClicked('md');
+    systemService.onAddSegmentClicked('md');
+    systemService.onAddSegmentClicked('md');
+
+    expect(mvs.ideViewModelState.activeSegmentIndex()).toBe(4);
+
+    systemService.onSegmentAddedViaDivider(
+        {
+            text: 'text',
+            type: 'computational',
+            id: -1,
+            parameters: {
+                visible: true,
+            },
+        },
+        2
+    );
+
+    expect(mvs.ideViewModelState.activeSegmentIndex()).toBe(3);
+    expect(mvs.ideViewModelState.previousActiveSegmentIndex()).toBe(4);
+
+    expect(
+        mvs.projectViewModelState.currentProgram().segments.map((s) => s.text)
+    ).toStrictEqual(['', '', '', 'text', '']);
 });

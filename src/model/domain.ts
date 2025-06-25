@@ -14,7 +14,8 @@ export type StatementType =
     | 'calculation'
     | 'file'
     | 'table'
-    | 'plot';
+    | 'plot'
+    | 'latex';
 export type PlotType = 'line' | 'scatter' | 'histogram';
 
 /*
@@ -96,6 +97,7 @@ export enum CompileError {
     OPERATOR_EXPECTED = 202,
     NUMBER_EXPECTED = 203,
     NAME_EXPECTED = 204,
+    NAME_RESERVED = 205,
 
     // INTERPRETER
     NO_SUCH_VARIABLE = 301,

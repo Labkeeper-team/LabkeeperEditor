@@ -208,6 +208,12 @@ export class ProgramService {
     };
 
     changeRoundStrategy = (strategy: ProgramRoundStrategy) => {
-        this.history.forEach((p) => (p.parameters.roundStrategy = strategy));
+        this.transformAndAddToHistory((last) => {
+            if (last.parameters.roundStrategy !== strategy) {
+                last.parameters.roundStrategy = strategy;
+                return last;
+            }
+            return undefined;
+        });
     };
 }
