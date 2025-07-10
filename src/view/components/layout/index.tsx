@@ -13,6 +13,8 @@ import {
 import { toast } from 'react-toastify';
 import { onAppEnterRequest } from '../../../controller';
 
+import './style.scss';
+
 let loaded = false;
 
 export const BaseLayout = () => {
@@ -121,13 +123,7 @@ export const BaseLayout = () => {
             onDragOver={isReadonly ? undefined : handleDragOver}
         >
             <Header />
-            <div
-                style={{
-                    marginLeft: '20px',
-                    marginRight: '20px',
-                    marginBottom: '20px',
-                }}
-            >
+            <div className="layout-outlet-container">
                 <Outlet />
             </div>
             <InterfaceTour />

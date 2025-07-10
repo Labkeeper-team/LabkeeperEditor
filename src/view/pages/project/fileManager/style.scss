@@ -2,9 +2,9 @@
 
 .manager-container {
     height: 100%;
-    min-width: 160px;
-    max-width: 160px;
-
+    //min-width: calc(160px*var(--mobile-scale));
+    //max-width: calc(160px*var(--mobile-scale));
+    width: 160px;
     background: $gray-60;
     display: flex;
     flex-direction: column;

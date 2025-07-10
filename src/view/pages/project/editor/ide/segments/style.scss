@@ -4,13 +4,12 @@
     display: flex;
     flex-direction: column;
     overflow-y: auto;
+    overflow-x: hidden;
     height: 100%;
     padding: 10px 10px 20px 10px;
     .CodeMirror {
         min-height: 66px;
         height: max-content;
-        //  height: unset;
-        //   min-height: 88px;
     }
     .segment-editor-container:nth-child(2n) {
         .CodeMirror-scroll {

@@ -6,13 +6,12 @@
 
 :root {
     font-family: Inter !important;
+    --mobile-scale: 1
 }
 
 body {
     margin: 0;
     background-color: #0e1621;
-    min-width: 1280px;
-    min-height: 720px;
     overflow-x: auto;
     overflow-y: hidden;
     ::-webkit-scrollbar {
@@ -33,7 +32,5 @@ body {
 }
 
 #root {
-    min-width: 1280px;
-    min-height: 720px;
-    overflow: auto;
+    overflow-x: hidden;
 }

@@ -52,7 +52,8 @@ export const Instruction = () => {
                 >
                     <Swiper
                         style={{ height: '100%' }}
-                        spaceBetween={50}
+                        spaceBetween={0}
+                        width={undefined}
                         slidesPerView={1}
                         onSwiper={(swiper) => (swiperRef.current = swiper)}
                         cssMode

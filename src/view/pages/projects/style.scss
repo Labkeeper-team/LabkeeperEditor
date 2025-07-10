@@ -5,10 +5,13 @@
     display: flex;
     flex-direction: row;
     background-color: $white;
-    height: calc(100vh - $header-height - $main-margin);
+    height: calc($screen-height - $header-height - $main-margin);
     width: 100%;
     gap: 8px;
     border-radius: 8px;
+    @media screen and (max-width: 1024px) {
+        height: calc($screen-height - $header-height - $main-margin-mobile);
+    }
     .project-content-container {
         padding-left: 40px;
         padding-right: 40px;
