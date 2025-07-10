@@ -24,7 +24,6 @@ export const callbackSlice = createSlice({
             state,
             { payload }: PayloadAction<{ message: string; type: TypeOptions }>
         ) => {
-            console.log('setShowToast', payload.message, payload.type);
             state.showToastMessage = payload.message;
             state.toastType = payload.type;
         },
