@@ -14,6 +14,10 @@ import { toast } from 'react-toastify';
 import { onAppEnterRequest } from '../../../controller';
 
 import './style.scss';
+import {
+    useIsDraggedToFileManager,
+    useIsProjectReadonly,
+} from '../../../viewModel/store/selectors/program';
 
 let loaded = false;
 
@@ -27,12 +31,8 @@ export const BaseLayout = () => {
     /*
     GLOBAL STATE
      */
-    const isReadonly = useSelector(
-        (state: StorageState) => state.project.projectIsReadonly
-    );
-    const isDragging = useSelector(
-        (state: StorageState) => state.settings.isFileDraggedToManager
-    );
+    const isReadonly = useSelector(useIsProjectReadonly);
+    const isDragging = useSelector(useIsDraggedToFileManager);
     const navigateTo = useSelector(
         (state: StorageState) => state.callback.navigateTo
     );
@@ -48,14 +48,14 @@ export const BaseLayout = () => {
      */
     useEffect(() => {
         if (navigateTo) {
-            console.log('Navigating to', navigateTo);
+            console.debug('Navigating to', navigateTo);
             navigate(navigateTo);
             dispatch(navigateSuccess());
         }
     }, [dispatch, navigate, navigateTo]);
     useEffect(() => {
         if (toastMessage && toastType) {
-            console.log('Showing toast', toastMessage);
+            console.debug('Showing toast', toastMessage);
             toast(toastMessage, { type: toastType });
             dispatch(toastSuccess());
         }

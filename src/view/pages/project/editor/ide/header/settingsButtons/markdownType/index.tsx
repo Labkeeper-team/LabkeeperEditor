@@ -1,17 +1,13 @@
 import { useDispatch, useSelector } from 'react-redux';
 
 import './style.scss';
-import {
-    AppDispatch,
-    StorageState,
-} from '../../../../../../../../viewModel/store';
+import { AppDispatch } from '../../../../../../../../viewModel/store';
 import { headerHelpItems } from '../../../../../../../../model/help';
 import { onHelpItemCreatedRequest } from '../../../../../../../../controller';
+import { useCurrentLanguage } from '../../../../../../../../viewModel/store/selectors/translations';
 
 export const HeaderHelperItems = () => {
-    const language = useSelector(
-        (state: StorageState) => state.persistence.language
-    );
+    const language = useSelector(useCurrentLanguage);
     const dispatch = useDispatch<AppDispatch>();
 
     return (

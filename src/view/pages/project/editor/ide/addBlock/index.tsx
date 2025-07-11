@@ -34,6 +34,9 @@ export const AddBlock = (props: AddBlockProps) => {
                     dispatch(onAddSegmentButtonClickedRequest({ type: 'md' }))
                 }
                 minimize={!props.isFirst}
+                style={{
+                    whiteSpace: 'nowrap'
+                }}
                 titleIcon={() => <PlusIcon />}
                 rounded
             />

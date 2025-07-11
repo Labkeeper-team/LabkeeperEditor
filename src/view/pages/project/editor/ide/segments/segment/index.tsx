@@ -29,28 +29,26 @@ import './style.scss';
 
 import { Typography } from '../../../../../../components/typography';
 import { DropdownMenu } from '../../../../../../components/dropdownMenu';
-import { ArrowUp, PlusIcon } from '../../../../../../icons';
-import { Checkbox } from '../../../../../../components/checkbox';
+import { ArrowUp } from '../../../../../../icons';
 import {
     AppDispatch,
     StorageState,
 } from '../../../../../../../viewModel/store';
 import {
+    useIsProjectReadonly,
     useIsSegmentIsActive,
     useSearch,
 } from '../../../../../../../viewModel/store/selectors/program';
 import classNames from 'classnames';
 import { colors } from '../../../../../../styles/colors';
-import { useDictionary } from '../../../../../../../viewModel/store/selectors/translations';
 import {
-    deleteSegmentRequest,
     onAddedFilesToSegmentEditorRequest,
     onBlurSegmentRequest,
     onFocusSegmentRequest,
     onSegmentTextChangedRequest,
     segmentEditorChangeSegmentPositionRequest,
-    segmentEditorChangeSegmentVisibilityRequest,
 } from '../../../../../../../controller';
+import { DropdownMenuContent } from './dropdownMenuContent';
 
 const shortTypeMap = {
     computational: 'code',
@@ -87,13 +85,10 @@ export const SegmentEditor = memo(
          */
         const search = useSelector(useSearch);
         const isActiveSegment = useSelector(useIsSegmentIsActive(props.index));
-        const dictionary = useSelector(useDictionary);
         const compileErrors = useSelector(
             (state: StorageState) => state.project.compileErrorResult?.errors
         );
-        const projectIsReadonly = useSelector(
-            (state: StorageState) => state.project.projectIsReadonly
-        );
+        const projectIsReadonly = useSelector(useIsProjectReadonly);
 
         /*
         LOCAL STATE
@@ -327,147 +322,9 @@ export const SegmentEditor = memo(
                         clickable={!projectIsReadonly}
                         containerClassname="dropdown-content-contanier-additional"
                     >
-                        <div
-                            onClick={() =>
-                                dispatch(
-                                    deleteSegmentRequest({
-                                        segmentIndex: props.index,
-                                    })
-                                )
-                            }
-                            className="delete-segment-container"
-                        >
-                            <div className="delete-icon">
-                                <PlusIcon />
-                            </div>
-                            <Typography
-                                color={colors.gray10}
-                                text={dictionary.delete}
-                            />
-                        </div>
-                        <Checkbox
-                            className="full-width-checkbox"
-                            id={`visibility-segment-${props.index}`}
-                            checked={!!props.segment.parameters.visible}
-                            onChange={(v) =>
-                                dispatch(
-                                    segmentEditorChangeSegmentVisibilityRequest(
-                                        {
-                                            segmentIndex: props.index,
-                                            parameterName: 'visible',
-                                            visible: v,
-                                        }
-                                    )
-                                )
-                            }
-                            title={dictionary.segment.visible}
-                        />
-                        <Checkbox
-                            hidden={props.segment.type !== 'computational'}
-                            className="full-width-checkbox"
-                            id={`valued-assignment-${props.index}`}
-                            checked={
-                                !!props.segment.parameters
-                                    .hideAssignmentWithValues
-                            }
-                            onChange={(v) =>
-                                dispatch(
-                                    segmentEditorChangeSegmentVisibilityRequest(
-                                        {
-                                            segmentIndex: props.index,
-                                            parameterName:
-                                                'hideAssignmentWithValues',
-                                            visible: v,
-                                        }
-                                    )
-                                )
-                            }
-                            title={
-                                dictionary.segment.hide_assignment_with_values
-                            }
-                        />
-                        <Checkbox
-                            hidden={props.segment.type !== 'computational'}
-                            className="full-width-checkbox"
-                            id={`array-${props.index}`}
-                            checked={!!props.segment.parameters.hideArray}
-                            onChange={(v) =>
-                                dispatch(
-                                    segmentEditorChangeSegmentVisibilityRequest(
-                                        {
-                                            segmentIndex: props.index,
-                                            parameterName: 'hideArray',
-                                            visible: v,
-                                        }
-                                    )
-                                )
-                            }
-                            title={dictionary.segment.hide_array}
-                        />
-                        <Checkbox
-                            hidden={props.segment.type !== 'computational'}
-                            className="full-width-checkbox"
-                            id={`general-${props.index}`}
-                            checked={
-                                !!props.segment.parameters.hideGeneralFormula
-                            }
-                            onChange={(v) =>
-                                dispatch(
-                                    segmentEditorChangeSegmentVisibilityRequest(
-                                        {
-                                            segmentIndex: props.index,
-                                            parameterName: 'hideGeneralFormula',
-                                            visible: v,
-                                        }
-                                    )
-                                )
-                            }
-                            title={dictionary.segment.hide_general_formula}
-                        />
-                        <Checkbox
-                            hidden={props.segment.type !== 'computational'}
-                            className="full-width-checkbox"
-                            id={`infl-assig-${props.index}`}
-                            checked={
-                                !!props.segment.parameters.hideInflAssignment
-                            }
-                            onChange={(v) =>
-                                dispatch(
-                                    segmentEditorChangeSegmentVisibilityRequest(
-                                        {
-                                            segmentIndex: props.index,
-                                            parameterName: 'hideInflAssignment',
-                                            visible: v,
-                                        }
-                                    )
-                                )
-                            }
-                            title={dictionary.segment.hide_infl_assignment}
-                        />
-                        <Checkbox
-                            hidden={props.segment.type !== 'computational'}
-                            className="full-width-checkbox"
-                            id={`infl-assig-${props.index}`}
-                            checked={
-                                !!props.segment.parameters
-                                    .hideInflAssignmentWithValues
-                            }
-                            onChange={(v) =>
-                                dispatch(
-                                    segmentEditorChangeSegmentVisibilityRequest(
-                                        {
-                                            segmentIndex: props.index,
-                                            parameterName:
-                                                'hideInflAssignmentWithValues',
-                                            visible: v,
-                                        }
-                                    )
-                                )
-                            }
-                            title={
-                                dictionary.segment
-                                    .hide_infl_assignment_with_values
-                            }
+                        <DropdownMenuContent
+                            index={props.index}
+                            segment={props.segment}
                         />
                     </DropdownMenu>
                 </div>

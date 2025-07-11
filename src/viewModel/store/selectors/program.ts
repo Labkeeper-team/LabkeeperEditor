@@ -46,3 +46,26 @@ export const useShowTour = createSelector(
     (state: StorageState) => state.settings,
     (s) => s.showTour
 );
+
+export const useShowFileManager = createSelector(
+    (state: StorageState) => state.settings,
+    (settings) => settings.showFileManager
+);
+
+export const useInstructionsExpanded = createSelector(
+    (state: StorageState) => state.persistence.instructionExpanded,
+    (s) => s
+);
+export const useIsDraggedToFileManager = createSelector(
+    (state: StorageState) => state.settings.isFileDraggedToManager,
+    (s) => s
+);
+export const useIsProjectReadonly = createSelector(
+    (state: StorageState) => state.project.projectIsReadonly,
+    (s) => s
+);
+
+export const useFileInFileManager = createSelector(
+    (state: StorageState) => state.project.files,
+    (files) => files
+);

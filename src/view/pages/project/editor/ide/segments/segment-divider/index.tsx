@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import classNames from 'classnames';
+
 import { useDictionary } from '../../../../../../../viewModel/store/selectors/translations';
 
 import { SegmentType } from '../../../../../../../model/domain.ts';
@@ -9,35 +10,50 @@ import {
     Events,
     EventValues,
 } from '../../../../../../../model/service/observer.ts';
+import { AppDispatch } from '../../../../../../../viewModel/store/index.ts';
+import { onSegmentAddedViaDividerRequest } from '../../../../../../../controller/index.ts';
+import { EditorTypeDivider, SegmentDividerProps } from './model.ts';
+import { createEmptySegment } from '../../../../../../helpers/index.ts';
 
 import './style.scss';
 
-interface EditorTypeDivider {
-    type: SegmentType;
-    text: string;
-    event1: EventValues;
-    event2?: EventValues;
-}
-interface SegmentDividerProps {
-    onAdd: (type: SegmentType) => void;
-}
+export const SegmentDivider: React.FC<SegmentDividerProps> = ({
+    showDivider,
+    index,
+}) => {
+    const dispatch = useDispatch<AppDispatch>();
 
-export const SegmentDivider: React.FC<SegmentDividerProps> = ({ onAdd }) => {
     const [isOpen, setIsOpen] = useState(false);
     const dictionary = useSelector(useDictionary);
 
-    const createOnClick = useCallback((
-        type: SegmentType,
-        observerEvent1: EventValues,
-        observerEvent2: EventValues = Events.EVENT_INSERT_SEGMENT_BETWEEN
-    ) => {
-        return () => {
-            observerService.onEvent(observerEvent1);
-            observerService.onEvent(observerEvent2);
-            onAdd(type);
-            setIsOpen(false);
-        };
-    }, [onAdd]);
+    const onAdd = useCallback(
+        (type: SegmentType) => {
+            const segmentViaDividerRequestObj = {
+                segment: createEmptySegment(type),
+                after: index,
+            };
+            dispatch(
+                onSegmentAddedViaDividerRequest(segmentViaDividerRequestObj)
+            );
+        },
+        [index, dispatch]
+    );
+
+    const createOnClick = useCallback(
+        (
+            type: SegmentType,
+            observerEvent1: EventValues,
+            observerEvent2: EventValues = Events.EVENT_INSERT_SEGMENT_BETWEEN
+        ) => {
+            return () => {
+                observerService.onEvent(observerEvent1);
+                observerService.onEvent(observerEvent2);
+                onAdd(type);
+                setIsOpen(false);
+            };
+        },
+        [onAdd]
+    );
 
     const editorTypes: EditorTypeDivider[] = useMemo(
         () => [
@@ -65,7 +81,9 @@ export const SegmentDivider: React.FC<SegmentDividerProps> = ({ onAdd }) => {
         ],
         [dictionary]
     );
-
+    if (!showDivider) {
+        return <div style={{ flex: 1 }} />;
+    }
     return (
         <div className="segment-divider">
             <div className="divider-line" />

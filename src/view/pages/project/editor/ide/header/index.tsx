@@ -4,23 +4,21 @@ import { AddBlock } from '../addBlock';
 import { HistoryButtons } from './historyButtons';
 import {
     useCurrentProgram,
+    useIsProjectReadonly,
+    useShowFileManager,
     useUser,
 } from '../../../../../../viewModel/store/selectors/program';
 import { SettingsButton } from './settingsButtons';
 import { FolderIcon } from '../../../../../icons';
-import { AppDispatch, StorageState } from '../../../../../../viewModel/store';
+import { AppDispatch } from '../../../../../../viewModel/store';
 import { onFolderButtonClickedRequest } from '../../../../../../controller';
 
 export const IdeHeader = () => {
     const program = useSelector(useCurrentProgram);
     const { isAuthenticated } = useSelector(useUser);
     const dispatch = useDispatch<AppDispatch>();
-    const showFileManager = useSelector(
-        (state: StorageState) => state.settings.showFileManager
-    );
-    const isReadonly = useSelector(
-        (state: StorageState) => state.project.projectIsReadonly
-    );
+    const showFileManager = useSelector(useShowFileManager);
+    const isReadonly = useSelector(useIsProjectReadonly);
 
     return (
         <div className="ide-header">

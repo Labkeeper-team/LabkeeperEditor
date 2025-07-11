@@ -1,3 +1,4 @@
+import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { SegmentEditor } from './segment';
 
@@ -6,7 +7,6 @@ import { useCurrentProgram } from '../../../../../../viewModel/store/selectors/p
 import { useEffect, useRef } from 'react';
 import { AppDispatch, StorageState } from '../../../../../../viewModel/store';
 import { setScrollEditorToBottom } from '../../../../../../viewModel/store/slices/callback';
-import { onSegmentAddedViaDividerRequest } from '../../../../../../controller';
 import { SegmentDivider } from './segment-divider';
 
 export const Segments = () => {
@@ -14,7 +14,7 @@ export const Segments = () => {
     const scrollEditorToBottom = useSelector(
         (state: StorageState) => state.callback.scrollEditorToBottom
     );
-    const ref = useRef<HTMLElement>(null);
+    const ref = useRef<HTMLDivElement>(null);
     const dispatch = useDispatch<AppDispatch>();
 
     useEffect(() => {
@@ -25,43 +25,25 @@ export const Segments = () => {
             });
             dispatch(setScrollEditorToBottom(false));
         }
-    }, [scrollEditorToBottom]);
+    }, [scrollEditorToBottom, dispatch]);
 
     return (
-        <div ref={ref as any} className="segments-container">
-            {program?.segments.map((s, i, ar) => (
-                <>
-                    <SegmentEditor
-                        key={s.id}
-                        segment={s}
-                        index={i}
-                        segmentCount={ar.length}
-                    />
-                    {i + 1 !== ar.length ? (
-                        <div key={`divider-${s.id}`} style={{ flex: 1 }}>
-                            <SegmentDivider
-                                onAdd={(type) => {
-                                    dispatch(
-                                        onSegmentAddedViaDividerRequest({
-                                            segment: {
-                                                id: -1,
-                                                type,
-                                                parameters: {
-                                                    visible: true,
-                                                },
-                                                text: '',
-                                            },
-                                            after: i,
-                                        })
-                                    );
-                                }}
-                            />
-                        </div>
-                    ) : (
-                        <div key={`empty-space-${s.id}`} style={{ flex: 1}} />
-                    )}
-                </>
-            ))}
+        <div ref={ref} className="segments-container">
+            {program?.segments.map((s, i, ar) => {
+                return (
+                    <React.Fragment key={s.id}>
+                        <SegmentEditor
+                            segment={s}
+                            index={i}
+                            segmentCount={ar.length}
+                        />
+                        <SegmentDivider
+                            index={i}
+                            showDivider={i + 1 !== ar.length}
+                        />
+                    </React.Fragment>
+                );
+            })}
         </div>
     );
 };

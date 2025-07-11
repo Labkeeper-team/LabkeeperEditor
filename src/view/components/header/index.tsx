@@ -12,7 +12,10 @@ import './style.scss';
 
 import { Back } from './back';
 import { useLocation } from 'react-router-dom';
-import { useUser } from '../../../viewModel/store/selectors/program';
+import {
+    useIsProjectReadonly,
+    useUser,
+} from '../../../viewModel/store/selectors/program';
 import { Routes } from '../../routing/routes.ts';
 import {
     useCurrentLanguage,
@@ -25,7 +28,6 @@ import { Language } from '../../../viewModel/store/shared/dictionaries';
 import { AuthModal } from '../../pages/project/auth';
 import { setShowAuthModal } from '../../../viewModel/store/slices/auth';
 import { ShareModal } from './share/modal';
-import { StorageState } from '../../../viewModel/store';
 
 const languageOptions = [
     {
@@ -44,9 +46,7 @@ export const Header = () => {
     const dictionary = useSelector(useDictionary);
     const language = useSelector(useCurrentLanguage);
     const { isAuthenticated, email } = useSelector(useUser);
-    const projectIsReadonly = useSelector(
-        (state: StorageState) => state.project.projectIsReadonly
-    );
+    const projectIsReadonly = useSelector(useIsProjectReadonly);
 
     const onLoginClick = useCallback(async () => {
         dispatch(setShowAuthModal(true));

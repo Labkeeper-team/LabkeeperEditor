@@ -1,4 +1,4 @@
-import { MouseEvent } from 'react';
+import { CSSProperties, MouseEvent } from 'react';
 
 export interface ButtnProps {
     onPress?: (e?: MouseEvent<HTMLButtonElement>) => void;
@@ -8,6 +8,7 @@ export interface ButtnProps {
     minimize: boolean | 'super';
     rounded?: boolean;
     disabled?: boolean;
+    style?: CSSProperties;
     color: 'green' | 'blue' | 'gray' | 'inherit';
     type?: 'rounded';
     buttonType?: 'submit' | 'reset';
