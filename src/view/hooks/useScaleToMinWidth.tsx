@@ -27,7 +27,7 @@ export function useScaleToMinWidth(ref, minWidth = 1024) {
             );
         };
 
-        // ⬅️ вызываем сразу — важно для «первой загрузки» на мобильном
+        //вызываем сразу — важно для «первой загрузки» на мобильном
         rescale();
         window.addEventListener('resize', rescale);
         return () => window.removeEventListener('resize', rescale);
