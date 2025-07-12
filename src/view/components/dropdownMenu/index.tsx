@@ -27,7 +27,8 @@ export const DropdownMenu = (
         if (ref.current?.clientWidth && !widthOfStopDefaulKistener) {
             setWidth(ref.current?.clientWidth);
         }
-    }, [ref?.current, widthOfStopDefaulKistener, showMenu]);
+    }, [ref.current?.clientWidth, widthOfStopDefaulKistener, showMenu]);
+
     const onHide = () => {
         setShowMenu(false);
     };

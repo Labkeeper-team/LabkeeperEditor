@@ -32,6 +32,7 @@ export const ProjectTitle = () => {
         if (!editMode) {
             setCurrentTitle(project?.title);
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [editMode]);
 
     useEffect(() => {

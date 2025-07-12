@@ -123,7 +123,7 @@ const customCompletion = autocompletion({
 // Создаем определение языка
 const customLanguage = LRLanguage.define({
     name: 'customPython',
-    parser: parser,
+    parser,
     languageData: {
         closeBrackets: { brackets: ['(', '[', '{', '"', "'"] },
     },

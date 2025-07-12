@@ -50,7 +50,7 @@ export const Header = () => {
 
     const onLoginClick = useCallback(async () => {
         dispatch(setShowAuthModal(true));
-    }, []);
+    }, [dispatch]);
 
     const onPress = (lang: unknown) => {
         dispatch(setLanguage(lang as Language));

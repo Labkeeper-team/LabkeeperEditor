@@ -105,14 +105,14 @@ export const BaseLayout = () => {
         if (error) {
             dispatch(setErrorMessage(error || ''));
         }
-    }, [searchParams]);
+    }, [searchParams, dispatch]);
 
     useEffect(() => {
         if (!loaded) {
             dispatch(onAppEnterRequest());
             loaded = true;
         }
-    }, []);
+    }, [dispatch]);
 
     return (
         <div

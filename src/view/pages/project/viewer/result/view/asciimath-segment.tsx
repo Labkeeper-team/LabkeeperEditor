@@ -6,7 +6,7 @@ import { MathJax } from 'better-react-mathjax';
 import { TextOutputSegment } from '../../../../../../model/domain.ts';
 import AsciiMathParser from 'asciimath2tex';
 
-export const parser = new AsciiMathParser();
+const parser = new AsciiMathParser();
 
 export const AsciimathSegment = forwardRef<
     HTMLDivElement,
