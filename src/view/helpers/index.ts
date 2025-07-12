@@ -1,4 +1,4 @@
-import { SegmentType } from "../../model/domain";
+import { SegmentType } from '../../model/domain';
 
 export const createEmptySegment = (type: SegmentType) => {
     return {

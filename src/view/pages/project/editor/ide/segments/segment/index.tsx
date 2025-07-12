@@ -111,7 +111,7 @@ export const SegmentEditor = memo(
                 setTempSegmentErrors([]);
                 setTempText(props.segment.text);
             }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+            // eslint-disable-next-line react-hooks/exhaustive-deps
         }, [props.segment.text]);
 
         // При обновлении глобального списка ошибок фильтруем и устанавливаем локальный

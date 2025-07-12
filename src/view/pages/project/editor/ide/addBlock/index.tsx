@@ -35,7 +35,7 @@ export const AddBlock = (props: AddBlockProps) => {
                 }
                 minimize={!props.isFirst}
                 style={{
-                    whiteSpace: 'nowrap'
+                    whiteSpace: 'nowrap',
                 }}
                 titleIcon={() => <PlusIcon />}
                 rounded

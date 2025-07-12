@@ -16,7 +16,8 @@ export const getPosition = (anchor: string) => {
     if (!rect) {
         return {};
     }
-    const scale =  +document.documentElement.style.getPropertyValue('--mobile-scale');
+    const scale =
+        +document.documentElement.style.getPropertyValue('--mobile-scale');
     const heightOfHint = 40 * scale;
     const widthOfHint = 40 * scale;
     return {

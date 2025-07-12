@@ -15,11 +15,11 @@
         overflow: hidden;
     }
     &.is-manager-opened {
-        .swiper-wrapper  {
+        .swiper-wrapper {
             @media screen and (max-width: 1024px) {
                 width: 350px;
             }
-            @media screen and (max-width: 1250px) and (min-width: 1024px)  {
+            @media screen and (max-width: 1250px) and (min-width: 1024px) {
                 max-width: 35vw;
             }
         }

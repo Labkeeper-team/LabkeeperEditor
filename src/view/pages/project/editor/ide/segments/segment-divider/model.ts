@@ -1,5 +1,5 @@
-import { SegmentType } from "../../../../../../../model/domain";
-import { EventValues } from "../../../../../../../model/service/observer";
+import { SegmentType } from '../../../../../../../model/domain';
+import { EventValues } from '../../../../../../../model/service/observer';
 
 export interface EditorTypeDivider {
     type: SegmentType;

@@ -22,7 +22,7 @@ export const Button = (props: ButtnProps) => {
             disabled={props.disabled}
             onClick={props.onPress}
         >
-            <span style={{overflow: 'hidden'}}>{props.title}</span>
+            <span style={{ overflow: 'hidden' }}>{props.title}</span>
             {props.titleIcon ? (props.titleIcon() as ReactNode) : null}
         </button>
     );

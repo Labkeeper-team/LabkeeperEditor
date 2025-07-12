@@ -45,7 +45,7 @@ export const FileItem = (props: {
                 setEditItem(false);
             });
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [globalEditFileMode]);
 
     /*
