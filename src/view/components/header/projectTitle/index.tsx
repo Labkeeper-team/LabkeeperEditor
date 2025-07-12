@@ -61,7 +61,7 @@ export const ProjectTitle = () => {
                 },
             })
         );
-    }, [project, currentTitle, dispatch]);
+    }, [project, currentTitle, dispatch, setEditMode]);
 
     const onPressPencil = () => {
         if (editMode) {
