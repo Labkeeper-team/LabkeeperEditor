@@ -23,8 +23,8 @@ export const IdeHeader = () => {
     return (
         <div className="ide-header">
             <div className="ide-wrapper">
-                {true ? (
-                    true ? (
+                {isAuthenticated ? (
+                    !showFileManager ? (
                         <div
                             className="file-manager-button "
                             onClick={() =>
