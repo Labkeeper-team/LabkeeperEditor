@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useDispatch, useSelector } from 'react-redux';
 import { Button } from '../../../../../components/button';
 import { Typography } from '../../../../../components/typography';
@@ -28,7 +29,7 @@ export const AddBlock = (props: AddBlockProps) => {
     return (
         <div className="empty-project-placeholder-container">
             <Button
-                classname={classNames(InterfaceTourAnchorClassnames.AddCode)}
+                classname={classNames(InterfaceTourAnchorClassnames.AddCode, {'desktop-display': !props.isFirst})}
                 title={dictionary.label_add_markdown}
                 color="gray"
                 onPress={() =>
@@ -39,6 +40,17 @@ export const AddBlock = (props: AddBlockProps) => {
                 titleIcon={() => <PlusIcon />}
                 rounded
             />
+            {!props.isFirst ? <Button
+                classname={classNames(InterfaceTourAnchorClassnames.AddCode, {'mobile-display': !props.isFirst})}
+                title={dictionary.label_add_markdown_short}
+                color="gray"
+                onPress={() =>
+                    dispatch(onAddSegmentButtonClickedRequest({ type: 'md' }))
+                }
+                minimize={!props.isFirst}
+                titleIcon={() => <PlusIcon />}
+                rounded
+            /> : null}
             {props.isFirst && (
                 <Typography text={dictionary.or} color={colors.black} />
             )}
@@ -53,9 +65,23 @@ export const AddBlock = (props: AddBlockProps) => {
                         })
                     )
                 }
-                className={SelectClassNames.Computation}
+                className={classNames(SelectClassNames.Computation, {'desktop-display': !props.isFirst}) as any}
                 minimize={!props.isFirst}
             />
+            { !props.isFirst ? <Select
+                options={selectOptions}
+                title={dictionary.label_add_more_short}
+                value="computational"
+                onChange={(value) =>
+                    dispatch(
+                        onAddSegmentButtonClickedRequest({
+                            type: value as SegmentType,
+                        })
+                    )
+                }
+                className={classNames(SelectClassNames.Computation, {'mobile-display': !props.isFirst}) as any}
+                minimize={!props.isFirst}
+            /> : null}
         </div>
     );
 };

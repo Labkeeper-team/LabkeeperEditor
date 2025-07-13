@@ -22,16 +22,9 @@ export const IdeHeader = () => {
 
     return (
         <div className="ide-header">
-            <div
-                style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 24,
-                }}
-            >
-                {isAuthenticated ? (
-                    !showFileManager ? (
+            <div className="ide-wrapper">
+                {true ? (
+                    true ? (
                         <div
                             className="file-manager-button "
                             onClick={() =>

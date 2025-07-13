@@ -13,7 +13,7 @@ export const HeaderLogo = () => {
     const { isAuthenticated, email } = useSelector(useUser);
     return (
         <div className="logo-container">
-            {isAuthenticated && email.includes('@phystech.edu') && <MiptLogo />}
+            {isAuthenticated && email.includes('@phystech.edu') && <MiptLogo height={32} width={32} />}
             <LogoIcon />
             <Typography type="body-large" text="Labkeeper" />
             <span className="version-tooltip" data-tooltip={INFO}>

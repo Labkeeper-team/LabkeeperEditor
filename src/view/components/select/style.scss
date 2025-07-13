@@ -3,6 +3,9 @@
 .labkeeper_select {
     position: relative;
     min-width: 115px;
+    @media screen and (max-width: 1024px) {
+        min-width: unset
+    }
 
     &.default {
         .select-header {
