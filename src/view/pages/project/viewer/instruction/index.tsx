@@ -21,25 +21,17 @@ import {
 } from '../../../../../viewModel/store/selectors/translations';
 import { instructions } from '../../../../../model/help';
 import { setInstructionExpanded } from '../../../../../viewModel/store/slices/persistence';
-import {
-    useInstructionsExpanded,
-    useShowFileManager,
-} from '../../../../../viewModel/store/selectors/program';
+import { useInstructionsExpanded } from '../../../../../viewModel/store/selectors/program';
 
 export const Instruction = () => {
     const swiperRef = useRef<SwiperType | null>(null);
-    const showFileManager = useSelector(useShowFileManager);
     const instructionExpanded = useSelector(useInstructionsExpanded);
     const dictionary = useSelector(useDictionary);
     const dispatch = useDispatch();
     const language = useSelector(useCurrentLanguage);
 
     return (
-        <div
-            className={classNames('labkeeper-instruction-container', {
-                'is-manager-opened': showFileManager,
-            })}
-        >
+        <div className={classNames('labkeeper-instruction-container')}>
             <SectorHeader
                 expanded={instructionExpanded}
                 onPressExpanded={() =>

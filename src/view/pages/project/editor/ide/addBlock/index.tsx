@@ -13,6 +13,7 @@ import { Select } from '../../../../../components/select';
 import { SelectClassNames } from '../../../../../components/select/model';
 import { onAddSegmentButtonClickedRequest } from '../../../../../../controller';
 import { AppDispatch } from '../../../../../../viewModel/store';
+import classNames from 'classnames';
 
 export const AddBlock = (props: AddBlockProps) => {
     const dispatch = useDispatch<AppDispatch>();
@@ -27,16 +28,14 @@ export const AddBlock = (props: AddBlockProps) => {
     return (
         <div className="empty-project-placeholder-container">
             <Button
-                classname={InterfaceTourAnchorClassnames.AddCode}
+                classname={classNames(InterfaceTourAnchorClassnames.AddCode)}
                 title={dictionary.label_add_markdown}
                 color="gray"
                 onPress={() =>
                     dispatch(onAddSegmentButtonClickedRequest({ type: 'md' }))
                 }
                 minimize={!props.isFirst}
-                style={{
-                    whiteSpace: 'nowrap',
-                }}
+
                 titleIcon={() => <PlusIcon />}
                 rounded
             />
