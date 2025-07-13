@@ -62,7 +62,6 @@ export const Instruction = () => {
                         spaceBetween={0}
                         width={undefined}
                         slidesPerView={1}
-                        className="123"
                         onSwiper={(swiper) => (swiperRef.current = swiper)}
                         cssMode
                         pagination={{
