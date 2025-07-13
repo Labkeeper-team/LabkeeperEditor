@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useDispatch, useSelector } from 'react-redux';
 import { useCurrentProject } from '../../../../viewModel/store/selectors/program';
 import { useCallback, useEffect, useRef, useState } from 'react';

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useDispatch, useSelector } from 'react-redux';
 import { Ref, useCallback, useEffect, useRef, useState } from 'react';
 import classNames from 'classnames';

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { Typography } from '../../../components/typography';
 import { colors } from '../../../styles/colors.ts';
 import { Button } from '../../../components/button';

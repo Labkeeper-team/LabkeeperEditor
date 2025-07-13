@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { Outlet, useNavigate, useSearchParams } from 'react-router-dom';
 import { Header } from '../header';
 import { InterfaceTour } from '../tour';

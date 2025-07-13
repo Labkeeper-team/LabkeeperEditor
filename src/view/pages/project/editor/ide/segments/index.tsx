@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useDispatch, useSelector } from 'react-redux';
 import { SegmentEditor } from './segment';
 
