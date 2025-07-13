@@ -29,28 +29,36 @@ export const AddBlock = (props: AddBlockProps) => {
     return (
         <div className="empty-project-placeholder-container">
             <Button
-                classname={classNames(InterfaceTourAnchorClassnames.AddCode, {'desktop-display': !props.isFirst})}
+                classname={classNames(InterfaceTourAnchorClassnames.AddCode, {
+                    'desktop-display': !props.isFirst,
+                })}
                 title={dictionary.label_add_markdown}
                 color="gray"
                 onPress={() =>
                     dispatch(onAddSegmentButtonClickedRequest({ type: 'md' }))
                 }
                 minimize={!props.isFirst}
-
                 titleIcon={() => <PlusIcon />}
                 rounded
             />
-            {!props.isFirst ? <Button
-                classname={classNames(InterfaceTourAnchorClassnames.AddCode, {'mobile-display': !props.isFirst})}
-                title={dictionary.label_add_markdown_short}
-                color="gray"
-                onPress={() =>
-                    dispatch(onAddSegmentButtonClickedRequest({ type: 'md' }))
-                }
-                minimize={!props.isFirst}
-                titleIcon={() => <PlusIcon />}
-                rounded
-            /> : null}
+            {!props.isFirst ? (
+                <Button
+                    classname={classNames(
+                        InterfaceTourAnchorClassnames.AddCode,
+                        { 'mobile-display': !props.isFirst }
+                    )}
+                    title={dictionary.label_add_markdown_short}
+                    color="gray"
+                    onPress={() =>
+                        dispatch(
+                            onAddSegmentButtonClickedRequest({ type: 'md' })
+                        )
+                    }
+                    minimize={!props.isFirst}
+                    titleIcon={() => <PlusIcon />}
+                    rounded
+                />
+            ) : null}
             {props.isFirst && (
                 <Typography text={dictionary.or} color={colors.black} />
             )}
@@ -65,23 +73,33 @@ export const AddBlock = (props: AddBlockProps) => {
                         })
                     )
                 }
-                className={classNames(SelectClassNames.Computation, {'desktop-display': !props.isFirst}) as any}
+                className={
+                    classNames(SelectClassNames.Computation, {
+                        'desktop-display': !props.isFirst,
+                    }) as any
+                }
                 minimize={!props.isFirst}
             />
-            { !props.isFirst ? <Select
-                options={selectOptions}
-                title={dictionary.label_add_more_short}
-                value="computational"
-                onChange={(value) =>
-                    dispatch(
-                        onAddSegmentButtonClickedRequest({
-                            type: value as SegmentType,
-                        })
-                    )
-                }
-                className={classNames(SelectClassNames.Computation, {'mobile-display': !props.isFirst}) as any}
-                minimize={!props.isFirst}
-            /> : null}
+            {!props.isFirst ? (
+                <Select
+                    options={selectOptions}
+                    title={dictionary.label_add_more_short}
+                    value="computational"
+                    onChange={(value) =>
+                        dispatch(
+                            onAddSegmentButtonClickedRequest({
+                                type: value as SegmentType,
+                            })
+                        )
+                    }
+                    className={
+                        classNames(SelectClassNames.Computation, {
+                            'mobile-display': !props.isFirst,
+                        }) as any
+                    }
+                    minimize={!props.isFirst}
+                />
+            ) : null}
         </div>
     );
 };
