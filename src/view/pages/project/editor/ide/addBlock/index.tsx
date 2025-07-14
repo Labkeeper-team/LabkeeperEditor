@@ -15,9 +15,11 @@ import { SelectClassNames } from '../../../../../components/select/model';
 import { onAddSegmentButtonClickedRequest } from '../../../../../../controller';
 import { AppDispatch } from '../../../../../../viewModel/store';
 import classNames from 'classnames';
+import { useIsMobile } from '../../../../../hooks/useMobile';
 
 export const AddBlock = (props: AddBlockProps) => {
     const dispatch = useDispatch<AppDispatch>();
+    const isMobile = useIsMobile();
     const dictionary = useSelector(useDictionary);
 
     const selectOptions = [
@@ -26,13 +28,21 @@ export const AddBlock = (props: AddBlockProps) => {
         { value: 'asciimath', label: dictionary.label_add_asciimath },
     ];
 
+    const addMdTitle =
+        isMobile && !props.isFirst
+            ? dictionary.label_add_markdown_short
+            : dictionary.label_add_markdown;
+
+    const addMoreTitle =
+        isMobile && !props.isFirst
+            ? dictionary.label_add_more_short
+            : dictionary.label_add_more;
+
     return (
         <div className="empty-project-placeholder-container">
             <Button
-                classname={classNames(InterfaceTourAnchorClassnames.AddCode, {
-                    'desktop-display': !props.isFirst,
-                })}
-                title={dictionary.label_add_markdown}
+                classname={classNames(InterfaceTourAnchorClassnames.AddCode)}
+                title={addMdTitle}
                 color="gray"
                 onPress={() =>
                     dispatch(onAddSegmentButtonClickedRequest({ type: 'md' }))
@@ -41,30 +51,13 @@ export const AddBlock = (props: AddBlockProps) => {
                 titleIcon={() => <PlusIcon />}
                 rounded
             />
-            {!props.isFirst ? (
-                <Button
-                    classname={classNames(
-                        InterfaceTourAnchorClassnames.AddCode,
-                        { 'mobile-display': !props.isFirst }
-                    )}
-                    title={dictionary.label_add_markdown_short}
-                    color="gray"
-                    onPress={() =>
-                        dispatch(
-                            onAddSegmentButtonClickedRequest({ type: 'md' })
-                        )
-                    }
-                    minimize={!props.isFirst}
-                    titleIcon={() => <PlusIcon />}
-                    rounded
-                />
-            ) : null}
+
             {props.isFirst && (
                 <Typography text={dictionary.or} color={colors.black} />
             )}
             <Select
                 options={selectOptions}
-                title={dictionary.label_add_more}
+                title={addMoreTitle}
                 value="computational"
                 onChange={(value) =>
                     dispatch(
@@ -73,33 +66,9 @@ export const AddBlock = (props: AddBlockProps) => {
                         })
                     )
                 }
-                className={
-                    classNames(SelectClassNames.Computation, {
-                        'desktop-display': !props.isFirst,
-                    }) as any
-                }
+                className={SelectClassNames.Computation}
                 minimize={!props.isFirst}
             />
-            {!props.isFirst ? (
-                <Select
-                    options={selectOptions}
-                    title={dictionary.label_add_more_short}
-                    value="computational"
-                    onChange={(value) =>
-                        dispatch(
-                            onAddSegmentButtonClickedRequest({
-                                type: value as SegmentType,
-                            })
-                        )
-                    }
-                    className={
-                        classNames(SelectClassNames.Computation, {
-                            'mobile-display': !props.isFirst,
-                        }) as any
-                    }
-                    minimize={!props.isFirst}
-                />
-            ) : null}
         </div>
     );
 };

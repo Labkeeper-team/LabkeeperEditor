@@ -5,22 +5,11 @@
     align-items: center;
     justify-content: center;
     gap: 10px;
-
-    .desktop-display {
-        display: flex;
-        @media screen and (max-width: 1024px) {
-            display: none;
-        }
-    }
-    .mobile-display {
-        display: flex;
+    @media screen and (min-width: 1024px) {
         &.labkeeper-button {
             gap: 0px;
             padding-left: 5px;
             padding-right: 5px;
-        }
-        @media screen and (min-width: 1024px) {
-            display: none;
         }
     }
 }
