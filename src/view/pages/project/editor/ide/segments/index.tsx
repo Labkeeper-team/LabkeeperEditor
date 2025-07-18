@@ -19,10 +19,10 @@ export const Segments = () => {
 
     useEffect(() => {
         if (ref?.current && scrollEditorToBottom) {
-            ref.current.scrollTo({
+            setTimeout(() => ref.current?.scrollTo({
                 top: 10000000,
                 behavior: 'smooth',
-            });
+            }), 1000);
             dispatch(setScrollEditorToBottom(false));
         }
     }, [scrollEditorToBottom, dispatch]);
