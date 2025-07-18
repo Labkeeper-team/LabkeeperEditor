@@ -17,7 +17,7 @@ export default function ScaleWrapper({ minWidth = 1024, children }) {
         const timeoutUpdateInnterHeight = () => {
             // Немного задержки, чтобы дать системе "устаканиться"
             setTimeout(updateInnerHeight, 100);
-        }
+        };
 
         updateInnerHeight();
 
