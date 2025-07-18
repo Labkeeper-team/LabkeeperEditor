@@ -43,6 +43,71 @@ export const Result = () => {
     const onPress = () => {
         observerService.onEvent(Events.EVENT_PRINT);
         dispatch(onPrintButtonPressedRequest());
+        const isMobile =
+            /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(
+                navigator.userAgent
+            );
+
+        if (isMobile) {
+            setTimeout(async () => {
+                const mathElements =
+                    document.querySelectorAll('#compile-result');
+                await window.MathJax.typesetPromise(mathElements);
+
+                const content = contentRef.current;
+                if (!content) return;
+
+                const newWindow = window.open(
+                    '',
+                    '_blank',
+                    'width=800,height=600'
+                );
+                if (!newWindow) return;
+                const collectStyles = () => {
+                    const links = Array.from(
+                        document.querySelectorAll('link[rel="stylesheet"]')
+                    );
+                    const styles = Array.from(
+                        document.querySelectorAll('style')
+                    );
+
+                    const linkTags = links
+                        .map(
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            (link: any) =>
+                                `<link rel="stylesheet" href="${link.href}" />`
+                        )
+                        .join('\n');
+
+                    const styleTags = styles
+                        .map((style) => `<style>${style.innerHTML}</style>`)
+                        .join('\n');
+
+                    return linkTags + styleTags;
+                };
+
+                const html = `
+                <html>
+                  <head>
+                    <meta charset="UTF-8">
+                    <title>${currentProject?.title ?? 'Document'}</title>
+                    ${collectStyles()}
+                  </head>
+                  <body>
+                    ${content.innerHTML}
+                  </body>
+                </html>
+              `;
+
+                newWindow.document.open();
+                newWindow.document.write(html);
+                newWindow.document.close();
+
+                newWindow.focus();
+                newWindow.print();
+            }, 100);
+            return;
+        }
         setTimeout(() => {
             const print = async () => {
                 const mathElements =
