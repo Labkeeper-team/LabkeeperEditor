@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useDispatch, useSelector } from 'react-redux';
 import { Button } from '../../../../../components/button';
 import { Typography } from '../../../../../components/typography';
