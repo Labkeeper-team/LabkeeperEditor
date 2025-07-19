@@ -3,6 +3,7 @@
 .ide-container {
     overflow: auto;
     display: flex;
+    position: relative;
     flex-direction: column;
     height: inherit;
     background-color: $white;

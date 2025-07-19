@@ -4,7 +4,7 @@
 .project-container {
     display: flex;
     flex-direction: row;
-    height: calc($screen-height - $header-height - $main-margin);
+    height: calc(100vh - $header-height - $main-margin);
     width: 100%;
     gap: 8px;
     @media screen and (max-width: 1024px) {

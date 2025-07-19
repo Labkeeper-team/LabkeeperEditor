@@ -7,31 +7,23 @@ export default function ScaleWrapper({ minWidth = 1024, children }) {
     useScaleToMinWidth(ref, minWidth);
 
     useEffect(() => {
-        const updateInnerHeight = () => {
+        // Здесь долждны быть логика с калькулируемой высотой.но пока оставим так
+        const setVh = () => {
             document.documentElement.style.setProperty(
                 '--inner-height',
-                `${window.innerHeight}px`
+                `100dvh`
             );
         };
 
-        const timeoutUpdateInnterHeight = () => {
-            // Немного задержки, чтобы дать системе "устаканиться"
-            setTimeout(updateInnerHeight, 100);
-        };
+        setVh();
 
-        updateInnerHeight();
-
-        window.addEventListener('resize', updateInnerHeight);
-        window.addEventListener('orientationchange', updateInnerHeight);
-        window.addEventListener('focusout', timeoutUpdateInnterHeight);
-        window.addEventListener('focusin', updateInnerHeight);
+        /*window.addEventListener('resize', setVh);
+        window.addEventListener('orientationchange', setVh);
 
         return () => {
-            window.removeEventListener('resize', updateInnerHeight);
-            window.removeEventListener('focusout', timeoutUpdateInnterHeight);
-            window.removeEventListener('orientationchange', updateInnerHeight);
-            window.removeEventListener('focusin', updateInnerHeight);
-        };
+            window.removeEventListener('resize', setVh);
+            window.removeEventListener('orientationchange', setVh);
+        };*/
     }, []);
     return (
         <div

@@ -9,7 +9,12 @@
     --mobile-scale: 1;
     --inner-height: 100vh;
 }
-
+html {
+    @media screen and (max-width: 1024px) {
+        max-height: 100dvh;
+        overflow: hidden;
+    }
+}
 body {
     margin: 0;
     background-color: #0e1621;
@@ -29,6 +34,10 @@ body {
         @media print {
             width: 0px;
         }
+    }
+    @media screen and (max-width: 1024px) {
+        max-height: 100dvh;
+        overflow: hidden;
     }
 }
 

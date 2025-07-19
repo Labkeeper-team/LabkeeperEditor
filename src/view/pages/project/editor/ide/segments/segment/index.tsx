@@ -148,7 +148,6 @@ export const SegmentEditor = memo(
         // Таймер тоже тут нужен из-за CodeMirror
         const onBlur = useCallback(async () => {
             editor?.current?.editor?.blur?.();
-            console.log('blur');
             setTimeout(async () => {
                 dispatch(
                     onBlurSegmentRequest({

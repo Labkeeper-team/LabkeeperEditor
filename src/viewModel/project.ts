@@ -12,7 +12,6 @@ export class LoaderService {
     }
 
     loadFiles = async (projectId: string) => {
-        console.log('listFiles', projectId);
         const result = await this.rpi.listFilesRequest(projectId);
 
         if (result.isOk) {
