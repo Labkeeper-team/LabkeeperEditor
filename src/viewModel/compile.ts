@@ -8,6 +8,7 @@ import {
 import { Events, ObserverService } from '../model/service/observer.ts';
 import { ProgramService } from '../model/service/program.ts';
 import { LoaderService } from './project.ts';
+import { IdeService } from './ide.ts';
 
 export class CompilationService {
     vms: ViewModelState;
@@ -15,19 +16,22 @@ export class CompilationService {
     programService: ProgramService;
     loaderService: LoaderService;
     observerService: ObserverService;
+    ideService: IdeService;
 
     constructor(
         vms: ViewModelState,
         rpi: Rpi,
         programService: ProgramService,
         loaderService: LoaderService,
-        observerService: ObserverService
+        observerService: ObserverService,
+        ideService: IdeService
     ) {
         this.vms = vms;
         this.rpi = rpi;
         this.programService = programService;
         this.loaderService = loaderService;
         this.observerService = observerService;
+        this.ideService = ideService;
     }
 
     runCompilation = async () => {
@@ -54,14 +58,14 @@ export class CompilationService {
                 this.vms.dictionary.filemanager.errors.internalError,
                 'error'
             );
-            this.vms.resetToInitialState();
+            this.ideService.resetEditor();
         }
         if (result.code === 401 || result.code === 403) {
             this.vms.toast(
                 this.vms.dictionary.filemanager.errors.sessionExpired,
                 'error'
             );
-            this.vms.resetToInitialState();
+            this.ideService.resetEditor();
         }
         if (result.code === 200) {
             this.vms.projectViewModelState.setCompileResult(
@@ -83,7 +87,7 @@ export class CompilationService {
             this.vms.settingsViewModelState.setExpandProblemViewer(true);
             compileResult.errors.map((error) => {
                 if (error.code === 308) {
-                    this.vms.authViewModelState.setShowAuthModal(true);
+                    this.vms.authViewModelState.setCurrentView('login');
                 }
             });
         }
@@ -101,7 +105,7 @@ export class CompilationService {
                 ],
             });
             this.vms.settingsViewModelState.setExpandProblemViewer(true);
-            this.vms.authViewModelState.setShowAuthModal(true);
+            this.vms.authViewModelState.setCurrentView('login');
         }
         if (!result.isOk) {
             this.observerService.onEvent(Events.EVENT_ERROR);

@@ -3,48 +3,51 @@ import { colors } from '../../../styles/colors.ts';
 import { Button } from '../../../components/button';
 import { Login2Icon } from '../../../icons';
 import { Modal } from '../../../components/modal';
-import { Routes } from '../../../routing/routes.ts';
 import { useSelector, useDispatch } from 'react-redux';
 import { useDictionary } from '../../../../viewModel/store/selectors/translations.ts';
 import { Input } from '../../../components/input';
-import { useState, ChangeEvent, useEffect } from 'react';
-import {
-    setCurrentView,
-    sendEmailWithCode,
-    checkCode,
-    setPassword as setPasswordAction,
-    resetRequestStates,
-    setRegistration,
-    setShowAuthModal,
-} from '../../../../viewModel/store/slices/auth';
+import { useState, ChangeEvent, useMemo } from 'react';
+import { setCurrentView } from '../../../../viewModel/store/slices/auth';
 import { StorageState } from '../../../../viewModel/store';
 import { AppDispatch } from '../../../../viewModel/store';
 import { SmartCaptcha } from '@yandex/smart-captcha';
-import { Providers, Secrets } from '../../../../constants.ts';
+import { Providers, Secrets, URLS } from '../../../../constants.ts';
+import {
+    onAuthClosedRequest,
+    onEmailSendButtonClickedRequest,
+    onForgotPasswordButtonClickedRequest,
+    onFormLoginClickedRequest,
+    onRegistrationButtonClickedRequest,
+    onSendCodeButtonClickedRequest,
+    onSendPasswordButtonClickedRequest,
+} from '../../../../controller';
 
 const LoginView = () => {
-    const dictionary = useSelector(useDictionary);
+    const dispatch = useDispatch<AppDispatch>();
+
+    // State
     const [login, setLogin] = useState('');
     const [password, setPassword] = useState('');
-    const dispatch = useDispatch();
-    const error = useSelector(
-        (state: StorageState) => state.auth.authErrorMessage
-    );
     const [token, setToken] = useState('');
+
+    // Selectors
+    const dictionary = useSelector(useDictionary);
     const language = useSelector(
         (state: StorageState) => state.persistence.language
     );
+    const loginRequest = useSelector(
+        (state: StorageState) => state.auth.loginRequest
+    );
 
-    const getErrorMessage = (): string => {
-        if (!error) return '';
-        if (error === 'bad_credentials') {
+    const errorMessage = useMemo((): string => {
+        if (loginRequest === 'bad_credentials') {
             return dictionary.authorization.errors.credentialsError;
         }
-        if (error === 'oauth_error') {
+        if (loginRequest === 'oauth_error') {
             return dictionary.authorization.errors.oauthError;
         }
-        return error;
-    };
+        return '';
+    }, [loginRequest]);
 
     return (
         <div
@@ -71,8 +74,23 @@ const LoginView = () => {
                 }}
             >
                 <form
-                    method="POST"
-                    action={Routes.FormLogin}
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        const userName =
+                            e.currentTarget.elements['username'].value;
+                        const password =
+                            e.currentTarget.elements['password'].value;
+                        const captcha =
+                            e.currentTarget.elements['captcha'].value;
+
+                        dispatch(
+                            onFormLoginClickedRequest({
+                                userName: userName,
+                                password: password,
+                                captcha: captcha,
+                            })
+                        );
+                    }}
                     style={{
                         display: 'flex',
                         flexDirection: 'column',
@@ -102,12 +120,12 @@ const LoginView = () => {
                     {!!Secrets.yandexCaptchaSiteKey && (
                         <input required hidden value={token} name="captcha" />
                     )}
-                    {error && (
+                    {errorMessage && (
                         <div style={{ textAlign: 'center' }}>
                             <Typography
                                 color={colors.gray10}
                                 type="body"
-                                text={getErrorMessage()}
+                                text={errorMessage}
                             />
                         </div>
                     )}
@@ -145,9 +163,7 @@ const LoginView = () => {
                         type="rounded"
                         minimize={true}
                         onPress={() => {
-                            dispatch(resetRequestStates());
-                            dispatch(setRegistration(true));
-                            dispatch(setCurrentView('email'));
+                            dispatch(onRegistrationButtonClickedRequest());
                         }}
                     />
                     <Button
@@ -158,9 +174,7 @@ const LoginView = () => {
                         type="rounded"
                         minimize={true}
                         onPress={() => {
-                            dispatch(resetRequestStates());
-                            dispatch(setRegistration(false));
-                            dispatch(setCurrentView('email'));
+                            dispatch(onForgotPasswordButtonClickedRequest());
                         }}
                     />
                 </div>
@@ -211,8 +225,9 @@ const LoginView = () => {
                             }
                             minimize={false}
                             onPress={() => {
-                                window.location = (Routes.OauthLoginPrefix +
-                                    provider) as unknown as Location;
+                                window.location =
+                                    URLS.YandexOidcLogin as unknown as string &
+                                        Location;
                             }}
                         />
                     ))}
@@ -234,17 +249,13 @@ const EmailView = () => {
         (state: StorageState) => state.persistence.language
     );
 
-    useEffect(() => {
-        if (status === 'ok') {
-            dispatch(setCurrentView('code'));
-        }
-    }, [status]);
-
     const handleSubmit = async () => {
         if (!email) {
             return;
         }
-        dispatch(sendEmailWithCode({ email, captcha: token }));
+        dispatch(
+            onEmailSendButtonClickedRequest({ email: email, captcha: token })
+        );
     };
 
     const getErrorMessage = () => {
@@ -333,17 +344,11 @@ const CodeView = () => {
     );
     const dictionary = useSelector(useDictionary);
 
-    useEffect(() => {
-        if (status === 'ok') {
-            dispatch(setCurrentView('password'));
-        }
-    }, [status]);
-
     const handleSubmit = async () => {
         if (!code) {
             return;
         }
-        dispatch(checkCode({ code }));
+        dispatch(onSendCodeButtonClickedRequest({ code: code }));
     };
 
     return (
@@ -420,12 +425,6 @@ const PasswordView = () => {
     );
     const dictionary = useSelector(useDictionary);
 
-    useEffect(() => {
-        if (status === 'ok') {
-            dispatch(setCurrentView('success'));
-        }
-    }, [status]);
-
     const handleSubmit = async () => {
         if (!password || !confirmPassword || !currentEmail || !verifiedCode) {
             setLocalError(dictionary.authorization.errors.fillAllFields);
@@ -437,9 +436,7 @@ const PasswordView = () => {
         }
         setLocalError('');
         dispatch(
-            setPasswordAction({
-                email: currentEmail,
-                code: verifiedCode,
+            onSendPasswordButtonClickedRequest({
                 password,
             })
         );
@@ -526,7 +523,7 @@ const PasswordView = () => {
 
 const SuccessView = () => {
     const dictionary = useSelector(useDictionary);
-    const dispatch = useDispatch();
+    const dispatch = useDispatch<AppDispatch>();
 
     return (
         <div
@@ -578,17 +575,7 @@ export const AuthModal = () => {
     const currentView = useSelector(
         (state: StorageState) => state.auth.currentView
     );
-    const dispatch = useDispatch();
-    const showAuthModal = useSelector(
-        (state: StorageState) => state.auth.showAuthModal
-    );
-
-    useEffect(() => {
-        if (showAuthModal) {
-            dispatch(resetRequestStates());
-            dispatch(setCurrentView('login'));
-        }
-    }, [showAuthModal]);
+    const dispatch = useDispatch<AppDispatch>();
 
     const renderView = () => {
         switch (currentView) {
@@ -603,16 +590,15 @@ export const AuthModal = () => {
             case 'success':
                 return <SuccessView />;
             default:
-                return <LoginView />;
+                return <></>;
         }
     };
 
     return (
         <Modal
-            showModal={showAuthModal}
+            showModal={currentView !== 'closed'}
             onClose={() => {
-                dispatch(setShowAuthModal(false));
-                dispatch(resetRequestStates());
+                dispatch(onAuthClosedRequest());
             }}
         >
             {renderView()}

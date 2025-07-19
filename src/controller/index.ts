@@ -10,6 +10,86 @@ TODO
 2. убрать createAsyncThunk и dispatch
  */
 
+export const onFormLoginClickedRequest = createAsyncThunk(
+    'onFormLoginClicked',
+    async ({
+        userName,
+        password,
+        captcha,
+    }: {
+        userName: string;
+        password: string;
+        captcha: string;
+    }) => {
+        wrapper(() =>
+            systemService.onFormLoginClicked(userName, password, captcha)
+        );
+    }
+);
+
+export const onAppEnterWithOauthCodeRequest = createAsyncThunk(
+    'onAppEnterWithOauthCode',
+    async ({ code, state }: { code: string; state: string }) => {
+        wrapper(() => systemService.onAppEnterWithOauthCode(code, state));
+    }
+);
+
+export const onLogoutButtonClickedRequest = createAsyncThunk(
+    'onLogoutButtonClicked',
+    async () => {
+        wrapper(() => systemService.onLogoutButtonClicked());
+    }
+);
+
+export const onAuthButtonClickedRequest = createAsyncThunk(
+    'onAuthButtonClicked',
+    async () => {
+        wrapper(() => systemService.onAuthButtonClicked());
+    }
+);
+
+export const onAuthClosedRequest = createAsyncThunk(
+    'onAuthClosed',
+    async () => {
+        wrapper(() => systemService.onAuthClosed());
+    }
+);
+
+export const onRegistrationButtonClickedRequest = createAsyncThunk(
+    'onRegistrationButtonClicked',
+    async () => {
+        wrapper(() => systemService.onRegistrationButtonClicked());
+    }
+);
+
+export const onForgotPasswordButtonClickedRequest = createAsyncThunk(
+    'onForgotPasswordButtonClicked',
+    async () => {
+        wrapper(() => systemService.onForgotPasswordButtonClicked());
+    }
+);
+
+export const onEmailSendButtonClickedRequest = createAsyncThunk(
+    'onEmailSendButtonClicked',
+    async ({ email, captcha }: { email: string; captcha: string }) => {
+        wrapper(() => systemService.onEmailSendButtonClicked(email, captcha));
+    }
+);
+
+export const onSendPasswordButtonClickedRequest = createAsyncThunk(
+    'onSendPasswordButtonClicked',
+    async ({ password }: { password: string }) => {
+        wrapper(() => systemService.onSendPasswordButtonClicked(password));
+    }
+);
+
+export const onSendCodeButtonClickedRequest = createAsyncThunk(
+    'onSendCodeButtonClicked',
+    async ({ code }: { code: string }) => {
+        wrapper(() => systemService.onSendCodeButtonClicked(code));
+    }
+);
+
 export const onAppEnterRequest = createAsyncThunk('onAppEnter', async () => {
     wrapper(() => systemService.onAppStartup());
 });

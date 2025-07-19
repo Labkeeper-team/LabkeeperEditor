@@ -17,6 +17,7 @@ import { StartupService } from './init.ts';
 import { CompilationService } from './compile.ts';
 import { ViewModelState } from './viewModelState';
 import { Events, ObserverService } from '../model/service/observer.ts';
+import { AuthService } from './auth.ts';
 
 export class SystemService {
     vms: ViewModelState;
@@ -27,6 +28,7 @@ export class SystemService {
     startupService: StartupService;
     compilationService: CompilationService;
     observerService: ObserverService;
+    authService: AuthService;
 
     constructor(
         vms: ViewModelState,
@@ -36,7 +38,8 @@ export class SystemService {
         ideService: IdeService,
         startupService: StartupService,
         compilationService: CompilationService,
-        observerService: ObserverService
+        observerService: ObserverService,
+        authService: AuthService
     ) {
         this.rpi = rpi;
         this.programService = programService;
@@ -46,7 +49,139 @@ export class SystemService {
         this.compilationService = compilationService;
         this.vms = vms;
         this.observerService = observerService;
+        this.authService = authService;
     }
+
+    onAppEnterWithOauthCode = async (code: string, state: string) => {
+        const response = await this.rpi.oauthCodeRequest(code, state);
+
+        if (!response.isOk) {
+            this.vms.authViewModelState.setCurrentView('login');
+            this.vms.authViewModelState.setLoginRequest('oauth_error');
+        }
+
+        await this.startupService.onAppStartup();
+    };
+
+    onFormLoginClicked = async (
+        userName: string,
+        password: string,
+        captcha: string
+    ) => {
+        this.vms.authViewModelState.setLoginRequest('loading');
+        const response = await this.rpi.formLoginRequest(
+            userName,
+            password,
+            captcha
+        );
+
+        if (response.isOk) {
+            this.vms.authViewModelState.setLoginRequest('ok');
+            await this.startupService.onAppStartup();
+            this.vms.authViewModelState.setCurrentView('closed');
+        } else if (response.code === 401) {
+            this.vms.authViewModelState.setLoginRequest('bad_credentials');
+        } else {
+            this.vms.authViewModelState.setLoginRequest('unknownError');
+        }
+    };
+
+    onLogoutButtonClicked = async () => {
+        const response = await this.rpi.logoutRequest();
+
+        if (response.isOk) {
+            this.ideService.resetEditor();
+            this.vms.navigate(Routes.ProjectDefault);
+            this.vms.projectViewModelState.setReadOnly(false);
+        }
+    };
+
+    onAuthButtonClicked = async () => {
+        this.vms.authViewModelState.setCurrentView('login');
+        this.authService.restartPasswordPipeline();
+    };
+
+    onAuthClosed = async () => {
+        this.vms.authViewModelState.setCurrentView('closed');
+        this.authService.restartPasswordPipeline();
+    };
+
+    onRegistrationButtonClicked = async () => {
+        this.vms.authViewModelState.setCurrentView('email');
+        this.vms.authViewModelState.setIsRegistration(true);
+        this.authService.restartPasswordPipeline();
+    };
+
+    onForgotPasswordButtonClicked = async () => {
+        this.vms.authViewModelState.setCurrentView('email');
+        this.vms.authViewModelState.setIsRegistration(false);
+        this.authService.restartPasswordPipeline();
+    };
+
+    onEmailSendButtonClicked = async (email: string, captcha: string) => {
+        this.vms.authViewModelState.setCurrentEmail(null);
+        this.vms.authViewModelState.setEmailRequest('loading');
+        const result = await this.rpi.sendEmailWithCodeRequest(
+            email,
+            this.vms.authViewModelState.isRegistration(),
+            this.vms.persistenceViewModelState.language(),
+            captcha
+        );
+
+        if (result.isOk) {
+            this.vms.authViewModelState.setEmailRequest('ok');
+            this.vms.authViewModelState.setCurrentEmail(email);
+            this.vms.authViewModelState.setCurrentView('code');
+        } else if (result.code === 404) {
+            this.vms.authViewModelState.setEmailRequest('userNotFound');
+        } else if (result.code === 407) {
+            this.vms.authViewModelState.setEmailRequest('userExists');
+        } else if (result.code === 400) {
+            this.vms.authViewModelState.setEmailRequest('validationError');
+        } else {
+            this.vms.authViewModelState.setEmailRequest('unknownError');
+        }
+    };
+
+    onSendPasswordButtonClicked = async (password: string) => {
+        this.vms.authViewModelState.setPasswordRequest('loading');
+        const result = await this.rpi.setPasswordRequest(
+            this.vms.authViewModelState.currentEmail() || '',
+            this.vms.authViewModelState.lastVerifiedCode() || '',
+            password,
+            this.vms.authViewModelState.isRegistration()
+        );
+
+        if (result.isOk) {
+            this.vms.authViewModelState.setPasswordRequest('ok');
+            this.vms.authViewModelState.setCurrentView('success');
+        } else if (result.code === 404) {
+            this.vms.authViewModelState.setPasswordRequest('userNotFound');
+        } else if (result.code === 409) {
+            this.vms.authViewModelState.setPasswordRequest('userExists');
+        } else if (result.code === 400) {
+            this.vms.authViewModelState.setPasswordRequest('validationError');
+        } else {
+            this.vms.authViewModelState.setPasswordRequest('unknownError');
+        }
+    };
+
+    onSendCodeButtonClicked = async (code: string) => {
+        this.vms.authViewModelState.setLastVerifiedCode(null);
+        this.vms.authViewModelState.setCodeCheckRequest('loading');
+        const result = await this.rpi.checkCodeRequest(
+            this.vms.authViewModelState.currentEmail() || '',
+            code
+        );
+
+        if (result.isOk) {
+            this.vms.authViewModelState.setCodeCheckRequest('ok');
+            this.vms.authViewModelState.setLastVerifiedCode(code);
+            this.vms.authViewModelState.setCurrentView('password');
+        } else {
+            this.vms.authViewModelState.setCodeCheckRequest('invalid');
+        }
+    };
 
     onAppStartup = async () => {
         await this.startupService.onAppStartup();
@@ -104,7 +239,7 @@ export class SystemService {
                         this.vms.dictionary.filemanager.errors.sessionExpired,
                         'error'
                     );
-                    this.vms.resetToInitialState();
+                    this.ideService.resetEditor();
                 }
                 if (!result.isOk) {
                     return;
@@ -136,7 +271,7 @@ export class SystemService {
                     this.vms.dictionary.filemanager.errors.sessionExpired,
                     'error'
                 );
-                this.vms.resetToInitialState();
+                this.ideService.resetEditor();
             }
             if (!result.isOk) {
                 return;
@@ -509,7 +644,7 @@ export class SystemService {
                 this.vms.dictionary.filemanager.errors.sessionExpired,
                 'error'
             );
-            this.vms.resetToInitialState();
+            this.ideService.resetEditor();
         }
         if (result.isOk) {
             await this.loaderService.loadFiles(project.projectId);
@@ -530,7 +665,7 @@ export class SystemService {
                 this.vms.dictionary.filemanager.errors.sessionExpired,
                 'error'
             );
-            this.vms.resetToInitialState();
+            this.ideService.resetEditor();
         }
         if (result.isOk) {
             await this.loaderService.loadFiles(project.projectId);
@@ -554,7 +689,7 @@ export class SystemService {
                 this.vms.dictionary.filemanager.errors.sessionExpired,
                 'error'
             );
-            this.vms.resetToInitialState();
+            this.ideService.resetEditor();
         }
         if (result.isOk) {
             await this.loaderService.loadFiles(project.projectId);
@@ -603,7 +738,7 @@ export class SystemService {
                 this.vms.dictionary.filemanager.errors.sessionExpired,
                 'error'
             );
-            this.vms.resetToInitialState();
+            this.ideService.resetEditor();
             return;
         }
         if (result.isOk) {
@@ -648,7 +783,7 @@ export class SystemService {
                 this.vms.dictionary.filemanager.errors.sessionExpired,
                 'error'
             );
-            this.vms.resetToInitialState();
+            this.ideService.resetEditor();
         }
         if (result.isOk) {
             this.vms.navigate(
@@ -686,7 +821,7 @@ export class SystemService {
                 this.vms.dictionary.filemanager.errors.sessionExpired,
                 'error'
             );
-            this.vms.resetToInitialState();
+            this.ideService.resetEditor();
         }
 
         if (result.isOk) {
@@ -713,7 +848,7 @@ export class SystemService {
                     this.vms.dictionary.filemanager.errors.sessionExpired,
                     'error'
                 );
-                this.vms.resetToInitialState();
+                this.ideService.resetEditor();
             }
         }
         if (result1.isUnauth) {
@@ -721,7 +856,7 @@ export class SystemService {
                 this.vms.dictionary.filemanager.errors.sessionExpired,
                 'error'
             );
-            this.vms.resetToInitialState();
+            this.ideService.resetEditor();
         }
     };
 

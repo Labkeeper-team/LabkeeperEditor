@@ -1,17 +1,22 @@
-import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { LOGOUT_TYPE } from '../../actions';
-import { StorageState } from '../../index';
 import { authInitialState } from '../index.ts';
-import { rpi } from '../../../../main.tsx';
 
-export type AuthView = 'login' | 'email' | 'code' | 'password' | 'success';
+export type AuthView =
+    | 'login'
+    | 'email'
+    | 'code'
+    | 'password'
+    | 'success'
+    | 'closed';
 export type EmailRequestState =
     | 'unknown'
     | 'loading'
     | 'ok'
     | 'userNotFound'
     | 'userExists'
-    | 'validationError';
+    | 'validationError'
+    | 'unknownError';
 export type CodeRequestState = 'unknown' | 'loading' | 'ok' | 'invalid';
 export type PasswordRequestState =
     | 'unknown'
@@ -19,20 +24,27 @@ export type PasswordRequestState =
     | 'ok'
     | 'userNotFound'
     | 'userExists'
-    | 'validationError';
+    | 'validationError'
+    | 'unknownError';
+export type LoginRequestState =
+    | 'unknown'
+    | 'loading'
+    | 'ok'
+    | 'bad_credentials'
+    | 'oauth_error'
+    | 'unknownError';
 
 export interface AuthState {
     currentView: AuthView;
     currentEmail: string | null;
     lastVerifiedCode: string | null;
-    isRegistration: boolean;
     emailRequest: EmailRequestState;
     codeCheckRequest: CodeRequestState;
     passwordSetRequest: PasswordRequestState;
-    authErrorMessage: string | null;
-    showAuthModal: boolean;
+    loginRequest: LoginRequestState;
+    isRegistration: boolean;
 }
-
+/*
 // Async thunks
 export const sendEmailWithCode = createAsyncThunk(
     'auth/sendEmailWithCode',
@@ -89,6 +101,8 @@ export const setPassword = createAsyncThunk(
     }
 );
 
+ */
+
 export const authSlice = createSlice({
     name: 'authSlice',
     initialState: authInitialState,
@@ -96,31 +110,40 @@ export const authSlice = createSlice({
         setCurrentView(state, { payload }: PayloadAction<AuthView>) {
             state.currentView = payload;
         },
+        setCurrentEmail(state, { payload }: PayloadAction<string | null>) {
+            state.currentEmail = payload;
+        },
+        setLastVerifiedCode(state, { payload }: PayloadAction<string | null>) {
+            state.lastVerifiedCode = payload;
+        },
+        setLoginRequest(state, { payload }: PayloadAction<LoginRequestState>) {
+            state.loginRequest = payload;
+        },
+        setEmailRequest(state, { payload }: PayloadAction<EmailRequestState>) {
+            state.emailRequest = payload;
+        },
+        setCodeCheckRequest(
+            state,
+            { payload }: PayloadAction<CodeRequestState>
+        ) {
+            state.codeCheckRequest = payload;
+        },
+        setPasswordRequest(
+            state,
+            { payload }: PayloadAction<PasswordRequestState>
+        ) {
+            state.passwordSetRequest = payload;
+        },
         setRegistration(state, { payload }: PayloadAction<boolean>) {
             state.isRegistration = payload;
         },
-        resetRequestStates(state) {
-            state.emailRequest = 'unknown';
-            state.codeCheckRequest = 'unknown';
-            state.passwordSetRequest = 'unknown';
-        },
-        setErrorMessage(state, { payload }: PayloadAction<string>) {
-            state.showAuthModal = true;
-            state.authErrorMessage = payload;
-        },
-        setShowAuthModal(state, { payload }: PayloadAction<boolean>) {
-            state.showAuthModal = payload;
-            if (!payload) {
-                state.authErrorMessage = '';
-            }
-        },
     },
     extraReducers: (builder) => {
-        builder
-            .addCase(LOGOUT_TYPE, (state) => {
-                state = authInitialState;
-                return state;
-            })
+        builder.addCase(LOGOUT_TYPE, (state) => {
+            state = authInitialState;
+            return state;
+        });
+        /*
             // Email request
             .addCase(sendEmailWithCode.pending, (state) => {
                 state.emailRequest = 'loading';
@@ -180,13 +203,18 @@ export const authSlice = createSlice({
                     state.passwordSetRequest = 'userExists';
                 }
             });
+
+             */
     },
 });
 
 export const {
     setCurrentView,
-    setShowAuthModal,
-    setErrorMessage,
-    resetRequestStates,
+    setEmailRequest,
+    setCodeCheckRequest,
+    setCurrentEmail,
+    setLastVerifiedCode,
+    setLoginRequest,
+    setPasswordRequest,
     setRegistration,
 } = authSlice.actions;

@@ -9,15 +9,14 @@ import { UserInfo } from './user';
 import { CallbackState } from './callback';
 
 export const authInitialState: AuthState = {
-    isRegistration: true,
-    currentView: 'login',
+    currentView: 'closed',
     currentEmail: null,
     lastVerifiedCode: null,
     emailRequest: 'unknown',
     codeCheckRequest: 'unknown',
     passwordSetRequest: 'unknown',
-    authErrorMessage: null,
-    showAuthModal: false,
+    loginRequest: 'unknown',
+    isRegistration: false,
 };
 
 export const ideInitialState: IdeState = {

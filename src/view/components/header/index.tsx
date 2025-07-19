@@ -13,7 +13,6 @@ import './style.scss';
 import { Back } from './back';
 import { useLocation } from 'react-router-dom';
 import { useUser } from '../../../viewModel/store/selectors/program';
-import { Routes } from '../../routing/routes.ts';
 import {
     useCurrentLanguage,
     useDictionary,
@@ -23,9 +22,12 @@ import { Select } from '../select';
 import { ProjectTitle } from './projectTitle';
 import { Language } from '../../../viewModel/store/shared/dictionaries';
 import { AuthModal } from '../../pages/project/auth';
-import { setShowAuthModal } from '../../../viewModel/store/slices/auth';
 import { ShareModal } from './share/modal';
-import { StorageState } from '../../../viewModel/store';
+import { AppDispatch, StorageState } from '../../../viewModel/store';
+import {
+    onAuthButtonClickedRequest,
+    onLogoutButtonClickedRequest,
+} from '../../../controller';
 
 const languageOptions = [
     {
@@ -39,7 +41,7 @@ const languageOptions = [
 ];
 
 export const Header = () => {
-    const dispatch = useDispatch();
+    const dispatch = useDispatch<AppDispatch>();
     const location = useLocation();
     const dictionary = useSelector(useDictionary);
     const language = useSelector(useCurrentLanguage);
@@ -49,7 +51,7 @@ export const Header = () => {
     );
 
     const onLoginClick = useCallback(async () => {
-        dispatch(setShowAuthModal(true));
+        dispatch(onAuthButtonClickedRequest());
     }, []);
 
     const onPress = (lang: unknown) => {
@@ -96,7 +98,12 @@ export const Header = () => {
                         <Typography color="white" text={email} />
                     ) : null}
                     {isAuthenticated ? (
-                        <form method="POST" action={Routes.Logout}>
+                        <form
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                dispatch(onLogoutButtonClickedRequest());
+                            }}
+                        >
                             <Button
                                 title={dictionary.exit}
                                 rounded

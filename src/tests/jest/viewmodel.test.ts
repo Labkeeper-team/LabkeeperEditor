@@ -30,7 +30,7 @@ const mockContext = () => {
     return setupContext(rpi, mvs, observerService);
 };
 
-test('help-items-add-test', () => {
+test('help-items-add-test', async () => {
     const { programService, systemService } = mockContext();
 
     systemService.onHelpItemCreated(headerHelpItems[0]);
@@ -71,7 +71,7 @@ test('help-items-add-test', () => {
         ],
     } as Program);
 
-    systemService.onFocusSegment(0);
+    await systemService.onFocusSegment(0);
     systemService.onHelpItemCreated(headerHelpItems[0]);
 
     program = programService.getCurrentProgram();
@@ -96,7 +96,7 @@ test('help-items-add-test', () => {
     } as Program);
 });
 
-test('add-segment-between-active-index-test', () => {
+test('add-segment-between-active-index-test', async () => {
     const { mvs, systemService } = mockContext();
 
     systemService.onAddSegmentClicked('md');
@@ -106,7 +106,7 @@ test('add-segment-between-active-index-test', () => {
 
     expect(mvs.ideViewModelState.activeSegmentIndex()).toBe(4);
 
-    systemService.onSegmentAddedViaDivider(
+    await systemService.onSegmentAddedViaDivider(
         {
             text: 'text',
             type: 'computational',
@@ -124,4 +124,46 @@ test('add-segment-between-active-index-test', () => {
     expect(
         mvs.projectViewModelState.currentProgram().segments.map((s) => s.text)
     ).toStrictEqual(['', '', '', 'text', '']);
+});
+
+test('login-and-logout-history-test', async () => {
+    const { mvs, systemService, rpi } = mockContext();
+
+    rpi.getUserInfoRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        body: {
+            isAuthenticated: false,
+        },
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+    });
+    rpi.formLoginRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        body: {},
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+    });
+
+    await systemService.onAppStartup();
+    await systemService.onFormLoginClicked('a@gmail.com', 'a', 'biba');
+
+    systemService.onAddSegmentClicked('md');
+    await systemService.onSegmentTextEdited(0, 'aaa');
+
+    rpi.logoutRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        body: {},
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+    });
+
+    await systemService.onLogoutButtonClicked();
+
+    systemService.onAddSegmentClicked('md');
+
+    const currentProgram = mvs.projectViewModelState.currentProgram();
+    expect(currentProgram.segments.map((s) => s.text)).toStrictEqual(['']);
 });

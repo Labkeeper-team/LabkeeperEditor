@@ -5,25 +5,31 @@ import { RequestResult, Rpi } from '../model/rpi';
 import { UserInfo } from './store/slices/user';
 import { ProgramService } from '../model/service/program.ts';
 import { LoaderService } from './project.ts';
-import { observerService } from '../main.tsx';
-import { States } from '../model/service/observer.ts';
+import { ObserverService, States } from '../model/service/observer.ts';
+import { IdeService } from './ide.ts';
 
 export class StartupService {
     rpi: Rpi;
     programService: ProgramService;
     loader: LoaderService;
     vms: ViewModelState;
+    observerService: ObserverService;
+    ideService: IdeService;
 
     constructor(
         rpi: Rpi,
         programService: ProgramService,
         loader: LoaderService,
-        vms: ViewModelState
+        vms: ViewModelState,
+        observerService: ObserverService,
+        ideService: IdeService
     ) {
+        this.observerService = observerService;
         this.rpi = rpi;
         this.programService = programService;
         this.loader = loader;
         this.vms = vms;
+        this.ideService = ideService;
     }
 
     onAppStartup = async (): Promise<void> => {
@@ -42,14 +48,17 @@ export class StartupService {
         const userInfo = result.body;
         this.vms.userViewModelState.setUserInfo(userInfo);
 
-        observerService.setUserState(States.STATE_EMAIL, userInfo.email);
+        this.observerService.setUserState(States.STATE_EMAIL, userInfo.email);
 
         const locationWithoutLastSlash = this.cutOfLastSlash(
             this.vms.location()
         );
 
         // HOME PAGE ENTER
-        if (locationWithoutLastSlash === Routes.Home) {
+        if (
+            locationWithoutLastSlash === Routes.Home ||
+            locationWithoutLastSlash === Routes.CodePage
+        ) {
             await this.openDefaultProject(userInfo);
         }
 
@@ -102,7 +111,7 @@ export class StartupService {
                 this.vms.dictionary.filemanager.errors.sessionExpired,
                 'error'
             );
-            this.vms.resetToInitialState();
+            this.ideService.resetEditor();
         }
         if (result.isForbidden) {
             this.vms.toast(
@@ -155,7 +164,7 @@ export class StartupService {
                     this.vms.dictionary.filemanager.errors.sessionExpired,
                     'error'
                 );
-                this.vms.resetToInitialState();
+                this.ideService.resetEditor();
             }
         } else {
             this.vms.navigate(Routes.ProjectDefault);

@@ -21,7 +21,7 @@ export class ProgramService {
     System operations
      */
 
-    setProgramChnagedCallback(callback: (currentProgram: Program) => void) {
+    setProgramChangedCallback(callback: (currentProgram: Program) => void) {
         this.onProgramChangedCallback = callback;
     }
 
@@ -215,5 +215,14 @@ export class ProgramService {
             }
             return undefined;
         });
+    };
+
+    clearHistory = () => {
+        this.history = [emptyProgram];
+        this.historyActiveIndex = 0;
+
+        if (this.onProgramChangedCallback) {
+            this.onProgramChangedCallback(this.getCurrentProgram());
+        }
     };
 }

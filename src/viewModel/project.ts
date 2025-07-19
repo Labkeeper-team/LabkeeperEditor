@@ -1,14 +1,17 @@
 import { ProjectShort } from '../model/domain.ts';
 import { ViewModelState } from './viewModelState';
 import { Rpi } from '../model/rpi';
+import { IdeService } from './ide.ts';
 
 export class LoaderService {
     rpi: Rpi;
     vms: ViewModelState;
+    ideService: IdeService;
 
-    constructor(rpi: Rpi, vms: ViewModelState) {
+    constructor(rpi: Rpi, vms: ViewModelState, ideService: IdeService) {
         this.rpi = rpi;
         this.vms = vms;
+        this.ideService = ideService;
     }
 
     loadFiles = async (projectId: string) => {
@@ -23,7 +26,7 @@ export class LoaderService {
                 this.vms.dictionary.filemanager.errors.sessionExpired,
                 'error'
             );
-            this.vms.resetToInitialState();
+            this.ideService.resetEditor();
         }
         if (result.code === 413) {
             this.vms.toast(
@@ -54,7 +57,7 @@ export class LoaderService {
                 this.vms.dictionary.filemanager.errors.sessionExpired,
                 'error'
             );
-            this.vms.resetToInitialState();
+            this.ideService.resetEditor();
         }
     };
 }

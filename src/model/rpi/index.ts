@@ -265,4 +265,34 @@ export class Rpi {
     async getUserInfoRequest(): Promise<RequestResult<UserInfo>> {
         return requestWrapper(() => axios.get(URLS.UserInfo));
     }
+
+    async formLoginRequest(
+        userName: string,
+        password: string,
+        captcha: string
+    ): Promise<RequestResult> {
+        const params = new URLSearchParams();
+        params.append('username', userName);
+        params.append('password', password);
+        params.append('captcha', captcha);
+        return requestWrapper(() => axios.post(URLS.FormLogin, params));
+    }
+
+    async oauthCodeRequest(
+        code: string,
+        state: string
+    ): Promise<RequestResult> {
+        return requestWrapper(() =>
+            axios.get(URLS.OauthCode + '/provider', {
+                params: {
+                    code: code,
+                    state: state,
+                },
+            })
+        );
+    }
+
+    async logoutRequest(): Promise<RequestResult> {
+        return requestWrapper(() => axios.post(URLS.Logout));
+    }
 }

@@ -1,25 +1,35 @@
-import { Outlet, useNavigate, useSearchParams } from 'react-router-dom';
+import {
+    Outlet,
+    useLocation,
+    useNavigate,
+    useSearchParams,
+} from 'react-router-dom';
 import { Header } from '../header';
 import { InterfaceTour } from '../tour';
 import { useCallback, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { setIsFileDraggedToFileManager } from '../../../viewModel/store/slices/settings';
 import { AppDispatch, StorageState } from '../../../viewModel/store';
-import { setErrorMessage } from '../../../viewModel/store/slices/auth';
 import {
     navigateSuccess,
     toastSuccess,
 } from '../../../viewModel/store/slices/callback';
 import { toast } from 'react-toastify';
-import { onAppEnterRequest } from '../../../controller';
+import {
+    onAppEnterRequest,
+    onAppEnterWithOauthCodeRequest,
+} from '../../../controller';
+import { Routes } from '../../routing/routes.ts';
 
 let loaded = false;
 
 export const BaseLayout = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch<AppDispatch>();
-
     const [searchParams] = useSearchParams();
+    const location = useLocation();
+    const state = searchParams.get('state') || '';
+    const code = searchParams.get('code') || '';
     const dragCounter = useRef(0);
 
     /*
@@ -94,20 +104,15 @@ export const BaseLayout = () => {
         [dispatch, dragCounter]
     );
 
-    /*
-    Логика для отображения ошибки, которая появляется после редиректа
-    через formlogin
-     */
-    useEffect(() => {
-        const error = searchParams.get('error');
-        if (error) {
-            dispatch(setErrorMessage(error || ''));
-        }
-    }, [searchParams]);
-
     useEffect(() => {
         if (!loaded) {
-            dispatch(onAppEnterRequest());
+            if (location.pathname.includes(Routes.CodePage)) {
+                dispatch(
+                    onAppEnterWithOauthCodeRequest({ code: code, state: state })
+                );
+            } else {
+                dispatch(onAppEnterRequest());
+            }
             loaded = true;
         }
     }, []);

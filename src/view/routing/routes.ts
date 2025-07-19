@@ -5,8 +5,6 @@ export enum Routes {
     Project = '/project/:id',
     ProjectDefault = '/project/default',
 
-    // Endpoints
-    OauthLoginPrefix = '/oauth2/authorization/',
-    Logout = '/logout',
-    FormLogin = '/formlogin',
+    // Oauth2
+    CodePage = '/oauth2/code',
 }

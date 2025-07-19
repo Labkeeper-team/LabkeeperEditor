@@ -10,7 +10,7 @@ import { Secrets } from './constants.ts';
 import { setupContext } from './viewModel/context.ts';
 import { MetrikaService } from './web/yandex';
 
-export const { observerService, rpi, systemService } = setupContext(
+export const { observerService, systemService } = setupContext(
     new Rpi(),
     createViewModelStateFromStore(store),
     new MetrikaService()

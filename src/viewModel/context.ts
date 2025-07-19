@@ -7,6 +7,7 @@ import { StartupService } from './init.ts';
 import { CompilationService } from './compile.ts';
 import { IdeService } from './ide.ts';
 import { SystemService } from './index.ts';
+import { AuthService } from './auth.ts';
 
 export function setupContext(
     rpi: Rpi,
@@ -14,21 +15,29 @@ export function setupContext(
     observerService: ObserverService
 ) {
     const programService: ProgramService = new ProgramService();
-    const loaderService: LoaderService = new LoaderService(rpi, mvs);
+    const ideService: IdeService = new IdeService(mvs, programService);
+    const loaderService: LoaderService = new LoaderService(
+        rpi,
+        mvs,
+        ideService
+    );
     const startupService: StartupService = new StartupService(
         rpi,
         programService,
         loaderService,
-        mvs
+        mvs,
+        observerService,
+        ideService
     );
     const compilationService: CompilationService = new CompilationService(
         mvs,
         rpi,
         programService,
         loaderService,
-        observerService
+        observerService,
+        ideService
     );
-    const ideService: IdeService = new IdeService(mvs);
+    const authService: AuthService = new AuthService(mvs);
     const systemService: SystemService = new SystemService(
         mvs,
         rpi,
@@ -37,10 +46,11 @@ export function setupContext(
         ideService,
         startupService,
         compilationService,
-        observerService
+        observerService,
+        authService
     );
 
-    programService.setProgramChnagedCallback((currentProgram) =>
+    programService.setProgramChangedCallback((currentProgram) =>
         systemService.onProgramUpdated(currentProgram)
     );
 

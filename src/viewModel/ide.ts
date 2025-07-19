@@ -1,10 +1,13 @@
 import { ViewModelState } from './viewModelState';
+import { ProgramService } from '../model/service/program.ts';
 
 export class IdeService {
     vms: ViewModelState;
+    programService: ProgramService;
 
-    constructor(vms: ViewModelState) {
+    constructor(vms: ViewModelState, programService: ProgramService) {
         this.vms = vms;
+        this.programService = programService;
     }
 
     setActiveSegmentIndexAndPreviousSegmentIndex = (activeIndex: number) => {
@@ -18,5 +21,10 @@ export class IdeService {
             );
         }
         this.vms.ideViewModelState.setActiveSegmentIndex(activeIndex);
+    };
+
+    resetEditor = () => {
+        this.vms.resetToInitialState();
+        this.programService.clearHistory();
     };
 }

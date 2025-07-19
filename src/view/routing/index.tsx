@@ -4,6 +4,7 @@ import { BaseLayout } from '../components/layout';
 import { ProjectPage } from '../pages/project';
 import { HomePage } from '../pages/home';
 import { ProjectsPage } from '../pages/projects';
+import { CodePage } from '../pages/code';
 
 export const appRouter = createBrowserRouter([
     {
@@ -21,6 +22,10 @@ export const appRouter = createBrowserRouter([
             {
                 path: Routes.Projects,
                 element: <ProjectsPage />,
+            },
+            {
+                path: Routes.CodePage,
+                element: <CodePage />,
             },
         ],
     },

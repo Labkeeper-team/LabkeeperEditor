@@ -10,8 +10,16 @@ import {
     AuthView,
     CodeRequestState,
     EmailRequestState,
+    LoginRequestState,
     PasswordRequestState,
-    setShowAuthModal,
+    setCodeCheckRequest,
+    setCurrentEmail,
+    setCurrentView,
+    setEmailRequest,
+    setLastVerifiedCode,
+    setLoginRequest,
+    setPasswordRequest,
+    setRegistration,
 } from '../store/slices/auth';
 import {
     dictionary,
@@ -67,18 +75,28 @@ export const createViewModelStateFromStore = (
     return {
         location: () => appRouter.state.location.pathname,
         authViewModelState: {
-            authErrorMessage: () => store.getState().auth.authErrorMessage,
             codeCheckRequest: () => store.getState().auth.codeCheckRequest,
             currentEmail: () => store.getState().auth.currentEmail,
             currentView: () => store.getState().auth.currentView,
             emailRequest: () => store.getState().auth.emailRequest,
-            isRegistration: () => store.getState().auth.isRegistration,
             lastVerifiedCode: () => store.getState().auth.lastVerifiedCode,
             passwordSetRequest: () => store.getState().auth.passwordSetRequest,
-            showAuthModal: () => store.getState().auth.showAuthModal,
+            loginRequest: () => store.getState().auth.loginRequest,
+            isRegistration: () => store.getState().auth.isRegistration,
 
-            setShowAuthModal: (value: boolean) =>
-                store.dispatch(setShowAuthModal(value)),
+            setCurrentEmail: (email) => store.dispatch(setCurrentEmail(email)),
+            setPasswordRequest: (password) =>
+                store.dispatch(setPasswordRequest(password)),
+            setLoginRequest: (request) =>
+                store.dispatch(setLoginRequest(request)),
+            setEmailRequest: (request) =>
+                store.dispatch(setEmailRequest(request)),
+            setLastVerifiedCode: (code) =>
+                store.dispatch(setLastVerifiedCode(code)),
+            setCodeCheckRequest: (request) =>
+                store.dispatch(setCodeCheckRequest(request)),
+            setCurrentView: (view) => store.dispatch(setCurrentView(view)),
+            setIsRegistration: (v) => store.dispatch(setRegistration(v)),
         },
         ideViewModelState: {
             activeSegmentIndex: () => store.getState().ide.activeSegmentIndex,
@@ -187,7 +205,6 @@ export const createViewModelStateFromStore = (
 
 export const mockViewModelState = (): ViewModelState => {
     let location = '/';
-    let showAuthModal = false;
 
     let activeSegmentIndex = -1;
     let search: string | undefined = undefined;
@@ -227,21 +244,36 @@ export const mockViewModelState = (): ViewModelState => {
     let email: string = '';
     let id: number = -1;
     let isAuthenticated: boolean = false;
+
+    let loginRequest: LoginRequestState = 'unknown';
+    let codeCheckRequest: CodeRequestState = 'unknown';
+    let currentEmail: string | null = null;
+    let currentView: AuthView = 'closed';
+    let emailRequest: EmailRequestState = 'unknown';
+    let lastVerifiedCode: string | null = null;
+    let passwordSetRequest: PasswordRequestState = 'unknown';
+    let isRegistration: boolean = false;
     return {
         scrollEditorToBottom: () => ({}),
         location: () => location,
         authViewModelState: {
-            authErrorMessage: () => '',
-            codeCheckRequest: () => 'unknown',
-            currentEmail: () => '',
-            currentView: () => 'login',
-            emailRequest: () => 'unknown',
-            isRegistration: () => false,
-            lastVerifiedCode: () => '',
-            passwordSetRequest: () => 'unknown',
-            showAuthModal: () => showAuthModal,
+            codeCheckRequest: () => codeCheckRequest,
+            currentEmail: () => currentEmail,
+            currentView: () => currentView,
+            emailRequest: () => emailRequest,
+            lastVerifiedCode: () => lastVerifiedCode,
+            passwordSetRequest: () => passwordSetRequest,
+            loginRequest: () => loginRequest,
+            isRegistration: () => isRegistration,
 
-            setShowAuthModal: (value: boolean) => (showAuthModal = value),
+            setCurrentEmail: (email) => (currentEmail = email),
+            setEmailRequest: (request) => (emailRequest = request),
+            setCurrentView: (view) => (currentView = view),
+            setCodeCheckRequest: (request) => (codeCheckRequest = request),
+            setLastVerifiedCode: (code) => (lastVerifiedCode = code),
+            setLoginRequest: (request) => (loginRequest = request),
+            setPasswordRequest: (request) => (passwordSetRequest = request),
+            setIsRegistration: (v) => (isRegistration = v),
         },
         ideViewModelState: {
             activeSegmentIndex: () => activeSegmentIndex,
@@ -403,14 +435,20 @@ export interface AuthViewModelState {
     currentView: () => AuthView;
     currentEmail: () => string | null;
     lastVerifiedCode: () => string | null;
-    isRegistration: () => boolean;
     emailRequest: () => EmailRequestState;
     codeCheckRequest: () => CodeRequestState;
     passwordSetRequest: () => PasswordRequestState;
-    authErrorMessage: () => string | null;
-    showAuthModal: () => boolean;
+    loginRequest: () => LoginRequestState;
+    isRegistration: () => boolean;
 
-    setShowAuthModal: (showAuthModal: boolean) => void;
+    setCurrentView: (view: AuthView) => void;
+    setCurrentEmail: (email: string | null) => void;
+    setLastVerifiedCode: (code: string | null) => void;
+    setEmailRequest: (request: EmailRequestState) => void;
+    setCodeCheckRequest: (request: CodeRequestState) => void;
+    setPasswordRequest: (request: PasswordRequestState) => void;
+    setLoginRequest: (request: LoginRequestState) => void;
+    setIsRegistration: (v: boolean) => void;
 }
 
 export interface UserViewModelState {

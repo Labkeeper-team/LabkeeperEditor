@@ -28,6 +28,11 @@ export const URLS = {
     Email: `/api/${version}/public/email`,
     Code: `/api/${version}/public/code`,
     Password: `/api/${version}/public/password`,
+
+    FormLogin: `/api/${version}/sec/formlogin`,
+    OauthCode: `/api/${version}/sec/login/oauth2/code`,
+    YandexOidcLogin: `/api/${version}/sec/oauth2/authorization/yandex`,
+    Logout: `/api/${version}/sec/logout`,
 };
 
 // TODO научиться прокидывать во время сборки из консоли

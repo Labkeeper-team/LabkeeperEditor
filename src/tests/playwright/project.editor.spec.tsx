@@ -195,29 +195,6 @@ test('phystech-icon-test', async ({ page }) => {
 });
 
 /*
-Тест на авторизацию
- */
-test('auth-error', async ({ page }) => {
-    await page.goto('/?error=bad_credentials');
-
-    // Ждем загрузки страницы
-    await page.waitForLoadState('domcontentloaded');
-
-    await expect(page).toHaveURL('/project/default');
-
-    await expect(page).toHaveScreenshot(`auth_error_form.png`);
-
-    await page.goto('/?error=oauth_error');
-
-    // Ждем загрузки страницы
-    await page.waitForLoadState('domcontentloaded');
-
-    await expect(page).toHaveURL('/project/default');
-
-    await expect(page).toHaveScreenshot(`auth_error_oauth.png`);
-});
-
-/*
 Тест на добавление и удаление сегментов разными способами
  */
 test('insert-segment-between', async ({ page }) => {
