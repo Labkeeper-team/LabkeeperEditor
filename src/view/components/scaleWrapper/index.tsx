@@ -8,6 +8,7 @@ export default function ScaleWrapper({ minWidth = 1024, children }) {
 
     useEffect(() => {
         // Здесь долждны быть логика с калькулируемой высотой.но пока оставим так
+        // Вместо 100dvh ставить window.innerHeight
         const setVh = () => {
             document.documentElement.style.setProperty(
                 '--inner-height',
@@ -17,6 +18,9 @@ export default function ScaleWrapper({ minWidth = 1024, children }) {
 
         setVh();
 
+        // Для более точного рассчета  надо производить калькуляции с window.innerHeight
+        // это нужно для поддержки старых браузеров
+        // так же надо добавить какие то ивенЛистенеры для появвления.исчезновения клавиатуры. focusIn focusOut не отработал
         /*window.addEventListener('resize', setVh);
         window.addEventListener('orientationchange', setVh);
 
