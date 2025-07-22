@@ -1,14 +1,14 @@
 import { useSelector } from 'react-redux';
 import { Button } from '../../button';
-import { useDictionary } from '../../../../viewModel/store/selectors/translations';
-import { StorageState } from '../../../../viewModel/store';
+import {
+    useCurrentLanguage,
+    useDictionary,
+} from '../../../../viewModel/store/selectors/translations';
 import { GithubIcon } from '../../../icons';
 
 export const WikiButton = () => {
     const dictionary = useSelector(useDictionary);
-    const language = useSelector(
-        (state: StorageState) => state.persistence.language
-    );
+    const language = useSelector(useCurrentLanguage);
 
     return (
         <Button

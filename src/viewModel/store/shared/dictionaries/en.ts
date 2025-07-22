@@ -16,9 +16,11 @@ export const en: Translations = {
 
     label_add_asciimath: 'Simple-math',
     label_add_markdown: 'Add markdown',
+    label_add_markdown_short: 'MD',
     label_add_code: 'Computation',
     label_add_latex: 'Latex-math',
     label_add_more: 'Add more',
+    label_add_more_short: 'More',
     label_save_to_pdf: 'Save to PDF',
     label_problems: 'Problems',
 

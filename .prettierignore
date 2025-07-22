@@ -1,0 +1,10 @@
+# Ignore GitHub workflows and configs
+.github/
+
+# Ignore build outputs
+dist/
+
+# Ignore node modules
+node_modules/ 
+
+**.md

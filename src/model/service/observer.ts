@@ -10,6 +10,8 @@ export const Events = {
     EVENT_PRINT: 'print_doc',
 };
 
+export type EventValues = (typeof Events)[keyof typeof Events];
+
 export const States = {
     STATE_ONLINE: 'is_logged',
     STATE_EMAIL: 'email',

@@ -13,9 +13,12 @@ import { Select } from '../../../../../components/select';
 import { SelectClassNames } from '../../../../../components/select/model';
 import { onAddSegmentButtonClickedRequest } from '../../../../../../controller';
 import { AppDispatch } from '../../../../../../viewModel/store';
+import classNames from 'classnames';
+import { useIsMobile } from '../../../../../hooks/useMobile';
 
 export const AddBlock = (props: AddBlockProps) => {
     const dispatch = useDispatch<AppDispatch>();
+    const isMobile = useIsMobile();
     const dictionary = useSelector(useDictionary);
 
     const selectOptions = [
@@ -24,11 +27,21 @@ export const AddBlock = (props: AddBlockProps) => {
         { value: 'asciimath', label: dictionary.label_add_asciimath },
     ];
 
+    const addMdTitle =
+        isMobile && !props.isFirst
+            ? dictionary.label_add_markdown_short
+            : dictionary.label_add_markdown;
+
+    const addMoreTitle =
+        isMobile && !props.isFirst
+            ? dictionary.label_add_more_short
+            : dictionary.label_add_more;
+
     return (
         <div className="empty-project-placeholder-container">
             <Button
-                classname={InterfaceTourAnchorClassnames.AddCode}
-                title={dictionary.label_add_markdown}
+                classname={classNames(InterfaceTourAnchorClassnames.AddCode)}
+                title={addMdTitle}
                 color="gray"
                 onPress={() =>
                     dispatch(onAddSegmentButtonClickedRequest({ type: 'md' }))
@@ -37,12 +50,13 @@ export const AddBlock = (props: AddBlockProps) => {
                 titleIcon={() => <PlusIcon />}
                 rounded
             />
+
             {props.isFirst && (
                 <Typography text={dictionary.or} color={colors.black} />
             )}
             <Select
                 options={selectOptions}
-                title={dictionary.label_add_more}
+                title={addMoreTitle}
                 value="computational"
                 onChange={(value) =>
                     dispatch(

@@ -6,6 +6,7 @@
     background-color: $gray-60;
     min-height: 26px;
     overflow: hidden;
+    width: 100%;
 
     .swiper {
         width: 100%;
@@ -13,15 +14,15 @@
         padding-left: 5px;
         overflow: hidden;
     }
-
     .swiper-wrapper {
         display: flex;
         align-items: center;
         overflow: hidden;
+        width: 100%;
     }
 
     .swiper-slide {
-        width: 100%;
+        width: 100% !important;
         height: 100%;
         display: flex;
         align-items: center;

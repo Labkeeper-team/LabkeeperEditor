@@ -16,10 +16,12 @@ export const getPosition = (anchor: string) => {
     if (!rect) {
         return {};
     }
-    const heightOfHint = 40;
-    const widthOfHint = 40;
+    const scale =
+        +document.documentElement.style.getPropertyValue('--mobile-scale');
+    const heightOfHint = 40 * scale;
+    const widthOfHint = 40 * scale;
     return {
-        top: rect.top + rect.height / 2 - heightOfHint / 2,
-        left: rect.left + rect.width / 2 - widthOfHint / 2,
+        top: (rect.top + rect.height / 2 - heightOfHint / 2) / scale,
+        left: (rect.left + rect.width / 2 - widthOfHint / 2) / scale,
     };
 };

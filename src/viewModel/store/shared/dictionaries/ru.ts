@@ -18,11 +18,13 @@ export const ru: Translations = {
 
     label_add_asciimath: 'Простая формула',
     label_add_markdown: 'Добавить маркдаун',
+    label_add_markdown_short: 'MD',
     label_save_to_pdf: 'Сохранить в PDF',
     label_problems: 'Проблемы',
     label_add_code: 'Вычисление',
     label_add_latex: 'Latex-формула',
     label_add_more: 'Добавить еще',
+    label_add_more_short: 'Еще',
 
     segment_divider: {
         add: 'Добавить',

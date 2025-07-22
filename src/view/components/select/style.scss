@@ -3,6 +3,9 @@
 .labkeeper_select {
     position: relative;
     min-width: 115px;
+    @media screen and (max-width: 1024px) {
+        min-width: unset;
+    }
 
     &.default {
         .select-header {
@@ -176,6 +179,11 @@
                     padding: 2px 21px;
                     font-size: 13px;
                     line-height: 15px;
+                    @media screen and (max-width: 1024px) {
+                        padding-left: 0px;
+                        padding-right: 0px;
+                        word-break: break-word;
+                    }
                 }
             }
         }

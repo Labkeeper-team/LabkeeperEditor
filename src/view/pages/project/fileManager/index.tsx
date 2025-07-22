@@ -2,7 +2,7 @@ import { ChangeEvent, LegacyRef, useCallback, useMemo, useRef } from 'react';
 import { PlusIcon } from '../../../icons';
 import './style.scss';
 import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, StorageState } from '../../../../viewModel/store';
+import { AppDispatch } from '../../../../viewModel/store';
 import { FileGroup } from './components/fileGroup';
 import { FileManagerDragZone } from './components/dragZone';
 import { Button } from '../../../components/button';
@@ -12,6 +12,12 @@ import {
     onUploadFileRequest,
 } from '../../../../controller';
 import { LabkeeperFile } from '../../../../model/domain.ts';
+import {
+    useFileInFileManager,
+    useIsDraggedToFileManager,
+    useIsProjectReadonly,
+    useShowFileManager,
+} from '../../../../viewModel/store/selectors/program.ts';
 
 export const FileManager = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -21,16 +27,10 @@ export const FileManager = () => {
     GLOBAL STATE
      */
     const dictionary = useSelector(useDictionary);
-    const showFileManager = useSelector(
-        (state: StorageState) => state.settings.showFileManager
-    );
-    const isDragged = useSelector(
-        (state: StorageState) => state.settings.isFileDraggedToManager
-    );
-    const isReadonly = useSelector(
-        (state: StorageState) => state.project.projectIsReadonly
-    );
-    const files = useSelector((state: StorageState) => state.project.files);
+    const showFileManager = useSelector(useShowFileManager);
+    const isDragged = useSelector(useIsDraggedToFileManager);
+    const isReadonly = useSelector(useIsProjectReadonly);
+    const files = useSelector(useFileInFileManager);
 
     /*
     При выборе файла для загрузки

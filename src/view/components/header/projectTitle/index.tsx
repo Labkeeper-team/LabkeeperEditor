@@ -1,5 +1,8 @@
 import { useDispatch, useSelector } from 'react-redux';
-import { useCurrentProject } from '../../../../viewModel/store/selectors/program';
+import {
+    useCurrentProject,
+    useIsProjectReadonly,
+} from '../../../../viewModel/store/selectors/program';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { PencilIcon } from '../../../icons';
 
@@ -17,9 +20,7 @@ export const ProjectTitle = () => {
     );
     const dispatch = useDispatch<AppDispatch>();
     const inputRef = useRef<HTMLInputElement>();
-    const projectIsReadonly = useSelector(
-        (state: StorageState) => state.project.projectIsReadonly
-    );
+    const projectIsReadonly = useSelector(useIsProjectReadonly);
     const setEditMode = useCallback(
         (value: boolean) => {
             dispatch(setEditModeForProjectTitle(value));
@@ -31,6 +32,7 @@ export const ProjectTitle = () => {
         if (!editMode) {
             setCurrentTitle(project?.title);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [editMode]);
 
     useEffect(() => {
@@ -59,7 +61,7 @@ export const ProjectTitle = () => {
                 },
             })
         );
-    }, [project, currentTitle, dispatch]);
+    }, [project, currentTitle, dispatch, setEditMode]);
 
     const onPressPencil = () => {
         if (editMode) {

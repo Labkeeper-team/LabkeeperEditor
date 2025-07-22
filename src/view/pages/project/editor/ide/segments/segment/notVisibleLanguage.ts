@@ -53,7 +53,7 @@ const highlighting = HighlightStyle.define([
 // Создаем определение языка
 const notVisibleLanguage = LRLanguage.define({
     name: 'notVisible',
-    parser: parser,
+    parser,
     languageData: {
         closeBrackets: { brackets: ['(', '[', '{', '"', "'"] },
     },

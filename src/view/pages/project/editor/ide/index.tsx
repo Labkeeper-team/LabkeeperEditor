@@ -5,7 +5,10 @@ import { AddBlock } from './addBlock';
 import { Segments } from './segments';
 import { Button } from '../../../../components/button';
 import { RightArrowIcon } from '../../../../icons';
-import { useCurrentProgram } from '../../../../../viewModel/store/selectors/program';
+import {
+    useCurrentProgram,
+    useIsProjectReadonly,
+} from '../../../../../viewModel/store/selectors/program';
 import classNames from 'classnames';
 import { InterfaceTourAnchorClassnames } from '../../../../components/tour/helpers';
 
@@ -25,9 +28,7 @@ export const Ide = () => {
         (state: StorageState) => state.settings.isCompiling
     );
     const program = useSelector(useCurrentProgram);
-    const isReadonly = useSelector(
-        (state: StorageState) => state.project.projectIsReadonly
-    );
+    const isReadonly = useSelector(useIsProjectReadonly);
     const dictionary = useSelector(useDictionary);
 
     const disabled = useMemo(

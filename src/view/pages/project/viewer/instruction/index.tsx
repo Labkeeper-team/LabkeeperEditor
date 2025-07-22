@@ -15,21 +15,20 @@ import { Navigation, Pagination } from 'swiper/modules';
 import { InstructionItemComponent } from './item';
 import { ImageButton } from '../../../../components/imageButton';
 import { useDispatch, useSelector } from 'react-redux';
-import { useDictionary } from '../../../../../viewModel/store/selectors/translations';
+import {
+    useCurrentLanguage,
+    useDictionary,
+} from '../../../../../viewModel/store/selectors/translations';
 import { instructions } from '../../../../../model/help';
-import { StorageState } from '../../../../../viewModel/store';
 import { setInstructionExpanded } from '../../../../../viewModel/store/slices/persistence';
+import { useInstructionsExpanded } from '../../../../../viewModel/store/selectors/program';
 
 export const Instruction = () => {
     const swiperRef = useRef<SwiperType | null>(null);
-    const instructionExpanded = useSelector(
-        (state: StorageState) => state.persistence.instructionExpanded
-    );
+    const instructionExpanded = useSelector(useInstructionsExpanded);
     const dictionary = useSelector(useDictionary);
     const dispatch = useDispatch();
-    const language = useSelector(
-        (state: StorageState) => state.persistence.language
-    );
+    const language = useSelector(useCurrentLanguage);
 
     return (
         <div className={classNames('labkeeper-instruction-container')}>
@@ -52,7 +51,8 @@ export const Instruction = () => {
                 >
                     <Swiper
                         style={{ height: '100%' }}
-                        spaceBetween={50}
+                        spaceBetween={0}
+                        width={undefined}
                         slidesPerView={1}
                         onSwiper={(swiper) => (swiperRef.current = swiper)}
                         cssMode

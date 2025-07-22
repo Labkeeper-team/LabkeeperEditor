@@ -6,13 +6,18 @@
 
 :root {
     font-family: Inter !important;
+    --mobile-scale: 1;
+    --inner-height: 100vh;
 }
-
+html {
+    @media screen and (max-width: 1024px) {
+        max-height: 100dvh;
+        overflow: hidden;
+    }
+}
 body {
     margin: 0;
     background-color: #0e1621;
-    min-width: 1280px;
-    min-height: 720px;
     overflow-x: auto;
     overflow-y: hidden;
     ::-webkit-scrollbar {
@@ -30,10 +35,15 @@ body {
             width: 0px;
         }
     }
+    @media screen and (max-width: 1024px) {
+        max-height: 100dvh;
+        overflow: hidden;
+    }
 }
 
 #root {
-    min-width: 1280px;
-    min-height: 720px;
     overflow: auto;
+    @media screen and (max-width: 1024px) {
+        overflow-x: hidden;
+    }
 }

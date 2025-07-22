@@ -45,6 +45,7 @@ export const FileItem = (props: {
                 setEditItem(false);
             });
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [globalEditFileMode]);
 
     /*
@@ -61,7 +62,7 @@ export const FileItem = (props: {
                 setShowDropdown(true);
             }, 10);
         }, 200);
-    }, [dispatch, inputRef, showDropdown]);
+    }, [dispatch, inputRef]);
 
     /*
     Когда ввод прекратился

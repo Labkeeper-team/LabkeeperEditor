@@ -5,15 +5,18 @@ import './App.scss';
 import { persist, store } from '../viewModel/store';
 import { RouterProvider } from 'react-router-dom';
 import { appRouter } from './routing';
+import ScaleWrapper from './components/scaleWrapper';
 
 function App() {
     return (
-        <StoreProvider store={store}>
-            <PersistGate loading={undefined} persistor={persist}>
-                <RouterProvider router={appRouter} />
-            </PersistGate>
-            <ToastContainer />
-        </StoreProvider>
+        <ScaleWrapper minWidth={1024}>
+            <StoreProvider store={store}>
+                <PersistGate loading={undefined} persistor={persist}>
+                    <RouterProvider router={appRouter} />
+                </PersistGate>
+                <ToastContainer />
+            </StoreProvider>
+        </ScaleWrapper>
     );
 }
 

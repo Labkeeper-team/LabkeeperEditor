@@ -109,6 +109,11 @@ mjx-stretchy-v {
         background: #f6f8fa;
     }
 }
+.markdown-body li:has(code) {
+    code {
+        background: #f6f8fa;
+    }
+}
 /* Блоки кода */
 .markdown-body pre:not(:has(mjx-container)) {
     padding: 16px;
