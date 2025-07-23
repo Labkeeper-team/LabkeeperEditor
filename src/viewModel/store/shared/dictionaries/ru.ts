@@ -147,6 +147,10 @@ export const ru: Translations = {
             'Необходимо авторизироваться, чтобы продолжить',
         [CompileError.NAME_RESERVED]:
             'E и PI нельзя использовать в названии переменной',
+        [CompileError.INCORRECT_INFL_DEFINITION_ARRAY_SIZE]:
+            'Погрешность нельзя задавать массивом',
+        [CompileError.INCORRECT_INFL_DEFINITION_VALUE_WITH_INFL]:
+            'Погрешность не должна задаваться значением, у которого уже есть погрешность',
     },
     error_common: {
         segment: 'Сегмент',

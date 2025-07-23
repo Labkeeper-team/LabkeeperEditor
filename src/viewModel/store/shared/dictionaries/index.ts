@@ -127,6 +127,8 @@ export interface Translations {
         [CompileError.MULTIPLE_ERROR]: string;
         [CompileError.LOGIN_REQUIRED]: string;
         [CompileError.NAME_RESERVED]: string;
+        [CompileError.INCORRECT_INFL_DEFINITION_ARRAY_SIZE]: string;
+        [CompileError.INCORRECT_INFL_DEFINITION_VALUE_WITH_INFL]: string;
     };
 
     error_common: {

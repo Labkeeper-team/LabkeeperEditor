@@ -139,6 +139,10 @@ export const en: Translations = {
         [CompileError.LOGIN_REQUIRED]: 'Login is required to proceed',
         [CompileError.NAME_RESERVED]:
             'E and PI can not be used as variable name',
+        [CompileError.INCORRECT_INFL_DEFINITION_ARRAY_SIZE]:
+            'The error cannot be set as an array',
+        [CompileError.INCORRECT_INFL_DEFINITION_VALUE_WITH_INFL]:
+            'The error should not be set to a value that already has an error',
     },
     error_common: {
         segment: 'Segment',
