@@ -64,8 +64,8 @@ export const Header = () => {
         <>
             <div className="labkeeper_header">
                 <div className="labkeeper_header__left">
-                    {isAuthenticated &&
-                    location.pathname.startsWith('/project/') ? (
+                    {location.pathname.startsWith('/project/') &&
+                    !location.pathname.includes('default') ? (
                         <Back />
                     ) : null}
                     <HeaderLogo />

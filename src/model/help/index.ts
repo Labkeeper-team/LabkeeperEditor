@@ -60,8 +60,8 @@ export const headerHelpItems: HeaderHelpItem[] = [
         },
         segmentType: 'computational',
         text: {
-            ru: `plot(x1=[1, 2, 3], y1=[2, 3, 1], type="line", color="red", x2=[1, 2, 3], y2=[3,4,1], type="scatter", color="blue")`,
-            en: `plot(x1=[1, 2, 3], y1=[2, 3, 1], type="line", color="red", x2=[1, 2, 3], y2=[3,4,1], type="scatter", color="blue")`,
+            ru: `plot(x1=[1, 2, 3], y1=[2, 3, 1], type1="line", color1="red", x2=[1, 2, 3], y2=[3,4,1], type2="scatter", color2="blue")`,
+            en: `plot(x1=[1, 2, 3], y1=[2, 3, 1], type1="line", color1="red", x2=[1, 2, 3], y2=[3,4,1], type2="scatter", color2="blue")`,
         },
     },
     {
@@ -93,19 +93,25 @@ export const headerHelpItems: HeaderHelpItem[] = [
         },
         segmentType: 'computational',
         text: {
-            ru: `
-            x = [1, 2, 3] // ваши значения
-            y = [3, 2, 3] // ваши значения
-            least_squares(x, y)
-            Y = a * x + b
-            plot(x_1 = x, y_1 = y, color="blue", x_2 = x, y_2 = Y, color="red", type="line")
+            ru: `x = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] # 0.1 // ваши значения
+y = [1, 3, 2, 3.5, 2, 3.6, 7, 5, 3, 4] # 0.2 // ваши значения
+
+least_squares(x, y)
+a = a # 0 // обнуление погрешности, чтобы график был ровным
+b = b # 0
+Y = a * x + b
+
+plot(x_1 = x, y_1 = y, color1="blue", x_2 = x, y_2 = Y, color2="red", type2="line")
             `,
-            en: `
-            x = [1, 2, 3] // your values
-            y = [3, 2, 3] // your values
-            least_squares(x, y)
-            Y = a * x + b
-            plot(x_1 = x, y_1 = y, color="blue", x_2 = x, y_2 = Y, color="red", type="line")
+            en: `x = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] # 0.1 // your x-values
+y = [1, 3, 2, 3.5, 2, 3.6, 7, 5, 3, 4] # 0.2 // your y-values
+
+least_squares(x, y)
+a = a # 0 // zero error to render correct plot
+b = b # 0
+Y = a * x + b
+
+plot(x_1 = x, y_1 = y, color1="blue", x_2 = x, y_2 = Y, color2="red", type2="line")
             `,
         },
     },
@@ -138,12 +144,10 @@ export const headerHelpItems: HeaderHelpItem[] = [
         },
         segmentType: 'computational',
         text: {
-            ru: `
-            // Добавьте файл с таким названием через файловый менеджер
+            ru: `// Добавьте файл с таким названием через файловый менеджер
             load_csv(file_name = "myfile.csv")
             `,
-            en: `
-            // Add file with such via file manager
+            en: `// Add file with such via file manager
             load_csv(file_name = "myfile.csv")
             `,
         },
@@ -155,12 +159,10 @@ export const headerHelpItems: HeaderHelpItem[] = [
         },
         segmentType: 'computational',
         text: {
-            ru: `
-            a = [1, 2, 3] // ваши данные
+            ru: `a = [1, 2, 3] // ваши данные
             save_csv(a)
             `,
-            en: `
-            a = [1, 2, 3] // your data
+            en: `a = [1, 2, 3] // your data
             save_csv(a)
             `,
         },

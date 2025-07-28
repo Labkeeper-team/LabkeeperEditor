@@ -1,7 +1,7 @@
 import { ViewModelState } from './viewModelState';
 import { Routes } from '../view/routing/routes.ts';
 import { Project } from '../model/domain.ts';
-import { RequestResult, Rpi } from '../model/rpi';
+import { RequestResult, RichProject, Rpi } from '../model/rpi';
 import { UserInfo } from './store/slices/user';
 import { ProgramService } from '../model/service/program.ts';
 import { LoaderService } from './project.ts';
@@ -128,12 +128,17 @@ export class StartupService {
             this.vms.projectViewModelState.setReadOnly(true);
         }
         if (result.isOk) {
-            const project = result.body as Project;
+            const project = result.body as RichProject;
             this.vms.projectViewModelState.setProject(project);
             this.vms.projectViewModelState.setReadOnly(
                 userInfo.id !== (result.body as Project).userId
             );
             this.programService.setNewProgram(project.program);
+            if (project.lastProgramResult) {
+                this.vms.projectViewModelState.setCompileResult(
+                    project.lastProgramResult
+                );
+            }
         }
     }
 
@@ -145,7 +150,7 @@ export class StartupService {
                 this.vms.persistenceViewModelState.lastProgram()
             );
             if (result.isOk) {
-                const project = result.body as Project;
+                const project = result.body as RichProject;
                 this.vms.projectViewModelState.setProject(project);
                 this.programService.setNewProgram(project.program);
                 this.vms.projectViewModelState.setCompileResult({
@@ -157,6 +162,11 @@ export class StartupService {
                 this.vms.navigate(
                     Routes.Project.replace(':id', project.projectId + '')
                 );
+                if (project.lastProgramResult) {
+                    this.vms.projectViewModelState.setCompileResult(
+                        project.lastProgramResult
+                    );
+                }
             }
             if (result.isUnauth) {
                 this.vms.navigate(Routes.ProjectDefault);

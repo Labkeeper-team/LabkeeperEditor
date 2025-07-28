@@ -60,6 +60,10 @@ interface CodeValidationResponse {
     valid: boolean;
 }
 
+export interface RichProject extends Project {
+    lastProgramResult?: CompileSuccessResult;
+}
+
 export const mockRpi = (): Rpi => {
     return {
         compilationRequest: () => {},
@@ -153,7 +157,7 @@ export class Rpi {
     async getDefaultProjectRequest(
         lang: string,
         program: Program
-    ): Promise<RequestResult<Project>> {
+    ): Promise<RequestResult<RichProject>> {
         return requestWrapper(async () =>
             axios.post(URLS.getDefaultProject, program, {
                 headers: {
@@ -165,7 +169,7 @@ export class Rpi {
 
     async getProjectRequest(
         projectId: string
-    ): Promise<RequestResult<Project>> {
+    ): Promise<RequestResult<RichProject>> {
         return requestWrapper(async () =>
             axios.get(URLS.getProject.replace('{id}', projectId))
         );
@@ -192,7 +196,7 @@ export class Rpi {
     async createProjectRequest(
         projectName: string,
         program: Program
-    ): Promise<RequestResult> {
+    ): Promise<RequestResult<Project>> {
         return requestWrapper(async () =>
             axios.put(`${URLS.createProject}?name=${projectName}`, program)
         );

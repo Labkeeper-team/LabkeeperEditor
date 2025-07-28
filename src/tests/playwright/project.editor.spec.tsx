@@ -257,21 +257,21 @@ test('insert-segment-between', async ({ page }) => {
 
     // удаляем latex
     await page.locator('div.dropdown-menu-container').nth(4).click();
-    await page.getByText('Delete').click();
+    await page.getByText('Delete').last().click();
 
     // удаляем md
     await page.locator('div.dropdown-menu-container').nth(3).click();
-    await page.getByText('Delete').click();
+    await page.getByText('Delete').last().click();
 
     await expect(page).toHaveScreenshot(`insert-segment-between2.png`);
 
     // удаляем asciimath
     // поскольку плашка с удалением не закрывается, можно ее заново не нажимать
-    await page.getByText('Delete').click();
+    await page.getByText('Delete').last().click();
 
     // удаляем computation
     await page.locator('div.dropdown-menu-container').nth(2).click();
-    await page.getByText('Delete').click();
+    await page.getByText('Delete').last().click();
 
     expect(await page.locator('.cm-content').count()).toBe(0);
 });

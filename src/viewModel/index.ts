@@ -374,7 +374,7 @@ export class SystemService {
                                         .sessionExpired,
                                     'error'
                                 );
-                                thisCopy.vms.resetToInitialState();
+                                thisCopy.ideService.resetEditor();
                                 reslv(null);
                             }
                             if (res.isForbidden) {
@@ -531,12 +531,17 @@ export class SystemService {
     };
 
     onHelpItemCreated = (item: HeaderHelpItem) => {
-        if (
-            this.vms.ideViewModelState.previousActiveSegmentIndex() === -1 ||
-            this.vms.ideViewModelState.previousActiveSegmentIndex() ===
-                undefined ||
-            this.vms.ideViewModelState.activeSegmentIndex() === undefined
-        ) {
+        const lastProgram = this.programService.getCurrentProgram();
+        if (!lastProgram) {
+            return;
+        }
+        const prevActiveIndex =
+            this.vms.ideViewModelState.previousActiveSegmentIndex();
+        const activeSegment = lastProgram.segments.find(
+            (_s, index) => index === prevActiveIndex
+        );
+
+        if (!activeSegment) {
             this.programService.addSegmentToLastPosition({
                 id: 0,
                 parameters: {
@@ -551,21 +556,6 @@ export class SystemService {
                 type: item.segmentType,
             });
         } else {
-            const lastProgram = this.programService.getCurrentProgram();
-            if (!lastProgram) {
-                return;
-            }
-            const prevActiveIndex =
-                this.vms.ideViewModelState.previousActiveSegmentIndex() >= 0
-                    ? this.vms.ideViewModelState.previousActiveSegmentIndex()
-                    : 0;
-            const activeSegment = lastProgram.segments.find(
-                (_s, index) => index === prevActiveIndex
-            );
-            if (!activeSegment) {
-                return;
-            }
-
             if (activeSegment.type === item.segmentType) {
                 const newActiveSegment = { ...activeSegment };
                 const text = `${newActiveSegment.text}\n\n${item.text[this.vms.persistenceViewModelState.language()]}`;
@@ -787,11 +777,10 @@ export class SystemService {
         }
         if (result.isOk) {
             this.vms.navigate(
-                Routes.Project.replace(
-                    ':id',
-                    (result.body as Project).projectId + ''
-                )
+                Routes.Project.replace(':id', result.body.projectId + '')
             );
+            this.vms.projectViewModelState.setProject(result.body);
+            this.vms.projectViewModelState.setReadOnly(false);
             okCallback();
         } else {
             const message =
@@ -804,7 +793,13 @@ export class SystemService {
 
     onBackButtonClicked = async () => {
         this.vms.projectViewModelState.resetToInitialState();
-        this.vms.navigate(Routes.Projects);
+        this.programService.clearHistory();
+        this.vms.projectViewModelState.setReadOnly(false);
+        if (this.vms.userViewModelState.isAuthenticated()) {
+            this.vms.navigate(Routes.Projects);
+        } else {
+            this.vms.navigate(Routes.ProjectDefault);
+        }
     };
 
     onProjectVisibilityChange = async (visible: boolean) => {
