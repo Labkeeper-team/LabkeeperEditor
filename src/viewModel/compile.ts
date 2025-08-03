@@ -58,7 +58,6 @@ export class CompilationService {
                 this.vms.dictionary.filemanager.errors.internalError,
                 'error'
             );
-            this.ideService.resetEditor();
         }
         if (result.code === 401 || result.code === 403) {
             this.vms.toast(

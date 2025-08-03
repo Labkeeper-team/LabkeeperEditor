@@ -66,24 +66,60 @@ export interface RichProject extends Project {
 
 export const mockRpi = (): Rpi => {
     return {
-        compilationRequest: () => {},
-        compileProjectRequest: () => {},
-        uploadFileRequest: () => {},
-        deleteFileRequest: () => {},
-        listFilesRequest: () => {},
-        setTitleRequest: () => {},
-        getDefaultProjectRequest: () => {},
-        getProjectRequest: () => {},
-        renameFileRequest: () => {},
-        getAllProjectsRequest: () => {},
-        createProjectRequest: () => {},
-        deleteProjectRequest: () => {},
-        saveProgramRequest: () => {},
-        setProjectVisibilityRequest: () => {},
-        sendEmailWithCodeRequest: () => {},
-        checkCodeRequest: () => {},
-        setPasswordRequest: () => {},
-        getUserInfoRequest: () => {},
+        compilationRequest: () => {
+            throw new Error('Not implemented');
+        },
+        compileProjectRequest: () => {
+            throw new Error('Not implemented');
+        },
+        uploadFileRequest: () => {
+            throw new Error('Not implemented');
+        },
+        deleteFileRequest: () => {
+            throw new Error('Not implemented');
+        },
+        listFilesRequest: () => {
+            throw new Error('Not implemented');
+        },
+        setTitleRequest: () => {
+            throw new Error('Not implemented');
+        },
+        getDefaultProjectRequest: () => {
+            throw new Error('Not implemented');
+        },
+        getProjectRequest: () => {
+            throw new Error('Not implemented');
+        },
+        renameFileRequest: () => {
+            throw new Error('Not implemented');
+        },
+        getAllProjectsRequest: () => {
+            throw new Error('Not implemented');
+        },
+        createProjectRequest: () => {
+            throw new Error('Not implemented');
+        },
+        deleteProjectRequest: () => {
+            throw new Error('Not implemented');
+        },
+        saveProgramRequest: () => {
+            throw new Error('Not implemented');
+        },
+        setProjectVisibilityRequest: () => {
+            throw new Error('Not implemented');
+        },
+        sendEmailWithCodeRequest: () => {
+            throw new Error('Not implemented');
+        },
+        checkCodeRequest: () => {
+            throw new Error('Not implemented');
+        },
+        setPasswordRequest: () => {
+            throw new Error('Not implemented');
+        },
+        getUserInfoRequest: () => {
+            throw new Error('Not implemented');
+        },
     } as unknown as Rpi;
 };
 
