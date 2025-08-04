@@ -8,38 +8,40 @@ import { CompilationService } from './compile.ts';
 import { IdeService } from './ide.ts';
 import { SystemService } from './index.ts';
 import { AuthService } from './auth.ts';
+import { FileService } from './file.ts';
 
 export function setupContext(
     rpi: Rpi,
-    mvs: ViewModelState,
+    vms: ViewModelState,
     observerService: ObserverService
 ) {
     const programService: ProgramService = new ProgramService();
-    const ideService: IdeService = new IdeService(mvs, programService);
+    const ideService: IdeService = new IdeService(vms, programService);
     const loaderService: LoaderService = new LoaderService(
         rpi,
-        mvs,
+        vms,
         ideService
     );
+    const fileService: FileService = new FileService(vms);
     const startupService: StartupService = new StartupService(
         rpi,
         programService,
         loaderService,
-        mvs,
+        vms,
         observerService,
         ideService
     );
     const compilationService: CompilationService = new CompilationService(
-        mvs,
+        vms,
         rpi,
         programService,
         loaderService,
         observerService,
         ideService
     );
-    const authService: AuthService = new AuthService(mvs);
+    const authService: AuthService = new AuthService(vms);
     const systemService: SystemService = new SystemService(
-        mvs,
+        vms,
         rpi,
         programService,
         loaderService,
@@ -47,7 +49,8 @@ export function setupContext(
         startupService,
         compilationService,
         observerService,
-        authService
+        authService,
+        fileService
     );
 
     programService.setProgramChangedCallback((currentProgram) =>
@@ -56,7 +59,7 @@ export function setupContext(
 
     return {
         observerService,
-        mvs,
+        mvs: vms,
         programService,
         rpi,
         loaderService,
@@ -64,5 +67,6 @@ export function setupContext(
         compilationService,
         ideService,
         systemService,
+        fileService,
     };
 }

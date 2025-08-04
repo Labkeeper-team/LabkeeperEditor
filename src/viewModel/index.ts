@@ -8,7 +8,7 @@ import {
     TextOutputSegment,
 } from '../model/domain.ts';
 import { LoaderService } from './project.ts';
-import { checkFile } from './file.ts';
+import { FileService } from './file.ts';
 import { HeaderHelpItem } from '../model/help';
 import { Rpi } from '../model/rpi';
 import { ProgramService } from '../model/service/program.ts';
@@ -29,6 +29,7 @@ export class SystemService {
     compilationService: CompilationService;
     observerService: ObserverService;
     authService: AuthService;
+    fileService: FileService;
 
     constructor(
         vms: ViewModelState,
@@ -39,7 +40,8 @@ export class SystemService {
         startupService: StartupService,
         compilationService: CompilationService,
         observerService: ObserverService,
-        authService: AuthService
+        authService: AuthService,
+        fileService: FileService
     ) {
         this.rpi = rpi;
         this.programService = programService;
@@ -50,6 +52,7 @@ export class SystemService {
         this.vms = vms;
         this.observerService = observerService;
         this.authService = authService;
+        this.fileService = fileService;
     }
 
     onAppEnterWithOauthCode = async (code: string, state: string) => {
@@ -330,12 +333,15 @@ export class SystemService {
                         if (!file) {
                             return reslv(null);
                         }
-                        checkFile(file, this.vms.dictionary);
+                        this.fileService.checkFile(file, this.vms.dictionary);
                         const reader = new FileReader();
                         reader.onload = async function () {
                             const fileToUpload = file;
-                            const [, ext] = file.name.split('.');
-                            const name = `${segmentId}-${Date.now()}.${ext}`;
+                            const name =
+                                thisCopy.fileService.calculateNumberFile(
+                                    segmentId,
+                                    file.name
+                                );
                             const formData = new FormData();
                             const filename = name ?? 'Файлнейм';
                             formData.append('file', fileToUpload);
@@ -378,7 +384,13 @@ export class SystemService {
                                 reslv(null);
                             }
                             if (res.isForbidden) {
-                                // TODO toast
+                                thisCopy.vms.toast(
+                                    thisCopy.vms.dictionary.filemanager.errors
+                                        .notEnoughRights,
+                                    'error'
+                                );
+                                thisCopy.ideService.resetEditor();
+                                reslv(null);
                             }
 
                             if (res.isOk) {
@@ -392,17 +404,16 @@ export class SystemService {
                                 switch (segmentType) {
                                     case 'md':
                                         if (file.type.includes('image')) {
-                                            itemToInsert = `![${filename}](${url})`;
+                                            itemToInsert = `!['image.png'](${url})`;
                                         }
                                         break;
                                     case 'computational':
                                     default: {
-                                        const prefunction = file.type.includes(
-                                            'image'
-                                        )
-                                            ? 'image'
-                                            : 'csv';
-                                        itemToInsert = `${prefunction}("${url}")`;
+                                        if (file.type.includes('image')) {
+                                            itemToInsert = `image("${url}")`;
+                                        } else {
+                                            itemToInsert = `load_csv("${filename}")`;
+                                        }
                                         break;
                                     }
                                 }
@@ -604,7 +615,7 @@ export class SystemService {
             return;
         }
 
-        checkFile(file, this.vms.dictionary);
+        this.fileService.checkFile(file, this.vms.dictionary);
         const name = file.name;
         const formData = new FormData();
         formData.append('file', file);
