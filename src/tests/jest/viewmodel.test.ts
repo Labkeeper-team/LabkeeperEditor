@@ -37,6 +37,41 @@ const mockContext = () => {
     return setupContext(rpi, mvs, observerService);
 };
 
+// Создает дефолтный пустой проект
+function createDefaultProject(projectId: string, title: string): RichProject {
+    return {
+        projectId: projectId,
+        userId: 1,
+        title: title,
+        lastProgramResult: undefined,
+        lastModified: new Date().toISOString(),
+        isPublic: false,
+        program: {
+            segments: [],
+            parameters: {
+                roundStrategy: 'noRound',
+            },
+        },
+    };
+}
+
+// Создает дефолтную информацию о юзере
+function createDefaultUserInfo(
+    isAuthenticated: boolean
+): RequestResult<UserInfo> {
+    return {
+        code: 200,
+        body: {
+            isAuthenticated: isAuthenticated,
+            email: 'a@gmail.com',
+            id: 1,
+        },
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+    };
+}
+
 test('help-items-add-test', async () => {
     const { programService, systemService } = mockContext();
 
@@ -136,15 +171,9 @@ test('add-segment-between-active-index-test', async () => {
 test('login-and-logout-history-test', async () => {
     const { mvs, systemService, rpi } = mockContext();
 
-    rpi.getUserInfoRequest = jest.fn().mockResolvedValue({
-        code: 200,
-        body: {
-            isAuthenticated: false,
-        },
-        isOk: true,
-        isUnauth: false,
-        isForbidden: false,
-    });
+    rpi.getUserInfoRequest = jest
+        .fn()
+        .mockResolvedValue(createDefaultUserInfo(false));
     rpi.formLoginRequest = jest.fn().mockResolvedValue({
         code: 200,
         body: {},
@@ -179,36 +208,15 @@ test('remove-readonly-when-project-is-create-test', async () => {
     const { mvs, systemService, rpi } = mockContext();
     const uuid = '2cd18704-6c3f-48cb-96f1-9a923930f8cb';
 
-    rpi.getUserInfoRequest = jest.fn().mockResolvedValue({
-        code: 200,
-        body: {
-            isAuthenticated: true,
-            email: 'a@gmail.com',
-            id: 1,
-        },
-        isOk: true,
-        isUnauth: false,
-        isForbidden: false,
-    } as RequestResult<UserInfo>);
+    rpi.getUserInfoRequest = jest
+        .fn()
+        .mockResolvedValue(createDefaultUserInfo(true));
     rpi.getDefaultProjectRequest = jest.fn().mockResolvedValue({
         code: 200,
         isOk: true,
         isUnauth: false,
         isForbidden: false,
-        body: {
-            projectId: uuid,
-            userId: 1,
-            title: 'Default Project',
-            lastModified: new Date().toISOString(),
-            isPublic: false,
-            lastProgramResult: undefined,
-            program: {
-                segments: [],
-                parameters: {
-                    roundStrategy: 'noRound',
-                },
-            },
-        },
+        body: createDefaultProject(uuid, 'Default Project'),
     } as RequestResult<RichProject>);
     rpi.getAllProjectsRequest = jest.fn().mockResolvedValue({
         code: 200,
@@ -224,19 +232,7 @@ test('remove-readonly-when-project-is-create-test', async () => {
         isOk: true,
         isUnauth: false,
         isForbidden: false,
-        body: {
-            projectId: uuid,
-            userId: 1,
-            title: 'Default Project2',
-            lastModified: new Date().toISOString(),
-            isPublic: false,
-            program: {
-                segments: [],
-                parameters: {
-                    roundStrategy: 'noRound',
-                },
-            },
-        },
+        body: createDefaultProject(uuid, 'Default Project2'),
     } as RequestResult<Project>);
 
     await systemService.onAppStartup();
@@ -255,17 +251,9 @@ test('remove-readonly-when-project-is-create-test', async () => {
 test('help-items-create-new-test', async () => {
     const { mvs, systemService, rpi } = mockContext();
 
-    rpi.getUserInfoRequest = jest.fn().mockResolvedValue({
-        code: 200,
-        body: {
-            isAuthenticated: false,
-            email: 'a@gmail.com',
-            id: 1,
-        },
-        isOk: true,
-        isUnauth: false,
-        isForbidden: false,
-    } as RequestResult<UserInfo>);
+    rpi.getUserInfoRequest = jest
+        .fn()
+        .mockResolvedValue(createDefaultUserInfo(false));
 
     const item = headerHelpItems[1];
 
@@ -277,6 +265,95 @@ test('help-items-create-new-test', async () => {
     systemService.onHelpItemCreated(item); // снова нажали на подсказку
     // должен остаться один сегмент
     expect(mvs.projectViewModelState.currentProgram().segments.length).toBe(1);
+});
+
+/* функция проверяет корректность отображения нового проекта
+1. Заходит в дефолтный проект
+2. Заходит на страницу со всеми проектами
+3. Создает новый проект
+4. Возвращается обратно на страницу со всеми проектами
+5. Сравнивается список проектов с предыдущим списком + новым проектом
+ */
+test('display-name-new-project-test', async () => {
+    const { mvs, systemService, rpi } = mockContext();
+
+    rpi.getUserInfoRequest = jest
+        .fn()
+        .mockResolvedValue(createDefaultUserInfo(true)); // залогиниться
+
+    rpi.getDefaultProjectRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+        body: createDefaultProject(
+            '2ce18705-6c4f-48cb-96f1-9a923931f8cd',
+            'Last Project'
+        ),
+    } as RequestResult<RichProject>); //запрос дефолтного проекта
+
+    const alloldprojects = [
+        createDefaultProject(
+            '2ce18705-6c4f-48cb-96f1-9a923931f8cd',
+            'Last Project'
+        ),
+        createDefaultProject(
+            '2ae18705-6c5f-48cb-96f1-9a923931f0cd',
+            'First Project'
+        ),
+        createDefaultProject(
+            '2cd18705-7c4f-48cb-90f1-9a923931f8cd',
+            'Second Project'
+        ),
+    ];
+
+    const allprojects = [
+        ...alloldprojects,
+        createDefaultProject(
+            '2ce18705-5c4f-45cb-96f1-9a953951f5ed',
+            'New Project'
+        ),
+    ];
+
+    rpi.getAllProjectsRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+        body: {
+            projects: alloldprojects,
+        },
+    } as RequestResult<ListProjectsResponse>); //запрос остальных проектов
+
+    rpi.createProjectRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+        body: createDefaultProject(
+            '2ce18705-5c4f-45cb-96f1-9a953951f5ed',
+            'New Project'
+        ),
+    } as RequestResult<Project>); // создание нового проекта
+
+    await systemService.onAppStartup(); // приложение запустилось
+    await systemService.onBackButtonClicked(); // перейти на экран с проектами
+    rpi.getAllProjectsRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+        body: {
+            projects: allprojects,
+        },
+    } as RequestResult<ListProjectsResponse>); //запрос остальных проектов
+    await systemService.onProjectCreate(
+        'New Project',
+        () => {},
+        () => {}
+    ); // создать новый проект
+    await systemService.onBackButtonClicked(); // перейти на экран с проектами
+    expect(mvs.projectsViewModelState.projects()).toBe(allprojects);
 });
 
 /*

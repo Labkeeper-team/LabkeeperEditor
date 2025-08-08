@@ -21,7 +21,7 @@ export const onFormLoginClickedRequest = createAsyncThunk(
         password: string;
         captcha: string;
     }) => {
-        wrapper(() =>
+        wrapper('onFormLoginClicked', () =>
             systemService.onFormLoginClicked(userName, password, captcha)
         );
     }
@@ -30,88 +30,108 @@ export const onFormLoginClickedRequest = createAsyncThunk(
 export const onAppEnterWithOauthCodeRequest = createAsyncThunk(
     'onAppEnterWithOauthCode',
     async ({ code, state }: { code: string; state: string }) => {
-        wrapper(() => systemService.onAppEnterWithOauthCode(code, state));
+        wrapper('onAppEnterWithOauthCode', () =>
+            systemService.onAppEnterWithOauthCode(code, state)
+        );
     }
 );
 
 export const onLogoutButtonClickedRequest = createAsyncThunk(
     'onLogoutButtonClicked',
     async () => {
-        wrapper(() => systemService.onLogoutButtonClicked());
+        wrapper('onLogoutButtonClicked', () =>
+            systemService.onLogoutButtonClicked()
+        );
     }
 );
 
 export const onAuthButtonClickedRequest = createAsyncThunk(
     'onAuthButtonClicked',
     async () => {
-        wrapper(() => systemService.onAuthButtonClicked());
+        wrapper('onAuthButtonClicked', () =>
+            systemService.onAuthButtonClicked()
+        );
     }
 );
 
 export const onAuthClosedRequest = createAsyncThunk(
     'onAuthClosed',
     async () => {
-        wrapper(() => systemService.onAuthClosed());
+        wrapper('onAuthClosed', () => systemService.onAuthClosed());
     }
 );
 
 export const onRegistrationButtonClickedRequest = createAsyncThunk(
     'onRegistrationButtonClicked',
     async () => {
-        wrapper(() => systemService.onRegistrationButtonClicked());
+        wrapper('onRegistrationButtonClicked', () =>
+            systemService.onRegistrationButtonClicked()
+        );
     }
 );
 
 export const onForgotPasswordButtonClickedRequest = createAsyncThunk(
     'onForgotPasswordButtonClicked',
     async () => {
-        wrapper(() => systemService.onForgotPasswordButtonClicked());
+        wrapper('onForgotPasswordButtonClicked', () =>
+            systemService.onForgotPasswordButtonClicked()
+        );
     }
 );
 
 export const onEmailSendButtonClickedRequest = createAsyncThunk(
     'onEmailSendButtonClicked',
     async ({ email, captcha }: { email: string; captcha: string }) => {
-        wrapper(() => systemService.onEmailSendButtonClicked(email, captcha));
+        wrapper('onEmailSendButtonClicked', () =>
+            systemService.onEmailSendButtonClicked(email, captcha)
+        );
     }
 );
 
 export const onSendPasswordButtonClickedRequest = createAsyncThunk(
     'onSendPasswordButtonClicked',
     async ({ password }: { password: string }) => {
-        wrapper(() => systemService.onSendPasswordButtonClicked(password));
+        wrapper('onSendPasswordButtonClicked', () =>
+            systemService.onSendPasswordButtonClicked(password)
+        );
     }
 );
 
 export const onSendCodeButtonClickedRequest = createAsyncThunk(
     'onSendCodeButtonClicked',
     async ({ code }: { code: string }) => {
-        wrapper(() => systemService.onSendCodeButtonClicked(code));
+        wrapper('onSendCodeButtonClicked', () =>
+            systemService.onSendCodeButtonClicked(code)
+        );
     }
 );
 
 export const onAppEnterRequest = createAsyncThunk('onAppEnter', async () => {
-    wrapper(() => systemService.onAppStartup());
+    wrapper('onAppEnter', () => systemService.onAppStartup());
 });
 
 export const onPrintButtonPressedRequest = createAsyncThunk(
     'onPrintButtonPressedRequest',
     async () => {
-        wrapper(() => systemService.onPrintButtonPressed());
+        wrapper('onPrintButtonPressedRequest', () =>
+            systemService.onPrintButtonPressed()
+        );
     }
 );
 
 export const onProjectPageEscButtonClicked = createAsyncThunk(
     'onProjectPageEscButtonClicked',
     async () => {
-        wrapper(() => systemService.onProjectPageEscButtonPressed());
+        wrapper('onProjectPageEscButtonClicked', () =>
+            systemService.onProjectPageEscButtonPressed()
+        );
     }
 );
 
 export const onRunButtonPressed = createAsyncThunk(
     'onRunButtonPressed',
     async () => {
-        wrapper(() => systemService.onRunButtonClicked());
+        wrapper('onRunButtonPressed', () => systemService.onRunButtonClicked());
     }
 );
 
@@ -124,7 +144,7 @@ export const segmentEditorChangeSegmentPositionRequest = createAsyncThunk(
         direction: 'down' | 'up';
         segmentIndex: number;
     }) => {
-        wrapper(() =>
+        wrapper('segmentEditorChangeSegmentPositionRequest', () =>
             systemService.segmentEditorChangeSegmentPosition(
                 direction,
                 segmentIndex
@@ -144,7 +164,7 @@ export const segmentEditorChangeSegmentVisibilityRequest = createAsyncThunk(
         parameterName: string;
         segmentIndex: number;
     }) => {
-        wrapper(() =>
+        wrapper('segmentEditorChangeSegmentVisibilityRequest', () =>
             systemService.segmentEditorChangeSegmentVisibility(
                 visible,
                 parameterName,
@@ -157,7 +177,9 @@ export const segmentEditorChangeSegmentVisibilityRequest = createAsyncThunk(
 export const deleteSegmentRequest = createAsyncThunk(
     'deleteSegmentRequest',
     async ({ segmentIndex }: { segmentIndex: number }) => {
-        wrapper(() => systemService.deleteSegment(segmentIndex));
+        wrapper('deleteSegmentRequest', () =>
+            systemService.deleteSegment(segmentIndex)
+        );
     }
 );
 
@@ -172,7 +194,7 @@ export const onAddedFilesToSegmentEditorRequest = createAsyncThunk(
         segmentId: number;
         editorCallback: (insert: string) => void;
     }) => {
-        wrapper(() =>
+        wrapper('onAddedFilesToSegmentEditorRequest', () =>
             systemService.onAddedFilesToSegmentEditor(
                 items,
                 segmentId,
@@ -185,14 +207,18 @@ export const onAddedFilesToSegmentEditorRequest = createAsyncThunk(
 export const onSegmentAddedViaDividerRequest = createAsyncThunk(
     'onSegmentAdded',
     async ({ segment, after }: { segment: Segment; after: number }) => {
-        wrapper(() => systemService.onSegmentAddedViaDivider(segment, after));
+        wrapper('onSegmentAdded', () =>
+            systemService.onSegmentAddedViaDivider(segment, after)
+        );
     }
 );
 
 export const onFocusSegmentRequest = createAsyncThunk(
     'onFocusSegmentRequest',
     async ({ segmentIndex }: { segmentIndex: number }) => {
-        wrapper(() => systemService.onFocusSegment(segmentIndex));
+        wrapper('onFocusSegmentRequest', () =>
+            systemService.onFocusSegment(segmentIndex)
+        );
     }
 );
 
@@ -205,7 +231,9 @@ export const onBlurSegmentRequest = createAsyncThunk(
         segmentIndex: number;
         segmentText: string;
     }) => {
-        wrapper(() => systemService.onBlurSegment(segmentIndex, segmentText));
+        wrapper('onBlurSegmentRequest', () =>
+            systemService.onBlurSegment(segmentIndex, segmentText)
+        );
     }
 );
 
@@ -218,7 +246,7 @@ export const onSegmentTextChangedRequest = createAsyncThunk(
         segmentIndex: number;
         segmentText: string;
     }) => {
-        wrapper(() =>
+        wrapper('onSegmentTextChanged', () =>
             systemService.onSegmentTextEdited(segmentIndex, segmentText)
         );
     }
@@ -227,105 +255,133 @@ export const onSegmentTextChangedRequest = createAsyncThunk(
 export const onAddSegmentButtonClickedRequest = createAsyncThunk(
     'onAddSegmentButtonClickedRequest',
     async ({ type }: { type: SegmentType }) => {
-        wrapper(() => systemService.onAddSegmentClicked(type));
+        wrapper('onAddSegmentButtonClickedRequest', () =>
+            systemService.onAddSegmentClicked(type)
+        );
     }
 );
 
 export const onFolderButtonClickedRequest = createAsyncThunk(
     'onFolderButtonClickedRequest',
     async () => {
-        wrapper(() => systemService.onFolderButtonClicked());
+        wrapper('onFolderButtonClickedRequest', () =>
+            systemService.onFolderButtonClicked()
+        );
     }
 );
 
 export const onPrevVersionButtonClickedRequest = createAsyncThunk(
     'onPrevVersionButtonClickedRequest',
     async () => {
-        wrapper(() => systemService.onPrevVersionButtonClicked());
+        wrapper('onPrevVersionButtonClickedRequest', () =>
+            systemService.onPrevVersionButtonClicked()
+        );
     }
 );
 
 export const onNextVersionButtonClickedRequest = createAsyncThunk(
     'onNextVersionButtonClickedRequest',
     async () => {
-        wrapper(() => systemService.onNextVersionButtonClicked());
+        wrapper('onNextVersionButtonClickedRequest', () =>
+            systemService.onNextVersionButtonClicked()
+        );
     }
 );
 
 export const onSearchIconPressRequest = createAsyncThunk(
     'onSearchIconPressRequest',
     async () => {
-        wrapper(() => systemService.onSearchIconPress());
+        wrapper('onSearchIconPressRequest', () =>
+            systemService.onSearchIconPress()
+        );
     }
 );
 
 export const onSearchInputChangedRequest = createAsyncThunk(
     'onSearchInputChangedRequest',
     async ({ text }: { text: string }) => {
-        wrapper(() => systemService.onSearchInputChanged(text));
+        wrapper('onSearchInputChangedRequest', () =>
+            systemService.onSearchInputChanged(text)
+        );
     }
 );
 
 export const onRoundStrategySetRequest = createAsyncThunk(
     'onRoundStrategySetRequest',
     async ({ strategy }: { strategy: ProgramRoundStrategy }) => {
-        wrapper(() => systemService.onRoundStrategySet(strategy));
+        wrapper('onRoundStrategySetRequest', () =>
+            systemService.onRoundStrategySet(strategy)
+        );
     }
 );
 
 export const onHelpItemCreatedRequest = createAsyncThunk(
     'onHelpItemCreatedRequest',
     async ({ item }: { item: HeaderHelpItem }) => {
-        wrapper(() => systemService.onHelpItemCreated(item));
+        wrapper('onHelpItemCreatedRequest', () =>
+            systemService.onHelpItemCreated(item)
+        );
     }
 );
 
 export const onExpandErrorsClickedRequest = createAsyncThunk(
     'onExpandErrorsClickedRequest',
     async () => {
-        wrapper(() => systemService.onExpandErrorsClicked());
+        wrapper('onExpandErrorsClickedRequest', () =>
+            systemService.onExpandErrorsClicked()
+        );
     }
 );
 
 export const onCrossButtonInFileManagerClickedRequest = createAsyncThunk(
     'onCrossButtonInFileManagerClickedRequest',
     async () => {
-        wrapper(() => systemService.onCrossButtonInFileManagerClicked());
+        wrapper('onCrossButtonInFileManagerClickedRequest', () =>
+            systemService.onCrossButtonInFileManagerClicked()
+        );
     }
 );
 
 export const onUploadFileRequest = createAsyncThunk(
     'onUploadFileRequest',
     async ({ file }: { file: File }) => {
-        wrapper(() => systemService.onUploadFile(file));
+        wrapper('onUploadFileRequest', () => systemService.onUploadFile(file));
     }
 );
 
 export const onDeleteFileRequest = createAsyncThunk(
     'onDeleteFileRequest',
     async ({ fileName }: { fileName: string }) => {
-        wrapper(() => systemService.onDeleteFile(fileName));
+        wrapper('onDeleteFileRequest', () =>
+            systemService.onDeleteFile(fileName)
+        );
     }
 );
 
 export const onFileNameChangedRequest = createAsyncThunk(
     'onFileNameChangedRequest',
     async ({ oldName, newName }: { oldName: string; newName: string }) => {
-        wrapper(() => systemService.onFileNameChanged(oldName, newName));
+        wrapper('onFileNameChangedRequest', () =>
+            systemService.onFileNameChanged(oldName, newName)
+        );
     }
 );
 
 export const onFileRenameButtonClickedRequest = createAsyncThunk(
     'onFileRenameButtonClickedRequest',
     async () => {
-        wrapper(() => systemService.onFileRenameButtonClicked());
+        wrapper('onFileRenameButtonClickedRequest', () =>
+            systemService.onFileRenameButtonClicked()
+        );
     }
 );
 
 export const onRowClickedInProjectsListRequest = createAsyncThunk(
     'onRowClickedInProjectsListRequest',
     async ({ projectId }: { projectId: string }) => {
-        wrapper(() => systemService.onRowClickedInProjectsList(projectId));
+        wrapper('onRowClickedInProjectsListRequest', () =>
+            systemService.onRowClickedInProjectsList(projectId)
+        );
     }
 );
 
@@ -342,7 +398,7 @@ export const onProjectTitleChangedRequest = createAsyncThunk(
         okCallback: () => void;
         failCallback: () => void;
     }) => {
-        wrapper(() =>
+        wrapper('onProjectTitleChangedRequest', () =>
             systemService.onProjectTitleChanged(
                 projectId,
                 title,
@@ -356,7 +412,9 @@ export const onProjectTitleChangedRequest = createAsyncThunk(
 export const onProjectVisibilityChangeRequest = createAsyncThunk(
     'onProjectVisibilityChangeRequest',
     async ({ visible }: { visible: boolean }) => {
-        wrapper(() => systemService.onProjectVisibilityChange(visible));
+        wrapper('onProjectVisibilityChangeRequest', () =>
+            systemService.onProjectVisibilityChange(visible)
+        );
     }
 );
 
@@ -371,7 +429,7 @@ export const onProjectCreateRequest = createAsyncThunk(
         okCallback: () => void;
         errorCallback: (message: string) => void;
     }) => {
-        wrapper(() =>
+        wrapper('onProjectCreateRequest', () =>
             systemService.onProjectCreate(
                 projectName,
                 okCallback,
@@ -384,7 +442,9 @@ export const onProjectCreateRequest = createAsyncThunk(
 export const onBackButtonClickedRequest = createAsyncThunk(
     'onBackButtonClickedRequest',
     async () => {
-        wrapper(() => systemService.onBackButtonClicked());
+        wrapper('onBackButtonClickedRequest', () =>
+            systemService.onBackButtonClicked()
+        );
     }
 );
 
@@ -397,7 +457,9 @@ export const onDeleteProjectRequest = createAsyncThunk(
         projectId: string;
         okCallback: () => void;
     }) => {
-        wrapper(() => systemService.onDeleteProject(projectId, okCallback));
+        wrapper('onDeleteProjectRequest', () =>
+            systemService.onDeleteProject(projectId, okCallback)
+        );
     }
 );
 
@@ -413,9 +475,10 @@ export const isNextVersionButtonDisabledRequest = (): boolean => {
     return systemService.isNextVersionButtonDisabled();
 };
 
-const wrapper = (method: () => void) => {
+const wrapper = (name: string, method: () => void) => {
     try {
         method();
+        console.info(`Invoking system operation [${name}]`);
     } catch (error) {
         console.error(error);
         Sentry.captureException(error);

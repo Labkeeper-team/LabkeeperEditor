@@ -791,6 +791,7 @@ export class SystemService {
                 Routes.Project.replace(':id', result.body.projectId + '')
             );
             this.vms.projectViewModelState.setProject(result.body);
+            await this.loaderService.loadProjects();
             this.vms.projectViewModelState.setReadOnly(false);
             okCallback();
         } else {
