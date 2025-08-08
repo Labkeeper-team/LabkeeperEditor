@@ -100,6 +100,8 @@ export const en: Translations = {
         },
         latex: 'latex-math',
         asciimath: 'simple-math',
+        no_computation_result: 'No computation result',
+        run_to_view: 'Press the run button to see computations',
     },
 
     instructions: {
@@ -189,6 +191,7 @@ export const en: Translations = {
             passwordSetError: 'Error setting password',
             credentialsError: 'Incorrect login or password',
             oauthError: 'Error while authenticating via third party provider',
+            unknownError: 'Unknown error',
         },
     },
     loginModal: {
@@ -232,4 +235,21 @@ export const en: Translations = {
         copy_error: 'Failed to copy link',
     },
     wiki: 'wiki',
+    contact_modal: {
+        button: 'Contact us',
+        title: 'Contact us',
+        subject: 'Subject',
+        subject_placeholder: 'Briefly describe the subject',
+        message: 'Message',
+        message_placeholder: 'Describe your question or suggestion',
+        send: 'Send',
+        cancel: 'Cancel',
+        warn: 'Please fill in subject and message',
+        err: 'Failed to open mail client',
+        contact_email: 'Contact email',
+        contact_form: 'Contact form',
+    },
+
+    contact_ok: 'We have received your feedback',
+    contact_error: 'An unexpected error has occurred',
 };

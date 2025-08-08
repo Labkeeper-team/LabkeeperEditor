@@ -1,0 +1,46 @@
+.contact-modal {
+    padding: 20px;
+    min-width: 480px;
+}
+
+.contact-modal__title {
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.contact-modal__email {
+    margin-bottom: 16px;
+}
+
+.contact-modal__form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.textarea-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.textarea-container > label {
+    color: #4b5668;
+}
+
+.textarea-container > textarea {
+    margin-top: 4px;
+    border: 2px solid #a7b2c1;
+    border-radius: 8px;
+    min-height: 140px;
+    font-size: 15px;
+    line-height: 18px;
+    padding: 12px 16px;
+    resize: vertical;
+}
+
+.contact-modal__actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 4px;
+}

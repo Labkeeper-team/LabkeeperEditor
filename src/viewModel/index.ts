@@ -3,9 +3,7 @@ import {
     Program,
     ProgramRoundStrategy,
     Project,
-    Segment,
     SegmentType,
-    TextOutputSegment,
 } from '../model/domain.ts';
 import { LoaderService } from './project.ts';
 import { FileService } from './file.ts';
@@ -137,7 +135,7 @@ export class SystemService {
             this.vms.authViewModelState.setCurrentView('code');
         } else if (result.code === 404) {
             this.vms.authViewModelState.setEmailRequest('userNotFound');
-        } else if (result.code === 407) {
+        } else if (result.code === 409) {
             this.vms.authViewModelState.setEmailRequest('userExists');
         } else if (result.code === 400) {
             this.vms.authViewModelState.setEmailRequest('validationError');
@@ -289,6 +287,7 @@ export class SystemService {
         this.observerService.onEvent(Events.EVENT_MOVE_SEGMENT);
         this.programService.moveSegment(segmentIndex, direction);
         await this.segmentEditorSaveProgram();
+        this.ideService.onProgramUpdated();
     };
 
     segmentEditorChangeSegmentVisibility = async (
@@ -301,16 +300,18 @@ export class SystemService {
             parameterName,
             segmentIndex
         );
+        this.ideService.onProgramUpdated();
     };
 
     deleteSegment = async (segmentIndex: number) => {
         this.programService.deleteSegmentByIndex(segmentIndex);
         await this.segmentEditorSaveProgram();
+        this.ideService.onProgramUpdated();
     };
 
     onAddedFilesToSegmentEditor = async (
         items: DataTransferItemList,
-        segmentId: number,
+        segmentIndex: number,
         editorCallback: (insert: string) => void
     ) => {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
@@ -339,7 +340,7 @@ export class SystemService {
                             const fileToUpload = file;
                             const name =
                                 thisCopy.fileService.calculateNumberFile(
-                                    segmentId,
+                                    segmentIndex + 1,
                                     file.name
                                 );
                             const formData = new FormData();
@@ -397,9 +398,8 @@ export class SystemService {
                                 const lastProgram =
                                     thisCopy.programService.getCurrentProgram();
                                 const url = res.body;
-                                const segmentType = lastProgram.segments.find(
-                                    (s) => s.id === segmentId
-                                )?.type;
+                                const segmentType =
+                                    lastProgram.segments[segmentIndex]?.type;
                                 let itemToInsert = '';
                                 switch (segmentType) {
                                     case 'md':
@@ -435,10 +435,14 @@ export class SystemService {
         }
     };
 
-    onSegmentAddedViaDivider = async (segment: Segment, after: number) => {
-        this.programService.addSegmentAfterIndex(segment, after);
+    onSegmentAddedViaDivider = async (
+        segmentType: SegmentType,
+        after: number
+    ) => {
+        this.programService.addSegmentAfterIndex(segmentType, after);
         this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(after + 1);
         await this.segmentEditorSaveProgram();
+        this.ideService.onProgramUpdated();
     };
 
     onFocusSegment = async (segmentIndex: number) => {
@@ -456,6 +460,7 @@ export class SystemService {
             segmentText
         );
         await this.segmentEditorSaveProgram();
+        this.ideService.onProgramUpdated();
     };
 
     onSegmentTextEdited = async (segmentIndex: number, segmentText: string) => {
@@ -466,6 +471,8 @@ export class SystemService {
             segmentIndex,
             segmentText
         );
+
+        this.ideService.onSegmentUpdate(segmentIndex, segmentText);
     };
 
     onAddSegmentClicked = (type: SegmentType) => {
@@ -485,18 +492,11 @@ export class SystemService {
                 this.observerService.onEvent(Events.EVENT_CREATE_COMP_SEGMENT);
                 break;
         }
-        const newSegment: Segment = {
-            id: 1,
-            type,
-            parameters: {
-                visible: true,
-            },
-            text: '',
-        };
-        this.programService.addSegmentToLastPosition(newSegment);
+        this.programService.addSegmentToLastPosition(type);
         this.vms.ideViewModelState.setActiveSegmentIndex(
             this.programService.getCurrentProgram().segments.length
         );
+        this.ideService.onProgramUpdated();
         this.vms.scrollEditorToBottom();
     };
 
@@ -510,11 +510,13 @@ export class SystemService {
 
     onPrevVersionButtonClicked = () => {
         this.programService.undo();
+        this.ideService.onProgramUpdated();
         this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(-1);
     };
 
     onNextVersionButtonClicked = () => {
         this.programService.redo();
+        this.ideService.onProgramUpdated();
         this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(-1);
     };
 
@@ -553,19 +555,11 @@ export class SystemService {
         );
 
         if (!activeSegment) {
-            this.programService.addSegmentToLastPosition({
-                id: 0,
-                parameters: {
-                    visible: true,
-                    hideArray: false,
-                    hideAssignmentWithValues: false,
-                    hideGeneralFormula: false,
-                    hideInflAssignment: false,
-                    hideInflAssignmentWithValues: false,
-                },
-                text: item.text[this.vms.persistenceViewModelState.language()],
-                type: item.segmentType,
-            });
+            this.programService.addSegmentToLastPosition(item.segmentType);
+            this.programService.changeSegmentTextByPositionIndex(
+                this.programService.getCurrentProgram().segments.length - 1,
+                item.text[this.vms.persistenceViewModelState.language()]
+            );
         } else {
             if (activeSegment.type === item.segmentType) {
                 const newActiveSegment = { ...activeSegment };
@@ -577,22 +571,12 @@ export class SystemService {
             } else {
                 const place = prevActiveIndex >= 1 ? prevActiveIndex - 1 : 0;
                 this.programService.addSegmentAfterIndex(
-                    {
-                        id: 0,
-                        parameters: {
-                            visible: true,
-                            hideArray: false,
-                            hideAssignmentWithValues: false,
-                            hideGeneralFormula: false,
-                            hideInflAssignment: false,
-                            hideInflAssignmentWithValues: false,
-                        },
-                        text: item.text[
-                            this.vms.persistenceViewModelState.language()
-                        ],
-                        type: item.segmentType,
-                    },
+                    item.segmentType,
                     place
+                );
+                this.programService.changeSegmentTextByPositionIndex(
+                    this.programService.getCurrentProgram().segments.length - 1,
+                    item.text[this.vms.persistenceViewModelState.language()]
                 );
             }
         }
@@ -867,27 +851,23 @@ export class SystemService {
         }
     };
 
-    onProgramUpdated = (program: Program) => {
-        this.vms.projectViewModelState.setCurrentProgram(program);
-        if (
-            !this.vms.userViewModelState.isAuthenticated() &&
-            !this.vms.projectViewModelState.projectIsReadonly()
-        ) {
-            this.vms.persistenceViewModelState.setLastProgram(program);
-        } else {
-            this.vms.persistenceViewModelState.clearLastProgram();
-        }
+    onProgramSaveTimeout = async () => {
+        await this.segmentEditorSaveProgram();
+    };
 
-        if (!program.segments.find((s) => s.type === 'computational')) {
-            this.vms.projectViewModelState.setCompileResult({
-                segments: program.segments.map(
-                    (inputSegment): TextOutputSegment => ({
-                        text: inputSegment.text,
-                        type: inputSegment.type,
-                        id: inputSegment.id,
-                    })
-                ),
-            });
+    onQrPageEnter = (version: string) => {
+        if (version === 'v1') {
+            this.observerService.onEvent(Events.EVENT_QR_V1);
+        }
+    };
+
+    onContactUsFormSubmitted = async (subject: string, body: string) => {
+        const response = await this.rpi.contactFormRequest(subject, body);
+
+        if (response.isOk) {
+            this.vms.toast(this.vms.dictionary.contact_ok, 'success');
+        } else {
+            this.vms.toast(this.vms.dictionary.contact_error, 'error');
         }
     };
 }

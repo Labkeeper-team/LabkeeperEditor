@@ -7,4 +7,5 @@ export enum Routes {
 
     // Oauth2
     CodePage = '/oauth2/code',
+    QrPage = '/qr/:version',
 }

@@ -13,20 +13,27 @@ jest.mock('./../../constants.ts', () => {});
 jest.mock('../../main.tsx', () => {});
 jest.mock('../../view/routing', () => {});
 
+global.structuredClone = (val) => {
+    return JSON.parse(JSON.stringify(val));
+};
+
 import { mockViewModelState } from '../../viewModel/viewModelState';
 import { headerHelpItems } from '../../model/help';
-import { LabkeeperFile, Program, Project } from '../../model/domain.ts';
+import {
+    CompileSuccessResult,
+    ComputationalOutputSegment,
+    LabkeeperFile,
+    Program,
+    Project,
+    Statement,
+    TextOutputSegment,
+} from '../../model/domain.ts';
 import { setupContext } from '../../viewModel/context.ts';
 import { mockObserver, ObserverService } from '../../model/service/observer.ts';
 import { UserInfo } from '../../viewModel/store/slices/user';
 
 const defaultParams = {
     visible: true,
-    hideArray: false,
-    hideGeneralFormula: false,
-    hideInflAssignment: false,
-    hideAssignmentWithValues: false,
-    hideInflAssignmentWithValues: false,
 };
 
 const mockContext = () => {
@@ -86,7 +93,6 @@ test('help-items-add-test', async () => {
                 parameters: defaultParams,
                 text: `my_array = [1, 2, 3, 4]`,
                 type: 'computational',
-                id: 1,
             },
         ],
     } as Program);
@@ -102,13 +108,11 @@ test('help-items-add-test', async () => {
                 parameters: defaultParams,
                 text: `my_array = [1, 2, 3, 4]`,
                 type: 'computational',
-                id: 1,
             },
             {
                 parameters: defaultParams,
                 text: `my_array = [1, 2, 3, 4]`,
                 type: 'computational',
-                id: 2,
             },
         ],
     } as Program);
@@ -126,13 +130,11 @@ test('help-items-add-test', async () => {
                 parameters: defaultParams,
                 text: `my_array = [1, 2, 3, 4]\n\nmy_array = [1, 2, 3, 4]`,
                 type: 'computational',
-                id: 1,
             },
             {
                 parameters: defaultParams,
                 text: `my_array = [1, 2, 3, 4]`,
                 type: 'computational',
-                id: 2,
             },
         ],
     } as Program);
@@ -148,20 +150,12 @@ test('add-segment-between-active-index-test', async () => {
 
     expect(mvs.ideViewModelState.activeSegmentIndex()).toBe(4);
 
-    await systemService.onSegmentAddedViaDivider(
-        {
-            text: 'text',
-            type: 'computational',
-            id: -1,
-            parameters: {
-                visible: true,
-            },
-        },
-        2
-    );
+    await systemService.onSegmentAddedViaDivider('computational', 2);
 
     expect(mvs.ideViewModelState.activeSegmentIndex()).toBe(3);
     expect(mvs.ideViewModelState.previousActiveSegmentIndex()).toBe(4);
+
+    await systemService.onSegmentTextEdited(3, 'text');
 
     expect(
         mvs.projectViewModelState.currentProgram().segments.map((s) => s.text)
@@ -437,4 +431,104 @@ test('add-new-file-via-CtrV-test_4', () => {
     expect(fileService.calculateNumberFile(segment_id, 'vgh87ygvh.png')).toBe(
         'file_seg5(2).png'
     );
+});
+
+/*
+Тест на то, не продублируется ли маркдаун при нажатии на стрелку смещения сегмента.
+Сценарий:
+1. Юзер не залогинен
+2. создаем три сегмента (comp, md, comp)
+3. заполняем сегменты текстом
+4. компилируем
+5. двигаем второй сегмент наверх (comp, md, comp) -> (md, comp, comp)
+6. результат компиляции для первого вычислительного сегмента должен быть не определен
+ */
+test('segments-move-with-result-test', async () => {
+    const { rpi, mvs, systemService } = mockContext();
+
+    rpi.getUserInfoRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        body: {
+            isAuthenticated: false,
+            email: 'a@gmail.com',
+            id: 1,
+        },
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+    } as RequestResult<UserInfo>);
+
+    rpi.compilationRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        body: {
+            segments: [
+                {
+                    type: 'computational',
+                    statements: [
+                        {
+                            type: 'latex',
+                            latex: 'a1 = 10',
+                        } as Statement,
+                    ],
+                } as ComputationalOutputSegment,
+                {
+                    type: 'md',
+                    text: 'md1',
+                } as TextOutputSegment,
+                {
+                    type: 'computational',
+                    statements: [
+                        {
+                            type: 'latex',
+                            latex: 'a2 = 10',
+                        } as Statement,
+                    ],
+                } as ComputationalOutputSegment,
+            ],
+        } as CompileSuccessResult,
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+    } as RequestResult<CompileSuccessResult>);
+
+    await systemService.onAppStartup();
+
+    systemService.onAddSegmentClicked('computational');
+    await systemService.onSegmentTextEdited(0, 'a1 = 10');
+
+    systemService.onAddSegmentClicked('md');
+    await systemService.onSegmentTextEdited(1, 'md1');
+
+    systemService.onAddSegmentClicked('computational');
+    await systemService.onSegmentTextEdited(2, 'a2 = 10');
+
+    await systemService.onRunButtonClicked();
+
+    await systemService.segmentEditorChangeSegmentPosition('up', 1);
+
+    const segments = mvs.projectViewModelState.compileSuccessResult().segments;
+
+    expect(segments).toStrictEqual([
+        {
+            type: 'md',
+            text: 'md1',
+        } as TextOutputSegment,
+        {
+            type: 'computational',
+            statements: [
+                {
+                    type: 'no_result',
+                } as Statement,
+            ],
+        } as ComputationalOutputSegment,
+        {
+            type: 'computational',
+            statements: [
+                {
+                    type: 'latex',
+                    latex: 'a2 = 10',
+                } as Statement,
+            ],
+        } as ComputationalOutputSegment,
+    ]);
 });

@@ -8,6 +8,9 @@ import { LoaderService } from './project.ts';
 import { ObserverService, States } from '../model/service/observer.ts';
 import { IdeService } from './ide.ts';
 
+const qrPagePattern = /\/qr\/v\d+/i;
+const projectPagePattern = /\/project\/\S+/i;
+
 export class StartupService {
     rpi: Rpi;
     programService: ProgramService;
@@ -57,7 +60,8 @@ export class StartupService {
         // HOME PAGE ENTER
         if (
             locationWithoutLastSlash === Routes.Home ||
-            locationWithoutLastSlash === Routes.CodePage
+            locationWithoutLastSlash === Routes.CodePage ||
+            qrPagePattern.test(locationWithoutLastSlash)
         ) {
             await this.openDefaultProject(userInfo);
         }
@@ -75,9 +79,7 @@ export class StartupService {
         }
 
         // PROJECT BY ID PAGE ENTER
-        else if (
-            locationWithoutLastSlash.includes(Routes.Project.replace(':id', ''))
-        ) {
+        else if (projectPagePattern.test(locationWithoutLastSlash)) {
             const id = this.extractProjectIdFromUrl(this.vms.location());
             await this.openProjectById(userInfo, id);
         }
@@ -85,6 +87,8 @@ export class StartupService {
         if (userInfo.isAuthenticated) {
             await this.loader.loadProjects();
         }
+
+        this.ideService.onProgramUpdated();
     };
 
     private cutOfLastSlash(location: string): string {
@@ -133,12 +137,10 @@ export class StartupService {
             this.vms.projectViewModelState.setReadOnly(
                 userInfo.id !== (result.body as Project).userId
             );
-            this.programService.setNewProgram(project.program);
-            if (project.lastProgramResult) {
-                this.vms.projectViewModelState.setCompileResult(
-                    project.lastProgramResult
-                );
-            }
+            this.ideService.setNewProgram(
+                project.program,
+                project.lastProgramResult
+            );
         }
     }
 
@@ -152,7 +154,10 @@ export class StartupService {
             if (result.isOk) {
                 const project = result.body as RichProject;
                 this.vms.projectViewModelState.setProject(project);
-                this.programService.setNewProgram(project.program);
+                this.ideService.setNewProgram(
+                    project.program,
+                    project.lastProgramResult
+                );
                 this.vms.projectViewModelState.setCompileResult({
                     segments: [],
                 });
@@ -162,11 +167,6 @@ export class StartupService {
                 this.vms.navigate(
                     Routes.Project.replace(':id', project.projectId + '')
                 );
-                if (project.lastProgramResult) {
-                    this.vms.projectViewModelState.setCompileResult(
-                        project.lastProgramResult
-                    );
-                }
             }
             if (result.isUnauth) {
                 this.vms.navigate(Routes.ProjectDefault);
@@ -179,7 +179,7 @@ export class StartupService {
         } else {
             this.vms.navigate(Routes.ProjectDefault);
             // on default uri but unauth
-            this.programService.setNewProgram(
+            this.ideService.setNewProgram(
                 this.vms.persistenceViewModelState.lastProgram()
             );
         }

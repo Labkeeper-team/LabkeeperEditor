@@ -1,5 +1,13 @@
 import { ViewModelState } from './viewModelState';
 import { ProgramService } from '../model/service/program.ts';
+import {
+    CompileSuccessResult,
+    ComputationalOutputSegment,
+    Program,
+    TextOutputSegment,
+} from '../model/domain.ts';
+
+const dollarPattern = /\${\w+}/i;
 
 export class IdeService {
     vms: ViewModelState;
@@ -26,5 +34,105 @@ export class IdeService {
     resetEditor = () => {
         this.vms.resetToInitialState();
         this.programService.clearHistory();
+    };
+
+    onSegmentUpdate = (segmentIndex: number, segmentText: string) => {
+        if (
+            this.programService.getCurrentProgram().segments[segmentIndex]
+                .type !== 'computational'
+        ) {
+            if (dollarPattern.test(segmentText)) {
+                this.vms.projectViewModelState.setCompileResultForSegment(
+                    segmentIndex,
+                    {
+                        type: 'computational',
+                        statements: [{ type: 'no_result' }],
+                    } as ComputationalOutputSegment
+                );
+            } else {
+                this.vms.projectViewModelState.setCompileResultForSegment(
+                    segmentIndex,
+                    {
+                        text: segmentText,
+                        type: this.programService.getCurrentProgram().segments[
+                            segmentIndex
+                        ].type,
+                    } as TextOutputSegment
+                );
+            }
+        }
+    };
+
+    onProgramUpdated = () => {
+        const program = this.programService.getCurrentProgram();
+        this.vms.projectViewModelState.setCurrentProgram(program);
+        if (
+            !this.vms.userViewModelState.isAuthenticated() &&
+            !this.vms.projectViewModelState.projectIsReadonly()
+        ) {
+            this.vms.persistenceViewModelState.setLastProgram(
+                structuredClone(program)
+            );
+        } else {
+            this.vms.persistenceViewModelState.clearLastProgram();
+        }
+
+        this.vms.projectViewModelState.setCompileResultSegmentsSize(
+            program.segments.length
+        );
+        for (let i = 0; i < program.segments.length; i++) {
+            if (
+                !this.vms.projectViewModelState.compileSuccessResult().segments[
+                    i
+                ]
+            ) {
+                if (
+                    program.segments[i].type === 'computational' ||
+                    dollarPattern.test(program.segments[i].text)
+                ) {
+                    this.vms.projectViewModelState.setCompileResultForSegment(
+                        i,
+                        {
+                            type: 'computational',
+                            statements: [{ type: 'no_result' }],
+                        } as ComputationalOutputSegment
+                    );
+                } else {
+                    this.vms.projectViewModelState.setCompileResultForSegment(
+                        i,
+                        {
+                            type: program.segments[i].type,
+                            text: program.segments[i].text,
+                        } as TextOutputSegment
+                    );
+                }
+            } else if (
+                program.segments[i].type !== 'computational' &&
+                !dollarPattern.test(program.segments[i].text)
+            ) {
+                this.vms.projectViewModelState.setCompileResultForSegment(i, {
+                    type: program.segments[i].type,
+                    text: program.segments[i].text,
+                } as TextOutputSegment);
+            } else if (
+                program.segments[i].type === 'computational' &&
+                this.vms.projectViewModelState.compileSuccessResult().segments[
+                    i
+                ].type !== 'computational'
+            ) {
+                this.vms.projectViewModelState.setCompileResultForSegment(i, {
+                    type: 'computational',
+                    statements: [{ type: 'no_result' }],
+                } as ComputationalOutputSegment);
+            }
+        }
+    };
+
+    setNewProgram = (program: Program, result?: CompileSuccessResult) => {
+        this.programService.setNewProgram(program);
+        if (result) {
+            this.vms.projectViewModelState.setCompileResult(result);
+        }
+        this.onProgramUpdated();
     };
 }

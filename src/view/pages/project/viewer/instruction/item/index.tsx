@@ -3,6 +3,7 @@ import { colors } from '../../../../../styles/colors';
 import { useSelector } from 'react-redux';
 import { useDictionary } from '../../../../../../viewModel/store/selectors/translations.ts';
 import { InstructionItem } from '../../../../../../model/help';
+import { YandexRtbBanner } from '../../../../../components/ads';
 
 export const InstructionItemComponent = ({
     item,
@@ -138,14 +139,22 @@ export const InstructionItemComponent = ({
                     overflow: 'hidden',
                 }}
             >
-                <img
-                    src={item.image}
-                    style={{
-                        maxWidth: '100%',
-                        maxHeight: '160px',
-                        objectFit: 'contain',
-                    }}
-                />
+                {item.containsAd ? (
+                    <YandexRtbBanner
+                        width={200}
+                        height={150}
+                        blockId={'R-A-16459386-3'}
+                    />
+                ) : (
+                    <img
+                        src={item.image}
+                        style={{
+                            maxWidth: '100%',
+                            maxHeight: '160px',
+                            objectFit: 'contain',
+                        }}
+                    />
+                )}
             </div>
         </div>
     );

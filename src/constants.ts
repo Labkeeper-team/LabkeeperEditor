@@ -28,6 +28,7 @@ export const URLS = {
     Email: `/api/${version}/public/email`,
     Code: `/api/${version}/public/code`,
     Password: `/api/${version}/public/password`,
+    Contact: `/api/${version}/public/contact`,
 
     FormLogin: `/api/${version}/sec/formlogin`,
     OauthCode: `/api/${version}/sec/login/oauth2/code`,

@@ -21,9 +21,18 @@ export const LatexSegment = forwardRef<
                 'result-segment': true,
             })}
         >
-            <MathJax>{`\\begin{equation}${segment.text
+            {segment.text
                 .replaceAll('\\begin{equation}', '')
-                .replaceAll('\\end{equation}', '')}\\end{equation}`}</MathJax>
+                .replaceAll('\\end{equation}', '')
+                .split(/\\newline|\\\\/i)
+                .map((line, index) => (
+                    <MathJax key={index}>{`\\begin{equation}${line
+                        .replaceAll('\\begin{equation}', '')
+                        .replaceAll(
+                            '\\end{equation}',
+                            ''
+                        )}\\end{equation}`}</MathJax>
+                ))}
         </div>
     );
 });

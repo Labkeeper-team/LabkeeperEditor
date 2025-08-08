@@ -98,7 +98,7 @@ export const Segments = memo(() => {
                             <CodeSegment
                                 ref={refs[index]}
                                 index={index}
-                                key={`${segment.id}_${index}_${JSON.stringify(comp.statements)}`}
+                                key={`${index + 1}_${index}_${JSON.stringify(comp.statements)}`}
                                 segment={comp}
                             />
                         );
@@ -108,7 +108,7 @@ export const Segments = memo(() => {
                         return (
                             <MdSegment
                                 ref={refs[index]}
-                                key={`${segment.id}_${index}_${text.text}`}
+                                key={`${index + 1}_${index}_${text.text}`}
                                 segment={text}
                                 index={index}
                             />
@@ -119,7 +119,7 @@ export const Segments = memo(() => {
                         return (
                             <LatexSegment
                                 ref={refs[index]}
-                                key={`${segment.id}_${index}_${text.text}`}
+                                key={`${index + 1}_${index}_${text.text}`}
                                 segment={text}
                                 index={index}
                             />
@@ -130,7 +130,7 @@ export const Segments = memo(() => {
                         return (
                             <AsciimathSegment
                                 ref={refs[index]}
-                                key={`${segment.id}_${index}_${text.text}`}
+                                key={`${index + 1}_${index}_${text.text}`}
                                 segment={text}
                                 index={index}
                             />

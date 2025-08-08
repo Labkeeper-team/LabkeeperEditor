@@ -6,6 +6,7 @@ import {
     Program,
     Project,
     ProjectShort,
+    Segment,
 } from '../domain.ts';
 import { URLS } from '../../constants.ts';
 import { UserInfo } from '../../viewModel/store/slices/user';
@@ -123,11 +124,42 @@ export const mockRpi = (): Rpi => {
     } as unknown as Rpi;
 };
 
+function withIds(program: Program): Program {
+    return {
+        segments: program.segments.map(
+            (s, index) =>
+                ({
+                    type: s.type,
+                    text: s.text,
+                    parameters: s.parameters,
+                    id: index + 1,
+                }) as Segment
+        ),
+        parameters: program.parameters,
+    };
+}
+
 export class Rpi {
     async compilationRequest(
         program: Program
     ): Promise<RequestResult<CompileSuccessResult | CompileErrorResultList>> {
-        return requestWrapper(async () => axios.post(URLS.compile, program));
+        return requestWrapper(async () =>
+            axios.post(URLS.compile, withIds(program))
+        );
+    }
+
+    async contactFormRequest(
+        subject: string,
+        body: string
+    ): Promise<RequestResult> {
+        return requestWrapper(async () =>
+            axios.post(URLS.Contact, null, {
+                params: {
+                    subject: subject,
+                    body: body,
+                },
+            })
+        );
     }
 
     async compileProjectRequest(
@@ -195,7 +227,7 @@ export class Rpi {
         program: Program
     ): Promise<RequestResult<RichProject>> {
         return requestWrapper(async () =>
-            axios.post(URLS.getDefaultProject, program, {
+            axios.post(URLS.getDefaultProject, withIds(program), {
                 headers: {
                     'Accept-Language': lang || 'en',
                 },
@@ -234,7 +266,10 @@ export class Rpi {
         program: Program
     ): Promise<RequestResult<Project>> {
         return requestWrapper(async () =>
-            axios.put(`${URLS.createProject}?name=${projectName}`, program)
+            axios.put(
+                `${URLS.createProject}?name=${projectName}`,
+                withIds(program)
+            )
         );
     }
 
@@ -249,7 +284,10 @@ export class Rpi {
         program: Program
     ): Promise<RequestResult> {
         return requestWrapper(async () =>
-            axios.post(URLS.setProgram.replace('{id}', projectId), program)
+            axios.post(
+                URLS.setProgram.replace('{id}', projectId),
+                withIds(program)
+            )
         );
     }
 

@@ -38,7 +38,7 @@ export const Select = ({
         const handleClickOutside = (event: MouseEvent) => {
             if (
                 selectRef.current &&
-                !selectRef.current.contains(event.target as Node)
+                !selectRef.current?.contains(event.target as Node)
             ) {
                 setIsOpen(false); // Закрываем список, если клик был за пределами контейнера
             }

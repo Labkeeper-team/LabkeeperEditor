@@ -8,6 +8,7 @@ export const Events = {
     EVENT_MOVE_SEGMENT: 'segment_move',
     EVENT_INSERT_SEGMENT_BETWEEN: 'segment_insert_between',
     EVENT_PRINT: 'print_doc',
+    EVENT_QR_V1: 'qr_v1',
 };
 
 export type EventValues = (typeof Events)[keyof typeof Events];

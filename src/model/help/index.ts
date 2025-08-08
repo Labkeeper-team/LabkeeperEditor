@@ -28,6 +28,7 @@ export interface InstructionItem {
     image: string;
     ending: string;
     wikiLink: string;
+    containsAd?: boolean;
 }
 
 export const headerHelpItems: HeaderHelpItem[] = [
@@ -222,6 +223,7 @@ export const instructions: LocalizedInstructionItem[] = [
                 Экспортируйте ваши документы в pdf.
                 `,
             ],
+            containsAd: true,
             image: '/instructions/welcome.png',
             ending: basicEndingRu,
             wikiLink: wikiRuUrl,

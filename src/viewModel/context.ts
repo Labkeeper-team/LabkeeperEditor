@@ -53,10 +53,6 @@ export function setupContext(
         fileService
     );
 
-    programService.setProgramChangedCallback((currentProgram) =>
-        systemService.onProgramUpdated(currentProgram)
-    );
-
     return {
         observerService,
         mvs: vms,

@@ -27,6 +27,8 @@ import { ProjectTitle } from './projectTitle';
 import { Language } from '../../../viewModel/store/shared/dictionaries';
 import { AuthModal } from '../../pages/project/auth';
 import { ShareModal } from './share/modal';
+import { ContactModal } from './contact/modal';
+import { setShowContactModal } from '../../../viewModel/store/slices/settings';
 import { AppDispatch } from '../../../viewModel/store';
 import {
     onAuthButtonClickedRequest,
@@ -76,6 +78,14 @@ export const Header = () => {
                             value={language}
                         />
                     </div>
+                    <Button
+                        title={dictionary.contact_modal.button}
+                        rounded
+                        classname="contact-us-button"
+                        onPress={() => dispatch(setShowContactModal(true))}
+                        minimize
+                        color="inherit"
+                    />
                 </div>
                 <div className="labkeeper_header__center">
                     <ProjectTitle />
@@ -120,6 +130,7 @@ export const Header = () => {
             </div>
             <AuthModal />
             <ShareModal />
+            <ContactModal />
         </>
     );
 };

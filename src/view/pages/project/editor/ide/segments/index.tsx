@@ -35,7 +35,7 @@ export const Segments = () => {
         <div ref={ref} className="segments-container">
             {program?.segments.map((s, i, ar) => {
                 return (
-                    <React.Fragment key={s.id}>
+                    <React.Fragment key={i}>
                         <SegmentEditor
                             segment={s}
                             index={i}

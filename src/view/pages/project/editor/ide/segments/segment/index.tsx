@@ -45,6 +45,7 @@ import {
     onAddedFilesToSegmentEditorRequest,
     onBlurSegmentRequest,
     onFocusSegmentRequest,
+    onProgramSaveTimeoutRequest,
     onSegmentTextChangedRequest,
     segmentEditorChangeSegmentPositionRequest,
 } from '../../../../../../../controller';
@@ -74,6 +75,8 @@ const decorationsField = StateField.define<unknown>({
     },
     provide: (field) => EditorView.decorations.from(field),
 });
+
+let timeout: NodeJS.Timeout | null = null;
 
 export const SegmentEditor = memo(
     (props: { segment: Segment; index: number; segmentCount: number }) => {
@@ -118,10 +121,10 @@ export const SegmentEditor = memo(
         useEffect(() => {
             setTempSegmentErrors(
                 (compileErrors ?? []).filter(
-                    (e) => e.payload.segmentId === props.segment.id
+                    (e) => e.payload.segmentId === props.index + 1
                 )
             );
-        }, [compileErrors, props.segment.id]);
+        }, [compileErrors, props.index]);
 
         // Проблема с мерцанием редактора кода
         useEffect(() => {
@@ -139,6 +142,15 @@ export const SegmentEditor = memo(
             }
             processDecorations(view, search, segmentTempErrors);
         }, [search, segmentTempErrors, editor?.current?.view]);
+        // При изменении текста сегмента создаем таймер
+        useEffect(() => {
+            if (timeout) {
+                clearTimeout(timeout);
+            }
+            timeout = setTimeout(() => {
+                dispatch(onProgramSaveTimeoutRequest());
+            }, 1000);
+        }, [tempText]);
 
         /*
          * Callbacks
@@ -178,7 +190,7 @@ export const SegmentEditor = memo(
                 dispatch(
                     onAddedFilesToSegmentEditorRequest({
                         items: items,
-                        segmentId: props.segment.id,
+                        segmentIndex: props.index,
                         editorCallback: (insert: string) => {
                             const cursorPosition =
                                 editor?.current?.view?.state.selection.main
@@ -247,7 +259,7 @@ export const SegmentEditor = memo(
                         EditorView.lineWrapping,
                         lineNumbers({
                             formatNumber: (lineNo) => {
-                                return `${props.segment.id || '' + 1}.${lineNo}`;
+                                return `${props.index + 1 || '' + 1}.${lineNo}`;
                             },
                         }),
                     ].filter((e) => !!e)}
@@ -310,11 +322,9 @@ export const SegmentEditor = memo(
                     <div className="segment-position">
                         <Typography
                             type={
-                                (props.segment.id ?? 0) < 10
-                                    ? 'body'
-                                    : 'label-small'
+                                (props.index ?? 0) < 10 ? 'body' : 'label-small'
                             }
-                            text={`${props.segment.id}`}
+                            text={`${props.index + 1}`}
                             color={colors.white}
                         />
                     </div>

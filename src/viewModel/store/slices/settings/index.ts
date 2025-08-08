@@ -12,6 +12,7 @@ export interface SettingsState {
     isFileDraggedToManager: boolean;
     isCompiling: boolean;
     showShareModal: boolean;
+    showContactModal: boolean;
 }
 
 export const settingsSlice = createSlice({
@@ -57,6 +58,9 @@ export const settingsSlice = createSlice({
         setShowShareModal: (state, { payload }: PayloadAction<boolean>) => {
             state.showShareModal = payload;
         },
+        setShowContactModal: (state, { payload }: PayloadAction<boolean>) => {
+            state.showContactModal = payload;
+        },
     },
     extraReducers: (b) => {
         b.addCase(LOGOUT_TYPE, (state) => {
@@ -75,4 +79,5 @@ export const {
     setShoFileManager,
     setIsFileDraggedToFileManager,
     setShowShareModal,
+    setShowContactModal,
 } = settingsSlice.actions;

@@ -2,6 +2,7 @@ import {
     CompileErrorResultList,
     CompileSuccessResult,
     LabkeeperFile,
+    OutputSegment,
     Program,
     Project,
     ProjectShort,
@@ -43,6 +44,8 @@ import {
     clearProject,
     setCompileError,
     setCompileResult,
+    setCompileResultForSegment,
+    setCompileResultSegmentsSize,
     setCurrentProgram,
     setFiles,
     setProject,
@@ -133,6 +136,18 @@ export const createViewModelStateFromStore = (
             currentProgram: () => store.getState().project.currentProgram,
             files: () => store.getState().project.files,
 
+            setCompileResultSegmentsSize: (size: number) =>
+                store.dispatch(setCompileResultSegmentsSize(size)),
+            setCompileResultForSegment: (
+                index: number,
+                segment: OutputSegment
+            ) =>
+                store.dispatch(
+                    setCompileResultForSegment({
+                        segment: segment,
+                        index: index,
+                    })
+                ),
             setReadOnly: (value: boolean) => store.dispatch(setReadOnly(value)),
             setProject: (project: Project) =>
                 store.dispatch(setProject(project)),
@@ -220,7 +235,7 @@ export const mockViewModelState = (): ViewModelState => {
     };
 
     let compileErrorResult: CompileErrorResultList | undefined = undefined;
-    let compileSuccessResult: CompileSuccessResult | undefined = undefined;
+    let compileSuccessResult: CompileSuccessResult = { segments: [] };
     let project: Project | undefined = undefined;
     let projectIsReadonly = false;
     let currentProgram: Program = {
@@ -308,6 +323,17 @@ export const mockViewModelState = (): ViewModelState => {
             currentProgram: () => currentProgram,
             files: () => files,
 
+            setCompileResultSegmentsSize: (size: number) => {
+                compileSuccessResult.segments.length = size;
+            },
+            setCompileResultForSegment: (
+                index: number,
+                segment: OutputSegment
+            ) => {
+                if (compileSuccessResult.segments.length > index) {
+                    compileSuccessResult.segments[index] = segment;
+                }
+            },
             setReadOnly: (v: boolean) => (projectIsReadonly = v),
             setProject: (v: Project) => (project = v),
             setCompileResult: (v: CompileSuccessResult) =>
@@ -317,7 +343,7 @@ export const mockViewModelState = (): ViewModelState => {
             setFiles: (v: LabkeeperFile[]) => (files = v),
             resetToInitialState: () => {
                 compileErrorResult = undefined;
-                compileSuccessResult = undefined;
+                compileSuccessResult = { segments: [] };
                 project = undefined;
                 projectIsReadonly = false;
                 currentProgram = {
@@ -377,12 +403,14 @@ export const mockViewModelState = (): ViewModelState => {
 
 export interface ProjectViewModelState {
     project: () => Project | undefined;
-    compileSuccessResult: () => CompileSuccessResult | undefined;
+    compileSuccessResult: () => CompileSuccessResult;
     compileErrorResult: () => CompileErrorResultList | undefined;
     projectIsReadonly: () => boolean;
     currentProgram: () => Program;
     files: () => LabkeeperFile[];
 
+    setCompileResultSegmentsSize: (size: number) => void;
+    setCompileResultForSegment: (index: number, segment: OutputSegment) => void;
     setReadOnly: (value: boolean) => void;
     setProject: (project: Project) => void;
     setCompileResult: (compileResult: CompileSuccessResult) => void;

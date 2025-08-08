@@ -13,7 +13,6 @@ import {
 import { AppDispatch } from '../../../../../../../viewModel/store/index.ts';
 import { onSegmentAddedViaDividerRequest } from '../../../../../../../controller/index.ts';
 import { EditorTypeDivider, SegmentDividerProps } from './model.ts';
-import { createEmptySegment } from '../../../../../../helpers/index.ts';
 
 import './style.scss';
 
@@ -28,12 +27,11 @@ export const SegmentDivider: React.FC<SegmentDividerProps> = ({
 
     const onAdd = useCallback(
         (type: SegmentType) => {
-            const segmentViaDividerRequestObj = {
-                segment: createEmptySegment(type),
-                after: index,
-            };
             dispatch(
-                onSegmentAddedViaDividerRequest(segmentViaDividerRequestObj)
+                onSegmentAddedViaDividerRequest({
+                    after: index,
+                    segmentType: type,
+                })
             );
         },
         [index, dispatch]

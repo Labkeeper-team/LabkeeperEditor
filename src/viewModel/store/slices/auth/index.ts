@@ -17,7 +17,12 @@ export type EmailRequestState =
     | 'userExists'
     | 'validationError'
     | 'unknownError';
-export type CodeRequestState = 'unknown' | 'loading' | 'ok' | 'invalid';
+export type CodeRequestState =
+    | 'unknown'
+    | 'loading'
+    | 'ok'
+    | 'invalid'
+    | 'unknownError';
 export type PasswordRequestState =
     | 'unknown'
     | 'loading'

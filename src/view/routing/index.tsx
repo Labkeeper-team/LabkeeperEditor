@@ -5,6 +5,7 @@ import { ProjectPage } from '../pages/project';
 import { HomePage } from '../pages/home';
 import { ProjectsPage } from '../pages/projects';
 import { CodePage } from '../pages/code';
+import { QrPage } from '../pages/qr';
 
 export const appRouter = createBrowserRouter([
     {
@@ -26,6 +27,10 @@ export const appRouter = createBrowserRouter([
             {
                 path: Routes.CodePage,
                 element: <CodePage />,
+            },
+            {
+                path: Routes.QrPage,
+                element: <QrPage />,
             },
         ],
     },

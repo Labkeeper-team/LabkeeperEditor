@@ -15,7 +15,8 @@ export type StatementType =
     | 'file'
     | 'table'
     | 'plot'
-    | 'latex';
+    | 'latex'
+    | 'no_result';
 export type PlotType = 'line' | 'scatter' | 'histogram';
 
 /*
@@ -28,7 +29,6 @@ export interface LabkeeperFile {
 }
 
 export interface Segment {
-    id: number;
     type: SegmentType;
     parameters: {
         visible?: boolean;
@@ -47,7 +47,6 @@ export interface CompileSuccessResult {
 
 export interface OutputSegment {
     type: SegmentType;
-    id: number;
 }
 
 export interface ComputationalOutputSegment extends OutputSegment {

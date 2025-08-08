@@ -106,6 +106,8 @@ export const ru: Translations = {
         },
         latex: 'latex-формула',
         asciimath: 'простая формула',
+        no_computation_result: 'Отсутствует результат вычислений',
+        run_to_view: 'Нажмите кнопку "Выполнить"',
     },
 
     instructions: {
@@ -197,6 +199,7 @@ export const ru: Translations = {
             passwordSetError: 'Ошибка установки пароля',
             credentialsError: 'Неправильный логин или пароль',
             oauthError: 'Ошибка входа через сторонний провайдер',
+            unknownError: 'Неизвестная ошибка',
         },
     },
     loginModal: {
@@ -242,4 +245,21 @@ export const ru: Translations = {
         copy_error: 'Не удалось скопировать ссылку',
     },
     wiki: 'wiki',
+    contact_modal: {
+        button: 'Связаться с нами',
+        title: 'Связаться с нами',
+        subject: 'Тема',
+        subject_placeholder: 'Кратко опишите тему',
+        message: 'Сообщение',
+        message_placeholder: 'Опишите ваш вопрос или предложение',
+        send: 'Отправить',
+        cancel: 'Отмена',
+        warn: 'Заполните тему и сообщение',
+        err: 'Не удалось открыть почтовый клиент',
+        contact_form: 'Связаться с нами через форму',
+        contact_email: 'Напишите нам на почту',
+    },
+
+    contact_ok: 'Мы получили вашу обратную связь',
+    contact_error: 'Произошла непредвиденная ошибка',
 };

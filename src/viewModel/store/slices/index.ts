@@ -41,6 +41,7 @@ export const persistenceInitialState: PersistenceState = {
 export const projectInitialState: ProjectState = {
     compileErrorResult: { errors: [] },
     projectIsReadonly: true,
+    compileSuccessResult: { segments: [] },
     files: [],
     currentProgram: {
         segments: [],
@@ -64,6 +65,7 @@ export const settingsInitialState: SettingsState = {
     isFileDraggedToManager: false,
     isCompiling: false,
     showShareModal: false,
+    showContactModal: false,
 };
 
 export const userInitialState: UserInfo = {

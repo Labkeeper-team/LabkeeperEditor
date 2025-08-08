@@ -1,5 +1,5 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { ProgramRoundStrategy, Segment, SegmentType } from '../model/domain.ts';
+import { ProgramRoundStrategy, SegmentType } from '../model/domain.ts';
 import { HeaderHelpItem } from '../model/help';
 import { systemService } from '../main.tsx';
 import * as Sentry from '@sentry/react';
@@ -23,6 +23,22 @@ export const onFormLoginClickedRequest = createAsyncThunk(
     }) => {
         wrapper('onFormLoginClicked', () =>
             systemService.onFormLoginClicked(userName, password, captcha)
+        );
+    }
+);
+
+export const onQrPageEnterRequest = createAsyncThunk(
+    'onQrPageEnter',
+    async ({ version }: { version: string }) => {
+        wrapper('onQrPageEnter', () => systemService.onQrPageEnter(version));
+    }
+);
+
+export const onProgramSaveTimeoutRequest = createAsyncThunk(
+    'onProgramSaveTimeout',
+    async () => {
+        wrapper('onProgramSaveTimeout', () =>
+            systemService.onProgramSaveTimeout()
         );
     }
 );
@@ -187,17 +203,17 @@ export const onAddedFilesToSegmentEditorRequest = createAsyncThunk(
     'onAddedFilesToSegmentEditorRequest',
     async ({
         items,
-        segmentId,
+        segmentIndex,
         editorCallback,
     }: {
         items: DataTransferItemList;
-        segmentId: number;
+        segmentIndex: number;
         editorCallback: (insert: string) => void;
     }) => {
         wrapper('onAddedFilesToSegmentEditorRequest', () =>
             systemService.onAddedFilesToSegmentEditor(
                 items,
-                segmentId,
+                segmentIndex,
                 editorCallback
             )
         );
@@ -206,9 +222,15 @@ export const onAddedFilesToSegmentEditorRequest = createAsyncThunk(
 
 export const onSegmentAddedViaDividerRequest = createAsyncThunk(
     'onSegmentAdded',
-    async ({ segment, after }: { segment: Segment; after: number }) => {
+    async ({
+        segmentType,
+        after,
+    }: {
+        segmentType: SegmentType;
+        after: number;
+    }) => {
         wrapper('onSegmentAdded', () =>
-            systemService.onSegmentAddedViaDivider(segment, after)
+            systemService.onSegmentAddedViaDivider(segmentType, after)
         );
     }
 );
@@ -444,6 +466,15 @@ export const onBackButtonClickedRequest = createAsyncThunk(
     async () => {
         wrapper('onBackButtonClickedRequest', () =>
             systemService.onBackButtonClicked()
+        );
+    }
+);
+
+export const onContactUsFormSubmittedRequest = createAsyncThunk(
+    'onContactUsFormSubmittedRequest',
+    async ({ body, subject }: { body: string; subject: string }) => {
+        wrapper('onContactUsFormSubmittedRequest', () =>
+            systemService.onContactUsFormSubmitted(subject, body)
         );
     }
 );

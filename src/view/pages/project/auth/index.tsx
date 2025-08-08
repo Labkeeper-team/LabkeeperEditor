@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { Typography } from '../../../components/typography';
 import { colors } from '../../../styles/colors.ts';
 import { Button } from '../../../components/button';
@@ -7,7 +6,7 @@ import { Modal } from '../../../components/modal';
 import { useSelector, useDispatch } from 'react-redux';
 import { useDictionary } from '../../../../viewModel/store/selectors/translations.ts';
 import { Input } from '../../../components/input';
-import { useState, ChangeEvent, useMemo } from 'react';
+import { useState, ChangeEvent, useMemo, useEffect } from 'react';
 import { setCurrentView } from '../../../../viewModel/store/slices/auth';
 import { StorageState } from '../../../../viewModel/store';
 import { AppDispatch } from '../../../../viewModel/store';
@@ -22,6 +21,44 @@ import {
     onSendCodeButtonClickedRequest,
     onSendPasswordButtonClickedRequest,
 } from '../../../../controller';
+import { YandexRtbBanner, YandexRtbFloorAd } from '../../../components/ads';
+
+// Компонент спиннера загрузки
+const LoadingSpinner = () => (
+    <div
+        style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+        }}
+    >
+        <div
+            style={{
+                width: '40px',
+                height: '40px',
+                border: '4px solid #f3f3f3',
+                borderTop: '4px solid #007bff',
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite',
+            }}
+        />
+        <style>
+            {`
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+            `}
+        </style>
+    </div>
+);
 
 const LoginView = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -47,8 +84,13 @@ const LoginView = () => {
         if (loginRequest === 'oauth_error') {
             return dictionary.authorization.errors.oauthError;
         }
+        if (loginRequest === 'unknownError') {
+            return dictionary.authorization.errors.unknownError;
+        }
         return '';
     }, [loginRequest]);
+
+    const isLoading = loginRequest === 'loading';
 
     return (
         <div
@@ -57,6 +99,7 @@ const LoginView = () => {
                 display: 'flex',
                 flexDirection: 'column',
                 padding: '40px',
+                position: 'relative',
             }}
         >
             <div style={{ textAlign: 'center', marginBottom: '32px' }}>
@@ -141,7 +184,10 @@ const LoginView = () => {
                         classname="full-width"
                         title={dictionary.authorization.login}
                         color="blue"
-                        disabled={!token && !!Secrets.yandexCaptchaSiteKey}
+                        disabled={
+                            (!token && !!Secrets.yandexCaptchaSiteKey) ||
+                            isLoading
+                        }
                         rounded
                         type="rounded"
                         minimize={false}
@@ -163,6 +209,7 @@ const LoginView = () => {
                         rounded
                         type="rounded"
                         minimize={true}
+                        disabled={isLoading}
                         onPress={() => {
                             dispatch(onRegistrationButtonClickedRequest());
                         }}
@@ -174,6 +221,7 @@ const LoginView = () => {
                         rounded
                         type="rounded"
                         minimize={true}
+                        disabled={isLoading}
                         onPress={() => {
                             dispatch(onForgotPasswordButtonClickedRequest());
                         }}
@@ -214,6 +262,7 @@ const LoginView = () => {
                 >
                     {Providers?.map((provider) => (
                         <Button
+                            key={provider}
                             classname="full-width"
                             title={`${dictionary.authorization.loginVia} ${provider}`}
                             color="blue"
@@ -225,6 +274,7 @@ const LoginView = () => {
                                     : undefined
                             }
                             minimize={false}
+                            disabled={isLoading}
                             onPress={() => {
                                 window.location =
                                     URLS.YandexOidcLogin as unknown as string &
@@ -233,7 +283,13 @@ const LoginView = () => {
                         />
                     ))}
                 </div>
+                <YandexRtbBanner
+                    width={520}
+                    height={150}
+                    blockId={'R-A-16459386-4'}
+                />
             </div>
+            {isLoading && <LoadingSpinner />}
         </div>
     );
 };
@@ -249,6 +305,8 @@ const EmailView = () => {
     const language = useSelector(
         (state: StorageState) => state.persistence.language
     );
+
+    const isLoading = status === 'loading';
 
     const handleSubmit = async () => {
         if (!email) {
@@ -269,6 +327,9 @@ const EmailView = () => {
         if (status === 'validationError') {
             return dictionary.authorization.errors.invalidEmail;
         }
+        if (status === 'unknownError') {
+            return dictionary.authorization.errors.unknownError;
+        }
         return '';
     };
 
@@ -279,6 +340,7 @@ const EmailView = () => {
                 display: 'flex',
                 flexDirection: 'column',
                 padding: '30px 40px',
+                position: 'relative',
             }}
         >
             <Typography
@@ -333,6 +395,7 @@ const EmailView = () => {
                     disabled={status === 'loading' || !token}
                 />
             </div>
+            {isLoading && <LoadingSpinner />}
         </div>
     );
 };
@@ -344,6 +407,8 @@ const CodeView = () => {
         (state: StorageState) => state.auth.codeCheckRequest
     );
     const dictionary = useSelector(useDictionary);
+
+    const isLoading = status === 'loading';
 
     const handleSubmit = async () => {
         if (!code) {
@@ -359,6 +424,7 @@ const CodeView = () => {
                 display: 'flex',
                 flexDirection: 'column',
                 padding: '30px 40px',
+                position: 'relative',
             }}
         >
             <Typography
@@ -395,6 +461,13 @@ const CodeView = () => {
                         text={dictionary.authorization.errors.invalidCode}
                     />
                 )}
+                {status === 'unknownError' && (
+                    <Typography
+                        color={colors.gray10}
+                        type="body"
+                        text={dictionary.authorization.errors.unknownError}
+                    />
+                )}
                 <Button
                     classname="full-width"
                     title={dictionary.authorization.confirmCode}
@@ -406,6 +479,7 @@ const CodeView = () => {
                     disabled={status === 'loading'}
                 />
             </div>
+            {isLoading && <LoadingSpinner />}
         </div>
     );
 };
@@ -425,6 +499,8 @@ const PasswordView = () => {
         (state: StorageState) => state.auth.lastVerifiedCode
     );
     const dictionary = useSelector(useDictionary);
+
+    const isLoading = status === 'loading';
 
     const handleSubmit = async () => {
         if (!password || !confirmPassword || !currentEmail || !verifiedCode) {
@@ -454,6 +530,9 @@ const PasswordView = () => {
         if (status === 'validationError') {
             return dictionary.authorization.errors.passwordSetError;
         }
+        if (status === 'unknownError') {
+            return dictionary.authorization.errors.unknownError;
+        }
         return '';
     };
 
@@ -464,6 +543,7 @@ const PasswordView = () => {
                 display: 'flex',
                 flexDirection: 'column',
                 padding: '30px 40px',
+                position: 'relative',
             }}
         >
             <Typography
@@ -518,6 +598,7 @@ const PasswordView = () => {
                     disabled={status === 'loading'}
                 />
             </div>
+            {isLoading && <LoadingSpinner />}
         </div>
     );
 };
@@ -594,6 +675,12 @@ export const AuthModal = () => {
                 return <></>;
         }
     };
+
+    useEffect(() => {
+        if (currentView !== 'closed') {
+            YandexRtbFloorAd('R-A-16459386-2');
+        }
+    }, [currentView]);
 
     return (
         <Modal

@@ -96,6 +96,8 @@ export interface Translations {
         errors: {
             non_authorized_paste_image: string;
         };
+        no_computation_result: string;
+        run_to_view: string;
     };
 
     instructions: {
@@ -176,6 +178,7 @@ export interface Translations {
             passwordSetError: string;
             credentialsError: string;
             oauthError: string;
+            unknownError: string;
         };
     };
     loginModal: {
@@ -221,6 +224,22 @@ export interface Translations {
         copy_error: string;
     };
     wiki: string;
+    contact_modal: {
+        button: string;
+        title: string;
+        contact_email: string;
+        contact_form: string;
+        subject: string;
+        subject_placeholder: string;
+        message: string;
+        message_placeholder: string;
+        send: string;
+        cancel: string;
+        warn: string;
+        err: string;
+    };
+    contact_ok: string;
+    contact_error: string;
 }
 
 export const dictionary: Record<Language, Translations> = {

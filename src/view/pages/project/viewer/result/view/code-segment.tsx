@@ -15,6 +15,7 @@ import {
     TableStatement,
 } from '../../../../../../model/domain.ts';
 import { LatexSegment } from './segments/latex-segment.tsx';
+import { NoResultSegment } from './segments/no-result-segment.tsx';
 
 /**
  * Стили дяя отображения fontsize
@@ -93,6 +94,9 @@ export const CodeSegment = forwardRef<
                                 legendVisible={plot.legendVisible}
                             />
                         );
+                    }
+                    case 'no_result': {
+                        return <NoResultSegment key={i} />;
                     }
                     default:
                         return <div />;
