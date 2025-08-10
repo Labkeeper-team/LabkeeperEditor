@@ -12,8 +12,9 @@ export const HeaderHelperItems = () => {
 
     return (
         <div className="markdown-select-dropdown">
-            {headerHelpItems.map((item) => (
+            {headerHelpItems.map((item, index) => (
                 <span
+                    key={index}
                     onClick={() =>
                         dispatch(onHelpItemCreatedRequest({ item: item }))
                     }

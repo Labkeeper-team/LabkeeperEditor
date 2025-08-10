@@ -70,6 +70,9 @@ export const projectSlice = createSlice({
                     state.currentProgram.segments[i].parameters =
                         structuredClone(payload.segments[i].parameters);
                 }
+                state.currentProgram.parameters = structuredClone(
+                    payload.parameters
+                );
             } else {
                 state.currentProgram = structuredClone(payload);
             }
