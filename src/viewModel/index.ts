@@ -541,6 +541,7 @@ export class SystemService {
 
     onRoundStrategySet = (strategy: ProgramRoundStrategy) => {
         this.programService.changeRoundStrategy(strategy);
+        this.ideService.onProgramUpdated();
     };
 
     onHelpItemCreated = (item: HeaderHelpItem) => {
@@ -580,6 +581,7 @@ export class SystemService {
                 );
             }
         }
+        this.ideService.onProgramUpdated();
     };
 
     onExpandErrorsClicked = () => {
