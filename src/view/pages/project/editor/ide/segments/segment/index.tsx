@@ -252,7 +252,7 @@ export const SegmentEditor = memo(
                               : props.segment.type === 'computational'
                                 ? customLanguageSupport
                                 : props.segment.type === 'latex'
-                                  ? [langs.stex(), latexLanguageSupport]
+                                  ? [langs.tex(), latexLanguageSupport]
                                   : undefined,
                         eventsExt,
                         eventsDom,

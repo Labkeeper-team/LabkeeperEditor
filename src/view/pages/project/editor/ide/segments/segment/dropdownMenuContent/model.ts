@@ -7,8 +7,10 @@ export interface DropdownSegmentMenuContentProps {
 
 export type ClickCheckboxParameter =
     | 'visible'
+    | 'hideAssignment'
     | 'hideAssignmentWithValues'
-    | 'hideArray'
+    | 'hideValue'
     | 'hideGeneralFormula'
     | 'hideInflAssignment'
-    | 'hideInflAssignmentWithValues';
+    | 'hideInflAssignmentWithValues'
+    | 'hideInfl';

@@ -68,7 +68,7 @@ export const en: Translations = {
         label: 'Rounding mode',
         without_round: 'Without rounding',
         first_digit: 'First significant digit of the error',
-        fixed_digits: 'Five digits',
+        five_digits: 'Five digits',
         one_digit: 'One digit',
         two_digits: 'Two digits',
         three_digits: 'Three digits',
@@ -102,6 +102,9 @@ export const en: Translations = {
         asciimath: 'simple-math',
         no_computation_result: 'No computation result',
         run_to_view: 'Press the run button to see computations',
+        hide_assignment: 'Hide assignment',
+        hide_value: 'Hide computed value',
+        hide_infl: 'Hide computed error',
     },
 
     instructions: {

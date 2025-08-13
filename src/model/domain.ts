@@ -6,7 +6,7 @@ export type ProgramRoundStrategy =
     | 'threeDigits'
     | 'twoDigits'
     | 'oneDigit'
-    | 'fixedDigits'
+    | 'fiveDigits'
     | 'firstMeaningDigit';
 export type SegmentType = 'md' | 'computational' | 'latex' | 'asciimath';
 export type StatementType =
@@ -32,11 +32,13 @@ export interface Segment {
     type: SegmentType;
     parameters: {
         visible?: boolean;
+        hideAssignment?: boolean;
         hideAssignmentWithValues?: boolean;
-        hideArray?: boolean;
+        hideValue?: boolean;
         hideGeneralFormula?: boolean;
         hideInflAssignment?: boolean;
         hideInflAssignmentWithValues?: boolean;
+        hideInfl?: boolean;
     };
     text: string;
 }

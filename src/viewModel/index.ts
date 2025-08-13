@@ -576,7 +576,7 @@ export class SystemService {
                     place
                 );
                 this.programService.changeSegmentTextByPositionIndex(
-                    this.programService.getCurrentProgram().segments.length - 1,
+                    place + 1,
                     item.text[this.vms.persistenceViewModelState.language()]
                 );
             }

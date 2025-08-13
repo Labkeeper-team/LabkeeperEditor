@@ -64,7 +64,7 @@ export interface Translations {
         label: string;
         without_round: string;
         first_digit: string;
-        fixed_digits: string;
+        five_digits: string;
         one_digit: string;
         two_digits: string;
         three_digits: string;
@@ -90,6 +90,9 @@ export interface Translations {
         visible: string;
         hide_assignment_with_values: string;
         hide_array: string;
+        hide_value: string;
+        hide_assignment: string;
+        hide_infl: string;
         hide_general_formula: string;
         hide_infl_assignment: string;
         hide_infl_assignment_with_values: string;

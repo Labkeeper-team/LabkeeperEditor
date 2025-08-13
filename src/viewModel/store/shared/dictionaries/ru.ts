@@ -71,7 +71,7 @@ export const ru: Translations = {
         label: 'Режим округления',
         without_round: 'Без округления',
         first_digit: 'Первая значащая цифра погрешности',
-        fixed_digits: '5 знаков',
+        five_digits: '5 знаков',
         one_digit: '1 знак',
         two_digits: '2 знака',
         three_digits: '3 знака',
@@ -108,6 +108,9 @@ export const ru: Translations = {
         asciimath: 'простая формула',
         no_computation_result: 'Отсутствует результат вычислений',
         run_to_view: 'Нажмите кнопку "Выполнить"',
+        hide_assignment: 'Скрыть формулу',
+        hide_value: 'Скрыть результат вычислений',
+        hide_infl: 'Скрыть погрешность',
     },
 
     instructions: {

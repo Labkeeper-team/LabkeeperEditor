@@ -532,3 +532,49 @@ test('segments-move-with-result-test', async () => {
         } as ComputationalOutputSegment,
     ]);
 });
+
+/*
+https://github.com/Labkeeper-team/TypeThree/issues/303
+Тест про то, как подсказки перезатирают сегменты.
+Сценарий:
+1. создаем выч сегмент
+2. пишем в него текст
+3. создаем md сегмент
+4. пишем в него текст
+5. выделяем последний сегмент
+6. отменяем выделение последнего сегмента
+7. добавляем подсказку
+8. проверяем, что все ок
+ */
+test('hint-erase-other-segments-test', async () => {
+    const { rpi, mvs, systemService } = mockContext();
+
+    rpi.getUserInfoRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        body: {
+            isAuthenticated: false,
+            email: 'a@gmail.com',
+            id: 1,
+        },
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+    } as RequestResult<UserInfo>);
+
+    systemService.onAddSegmentClicked('computational');
+    await systemService.onSegmentTextEdited(0, 'a = 19');
+    systemService.onAddSegmentClicked('md');
+    await systemService.onSegmentTextEdited(1, 'biba');
+
+    await systemService.onFocusSegment(1);
+    await systemService.onBlurSegment(1, 'biba');
+
+    systemService.onHelpItemCreated(headerHelpItems[0]);
+
+    const segments = mvs.projectViewModelState.currentProgram().segments;
+    expect(segments.map((s) => s.text)).toStrictEqual([
+        'a = 19',
+        'my_array = [1, 2, 3, 4]',
+        'biba',
+    ]);
+});

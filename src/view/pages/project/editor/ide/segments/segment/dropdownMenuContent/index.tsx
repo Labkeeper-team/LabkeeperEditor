@@ -65,6 +65,14 @@ export const DropdownMenuContent = ({
             <Checkbox
                 hidden={isSegmentIsNotComputional}
                 className="full-width-checkbox"
+                id={`assignment-${index}`}
+                checked={!!segment.parameters.hideAssignment}
+                onChange={onCreateClickCheckox('hideAssignment')}
+                title={dictionary.segment.hide_assignment}
+            />
+            <Checkbox
+                hidden={isSegmentIsNotComputional}
+                className="full-width-checkbox"
                 id={`valued-assignment-${index}`}
                 checked={!!segment.parameters.hideAssignmentWithValues}
                 onChange={onCreateClickCheckox('hideAssignmentWithValues')}
@@ -73,10 +81,10 @@ export const DropdownMenuContent = ({
             <Checkbox
                 hidden={isSegmentIsNotComputional}
                 className="full-width-checkbox"
-                id={`array-${index}`}
-                checked={!!segment.parameters.hideArray}
-                onChange={onCreateClickCheckox('hideArray')}
-                title={dictionary.segment.hide_array}
+                id={`value-${index}`}
+                checked={!!segment.parameters.hideValue}
+                onChange={onCreateClickCheckox('hideValue')}
+                title={dictionary.segment.hide_value}
             />
             <Checkbox
                 hidden={isSegmentIsNotComputional}
@@ -101,6 +109,14 @@ export const DropdownMenuContent = ({
                 checked={!!segment.parameters.hideInflAssignmentWithValues}
                 onChange={onCreateClickCheckox('hideInflAssignmentWithValues')}
                 title={dictionary.segment.hide_infl_assignment_with_values}
+            />
+            <Checkbox
+                hidden={isSegmentIsNotComputional}
+                className="full-width-checkbox"
+                id={`infl-${index}`}
+                checked={!!segment.parameters.hideInfl}
+                onChange={onCreateClickCheckox('hideInfl')}
+                title={dictionary.segment.hide_infl}
             />
         </>
     );

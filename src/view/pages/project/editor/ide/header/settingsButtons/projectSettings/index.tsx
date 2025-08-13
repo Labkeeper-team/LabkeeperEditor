@@ -84,17 +84,16 @@ export const ProjectSettings = () => {
                 <Radio
                     id="fixedNumber"
                     checked={
-                        activeProgram?.parameters.roundStrategy ===
-                        'fixedDigits'
+                        activeProgram?.parameters.roundStrategy === 'fiveDigits'
                     }
                     onChange={() =>
                         dispatch(
                             onRoundStrategySetRequest({
-                                strategy: 'fixedDigits',
+                                strategy: 'fiveDigits',
                             })
                         )
                     }
-                    title={dictionary.rounding_mode.fixed_digits}
+                    title={dictionary.rounding_mode.five_digits}
                 />
                 <Radio
                     id="firstMeaningDigit"

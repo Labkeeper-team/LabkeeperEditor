@@ -26,6 +26,12 @@
             width: 0px;
         }
     }
+    /* Отступ справа у первых двух видимых строк, чтобы не было наслоения с блоком правил редактора */
+    .cm-content {
+        .cm-line:nth-child(-n + 2) {
+            padding-right: 145px;
+        }
+    }
     .highlight-text-editor {
         background: yellow;
     }
