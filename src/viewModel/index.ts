@@ -91,6 +91,12 @@ export class SystemService {
         }
     };
 
+    onOauthLogin = async () => {
+        this.vms.persistenceViewModelState.setLastOpenedProjectUuid(
+            this.vms.projectViewModelState.project()?.projectId
+        );
+    };
+
     onLogoutButtonClicked = async () => {
         const response = await this.rpi.logoutRequest();
 

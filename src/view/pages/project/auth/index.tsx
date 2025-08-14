@@ -17,6 +17,7 @@ import {
     onEmailSendButtonClickedRequest,
     onForgotPasswordButtonClickedRequest,
     onFormLoginClickedRequest,
+    onOauthLoginRequest,
     onRegistrationButtonClickedRequest,
     onSendCodeButtonClickedRequest,
     onSendPasswordButtonClickedRequest,
@@ -276,6 +277,7 @@ const LoginView = () => {
                             minimize={false}
                             disabled={isLoading}
                             onPress={() => {
+                                dispatch(onOauthLoginRequest());
                                 window.location =
                                     URLS.YandexOidcLogin as unknown as string &
                                         Location;

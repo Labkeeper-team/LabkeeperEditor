@@ -8,6 +8,7 @@ export interface PersistenceState {
     language: Language;
     lastProgram: Program;
     instructionExpanded: boolean;
+    lastOpenedProjectUuid?: string;
 }
 
 export const persistenceSlice = createSlice({
@@ -26,6 +27,12 @@ export const persistenceSlice = createSlice({
         clearLastProgram(state) {
             state.lastProgram = initialProgram;
         },
+        setLastOpenedProjectUuid(
+            state,
+            { payload }: PayloadAction<string | undefined>
+        ) {
+            state.lastOpenedProjectUuid = payload;
+        },
     },
     extraReducers: (b) => {
         b.addCase(LOGOUT_TYPE, (state) => {
@@ -41,4 +48,5 @@ export const {
     setInstructionExpanded,
     clearLastProgram,
     setLastProgram,
+    setLastOpenedProjectUuid,
 } = persistenceSlice.actions;

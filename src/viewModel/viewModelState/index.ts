@@ -33,6 +33,7 @@ import {
     clearLastProgram,
     setInstructionExpanded,
     setLanguage,
+    setLastOpenedProjectUuid,
     setLastProgram,
 } from '../store/slices/persistence';
 import {
@@ -118,7 +119,11 @@ export const createViewModelStateFromStore = (
                 store.getState().persistence.instructionExpanded,
             language: () => store.getState().persistence.language,
             lastProgram: () => store.getState().persistence.lastProgram,
+            lastOpenedProjectUuid: () =>
+                store.getState().persistence.lastOpenedProjectUuid,
 
+            setLastOpenedProjectUuid: (uuid) =>
+                store.dispatch(setLastOpenedProjectUuid(uuid)),
             setInstructionExpanded: (instructionExpanded) =>
                 store.dispatch(setInstructionExpanded(instructionExpanded)),
             setLanguage: (language) => store.dispatch(setLanguage(language)),
@@ -233,6 +238,7 @@ export const mockViewModelState = (): ViewModelState => {
             roundStrategy: 'firstMeaningDigit',
         },
     };
+    let lastOpenedProjectUuid: string | undefined = undefined;
 
     let compileErrorResult: CompileErrorResultList | undefined = undefined;
     let compileSuccessResult: CompileSuccessResult = { segments: [] };
@@ -305,7 +311,9 @@ export const mockViewModelState = (): ViewModelState => {
             instructionExpanded: () => instructionExpanded,
             language: () => language,
             lastProgram: () => lastProgram,
+            lastOpenedProjectUuid: () => lastOpenedProjectUuid,
 
+            setLastOpenedProjectUuid: (uuid) => (lastOpenedProjectUuid = uuid),
             setInstructionExpanded: (v) => (instructionExpanded = v),
             setLanguage: (v) => (language = v),
             setLastProgram: (v) => (lastProgram = v),
@@ -491,7 +499,9 @@ export interface PersistenceViewModelState {
     language: () => Language;
     lastProgram: () => Program;
     instructionExpanded: () => boolean;
+    lastOpenedProjectUuid: () => string | undefined;
 
+    setLastOpenedProjectUuid: (uuid: string | undefined) => void;
     setLanguage: (language: Language) => void;
     setInstructionExpanded: (instructionExpanded: boolean) => void;
     setLastProgram: (lastProgram: Program) => void;

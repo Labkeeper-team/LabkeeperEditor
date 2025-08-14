@@ -66,10 +66,23 @@ export class StartupService {
         // HOME PAGE ENTER
         if (
             locationWithoutLastSlash === Routes.Home ||
-            locationWithoutLastSlash === Routes.CodePage ||
             qrPagePattern.test(locationWithoutLastSlash)
         ) {
             await this.openDefaultProject(userInfo, version);
+        }
+
+        // OAUTH
+        else if (locationWithoutLastSlash === Routes.CodePage) {
+            const lastOpenedProjectUuid =
+                this.vms.persistenceViewModelState.lastOpenedProjectUuid();
+            this.vms.persistenceViewModelState.setLastOpenedProjectUuid(
+                undefined
+            );
+            if (!lastOpenedProjectUuid) {
+                await this.openDefaultProject(userInfo, version);
+            } else {
+                await this.openProjectById(userInfo, lastOpenedProjectUuid);
+            }
         }
 
         // PROJECT DEFAULT PAGE ENTER
@@ -147,6 +160,7 @@ export class StartupService {
                 project.program,
                 project.lastProgramResult
             );
+            this.vms.navigate(Routes.Project.replace(':id', project.projectId));
         }
     }
 
@@ -174,7 +188,7 @@ export class StartupService {
                     errors: [],
                 });
                 this.vms.navigate(
-                    Routes.Project.replace(':id', project.projectId + '')
+                    Routes.Project.replace(':id', project.projectId)
                 );
             }
             if (result.isUnauth) {

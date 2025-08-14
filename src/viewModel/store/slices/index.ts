@@ -36,6 +36,7 @@ export const persistenceInitialState: PersistenceState = {
     language: navigator.language.includes('ru') ? 'ru' : 'en',
     lastProgram: initialProgram,
     instructionExpanded: true,
+    lastOpenedProjectUuid: undefined,
 };
 
 export const projectInitialState: ProjectState = {

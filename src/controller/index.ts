@@ -328,6 +328,13 @@ export const onSearchInputChangedRequest = createAsyncThunk(
     }
 );
 
+export const onOauthLoginRequest = createAsyncThunk(
+    'onOauthLoginRequest',
+    async () => {
+        wrapper('onOauthLoginRequest', () => systemService.onOauthLogin());
+    }
+);
+
 export const onRoundStrategySetRequest = createAsyncThunk(
     'onRoundStrategySetRequest',
     async ({ strategy }: { strategy: ProgramRoundStrategy }) => {
