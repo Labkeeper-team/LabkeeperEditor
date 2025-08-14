@@ -22,7 +22,7 @@ import {
     onSendCodeButtonClickedRequest,
     onSendPasswordButtonClickedRequest,
 } from '../../../../controller';
-import { YandexRtbBanner, YandexRtbFloorAd } from '../../../components/ads';
+import { YandexRtbFloorAd } from '../../../components/ads';
 
 // Компонент спиннера загрузки
 const LoadingSpinner = () => (
@@ -285,11 +285,6 @@ const LoginView = () => {
                         />
                     ))}
                 </div>
-                <YandexRtbBanner
-                    width={520}
-                    height={150}
-                    blockId={'R-A-16459386-4'}
-                />
             </div>
             {isLoading && <LoadingSpinner />}
         </div>
