@@ -1,0 +1,21 @@
+{
+    "segments": [
+        {
+            "text": "### Example",
+            "type": "md"
+        },
+        {
+            "statements": [
+                {
+                    "latex": "\\begin{equation}\n\\normalsize\nd\n\\ = \\\n0.56\n\\pm\n0.01\n\\end{equation}\\begin{equation}\n\\normalsize\nS\n\\ = \\\n\\frac{\\pi \\cdot d^{2}}{4}\n\\ = \\\n\\frac{\\pi \\cdot 0.56^{2}}{4}\n\\ = \\\n0.25\n\\pm\n0.0088\n\\end{equation}\\begin{equation}\n\\small\n\\sigma(\nS\n)\n\\ = \\\n\\sqrt{\n\\left ( \\frac{\\partial S}{\\partial d} \\cdot \\sigma \\left ( d \\right ) \\right )^{2}\n}\n\\ = \\\n\\sqrt{\n\\frac{1}{4} \\cdot \\sigma \\left ( d \\right )^{2} \\cdot d^{2} \\cdot \\pi^{2}\n}\n\\ = \\\n\\sqrt{\n\\frac{1}{4} \\cdot 0.01^{2} \\cdot 0.56^{2} \\cdot \\pi^{2}\n}\n\\ = \\\n\\end{equation}\\begin{equation}\n\\normalsize\n\\ = \\\n0.0088\n\\end{equation}",
+                    "type": "latex"
+                }
+            ],
+            "type": "computational"
+        },
+        {
+            "text": "* *Result* ~can~ be inserted into **markdown**.\n $$\n S = (\\pi * d^2) / 4 = 0.25\n\\pm\n0.0088\n $$\n> Latex math can be used in markdown $\\int$",
+            "type": "md"
+        }
+    ]
+}

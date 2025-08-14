@@ -53,10 +53,12 @@ export interface OutputSegment {
 
 export interface ComputationalOutputSegment extends OutputSegment {
     statements: Statement[];
+    type: 'computational';
 }
 
 export interface TextOutputSegment extends OutputSegment {
     text: string;
+    type: 'md' | 'latex' | 'asciimath';
 }
 
 export interface Statement {
@@ -135,6 +137,12 @@ export interface CalcStatement extends Statement {
     inflAssignmentGeneralFormula: string;
     inflAssignmentWithValues: string[];
     variable: string;
+    type: 'calculation';
+}
+
+export interface LatexStatement extends Statement {
+    latex: string;
+    type: 'latex';
 }
 
 export interface PlotStatement extends Statement {
@@ -143,14 +151,17 @@ export interface PlotStatement extends Statement {
     plotYAxisName: string;
     plots: PlotDto[];
     legendVisible: boolean;
+    type: 'plot';
 }
 
 export interface FileStatement extends Statement {
     url: string;
+    type: 'file';
 }
 
 export interface TableStatement extends Statement {
     table: string[][];
+    type: 'table';
 }
 
 export interface PlotDto {

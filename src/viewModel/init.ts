@@ -7,6 +7,7 @@ import { ProgramService } from '../model/service/program.ts';
 import { LoaderService } from './project.ts';
 import { ObserverService, States } from '../model/service/observer.ts';
 import { IdeService } from './ide.ts';
+import { ExampleService } from './example.ts';
 
 const qrPagePattern = /\/qr\/v\d+/i;
 const projectPagePattern = /\/project\/\S+/i;
@@ -18,6 +19,7 @@ export class StartupService {
     vms: ViewModelState;
     observerService: ObserverService;
     ideService: IdeService;
+    exampleService: ExampleService;
 
     constructor(
         rpi: Rpi,
@@ -25,7 +27,8 @@ export class StartupService {
         loader: LoaderService,
         vms: ViewModelState,
         observerService: ObserverService,
-        ideService: IdeService
+        ideService: IdeService,
+        exampleService: ExampleService
     ) {
         this.observerService = observerService;
         this.rpi = rpi;
@@ -33,6 +36,7 @@ export class StartupService {
         this.loader = loader;
         this.vms = vms;
         this.ideService = ideService;
+        this.exampleService = exampleService;
     }
 
     onAppStartup = async (): Promise<void> => {
@@ -56,25 +60,27 @@ export class StartupService {
         const locationWithoutLastSlash = this.cutOfLastSlash(
             this.vms.location()
         );
-
+        const version = qrPagePattern.test(locationWithoutLastSlash)
+            ? locationWithoutLastSlash.split('/').pop()
+            : undefined;
         // HOME PAGE ENTER
         if (
             locationWithoutLastSlash === Routes.Home ||
             locationWithoutLastSlash === Routes.CodePage ||
             qrPagePattern.test(locationWithoutLastSlash)
         ) {
-            await this.openDefaultProject(userInfo);
+            await this.openDefaultProject(userInfo, version);
         }
 
         // PROJECT DEFAULT PAGE ENTER
         else if (locationWithoutLastSlash === Routes.ProjectDefault) {
-            await this.openDefaultProject(userInfo);
+            await this.openDefaultProject(userInfo, version);
         }
 
         // PROJECTS PAGE ENTER
         else if (locationWithoutLastSlash === Routes.Projects) {
             if (!userInfo.isAuthenticated) {
-                await this.openDefaultProject(userInfo);
+                await this.openDefaultProject(userInfo, version);
             }
         }
 
@@ -144,7 +150,10 @@ export class StartupService {
         }
     }
 
-    private async openDefaultProject(userInfo: UserInfo): Promise<void> {
+    private async openDefaultProject(
+        userInfo: UserInfo,
+        version: string | undefined
+    ): Promise<void> {
         this.vms.projectViewModelState.setReadOnly(false);
         if (userInfo.isAuthenticated) {
             const result = await this.rpi.getDefaultProjectRequest(
@@ -179,9 +188,32 @@ export class StartupService {
         } else {
             this.vms.navigate(Routes.ProjectDefault);
             // on default uri but unauth
-            this.ideService.setNewProgram(
-                this.vms.persistenceViewModelState.lastProgram()
-            );
+            if (
+                this.vms.persistenceViewModelState.lastProgram() &&
+                this.vms.persistenceViewModelState.lastProgram().segments
+                    ?.length > 0
+            ) {
+                this.programService.setNewProgram(
+                    this.vms.persistenceViewModelState.lastProgram()
+                );
+            } else {
+                const language = this.vms.persistenceViewModelState.language();
+                if (version) {
+                    const [program, result] = this.exampleService.exampleForQR(
+                        version,
+                        language
+                    );
+                    this.ideService.setNewProgram(program, result);
+                } else {
+                    this.programService.setNewProgram(
+                        this.vms.persistenceViewModelState.lastProgram()
+                    );
+                    /* закоменчено, так как не выбрали какой пример показывать на странице labkeeper.io
+                    const [program, result] =
+                        this.exampleService.exampleForUnauthorize();
+                    this.ideService.setNewProgram(program, result);*/
+                }
+            }
         }
     }
 }

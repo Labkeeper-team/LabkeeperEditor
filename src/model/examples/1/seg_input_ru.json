@@ -1,0 +1,28 @@
+{
+    "segments": [
+        {
+            "type": "md",
+            "parameters": {
+                "visible": true
+            },
+            "text": "### Пример"
+        },
+        {
+            "type": "computational",
+            "parameters": {
+                "visible": true
+            },
+            "text": "//Вычисления на Python-подобном языке с поддержкой погрешности #\n d = 0.56 # 0.01 \n S = (pi * d^2) / 4 \n //При необходимости можно скрыть все вычисления сверху или только часть формулы (нажать ...)"
+        },
+        {
+            "type": "md",
+            "parameters": {
+                "visible": true
+            },
+            "text": "* *Результат* ~можно~ вставить в **маркдаун**.\n $$\n S = (\\pi * d^2) / 4 = ${S}\n $$\n> В маркдауне можно использовать latex-математику $\\int$"
+        }
+    ],
+    "parameters": {
+        "roundStrategy": "twoDigits"
+    }
+}

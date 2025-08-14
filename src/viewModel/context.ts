@@ -9,6 +9,7 @@ import { IdeService } from './ide.ts';
 import { SystemService } from './index.ts';
 import { AuthService } from './auth.ts';
 import { FileService } from './file.ts';
+import { ExampleService } from './example.ts';
 
 export function setupContext(
     rpi: Rpi,
@@ -23,13 +24,15 @@ export function setupContext(
         ideService
     );
     const fileService: FileService = new FileService(vms);
+    const exampleService: ExampleService = new ExampleService();
     const startupService: StartupService = new StartupService(
         rpi,
         programService,
         loaderService,
         vms,
         observerService,
-        ideService
+        ideService,
+        exampleService
     );
     const compilationService: CompilationService = new CompilationService(
         vms,
@@ -50,7 +53,8 @@ export function setupContext(
         compilationService,
         observerService,
         authService,
-        fileService
+        fileService,
+        exampleService
     );
 
     return {
@@ -64,5 +68,6 @@ export function setupContext(
         ideService,
         systemService,
         fileService,
+        exampleService,
     };
 }

@@ -6,6 +6,7 @@ import {
     SegmentType,
 } from '../model/domain.ts';
 import { LoaderService } from './project.ts';
+import { ExampleService } from './example.ts';
 import { FileService } from './file.ts';
 import { HeaderHelpItem } from '../model/help';
 import { Rpi } from '../model/rpi';
@@ -28,6 +29,7 @@ export class SystemService {
     observerService: ObserverService;
     authService: AuthService;
     fileService: FileService;
+    exampleService: ExampleService;
 
     constructor(
         vms: ViewModelState,
@@ -39,7 +41,8 @@ export class SystemService {
         compilationService: CompilationService,
         observerService: ObserverService,
         authService: AuthService,
-        fileService: FileService
+        fileService: FileService,
+        exampleService: ExampleService
     ) {
         this.rpi = rpi;
         this.programService = programService;
@@ -51,6 +54,7 @@ export class SystemService {
         this.observerService = observerService;
         this.authService = authService;
         this.fileService = fileService;
+        this.exampleService = exampleService;
     }
 
     onAppEnterWithOauthCode = async (code: string, state: string) => {
