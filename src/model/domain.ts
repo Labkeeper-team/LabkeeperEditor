@@ -8,7 +8,12 @@ export type ProgramRoundStrategy =
     | 'oneDigit'
     | 'fiveDigits'
     | 'firstMeaningDigit';
-export type SegmentType = 'md' | 'computational' | 'latex' | 'asciimath';
+export type SegmentType =
+    | 'md'
+    | 'computational'
+    | 'latex'
+    | 'asciimath'
+    | 'empty';
 export type StatementType =
     | 'assignment'
     | 'calculation'

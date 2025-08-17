@@ -1,4 +1,3 @@
-import { useCompiledSegments } from '../../viewModel/store/selectors/program.ts';
 import { ViewResult } from '../../view/pages/project/viewer/result/view';
 import { render } from '@testing-library/react';
 import preview from 'jest-preview';
@@ -28,11 +27,29 @@ const TestSegment = () => (
     </div>
 );
 
+let i = 0;
 jest.mock('react-redux', () => {
     return {
-        useSelector: (arg) => {
-            if (arg === useCompiledSegments) {
-                return [testSegment];
+        useSelector: () => {
+            if (i === 0) {
+                i++;
+                return 1;
+            }
+            if (i === 1) {
+                i++;
+                return testSegment;
+            }
+            if (i === 2) {
+                i++;
+                return false;
+            }
+            if (i === 3) {
+                i++;
+                return false;
+            }
+            if (i === 4) {
+                i = 1;
+                return 1;
             }
         },
     };

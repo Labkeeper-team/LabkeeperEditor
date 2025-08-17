@@ -17,6 +17,10 @@ export const useCompiledSegments = createSelector(
     (state: StorageState) => state.project,
     (s) => s.compileSuccessResult?.segments
 );
+export const useCompiledSegmentsSize = createSelector(
+    (state: StorageState) => state.project,
+    (s) => s.compileSuccessResult?.segments?.length
+);
 export const useCompiledErrors = createSelector(
     (state: StorageState) => state.project,
     (e) => e.compileErrorResult?.errors
@@ -41,6 +45,14 @@ export const useIsSegmentIsActive = (id: number) =>
     createSelector(
         (state: StorageState) => state.ide.activeSegmentIndex,
         (index) => index === id
+    );
+export const useSegment = (id: number) =>
+    createSelector(
+        (state: StorageState) =>
+            state.project.compileSuccessResult?.segments.filter(
+                (_, i) => i === id
+            ),
+        (s) => (s.length > 0 ? s[0] : undefined)
     );
 export const useShowTour = createSelector(
     (state: StorageState) => state.settings,

@@ -81,6 +81,10 @@ export class IdeService {
             program.segments.length
         );
         for (let i = 0; i < program.segments.length; i++) {
+            let output =
+                this.vms.projectViewModelState.compileSuccessResult().segments[
+                    i
+                ];
             if (
                 !this.vms.projectViewModelState.compileSuccessResult().segments[
                     i
@@ -90,40 +94,48 @@ export class IdeService {
                     program.segments[i].type === 'computational' ||
                     dollarPattern.test(program.segments[i].text)
                 ) {
-                    this.vms.projectViewModelState.setCompileResultForSegment(
-                        i,
-                        {
-                            type: 'computational',
-                            statements: [{ type: 'no_result' }],
-                        } as ComputationalOutputSegment
-                    );
+                    output = {
+                        type: 'computational',
+                        statements: [{ type: 'no_result' }],
+                    } as ComputationalOutputSegment;
                 } else {
-                    this.vms.projectViewModelState.setCompileResultForSegment(
-                        i,
-                        {
-                            type: program.segments[i].type,
-                            text: program.segments[i].text,
-                        } as TextOutputSegment
-                    );
+                    output = {
+                        type: program.segments[i].type,
+                        text: program.segments[i].text,
+                    } as TextOutputSegment;
                 }
             } else if (
                 program.segments[i].type !== 'computational' &&
                 !dollarPattern.test(program.segments[i].text)
             ) {
-                this.vms.projectViewModelState.setCompileResultForSegment(i, {
+                output = {
                     type: program.segments[i].type,
                     text: program.segments[i].text,
-                } as TextOutputSegment);
+                } as TextOutputSegment;
             } else if (
                 program.segments[i].type === 'computational' &&
                 this.vms.projectViewModelState.compileSuccessResult().segments[
                     i
-                ].type !== 'computational'
+                ].type !== 'computational' &&
+                program.segments[i].parameters.visible
             ) {
-                this.vms.projectViewModelState.setCompileResultForSegment(i, {
+                output = {
                     type: 'computational',
                     statements: [{ type: 'no_result' }],
-                } as ComputationalOutputSegment);
+                } as ComputationalOutputSegment;
+            }
+
+            if (
+                JSON.stringify(output) !==
+                JSON.stringify(
+                    this.vms.projectViewModelState.compileSuccessResult()
+                        .segments[i]
+                )
+            ) {
+                this.vms.projectViewModelState.setCompileResultForSegment(
+                    i,
+                    output
+                );
             }
         }
     };

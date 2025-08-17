@@ -2,144 +2,140 @@ import { createRef, memo, useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 
 import {
-    useActiveElement,
-    useCompiledSegments,
+    useCompiledSegmentsSize,
+    useIsSegmentIsActive,
+    useSegment,
 } from '../../../../../../viewModel/store/selectors/program';
 import { CodeSegment } from './code-segment';
 import { MdSegment } from './md-segment';
+import { LatexSegment } from './latex-segment.tsx';
+import { AsciimathSegment } from './asciimath-segment.tsx';
 import {
     ComputationalOutputSegment,
     TextOutputSegment,
 } from '../../../../../../model/domain.ts';
-import { LatexSegment } from './latex-segment.tsx';
-import { AsciimathSegment } from './asciimath-segment.tsx';
 
 export const Segments = memo(() => {
-    const [prevActiveIndex, setPrevActiveIndex] = useState(-1);
-    const segments = useSelector(useCompiledSegments);
-    const activeIndex = useSelector(useActiveElement);
-    const refs = (segments || []).reduce((prv, _, index) => {
-        prv[index] = createRef();
-        return prv;
-    }, {});
+    const segmentsSize = useSelector(useCompiledSegmentsSize);
 
-    const isElementVisible = useCallback(
-        (elementRef: React.RefObject<HTMLElement>) => {
-            if (!elementRef?.current) return false;
-
-            const container = document.getElementById('compile-result');
-            if (!container) return false;
-
-            const containerRect = container.getBoundingClientRect();
-            const elementRect = elementRef.current.getBoundingClientRect();
-
-            // Проверяем, что элемент виден на 30% или больше
-            const visibleTop = Math.max(elementRect.top, containerRect.top);
-            const visibleBottom = Math.min(
-                elementRect.bottom,
-                containerRect.bottom
-            );
-            const visibleHeight = Math.max(0, visibleBottom - visibleTop);
-
-            const visibilityRatio = visibleHeight / elementRect.height;
-
-            return visibilityRatio >= 0.3;
-        },
-        []
+    return (
+        <>
+            {Array.from(Array(segmentsSize).keys()).map((_, index) => {
+                return <SegmentWrapper index={index} key={index} />;
+            })}
+        </>
     );
+});
 
-    const handleClick = useCallback(
-        (index: number) => {
-            const container = refs[index]?.current.parentElement; // Родительский scroll-контейнер
-            const element = refs[index]?.current;
+const SegmentWrapper = memo(({ index }: { index: number }) => {
+    const segment = useSelector(useSegment(index));
+    const isActive = useSelector(useIsSegmentIsActive(index));
+    const [prevIsActive, setPrevIsActive] = useState(false);
+    const ref = createRef<HTMLDivElement>();
 
-            if (!container || !element) return;
+    const isElementVisible = useCallback(() => {
+        if (!ref?.current) return false;
 
-            const scaleFactor =
-                +document.documentElement.style.getPropertyValue(
-                    '--mobile-scale'
-                );
-            const rect = element.getBoundingClientRect();
-            const containerRect = container.getBoundingClientRect();
+        const container = document.getElementById('compile-result');
+        if (!container) return false;
 
-            // Корректируем позицию с учётом scale
-            const offsetY = (rect.top - containerRect.top) * (1 / scaleFactor);
+        const containerRect = container.getBoundingClientRect();
+        const elementRect = ref.current.getBoundingClientRect();
 
-            // Прокручиваем контейнер
+        // Проверяем, что элемент виден на 30% или больше
+        const visibleTop = Math.max(elementRect.top, containerRect.top);
+        const visibleBottom = Math.min(
+            elementRect.bottom,
+            containerRect.bottom
+        );
+        const visibleHeight = Math.max(0, visibleBottom - visibleTop);
+
+        const visibilityRatio = visibleHeight / elementRect.height;
+
+        return visibilityRatio >= 0.3;
+    }, [ref]);
+
+    const handleClick = useCallback(() => {
+        const container = ref?.current?.parentElement; // Родительский scroll-контейнер
+        const element = ref?.current;
+
+        if (!container || !element) return;
+
+        const scaleFactor =
+            +document.documentElement.style.getPropertyValue('--mobile-scale');
+        const rect = element.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+
+        // Корректируем позицию с учётом scale
+        const offsetY = (rect.top - containerRect.top) * (1 / scaleFactor);
+
+        // Прокручиваем контейнер
+        if (container.scrollTo) {
             container.scrollTo({
                 top: container.scrollTop + offsetY,
                 behavior: 'smooth',
             });
-        },
-        [refs]
-    );
+        }
+    }, [ref]);
 
     useEffect(() => {
-        if (activeIndex > -1) {
+        if (isActive) {
             const shouldScroll =
-                prevActiveIndex !== activeIndex ||
-                !isElementVisible(refs[activeIndex]);
+                isActive !== prevIsActive || !isElementVisible();
 
             if (shouldScroll) {
-                setPrevActiveIndex(activeIndex);
-                handleClick(activeIndex);
+                setPrevIsActive(isActive);
+                handleClick();
             }
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activeIndex, refs, handleClick, isElementVisible]);
+    }, [isActive]);
 
-    return (
-        <>
-            {segments?.map((segment, index) => {
-                switch (segment.type) {
-                    case 'computational': {
-                        const comp = segment as ComputationalOutputSegment;
-                        return (
-                            <CodeSegment
-                                ref={refs[index]}
-                                index={index}
-                                key={`${index + 1}_${index}_${JSON.stringify(comp.statements)}`}
-                                segment={comp}
-                            />
-                        );
-                    }
-                    case 'md': {
-                        const text = segment as TextOutputSegment;
-                        return (
-                            <MdSegment
-                                ref={refs[index]}
-                                key={`${index + 1}_${index}_${text.text}`}
-                                segment={text}
-                                index={index}
-                            />
-                        );
-                    }
-                    case 'latex': {
-                        const text = segment as TextOutputSegment;
-                        return (
-                            <LatexSegment
-                                ref={refs[index]}
-                                key={`${index + 1}_${index}_${text.text}`}
-                                segment={text}
-                                index={index}
-                            />
-                        );
-                    }
-                    case 'asciimath': {
-                        const text = segment as TextOutputSegment;
-                        return (
-                            <AsciimathSegment
-                                ref={refs[index]}
-                                key={`${index + 1}_${index}_${text.text}`}
-                                segment={text}
-                                index={index}
-                            />
-                        );
-                    }
-                    default:
-                        return <div />;
-                }
-            })}
-        </>
-    );
+    if (!segment) {
+        return <div key={index} />;
+    }
+
+    switch (segment.type) {
+        case 'computational': {
+            return (
+                <CodeSegment
+                    segment={segment as ComputationalOutputSegment}
+                    index={index}
+                    key={index}
+                    ref={ref}
+                />
+            );
+        }
+        case 'md': {
+            return (
+                <MdSegment
+                    key={index}
+                    index={index}
+                    ref={ref}
+                    segment={segment as TextOutputSegment}
+                />
+            );
+        }
+        case 'latex': {
+            return (
+                <LatexSegment
+                    key={index}
+                    index={index}
+                    ref={ref}
+                    segment={segment as TextOutputSegment}
+                />
+            );
+        }
+        case 'asciimath': {
+            return (
+                <AsciimathSegment
+                    key={index}
+                    segment={segment as TextOutputSegment}
+                    index={index}
+                    ref={ref}
+                />
+            );
+        }
+        default:
+            return <div />;
+    }
 });
