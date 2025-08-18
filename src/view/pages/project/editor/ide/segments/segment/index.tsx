@@ -52,13 +52,7 @@ import {
     segmentEditorChangeSegmentPositionRequest,
 } from '../../../../../../../controller';
 import { DropdownMenuContent } from './dropdownMenuContent';
-
-const shortTypeMap = {
-    computational: 'code',
-    md: 'markdown',
-    latex: 'latex',
-    asciimath: 'formula',
-};
+import { useDictionary } from '../../../../../../../viewModel/store/selectors/translations.ts';
 
 const setDecorationsEffect = StateEffect.define();
 
@@ -84,6 +78,7 @@ export const SegmentEditor = memo((props: { index: number }) => {
     const segment = useSelector(useInputSegment(props.index));
     const editor = useRef<ReactCodeMirrorRef | undefined>();
     const dispatch = useDispatch<AppDispatch>();
+    const dictionary = useSelector(useDictionary);
 
     /*
         GLOBAL STATE
@@ -314,7 +309,7 @@ export const SegmentEditor = memo((props: { index: number }) => {
                 <div className="segment-type-container">
                     <Typography
                         color={colors.gray10}
-                        text={shortTypeMap[segment.type]}
+                        text={dictionary.short_segment[segment.type]}
                     />
                 </div>
                 <div className="segment-position">

@@ -24,6 +24,13 @@ export const en: Translations = {
     label_save_to_pdf: 'Save to PDF',
     label_problems: 'Problems',
 
+    short_segment: {
+        md: 'Markdown',
+        computational: 'Computation',
+        latex: 'Latex-formula',
+        asciimath: 'Simple-formula',
+    },
+
     segment_divider: {
         add: 'Add',
         computation: 'computation',
@@ -111,7 +118,6 @@ export const en: Translations = {
         adding_segment: 'Adding a segment',
         label: 'Instructions',
     },
-
     compile_error: {
         [CompileError.CODE_NO_END_QUOTES]: 'No closing quotes',
         [CompileError.UNKNOWN_SYMBOL]: 'Unknown symbol',

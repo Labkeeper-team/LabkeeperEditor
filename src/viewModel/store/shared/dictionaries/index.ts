@@ -28,6 +28,13 @@ export interface Translations {
     label_save_to_pdf: string;
     label_problems: string;
 
+    short_segment: {
+        md: string;
+        computational: string;
+        latex: string;
+        asciimath: string;
+    };
+
     segment_divider: {
         add: string;
         computation: string;

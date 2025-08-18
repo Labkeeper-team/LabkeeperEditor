@@ -26,6 +26,13 @@ export const ru: Translations = {
     label_add_more: 'Добавить еще',
     label_add_more_short: 'Еще',
 
+    short_segment: {
+        md: 'Макрдаун',
+        computational: 'Вычисление',
+        latex: 'Latex-формула',
+        asciimath: 'Простая формула',
+    },
+
     segment_divider: {
         add: 'Добавить',
         computation: 'вычисления',
