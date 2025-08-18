@@ -61,6 +61,13 @@ export class IdeService {
                 );
             }
         }
+
+        this.vms.ideViewModelState.setUndoEnabled(
+            this.programService.canUndo()
+        );
+        this.vms.ideViewModelState.setRedoEnabled(
+            this.programService.canRedo()
+        );
     };
 
     onProgramUpdated = () => {
@@ -138,6 +145,13 @@ export class IdeService {
                 );
             }
         }
+
+        this.vms.ideViewModelState.setUndoEnabled(
+            this.programService.canUndo()
+        );
+        this.vms.ideViewModelState.setRedoEnabled(
+            this.programService.canRedo()
+        );
     };
 
     setNewProgram = (program: Program, result?: CompileSuccessResult) => {

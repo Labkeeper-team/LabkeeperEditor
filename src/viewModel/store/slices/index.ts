@@ -23,6 +23,8 @@ export const ideInitialState: IdeState = {
     search: undefined,
     activeSegmentIndex: -1,
     previousActiveSegmentIndex: -1,
+    undoEnabled: false,
+    redoEnabled: false,
 };
 
 export const initialProgram: Program = {

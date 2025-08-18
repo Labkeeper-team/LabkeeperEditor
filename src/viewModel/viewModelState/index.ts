@@ -67,7 +67,9 @@ import {
 import {
     setActiveSegmentIndex,
     setPreviousActiveSegmentIndex,
+    setRedoEnabled,
     setSearch,
+    setUndoEnabled,
 } from '../store/slices/ide';
 import { setProjects } from '../store/slices/projects';
 import { appRouter } from '../../view/routing';
@@ -107,7 +109,11 @@ export const createViewModelStateFromStore = (
             search: () => store.getState().ide.search,
             previousActiveSegmentIndex: () =>
                 store.getState().ide.previousActiveSegmentIndex,
+            redoEnabled: () => store.getState().ide.redoEnabled,
+            undoEnabled: () => store.getState().ide.undoEnabled,
 
+            setUndoEnabled: (v: boolean) => store.dispatch(setUndoEnabled(v)),
+            setRedoEnabled: (v: boolean) => store.dispatch(setRedoEnabled(v)),
             setSearch: (search: string) => store.dispatch(setSearch(search)),
             setActiveSegmentIndex: (index: number) =>
                 store.dispatch(setActiveSegmentIndex(index)),
@@ -229,6 +235,8 @@ export const mockViewModelState = (): ViewModelState => {
     let activeSegmentIndex = -1;
     let search: string | undefined = undefined;
     let previousActiveSegmentIndex = -1;
+    let redoEnabled: boolean = false;
+    let undoEnabled: boolean = false;
 
     let instructionExpanded = false;
     let language: 'ru' | 'en' = 'ru';
@@ -300,7 +308,11 @@ export const mockViewModelState = (): ViewModelState => {
             activeSegmentIndex: () => activeSegmentIndex,
             search: () => search,
             previousActiveSegmentIndex: () => previousActiveSegmentIndex,
+            redoEnabled: () => redoEnabled,
+            undoEnabled: () => undoEnabled,
 
+            setUndoEnabled: (v: boolean) => (undoEnabled = v),
+            setRedoEnabled: (v: boolean) => (redoEnabled = v),
             setSearch: (v: string) => (search = v),
             setActiveSegmentIndex: (index: number) =>
                 (activeSegmentIndex = index),
@@ -434,7 +446,11 @@ export interface IdeViewModelState {
     search: () => string | undefined;
     activeSegmentIndex: () => number;
     previousActiveSegmentIndex: () => number;
+    redoEnabled: () => boolean;
+    undoEnabled: () => boolean;
 
+    setRedoEnabled: (v: boolean) => void;
+    setUndoEnabled: (v: boolean) => void;
     setSearch: (search: string) => void;
     setActiveSegmentIndex: (index: number) => void;
     setPreviousActiveSegmentIndex: (index: number) => void;

@@ -63,12 +63,14 @@ export const projectSlice = createSlice({
                 state.currentProgram.segments.length === payload.segments.length
             ) {
                 for (let i = 0; i < payload.segments.length; i++) {
-                    state.currentProgram.segments[i].text =
-                        payload.segments[i].text;
-                    state.currentProgram.segments[i].type =
-                        payload.segments[i].type;
-                    state.currentProgram.segments[i].parameters =
-                        structuredClone(payload.segments[i].parameters);
+                    if (
+                        JSON.stringify(state.currentProgram.segments[i]) !==
+                        JSON.stringify(payload.segments[i])
+                    ) {
+                        state.currentProgram.segments[i] = structuredClone(
+                            payload.segments[i]
+                        );
+                    }
                 }
                 state.currentProgram.parameters = structuredClone(
                     payload.parameters

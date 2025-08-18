@@ -501,18 +501,6 @@ export const onDeleteProjectRequest = createAsyncThunk(
     }
 );
 
-/*
-Controllers without thunk
- */
-
-export const isPrevVersionButtonDisabledRequest = (): boolean => {
-    return systemService.isPrevVersionButtonDisabled();
-};
-
-export const isNextVersionButtonDisabledRequest = (): boolean => {
-    return systemService.isNextVersionButtonDisabled();
-};
-
 const wrapper = (name: string, method: () => void) => {
     try {
         method();

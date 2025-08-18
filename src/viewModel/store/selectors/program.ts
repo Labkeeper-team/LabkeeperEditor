@@ -25,6 +25,15 @@ export const useCompiledErrors = createSelector(
     (state: StorageState) => state.project,
     (e) => e.compileErrorResult?.errors
 );
+export const useInputSegmentsSize = createSelector(
+    (state: StorageState) => state.project.currentProgram,
+    (p) => p?.segments?.length
+);
+export const useInputSegment = (id) =>
+    createSelector(
+        (state: StorageState) => state.project.currentProgram,
+        (p) => p?.segments[id]
+    );
 export const useCurrentProgram = createSelector(
     (state: StorageState) => state.project,
     (state) => state.currentProgram

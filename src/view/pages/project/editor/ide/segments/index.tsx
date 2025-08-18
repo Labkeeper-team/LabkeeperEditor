@@ -1,21 +1,22 @@
-import React from 'react';
+import { memo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { SegmentEditor } from './segment';
 
 import './style.scss';
-import { useCurrentProgram } from '../../../../../../viewModel/store/selectors/program';
+import { useInputSegmentsSize } from '../../../../../../viewModel/store/selectors/program';
 import { useEffect, useRef } from 'react';
 import { AppDispatch, StorageState } from '../../../../../../viewModel/store';
 import { setScrollEditorToBottom } from '../../../../../../viewModel/store/slices/callback';
 import { SegmentDivider } from './segment-divider';
+import React from 'react';
 
 export const Segments = () => {
-    const program = useSelector(useCurrentProgram);
     const scrollEditorToBottom = useSelector(
         (state: StorageState) => state.callback.scrollEditorToBottom
     );
     const ref = useRef<HTMLDivElement>(null);
     const dispatch = useDispatch<AppDispatch>();
+    const segmentsSize = useSelector(useInputSegmentsSize);
 
     useEffect(() => {
         if (ref?.current && scrollEditorToBottom) {
@@ -33,21 +34,19 @@ export const Segments = () => {
 
     return (
         <div ref={ref} className="segments-container">
-            {program?.segments.map((s, i, ar) => {
-                return (
-                    <React.Fragment key={i}>
-                        <SegmentEditor
-                            segment={s}
-                            index={i}
-                            segmentCount={ar.length}
-                        />
-                        <SegmentDivider
-                            index={i}
-                            showDivider={i + 1 !== ar.length}
-                        />
-                    </React.Fragment>
-                );
+            {Array.from(Array(segmentsSize).keys()).map((_, index) => {
+                return <SegmentEditorWrapper index={index} key={index} />;
             })}
         </div>
     );
 };
+
+const SegmentEditorWrapper = memo(({ index }: { index: number }) => {
+    const size = useSelector(useInputSegmentsSize);
+    return (
+        <React.Fragment key={index}>
+            <SegmentEditor index={index} />
+            <SegmentDivider index={index} showDivider={index + 1 !== size} />
+        </React.Fragment>
+    );
+});

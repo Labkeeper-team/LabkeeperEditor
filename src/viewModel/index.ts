@@ -530,14 +530,6 @@ export class SystemService {
         this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(-1);
     };
 
-    isPrevVersionButtonDisabled = (): boolean => {
-        return !this.programService.canUndo();
-    };
-
-    isNextVersionButtonDisabled = (): boolean => {
-        return !this.programService.canRedo();
-    };
-
     onSearchIconPress = () => {
         if (this.vms.settingsViewModelState.showSearch()) {
             this.vms.ideViewModelState.setSearch('');

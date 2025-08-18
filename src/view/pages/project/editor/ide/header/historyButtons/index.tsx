@@ -6,40 +6,53 @@ import { HistoryChangerIcon } from '../../../../../../icons';
 
 import './style.scss';
 import {
-    isNextVersionButtonDisabledRequest,
-    isPrevVersionButtonDisabledRequest,
     onNextVersionButtonClickedRequest,
     onPrevVersionButtonClickedRequest,
 } from '../../../../../../../controller';
-import { AppDispatch } from '../../../../../../../viewModel/store';
+import {
+    AppDispatch,
+    StorageState,
+} from '../../../../../../../viewModel/store';
 import { useActiveElement } from '../../../../../../../viewModel/store/selectors/program.ts';
 
 export const HistoryButtons = () => {
-    const dispatch = useDispatch<AppDispatch>();
     const activeSegmentIndex = useSelector(useActiveElement);
+    const dispatch = useDispatch<AppDispatch>();
+    const undoEnabled = useSelector(
+        (state: StorageState) => state.ide.undoEnabled
+    );
+    const redoEnabled = useSelector(
+        (state: StorageState) => state.ide.redoEnabled
+    );
 
     useHotkeys(
-        'ctrl+z',
-        () => {
-            if (!activeSegmentIndex || activeSegmentIndex < 0) {
+        'ctrl+z, cmd+z, shift+ctrl+z, shift+cmd+z',
+        (e) => {
+            if (activeSegmentIndex === undefined || activeSegmentIndex < 0) {
+                e?.preventDefault();
+                e?.stopPropagation();
                 dispatch(onPrevVersionButtonClickedRequest());
             }
         },
         {
             enableOnFormTags: true,
             enableOnContentEditable: true,
+            preventDefault: true,
         }
     );
     useHotkeys(
-        'ctrl+y',
-        () => {
-            if (!activeSegmentIndex || activeSegmentIndex < 0) {
+        'ctrl+y, cmd+shift+z',
+        (e) => {
+            if (activeSegmentIndex === undefined || activeSegmentIndex < 0) {
+                e?.preventDefault();
+                e?.stopPropagation();
                 dispatch(onNextVersionButtonClickedRequest());
             }
         },
         {
             enableOnFormTags: true,
             enableOnContentEditable: true,
+            preventDefault: true,
         }
     );
 
@@ -53,7 +66,7 @@ export const HistoryButtons = () => {
             <div
                 onClick={() => dispatch(onPrevVersionButtonClickedRequest())}
                 className={classNames('history-button revert', {
-                    disabled: isPrevVersionButtonDisabledRequest(),
+                    disabled: !undoEnabled,
                 })}
             >
                 <HistoryChangerIcon />
@@ -61,7 +74,7 @@ export const HistoryButtons = () => {
             <div
                 onClick={() => dispatch(onNextVersionButtonClickedRequest())}
                 className={classNames('history-button', {
-                    disabled: isNextVersionButtonDisabledRequest(),
+                    disabled: !redoEnabled,
                 })}
             >
                 <HistoryChangerIcon />
