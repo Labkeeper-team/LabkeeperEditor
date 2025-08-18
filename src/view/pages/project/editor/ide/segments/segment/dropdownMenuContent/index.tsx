@@ -43,7 +43,7 @@ export const DropdownMenuContent = ({
         );
     };
 
-    const isSegmentIsNotComputional = useMemo(() => {
+    const isSegmentIsNotComputational = useMemo(() => {
         return segment.type !== 'computational';
     }, [segment.type]);
 
@@ -56,6 +56,7 @@ export const DropdownMenuContent = ({
                 <Typography color={colors.gray10} text={dictionary.delete} />
             </div>
             <Checkbox
+                hidden={isSegmentIsNotComputational}
                 className="full-width-checkbox"
                 id={`visibility-segment-${index}`}
                 checked={!!segment.parameters.visible}
@@ -63,7 +64,7 @@ export const DropdownMenuContent = ({
                 title={dictionary.segment.visible}
             />
             <Checkbox
-                hidden={isSegmentIsNotComputional}
+                hidden={isSegmentIsNotComputational}
                 className="full-width-checkbox"
                 id={`assignment-${index}`}
                 checked={!!segment.parameters.hideAssignment}
@@ -71,7 +72,7 @@ export const DropdownMenuContent = ({
                 title={dictionary.segment.hide_assignment}
             />
             <Checkbox
-                hidden={isSegmentIsNotComputional}
+                hidden={isSegmentIsNotComputational}
                 className="full-width-checkbox"
                 id={`valued-assignment-${index}`}
                 checked={!!segment.parameters.hideAssignmentWithValues}
@@ -79,7 +80,7 @@ export const DropdownMenuContent = ({
                 title={dictionary.segment.hide_assignment_with_values}
             />
             <Checkbox
-                hidden={isSegmentIsNotComputional}
+                hidden={isSegmentIsNotComputational}
                 className="full-width-checkbox"
                 id={`value-${index}`}
                 checked={!!segment.parameters.hideValue}
@@ -87,7 +88,7 @@ export const DropdownMenuContent = ({
                 title={dictionary.segment.hide_value}
             />
             <Checkbox
-                hidden={isSegmentIsNotComputional}
+                hidden={isSegmentIsNotComputational}
                 className="full-width-checkbox"
                 id={`general-${index}`}
                 checked={!!segment.parameters.hideGeneralFormula}
@@ -95,7 +96,7 @@ export const DropdownMenuContent = ({
                 title={dictionary.segment.hide_general_formula}
             />
             <Checkbox
-                hidden={isSegmentIsNotComputional}
+                hidden={isSegmentIsNotComputational}
                 className="full-width-checkbox"
                 id={`infl-assig-${index}`}
                 checked={!!segment.parameters.hideInflAssignment}
@@ -103,7 +104,7 @@ export const DropdownMenuContent = ({
                 title={dictionary.segment.hide_infl_assignment}
             />
             <Checkbox
-                hidden={isSegmentIsNotComputional}
+                hidden={isSegmentIsNotComputational}
                 className="full-width-checkbox"
                 id={`infl-assig-with-values-${index}`}
                 checked={!!segment.parameters.hideInflAssignmentWithValues}
@@ -111,7 +112,7 @@ export const DropdownMenuContent = ({
                 title={dictionary.segment.hide_infl_assignment_with_values}
             />
             <Checkbox
-                hidden={isSegmentIsNotComputional}
+                hidden={isSegmentIsNotComputational}
                 className="full-width-checkbox"
                 id={`infl-${index}`}
                 checked={!!segment.parameters.hideInfl}

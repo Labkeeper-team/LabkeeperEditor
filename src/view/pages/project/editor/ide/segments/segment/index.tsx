@@ -235,7 +235,7 @@ export const SegmentEditor = memo((props: { index: number }) => {
                 ref={editor as LegacyRef<ReactCodeMirrorRef>}
                 value={tempText}
                 onChange={onChange}
-                readOnly={projectIsReadonly || !segment.parameters.visible}
+                readOnly={projectIsReadonly}
                 extensions={[
                     decorationsField,
                     !segment.parameters.visible
