@@ -6,11 +6,13 @@ import { HomePage } from '../pages/home';
 import { ProjectsPage } from '../pages/projects';
 import { CodePage } from '../pages/code';
 import { QrPage } from '../pages/qr';
+import { RouterErrorBoundary } from '../pages/error';
 
 export const appRouter = createBrowserRouter([
     {
         path: Routes.Home,
         element: <BaseLayout></BaseLayout>,
+        errorElement: <RouterErrorBoundary />,
         children: [
             {
                 path: Routes.Home,
