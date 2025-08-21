@@ -24,7 +24,7 @@
         "@yandex/smart-captcha": "^2.7.0",
         "asciimath2tex": "1.5.0",
         "axios": "1.7.7",
-        "better-react-mathjax": "2.0.3",
+        "better-react-mathjax": "2.3.0",
         "classnames": "2.5.1",
         "codemirror": "5.65.18",
         "date-fns": "4.1.0",

@@ -135,12 +135,12 @@ export enum CompileError {
 }
 
 export interface CalcStatement extends Statement {
-    array: { array: { value: number; infl: number }[] };
-    assignment: string;
-    assignmentWithValues: string[];
-    inflAssignment: string;
-    inflAssignmentGeneralFormula: string;
-    inflAssignmentWithValues: string[];
+    array?: { array: { value: number; infl: number }[] };
+    assignment?: string;
+    assignmentWithValues?: string[];
+    inflAssignment?: string;
+    inflAssignmentGeneralFormula?: string;
+    inflAssignmentWithValues?: string[];
     variable: string;
     type: 'calculation';
 }

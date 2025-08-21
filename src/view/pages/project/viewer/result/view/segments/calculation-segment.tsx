@@ -28,7 +28,8 @@ export const DetailedStatement = ({
             }}
         >
             <MathJax>
-                {`
+                {!!statement.assignment &&
+                    `
         \\begin{equation}
         \\displaystyle
         ${renderVariableToLatex(statement.variable)} \\ = \\ ${renderFormulaToLatex(statement.assignment, variables)} ${statement.assignmentWithValues || statement.array ? '\\ = \\' : ''}
@@ -104,8 +105,9 @@ export const DetailedStatement = ({
 
 function hasSameValuedAssignmentAndValue(statement: CalcStatement) {
     if (
+        statement.array &&
         statement?.array?.array?.length ===
-        statement?.assignmentWithValues?.length
+            statement?.assignmentWithValues?.length
     ) {
         for (let i = 0; i < statement.array.array.length; i++) {
             if (

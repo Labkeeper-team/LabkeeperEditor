@@ -20,6 +20,13 @@ Sentry.init({
     dsn: Secrets.sentryDsn,
     sendDefaultPii: true,
     integrations: [],
+    beforeSend(event) {
+        if (window?.location?.host?.includes('localhost')) {
+            console.log('Error event is dropped due to dev hostname');
+            return null;
+        }
+        return event;
+    },
 });
 
 createRoot(document.getElementById('root')!, {

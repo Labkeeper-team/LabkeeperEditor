@@ -11,7 +11,9 @@ export const MAX_LENGTH_VAR = 2;
 export const MAX_LINE_COUNT_IN_ARRAY = 20;
 export const LINE_LENGTH_WHEN_FORMULA_IS_SHRINK = 10 * MAX_LINE_LENGTH;
 
-export function renderArrayWithoutInflToLatex(array) {
+export function renderArrayWithoutInflToLatex(
+    array: { value: number; infl: number }[]
+) {
     const clearFormulaItems = array.map((i) => parser.parse(i.infl));
 
     let currentLineLength = 0;
@@ -64,7 +66,10 @@ export function renderArrayWithoutInflToLatex(array) {
        ${clearFormulaItems.length > 1 ? '\\right]' : ''}`;
 }
 
-export function renderArrayWithInflToLatex(array, initialGap) {
+export function renderArrayWithInflToLatex(
+    array: { value: number; infl: number }[],
+    initialGap: number
+) {
     let arrayPresentation = '';
     let maxLineLength = 0;
     let lineCount = 0;
@@ -113,7 +118,7 @@ export function renderArrayWithInflToLatex(array, initialGap) {
 
         const valueParsedString = parser.parse(value);
         const inflParsedString = parser.parse(infl);
-        const inflFloatValue = parseFloat(infl);
+        const inflFloatValue = parseFloat(String(infl));
         const comma = index + 1 < array.length ? ',\\ ' : '';
 
         if (inflFloatValue && !hasSingleInflValue) {
@@ -147,8 +152,8 @@ export function renderArrayWithInflToLatex(array, initialGap) {
 }
 
 export function renderArrayOfValuedFormulasToLatex(
-    formulas,
-    initialGap,
+    formulas: string[],
+    initialGap: number,
     maySplit = false
 ) {
     const isCutted = formulas.length > 5;
@@ -211,7 +216,7 @@ export function renderArrayOfValuedFormulasToLatex(
     `;
 }
 
-export function renderVariableToLatex(name) {
+export function renderVariableToLatex(name: string) {
     const [first, second, third] = name.split('_');
     if (!first) {
         return second;
@@ -288,7 +293,11 @@ function isAlphabetic(s: string) {
     }
 }
 
-export function renderFormulaToLatex(str, variables, maySplitBySqrt = false) {
+export function renderFormulaToLatex(
+    str: string,
+    variables: string[],
+    maySplitBySqrt = false
+) {
     let aliased_equation = customizeSpecialSymbolsBeforeParsing(str);
     variables.forEach((v) => {
         const presentation = renderVariableToLatex(v);
@@ -343,7 +352,7 @@ export function renderFormulaToLatex(str, variables, maySplitBySqrt = false) {
   `;
 }
 
-function toAlias(str) {
+function toAlias(str: string) {
     let result = 'biba';
     for (let i = 0; i < str.length; i++) {
         result += String.fromCharCode(97 + (str.charCodeAt(i) % 26));
@@ -351,7 +360,7 @@ function toAlias(str) {
     return result;
 }
 
-function tryToSplitFormulaByPlusesInSqrt(formula) {
+function tryToSplitFormulaByPlusesInSqrt(formula: string) {
     if (!formula.startsWith('\\sqrt{') || !formula.endsWith('}')) {
         return formula;
     }
