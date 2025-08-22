@@ -2105,3 +2105,296 @@ test('file-list-changes-after-compilation', async ({ page }) => {
     // Делаем скриншот файлового менеджера после компиляции
     await expect(page).toHaveScreenshot('file-list-changes/after.png');
 });
+
+/*
+Тест: два запуска компиляции с изменением кода вычислительного сегмента
+ */
+test('double-plots-and-tables-test', async ({ page }) => {
+    // Перехватываем запрос user-info
+    await page.route('/api/v2/public/user-info', async (route) => {
+        await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({
+                isAuthenticated: true,
+                email: 'a@gmail.com',
+                id: 1,
+            }),
+        });
+    });
+
+    // Перехватываем запрос default project и get project
+    await page.route('/api/v2/public/project/default', async (route) => {
+        await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({
+                projectId: uuid,
+                userId: 1,
+                title: 'Default Project',
+                lastModified: new Date().toISOString(),
+                program: {
+                    segments: [],
+                    parameters: {
+                        roundStrategy: 'noRound',
+                    },
+                },
+            }),
+        });
+    });
+    await page.route(`/api/v2/public/project/${uuid}/get`, async (route) => {
+        await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({
+                projectId: uuid,
+                userId: 1,
+                title: 'Default Project',
+                lastModified: new Date().toISOString(),
+                program: {
+                    segments: [],
+                    parameters: {
+                        roundStrategy: 'noRound',
+                    },
+                },
+            }),
+        });
+    });
+
+    // Перехватываем запрос на список файлов
+    await page.route(
+        `/api/v2/public/project/${uuid}/file/list`,
+        async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({
+                    files: [],
+                }),
+            });
+        }
+    );
+
+    // Перехватываем запрос на сохранение программы
+    await page.route(
+        `/api/v2/public/project/${uuid}/program`,
+        async (route) => {
+            await route.fulfill({
+                status: 200,
+            });
+        }
+    );
+
+    // Перехватываем запрос на компиляцию
+    await page.route(
+        `/api/v2/public/project/${uuid}/compile`,
+        async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({
+                    segments: [
+                        {
+                            id: 1,
+                            type: 'computational',
+                            statements: [
+                                {
+                                    type: 'latex',
+                                    legendVisible: false,
+                                    latex: '\\begin{equation}\n\\normalsize\na\n\\ = \\\n\\text{range} \\left ( 10 \\right )\n\\ = \\\n\\left[\n\\begin{array}{c}\n\\normalsize\n0\n, \\ \n1\n, \\ \n2\n, \\ \n3\n, \\ \n4\n, \\ \n5\n, \\ \n6\n, \\ \n7\n, \\ \n8\n, \\ \n9\n\\end{array}\n\\right]\n\\end{equation}\n',
+                                },
+                                {
+                                    type: 'table',
+                                    table: [
+                                        [
+                                            'a',
+                                            '0',
+                                            '1',
+                                            '2',
+                                            '3',
+                                            '4',
+                                            '5',
+                                            '6',
+                                            '7',
+                                            '8',
+                                        ],
+                                    ],
+                                    legendVisible: false,
+                                },
+                                {
+                                    type: 'plot',
+                                    plotName: 'Plot',
+                                    plotXAxisName: 'x',
+                                    plotYAxisName: 'y',
+                                    plots: [
+                                        {
+                                            x: [
+                                                '0',
+                                                '1',
+                                                '2',
+                                                '3',
+                                                '4',
+                                                '5',
+                                                '6',
+                                                '7',
+                                                '8',
+                                                '9',
+                                            ],
+                                            y: [
+                                                '0',
+                                                '1',
+                                                '2',
+                                                '3',
+                                                '4',
+                                                '5',
+                                                '6',
+                                                '7',
+                                                '8',
+                                                '9',
+                                            ],
+                                            name: 'plot',
+                                            type: 'scatter',
+                                            color: 'blue',
+                                            xInfl: [],
+                                            yInfl: [],
+                                        },
+                                    ],
+                                    legendVisible: false,
+                                },
+                            ],
+                        },
+                    ],
+                }),
+            });
+        }
+    );
+
+    await page.goto('/');
+
+    // Ждем загрузки страницы
+    await page.waitForLoadState('domcontentloaded');
+    // Ждем редиректа на конкретный проект
+    await expect(page).toHaveURL(`/project/${uuid}`);
+
+    // добавляем вычислительный
+    await page
+        .locator('div')
+        .filter({ hasText: /^Add more$/ })
+        .first()
+        .click();
+    await page.getByRole('listitem').filter({ hasText: 'Computation' }).click();
+
+    const firstText = `a = range(10)\ntable(a)\nplot(a, a)`;
+    const secondText = `a = range(10)\nb = a ^ 2\ntable(a)\nplot(a, a)`;
+
+    // Вставляем первый текст и компилируем
+    const editor = page.locator('.cm-content').nth(0);
+    await editor.click();
+    await editor.fill(firstText);
+    await editor.click();
+    await page.getByRole('button', { name: /Run/i }).click();
+    await page
+        .getByRole('button', { name: /Run/i })
+        .waitFor({ state: 'attached' });
+
+    // Перехватываем запрос на компиляцию
+    await page.route(
+        `/api/v2/public/project/${uuid}/compile`,
+        async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({
+                    segments: [
+                        {
+                            id: 1,
+                            type: 'computational',
+                            statements: [
+                                {
+                                    type: 'latex',
+                                    legendVisible: false,
+                                    latex: '\\begin{equation}\n\\normalsize\na\n\\ = \\\n\\text{range} \\left ( 10 \\right )\n\\ = \\\n\\left[\n\\begin{array}{c}\n\\normalsize\n0\n, \\ \n1\n, \\ \n2\n, \\ \n3\n, \\ \n4\n, \\ \n5\n, \\ \n6\n, \\ \n7\n, \\ \n8\n, \\ \n9\n\\end{array}\n\\right]\n\\end{equation}\n',
+                                },
+                                {
+                                    type: 'latex',
+                                    legendVisible: false,
+                                    latex: '\\begin{equation}\n\\normalsize\nb\n\\ = \\\na^{2}\n\\ = \\\n\\left[\n\\begin{array}{c}\n\\normalsize\n0^{2}\n, \\ \n1^{2}\n, \\ \n2^{2}\n\\\\\n\\normalsize\n...\n\\end{array}\n\\right]\n\\ = \\\n\\left[\n\\begin{array}{c}\n\\normalsize\n0\n, \\ \n1\n, \\ \n4\n, \\ \n9\n, \\ \n16\n, \\ \n25\n, \\ \n36\n, \\ \n49\n, \\ \n64\n, \\ \n81\n\\end{array}\n\\right]\n\\end{equation}\n',
+                                },
+                                {
+                                    type: 'table',
+                                    table: [
+                                        [
+                                            'a',
+                                            '0',
+                                            '1',
+                                            '2',
+                                            '3',
+                                            '4',
+                                            '5',
+                                            '6',
+                                            '7',
+                                            '8',
+                                        ],
+                                    ],
+                                    legendVisible: false,
+                                },
+                                {
+                                    type: 'plot',
+                                    plotName: 'Plot',
+                                    plotXAxisName: 'x',
+                                    plotYAxisName: 'y',
+                                    plots: [
+                                        {
+                                            x: [
+                                                '0',
+                                                '1',
+                                                '2',
+                                                '3',
+                                                '4',
+                                                '5',
+                                                '6',
+                                                '7',
+                                                '8',
+                                                '9',
+                                            ],
+                                            y: [
+                                                '0',
+                                                '1',
+                                                '2',
+                                                '3',
+                                                '4',
+                                                '5',
+                                                '6',
+                                                '7',
+                                                '8',
+                                                '9',
+                                            ],
+                                            name: 'plot',
+                                            type: 'scatter',
+                                            color: 'blue',
+                                            xInfl: [],
+                                            yInfl: [],
+                                        },
+                                    ],
+                                    legendVisible: false,
+                                },
+                            ],
+                        },
+                    ],
+                }),
+            });
+        }
+    );
+
+    // Меняем текст и снова компилируем
+    await editor.click();
+    await editor.press('Control+a');
+    await editor.fill(secondText);
+    await editor.click();
+    await page.getByRole('button', { name: /Run/i }).click();
+    await page
+        .getByRole('button', { name: /Run/i })
+        .waitFor({ state: 'attached' });
+
+    await expect(page).toHaveScreenshot('double-tables.png');
+});

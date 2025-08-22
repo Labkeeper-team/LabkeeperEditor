@@ -80,12 +80,20 @@ export const CodeSegment = memo(
                             );
                         case 'file': {
                             const file = statement as FileStatement;
-                            return <FileSegment key={index} url={file.url} />;
+                            return (
+                                <FileSegment
+                                    key={`${i}-${JSON.stringify(statement)}`}
+                                    url={file.url}
+                                />
+                            );
                         }
                         case 'table': {
                             const table = statement as TableStatement;
                             return (
-                                <TableSegment key={index} items={table.table} />
+                                <TableSegment
+                                    key={`${i}-${JSON.stringify(statement)}`}
+                                    items={table.table}
+                                />
                             );
                         }
                         case 'plot': {
@@ -96,7 +104,7 @@ export const CodeSegment = memo(
                                     xAxis={plot.plotXAxisName}
                                     yAxis={plot.plotYAxisName}
                                     plots={plot.plots}
-                                    key={index}
+                                    key={`${i}-${JSON.stringify(statement)}`}
                                     legendVisible={plot.legendVisible}
                                 />
                             );
