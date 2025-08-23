@@ -194,8 +194,8 @@ export class SystemService {
         }
     };
 
-    onAppStartup = async () => {
-        await this.startupService.onAppStartup();
+    onAppStartup = async (from?: string) => {
+        await this.startupService.onAppStartup(from);
     };
 
     onPrintButtonPressed = (): void => {

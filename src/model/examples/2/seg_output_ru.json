@@ -1,0 +1,21 @@
+{
+    "segments": [
+        {
+            "text": "### Пример",
+            "type": "md"
+        },
+        {
+            "statements": [
+                {
+                    "latex": "\\begin{equation}\n\\normalsize\nd\n\\ = \\\n0.56\n\\pm\n0.01\n\\end{equation}\\begin{equation}\n\\normalsize\nS\n\\ = \\\n\\frac{\\pi \\cdot d^{2}}{4}\n\\ = \\\n\\frac{\\pi \\cdot 0.56^{2}}{4}\n\\ = \\\n0.25\n\\pm\n0.0088\n\\end{equation}\\begin{equation}\n\\small\n\\sigma(\nS\n)\n\\ = \\\n\\sqrt{\n\\left ( \\frac{\\partial S}{\\partial d} \\cdot \\sigma \\left ( d \\right ) \\right )^{2}\n}\n\\ = \\\n\\sqrt{\n\\frac{1}{4} \\cdot \\sigma \\left ( d \\right )^{2} \\cdot d^{2} \\cdot \\pi^{2}\n}\n\\ = \\\n\\sqrt{\n\\frac{1}{4} \\cdot 0.01^{2} \\cdot 0.56^{2} \\cdot \\pi^{2}\n}\n\\ = \\\n\\end{equation}\\begin{equation}\n\\normalsize\n\\ = \\\n0.0088\n\\end{equation}",
+                    "type": "latex"
+                }
+            ],
+            "type": "computational"
+        },
+        {
+            "text": "* *Результат* ~можно~ вставить в **маркдаун**.\n $$\n S = (\\pi * d^2) / 4 = 0.56\n\\pm\n0.01\n $$\n> В маркдауне можно использовать latex-математику $\\int$\n\nПримеры оформления лаб:\n* [**lab 1.1.1**](https://labkeeper.io/project/8c6b50d6-e1b2-4795-ab81-7aa4407d05b5)\n* [**lab 1.1.3**](https://labkeeper.io/project/1db9efda-90db-4e37-9dc7-2589555c2c22)\n* [**lab 1.1.4**](https://labkeeper.io/project/630fd8ff-49f0-49df-81aa-507a4465f383)\n",
+            "type": "md"
+        }
+    ]
+}

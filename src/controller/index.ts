@@ -1,8 +1,9 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { ProgramRoundStrategy, SegmentType } from '../model/domain.ts';
 import { HeaderHelpItem } from '../model/help';
-import { systemService } from '../main.tsx';
+import { observerService, systemService } from '../main.tsx';
 import * as Sentry from '@sentry/react';
+import { Events } from '../model/service/observer.ts';
 
 /*
 TODO
@@ -122,9 +123,12 @@ export const onSendCodeButtonClickedRequest = createAsyncThunk(
     }
 );
 
-export const onAppEnterRequest = createAsyncThunk('onAppEnter', async () => {
-    wrapper('onAppEnter', () => systemService.onAppStartup());
-});
+export const onAppEnterRequest = createAsyncThunk(
+    'onAppEnter',
+    async ({ from }: { from?: string }) => {
+        wrapper('onAppEnter', () => systemService.onAppStartup(from));
+    }
+);
 
 export const onPrintButtonPressedRequest = createAsyncThunk(
     'onPrintButtonPressedRequest',
@@ -506,6 +510,7 @@ const wrapper = (name: string, method: () => void) => {
         method();
         console.info(`Invoking system operation [${name}]`);
     } catch (error) {
+        observerService.onEvent(Events.FRONTEND_ERROR);
         console.error(error);
         Sentry.captureException(error);
     }

@@ -7,11 +7,16 @@ import { persist, store } from '../viewModel/store';
 import { RouterProvider } from 'react-router-dom';
 import { appRouter } from './routing';
 import ScaleWrapper from './components/scaleWrapper';
+import { observerService } from '../main.tsx';
+import { Events } from '../model/service/observer.ts';
 
 function App() {
     return (
         <Sentry.ErrorBoundary
             showDialog
+            beforeCapture={() => {
+                observerService.onEvent(Events.FRONTEND_ERROR);
+            }}
             fallback={({ resetError }) => (
                 <div
                     style={{

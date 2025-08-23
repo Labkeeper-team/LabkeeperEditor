@@ -1,0 +1,28 @@
+{
+    "segments": [
+        {
+            "type": "md",
+            "parameters": {
+                "visible": true
+            },
+            "text": "### Example"
+        },
+        {
+            "type": "computational",
+            "parameters": {
+                "visible": true
+            },
+            "text": "//Calculations in a Python-like language with error support #\n d = 0.56 # 0.01 \n S = (pi * d^2) / 4 \n //If necessary, you can hide all calculations from above or only part of the formula (click ...)"
+        },
+        {
+            "type": "md",
+            "parameters": {
+                "visible": true
+            },
+            "text": "* *Result* ~can~ be inserted into **markdown**.\n $$\n S = (\\pi * d^2) / 4 = ${S}\n $$\n> Latex math can be used in markdown $\\int$\n\nMore examples here:\n* [**lab 1.1.1**](https://labkeeper.io/project/8c6b50d6-e1b2-4795-ab81-7aa4407d05b5)\n* [**lab 1.1.3**](https://labkeeper.io/project/1db9efda-90db-4e37-9dc7-2589555c2c22)\n* [**lab 1.1.4**](https://labkeeper.io/project/630fd8ff-49f0-49df-81aa-507a4465f383)\n"
+        }
+    ],
+    "parameters": {
+        "roundStrategy": "twoDigits"
+    }
+}

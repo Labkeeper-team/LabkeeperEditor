@@ -39,7 +39,7 @@ export class StartupService {
         this.exampleService = exampleService;
     }
 
-    onAppStartup = async (): Promise<void> => {
+    onAppStartup = async (from?: string): Promise<void> => {
         const result: RequestResult<UserInfo> =
             await this.rpi.getUserInfoRequest();
 
@@ -55,7 +55,11 @@ export class StartupService {
         const userInfo = result.body;
         this.vms.userViewModelState.setUserInfo(userInfo);
 
-        this.observerService.setUserState(States.STATE_EMAIL, userInfo.email);
+        this.observerService.setUserState(States.USER_ID, String(userInfo.id));
+        this.observerService.setUserState(
+            States.STATE_ONLINE,
+            String(userInfo.isAuthenticated)
+        );
 
         const locationWithoutLastSlash = this.cutOfLastSlash(
             this.vms.location()
@@ -68,7 +72,7 @@ export class StartupService {
             locationWithoutLastSlash === Routes.Home ||
             qrPagePattern.test(locationWithoutLastSlash)
         ) {
-            await this.openDefaultProject(userInfo, version);
+            await this.openDefaultProject(userInfo, version, from);
         }
 
         // OAUTH
@@ -79,7 +83,7 @@ export class StartupService {
                 undefined
             );
             if (!lastOpenedProjectUuid) {
-                await this.openDefaultProject(userInfo, version);
+                await this.openDefaultProject(userInfo, version, from);
             } else {
                 await this.openProjectById(userInfo, lastOpenedProjectUuid);
             }
@@ -87,13 +91,13 @@ export class StartupService {
 
         // PROJECT DEFAULT PAGE ENTER
         else if (locationWithoutLastSlash === Routes.ProjectDefault) {
-            await this.openDefaultProject(userInfo, version);
+            await this.openDefaultProject(userInfo, version, from);
         }
 
         // PROJECTS PAGE ENTER
         else if (locationWithoutLastSlash === Routes.Projects) {
             if (!userInfo.isAuthenticated) {
-                await this.openDefaultProject(userInfo, version);
+                await this.openDefaultProject(userInfo, version, from);
             }
         }
 
@@ -161,12 +165,17 @@ export class StartupService {
                 project.lastProgramResult
             );
             this.vms.navigate(Routes.Project.replace(':id', project.projectId));
+            this.observerService.setUserState(
+                States.STATE_PROJECT,
+                project.projectId
+            );
         }
     }
 
     private async openDefaultProject(
         userInfo: UserInfo,
-        version: string | undefined
+        version: string | undefined,
+        from: string | undefined
     ): Promise<void> {
         this.vms.projectViewModelState.setReadOnly(false);
         if (userInfo.isAuthenticated) {
@@ -218,6 +227,17 @@ export class StartupService {
                         language
                     );
                     this.ideService.setNewProgram(program, result);
+                } else if (from) {
+                    const result = this.exampleService.exampleForFrom(
+                        from,
+                        language
+                    );
+                    if (result) {
+                        this.ideService.setNewProgram(
+                            result.program,
+                            result.result
+                        );
+                    }
                 } else {
                     this.programService.setNewProgram(
                         this.vms.persistenceViewModelState.lastProgram()

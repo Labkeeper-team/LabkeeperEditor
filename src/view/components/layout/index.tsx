@@ -36,6 +36,7 @@ export const BaseLayout = () => {
     const location = useLocation();
     const state = searchParams.get('state') || '';
     const code = searchParams.get('code') || '';
+    const from = searchParams.get('from') || undefined;
     const dragCounter = useRef(0);
 
     /*
@@ -113,7 +114,7 @@ export const BaseLayout = () => {
                     onAppEnterWithOauthCodeRequest({ code: code, state: state })
                 );
             } else {
-                dispatch(onAppEnterRequest());
+                dispatch(onAppEnterRequest({ from }));
             }
             loaded = true;
         }

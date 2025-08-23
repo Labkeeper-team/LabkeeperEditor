@@ -8,7 +8,7 @@ export class MetrikaService implements ObserverService {
     setUserState(name: string, value: string) {
         const map = {};
         map[name] = value;
-        this.metrika('params', JSON.stringify(map));
+        this.metrika('userParams', JSON.stringify(map));
     }
 
     private metrika(first: string, second: string) {

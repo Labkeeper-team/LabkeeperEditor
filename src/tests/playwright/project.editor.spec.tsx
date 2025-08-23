@@ -2398,3 +2398,42 @@ test('double-plots-and-tables-test', async ({ page }) => {
 
     await expect(page).toHaveScreenshot('double-tables.png');
 });
+
+/*
+Тест захода на /oauth2/code и отсутствие сети для запроса провайдера
+ */
+test('oauth2-code-offline-provider', async ({ page }) => {
+    // Перехватываем запрос user-info (пользователь не аутентифицирован)
+    await page.route('/api/v2/public/user-info', async (route) => {
+        await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({
+                isAuthenticated: false,
+                email: null,
+                id: null,
+            }),
+        });
+    });
+
+    // Имитируем отсутствие сети для запроса oauth провайдера
+    // Матчим как login, так и logic, и любые версии v2/v3
+    await page.route(
+        /\/api\/v\d+\/sec\/(login|logic)\/oauth2\/code\/provider.*/,
+        async (route) => {
+            await route.abort('internetdisconnected');
+        }
+    );
+
+    // Заходим на страницу с параметрами code/state
+    await page.goto('/oauth2/code?code=abc&state=xyz');
+
+    // Ждем загрузки и редиректа на дефолтный проект
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page).toHaveURL('/project/default');
+
+    // Проверяем, что показана ошибка OAuth
+    await expect(
+        page.getByText('Error while authenticating via third party provider')
+    ).toBeVisible();
+});

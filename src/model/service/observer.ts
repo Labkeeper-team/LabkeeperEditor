@@ -9,6 +9,7 @@ export const Events = {
     EVENT_INSERT_SEGMENT_BETWEEN: 'segment_insert_between',
     EVENT_PRINT: 'print_doc',
     EVENT_QR_V1: 'qr_v1',
+    FRONTEND_ERROR: 'frontend_error',
 };
 
 export type EventValues = (typeof Events)[keyof typeof Events];
@@ -16,6 +17,8 @@ export type EventValues = (typeof Events)[keyof typeof Events];
 export const States = {
     STATE_ONLINE: 'is_logged',
     STATE_EMAIL: 'email',
+    STATE_PROJECT: 'project',
+    USER_ID: 'UserID',
 };
 
 /*
