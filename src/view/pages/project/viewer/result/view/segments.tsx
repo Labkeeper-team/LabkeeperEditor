@@ -100,7 +100,7 @@ const SegmentWrapper = memo(({ index }: { index: number }) => {
                 <CodeSegment
                     segment={segment as ComputationalOutputSegment}
                     index={index}
-                    key={index}
+                    key={`${index}-${JSON.stringify(segment)}`}
                     ref={ref}
                 />
             );
@@ -108,7 +108,7 @@ const SegmentWrapper = memo(({ index }: { index: number }) => {
         case 'md': {
             return (
                 <MdSegment
-                    key={index}
+                    key={`${index}-${JSON.stringify(segment)}`}
                     index={index}
                     ref={ref}
                     segment={segment as TextOutputSegment}
@@ -118,7 +118,7 @@ const SegmentWrapper = memo(({ index }: { index: number }) => {
         case 'latex': {
             return (
                 <LatexSegment
-                    key={index}
+                    key={`${index}-${JSON.stringify(segment)}`}
                     index={index}
                     ref={ref}
                     segment={segment as TextOutputSegment}
@@ -128,7 +128,7 @@ const SegmentWrapper = memo(({ index }: { index: number }) => {
         case 'asciimath': {
             return (
                 <AsciimathSegment
-                    key={index}
+                    key={`${index}-${JSON.stringify(segment)}`}
                     segment={segment as TextOutputSegment}
                     index={index}
                     ref={ref}
