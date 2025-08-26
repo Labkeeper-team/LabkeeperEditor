@@ -22,7 +22,6 @@ import {
     onSendCodeButtonClickedRequest,
     onSendPasswordButtonClickedRequest,
 } from '../../../../controller';
-import { YandexRtbFloorAd } from '../../../components/ads';
 
 // Компонент спиннера загрузки
 const LoadingSpinner = () => (
@@ -675,7 +674,7 @@ export const AuthModal = () => {
 
     useEffect(() => {
         if (currentView !== 'closed') {
-            YandexRtbFloorAd('R-A-16459386-2');
+            // YandexRtbFloorAd('R-A-16459386-2');
         }
     }, [currentView]);
 

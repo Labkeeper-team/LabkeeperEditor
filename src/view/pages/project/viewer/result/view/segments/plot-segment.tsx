@@ -1,35 +1,23 @@
 import Plot from 'react-plotly.js';
 import './plot-segment.scss';
+import { PlotStatement } from '../../../../../../../model/domain.ts';
 
-interface PlotItem {
-    x: number[];
-    y: number[];
-    type: 'scatter' | 'histogram' | 'line';
-    color: string;
-    name: string;
-    xInfl: number[];
-    yInfl: number[];
-}
-
-interface PlotSegmentProps {
-    title: string;
-    xAxis: string;
-    yAxis: string;
-    plots: PlotItem[];
-    legendVisible: boolean;
-}
-
-export const PlotSegment = ({
-    title,
-    xAxis,
-    yAxis,
-    plots,
-    legendVisible,
-}: PlotSegmentProps) => {
-    const traces = plots.map((plot) => ({
+export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
+    const traces = statement.plots.map((plot) => ({
         x: plot.x,
-        y: plot.type !== 'histogram' ? plot.y : undefined,
+        y:
+            plot.type !== 'histogram'
+                ? plot.y
+                : plot.y?.length > 0
+                  ? plot.y
+                  : undefined,
         type: plot.type,
+        histfunc:
+            plot.type === 'histogram' && plot.y?.length > 0 ? 'sum' : undefined,
+        xbins:
+            plot.type === 'histogram' && plot.y?.length > 0 && plot.size
+                ? { size: plot.size }
+                : undefined,
         name: plot.name,
         text: plot.type === 'scatter' ? plot.name : undefined,
         mode:
@@ -53,20 +41,47 @@ export const PlotSegment = ({
         },
     }));
 
+    const axisEnhancement =
+        statement.plotGridVisible === true
+            ? {
+                  showgrid: true,
+                  ticks: 'outside',
+                  ticklen: 6,
+                  tickwidth: 1.5,
+                  tickcolor: '#6b7280',
+                  showline: true,
+                  linewidth: 1.5,
+                  linecolor: '#6b7280',
+                  minor: {
+                      ticks: 'outside',
+                      ticklen: 3,
+                      tickwidth: 1,
+                      tickcolor: '#9ca3af',
+                      showgrid: true,
+                      gridwidth: 0.5,
+                      gridcolor: '#e5e7eb',
+                  },
+              }
+            : typeof statement.plotGridVisible === 'boolean'
+              ? { showgrid: false }
+              : {};
+
     const layout = {
         title: {
-            text: title,
+            text: statement.plotName,
         },
-        showlegend: legendVisible,
+        showlegend: statement.legendVisible,
         xaxis: {
             title: {
-                text: xAxis,
+                text: statement.plotXAxisName,
             },
+            ...axisEnhancement,
         },
         yaxis: {
             title: {
-                text: yAxis,
+                text: statement.plotYAxisName,
             },
+            ...axisEnhancement,
         },
         margin: {
             t: 40,

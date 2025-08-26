@@ -223,7 +223,6 @@ export const instructions: LocalizedInstructionItem[] = [
                 Экспортируйте ваши документы в pdf.
                 `,
             ],
-            containsAd: true,
             image: '/instructions/welcome.png',
             ending: basicEndingRu,
             wikiLink: wikiRuUrl,

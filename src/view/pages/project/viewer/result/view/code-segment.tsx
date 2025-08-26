@@ -100,12 +100,8 @@ export const CodeSegment = memo(
                             const plot = statement as PlotStatement;
                             return (
                                 <PlotSegment
-                                    title={plot.plotName}
-                                    xAxis={plot.plotXAxisName}
-                                    yAxis={plot.plotYAxisName}
-                                    plots={plot.plots}
+                                    statement={plot}
                                     key={`${i}-${JSON.stringify(statement)}`}
-                                    legendVisible={plot.legendVisible}
                                 />
                             );
                         }

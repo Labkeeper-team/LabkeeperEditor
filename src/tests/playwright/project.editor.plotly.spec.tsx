@@ -110,6 +110,36 @@ test('plotly-scatter', async ({ page }) => {
 });
 
 /*
+Тест на рисование точек в plotly
+ */
+test('plotly-with-grid', async ({ page }) => {
+    await plotlyTest(
+        {
+            type: 'plot',
+            plotName: 'MyTitle',
+            plotXAxisName: 'MyX',
+            plotYAxisName: 'MyY',
+            legendVisible: true,
+            plotGridVisible: true,
+            plots: [
+                {
+                    x: [1, 2, 3, 4, 5],
+                    y: [1, 2, 1, 3, 1],
+                    type: 'line',
+                    color: 'blue',
+                    name: 'MyLine',
+                    xInfl: [],
+                    yInfl: [],
+                },
+            ],
+        },
+        page
+    );
+
+    await expect(page).toHaveScreenshot('plotly-with-grid.png');
+});
+
+/*
 Тест на рисование гистограмм в plotly
  */
 test('plotly-histogram', async ({ page }) => {
@@ -195,6 +225,24 @@ test('plotly-histogram-single', async ({ page }) => {
     );
 
     await expect(page).toHaveScreenshot('plotly-histogram-single.png');
+});
+
+test('plotly-histogram-two-dims-test', async ({ page }) => {
+    await plotlyTestWithSingleCurve(
+        {
+            x: [1, 2, 3, 4, 5, 6],
+            y: [5, 4, 3, 2, 1, 0],
+            type: 'histogram',
+            color: 'blue',
+            name: 'MyLine1',
+            xInfl: [],
+            yInfl: [],
+            size: 1,
+        },
+        page
+    );
+
+    await expect(page).toHaveScreenshot('plotly-histogram-two-dims.png');
 });
 
 /*

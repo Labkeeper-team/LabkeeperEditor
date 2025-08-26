@@ -157,6 +157,7 @@ export interface PlotStatement extends Statement {
     plots: PlotDto[];
     legendVisible: boolean;
     type: 'plot';
+    plotGridVisible?: boolean;
 }
 
 export interface FileStatement extends Statement {
@@ -177,6 +178,7 @@ export interface PlotDto {
     color: string;
     xInfl: number[];
     yInfl: number[];
+    size?: number;
 }
 
 export interface CompileErrorResultList {
