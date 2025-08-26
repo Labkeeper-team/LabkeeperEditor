@@ -878,6 +878,11 @@ export class SystemService {
             this.ideService.setNewProgram(result.body.program);
             await this.loaderService.loadProjects();
             this.vms.projectViewModelState.setReadOnly(false);
+        } else if (result.code === 417) {
+            this.vms.toast(
+                this.vms.dictionary.create_modal.error.too_many_projects,
+                'error'
+            );
         } else {
             this.vms.toast(
                 this.vms.dictionary.filemanager.errors.internalError,
