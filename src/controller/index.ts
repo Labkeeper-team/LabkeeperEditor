@@ -505,6 +505,13 @@ export const onDeleteProjectRequest = createAsyncThunk(
     }
 );
 
+export const onCloneProjectRequest = createAsyncThunk(
+    'onCloneProjectRequest',
+    async () => {
+        wrapper('onCloneProjectRequest', () => systemService.onCloneProject());
+    }
+);
+
 const wrapper = (name: string, method: () => void) => {
     try {
         method();

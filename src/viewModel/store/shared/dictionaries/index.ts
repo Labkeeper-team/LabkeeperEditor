@@ -234,6 +234,8 @@ export interface Translations {
         copy_error: string;
     };
     wiki: string;
+    readonly_public_project: string;
+    clone: string;
     contact_modal: {
         button: string;
         title: string;

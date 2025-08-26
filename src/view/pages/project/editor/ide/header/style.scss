@@ -96,5 +96,25 @@
                 }
             }
         }
+        .readonly-public-panel {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 6px 10px;
+            border-radius: 8px;
+            .readonly-badge {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 6px 12px;
+                border-radius: 999px;
+                background: $gray-40;
+                border: 1px solid $gray-30;
+                color: $gray-10;
+                letter-spacing: 0.2px;
+            }
+        }
     }
 }

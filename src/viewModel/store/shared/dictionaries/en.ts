@@ -244,6 +244,8 @@ export const en: Translations = {
         copy_error: 'Failed to copy link',
     },
     wiki: 'wiki',
+    readonly_public_project: 'readonly public project',
+    clone: 'Clone',
     contact_modal: {
         button: 'Contact us',
         title: 'Contact us',

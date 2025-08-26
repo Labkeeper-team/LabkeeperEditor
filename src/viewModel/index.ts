@@ -511,10 +511,12 @@ export class SystemService {
     };
 
     onFolderButtonClicked = async () => {
-        this.vms.settingsViewModelState.setShowFileManager(true);
         const project = this.vms.projectViewModelState.project();
-        if (project) {
+        if (project && this.vms.userViewModelState.isAuthenticated()) {
+            this.vms.settingsViewModelState.setShowFileManager(true);
             await this.loaderService.loadFiles(project.projectId);
+        } else {
+            this.vms.authViewModelState.setCurrentView('login');
         }
     };
 
@@ -852,6 +854,35 @@ export class SystemService {
                 'error'
             );
             this.ideService.resetEditor();
+        }
+    };
+
+    onCloneProject = async () => {
+        const project = this.vms.projectViewModelState.project();
+        if (!project) {
+            throw new Error('No project to clone');
+        }
+
+        if (!this.vms.userViewModelState.isAuthenticated()) {
+            this.vms.authViewModelState.setCurrentView('login');
+            return;
+        }
+
+        const result = await this.rpi.cloneProjectRequest(project.projectId);
+
+        if (result.isOk) {
+            this.vms.navigate(
+                Routes.Project.replace(':id', result.body.projectId)
+            );
+            this.vms.projectViewModelState.setProject(result.body);
+            this.ideService.setNewProgram(result.body.program);
+            await this.loaderService.loadProjects();
+            this.vms.projectViewModelState.setReadOnly(false);
+        } else {
+            this.vms.toast(
+                this.vms.dictionary.filemanager.errors.internalError,
+                'error'
+            );
         }
     };
 

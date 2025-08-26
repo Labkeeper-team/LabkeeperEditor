@@ -6,39 +6,58 @@ import {
     useCurrentProgram,
     useIsProjectReadonly,
     useShowFileManager,
-    useUser,
+    useCurrentProject,
 } from '../../../../../../viewModel/store/selectors/program';
 import { SettingsButton } from './settingsButtons';
 import { FolderIcon } from '../../../../../icons';
 import { AppDispatch } from '../../../../../../viewModel/store';
-import { onFolderButtonClickedRequest } from '../../../../../../controller';
+import {
+    onFolderButtonClickedRequest,
+    onCloneProjectRequest,
+} from '../../../../../../controller';
+import { Typography } from '../../../../../components/typography';
+import { Button } from '../../../../../components/button';
+import { useDictionary } from '../../../../../../viewModel/store/selectors/translations';
 
 export const IdeHeader = () => {
     const program = useSelector(useCurrentProgram);
-    const { isAuthenticated } = useSelector(useUser);
     const dispatch = useDispatch<AppDispatch>();
     const showFileManager = useSelector(useShowFileManager);
     const isReadonly = useSelector(useIsProjectReadonly);
+    const project = useSelector(useCurrentProject);
+    const dictionary = useSelector(useDictionary);
 
     return (
         <div className="ide-header">
             <div className="ide-wrapper">
-                {isAuthenticated ? (
-                    !showFileManager ? (
-                        <div
-                            className="file-manager-button "
-                            onClick={() =>
-                                dispatch(onFolderButtonClickedRequest())
-                            }
-                        >
-                            <FolderIcon />
-                        </div>
-                    ) : null
+                {!!project && !showFileManager ? (
+                    <div
+                        className="file-manager-button "
+                        onClick={() => dispatch(onFolderButtonClickedRequest())}
+                    >
+                        <FolderIcon />
+                    </div>
                 ) : null}
                 {!isReadonly && <HistoryButtons />}
             </div>
             {program?.segments.length && !isReadonly ? (
                 <AddBlock isFirst={false} />
+            ) : isReadonly && project?.isPublic ? (
+                <div className="readonly-public-panel">
+                    <div className="readonly-badge">
+                        <Typography
+                            type="label-small"
+                            text={dictionary.readonly_public_project}
+                        />
+                    </div>
+                    <Button
+                        title={dictionary.clone}
+                        rounded
+                        minimize
+                        color="green"
+                        onPress={() => dispatch(onCloneProjectRequest())}
+                    />
+                </div>
             ) : (
                 <div />
             )}

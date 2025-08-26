@@ -273,6 +273,14 @@ export class Rpi {
         );
     }
 
+    async cloneProjectRequest(
+        projectId: string
+    ): Promise<RequestResult<Project>> {
+        return requestWrapper(async () =>
+            axios.post(`${URLS.cloneProject.replace('{id}', projectId)}`)
+        );
+    }
+
     async deleteProjectRequest(projectId: string): Promise<RequestResult> {
         return requestWrapper(async () =>
             axios.delete(URLS.deleteProject.replace('{id}', projectId))

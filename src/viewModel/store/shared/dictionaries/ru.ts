@@ -255,6 +255,8 @@ export const ru: Translations = {
         copy_error: 'Не удалось скопировать ссылку',
     },
     wiki: 'wiki',
+    readonly_public_project: 'Публичный проект, доступный только для чтения',
+    clone: 'Клонировать',
     contact_modal: {
         button: 'Связаться с нами',
         title: 'Связаться с нами',

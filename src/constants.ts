@@ -13,6 +13,7 @@ export const URLS = {
     getAllProjects: `/api/${version}/public/project/all`,
     getDefaultProject: `/api/${version}/public/project/default`,
     createProject: `/api/${version}/public/project/create`,
+    cloneProject: `/api/${version}/public/project/{id}/clone`,
     deleteProject: `/api/${version}/public/project/{id}/delete`,
     getProject: `/api/${version}/public/project/{id}/get`,
     setProgram: `/api/${version}/public/project/{id}/program`,
