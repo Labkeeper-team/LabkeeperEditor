@@ -90,6 +90,26 @@ test('plotly-line', async ({ page }) => {
 });
 
 /*
+Тест на рисование пунктирной линий в plotly
+ */
+test('plotly-dotted', async ({ page }) => {
+    await plotlyTestWithSingleCurve(
+        {
+            x: [1, 2, 3, 4, 5],
+            y: [1, 2, 1, 3, 1],
+            type: 'dotted',
+            color: 'red',
+            name: 'MyLine',
+            xInfl: [],
+            yInfl: [],
+        },
+        page
+    );
+
+    await expect(page).toHaveScreenshot('plotly-dotted.png');
+});
+
+/*
 Тест на рисование точек в plotly
  */
 test('plotly-scatter', async ({ page }) => {

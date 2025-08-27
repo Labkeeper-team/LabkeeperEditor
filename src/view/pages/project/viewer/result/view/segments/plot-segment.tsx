@@ -11,7 +11,7 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
                 : plot.y?.length > 0
                   ? plot.y
                   : undefined,
-        type: plot.type,
+        type: plot.type === 'histogram' ? 'histogram' : 'scatter',
         histfunc:
             plot.type === 'histogram' && plot.y?.length > 0 ? 'sum' : undefined,
         xbins:
@@ -23,11 +23,12 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
         mode:
             plot.type === 'scatter'
                 ? 'markers'
-                : plot.type === 'line'
+                : plot.type === 'line' || plot.type === 'dotted'
                   ? 'lines'
                   : undefined,
         line: {
             color: plot.color,
+            ...(plot.type === 'dotted' ? { dash: 'dot' } : {}),
         },
         error_y: {
             type: 'data',

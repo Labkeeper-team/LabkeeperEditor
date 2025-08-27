@@ -22,7 +22,7 @@ export type StatementType =
     | 'plot'
     | 'latex'
     | 'no_result';
-export type PlotType = 'line' | 'scatter' | 'histogram';
+export type PlotType = 'line' | 'scatter' | 'histogram' | 'dotted';
 
 /*
 Domain
