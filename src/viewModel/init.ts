@@ -211,42 +211,32 @@ export class StartupService {
         } else {
             this.vms.navigate(Routes.ProjectDefault);
             // on default uri but unauth
-            if (
-                this.vms.persistenceViewModelState.lastProgram() &&
-                this.vms.persistenceViewModelState.lastProgram().segments
-                    ?.length > 0
-            ) {
+            const language = this.vms.persistenceViewModelState.language();
+            if (version) {
+                const [program, result] = this.exampleService.exampleForQR(
+                    version,
+                    language
+                );
+                this.ideService.setNewProgram(program, result);
+            } else if (from) {
+                const result = this.exampleService.exampleForFrom(
+                    from,
+                    language
+                );
+                if (result) {
+                    this.ideService.setNewProgram(
+                        result.program,
+                        result.result
+                    );
+                }
+            } else {
                 this.programService.setNewProgram(
                     this.vms.persistenceViewModelState.lastProgram()
                 );
-            } else {
-                const language = this.vms.persistenceViewModelState.language();
-                if (version) {
-                    const [program, result] = this.exampleService.exampleForQR(
-                        version,
-                        language
-                    );
-                    this.ideService.setNewProgram(program, result);
-                } else if (from) {
-                    const result = this.exampleService.exampleForFrom(
-                        from,
-                        language
-                    );
-                    if (result) {
-                        this.ideService.setNewProgram(
-                            result.program,
-                            result.result
-                        );
-                    }
-                } else {
-                    this.programService.setNewProgram(
-                        this.vms.persistenceViewModelState.lastProgram()
-                    );
-                    /* закоменчено, так как не выбрали какой пример показывать на странице labkeeper.io
-                    const [program, result] =
-                        this.exampleService.exampleForUnauthorize();
-                    this.ideService.setNewProgram(program, result);*/
-                }
+                /* закоменчено, так как не выбрали какой пример показывать на странице labkeeper.io
+                const [program, result] =
+                    this.exampleService.exampleForUnauthorize();
+                this.ideService.setNewProgram(program, result);*/
             }
         }
     }
