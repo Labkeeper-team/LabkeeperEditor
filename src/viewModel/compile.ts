@@ -59,8 +59,7 @@ export class CompilationService {
                 'error'
             );
             this.ideService.resetEditor();
-        }
-        if (result.code === 200) {
+        } else if (result.code === 200) {
             this.vms.projectViewModelState.setCompileResult(
                 result.body as CompileSuccessResult
             );
@@ -73,8 +72,7 @@ export class CompilationService {
             ) {
                 await this.loaderService.loadFiles(projectId);
             }
-        }
-        if (result.code === 203) {
+        } else if (result.code === 203) {
             const compileResult = result.body as CompileErrorResultList;
             this.vms.projectViewModelState.setCompileErrorResult(compileResult);
             this.vms.settingsViewModelState.setExpandProblemViewer(true);
@@ -83,8 +81,7 @@ export class CompilationService {
                     this.vms.authViewModelState.setCurrentView('login');
                 }
             });
-        }
-        if (result.code === 425) {
+        } else if (result.code === 425) {
             this.vms.projectViewModelState.setCompileErrorResult({
                 errors: [
                     {
@@ -99,8 +96,7 @@ export class CompilationService {
             });
             this.vms.settingsViewModelState.setExpandProblemViewer(true);
             this.vms.authViewModelState.setCurrentView('login');
-        }
-        if (!result.isOk) {
+        } else {
             this.vms.toast(
                 this.vms.dictionary.filemanager.errors.internalError,
                 'error'
