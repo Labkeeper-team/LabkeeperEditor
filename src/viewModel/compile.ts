@@ -53,12 +53,6 @@ export class CompilationService {
 
         this.vms.settingsViewModelState.setIsCompiling(false);
 
-        if (result.code >= 500) {
-            this.vms.toast(
-                this.vms.dictionary.filemanager.errors.internalError,
-                'error'
-            );
-        }
         if (result.code === 401 || result.code === 403) {
             this.vms.toast(
                 this.vms.dictionary.filemanager.errors.sessionExpired,
@@ -107,6 +101,10 @@ export class CompilationService {
             this.vms.authViewModelState.setCurrentView('login');
         }
         if (!result.isOk) {
+            this.vms.toast(
+                this.vms.dictionary.filemanager.errors.internalError,
+                'error'
+            );
             this.observerService.onEvent(Events.EVENT_ERROR);
         }
     };

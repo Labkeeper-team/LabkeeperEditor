@@ -65,7 +65,9 @@ import {
     setTourVisibility,
 } from '../store/slices/settings';
 import {
+    CloneRequestState,
     setActiveSegmentIndex,
+    setCloneRequestState,
     setPreviousActiveSegmentIndex,
     setRedoEnabled,
     setSearch,
@@ -111,7 +113,10 @@ export const createViewModelStateFromStore = (
                 store.getState().ide.previousActiveSegmentIndex,
             redoEnabled: () => store.getState().ide.redoEnabled,
             undoEnabled: () => store.getState().ide.undoEnabled,
+            cloneRequestState: () => store.getState().ide.cloneRequestState,
 
+            setCloneRequestState: (v: CloneRequestState) =>
+                store.dispatch(setCloneRequestState(v)),
             setUndoEnabled: (v: boolean) => store.dispatch(setUndoEnabled(v)),
             setRedoEnabled: (v: boolean) => store.dispatch(setRedoEnabled(v)),
             setSearch: (search: string) => store.dispatch(setSearch(search)),
@@ -237,6 +242,7 @@ export const mockViewModelState = (): ViewModelState => {
     let previousActiveSegmentIndex = -1;
     let redoEnabled: boolean = false;
     let undoEnabled: boolean = false;
+    let cloneRequestState: CloneRequestState = 'unknown';
 
     let instructionExpanded = false;
     let language: 'ru' | 'en' = 'ru';
@@ -310,7 +316,10 @@ export const mockViewModelState = (): ViewModelState => {
             previousActiveSegmentIndex: () => previousActiveSegmentIndex,
             redoEnabled: () => redoEnabled,
             undoEnabled: () => undoEnabled,
+            cloneRequestState: () => cloneRequestState,
 
+            setCloneRequestState: (v: CloneRequestState) =>
+                (cloneRequestState = v),
             setUndoEnabled: (v: boolean) => (undoEnabled = v),
             setRedoEnabled: (v: boolean) => (redoEnabled = v),
             setSearch: (v: string) => (search = v),
@@ -448,12 +457,14 @@ export interface IdeViewModelState {
     previousActiveSegmentIndex: () => number;
     redoEnabled: () => boolean;
     undoEnabled: () => boolean;
+    cloneRequestState: () => CloneRequestState;
 
     setRedoEnabled: (v: boolean) => void;
     setUndoEnabled: (v: boolean) => void;
     setSearch: (search: string) => void;
     setActiveSegmentIndex: (index: number) => void;
     setPreviousActiveSegmentIndex: (index: number) => void;
+    setCloneRequestState: (state: CloneRequestState) => void;
 }
 
 export interface SettingsViewModelState {

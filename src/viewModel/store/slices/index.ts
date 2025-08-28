@@ -25,6 +25,7 @@ export const ideInitialState: IdeState = {
     previousActiveSegmentIndex: -1,
     undoEnabled: false,
     redoEnabled: false,
+    cloneRequestState: 'unknown',
 };
 
 export const initialProgram: Program = {

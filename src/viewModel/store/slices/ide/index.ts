@@ -2,12 +2,15 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { LOGOUT_TYPE } from '../../actions';
 import { ideInitialState } from '../index.ts';
 
+export type CloneRequestState = 'unknown' | 'ok' | 'error' | 'loading';
+
 export interface IdeState {
     search?: string;
     activeSegmentIndex: number;
     previousActiveSegmentIndex: number;
     undoEnabled: boolean;
     redoEnabled: boolean;
+    cloneRequestState: CloneRequestState;
 }
 
 export const ideSlice = createSlice({
@@ -32,6 +35,12 @@ export const ideSlice = createSlice({
         ) => {
             state.previousActiveSegmentIndex = payload;
         },
+        setCloneRequestState: (
+            state,
+            { payload }: PayloadAction<CloneRequestState>
+        ) => {
+            state.cloneRequestState = payload;
+        },
     },
     extraReducers: (b) => {
         b.addCase(LOGOUT_TYPE, (state) => {
@@ -46,4 +55,5 @@ export const {
     setPreviousActiveSegmentIndex,
     setUndoEnabled,
     setRedoEnabled,
+    setCloneRequestState,
 } = ideSlice.actions;

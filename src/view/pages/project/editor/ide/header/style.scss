@@ -115,6 +115,44 @@
                 color: $gray-10;
                 letter-spacing: 0.2px;
             }
+            .ide-clone-spinner {
+                width: 14px;
+                height: 14px;
+                border: 2px solid rgba(255, 255, 255, 0.3);
+                border-top-color: rgba(255, 255, 255, 0.9);
+                border-radius: 50%;
+                animation: ide-clone-spin 0.8s linear infinite;
+            }
+            @keyframes ide-clone-spin {
+                0% {
+                    transform: rotate(0deg);
+                }
+                100% {
+                    transform: rotate(360deg);
+                }
+            }
+            .ide-clone-error {
+                position: relative;
+                width: 14px;
+                height: 14px;
+                display: inline-block;
+            }
+            .ide-clone-error::before,
+            .ide-clone-error::after {
+                content: '';
+                position: absolute;
+                top: 6px;
+                left: 2px;
+                right: 2px;
+                height: 2px;
+                background: #ff5252;
+            }
+            .ide-clone-error::before {
+                transform: rotate(45deg);
+            }
+            .ide-clone-error::after {
+                transform: rotate(-45deg);
+            }
         }
     }
 }

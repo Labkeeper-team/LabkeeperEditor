@@ -10,7 +10,7 @@ import {
 } from '../../../../../../viewModel/store/selectors/program';
 import { SettingsButton } from './settingsButtons';
 import { FolderIcon } from '../../../../../icons';
-import { AppDispatch } from '../../../../../../viewModel/store';
+import { AppDispatch, StorageState } from '../../../../../../viewModel/store';
 import {
     onFolderButtonClickedRequest,
     onCloneProjectRequest,
@@ -26,6 +26,9 @@ export const IdeHeader = () => {
     const isReadonly = useSelector(useIsProjectReadonly);
     const project = useSelector(useCurrentProject);
     const dictionary = useSelector(useDictionary);
+    const cloneRequestState = useSelector(
+        (state: StorageState) => state.ide.cloneRequestState
+    );
 
     return (
         <div className="ide-header">
@@ -50,13 +53,33 @@ export const IdeHeader = () => {
                             text={dictionary.readonly_public_project}
                         />
                     </div>
-                    <Button
-                        title={dictionary.clone}
-                        rounded
-                        minimize
-                        color="green"
-                        onPress={() => dispatch(onCloneProjectRequest())}
-                    />
+                    {(() => {
+                        const isCloneLoading = cloneRequestState === 'loading';
+                        const isCloneError = cloneRequestState === 'error';
+                        return (
+                            <Button
+                                title={dictionary.clone}
+                                rounded
+                                minimize
+                                color="green"
+                                disabled={isCloneLoading}
+                                titleIcon={
+                                    isCloneLoading
+                                        ? () => (
+                                              <span className="ide-clone-spinner" />
+                                          )
+                                        : isCloneError
+                                          ? () => (
+                                                <span className="ide-clone-error" />
+                                            )
+                                          : undefined
+                                }
+                                onPress={() =>
+                                    dispatch(onCloneProjectRequest())
+                                }
+                            />
+                        );
+                    })()}
                 </div>
             ) : (
                 <div />
