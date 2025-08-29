@@ -15,7 +15,7 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
         histfunc:
             plot.type === 'histogram' && plot.y?.length > 0 ? 'sum' : undefined,
         xbins:
-            plot.type === 'histogram' && plot.y?.length > 0 && plot.size
+            plot.type === 'histogram' && plot.size
                 ? { size: plot.size }
                 : undefined,
         name: plot.name,

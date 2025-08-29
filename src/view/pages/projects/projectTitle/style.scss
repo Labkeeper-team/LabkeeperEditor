@@ -12,6 +12,7 @@
         text-overflow: ellipsis;
         white-space: nowrap;
         overflow: hidden;
+        max-width: 40ch;
         width: 100%;
     }
     .input-base {

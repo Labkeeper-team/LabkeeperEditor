@@ -253,6 +253,10 @@ export class SystemService {
                     this.ideService.resetEditor();
                 }
                 if (!result.isOk) {
+                    this.vms.toast(
+                        this.vms.dictionary.filemanager.errors.noNetwork,
+                        'error'
+                    );
                     return;
                 }
             }

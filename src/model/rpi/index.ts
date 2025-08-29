@@ -26,11 +26,11 @@ async function requestWrapper<T>(
     } catch (error: unknown) {
         const axiosError = error as AxiosError;
         return {
-            code: axiosError.response?.status || 500,
-            body: axiosError.response?.data as T,
+            code: axiosError?.response?.status || 500,
+            body: axiosError?.response?.data as T,
             isOk: false,
-            isUnauth: axiosError.response?.status === 401,
-            isForbidden: axiosError.response?.status === 403,
+            isUnauth: axiosError?.response?.status === 401,
+            isForbidden: axiosError?.response?.status === 403,
         };
     }
 }

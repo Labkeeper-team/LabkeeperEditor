@@ -7,7 +7,7 @@ import {
     TextOutputSegment,
 } from '../model/domain.ts';
 
-const dollarPattern = /\${\w+}/i;
+const dollarPattern = /\$\{[\w|\p{Script=Cyrillic}]+\}/u;
 
 export class IdeService {
     vms: ViewModelState;

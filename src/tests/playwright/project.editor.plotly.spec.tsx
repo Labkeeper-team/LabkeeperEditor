@@ -265,6 +265,24 @@ test('plotly-histogram-two-dims-test', async ({ page }) => {
     await expect(page).toHaveScreenshot('plotly-histogram-two-dims.png');
 });
 
+test('plotly-histogram-simple-ladder-test', async ({ page }) => {
+    await plotlyTestWithSingleCurve(
+        {
+            x: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+            y: [],
+            type: 'histogram',
+            color: 'blue',
+            name: 'MyLine1',
+            size: 1,
+            xInfl: [],
+            yInfl: [],
+        },
+        page
+    );
+
+    await expect(page).toHaveScreenshot('plotly-histogram-simple-ladder.png');
+});
+
 /*
 Тест на рисование погрешностей в plotly
  */

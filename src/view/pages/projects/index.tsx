@@ -138,6 +138,7 @@ export const ProjectsPage = () => {
                                                 style={{
                                                     height: 63,
                                                     width: '33%',
+                                                    minWidth: '40ch',
                                                 }}
                                             >
                                                 <ProjectTitle project={p} />
