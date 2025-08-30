@@ -35,18 +35,25 @@ export const Segments = () => {
     return (
         <div ref={ref} className="segments-container">
             {Array.from(Array(segmentsSize).keys()).map((_, index) => {
-                return <SegmentEditorWrapper index={index} key={index} />;
+                return (
+                    <SegmentEditorWrapper
+                        index={index}
+                        key={index}
+                        isLast={index + 1 === segmentsSize}
+                    />
+                );
             })}
         </div>
     );
 };
 
-const SegmentEditorWrapper = memo(({ index }: { index: number }) => {
-    const size = useSelector(useInputSegmentsSize);
-    return (
-        <React.Fragment key={index}>
-            <SegmentEditor index={index} />
-            <SegmentDivider index={index} showDivider={index + 1 !== size} />
-        </React.Fragment>
-    );
-});
+const SegmentEditorWrapper = memo(
+    ({ index, isLast }: { index: number; isLast: boolean }) => {
+        return (
+            <React.Fragment key={index}>
+                <SegmentEditor index={index} isLast={isLast} />
+                <SegmentDivider index={index} showDivider={!isLast} />
+            </React.Fragment>
+        );
+    }
+);

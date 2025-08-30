@@ -34,8 +34,6 @@ import {
     StorageState,
 } from '../../../../../../../viewModel/store';
 import {
-    useInputSegment,
-    useInputSegmentsSize,
     useIsProjectReadonly,
     useIsSegmentIsActive,
     useSearch,
@@ -73,263 +71,273 @@ const decorationsField = StateField.define<unknown>({
 
 let timeout: NodeJS.Timeout | null = null;
 
-export const SegmentEditor = memo((props: { index: number }) => {
-    const segment = useSelector(useInputSegment(props.index));
-    const editor = useRef<ReactCodeMirrorRef | undefined>();
-    const dispatch = useDispatch<AppDispatch>();
-    const dictionary = useSelector(useDictionary);
+export const SegmentEditor = memo(
+    (props: { index: number; isLast: boolean }) => {
+        const segment = useSelector(
+            (state: StorageState) =>
+                state.project.currentProgram?.segments[props.index]
+        );
+        console.info('input', props.index);
+        const editor = useRef<ReactCodeMirrorRef | undefined>();
+        const dispatch = useDispatch<AppDispatch>();
+        const dictionary = useSelector(useDictionary);
 
-    /*
+        /*
         GLOBAL STATE
          */
-    const search = useSelector(useSearch);
-    const isActiveSegment = useSelector(useIsSegmentIsActive(props.index));
-    const compileErrors = useSelector(
-        (state: StorageState) => state.project.compileErrorResult?.errors
-    );
-    const projectIsReadonly = useSelector(useIsProjectReadonly);
-    const segmentCount = useSelector(useInputSegmentsSize);
+        const search = useSelector(useSearch);
+        const isActiveSegment = useSelector(useIsSegmentIsActive(props.index));
+        const compileErrors = useSelector(
+            (state: StorageState) => state.project.compileErrorResult?.errors
+        );
+        const projectIsReadonly = useSelector(useIsProjectReadonly);
 
-    /*
+        /*
         LOCAL STATE
          */
-    // Переменная необходима, чтобы CodeMirror не сразу прогружался, иначе будет мигать
-    const [isLoaded, setIsLoaded] = useState(false);
-    // Промежуточный текст необходим по той же причине
-    const [tempText, setTempText] = useState(segment.text);
-    // Промежуточные ошибки нужны для того, чтобы при вводе текста их можно было скрывать
-    const [segmentTempErrors, setTempSegmentErrors] = useState<
-        CompileErrorResult[]
-    >([]);
+        // Переменная необходима, чтобы CodeMirror не сразу прогружался, иначе будет мигать
+        const [isLoaded, setIsLoaded] = useState(false);
+        // Промежуточный текст необходим по той же причине
+        const [tempText, setTempText] = useState(segment.text);
+        // Промежуточные ошибки нужны для того, чтобы при вводе текста их можно было скрывать
+        const [segmentTempErrors, setTempSegmentErrors] = useState<
+            CompileErrorResult[]
+        >([]);
 
-    /*
+        /*
         Events
          */
-    // При изменении глобального текста устанавливаем значение
-    useEffect(() => {
-        if (segment.text !== tempText) {
-            setTempSegmentErrors([]);
-            setTempText(segment.text);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [segment.text]);
+        // При изменении глобального текста устанавливаем значение
+        useEffect(() => {
+            if (segment.text !== tempText) {
+                setTempSegmentErrors([]);
+                setTempText(segment.text);
+            }
+            // eslint-disable-next-line react-hooks/exhaustive-deps
+        }, [segment.text]);
 
-    // При обновлении глобального списка ошибок фильтруем и устанавливаем локальный
-    useEffect(() => {
-        setTempSegmentErrors(
-            (compileErrors ?? []).filter(
-                (e) => e.payload.segmentId === props.index + 1
-            )
-        );
-    }, [compileErrors, props.index]);
-
-    // Проблема с мерцанием редактора кода
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setIsLoaded(true);
-        });
-        return () => clearTimeout(timer);
-    }, []);
-
-    // При изменении текста перерисовываем декорации
-    useEffect(() => {
-        const view = editor?.current?.view;
-        if (!view) {
-            return;
-        }
-        processDecorations(view, search, segmentTempErrors);
-    }, [search, segmentTempErrors, editor?.current?.view]);
-    // При изменении текста сегмента создаем таймер
-    useEffect(() => {
-        if (timeout) {
-            clearTimeout(timeout);
-        }
-        timeout = setTimeout(() => {
-            dispatch(onProgramSaveTimeoutRequest());
-        }, 1000);
-    }, [tempText]);
-
-    /*
-     * Callbacks
-     */
-
-    // Отдельный вызов для того, чтобы можно было таймер использовать
-    // Таймер тоже тут нужен из-за CodeMirror
-    const onBlur = useCallback(async () => {
-        editor?.current?.editor?.blur?.();
-        setTimeout(async () => {
-            dispatch(
-                onBlurSegmentRequest({
-                    segmentText: tempText,
-                    segmentIndex: props.index,
-                })
+        // При обновлении глобального списка ошибок фильтруем и устанавливаем локальный
+        useEffect(() => {
+            setTempSegmentErrors(
+                (compileErrors ?? []).filter(
+                    (e) => e.payload.segmentId === props.index + 1
+                )
             );
-        });
-    }, [props.index, dispatch, tempText]);
+        }, [compileErrors, props.index]);
 
-    // События редактора
-    const eventsExt = useMemo(() => {
-        return content({
-            focus: () => {
-                dispatch(onFocusSegmentRequest({ segmentIndex: props.index }));
-            },
-            blur: onBlur,
-        });
-    }, [dispatch, onBlur, props.index]);
-
-    // Вставка файлов
-    const eventsDom = dom({
-        paste: async (ev: ClipboardEvent) => {
-            const items = (ev?.clipboardData?.items ??
-                []) as DataTransferItemList;
-            dispatch(
-                onAddedFilesToSegmentEditorRequest({
-                    items: items,
-                    segmentIndex: props.index,
-                    editorCallback: (insert: string) => {
-                        const cursorPosition =
-                            editor?.current?.view?.state.selection.main.head; // Получаем позицию курсора
-                        onChange(
-                            `${tempText.slice(0, cursorPosition)}\n${insert}${tempText.slice(cursorPosition)}`
-                        );
-                    },
-                })
-            );
-            ev.preventDefault();
-        },
-    });
-
-    // Вызов, который меняет текст и сбрасывает ошибки и декорации
-    const onChange = useCallback(
-        async (value) => {
-            editor?.current?.view?.dispatch({
-                effects: setDecorationsEffect.of(Decoration.none as never),
+        // Проблема с мерцанием редактора кода
+        useEffect(() => {
+            const timer = setTimeout(() => {
+                setIsLoaded(true);
             });
-            setTempText(value);
-            setTempSegmentErrors([]);
-            setTimeout(() => {
+            return () => clearTimeout(timer);
+        }, []);
+
+        // При изменении текста перерисовываем декорации
+        useEffect(() => {
+            const view = editor?.current?.view;
+            if (!view) {
+                return;
+            }
+            processDecorations(view, search, segmentTempErrors);
+        }, [search, segmentTempErrors, editor?.current?.view]);
+        // При изменении текста сегмента создаем таймер
+        useEffect(() => {
+            if (timeout) {
+                clearTimeout(timeout);
+            }
+            timeout = setTimeout(() => {
+                dispatch(onProgramSaveTimeoutRequest());
+            }, 1000);
+        }, [tempText]);
+
+        /*
+         * Callbacks
+         */
+
+        // Отдельный вызов для того, чтобы можно было таймер использовать
+        // Таймер тоже тут нужен из-за CodeMirror
+        const onBlur = useCallback(async () => {
+            editor?.current?.editor?.blur?.();
+            setTimeout(async () => {
                 dispatch(
-                    onSegmentTextChangedRequest({
+                    onBlurSegmentRequest({
+                        segmentText: tempText,
                         segmentIndex: props.index,
-                        segmentText: value,
                     })
                 );
             });
-        },
-        [setTempText, setTempSegmentErrors, props.index, dispatch]
-    );
+        }, [props.index, dispatch, tempText]);
 
-    // Первую прорисовку пропускаем
-    if (!isLoaded) {
-        return <div />;
-    }
+        // События редактора
+        const eventsExt = useMemo(() => {
+            return content({
+                focus: () => {
+                    dispatch(
+                        onFocusSegmentRequest({ segmentIndex: props.index })
+                    );
+                },
+                blur: onBlur,
+            });
+        }, [dispatch, onBlur, props.index]);
 
-    return (
-        <div
-            className={classNames('segment-editor-container', {
-                'is-active': isActiveSegment,
-                'not-visible': !segment.parameters.visible,
-            })}
-        >
-            <CodeMirror
-                ref={editor as LegacyRef<ReactCodeMirrorRef>}
-                value={tempText}
-                onChange={onChange}
-                readOnly={projectIsReadonly}
-                extensions={[
-                    decorationsField,
-                    segment.type === 'md'
-                        ? langs.markdown()
-                        : segment.type === 'computational'
-                          ? customLanguageSupport
-                          : segment.type === 'latex'
-                            ? [langs.tex(), latexLanguageSupport]
-                            : undefined,
-                    eventsExt,
-                    eventsDom,
-                    EditorView.lineWrapping,
-                    lineNumbers({
-                        formatNumber: (lineNo) => {
-                            return `${props.index + 1 || '' + 1}.${lineNo}`;
+        // Вставка файлов
+        const eventsDom = dom({
+            paste: async (ev: ClipboardEvent) => {
+                const items = (ev?.clipboardData?.items ??
+                    []) as DataTransferItemList;
+                dispatch(
+                    onAddedFilesToSegmentEditorRequest({
+                        items: items,
+                        segmentIndex: props.index,
+                        editorCallback: (insert: string) => {
+                            const cursorPosition =
+                                editor?.current?.view?.state.selection.main
+                                    .head; // Получаем позицию курсора
+                            onChange(
+                                `${tempText.slice(0, cursorPosition)}\n${insert}${tempText.slice(cursorPosition)}`
+                            );
                         },
-                    }),
-                ].filter((e) => !!e)}
-                basicSetup={{
-                    lineNumbers: true,
-                }}
-            />
-            <div className="editor-rules">
-                {!projectIsReadonly && (
-                    <div
-                        style={{
-                            display: 'flex',
-                            flexDirection: 'row',
-                            gap: 2,
-                            alignItems: 'center',
-                        }}
-                    >
-                        {props.index ? (
-                            <div
-                                onClick={() =>
-                                    dispatch(
-                                        segmentEditorChangeSegmentPositionRequest(
-                                            {
-                                                direction: 'up',
-                                                segmentIndex: props.index,
-                                            }
+                    })
+                );
+                ev.preventDefault();
+            },
+        });
+
+        // Вызов, который меняет текст и сбрасывает ошибки и декорации
+        const onChange = useCallback(
+            async (value) => {
+                editor?.current?.view?.dispatch({
+                    effects: setDecorationsEffect.of(Decoration.none as never),
+                });
+                setTempText(value);
+                setTempSegmentErrors([]);
+                setTimeout(() => {
+                    dispatch(
+                        onSegmentTextChangedRequest({
+                            segmentIndex: props.index,
+                            segmentText: value,
+                        })
+                    );
+                });
+            },
+            [setTempText, setTempSegmentErrors, props.index, dispatch]
+        );
+
+        // Первую прорисовку пропускаем
+        if (!isLoaded) {
+            return <div />;
+        }
+
+        return (
+            <div
+                className={classNames('segment-editor-container', {
+                    'is-active': isActiveSegment,
+                    'not-visible': !segment.parameters.visible,
+                })}
+            >
+                <CodeMirror
+                    ref={editor as LegacyRef<ReactCodeMirrorRef>}
+                    value={tempText}
+                    onChange={onChange}
+                    readOnly={projectIsReadonly}
+                    extensions={[
+                        decorationsField,
+                        segment.type === 'md'
+                            ? langs.markdown()
+                            : segment.type === 'computational'
+                              ? customLanguageSupport
+                              : segment.type === 'latex'
+                                ? [langs.tex(), latexLanguageSupport]
+                                : undefined,
+                        eventsExt,
+                        eventsDom,
+                        EditorView.lineWrapping,
+                        lineNumbers({
+                            formatNumber: (lineNo) => {
+                                return `${props.index + 1 || '' + 1}.${lineNo}`;
+                            },
+                        }),
+                    ].filter((e) => !!e)}
+                    basicSetup={{
+                        lineNumbers: true,
+                    }}
+                />
+                <div className="editor-rules">
+                    {!projectIsReadonly && (
+                        <div
+                            style={{
+                                display: 'flex',
+                                flexDirection: 'row',
+                                gap: 2,
+                                alignItems: 'center',
+                            }}
+                        >
+                            {props.index ? (
+                                <div
+                                    onClick={() =>
+                                        dispatch(
+                                            segmentEditorChangeSegmentPositionRequest(
+                                                {
+                                                    direction: 'up',
+                                                    segmentIndex: props.index,
+                                                }
+                                            )
                                         )
-                                    )
-                                }
-                                className="change-position-button"
-                            >
-                                <ArrowUp />
-                            </div>
-                        ) : null}
-                        {props.index !== segmentCount - 1 ? (
-                            <div
-                                onClick={() =>
-                                    dispatch(
-                                        segmentEditorChangeSegmentPositionRequest(
-                                            {
-                                                direction: 'down',
-                                                segmentIndex: props.index,
-                                            }
+                                    }
+                                    className="change-position-button"
+                                >
+                                    <ArrowUp />
+                                </div>
+                            ) : null}
+                            {!props.isLast ? (
+                                <div
+                                    onClick={() =>
+                                        dispatch(
+                                            segmentEditorChangeSegmentPositionRequest(
+                                                {
+                                                    direction: 'down',
+                                                    segmentIndex: props.index,
+                                                }
+                                            )
                                         )
-                                    )
-                                }
-                                className="change-position-button rotate"
-                            >
-                                <ArrowUp />
-                            </div>
-                        ) : null}
+                                    }
+                                    className="change-position-button rotate"
+                                >
+                                    <ArrowUp />
+                                </div>
+                            ) : null}
+                        </div>
+                    )}
+                    <div className="segment-type-container">
+                        <Typography
+                            color={colors.gray10}
+                            text={dictionary.short_segment[segment.type]}
+                        />
                     </div>
-                )}
-                <div className="segment-type-container">
-                    <Typography
-                        color={colors.gray10}
-                        text={dictionary.short_segment[segment.type]}
-                    />
+                    <div className="segment-position">
+                        <Typography
+                            type={
+                                (props.index ?? 0) < 10 ? 'body' : 'label-small'
+                            }
+                            text={`${props.index + 1}`}
+                            color={colors.white}
+                        />
+                    </div>
+                    <DropdownMenu
+                        clickable={!projectIsReadonly}
+                        containerClassname="dropdown-content-contanier-additional"
+                    >
+                        <DropdownMenuContent
+                            index={props.index}
+                            segment={segment}
+                        />
+                    </DropdownMenu>
                 </div>
-                <div className="segment-position">
-                    <Typography
-                        type={(props.index ?? 0) < 10 ? 'body' : 'label-small'}
-                        text={`${props.index + 1}`}
-                        color={colors.white}
-                    />
-                </div>
-                <DropdownMenu
-                    clickable={!projectIsReadonly}
-                    containerClassname="dropdown-content-contanier-additional"
-                >
-                    <DropdownMenuContent
-                        index={props.index}
-                        segment={segment}
-                    />
-                </DropdownMenu>
             </div>
-        </div>
-    );
-});
+        );
+    }
+);
 
 function processDecorations(
     view: EditorView,

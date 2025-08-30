@@ -6,6 +6,7 @@ import {
     OutputSegment,
     Program,
     Project,
+    Segment,
 } from '../../../../model/domain';
 import { LOGOUT_TYPE } from '../../actions';
 import { projectInitialState } from '../index.ts';
@@ -34,6 +35,35 @@ export const projectSlice = createSlice({
             { payload }: PayloadAction<CompileSuccessResult>
         ) => {
             state.compileSuccessResult = payload;
+            while (
+                state.compileSuccessResult.segments.length <
+                payload.segments.length
+            ) {
+                state.compileSuccessResult.segments.push({} as Segment);
+            }
+            while (
+                state.compileSuccessResult.segments.length >
+                payload.segments.length
+            ) {
+                state.compileSuccessResult.segments.pop();
+            }
+            if (
+                state.compileSuccessResult.segments.length ===
+                payload.segments.length
+            ) {
+                for (let i = 0; i < payload.segments.length; i++) {
+                    if (
+                        JSON.stringify(
+                            state.compileSuccessResult.segments[i]
+                        ) !== JSON.stringify(payload.segments[i])
+                    ) {
+                        state.compileSuccessResult.segments[i] =
+                            structuredClone(payload.segments[i]);
+                    }
+                }
+            } else {
+                state.compileSuccessResult = structuredClone(payload);
+            }
         },
         setCompileError: (
             state,
@@ -59,6 +89,16 @@ export const projectSlice = createSlice({
             }
         },
         setCurrentProgram: (state, { payload }: PayloadAction<Program>) => {
+            while (
+                state.currentProgram.segments.length < payload.segments.length
+            ) {
+                state.currentProgram.segments.push({} as Segment);
+            }
+            while (
+                state.currentProgram.segments.length > payload.segments.length
+            ) {
+                state.currentProgram.segments.pop();
+            }
             if (
                 state.currentProgram.segments.length === payload.segments.length
             ) {
