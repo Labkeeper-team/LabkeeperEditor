@@ -7,12 +7,76 @@
     flex-direction: column;
     height: inherit;
     background-color: $white;
-    .ide-flexibility-conainer {
+    .ide-flexibility-container {
         display: flex;
         flex-direction: column;
         overflow-x: auto;
         position: relative;
         flex: 1;
+        .ide-loading-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 0;
+            flex: 1;
+        }
+        .ide-loading-icon-with-text {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            text-align: center;
+            max-width: 80%;
+        }
+        .ide-loading-caption {
+            color: rgba(0, 0, 0, 0.7);
+            font-size: 14px;
+            line-height: 18px;
+            white-space: pre-wrap;
+        }
+        .ide-loading-spinner {
+            width: 28px;
+            height: 28px;
+            border: 3px solid rgba(0, 0, 0, 0.12);
+            border-top-color: rgba(0, 0, 0, 0.6);
+            border-radius: 50%;
+            animation: ide-main-spin 0.9s linear infinite;
+        }
+        @keyframes ide-main-spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+        .ide-loading-warning {
+            position: relative;
+            width: 28px;
+            height: 28px;
+            display: inline-block;
+            border-radius: 50%;
+            background: rgba(255, 82, 82, 0.13);
+            border: 2px solid #ff5252;
+        }
+        .ide-loading-warning::before,
+        .ide-loading-warning::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 3px;
+            background: #ff5252;
+            border-radius: 2px;
+        }
+        .ide-loading-warning::before {
+            top: 5px;
+            height: 14px;
+        }
+        .ide-loading-warning::after {
+            bottom: 5px;
+            height: 3px;
+        }
         .hint-code-container {
             background: $gray-50;
             margin: 10px;

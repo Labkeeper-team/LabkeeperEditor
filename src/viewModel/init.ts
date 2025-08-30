@@ -132,6 +132,7 @@ export class StartupService {
     }
 
     async openProjectById(userInfo: UserInfo, id: string): Promise<void> {
+        this.vms.ideViewModelState.setGetProjectRequestState('loading');
         const result = await this.rpi.getProjectRequest(id);
         if (result.isUnauth) {
             this.vms.toast(
@@ -139,20 +140,25 @@ export class StartupService {
                 'error'
             );
             this.ideService.resetEditor();
+            return;
         }
         if (result.isForbidden) {
+            this.vms.ideViewModelState.setGetProjectRequestState('forbidden');
             this.vms.toast(
                 this.vms.dictionary.filemanager.errors.notEnoughRights,
                 'error'
             );
             this.vms.projectViewModelState.setReadOnly(true);
+            return;
         }
         if (result.code === 404) {
+            this.vms.ideViewModelState.setGetProjectRequestState('not_found');
             this.vms.toast(
                 this.vms.dictionary.filemanager.errors.notFound,
                 'error'
             );
             this.vms.projectViewModelState.setReadOnly(true);
+            return;
         }
         if (result.isOk) {
             const project = result.body as RichProject;
@@ -169,6 +175,11 @@ export class StartupService {
                 States.STATE_PROJECT,
                 project.projectId
             );
+            this.vms.ideViewModelState.setGetProjectRequestState('ok');
+            return;
+        }
+        if (!result.isOk) {
+            this.vms.ideViewModelState.setGetProjectRequestState('error');
         }
     }
 

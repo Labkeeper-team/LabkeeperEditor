@@ -3,6 +3,13 @@ import { LOGOUT_TYPE } from '../../actions';
 import { ideInitialState } from '../index.ts';
 
 export type CloneRequestState = 'unknown' | 'ok' | 'error' | 'loading';
+export type GetProjectRequestState =
+    | 'unknown'
+    | 'ok'
+    | 'error'
+    | 'loading'
+    | 'forbidden'
+    | 'not_found';
 
 export interface IdeState {
     search?: string;
@@ -11,6 +18,7 @@ export interface IdeState {
     undoEnabled: boolean;
     redoEnabled: boolean;
     cloneRequestState: CloneRequestState;
+    getProjectRequestState: GetProjectRequestState;
 }
 
 export const ideSlice = createSlice({
@@ -41,6 +49,12 @@ export const ideSlice = createSlice({
         ) => {
             state.cloneRequestState = payload;
         },
+        setGetProjectRequestState: (
+            state,
+            { payload }: PayloadAction<GetProjectRequestState>
+        ) => {
+            state.getProjectRequestState = payload;
+        },
     },
     extraReducers: (b) => {
         b.addCase(LOGOUT_TYPE, (state) => {
@@ -56,4 +70,5 @@ export const {
     setUndoEnabled,
     setRedoEnabled,
     setCloneRequestState,
+    setGetProjectRequestState,
 } = ideSlice.actions;

@@ -30,6 +30,9 @@ export const Ide = () => {
     const program = useSelector(useCurrentProgram);
     const isReadonly = useSelector(useIsProjectReadonly);
     const dictionary = useSelector(useDictionary);
+    const getProjectRequestState = useSelector(
+        (state: StorageState) => state.ide.getProjectRequestState
+    );
 
     const disabled = useMemo(
         () =>
@@ -61,11 +64,37 @@ export const Ide = () => {
             <IdeHeader />
 
             <div
-                className={classNames('ide-flexibility-conainer', {
+                className={classNames('ide-flexibility-container', {
                     [InterfaceTourAnchorClassnames.Ide]: true,
                 })}
             >
-                {!program?.segments.length && !isReadonly ? (
+                {getProjectRequestState === 'loading' ? (
+                    <div className="ide-loading-wrapper" aria-hidden>
+                        <span className="ide-loading-spinner" />
+                    </div>
+                ) : getProjectRequestState !== 'ok' &&
+                  getProjectRequestState !== 'unknown' ? (
+                    <div className="ide-loading-wrapper" aria-hidden>
+                        <div className="ide-loading-icon-with-text">
+                            <span className="ide-loading-warning" />
+                            <div className="ide-loading-caption">
+                                {(() => {
+                                    switch (getProjectRequestState) {
+                                        case 'forbidden':
+                                            return dictionary.filemanager.errors
+                                                .notEnoughRights;
+                                        case 'not_found':
+                                            return dictionary.filemanager.errors
+                                                .notFound;
+                                        default:
+                                            return dictionary.filemanager.errors
+                                                .internalError;
+                                    }
+                                })()}
+                            </div>
+                        </div>
+                    </div>
+                ) : !program?.segments.length && !isReadonly ? (
                     <AddBlock isFirst />
                 ) : (
                     <Segments />
