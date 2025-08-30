@@ -10,6 +10,11 @@
     &.is-active {
         border: 1px solid $blue-10;
     }
+    &.not-visible {
+        .cm-content {
+            opacity: 0.35;
+        }
+    }
     .full-width-checkbox {
         width: 100%;
     }

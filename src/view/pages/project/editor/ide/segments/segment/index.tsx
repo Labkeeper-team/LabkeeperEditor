@@ -23,7 +23,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { CompileErrorResult } from '../../../../../../../model/domain';
 import { customLanguageSupport } from './customLanguage';
 import { latexLanguageSupport } from './latexLanguage';
-import { notVisibleLanguageSupport } from './notVisibleLanguage';
 
 import './style.scss';
 
@@ -229,6 +228,7 @@ export const SegmentEditor = memo((props: { index: number }) => {
         <div
             className={classNames('segment-editor-container', {
                 'is-active': isActiveSegment,
+                'not-visible': !segment.parameters.visible,
             })}
         >
             <CodeMirror
@@ -238,15 +238,13 @@ export const SegmentEditor = memo((props: { index: number }) => {
                 readOnly={projectIsReadonly}
                 extensions={[
                     decorationsField,
-                    !segment.parameters.visible
-                        ? notVisibleLanguageSupport
-                        : segment.type === 'md'
-                          ? langs.markdown()
-                          : segment.type === 'computational'
-                            ? customLanguageSupport
-                            : segment.type === 'latex'
-                              ? [langs.tex(), latexLanguageSupport]
-                              : undefined,
+                    segment.type === 'md'
+                        ? langs.markdown()
+                        : segment.type === 'computational'
+                          ? customLanguageSupport
+                          : segment.type === 'latex'
+                            ? [langs.tex(), latexLanguageSupport]
+                            : undefined,
                     eventsExt,
                     eventsDom,
                     EditorView.lineWrapping,
