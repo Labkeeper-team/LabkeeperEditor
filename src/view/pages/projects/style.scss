@@ -19,6 +19,70 @@
         display: flex;
         flex-direction: column;
         flex: 1;
+        .projects-loading-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 0;
+            flex: 1;
+        }
+        .projects-loading-icon-with-text {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            text-align: center;
+            max-width: 80%;
+        }
+        .projects-loading-caption {
+            color: rgba(0, 0, 0, 0.7);
+            font-size: 14px;
+            line-height: 18px;
+            white-space: pre-wrap;
+        }
+        .projects-loading-spinner {
+            width: 28px;
+            height: 28px;
+            border: 3px solid rgba(0, 0, 0, 0.12);
+            border-top-color: rgba(0, 0, 0, 0.6);
+            border-radius: 50%;
+            animation: ide-main-spin 0.9s linear infinite;
+        }
+        @keyframes ide-main-spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+        .projects-loading-warning {
+            position: relative;
+            width: 28px;
+            height: 28px;
+            display: inline-block;
+            border-radius: 50%;
+            background: rgba(255, 82, 82, 0.13);
+            border: 2px solid #ff5252;
+        }
+        .projects-loading-warning::before,
+        .projects-loading-warning::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 3px;
+            background: #ff5252;
+            border-radius: 2px;
+        }
+        .projects-loading-warning::before {
+            top: 5px;
+            height: 14px;
+        }
+        .projects-loading-warning::after {
+            bottom: 5px;
+            height: 3px;
+        }
     }
     .add-project-button {
         width: 300px;

@@ -95,6 +95,8 @@ export const ru: Translations = {
         errors: {
             empty_name:
                 'Имя не должно быть пустым или состоять только из пробелов',
+            sessionExpiredReload:
+                'Сессия истекла. Пожалуйста, перезагрузите страницу',
         },
     },
     segment: {

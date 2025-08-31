@@ -87,6 +87,7 @@ export interface Translations {
         add: string;
         errors: {
             empty_name: string;
+            sessionExpiredReload: string;
         };
     };
     segment: {

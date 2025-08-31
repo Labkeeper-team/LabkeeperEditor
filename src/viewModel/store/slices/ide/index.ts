@@ -18,6 +18,13 @@ export type GetFilesRequestState =
     | 'loading'
     | 'forbidden';
 
+export type GetProjectsRequestState =
+    | 'unknown'
+    | 'ok'
+    | 'error'
+    | 'loading'
+    | 'unauth';
+
 export interface IdeState {
     search?: string;
     activeSegmentIndex: number;
@@ -27,6 +34,7 @@ export interface IdeState {
     cloneRequestState: CloneRequestState;
     getProjectRequestState: GetProjectRequestState;
     getFilesRequestState: GetFilesRequestState;
+    getProjectsRequestState: GetProjectsRequestState;
 }
 
 export const ideSlice = createSlice({
@@ -69,6 +77,12 @@ export const ideSlice = createSlice({
         ) => {
             state.getFilesRequestState = payload;
         },
+        setGetProjectsRequestState: (
+            state,
+            { payload }: PayloadAction<GetProjectsRequestState>
+        ) => {
+            state.getProjectsRequestState = payload;
+        },
     },
     extraReducers: (b) => {
         b.addCase(LOGOUT_TYPE, (state) => {
@@ -86,4 +100,5 @@ export const {
     setCloneRequestState,
     setGetProjectRequestState,
     setGetFilesRequestState,
+    setGetProjectsRequestState,
 } = ideSlice.actions;

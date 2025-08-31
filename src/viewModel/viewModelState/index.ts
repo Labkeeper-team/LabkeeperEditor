@@ -67,10 +67,12 @@ import {
 import {
     CloneRequestState,
     GetFilesRequestState,
+    GetProjectsRequestState,
     GetProjectRequestState,
     setActiveSegmentIndex,
     setCloneRequestState,
     setGetFilesRequestState,
+    setGetProjectsRequestState,
     setGetProjectRequestState,
     setPreviousActiveSegmentIndex,
     setRedoEnabled,
@@ -122,6 +124,8 @@ export const createViewModelStateFromStore = (
                 store.getState().ide.getProjectRequestState,
             getFilesRequestState: () =>
                 store.getState().ide.getFilesRequestState,
+            getProjectsRequestState: () =>
+                store.getState().ide.getProjectsRequestState,
 
             setCloneRequestState: (v: CloneRequestState) =>
                 store.dispatch(setCloneRequestState(v)),
@@ -129,6 +133,8 @@ export const createViewModelStateFromStore = (
                 store.dispatch(setGetProjectRequestState(v)),
             setGetFilesRequestState: (v: GetFilesRequestState) =>
                 store.dispatch(setGetFilesRequestState(v)),
+            setGetProjectsRequestState: (v: GetProjectsRequestState) =>
+                store.dispatch(setGetProjectsRequestState(v)),
             setUndoEnabled: (v: boolean) => store.dispatch(setUndoEnabled(v)),
             setRedoEnabled: (v: boolean) => store.dispatch(setRedoEnabled(v)),
             setSearch: (search: string) => store.dispatch(setSearch(search)),
@@ -257,6 +263,7 @@ export const mockViewModelState = (): ViewModelState => {
     let cloneRequestState: CloneRequestState = 'unknown';
     let getProjectRequestState: GetProjectRequestState = 'unknown';
     let getFilesRequestState: GetFilesRequestState = 'unknown';
+    let getProjectsRequestState: GetProjectsRequestState = 'unknown';
 
     let instructionExpanded = false;
     let language: 'ru' | 'en' = 'ru';
@@ -333,7 +340,10 @@ export const mockViewModelState = (): ViewModelState => {
             cloneRequestState: () => cloneRequestState,
             getProjectRequestState: () => getProjectRequestState,
             getFilesRequestState: () => getFilesRequestState,
+            getProjectsRequestState: () => getProjectsRequestState,
 
+            setGetProjectsRequestState: (v: GetProjectsRequestState) =>
+                (getProjectsRequestState = v),
             setGetFilesRequestState: (v: GetFilesRequestState) =>
                 (getFilesRequestState = v),
             setCloneRequestState: (v: CloneRequestState) =>
@@ -480,6 +490,7 @@ export interface IdeViewModelState {
     cloneRequestState: () => CloneRequestState;
     getProjectRequestState: () => GetProjectRequestState;
     getFilesRequestState: () => GetFilesRequestState;
+    getProjectsRequestState: () => GetProjectsRequestState;
 
     setRedoEnabled: (v: boolean) => void;
     setUndoEnabled: (v: boolean) => void;
@@ -489,6 +500,7 @@ export interface IdeViewModelState {
     setCloneRequestState: (state: CloneRequestState) => void;
     setGetProjectRequestState: (state: GetProjectRequestState) => void;
     setGetFilesRequestState: (state: GetFilesRequestState) => void;
+    setGetProjectsRequestState: (state: GetProjectsRequestState) => void;
 }
 
 export interface SettingsViewModelState {

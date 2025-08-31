@@ -19,7 +19,7 @@ import {
     useDictionary,
 } from '../../../viewModel/store/selectors/translations';
 import { onRowClickedInProjectsListRequest } from '../../../controller';
-import { AppDispatch } from '../../../viewModel/store';
+import { AppDispatch, StorageState } from '../../../viewModel/store';
 
 export const ProjectsPage = () => {
     const [showAddModal, setShowAddModal] = useState(false);
@@ -30,6 +30,9 @@ export const ProjectsPage = () => {
     const dictionary = useSelector(useDictionary);
     const lang = useSelector(useCurrentLanguage);
     const projects = useSelector(useProjects);
+    const getProjectsRequestState = useSelector(
+        (state: StorageState) => state.ide.getProjectsRequestState
+    );
     const dispatch = useDispatch<AppDispatch>();
 
     const localize = useMemo(() => {
@@ -64,7 +67,43 @@ export const ProjectsPage = () => {
                         text={dictionary.projects.label}
                         color={colors.black}
                     />
-                    {!projects.length ? (
+                    {getProjectsRequestState === 'loading' ? (
+                        <div className="projects-loading-wrapper" aria-hidden>
+                            <span className="projects-loading-spinner" />
+                        </div>
+                    ) : getProjectsRequestState !== 'ok' &&
+                      getProjectsRequestState !== 'unknown' &&
+                      !projects.length ? (
+                        <div className="projects-loading-wrapper" aria-hidden>
+                            <div className="projects-loading-icon-with-text">
+                                <span className="projects-loading-warning" />
+                                <div className="projects-loading-caption">
+                                    {(() => {
+                                        switch (getProjectsRequestState) {
+                                            case 'unauth': {
+                                                const projectsDictAny =
+                                                    dictionary.projects as unknown as {
+                                                        errors: Record<
+                                                            string,
+                                                            string
+                                                        >;
+                                                    };
+                                                return (
+                                                    projectsDictAny.errors
+                                                        ?.sessionExpiredReload ??
+                                                    dictionary.filemanager
+                                                        .errors.sessionExpired
+                                                );
+                                            }
+                                            default:
+                                                return dictionary.filemanager
+                                                    .errors.internalError;
+                                        }
+                                    })()}
+                                </div>
+                            </div>
+                        </div>
+                    ) : !projects.length ? (
                         <div
                             style={{
                                 display: 'flex',

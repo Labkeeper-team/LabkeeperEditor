@@ -35,18 +35,17 @@ export class LoaderService {
     };
 
     loadProjects = async () => {
+        this.vms.ideViewModelState.setGetProjectsRequestState('loading');
         const result = await this.rpi.getAllProjectsRequest();
         if (result.isOk) {
             this.vms.projectsViewModelState.setProjects(
                 (result.body as { projects: ProjectShort[] }).projects.reverse()
             );
-        }
-        if (result.isUnauth) {
-            this.vms.toast(
-                this.vms.dictionary.filemanager.errors.sessionExpired,
-                'error'
-            );
-            this.ideService.resetEditor();
+            this.vms.ideViewModelState.setGetProjectsRequestState('ok');
+        } else if (result.isUnauth) {
+            this.vms.ideViewModelState.setGetProjectsRequestState('unauth');
+        } else {
+            this.vms.ideViewModelState.setGetProjectsRequestState('error');
         }
     };
 }

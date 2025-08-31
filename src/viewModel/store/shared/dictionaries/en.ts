@@ -91,6 +91,7 @@ export const en: Translations = {
         add: 'Add',
         errors: {
             empty_name: 'The name must not be empty or consist only of spaces.',
+            sessionExpiredReload: 'Session expired. Please reload the page',
         },
     },
     segment: {
