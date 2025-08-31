@@ -27,6 +27,7 @@ export const ideInitialState: IdeState = {
     redoEnabled: false,
     cloneRequestState: 'unknown',
     getProjectRequestState: 'unknown',
+    getFilesRequestState: 'unknown',
 };
 
 export const initialProgram: Program = {
