@@ -18,7 +18,8 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
             plot.type === 'histogram' && plot.size
                 ? { size: plot.size }
                 : undefined,
-        name: plot.name,
+        name: plot?.name?.length > 0 ? plot.name : undefined,
+        showlegend: plot?.name?.length > 0,
         text: plot.type === 'scatter' ? plot.name : undefined,
         mode:
             plot.type === 'scatter'
@@ -77,12 +78,14 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
                 text: statement.plotXAxisName,
             },
             ...axisEnhancement,
+            zeroline: false,
         },
         yaxis: {
             title: {
                 text: statement.plotYAxisName,
             },
             ...axisEnhancement,
+            zeroline: false,
         },
         margin: {
             t: 40,
