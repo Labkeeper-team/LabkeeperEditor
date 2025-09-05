@@ -92,7 +92,7 @@ export const CodeSegment = memo(
                             return (
                                 <TableSegment
                                     key={`${i}-${JSON.stringify(statement)}`}
-                                    items={table.table}
+                                    items={table.items}
                                 />
                             );
                         }

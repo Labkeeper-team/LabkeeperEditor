@@ -166,7 +166,7 @@ export interface FileStatement extends Statement {
 }
 
 export interface TableStatement extends Statement {
-    table: string[][];
+    items: string[][];
     type: 'table';
 }
 

@@ -1,5 +1,4 @@
 import { MathJax } from 'better-react-mathjax';
-import { parser } from '../utils.tsx';
 
 interface TableSegmentProps {
     items: string[][];
@@ -21,7 +20,7 @@ export const TableSegment = ({ items }: TableSegmentProps) => {
                                     {containsLatex(cell) ? (
                                         <MathJax>{`
                                         \\begin{equation}
-                                        ${parser.parse(cell)}
+                                        ${cell}
                                         \\end{equation}
                                         `}</MathJax>
                                     ) : (

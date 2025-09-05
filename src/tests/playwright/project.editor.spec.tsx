@@ -2291,7 +2291,7 @@ test('double-plots-and-tables-test', async ({ page }) => {
                                 },
                                 {
                                     type: 'table',
-                                    table: [
+                                    items: [
                                         [
                                             'a',
                                             '0',
@@ -2408,7 +2408,7 @@ test('double-plots-and-tables-test', async ({ page }) => {
                                 },
                                 {
                                     type: 'table',
-                                    table: [
+                                    items: [
                                         [
                                             'a',
                                             '0',
