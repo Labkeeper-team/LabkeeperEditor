@@ -225,6 +225,7 @@ export const instructions: LocalizedInstructionItem[] = [
             ],
             image: '/instructions/welcome.png',
             ending: basicEndingRu,
+            containsAd: true,
             wikiLink: wikiRuUrl,
         },
         en: {
