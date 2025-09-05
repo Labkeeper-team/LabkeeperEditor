@@ -4,15 +4,19 @@ import { useSelector } from 'react-redux';
 import { forwardRef, memo, useRef } from 'react';
 import { MathJax } from 'better-react-mathjax';
 import { TextOutputSegment } from '../../../../../../model/domain.ts';
-import AsciiMathParser from 'asciimath2tex';
+import { parser } from './utils.tsx';
 
-const parser = new AsciiMathParser();
+const SPLIT_REGEX = /[\n|\r]/;
 
 export const AsciimathSegment = memo(
     forwardRef<HTMLDivElement, { segment: TextOutputSegment; index: number }>(
         ({ segment, index }, ref) => {
             const activeIndex = useSelector(useIsSegmentIsActive(index));
             const segmentRef = useRef<HTMLDivElement>(null);
+
+            if (!segment?.text) {
+                return <div />;
+            }
 
             return (
                 <div
@@ -23,7 +27,14 @@ export const AsciimathSegment = memo(
                         'result-segment': true,
                     })}
                 >
-                    <MathJax>{`\\begin{equation}${parser.parse(segment.text)}\\end{equation}`}</MathJax>
+                    {segment.text
+                        .split(SPLIT_REGEX)
+                        .filter((s) => s.length > 0)
+                        .map((part, index) => (
+                            <MathJax key={index}>
+                                {`\\begin{equation}\n${parser.parse(part)}\n\\end{equation}\n`}
+                            </MathJax>
+                        ))}
                 </div>
             );
         }
