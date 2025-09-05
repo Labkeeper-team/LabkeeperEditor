@@ -352,6 +352,10 @@ export class Rpi {
         return requestWrapper(() => axios.get(URLS.UserInfo));
     }
 
+    async getS3FileRequest(path: string): Promise<RequestResult> {
+        return requestWrapper(() => axios.get(URLS.S3File + path));
+    }
+
     async formLoginRequest(
         userName: string,
         password: string,

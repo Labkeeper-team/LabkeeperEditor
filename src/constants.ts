@@ -26,6 +26,7 @@ export const URLS = {
     deleteFile: `/api/${version}/public/project/{id}/file/delete`,
 
     UserInfo: `/api/${version}/public/user-info`,
+    S3File: `https://files.labkeeper.io/`,
     Email: `/api/${version}/public/email`,
     Code: `/api/${version}/public/code`,
     Password: `/api/${version}/public/password`,

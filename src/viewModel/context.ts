@@ -24,7 +24,7 @@ export function setupContext(
         ideService
     );
     const fileService: FileService = new FileService(vms);
-    const exampleService: ExampleService = new ExampleService();
+    const exampleService: ExampleService = new ExampleService(rpi);
     const startupService: StartupService = new StartupService(
         rpi,
         programService,

@@ -224,13 +224,18 @@ export class StartupService {
             // on default uri but unauth
             const language = this.vms.persistenceViewModelState.language();
             if (version) {
-                const [program, result] = this.exampleService.exampleForQR(
+                const result = await this.exampleService.exampleForQR(
                     version,
                     language
                 );
-                this.ideService.setNewProgram(program, result);
+                if (result) {
+                    this.ideService.setNewProgram(
+                        result.program,
+                        result.result
+                    );
+                }
             } else if (from) {
-                const result = this.exampleService.exampleForFrom(
+                const result = await this.exampleService.exampleForFrom(
                     from,
                     language
                 );
