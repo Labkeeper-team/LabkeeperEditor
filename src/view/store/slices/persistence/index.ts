@@ -1,8 +1,8 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { LOGOUT_TYPE } from '../../actions';
 import { Language } from '../../../../viewModel/dictionaries';
 import { Program } from '../../../../model/domain.ts';
-import { initialProgram, persistenceInitialState } from '../index.ts';
+import { persistenceInitialState } from '../index.ts';
+import { createEmptyProgram } from '../../../../model/repository/ProgramRepository.ts';
 
 export const persistenceSlice = createSlice({
     name: 'persistenceSlice',
@@ -18,7 +18,7 @@ export const persistenceSlice = createSlice({
             state.lastProgram = payload;
         },
         clearLastProgram(state) {
-            state.lastProgram = initialProgram;
+            state.lastProgram = createEmptyProgram();
         },
         setLastOpenedProjectUuid(
             state,
@@ -26,14 +26,6 @@ export const persistenceSlice = createSlice({
         ) {
             state.lastOpenedProjectUuid = payload;
         },
-    },
-    extraReducers: (b) => {
-        b.addCase(LOGOUT_TYPE, (state) => {
-            const newLogoutState = { ...persistenceInitialState };
-            newLogoutState.language = state.language;
-            state = newLogoutState;
-            return state;
-        });
     },
 });
 export const {

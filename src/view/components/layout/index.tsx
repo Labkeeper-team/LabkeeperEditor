@@ -1,17 +1,10 @@
-import {
-    Outlet,
-    useLocation,
-    useNavigate,
-    useSearchParams,
-} from 'react-router-dom';
+import { Outlet, useLocation, useSearchParams } from 'react-router-dom';
 import { Header } from '../header';
 import { InterfaceTour } from '../tour';
 import { useCallback, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { setIsFileDraggedToFileManager } from '../../store/slices/settings';
-import { AppDispatch, StorageState } from '../../store';
-import { navigateSuccess, toastSuccess } from '../../store/slices/callback';
-import { toast } from 'react-toastify';
+import { AppDispatch } from '../../store';
 import { Routes } from '../../../viewModel/routes.ts';
 
 import './style.scss';
@@ -24,7 +17,6 @@ import { controller } from '../../../main.tsx';
 let loaded = false;
 
 export const BaseLayout = () => {
-    const navigate = useNavigate();
     const dispatch = useDispatch<AppDispatch>();
     const [searchParams] = useSearchParams();
     const location = useLocation();
@@ -38,33 +30,6 @@ export const BaseLayout = () => {
      */
     const isReadonly = useSelector(useIsProjectReadonly);
     const isDragging = useSelector(useIsDraggedToFileManager);
-    const navigateTo = useSelector(
-        (state: StorageState) => state.callback.navigateTo
-    );
-    const toastMessage = useSelector(
-        (state: StorageState) => state.callback.showToastMessage
-    );
-    const toastType = useSelector(
-        (state: StorageState) => state.callback.toastType
-    );
-
-    /*
-    EVENT HANDLERS
-     */
-    useEffect(() => {
-        if (navigateTo) {
-            console.debug('Navigating to', navigateTo);
-            navigate(navigateTo);
-            dispatch(navigateSuccess());
-        }
-    }, [dispatch, navigate, navigateTo]);
-    useEffect(() => {
-        if (toastMessage && toastType) {
-            console.debug('Showing toast', toastMessage);
-            toast(toastMessage, { type: toastType });
-            dispatch(toastSuccess());
-        }
-    }, [dispatch, toastMessage, toastType]);
 
     /*
     Логика перетаскивания файлов

@@ -60,7 +60,7 @@ export class AuthService {
 
         if (response.isOk) {
             this.ideService.resetEditor();
-            this.repository.navigate(Routes.ProjectDefault);
+            this.repository.setLocation(Routes.ProjectDefault);
             this.repository.projectViewModelRepository.setReadOnly(false);
         }
     };

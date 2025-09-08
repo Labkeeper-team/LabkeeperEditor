@@ -45,7 +45,6 @@ import {
     setLastProgram,
 } from './slices/persistence';
 import {
-    clearProject,
     setCompileError,
     setCompileResult,
     setCompileResultForSegment,
@@ -75,14 +74,9 @@ import {
     setTourVisibility,
 } from './slices/settings';
 import { setUser } from './slices/user';
-import {
-    setNavigateTo,
-    setScrollEditorToBottom,
-    setShowToast,
-} from './slices/callback';
+import { setScrollEditorToBottom } from './slices/callback';
 import { dictionary } from '../../viewModel/dictionaries';
-import { TypeOptions } from 'react-toastify';
-import { logoutAction } from './actions';
+import { toast, TypeOptions } from 'react-toastify';
 import {
     CloneRequestState,
     GetFilesRequestState,
@@ -178,7 +172,7 @@ export const createViewModelStateFromStore = (
                 store.dispatch(setGetProjectsRequestState(v)),
             setUndoEnabled: (v: boolean) => store.dispatch(setUndoEnabled(v)),
             setRedoEnabled: (v: boolean) => store.dispatch(setRedoEnabled(v)),
-            setSearch: (search: string) => store.dispatch(setSearch(search)),
+            setSearch: (search?: string) => store.dispatch(setSearch(search)),
             setActiveSegmentIndex: (index: number) =>
                 store.dispatch(setActiveSegmentIndex(index)),
             setPreviousActiveSegmentIndex: (index: number) =>
@@ -224,7 +218,7 @@ export const createViewModelStateFromStore = (
                     })
                 ),
             setReadOnly: (value: boolean) => store.dispatch(setReadOnly(value)),
-            setProject: (project: Project) =>
+            setProject: (project?: Project) =>
                 store.dispatch(setProject(project)),
             setCompileResult: (compileResult: CompileSuccessResult) =>
                 store.dispatch(setCompileResult(compileResult)),
@@ -233,7 +227,6 @@ export const createViewModelStateFromStore = (
             ) => store.dispatch(setCompileError(compileErrorResultList)),
             setFiles: (files: LabkeeperFile[]) =>
                 store.dispatch(setFiles(files)),
-            resetToInitialState: () => store.dispatch(clearProject()),
             setCurrentProgram: (program) =>
                 store.dispatch(setCurrentProgram(program)),
         },
@@ -283,12 +276,12 @@ export const createViewModelStateFromStore = (
             setUserInfo: (userInfo) => store.dispatch(setUser(userInfo)),
         },
 
-        navigate: (url: string) => store.dispatch(setNavigateTo(url)),
+        setLocation: (url: string) => appRouter.navigate(url),
         dictionary: dictionary[store.getState().persistence.language],
-        toast: (message: string, type: TypeOptions) =>
-            store.dispatch(setShowToast({ message, type })),
+        toast: (message: string, type: TypeOptions) => {
+            toast(message, { type });
+        },
         scrollEditorToBottom: () =>
             store.dispatch(setScrollEditorToBottom(true)),
-        resetToInitialState: () => store.dispatch(logoutAction),
     };
 };

@@ -174,7 +174,7 @@ export const mockViewModelState = (): ViewModelRepository => {
                 (getProjectRequestState = v),
             setUndoEnabled: (v: boolean) => (undoEnabled = v),
             setRedoEnabled: (v: boolean) => (redoEnabled = v),
-            setSearch: (v: string) => (search = v),
+            setSearch: (v: string | undefined) => (search = v),
             setActiveSegmentIndex: (index: number) =>
                 (activeSegmentIndex = index),
             setPreviousActiveSegmentIndex: (index: number) =>
@@ -216,23 +216,12 @@ export const mockViewModelState = (): ViewModelRepository => {
                 }
             },
             setReadOnly: (v: boolean) => (projectIsReadonly = v),
-            setProject: (v: Project) => (project = v),
+            setProject: (v?: Project) => (project = v),
             setCompileResult: (v: CompileSuccessResult) =>
                 (compileSuccessResult = v),
             setCompileErrorResult: (v: CompileErrorResultList) =>
                 (compileErrorResult = v),
             setFiles: (v: LabkeeperFile[]) => (files = v),
-            resetToInitialState: () => {
-                compileErrorResult = undefined;
-                compileSuccessResult = { segments: [] };
-                project = undefined;
-                projectIsReadonly = false;
-                currentProgram = {
-                    segments: [],
-                    parameters: { roundStrategy: 'firstMeaningDigit' },
-                };
-                files = [];
-            },
             setCurrentProgram: (v) => (currentProgram = v),
         },
         projectsViewModelRepository: {
@@ -274,11 +263,10 @@ export const mockViewModelState = (): ViewModelRepository => {
             },
         },
 
-        navigate: (url: string) => (location = url),
+        setLocation: (url: string) => (location = url),
         dictionary: en,
         toast: (message: string, type: TypeOptions) =>
             console.log('Show toast:', message, type),
-        resetToInitialState: () => console.log('resetToInitialState'),
     };
 };
 
@@ -293,13 +281,12 @@ export interface ProjectViewModelRepository {
     setCompileResultSegmentsSize: (size: number) => void;
     setCompileResultForSegment: (index: number, segment: OutputSegment) => void;
     setReadOnly: (value: boolean) => void;
-    setProject: (project: Project) => void;
+    setProject: (project?: Project) => void;
     setCompileResult: (compileResult: CompileSuccessResult) => void;
     setCompileErrorResult: (
         compileErrorResultList: CompileErrorResultList
     ) => void;
     setFiles: (files: LabkeeperFile[]) => void;
-    resetToInitialState: () => void;
     setCurrentProgram: (program: Program) => void;
 }
 
@@ -316,7 +303,7 @@ export interface IdeViewModelRepository {
 
     setRedoEnabled: (v: boolean) => void;
     setUndoEnabled: (v: boolean) => void;
-    setSearch: (search: string) => void;
+    setSearch: (search: string | undefined) => void;
     setActiveSegmentIndex: (index: number) => void;
     setPreviousActiveSegmentIndex: (index: number) => void;
     setCloneRequestState: (state: CloneRequestState) => void;
@@ -401,10 +388,9 @@ export interface ViewModelRepository {
     authViewModelRepository: AuthViewModelRepository;
     projectsViewModelRepository: ProjectsViewModelRepository;
     settingsViewModelRepository: SettingsViewModelRepository;
-    navigate: (url: string) => void;
+    setLocation: (url: string) => void;
     toast: (message: string, type: TypeOptions) => void;
     dictionary: Translations;
-    resetToInitialState: () => void;
     location: () => string;
     scrollEditorToBottom: () => void;
 }

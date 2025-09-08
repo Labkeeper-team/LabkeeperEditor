@@ -8,7 +8,6 @@ import {
     UserInfo,
 } from '../../../model/domain.ts';
 
-import { TypeOptions } from 'react-toastify';
 import { Language } from '../../../viewModel/dictionaries';
 import {
     AuthView,
@@ -21,11 +20,9 @@ import {
     LoginRequestState,
     PasswordRequestState,
 } from '../../../viewModel/repository';
+import { createEmptyProgram } from '../../../model/repository/ProgramRepository.ts';
 
 interface CallbackState {
-    navigateTo?: string;
-    showToastMessage?: string;
-    toastType?: TypeOptions;
     scrollEditorToBottom: boolean;
 }
 
@@ -108,16 +105,9 @@ export const ideInitialState: IdeState = {
     getProjectsRequestState: 'unknown',
 };
 
-export const initialProgram: Program = {
-    segments: [],
-    parameters: {
-        roundStrategy: 'firstMeaningDigit',
-    },
-};
-
 export const persistenceInitialState: PersistenceState = {
     language: navigator.language.includes('ru') ? 'ru' : 'en',
-    lastProgram: initialProgram,
+    lastProgram: createEmptyProgram(),
     instructionExpanded: true,
     lastOpenedProjectUuid: undefined,
 };
@@ -127,12 +117,7 @@ export const projectInitialState: ProjectState = {
     projectIsReadonly: true,
     compileSuccessResult: { segments: [] },
     files: [],
-    currentProgram: {
-        segments: [],
-        parameters: {
-            roundStrategy: 'firstMeaningDigit',
-        },
-    },
+    currentProgram: createEmptyProgram(),
 };
 
 export const projectsInitialState: ProjectsState = {
@@ -159,8 +144,5 @@ export const userInitialState: UserInfo = {
 };
 
 export const callbackInitialState: CallbackState = {
-    navigateTo: undefined,
-    showToastMessage: undefined,
-    toastType: undefined,
     scrollEditorToBottom: false,
 };

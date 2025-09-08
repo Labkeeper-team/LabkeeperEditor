@@ -8,7 +8,6 @@ import {
     Project,
     Segment,
 } from '../../../../model/domain.ts';
-import { LOGOUT_TYPE } from '../../actions';
 import { projectInitialState } from '../index.ts';
 
 export const projectSlice = createSlice({
@@ -113,25 +112,17 @@ export const projectSlice = createSlice({
         setFiles: (state, { payload }: PayloadAction<LabkeeperFile[]>) => {
             state.files = payload;
         },
-        setProject: (state, { payload }: PayloadAction<Project>) => {
+        setProject: (
+            state,
+            { payload }: PayloadAction<Project | undefined>
+        ) => {
             state.project = payload;
         },
-        clearProject: (state) => {
-            state = projectInitialState;
-            return state;
-        },
-    },
-    extraReducers: (b) => {
-        b.addCase(LOGOUT_TYPE, (state) => {
-            state = projectInitialState;
-            return state;
-        });
     },
 });
 
 export const {
     setProject,
-    clearProject,
     setFiles,
     setReadOnly,
     setCompileResult,

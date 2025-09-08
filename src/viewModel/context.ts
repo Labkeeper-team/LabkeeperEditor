@@ -18,6 +18,7 @@ import {
     InMemoryProgramRepository,
     ProgramRepository,
 } from '../model/repository/ProgramRepository.ts';
+import { ResetService } from './domain/ResetService.ts';
 
 export function setupContext(
     rpi: Rpi,
@@ -32,7 +33,15 @@ export function setupContext(
     const programService: ProgramService = new ProgramService(
         programRepository
     );
-    const ideService: IdeService = new IdeService(repository, programService);
+    const resetService: ResetService = new ResetService(
+        repository,
+        programService
+    );
+    const ideService: IdeService = new IdeService(
+        repository,
+        programService,
+        resetService
+    );
     const loaderService: LoaderService = new LoaderService(
         rpi,
         repository,
@@ -91,7 +100,8 @@ export function setupContext(
         loaderService,
         ideService,
         observerService,
-        compilationService
+        compilationService,
+        resetService
     );
     const projectsPageService: ProjectsPageService = new ProjectsPageService(
         repository,

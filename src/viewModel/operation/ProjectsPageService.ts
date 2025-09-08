@@ -87,7 +87,7 @@ export class ProjectsPageService {
             this.ideService.resetEditor();
         }
         if (result.isOk) {
-            this.repository.navigate(
+            this.repository.setLocation(
                 Routes.Project.replace(':id', result.body.projectId + '')
             );
             this.repository.projectViewModelRepository.setProject(result.body);
@@ -105,7 +105,7 @@ export class ProjectsPageService {
     };
 
     onRowClickedInProjectsList = async (projectId: string) => {
-        this.repository.navigate(Routes.Project.replace(':id', projectId));
+        this.repository.setLocation(Routes.Project.replace(':id', projectId));
         await this.startupService.openProjectById(
             {
                 isAuthenticated:

@@ -1,5 +1,4 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { LOGOUT_TYPE } from '../../actions';
 import { settingsInitialState } from '../index.ts';
 
 export const settingsSlice = createSlice({
@@ -48,12 +47,6 @@ export const settingsSlice = createSlice({
         setShowContactModal: (state, { payload }: PayloadAction<boolean>) => {
             state.showContactModal = payload;
         },
-    },
-    extraReducers: (b) => {
-        b.addCase(LOGOUT_TYPE, (state) => {
-            state = settingsInitialState;
-            return state;
-        });
     },
 });
 export const {

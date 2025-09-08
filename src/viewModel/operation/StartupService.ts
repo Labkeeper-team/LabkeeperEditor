@@ -70,7 +70,7 @@ export class StartupService {
                 this.repository.dictionary.filemanager.errors.noNetwork,
                 'error'
             );
-            this.repository.navigate(Routes.Home);
+            this.repository.setLocation(Routes.Home);
             return;
         }
 
@@ -204,7 +204,7 @@ export class StartupService {
                 project.program,
                 project.lastProgramResult
             );
-            this.repository.navigate(
+            this.repository.setLocation(
                 Routes.Project.replace(':id', project.projectId)
             );
             this.observerService.setUserState(
@@ -249,12 +249,12 @@ export class StartupService {
                         errors: [],
                     }
                 );
-                this.repository.navigate(
+                this.repository.setLocation(
                     Routes.Project.replace(':id', project.projectId)
                 );
             }
             if (result.isUnauth) {
-                this.repository.navigate(Routes.ProjectDefault);
+                this.repository.setLocation(Routes.ProjectDefault);
                 this.repository.toast(
                     this.repository.dictionary.filemanager.errors
                         .sessionExpired,
@@ -263,7 +263,7 @@ export class StartupService {
                 this.ideService.resetEditor();
             }
         } else {
-            this.repository.navigate(Routes.ProjectDefault);
+            this.repository.setLocation(Routes.ProjectDefault);
             // on default uri but unauth
             const language =
                 this.repository.persistenceViewModelRepository.language();

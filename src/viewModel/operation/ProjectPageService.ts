@@ -10,6 +10,7 @@ import { IdeService } from '../domain/IdeService.ts';
 import { HeaderHelpItem } from '../../model/help';
 import { Routes } from '../routes.ts';
 import { CompilationService } from '../domain/CompilationService.ts';
+import { ResetService } from '../domain/ResetService.ts';
 
 export class ProjectPageService {
     repository: ViewModelRepository;
@@ -19,6 +20,7 @@ export class ProjectPageService {
     ideService: IdeService;
     observerService: ObserverService;
     compilationService: CompilationService;
+    resetService: ResetService;
 
     constructor(
         repository: ViewModelRepository,
@@ -27,7 +29,8 @@ export class ProjectPageService {
         loaderService: LoaderService,
         ideService: IdeService,
         observerService: ObserverService,
-        compilationService: CompilationService
+        compilationService: CompilationService,
+        resetService: ResetService
     ) {
         this.rpi = rpi;
         this.programService = programService;
@@ -36,6 +39,7 @@ export class ProjectPageService {
         this.repository = repository;
         this.observerService = observerService;
         this.compilationService = compilationService;
+        this.resetService = resetService;
     }
 
     onContactUsFormSubmitted = async (subject: string, body: string) => {
@@ -55,13 +59,12 @@ export class ProjectPageService {
     };
 
     onBackButtonClicked = async () => {
-        this.repository.projectViewModelRepository.resetToInitialState();
-        this.programService.clearHistory();
+        this.resetService.resetProject();
         this.repository.projectViewModelRepository.setReadOnly(false);
         if (this.repository.userViewModelRepository.isAuthenticated()) {
-            this.repository.navigate(Routes.Projects);
+            this.repository.setLocation(Routes.Projects);
         } else {
-            this.repository.navigate(Routes.ProjectDefault);
+            this.repository.setLocation(Routes.ProjectDefault);
         }
     };
 
@@ -258,7 +261,7 @@ export class ProjectPageService {
 
         if (result.isOk) {
             this.repository.ideViewModelRepository.setCloneRequestState('ok');
-            this.repository.navigate(
+            this.repository.setLocation(
                 Routes.Project.replace(':id', result.body.projectId)
             );
             this.repository.projectViewModelRepository.setProject(result.body);

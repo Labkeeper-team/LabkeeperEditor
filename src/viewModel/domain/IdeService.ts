@@ -6,19 +6,23 @@ import {
     Program,
     TextOutputSegment,
 } from '../../model/domain.ts';
+import { ResetService } from './ResetService.ts';
 
 const dollarPattern = /\$\{[\w|\p{Script=Cyrillic}]+\}/u;
 
 export class IdeService {
     repository: ViewModelRepository;
     programService: ProgramService;
+    resetService: ResetService;
 
     constructor(
         repository: ViewModelRepository,
-        programService: ProgramService
+        programService: ProgramService,
+        resetService: ResetService
     ) {
         this.repository = repository;
         this.programService = programService;
+        this.resetService = resetService;
     }
 
     setActiveSegmentIndexAndPreviousSegmentIndex = (activeIndex: number) => {
@@ -39,8 +43,7 @@ export class IdeService {
     };
 
     resetEditor = () => {
-        this.repository.resetToInitialState();
-        this.programService.clearHistory();
+        this.resetService.resetAll();
     };
 
     onSegmentUpdate = (segmentIndex: number, segmentText: string) => {
