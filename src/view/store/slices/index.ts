@@ -1,12 +1,13 @@
-import { AuthState } from './auth';
-import { IdeState } from './ide';
-import { PersistenceState } from './persistence';
-import { Program } from '../../../model/domain.ts';
-import { ProjectState } from './project';
-import { ProjectsState } from './projects';
-import { SettingsState } from './settings';
-import { UserInfo } from './user';
-import { CallbackState } from './callback';
+import { Program, UserInfo } from '../../../model/domain.ts';
+import {
+    AuthState,
+    CallbackState,
+    IdeState,
+    PersistenceState,
+    ProjectsState,
+    ProjectState,
+    SettingsState,
+} from '../../../viewModel/viewModelState';
 
 export const authInitialState: AuthState = {
     currentView: 'closed',

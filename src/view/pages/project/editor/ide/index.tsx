@@ -8,14 +8,14 @@ import { RightArrowIcon } from '../../../../icons';
 import {
     useCurrentProgram,
     useIsProjectReadonly,
-} from '../../../../../viewModel/store/selectors/program';
+} from '../../../../store/selectors/program';
 import classNames from 'classnames';
 import { InterfaceTourAnchorClassnames } from '../../../../components/tour/helpers';
 
-import { AppDispatch, StorageState } from '../../../../../viewModel/store';
-import { onRunButtonPressed } from '../../../../../controller';
+import { AppDispatch, StorageState } from '../../../../store';
 import { useMemo, useState } from 'react';
-import { useDictionary } from '../../../../../viewModel/store/selectors/translations.ts';
+import { useDictionary } from '../../../../store/selectors/translations.ts';
+import { controller } from '../../../../../main.tsx';
 
 export const Ide = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -107,7 +107,7 @@ export const Ide = () => {
                         setTimeout(() => {
                             setFlag(false);
                         }, 1000);
-                        dispatch(onRunButtonPressed());
+                        dispatch(controller.onRunButtonPressedRequest());
                     }}
                     disabled={disabled}
                     titleIcon={() =>

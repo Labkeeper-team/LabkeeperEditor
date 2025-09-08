@@ -5,15 +5,9 @@ import { InterfaceTourAnchorClassnames } from '../../../../../../components/tour
 import { HistoryChangerIcon } from '../../../../../../icons';
 
 import './style.scss';
-import {
-    onNextVersionButtonClickedRequest,
-    onPrevVersionButtonClickedRequest,
-} from '../../../../../../../controller';
-import {
-    AppDispatch,
-    StorageState,
-} from '../../../../../../../viewModel/store';
-import { useActiveElement } from '../../../../../../../viewModel/store/selectors/program.ts';
+import { AppDispatch, StorageState } from '../../../../../../store';
+import { useActiveElement } from '../../../../../../store/selectors/program.ts';
+import { controller } from '../../../../../../../main.tsx';
 
 export const HistoryButtons = () => {
     const activeSegmentIndex = useSelector(useActiveElement);
@@ -31,7 +25,7 @@ export const HistoryButtons = () => {
             if (activeSegmentIndex === undefined || activeSegmentIndex < 0) {
                 e?.preventDefault();
                 e?.stopPropagation();
-                dispatch(onPrevVersionButtonClickedRequest());
+                dispatch(controller.onPrevVersionButtonClickedRequest());
             }
         },
         {
@@ -46,7 +40,7 @@ export const HistoryButtons = () => {
             if (activeSegmentIndex === undefined || activeSegmentIndex < 0) {
                 e?.preventDefault();
                 e?.stopPropagation();
-                dispatch(onNextVersionButtonClickedRequest());
+                dispatch(controller.onNextVersionButtonClickedRequest());
             }
         },
         {
@@ -64,7 +58,9 @@ export const HistoryButtons = () => {
             )}
         >
             <div
-                onClick={() => dispatch(onPrevVersionButtonClickedRequest())}
+                onClick={() =>
+                    dispatch(controller.onPrevVersionButtonClickedRequest())
+                }
                 className={classNames('history-button revert', {
                     disabled: !undoEnabled,
                 })}
@@ -72,7 +68,9 @@ export const HistoryButtons = () => {
                 <HistoryChangerIcon />
             </div>
             <div
-                onClick={() => dispatch(onNextVersionButtonClickedRequest())}
+                onClick={() =>
+                    dispatch(controller.onNextVersionButtonClickedRequest())
+                }
                 className={classNames('history-button', {
                     disabled: !redoEnabled,
                 })}

@@ -2,23 +2,20 @@ import { ChangeEvent, LegacyRef, useCallback, useMemo, useRef } from 'react';
 import { PlusIcon } from '../../../icons';
 import './style.scss';
 import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch } from '../../../../viewModel/store';
+import { AppDispatch } from '../../../store';
 import { FileGroup } from './components/fileGroup';
 import { FileManagerDragZone } from './components/dragZone';
 import { Button } from '../../../components/button';
-import { useDictionary } from '../../../../viewModel/store/selectors/translations';
-import {
-    onCrossButtonInFileManagerClickedRequest,
-    onUploadFileRequest,
-} from '../../../../controller';
+import { useDictionary } from '../../../store/selectors/translations';
 import { LabkeeperFile } from '../../../../model/domain.ts';
 import {
     useFileInFileManager,
     useIsDraggedToFileManager,
     useIsProjectReadonly,
     useShowFileManager,
-} from '../../../../viewModel/store/selectors/program.ts';
-import { StorageState } from '../../../../viewModel/store';
+} from '../../../store/selectors/program.ts';
+import { StorageState } from '../../../store';
+import { controller } from '../../../../main.tsx';
 
 export const FileManager = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -47,7 +44,9 @@ export const FileManager = () => {
                     return;
                 }
 
-                dispatch(onUploadFileRequest({ file: fileToUpload }));
+                dispatch(
+                    controller.onUploadFileRequest({ file: fileToUpload })
+                );
             }
         },
         [dispatch]
@@ -89,7 +88,9 @@ export const FileManager = () => {
                 <div>{dictionary.filemanager.title}</div>
                 <div
                     onClick={() =>
-                        dispatch(onCrossButtonInFileManagerClickedRequest())
+                        dispatch(
+                            controller.onCrossButtonInFileManagerClickedRequest()
+                        )
                     }
                     className="close-icon-container"
                 >

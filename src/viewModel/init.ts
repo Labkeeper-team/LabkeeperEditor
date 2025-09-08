@@ -1,8 +1,7 @@
 import { ViewModelState } from './viewModelState';
-import { Routes } from '../view/routing/routes.ts';
-import { Project } from '../model/domain.ts';
+import { Routes } from './routes.ts';
+import { Project, UserInfo } from '../model/domain.ts';
 import { RequestResult, RichProject, Rpi } from '../model/rpi';
-import { UserInfo } from './store/slices/user';
 import { ProgramService } from '../model/service/program.ts';
 import { LoaderService } from './project.ts';
 import { ObserverService, States } from '../model/service/observer.ts';
@@ -54,6 +53,12 @@ export class StartupService {
 
         const userInfo = result.body;
         this.vms.userViewModelState.setUserInfo(userInfo);
+
+        if (userInfo.isAuthenticated) {
+            this.observerService.setUserState(States.STATE_ONLINE, 'online');
+        } else {
+            this.observerService.setUserState(States.STATE_ONLINE, 'anonymous');
+        }
 
         this.observerService.setUserState(States.USER_ID, String(userInfo.id));
         this.observerService.setUserState(

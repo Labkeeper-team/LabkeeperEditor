@@ -13,7 +13,7 @@ import seg_output_ru2 from '../model/examples/2/seg_output_ru.json';
 import seg_input_en2 from '../model/examples/2/seg_input_en.json';
 import seg_output_en2 from '../model/examples/2/seg_output_en.json';
 
-import { Language } from './store/shared/dictionaries';
+import { Language } from './dictionaries';
 import { Rpi } from '../model/rpi';
 
 interface Lab {

@@ -8,13 +8,13 @@ import { SegmentType } from '../../../../../../model/domain';
 import { AddBlockProps } from './model';
 import { InterfaceTourAnchorClassnames } from '../../../../../components/tour/helpers';
 import { colors } from '../../../../../styles/colors';
-import { useDictionary } from '../../../../../../viewModel/store/selectors/translations';
+import { useDictionary } from '../../../../../store/selectors/translations';
 import { Select } from '../../../../../components/select';
 import { SelectClassNames } from '../../../../../components/select/model';
-import { onAddSegmentButtonClickedRequest } from '../../../../../../controller';
-import { AppDispatch } from '../../../../../../viewModel/store';
+import { AppDispatch } from '../../../../../store';
 import classNames from 'classnames';
 import { useIsMobile } from '../../../../../hooks/useMobile';
+import { controller } from '../../../../../../main.tsx';
 
 export const AddBlock = (props: AddBlockProps) => {
     const dispatch = useDispatch<AppDispatch>();
@@ -44,7 +44,11 @@ export const AddBlock = (props: AddBlockProps) => {
                 title={addMdTitle}
                 color="gray"
                 onPress={() =>
-                    dispatch(onAddSegmentButtonClickedRequest({ type: 'md' }))
+                    dispatch(
+                        controller.onAddSegmentButtonClickedRequest({
+                            type: 'md',
+                        })
+                    )
                 }
                 minimize={!props.isFirst}
                 titleIcon={() => <PlusIcon />}
@@ -60,7 +64,7 @@ export const AddBlock = (props: AddBlockProps) => {
                 value="computational"
                 onChange={(value) =>
                     dispatch(
-                        onAddSegmentButtonClickedRequest({
+                        controller.onAddSegmentButtonClickedRequest({
                             type: value as SegmentType,
                         })
                     )

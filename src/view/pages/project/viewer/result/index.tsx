@@ -10,14 +10,12 @@ import {
     useCompiledSuccesInfo,
     useCurrentProject,
     useUser,
-} from '../../../../../viewModel/store/selectors/program';
+} from '../../../../store/selectors/program';
 import { useReactToPrint } from 'react-to-print';
 import { useRef } from 'react';
-import { useDictionary } from '../../../../../viewModel/store/selectors/translations';
-import { AppDispatch } from '../../../../../viewModel/store';
-import { onPrintButtonPressedRequest } from '../../../../../controller';
-import { observerService } from '../../../../../main.tsx';
-import { Events } from '../../../../../model/service/observer.ts';
+import { useDictionary } from '../../../../store/selectors/translations';
+import { AppDispatch } from '../../../../store';
+import { controller } from '../../../../../main.tsx';
 
 declare global {
     interface Window {
@@ -41,8 +39,7 @@ export const Result = () => {
     });
 
     const onPress = () => {
-        observerService.onEvent(Events.EVENT_PRINT);
-        dispatch(onPrintButtonPressedRequest());
+        dispatch(controller.onPrintButtonPressedRequest());
         const isMobile =
             /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(
                 navigator.userAgent

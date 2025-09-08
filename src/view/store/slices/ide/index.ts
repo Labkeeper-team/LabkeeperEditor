@@ -1,41 +1,12 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { LOGOUT_TYPE } from '../../actions';
 import { ideInitialState } from '../index.ts';
-
-export type CloneRequestState = 'unknown' | 'ok' | 'error' | 'loading';
-export type GetProjectRequestState =
-    | 'unknown'
-    | 'ok'
-    | 'error'
-    | 'loading'
-    | 'forbidden'
-    | 'not_found';
-
-export type GetFilesRequestState =
-    | 'unknown'
-    | 'ok'
-    | 'error'
-    | 'loading'
-    | 'forbidden';
-
-export type GetProjectsRequestState =
-    | 'unknown'
-    | 'ok'
-    | 'error'
-    | 'loading'
-    | 'unauth';
-
-export interface IdeState {
-    search?: string;
-    activeSegmentIndex: number;
-    previousActiveSegmentIndex: number;
-    undoEnabled: boolean;
-    redoEnabled: boolean;
-    cloneRequestState: CloneRequestState;
-    getProjectRequestState: GetProjectRequestState;
-    getFilesRequestState: GetFilesRequestState;
-    getProjectsRequestState: GetProjectsRequestState;
-}
+import {
+    CloneRequestState,
+    GetFilesRequestState,
+    GetProjectRequestState,
+    GetProjectsRequestState,
+} from '../../../../viewModel/viewModelState';
 
 export const ideSlice = createSlice({
     name: 'ideSlice',

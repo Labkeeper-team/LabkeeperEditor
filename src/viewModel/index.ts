@@ -1,4 +1,4 @@
-import { Routes } from './../view/routing/routes.ts';
+import { Routes } from './routes.ts';
 import {
     Program,
     ProgramRoundStrategy,
@@ -199,6 +199,7 @@ export class SystemService {
     };
 
     onPrintButtonPressed = (): void => {
+        this.observerService.onEvent(Events.EVENT_PRINT);
         this.vms.ideViewModelState.setActiveSegmentIndex(-1);
     };
 
@@ -453,6 +454,7 @@ export class SystemService {
         segmentType: SegmentType,
         after: number
     ) => {
+        // TODO observer service call
         this.programService.addSegmentAfterIndex(segmentType, after);
         this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(after + 1);
         await this.segmentEditorSaveProgram();

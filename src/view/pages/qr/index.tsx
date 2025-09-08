@@ -1,8 +1,8 @@
 import { useDispatch } from 'react-redux';
-import { AppDispatch } from '../../../viewModel/store';
+import { AppDispatch } from '../../store';
 import { useParams } from 'react-router-dom';
 import { useEffect } from 'react';
-import { onQrPageEnterRequest } from '../../../controller';
+import { controller } from '../../../main.tsx';
 
 export const QrPage = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -11,7 +11,7 @@ export const QrPage = () => {
 
     useEffect(() => {
         if (version) {
-            dispatch(onQrPageEnterRequest({ version: version }));
+            dispatch(controller.onQrPageEnterRequest({ version: version }));
         }
     }, [version]);
 

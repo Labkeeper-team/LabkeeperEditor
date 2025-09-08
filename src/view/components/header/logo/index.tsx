@@ -5,7 +5,7 @@ import { Typography } from '../../typography';
 import './style.scss';
 import { BUILD_INFO } from '../../../../constants.ts';
 import { useSelector } from 'react-redux';
-import { useUser } from '../../../../viewModel/store/selectors/program.ts';
+import { useUser } from '../../../store/selectors/program.ts';
 
 const INFO = `v${BUILD_INFO.major}${BUILD_INFO.minor ? '.' : ''}${BUILD_INFO.minor}`;
 

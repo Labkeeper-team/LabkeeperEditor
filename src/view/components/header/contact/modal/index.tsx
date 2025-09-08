@@ -4,13 +4,13 @@ import { Typography } from '../../../typography';
 import { Input } from '../../../input';
 import { Button } from '../../../button';
 import './style.scss';
-import { AppDispatch, StorageState } from '../../../../../viewModel/store';
-import { useDictionary } from '../../../../../viewModel/store/selectors/translations';
-import { setShowContactModal } from '../../../../../viewModel/store/slices/settings';
+import { AppDispatch, StorageState } from '../../../../store';
+import { useDictionary } from '../../../../store/selectors/translations';
+import { setShowContactModal } from '../../../../store/slices/settings';
 import { useState } from 'react';
-import { onContactUsFormSubmittedRequest } from '../../../../../controller';
 import { colors } from '../../../../styles/colors.ts';
-import { useUser } from '../../../../../viewModel/store/selectors/program.ts';
+import { useUser } from '../../../../store/selectors/program.ts';
+import { controller } from '../../../../../main.tsx';
 
 const contactEmail = 'contact@labkeeper.io';
 
@@ -30,7 +30,10 @@ export const ContactModal = () => {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         dispatch(
-            onContactUsFormSubmittedRequest({ body: message, subject: subject })
+            controller.onContactUsFormSubmittedRequest({
+                body: message,
+                subject: subject,
+            })
         );
         setMessage('');
         setSubject('');

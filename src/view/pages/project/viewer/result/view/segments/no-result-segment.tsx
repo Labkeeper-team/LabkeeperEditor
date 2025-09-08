@@ -1,5 +1,5 @@
 import { Typography } from '../../../../../../components/typography';
-import { useDictionary } from '../../../../../../../viewModel/store/selectors/translations.ts';
+import { useDictionary } from '../../../../../../store/selectors/translations.ts';
 import { useSelector } from 'react-redux';
 import { colors } from '../../../../../../styles/colors.ts';
 

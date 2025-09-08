@@ -8,24 +8,18 @@ import { Header } from '../header';
 import { InterfaceTour } from '../tour';
 import { useCallback, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { setIsFileDraggedToFileManager } from '../../../viewModel/store/slices/settings';
-import { AppDispatch, StorageState } from '../../../viewModel/store';
-import {
-    navigateSuccess,
-    toastSuccess,
-} from '../../../viewModel/store/slices/callback';
+import { setIsFileDraggedToFileManager } from '../../store/slices/settings';
+import { AppDispatch, StorageState } from '../../store';
+import { navigateSuccess, toastSuccess } from '../../store/slices/callback';
 import { toast } from 'react-toastify';
-import {
-    onAppEnterRequest,
-    onAppEnterWithOauthCodeRequest,
-} from '../../../controller';
-import { Routes } from '../../routing/routes.ts';
+import { Routes } from '../../../viewModel/routes.ts';
 
 import './style.scss';
 import {
     useIsDraggedToFileManager,
     useIsProjectReadonly,
-} from '../../../viewModel/store/selectors/program';
+} from '../../store/selectors/program';
+import { controller } from '../../../main.tsx';
 
 let loaded = false;
 
@@ -111,10 +105,13 @@ export const BaseLayout = () => {
         if (!loaded) {
             if (location.pathname.includes(Routes.CodePage)) {
                 dispatch(
-                    onAppEnterWithOauthCodeRequest({ code: code, state: state })
+                    controller.onAppEnterWithOauthCodeRequest({
+                        code: code,
+                        state: state,
+                    })
                 );
             } else {
-                dispatch(onAppEnterRequest({ from }));
+                dispatch(controller.onAppEnterRequest({ from }));
             }
             loaded = true;
         }

@@ -5,11 +5,11 @@ import { Radio } from '../../../radiobutton';
 import { Button } from '../../../button';
 import { LinkIcon } from '../../../../icons';
 import './style.scss';
-import { setShowShareModal } from '../../../../../viewModel/store/slices/settings';
-import { AppDispatch, StorageState } from '../../../../../viewModel/store';
+import { setShowShareModal } from '../../../../store/slices/settings';
+import { AppDispatch, StorageState } from '../../../../store';
 import { toast } from 'react-toastify';
-import { useDictionary } from '../../../../../viewModel/store/selectors/translations';
-import { onProjectVisibilityChangeRequest } from '../../../../../controller';
+import { useDictionary } from '../../../../store/selectors/translations';
+import { controller } from '../../../../../main.tsx';
 
 export const ShareModal = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -23,7 +23,9 @@ export const ShareModal = () => {
 
     const handleVisibilityChange = async (option: 'private' | 'public') => {
         dispatch(
-            onProjectVisibilityChangeRequest({ visible: option === 'public' })
+            controller.onProjectVisibilityChangeRequest({
+                visible: option === 'public',
+            })
         );
     };
 

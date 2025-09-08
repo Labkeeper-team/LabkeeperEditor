@@ -1,5 +1,5 @@
 import { useSelector } from 'react-redux';
-import { useDictionary } from '../../../../../../viewModel/store/selectors/translations';
+import { useDictionary } from '../../../../../store/selectors/translations';
 
 export const EmptyResultContainer = () => {
     const dictionary = useSelector(useDictionary);

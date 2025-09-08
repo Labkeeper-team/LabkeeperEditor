@@ -10,6 +10,7 @@ import { SystemService } from './index.ts';
 import { AuthService } from './auth.ts';
 import { FileService } from './file.ts';
 import { ExampleService } from './example.ts';
+import { Controller } from '../controller';
 
 export function setupContext(
     rpi: Rpi,
@@ -56,6 +57,7 @@ export function setupContext(
         fileService,
         exampleService
     );
+    const controller = new Controller(systemService, observerService);
 
     return {
         observerService,
@@ -69,5 +71,6 @@ export function setupContext(
         systemService,
         fileService,
         exampleService,
+        controller,
     };
 }

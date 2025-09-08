@@ -4,24 +4,15 @@ import { Button } from '../../../components/button';
 import { Login2Icon } from '../../../icons';
 import { Modal } from '../../../components/modal';
 import { useSelector, useDispatch } from 'react-redux';
-import { useDictionary } from '../../../../viewModel/store/selectors/translations.ts';
+import { useDictionary } from '../../../store/selectors/translations.ts';
 import { Input } from '../../../components/input';
 import { useState, ChangeEvent, useMemo, useEffect } from 'react';
-import { setCurrentView } from '../../../../viewModel/store/slices/auth';
-import { StorageState } from '../../../../viewModel/store';
-import { AppDispatch } from '../../../../viewModel/store';
+import { setCurrentView } from '../../../store/slices/auth';
+import { StorageState } from '../../../store';
+import { AppDispatch } from '../../../store';
 import { SmartCaptcha } from '@yandex/smart-captcha';
 import { Providers, Secrets, URLS } from '../../../../constants.ts';
-import {
-    onAuthClosedRequest,
-    onEmailSendButtonClickedRequest,
-    onForgotPasswordButtonClickedRequest,
-    onFormLoginClickedRequest,
-    onOauthLoginRequest,
-    onRegistrationButtonClickedRequest,
-    onSendCodeButtonClickedRequest,
-    onSendPasswordButtonClickedRequest,
-} from '../../../../controller';
+import { controller } from '../../../../main.tsx';
 
 // Компонент спиннера загрузки
 const LoadingSpinner = () => (
@@ -128,7 +119,7 @@ const LoginView = () => {
                             e.currentTarget.elements['captcha'].value;
 
                         dispatch(
-                            onFormLoginClickedRequest({
+                            controller.onFormLoginClickedRequest({
                                 userName: userName,
                                 password: password,
                                 captcha: captcha,
@@ -211,7 +202,9 @@ const LoginView = () => {
                         minimize={true}
                         disabled={isLoading}
                         onPress={() => {
-                            dispatch(onRegistrationButtonClickedRequest());
+                            dispatch(
+                                controller.onRegistrationButtonClickedRequest()
+                            );
                         }}
                     />
                     <Button
@@ -223,7 +216,9 @@ const LoginView = () => {
                         minimize={true}
                         disabled={isLoading}
                         onPress={() => {
-                            dispatch(onForgotPasswordButtonClickedRequest());
+                            dispatch(
+                                controller.onForgotPasswordButtonClickedRequest()
+                            );
                         }}
                     />
                 </div>
@@ -276,7 +271,7 @@ const LoginView = () => {
                             minimize={false}
                             disabled={isLoading}
                             onPress={() => {
-                                dispatch(onOauthLoginRequest());
+                                dispatch(controller.onOauthLoginRequest());
                                 window.location =
                                     URLS.YandexOidcLogin as unknown as string &
                                         Location;
@@ -309,7 +304,10 @@ const EmailView = () => {
             return;
         }
         dispatch(
-            onEmailSendButtonClickedRequest({ email: email, captcha: token })
+            controller.onEmailSendButtonClickedRequest({
+                email: email,
+                captcha: token,
+            })
         );
     };
 
@@ -410,7 +408,7 @@ const CodeView = () => {
         if (!code) {
             return;
         }
-        dispatch(onSendCodeButtonClickedRequest({ code: code }));
+        dispatch(controller.onSendCodeButtonClickedRequest({ code: code }));
     };
 
     return (
@@ -509,7 +507,7 @@ const PasswordView = () => {
         }
         setLocalError('');
         dispatch(
-            onSendPasswordButtonClickedRequest({
+            controller.onSendPasswordButtonClickedRequest({
                 password,
             })
         );
@@ -682,7 +680,7 @@ export const AuthModal = () => {
         <Modal
             showModal={currentView !== 'closed'}
             onClose={() => {
-                dispatch(onAuthClosedRequest());
+                dispatch(controller.onAuthClosedRequest());
             }}
         >
             {renderView()}

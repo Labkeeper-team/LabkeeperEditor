@@ -1,10 +1,10 @@
 import { useDispatch, useSelector } from 'react-redux';
 
 import './style.scss';
-import { AppDispatch } from '../../../../../../../../viewModel/store';
+import { AppDispatch } from '../../../../../../../store';
 import { headerHelpItems } from '../../../../../../../../model/help';
-import { onHelpItemCreatedRequest } from '../../../../../../../../controller';
-import { useCurrentLanguage } from '../../../../../../../../viewModel/store/selectors/translations';
+import { useCurrentLanguage } from '../../../../../../../store/selectors/translations';
+import { controller } from '../../../../../../../../main.tsx';
 
 export const HeaderHelperItems = () => {
     const language = useSelector(useCurrentLanguage);
@@ -16,7 +16,9 @@ export const HeaderHelperItems = () => {
                 <span
                     key={index}
                     onClick={() =>
-                        dispatch(onHelpItemCreatedRequest({ item: item }))
+                        dispatch(
+                            controller.onHelpItemCreatedRequest({ item: item })
+                        )
                     }
                 >
                     {item.description[language]}

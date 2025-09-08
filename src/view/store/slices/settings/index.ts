@@ -2,19 +2,6 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { LOGOUT_TYPE } from '../../actions';
 import { settingsInitialState } from '../index.ts';
 
-export interface SettingsState {
-    showTour: boolean;
-    showFileManager: boolean;
-    expandProblemViewer: boolean;
-    showSearch: boolean;
-    editModeForProjectTitle: boolean;
-    editModeForFilename: boolean;
-    isFileDraggedToManager: boolean;
-    isCompiling: boolean;
-    showShareModal: boolean;
-    showContactModal: boolean;
-}
-
 export const settingsSlice = createSlice({
     name: 'settingsSlice',
     initialState: settingsInitialState,

@@ -1,6 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit';
-import { StorageState } from '..';
-import { dictionary } from '../shared/dictionaries';
+import { StorageState } from '../index.ts';
+import { dictionary } from '../../../viewModel/dictionaries';
 
 export const useDictionary = createSelector(
     (state: StorageState) => state.persistence.language,

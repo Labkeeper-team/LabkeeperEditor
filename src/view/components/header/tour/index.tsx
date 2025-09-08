@@ -3,9 +3,9 @@ import { InterfaceTour as InterfaceTourLogo } from '../../../icons';
 import { Typography } from '../../typography';
 
 import './style.scss';
-import { setTourVisibility } from '../../../../viewModel/store/slices/settings';
-import { useDictionary } from '../../../../viewModel/store/selectors/translations';
-import { useUser } from '../../../../viewModel/store/selectors/program';
+import { setTourVisibility } from '../../../store/slices/settings';
+import { useDictionary } from '../../../store/selectors/translations';
+import { useUser } from '../../../store/selectors/program';
 import classNames from 'classnames';
 
 export const InterfaceTour = () => {

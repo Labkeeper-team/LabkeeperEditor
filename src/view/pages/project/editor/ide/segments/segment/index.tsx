@@ -29,27 +29,17 @@ import './style.scss';
 import { Typography } from '../../../../../../components/typography';
 import { DropdownMenu } from '../../../../../../components/dropdownMenu';
 import { ArrowUp } from '../../../../../../icons';
-import {
-    AppDispatch,
-    StorageState,
-} from '../../../../../../../viewModel/store';
+import { AppDispatch, StorageState } from '../../../../../../store';
 import {
     useIsProjectReadonly,
     useIsSegmentIsActive,
     useSearch,
-} from '../../../../../../../viewModel/store/selectors/program';
+} from '../../../../../../store/selectors/program';
 import classNames from 'classnames';
 import { colors } from '../../../../../../styles/colors';
-import {
-    onAddedFilesToSegmentEditorRequest,
-    onBlurSegmentRequest,
-    onFocusSegmentRequest,
-    onProgramSaveTimeoutRequest,
-    onSegmentTextChangedRequest,
-    segmentEditorChangeSegmentPositionRequest,
-} from '../../../../../../../controller';
 import { DropdownMenuContent } from './dropdownMenuContent';
-import { useDictionary } from '../../../../../../../viewModel/store/selectors/translations.ts';
+import { useDictionary } from '../../../../../../store/selectors/translations.ts';
+import { controller } from '../../../../../../../main.tsx';
 
 const setDecorationsEffect = StateEffect.define();
 
@@ -147,7 +137,7 @@ export const SegmentEditor = memo(
                 clearTimeout(timeout);
             }
             timeout = setTimeout(() => {
-                dispatch(onProgramSaveTimeoutRequest());
+                dispatch(controller.onProgramSaveTimeoutRequest());
             }, 1000);
         }, [tempText]);
 
@@ -161,7 +151,7 @@ export const SegmentEditor = memo(
             editor?.current?.editor?.blur?.();
             setTimeout(async () => {
                 dispatch(
-                    onBlurSegmentRequest({
+                    controller.onBlurSegmentRequest({
                         segmentText: tempText,
                         segmentIndex: props.index,
                     })
@@ -174,7 +164,9 @@ export const SegmentEditor = memo(
             return content({
                 focus: () => {
                     dispatch(
-                        onFocusSegmentRequest({ segmentIndex: props.index })
+                        controller.onFocusSegmentRequest({
+                            segmentIndex: props.index,
+                        })
                     );
                 },
                 blur: onBlur,
@@ -187,7 +179,7 @@ export const SegmentEditor = memo(
                 const items = (ev?.clipboardData?.items ??
                     []) as DataTransferItemList;
                 dispatch(
-                    onAddedFilesToSegmentEditorRequest({
+                    controller.onAddedFilesToSegmentEditorRequest({
                         items: items,
                         segmentIndex: props.index,
                         editorCallback: (insert: string) => {
@@ -214,7 +206,7 @@ export const SegmentEditor = memo(
                 setTempSegmentErrors([]);
                 setTimeout(() => {
                     dispatch(
-                        onSegmentTextChangedRequest({
+                        controller.onSegmentTextChangedRequest({
                             segmentIndex: props.index,
                             segmentText: value,
                         })
@@ -277,7 +269,7 @@ export const SegmentEditor = memo(
                                 <div
                                     onClick={() =>
                                         dispatch(
-                                            segmentEditorChangeSegmentPositionRequest(
+                                            controller.segmentEditorChangeSegmentPositionRequest(
                                                 {
                                                     direction: 'up',
                                                     segmentIndex: props.index,
@@ -294,7 +286,7 @@ export const SegmentEditor = memo(
                                 <div
                                     onClick={() =>
                                         dispatch(
-                                            segmentEditorChangeSegmentPositionRequest(
+                                            controller.segmentEditorChangeSegmentPositionRequest(
                                                 {
                                                     direction: 'down',
                                                     segmentIndex: props.index,

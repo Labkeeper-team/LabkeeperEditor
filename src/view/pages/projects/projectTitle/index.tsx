@@ -9,8 +9,8 @@ import { colors } from '../../../styles/colors';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { useDispatch } from 'react-redux';
 import { ProjectShort } from '../../../../model/domain.ts';
-import { onProjectTitleChangedRequest } from '../../../../controller';
-import { AppDispatch } from '../../../../viewModel/store';
+import { AppDispatch } from '../../../store';
+import { controller } from '../../../../main.tsx';
 
 export const ProjectTitle = (props: { project: ProjectShort }) => {
     const ref = useRef<HTMLInputElement>(null);
@@ -34,7 +34,7 @@ export const ProjectTitle = (props: { project: ProjectShort }) => {
             return;
         }
         dispatch(
-            onProjectTitleChangedRequest({
+            controller.onProjectTitleChangedRequest({
                 projectId: props.project.projectId,
                 title: currentTitle,
                 okCallback: () => {},

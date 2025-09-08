@@ -4,13 +4,13 @@ import { useMemo } from 'react';
 import { SectorHeader } from '../../../../components/littleSectorHeader';
 import classNames from 'classnames';
 import { InterfaceTourAnchorClassnames } from '../../../../components/tour/helpers';
-import { useCompiledErrors } from '../../../../../viewModel/store/selectors/program';
+import { useCompiledErrors } from '../../../../store/selectors/program';
 import { colors } from '../../../../styles/colors';
-import { useDictionary } from '../../../../../viewModel/store/selectors/translations';
+import { useDictionary } from '../../../../store/selectors/translations';
 import { CompileErrorResult } from '../../../../../model/domain';
 import { ErrorGroupedItem } from './errorGroupItem';
-import { AppDispatch, StorageState } from '../../../../../viewModel/store';
-import { onExpandErrorsClickedRequest } from '../../../../../controller';
+import { AppDispatch, StorageState } from '../../../../store';
+import { controller } from '../../../../../main.tsx';
 
 type SegmentId = number;
 export const ProblemViewer = () => {
@@ -53,7 +53,9 @@ export const ProblemViewer = () => {
         >
             <SectorHeader
                 expanded={expanded}
-                onPressExpanded={() => dispatch(onExpandErrorsClickedRequest())}
+                onPressExpanded={() =>
+                    dispatch(controller.onExpandErrorsClickedRequest())
+                }
                 title={
                     <span className="header-problem-title">
                         {dictionary.label_problems}

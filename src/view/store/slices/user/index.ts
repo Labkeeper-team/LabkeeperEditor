@@ -1,14 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { LOGOUT_TYPE } from '../../actions';
 import { userInitialState } from '../index.ts';
-import { observerService } from '../../../../main.tsx';
-import { States } from '../../../../model/service/observer.ts';
-
-export interface UserInfo {
-    email: string;
-    id: number;
-    isAuthenticated: boolean;
-}
+import { UserInfo } from '../../../../model/domain.ts';
 
 export const userSlice = createSlice({
     name: 'userSlice',
@@ -23,12 +16,6 @@ export const userSlice = createSlice({
             state.email = payload.email;
             state.isAuthenticated = payload.isAuthenticated;
             state.id = payload.id;
-
-            if (state.isAuthenticated) {
-                observerService.setUserState(States.STATE_ONLINE, 'online');
-            } else {
-                observerService.setUserState(States.STATE_ONLINE, 'anonymous');
-            }
         },
         clearUser: (state) => {
             state = userInitialState;

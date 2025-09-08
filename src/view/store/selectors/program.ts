@@ -1,5 +1,5 @@
 import { createSelector } from '@reduxjs/toolkit';
-import { StorageState } from '..';
+import { StorageState } from '../index.ts';
 
 export const useProjects = createSelector(
     (state: StorageState) => state.projects,

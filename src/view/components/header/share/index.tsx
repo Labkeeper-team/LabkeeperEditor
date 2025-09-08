@@ -1,7 +1,7 @@
 import { useSelector, useDispatch } from 'react-redux';
 import { ShareIcon } from '../../../icons';
-import { useCurrentProject } from '../../../../viewModel/store/selectors/program';
-import { setShowShareModal } from '../../../../viewModel/store/slices/settings';
+import { useCurrentProject } from '../../../store/selectors/program';
+import { setShowShareModal } from '../../../store/slices/settings';
 import './style.scss';
 
 export const ShareButton = () => {

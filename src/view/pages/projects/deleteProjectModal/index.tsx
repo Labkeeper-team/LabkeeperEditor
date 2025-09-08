@@ -4,9 +4,9 @@ import { Button } from '../../../components/button';
 import './style.scss';
 import { useDispatch, useSelector } from 'react-redux';
 import { colors } from '../../../styles/colors';
-import { useDictionary } from '../../../../viewModel/store/selectors/translations';
-import { AppDispatch } from '../../../../viewModel/store';
-import { onDeleteProjectRequest } from '../../../../controller';
+import { useDictionary } from '../../../store/selectors/translations';
+import { AppDispatch } from '../../../store';
+import { controller } from '../../../../main.tsx';
 
 export const DeleteProjectModal = (props: {
     onClose: () => void;
@@ -28,7 +28,7 @@ export const DeleteProjectModal = (props: {
                 classname="delete-project-modal-button"
                 onPress={() =>
                     dispatch(
-                        onDeleteProjectRequest({
+                        controller.onDeleteProjectRequest({
                             projectId: props.projectId,
                             okCallback: props.onClose,
                         })

@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import { useIsSegmentIsActive } from '../../../../../../viewModel/store/selectors/program';
+import { useIsSegmentIsActive } from '../../../../../store/selectors/program';
 import { useSelector } from 'react-redux';
 import { forwardRef, memo, useRef } from 'react';
 import { MathJax } from 'better-react-mathjax';

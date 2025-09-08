@@ -2,15 +2,15 @@ import { useDispatch, useSelector } from 'react-redux';
 import {
     useCurrentProject,
     useIsProjectReadonly,
-} from '../../../../viewModel/store/selectors/program';
+} from '../../../store/selectors/program';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { PencilIcon } from '../../../icons';
 
 import './style.scss';
 import classNames from 'classnames';
-import { AppDispatch, StorageState } from '../../../../viewModel/store';
-import { setEditModeForProjectTitle } from '../../../../viewModel/store/slices/settings';
-import { onProjectTitleChangedRequest } from '../../../../controller';
+import { AppDispatch, StorageState } from '../../../store';
+import { setEditModeForProjectTitle } from '../../../store/slices/settings';
+import { controller } from '../../../../main.tsx';
 
 export const ProjectTitle = () => {
     const project = useSelector(useCurrentProject);
@@ -48,7 +48,7 @@ export const ProjectTitle = () => {
             return;
         }
         dispatch(
-            onProjectTitleChangedRequest({
+            controller.onProjectTitleChangedRequest({
                 projectId: project.projectId,
                 title: currentTitle,
                 okCallback: () => {

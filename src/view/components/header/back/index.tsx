@@ -1,13 +1,13 @@
 import { ImageButton } from '../../imageButton';
 import { useDispatch } from 'react-redux';
-import { AppDispatch } from '../../../../viewModel/store';
-import { onBackButtonClickedRequest } from '../../../../controller';
+import { AppDispatch } from '../../../store';
+import { controller } from '../../../../main.tsx';
 
 export const Back = () => {
     const dispatch = useDispatch<AppDispatch>();
     const onClick = () => {
         setTimeout(() => {
-            dispatch(onBackButtonClickedRequest());
+            dispatch(controller.onBackButtonClickedRequest());
         }, 100);
     };
     return <ImageButton onClick={onClick} rotate type="outline" />;

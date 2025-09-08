@@ -13,17 +13,11 @@ import {
 import { DropdownMenu } from '../../../../../../components/dropdownMenu';
 import { HeaderHelperItems } from './markdownType';
 import { ProjectSettings } from './projectSettings';
-import { useSearch } from '../../../../../../../viewModel/store/selectors/program';
-import { useDictionary } from '../../../../../../../viewModel/store/selectors/translations';
-import {
-    AppDispatch,
-    StorageState,
-} from '../../../../../../../viewModel/store';
-import { setShowSearch } from '../../../../../../../viewModel/store/slices/settings';
-import {
-    onSearchIconPressRequest,
-    onSearchInputChangedRequest,
-} from '../../../../../../../controller';
+import { useSearch } from '../../../../../../store/selectors/program';
+import { useDictionary } from '../../../../../../store/selectors/translations';
+import { AppDispatch, StorageState } from '../../../../../../store';
+import { setShowSearch } from '../../../../../../store/slices/settings';
+import { controller } from '../../../../../../../main.tsx';
 
 export const SettingsButton = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -61,12 +55,14 @@ export const SettingsButton = () => {
                 placeholder={`${dictionary.placeholder_search}...`}
                 onClear={
                     showSearch
-                        ? () => dispatch(onSearchIconPressRequest())
+                        ? () => dispatch(controller.onSearchIconPressRequest())
                         : undefined
                 }
                 onChange={(e) => {
                     dispatch(
-                        onSearchInputChangedRequest({ text: e.target.value })
+                        controller.onSearchInputChangedRequest({
+                            text: e.target.value,
+                        })
                     );
                 }}
                 className={classNames({

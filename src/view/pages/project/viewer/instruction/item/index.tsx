@@ -1,7 +1,7 @@
 import { Typography } from '../../../../../components/typography';
 import { colors } from '../../../../../styles/colors';
 import { useSelector } from 'react-redux';
-import { useDictionary } from '../../../../../../viewModel/store/selectors/translations.ts';
+import { useDictionary } from '../../../../../store/selectors/translations.ts';
 import { InstructionItem } from '../../../../../../model/help';
 import { YandexRtbBanner } from '../../../../../components/ads';
 

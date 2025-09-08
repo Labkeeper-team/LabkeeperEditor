@@ -7,7 +7,7 @@ import { ExpandIcon } from '../../../../../icons';
 
 import './style.scss';
 import { useSelector } from 'react-redux';
-import { useDictionary } from '../../../../../../viewModel/store/selectors/translations';
+import { useDictionary } from '../../../../../store/selectors/translations';
 
 export const ErrorGroupedItem = (props: {
     segmentId: number;

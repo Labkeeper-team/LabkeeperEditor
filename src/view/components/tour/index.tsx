@@ -3,9 +3,9 @@ import './style.scss';
 import { Hint } from './hint';
 import { useCallback, useMemo } from 'react';
 import { getPosition, InterfaceTourAnchorClassnames } from './helpers';
-import { setTourVisibility } from '../../../viewModel/store/slices/settings';
-import { useShowTour } from '../../../viewModel/store/selectors/program';
-import { useDictionary } from '../../../viewModel/store/selectors/translations';
+import { setTourVisibility } from '../../store/slices/settings';
+import { useShowTour } from '../../store/selectors/program';
+import { useDictionary } from '../../store/selectors/translations';
 
 export const InterfaceTour = () => {
     const dispatch = useDispatch();

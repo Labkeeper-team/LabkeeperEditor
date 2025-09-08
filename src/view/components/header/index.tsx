@@ -13,27 +13,21 @@ import './style.scss';
 import { Back } from './back';
 import { useLocation } from 'react-router-dom';
 
-import {
-    useIsProjectReadonly,
-    useUser,
-} from '../../../viewModel/store/selectors/program';
+import { useIsProjectReadonly, useUser } from '../../store/selectors/program';
 import {
     useCurrentLanguage,
     useDictionary,
-} from '../../../viewModel/store/selectors/translations';
-import { setLanguage } from '../../../viewModel/store/slices/persistence';
+} from '../../store/selectors/translations';
+import { setLanguage } from '../../store/slices/persistence';
 import { Select } from '../select';
 import { ProjectTitle } from './projectTitle';
-import { Language } from '../../../viewModel/store/shared/dictionaries';
+import { Language } from '../../../viewModel/dictionaries';
 import { AuthModal } from '../../pages/project/auth';
 import { ShareModal } from './share/modal';
 import { ContactModal } from './contact/modal';
-import { setShowContactModal } from '../../../viewModel/store/slices/settings';
-import { AppDispatch } from '../../../viewModel/store';
-import {
-    onAuthButtonClickedRequest,
-    onLogoutButtonClickedRequest,
-} from '../../../controller';
+import { setShowContactModal } from '../../store/slices/settings';
+import { AppDispatch } from '../../store';
+import { controller } from '../../../main.tsx';
 
 const languageOptions = [
     {
@@ -55,7 +49,7 @@ export const Header = () => {
     const projectIsReadonly = useSelector(useIsProjectReadonly);
 
     const onLoginClick = useCallback(async () => {
-        dispatch(onAuthButtonClickedRequest());
+        dispatch(controller.onAuthButtonClickedRequest());
     }, []);
 
     const onPress = (lang: unknown) => {
@@ -113,7 +107,9 @@ export const Header = () => {
                         <form
                             onSubmit={(e) => {
                                 e.preventDefault();
-                                dispatch(onLogoutButtonClickedRequest());
+                                dispatch(
+                                    controller.onLogoutButtonClickedRequest()
+                                );
                             }}
                         >
                             <Button

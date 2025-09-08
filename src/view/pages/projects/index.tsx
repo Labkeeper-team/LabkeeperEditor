@@ -12,14 +12,14 @@ import { AddProjectModal } from './addProjectModal';
 import { DeleteProjectModal } from './deleteProjectModal';
 import { ProjectShort } from '../../../model/domain';
 import { ProjectTitle } from './projectTitle';
-import { useProjects } from '../../../viewModel/store/selectors/program';
+import { useProjects } from '../../store/selectors/program';
 import { colors } from '../../styles/colors';
 import {
     useCurrentLanguage,
     useDictionary,
-} from '../../../viewModel/store/selectors/translations';
-import { onRowClickedInProjectsListRequest } from '../../../controller';
-import { AppDispatch, StorageState } from '../../../viewModel/store';
+} from '../../store/selectors/translations';
+import { AppDispatch, StorageState } from '../../store';
+import { controller } from '../../../main.tsx';
 
 export const ProjectsPage = () => {
     const [showAddModal, setShowAddModal] = useState(false);
@@ -162,7 +162,7 @@ export const ProjectsPage = () => {
                                             onClick={() => {
                                                 if (p.projectId) {
                                                     dispatch(
-                                                        onRowClickedInProjectsListRequest(
+                                                        controller.onRowClickedInProjectsListRequest(
                                                             {
                                                                 projectId:
                                                                     p.projectId,

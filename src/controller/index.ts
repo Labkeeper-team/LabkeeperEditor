@@ -1,524 +1,548 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { ProgramRoundStrategy, SegmentType } from '../model/domain.ts';
 import { HeaderHelpItem } from '../model/help';
-import { observerService, systemService } from '../main.tsx';
 import * as Sentry from '@sentry/react';
-import { Events } from '../model/service/observer.ts';
+import { Events, ObserverService } from '../model/service/observer.ts';
+import { SystemService } from '../viewModel';
 
-/*
-TODO
-1. все оставшиеся dispatch (store_action) заменить на системные операции
-2. убрать createAsyncThunk и dispatch
- */
+export class Controller {
+    systemService: SystemService;
+    observerService: ObserverService;
 
-export const onFormLoginClickedRequest = createAsyncThunk(
-    'onFormLoginClicked',
-    async ({
-        userName,
-        password,
-        captcha,
-    }: {
-        userName: string;
-        password: string;
-        captcha: string;
-    }) => {
-        wrapper('onFormLoginClicked', () =>
-            systemService.onFormLoginClicked(userName, password, captcha)
+    constructor(
+        systemService: SystemService,
+        observerService: ObserverService
+    ) {
+        this.systemService = systemService;
+        this.observerService = observerService;
+    }
+
+    onFormLoginClickedRequest = createAsyncThunk(
+        'onFormLoginClicked',
+        async ({
+            userName,
+            password,
+            captcha,
+        }: {
+            userName: string;
+            password: string;
+            captcha: string;
+        }) => {
+            this.wrapper('onFormLoginClicked', () =>
+                this.systemService.onFormLoginClicked(
+                    userName,
+                    password,
+                    captcha
+                )
+            );
+        }
+    );
+
+    onQrPageEnterRequest = createAsyncThunk(
+        'onQrPageEnter',
+        async ({ version }: { version: string }) => {
+            this.wrapper('onQrPageEnter', () =>
+                this.systemService.onQrPageEnter(version)
+            );
+        }
+    );
+
+    onProgramSaveTimeoutRequest = createAsyncThunk(
+        'onProgramSaveTimeout',
+        async () => {
+            this.wrapper('onProgramSaveTimeout', () =>
+                this.systemService.onProgramSaveTimeout()
+            );
+        }
+    );
+
+    onAppEnterWithOauthCodeRequest = createAsyncThunk(
+        'onAppEnterWithOauthCode',
+        async ({ code, state }: { code: string; state: string }) => {
+            this.wrapper('onAppEnterWithOauthCode', () =>
+                this.systemService.onAppEnterWithOauthCode(code, state)
+            );
+        }
+    );
+
+    onLogoutButtonClickedRequest = createAsyncThunk(
+        'onLogoutButtonClicked',
+        async () => {
+            this.wrapper('onLogoutButtonClicked', () =>
+                this.systemService.onLogoutButtonClicked()
+            );
+        }
+    );
+
+    onAuthButtonClickedRequest = createAsyncThunk(
+        'onAuthButtonClicked',
+        async () => {
+            this.wrapper('onAuthButtonClicked', () =>
+                this.systemService.onAuthButtonClicked()
+            );
+        }
+    );
+
+    onAuthClosedRequest = createAsyncThunk('onAuthClosed', async () => {
+        this.wrapper('onAuthClosed', () => this.systemService.onAuthClosed());
+    });
+
+    onRegistrationButtonClickedRequest = createAsyncThunk(
+        'onRegistrationButtonClicked',
+        async () => {
+            this.wrapper('onRegistrationButtonClicked', () =>
+                this.systemService.onRegistrationButtonClicked()
+            );
+        }
+    );
+
+    onForgotPasswordButtonClickedRequest = createAsyncThunk(
+        'onForgotPasswordButtonClicked',
+        async () => {
+            this.wrapper('onForgotPasswordButtonClicked', () =>
+                this.systemService.onForgotPasswordButtonClicked()
+            );
+        }
+    );
+
+    onEmailSendButtonClickedRequest = createAsyncThunk(
+        'onEmailSendButtonClicked',
+        async ({ email, captcha }: { email: string; captcha: string }) => {
+            this.wrapper('onEmailSendButtonClicked', () =>
+                this.systemService.onEmailSendButtonClicked(email, captcha)
+            );
+        }
+    );
+
+    onSendPasswordButtonClickedRequest = createAsyncThunk(
+        'onSendPasswordButtonClicked',
+        async ({ password }: { password: string }) => {
+            this.wrapper('onSendPasswordButtonClicked', () =>
+                this.systemService.onSendPasswordButtonClicked(password)
+            );
+        }
+    );
+
+    onSendCodeButtonClickedRequest = createAsyncThunk(
+        'onSendCodeButtonClicked',
+        async ({ code }: { code: string }) => {
+            this.wrapper('onSendCodeButtonClicked', () =>
+                this.systemService.onSendCodeButtonClicked(code)
+            );
+        }
+    );
+
+    onAppEnterRequest = createAsyncThunk(
+        'onAppEnter',
+        async ({ from }: { from?: string }) => {
+            this.wrapper('onAppEnter', () =>
+                this.systemService.onAppStartup(from)
+            );
+        }
+    );
+
+    onPrintButtonPressedRequest = createAsyncThunk(
+        'onPrintButtonPressedRequest',
+        async () => {
+            this.wrapper('onPrintButtonPressedRequest', () =>
+                this.systemService.onPrintButtonPressed()
+            );
+        }
+    );
+
+    onProjectPageEscButtonClickedRequest = createAsyncThunk(
+        'onProjectPageEscButtonClicked',
+        async () => {
+            this.wrapper('onProjectPageEscButtonClicked', () =>
+                this.systemService.onProjectPageEscButtonPressed()
+            );
+        }
+    );
+
+    onUndefinedError = () => {
+        this.observerService.onEvent(Events.FRONTEND_ERROR);
+    };
+
+    onRunButtonPressedRequest = createAsyncThunk(
+        'onRunButtonPressed',
+        async () => {
+            this.wrapper('onRunButtonPressed', () =>
+                this.systemService.onRunButtonClicked()
+            );
+        }
+    );
+
+    segmentEditorChangeSegmentPositionRequest = createAsyncThunk(
+        'segmentEditorChangeSegmentPositionRequest',
+        async ({
+            direction,
+            segmentIndex,
+        }: {
+            direction: 'down' | 'up';
+            segmentIndex: number;
+        }) => {
+            this.wrapper('segmentEditorChangeSegmentPositionRequest', () =>
+                this.systemService.segmentEditorChangeSegmentPosition(
+                    direction,
+                    segmentIndex
+                )
+            );
+        }
+    );
+
+    segmentEditorChangeSegmentVisibilityRequest = createAsyncThunk(
+        'segmentEditorChangeSegmentVisibilityRequest',
+        async ({
+            visible,
+            parameterName,
+            segmentIndex,
+        }: {
+            visible: boolean;
+            parameterName: string;
+            segmentIndex: number;
+        }) => {
+            this.wrapper('segmentEditorChangeSegmentVisibilityRequest', () =>
+                this.systemService.segmentEditorChangeSegmentVisibility(
+                    visible,
+                    parameterName,
+                    segmentIndex
+                )
+            );
+        }
+    );
+
+    deleteSegmentRequest = createAsyncThunk(
+        'deleteSegmentRequest',
+        async ({ segmentIndex }: { segmentIndex: number }) => {
+            this.wrapper('deleteSegmentRequest', () =>
+                this.systemService.deleteSegment(segmentIndex)
+            );
+        }
+    );
+
+    onAddedFilesToSegmentEditorRequest = createAsyncThunk(
+        'onAddedFilesToSegmentEditorRequest',
+        async ({
+            items,
+            segmentIndex,
+            editorCallback,
+        }: {
+            items: DataTransferItemList;
+            segmentIndex: number;
+            editorCallback: (insert: string) => void;
+        }) => {
+            this.wrapper('onAddedFilesToSegmentEditorRequest', () =>
+                this.systemService.onAddedFilesToSegmentEditor(
+                    items,
+                    segmentIndex,
+                    editorCallback
+                )
+            );
+        }
+    );
+
+    onSegmentAddedViaDividerRequest = createAsyncThunk(
+        'onSegmentAdded',
+        async ({
+            segmentType,
+            after,
+        }: {
+            segmentType: SegmentType;
+            after: number;
+        }) => {
+            this.wrapper('onSegmentAdded', () =>
+                this.systemService.onSegmentAddedViaDivider(segmentType, after)
+            );
+        }
+    );
+
+    onFocusSegmentRequest = createAsyncThunk(
+        'onFocusSegmentRequest',
+        async ({ segmentIndex }: { segmentIndex: number }) => {
+            this.wrapper('onFocusSegmentRequest', () =>
+                this.systemService.onFocusSegment(segmentIndex)
+            );
+        }
+    );
+
+    onBlurSegmentRequest = createAsyncThunk(
+        'onBlurSegmentRequest',
+        async ({
+            segmentIndex,
+            segmentText,
+        }: {
+            segmentIndex: number;
+            segmentText: string;
+        }) => {
+            this.wrapper('onBlurSegmentRequest', () =>
+                this.systemService.onBlurSegment(segmentIndex, segmentText)
+            );
+        }
+    );
+
+    onSegmentTextChangedRequest = createAsyncThunk(
+        'onSegmentTextChanged',
+        async ({
+            segmentIndex,
+            segmentText,
+        }: {
+            segmentIndex: number;
+            segmentText: string;
+        }) => {
+            this.wrapper('onSegmentTextChanged', () =>
+                this.systemService.onSegmentTextEdited(
+                    segmentIndex,
+                    segmentText
+                )
+            );
+        }
+    );
+
+    onAddSegmentButtonClickedRequest = createAsyncThunk(
+        'onAddSegmentButtonClickedRequest',
+        async ({ type }: { type: SegmentType }) => {
+            this.wrapper('onAddSegmentButtonClickedRequest', () =>
+                this.systemService.onAddSegmentClicked(type)
+            );
+        }
+    );
+
+    onFolderButtonClickedRequest = createAsyncThunk(
+        'onFolderButtonClickedRequest',
+        async () => {
+            this.wrapper('onFolderButtonClickedRequest', () =>
+                this.systemService.onFolderButtonClicked()
+            );
+        }
+    );
+
+    onPrevVersionButtonClickedRequest = createAsyncThunk(
+        'onPrevVersionButtonClickedRequest',
+        async () => {
+            this.wrapper('onPrevVersionButtonClickedRequest', () =>
+                this.systemService.onPrevVersionButtonClicked()
+            );
+        }
+    );
+
+    onNextVersionButtonClickedRequest = createAsyncThunk(
+        'onNextVersionButtonClickedRequest',
+        async () => {
+            this.wrapper('onNextVersionButtonClickedRequest', () =>
+                this.systemService.onNextVersionButtonClicked()
+            );
+        }
+    );
+
+    onSearchIconPressRequest = createAsyncThunk(
+        'onSearchIconPressRequest',
+        async () => {
+            this.wrapper('onSearchIconPressRequest', () =>
+                this.systemService.onSearchIconPress()
+            );
+        }
+    );
+
+    onSearchInputChangedRequest = createAsyncThunk(
+        'onSearchInputChangedRequest',
+        async ({ text }: { text: string }) => {
+            this.wrapper('onSearchInputChangedRequest', () =>
+                this.systemService.onSearchInputChanged(text)
+            );
+        }
+    );
+
+    onOauthLoginRequest = createAsyncThunk('onOauthLoginRequest', async () => {
+        this.wrapper('onOauthLoginRequest', () =>
+            this.systemService.onOauthLogin()
         );
-    }
-);
+    });
 
-export const onQrPageEnterRequest = createAsyncThunk(
-    'onQrPageEnter',
-    async ({ version }: { version: string }) => {
-        wrapper('onQrPageEnter', () => systemService.onQrPageEnter(version));
-    }
-);
+    onRoundStrategySetRequest = createAsyncThunk(
+        'onRoundStrategySetRequest',
+        async ({ strategy }: { strategy: ProgramRoundStrategy }) => {
+            this.wrapper('onRoundStrategySetRequest', () =>
+                this.systemService.onRoundStrategySet(strategy)
+            );
+        }
+    );
 
-export const onProgramSaveTimeoutRequest = createAsyncThunk(
-    'onProgramSaveTimeout',
-    async () => {
-        wrapper('onProgramSaveTimeout', () =>
-            systemService.onProgramSaveTimeout()
-        );
-    }
-);
+    onHelpItemCreatedRequest = createAsyncThunk(
+        'onHelpItemCreatedRequest',
+        async ({ item }: { item: HeaderHelpItem }) => {
+            this.wrapper('onHelpItemCreatedRequest', () =>
+                this.systemService.onHelpItemCreated(item)
+            );
+        }
+    );
 
-export const onAppEnterWithOauthCodeRequest = createAsyncThunk(
-    'onAppEnterWithOauthCode',
-    async ({ code, state }: { code: string; state: string }) => {
-        wrapper('onAppEnterWithOauthCode', () =>
-            systemService.onAppEnterWithOauthCode(code, state)
-        );
-    }
-);
+    onExpandErrorsClickedRequest = createAsyncThunk(
+        'onExpandErrorsClickedRequest',
+        async () => {
+            this.wrapper('onExpandErrorsClickedRequest', () =>
+                this.systemService.onExpandErrorsClicked()
+            );
+        }
+    );
 
-export const onLogoutButtonClickedRequest = createAsyncThunk(
-    'onLogoutButtonClicked',
-    async () => {
-        wrapper('onLogoutButtonClicked', () =>
-            systemService.onLogoutButtonClicked()
-        );
-    }
-);
+    onCrossButtonInFileManagerClickedRequest = createAsyncThunk(
+        'onCrossButtonInFileManagerClickedRequest',
+        async () => {
+            this.wrapper('onCrossButtonInFileManagerClickedRequest', () =>
+                this.systemService.onCrossButtonInFileManagerClicked()
+            );
+        }
+    );
 
-export const onAuthButtonClickedRequest = createAsyncThunk(
-    'onAuthButtonClicked',
-    async () => {
-        wrapper('onAuthButtonClicked', () =>
-            systemService.onAuthButtonClicked()
-        );
-    }
-);
+    onUploadFileRequest = createAsyncThunk(
+        'onUploadFileRequest',
+        async ({ file }: { file: File }) => {
+            this.wrapper('onUploadFileRequest', () =>
+                this.systemService.onUploadFile(file)
+            );
+        }
+    );
 
-export const onAuthClosedRequest = createAsyncThunk(
-    'onAuthClosed',
-    async () => {
-        wrapper('onAuthClosed', () => systemService.onAuthClosed());
-    }
-);
+    onDeleteFileRequest = createAsyncThunk(
+        'onDeleteFileRequest',
+        async ({ fileName }: { fileName: string }) => {
+            this.wrapper('onDeleteFileRequest', () =>
+                this.systemService.onDeleteFile(fileName)
+            );
+        }
+    );
 
-export const onRegistrationButtonClickedRequest = createAsyncThunk(
-    'onRegistrationButtonClicked',
-    async () => {
-        wrapper('onRegistrationButtonClicked', () =>
-            systemService.onRegistrationButtonClicked()
-        );
-    }
-);
+    onFileNameChangedRequest = createAsyncThunk(
+        'onFileNameChangedRequest',
+        async ({ oldName, newName }: { oldName: string; newName: string }) => {
+            this.wrapper('onFileNameChangedRequest', () =>
+                this.systemService.onFileNameChanged(oldName, newName)
+            );
+        }
+    );
 
-export const onForgotPasswordButtonClickedRequest = createAsyncThunk(
-    'onForgotPasswordButtonClicked',
-    async () => {
-        wrapper('onForgotPasswordButtonClicked', () =>
-            systemService.onForgotPasswordButtonClicked()
-        );
-    }
-);
+    onFileRenameButtonClickedRequest = createAsyncThunk(
+        'onFileRenameButtonClickedRequest',
+        async () => {
+            this.wrapper('onFileRenameButtonClickedRequest', () =>
+                this.systemService.onFileRenameButtonClicked()
+            );
+        }
+    );
 
-export const onEmailSendButtonClickedRequest = createAsyncThunk(
-    'onEmailSendButtonClicked',
-    async ({ email, captcha }: { email: string; captcha: string }) => {
-        wrapper('onEmailSendButtonClicked', () =>
-            systemService.onEmailSendButtonClicked(email, captcha)
-        );
-    }
-);
+    onRowClickedInProjectsListRequest = createAsyncThunk(
+        'onRowClickedInProjectsListRequest',
+        async ({ projectId }: { projectId: string }) => {
+            this.wrapper('onRowClickedInProjectsListRequest', () =>
+                this.systemService.onRowClickedInProjectsList(projectId)
+            );
+        }
+    );
 
-export const onSendPasswordButtonClickedRequest = createAsyncThunk(
-    'onSendPasswordButtonClicked',
-    async ({ password }: { password: string }) => {
-        wrapper('onSendPasswordButtonClicked', () =>
-            systemService.onSendPasswordButtonClicked(password)
-        );
-    }
-);
+    onProjectTitleChangedRequest = createAsyncThunk(
+        'onProjectTitleChangedRequest',
+        async ({
+            projectId,
+            title,
+            failCallback,
+            okCallback,
+        }: {
+            projectId: string;
+            title: string;
+            okCallback: () => void;
+            failCallback: () => void;
+        }) => {
+            this.wrapper('onProjectTitleChangedRequest', () =>
+                this.systemService.onProjectTitleChanged(
+                    projectId,
+                    title,
+                    okCallback,
+                    failCallback
+                )
+            );
+        }
+    );
 
-export const onSendCodeButtonClickedRequest = createAsyncThunk(
-    'onSendCodeButtonClicked',
-    async ({ code }: { code: string }) => {
-        wrapper('onSendCodeButtonClicked', () =>
-            systemService.onSendCodeButtonClicked(code)
-        );
-    }
-);
+    onProjectVisibilityChangeRequest = createAsyncThunk(
+        'onProjectVisibilityChangeRequest',
+        async ({ visible }: { visible: boolean }) => {
+            this.wrapper('onProjectVisibilityChangeRequest', () =>
+                this.systemService.onProjectVisibilityChange(visible)
+            );
+        }
+    );
 
-export const onAppEnterRequest = createAsyncThunk(
-    'onAppEnter',
-    async ({ from }: { from?: string }) => {
-        wrapper('onAppEnter', () => systemService.onAppStartup(from));
-    }
-);
+    onProjectCreateRequest = createAsyncThunk(
+        'onProjectCreateRequest',
+        async ({
+            projectName,
+            errorCallback,
+            okCallback,
+        }: {
+            projectName: string;
+            okCallback: () => void;
+            errorCallback: (message: string) => void;
+        }) => {
+            this.wrapper('onProjectCreateRequest', () =>
+                this.systemService.onProjectCreate(
+                    projectName,
+                    okCallback,
+                    errorCallback
+                )
+            );
+        }
+    );
 
-export const onPrintButtonPressedRequest = createAsyncThunk(
-    'onPrintButtonPressedRequest',
-    async () => {
-        wrapper('onPrintButtonPressedRequest', () =>
-            systemService.onPrintButtonPressed()
-        );
-    }
-);
+    onBackButtonClickedRequest = createAsyncThunk(
+        'onBackButtonClickedRequest',
+        async () => {
+            this.wrapper('onBackButtonClickedRequest', () =>
+                this.systemService.onBackButtonClicked()
+            );
+        }
+    );
 
-export const onProjectPageEscButtonClicked = createAsyncThunk(
-    'onProjectPageEscButtonClicked',
-    async () => {
-        wrapper('onProjectPageEscButtonClicked', () =>
-            systemService.onProjectPageEscButtonPressed()
-        );
-    }
-);
+    onContactUsFormSubmittedRequest = createAsyncThunk(
+        'onContactUsFormSubmittedRequest',
+        async ({ body, subject }: { body: string; subject: string }) => {
+            this.wrapper('onContactUsFormSubmittedRequest', () =>
+                this.systemService.onContactUsFormSubmitted(subject, body)
+            );
+        }
+    );
 
-export const onRunButtonPressed = createAsyncThunk(
-    'onRunButtonPressed',
-    async () => {
-        wrapper('onRunButtonPressed', () => systemService.onRunButtonClicked());
-    }
-);
+    onDeleteProjectRequest = createAsyncThunk(
+        'onDeleteProjectRequest',
+        async ({
+            projectId,
+            okCallback,
+        }: {
+            projectId: string;
+            okCallback: () => void;
+        }) => {
+            this.wrapper('onDeleteProjectRequest', () =>
+                this.systemService.onDeleteProject(projectId, okCallback)
+            );
+        }
+    );
 
-export const segmentEditorChangeSegmentPositionRequest = createAsyncThunk(
-    'segmentEditorChangeSegmentPositionRequest',
-    async ({
-        direction,
-        segmentIndex,
-    }: {
-        direction: 'down' | 'up';
-        segmentIndex: number;
-    }) => {
-        wrapper('segmentEditorChangeSegmentPositionRequest', () =>
-            systemService.segmentEditorChangeSegmentPosition(
-                direction,
-                segmentIndex
-            )
-        );
-    }
-);
+    onCloneProjectRequest = createAsyncThunk(
+        'onCloneProjectRequest',
+        async () => {
+            this.wrapper('onCloneProjectRequest', () =>
+                this.systemService.onCloneProject()
+            );
+        }
+    );
 
-export const segmentEditorChangeSegmentVisibilityRequest = createAsyncThunk(
-    'segmentEditorChangeSegmentVisibilityRequest',
-    async ({
-        visible,
-        parameterName,
-        segmentIndex,
-    }: {
-        visible: boolean;
-        parameterName: string;
-        segmentIndex: number;
-    }) => {
-        wrapper('segmentEditorChangeSegmentVisibilityRequest', () =>
-            systemService.segmentEditorChangeSegmentVisibility(
-                visible,
-                parameterName,
-                segmentIndex
-            )
-        );
-    }
-);
-
-export const deleteSegmentRequest = createAsyncThunk(
-    'deleteSegmentRequest',
-    async ({ segmentIndex }: { segmentIndex: number }) => {
-        wrapper('deleteSegmentRequest', () =>
-            systemService.deleteSegment(segmentIndex)
-        );
-    }
-);
-
-export const onAddedFilesToSegmentEditorRequest = createAsyncThunk(
-    'onAddedFilesToSegmentEditorRequest',
-    async ({
-        items,
-        segmentIndex,
-        editorCallback,
-    }: {
-        items: DataTransferItemList;
-        segmentIndex: number;
-        editorCallback: (insert: string) => void;
-    }) => {
-        wrapper('onAddedFilesToSegmentEditorRequest', () =>
-            systemService.onAddedFilesToSegmentEditor(
-                items,
-                segmentIndex,
-                editorCallback
-            )
-        );
-    }
-);
-
-export const onSegmentAddedViaDividerRequest = createAsyncThunk(
-    'onSegmentAdded',
-    async ({
-        segmentType,
-        after,
-    }: {
-        segmentType: SegmentType;
-        after: number;
-    }) => {
-        wrapper('onSegmentAdded', () =>
-            systemService.onSegmentAddedViaDivider(segmentType, after)
-        );
-    }
-);
-
-export const onFocusSegmentRequest = createAsyncThunk(
-    'onFocusSegmentRequest',
-    async ({ segmentIndex }: { segmentIndex: number }) => {
-        wrapper('onFocusSegmentRequest', () =>
-            systemService.onFocusSegment(segmentIndex)
-        );
-    }
-);
-
-export const onBlurSegmentRequest = createAsyncThunk(
-    'onBlurSegmentRequest',
-    async ({
-        segmentIndex,
-        segmentText,
-    }: {
-        segmentIndex: number;
-        segmentText: string;
-    }) => {
-        wrapper('onBlurSegmentRequest', () =>
-            systemService.onBlurSegment(segmentIndex, segmentText)
-        );
-    }
-);
-
-export const onSegmentTextChangedRequest = createAsyncThunk(
-    'onSegmentTextChanged',
-    async ({
-        segmentIndex,
-        segmentText,
-    }: {
-        segmentIndex: number;
-        segmentText: string;
-    }) => {
-        wrapper('onSegmentTextChanged', () =>
-            systemService.onSegmentTextEdited(segmentIndex, segmentText)
-        );
-    }
-);
-
-export const onAddSegmentButtonClickedRequest = createAsyncThunk(
-    'onAddSegmentButtonClickedRequest',
-    async ({ type }: { type: SegmentType }) => {
-        wrapper('onAddSegmentButtonClickedRequest', () =>
-            systemService.onAddSegmentClicked(type)
-        );
-    }
-);
-
-export const onFolderButtonClickedRequest = createAsyncThunk(
-    'onFolderButtonClickedRequest',
-    async () => {
-        wrapper('onFolderButtonClickedRequest', () =>
-            systemService.onFolderButtonClicked()
-        );
-    }
-);
-
-export const onPrevVersionButtonClickedRequest = createAsyncThunk(
-    'onPrevVersionButtonClickedRequest',
-    async () => {
-        wrapper('onPrevVersionButtonClickedRequest', () =>
-            systemService.onPrevVersionButtonClicked()
-        );
-    }
-);
-
-export const onNextVersionButtonClickedRequest = createAsyncThunk(
-    'onNextVersionButtonClickedRequest',
-    async () => {
-        wrapper('onNextVersionButtonClickedRequest', () =>
-            systemService.onNextVersionButtonClicked()
-        );
-    }
-);
-
-export const onSearchIconPressRequest = createAsyncThunk(
-    'onSearchIconPressRequest',
-    async () => {
-        wrapper('onSearchIconPressRequest', () =>
-            systemService.onSearchIconPress()
-        );
-    }
-);
-
-export const onSearchInputChangedRequest = createAsyncThunk(
-    'onSearchInputChangedRequest',
-    async ({ text }: { text: string }) => {
-        wrapper('onSearchInputChangedRequest', () =>
-            systemService.onSearchInputChanged(text)
-        );
-    }
-);
-
-export const onOauthLoginRequest = createAsyncThunk(
-    'onOauthLoginRequest',
-    async () => {
-        wrapper('onOauthLoginRequest', () => systemService.onOauthLogin());
-    }
-);
-
-export const onRoundStrategySetRequest = createAsyncThunk(
-    'onRoundStrategySetRequest',
-    async ({ strategy }: { strategy: ProgramRoundStrategy }) => {
-        wrapper('onRoundStrategySetRequest', () =>
-            systemService.onRoundStrategySet(strategy)
-        );
-    }
-);
-
-export const onHelpItemCreatedRequest = createAsyncThunk(
-    'onHelpItemCreatedRequest',
-    async ({ item }: { item: HeaderHelpItem }) => {
-        wrapper('onHelpItemCreatedRequest', () =>
-            systemService.onHelpItemCreated(item)
-        );
-    }
-);
-
-export const onExpandErrorsClickedRequest = createAsyncThunk(
-    'onExpandErrorsClickedRequest',
-    async () => {
-        wrapper('onExpandErrorsClickedRequest', () =>
-            systemService.onExpandErrorsClicked()
-        );
-    }
-);
-
-export const onCrossButtonInFileManagerClickedRequest = createAsyncThunk(
-    'onCrossButtonInFileManagerClickedRequest',
-    async () => {
-        wrapper('onCrossButtonInFileManagerClickedRequest', () =>
-            systemService.onCrossButtonInFileManagerClicked()
-        );
-    }
-);
-
-export const onUploadFileRequest = createAsyncThunk(
-    'onUploadFileRequest',
-    async ({ file }: { file: File }) => {
-        wrapper('onUploadFileRequest', () => systemService.onUploadFile(file));
-    }
-);
-
-export const onDeleteFileRequest = createAsyncThunk(
-    'onDeleteFileRequest',
-    async ({ fileName }: { fileName: string }) => {
-        wrapper('onDeleteFileRequest', () =>
-            systemService.onDeleteFile(fileName)
-        );
-    }
-);
-
-export const onFileNameChangedRequest = createAsyncThunk(
-    'onFileNameChangedRequest',
-    async ({ oldName, newName }: { oldName: string; newName: string }) => {
-        wrapper('onFileNameChangedRequest', () =>
-            systemService.onFileNameChanged(oldName, newName)
-        );
-    }
-);
-
-export const onFileRenameButtonClickedRequest = createAsyncThunk(
-    'onFileRenameButtonClickedRequest',
-    async () => {
-        wrapper('onFileRenameButtonClickedRequest', () =>
-            systemService.onFileRenameButtonClicked()
-        );
-    }
-);
-
-export const onRowClickedInProjectsListRequest = createAsyncThunk(
-    'onRowClickedInProjectsListRequest',
-    async ({ projectId }: { projectId: string }) => {
-        wrapper('onRowClickedInProjectsListRequest', () =>
-            systemService.onRowClickedInProjectsList(projectId)
-        );
-    }
-);
-
-export const onProjectTitleChangedRequest = createAsyncThunk(
-    'onProjectTitleChangedRequest',
-    async ({
-        projectId,
-        title,
-        failCallback,
-        okCallback,
-    }: {
-        projectId: string;
-        title: string;
-        okCallback: () => void;
-        failCallback: () => void;
-    }) => {
-        wrapper('onProjectTitleChangedRequest', () =>
-            systemService.onProjectTitleChanged(
-                projectId,
-                title,
-                okCallback,
-                failCallback
-            )
-        );
-    }
-);
-
-export const onProjectVisibilityChangeRequest = createAsyncThunk(
-    'onProjectVisibilityChangeRequest',
-    async ({ visible }: { visible: boolean }) => {
-        wrapper('onProjectVisibilityChangeRequest', () =>
-            systemService.onProjectVisibilityChange(visible)
-        );
-    }
-);
-
-export const onProjectCreateRequest = createAsyncThunk(
-    'onProjectCreateRequest',
-    async ({
-        projectName,
-        errorCallback,
-        okCallback,
-    }: {
-        projectName: string;
-        okCallback: () => void;
-        errorCallback: (message: string) => void;
-    }) => {
-        wrapper('onProjectCreateRequest', () =>
-            systemService.onProjectCreate(
-                projectName,
-                okCallback,
-                errorCallback
-            )
-        );
-    }
-);
-
-export const onBackButtonClickedRequest = createAsyncThunk(
-    'onBackButtonClickedRequest',
-    async () => {
-        wrapper('onBackButtonClickedRequest', () =>
-            systemService.onBackButtonClicked()
-        );
-    }
-);
-
-export const onContactUsFormSubmittedRequest = createAsyncThunk(
-    'onContactUsFormSubmittedRequest',
-    async ({ body, subject }: { body: string; subject: string }) => {
-        wrapper('onContactUsFormSubmittedRequest', () =>
-            systemService.onContactUsFormSubmitted(subject, body)
-        );
-    }
-);
-
-export const onDeleteProjectRequest = createAsyncThunk(
-    'onDeleteProjectRequest',
-    async ({
-        projectId,
-        okCallback,
-    }: {
-        projectId: string;
-        okCallback: () => void;
-    }) => {
-        wrapper('onDeleteProjectRequest', () =>
-            systemService.onDeleteProject(projectId, okCallback)
-        );
-    }
-);
-
-export const onCloneProjectRequest = createAsyncThunk(
-    'onCloneProjectRequest',
-    async () => {
-        wrapper('onCloneProjectRequest', () => systemService.onCloneProject());
-    }
-);
-
-const wrapper = (name: string, method: () => void) => {
-    try {
-        method();
-        console.info(`Invoking system operation [${name}]`);
-    } catch (error) {
-        observerService.onEvent(Events.FRONTEND_ERROR);
-        console.error(error);
-        Sentry.captureException(error);
-    }
-};
+    private wrapper = (name: string, method: () => void) => {
+        try {
+            method();
+            console.info(`Invoking system operation [${name}]`);
+        } catch (error) {
+            this.observerService.onEvent(Events.FRONTEND_ERROR);
+            console.error(error);
+            Sentry.captureException(error);
+        }
+    };
+}

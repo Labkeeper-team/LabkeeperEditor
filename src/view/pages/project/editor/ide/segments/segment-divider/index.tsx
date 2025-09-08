@@ -2,16 +2,11 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import classNames from 'classnames';
 
-import { useDictionary } from '../../../../../../../viewModel/store/selectors/translations';
+import { useDictionary } from '../../../../../../store/selectors/translations';
 
 import { SegmentType } from '../../../../../../../model/domain.ts';
-import { observerService } from '../../../../../../../main.tsx';
-import {
-    Events,
-    EventValues,
-} from '../../../../../../../model/service/observer.ts';
-import { AppDispatch } from '../../../../../../../viewModel/store/index.ts';
-import { onSegmentAddedViaDividerRequest } from '../../../../../../../controller/index.ts';
+import { controller } from '../../../../../../../main.tsx';
+import { AppDispatch } from '../../../../../../store';
 import { EditorTypeDivider, SegmentDividerProps } from './model.ts';
 
 import './style.scss';
@@ -28,7 +23,7 @@ export const SegmentDivider: React.FC<SegmentDividerProps> = ({
     const onAdd = useCallback(
         (type: SegmentType) => {
             dispatch(
-                onSegmentAddedViaDividerRequest({
+                controller.onSegmentAddedViaDividerRequest({
                     after: index,
                     segmentType: type,
                 })
@@ -38,14 +33,8 @@ export const SegmentDivider: React.FC<SegmentDividerProps> = ({
     );
 
     const createOnClick = useCallback(
-        (
-            type: SegmentType,
-            observerEvent1: EventValues,
-            observerEvent2: EventValues = Events.EVENT_INSERT_SEGMENT_BETWEEN
-        ) => {
+        (type: SegmentType) => {
             return () => {
-                observerService.onEvent(observerEvent1);
-                observerService.onEvent(observerEvent2);
                 onAdd(type);
                 setIsOpen(false);
             };
@@ -58,23 +47,18 @@ export const SegmentDivider: React.FC<SegmentDividerProps> = ({
             {
                 type: 'md',
                 text: dictionary.segment_divider.markdown,
-                event1: Events.EVENT_INSERT_SEGMENT_BETWEEN,
-                event2: Events.EVENT_CREATE_MD_SEGMENT,
             },
             {
                 type: 'latex',
                 text: dictionary.segment_divider.latex,
-                event1: Events.EVENT_CREATE_LATEX_SEGMENT,
             },
             {
                 type: 'asciimath',
                 text: dictionary.segment_divider.asciimath,
-                event1: Events.EVENT_CREATE_ASCIIMATH_SEGMENT,
             },
             {
                 type: 'computational',
                 text: dictionary.segment_divider.computation,
-                event1: Events.EVENT_CREATE_COMP_SEGMENT,
             },
         ],
         [dictionary]
@@ -97,15 +81,11 @@ export const SegmentDivider: React.FC<SegmentDividerProps> = ({
                         className="divider-dropdown"
                         onMouseLeave={() => setIsOpen(false)}
                     >
-                        {editorTypes.map(({ type, text, event1, event2 }) => {
+                        {editorTypes.map(({ type, text }) => {
                             return (
                                 <button
                                     key={type}
-                                    onClick={createOnClick(
-                                        type,
-                                        event1,
-                                        event2
-                                    )}
+                                    onClick={createOnClick(type)}
                                 >
                                     {text}
                                 </button>

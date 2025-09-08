@@ -1,5 +1,5 @@
 import { createBrowserRouter } from 'react-router-dom';
-import { Routes } from './routes';
+import { Routes } from '../../viewModel/routes.ts';
 import { BaseLayout } from '../components/layout';
 import { ProjectPage } from '../pages/project';
 import { HomePage } from '../pages/home';

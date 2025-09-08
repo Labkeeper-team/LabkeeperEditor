@@ -5,7 +5,7 @@ import {
     useCompiledSegmentsSize,
     useIsSegmentIsActive,
     useSegment,
-} from '../../../../../../viewModel/store/selectors/program';
+} from '../../../../../store/selectors/program';
 import { CodeSegment } from './code-segment';
 import { MdSegment } from './md-segment';
 import { LatexSegment } from './latex-segment.tsx';

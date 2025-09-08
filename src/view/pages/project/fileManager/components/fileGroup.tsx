@@ -1,9 +1,9 @@
 import { useSelector } from 'react-redux';
 import { Typography } from '../../../../components/typography';
 import { FileItem } from './fileItem';
-import { useDictionary } from '../../../../../viewModel/store/selectors/translations';
+import { useDictionary } from '../../../../store/selectors/translations';
 import { LabkeeperFile } from '../../../../../model/domain.ts';
-import { useIsProjectReadonly } from '../../../../../viewModel/store/selectors/program.ts';
+import { useIsProjectReadonly } from '../../../../store/selectors/program.ts';
 
 export const FileGroup = (props: {
     files: LabkeeperFile[];

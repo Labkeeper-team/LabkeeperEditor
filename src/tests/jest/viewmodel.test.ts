@@ -6,13 +6,6 @@
     Rpi,
 } from '../../model/rpi';
 
-/*
-TODO remove this
- */
-jest.mock('./../../constants.ts', () => {});
-jest.mock('../../main.tsx', () => {});
-jest.mock('../../view/routing', () => {});
-
 global.structuredClone = (val) => {
     return JSON.parse(JSON.stringify(val));
 };
@@ -27,10 +20,10 @@ import {
     Project,
     Statement,
     TextOutputSegment,
+    UserInfo,
 } from '../../model/domain.ts';
 import { setupContext } from '../../viewModel/context.ts';
 import { mockObserver, ObserverService } from '../../model/service/observer.ts';
-import { UserInfo } from '../../viewModel/store/slices/user';
 
 const defaultParams = {
     visible: true,

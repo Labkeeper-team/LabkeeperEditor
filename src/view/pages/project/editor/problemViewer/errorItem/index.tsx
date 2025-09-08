@@ -10,7 +10,7 @@ import {
 } from '../../../../../../model/domain';
 import { colors } from '../../../../../styles/colors';
 import { ErrorItemProps } from './model';
-import { useDictionary } from '../../../../../../viewModel/store/selectors/translations';
+import { useDictionary } from '../../../../../store/selectors/translations';
 
 export const ErrorItem = ({ code, payload }: ErrorItemProps) => {
     const dictionary = useSelector(useDictionary);

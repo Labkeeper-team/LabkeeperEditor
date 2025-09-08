@@ -2,18 +2,15 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Checkbox } from '../../../../../../../components/checkbox';
 import { Typography } from '../../../../../../../components/typography';
 import { PlusIcon } from '../../../../../../../icons';
-import { useDictionary } from '../../../../../../../../viewModel/store/selectors/translations';
-import { AppDispatch } from '../../../../../../../../viewModel/store';
+import { useDictionary } from '../../../../../../../store/selectors/translations';
+import { AppDispatch } from '../../../../../../../store';
 import { colors } from '../../../../../../../styles/colors';
-import {
-    deleteSegmentRequest,
-    segmentEditorChangeSegmentVisibilityRequest,
-} from '../../../../../../../../controller';
 import {
     ClickCheckboxParameter,
     DropdownSegmentMenuContentProps,
 } from './model';
 import { useMemo } from 'react';
+import { controller } from '../../../../../../../../main.tsx';
 
 export const DropdownMenuContent = ({
     index,
@@ -26,7 +23,7 @@ export const DropdownMenuContent = ({
     const onCreateClickCheckox = (parameter: ClickCheckboxParameter) => {
         return (v: boolean) => {
             dispatch(
-                segmentEditorChangeSegmentVisibilityRequest({
+                controller.segmentEditorChangeSegmentVisibilityRequest({
                     segmentIndex: index,
                     parameterName: parameter,
                     visible: v,
@@ -37,7 +34,7 @@ export const DropdownMenuContent = ({
 
     const onDeleteClick = () => {
         dispatch(
-            deleteSegmentRequest({
+            controller.deleteSegmentRequest({
                 segmentIndex: index,
             })
         );

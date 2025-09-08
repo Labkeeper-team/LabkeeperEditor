@@ -7,17 +7,14 @@ import {
     useIsProjectReadonly,
     useShowFileManager,
     useCurrentProject,
-} from '../../../../../../viewModel/store/selectors/program';
+} from '../../../../../store/selectors/program';
 import { SettingsButton } from './settingsButtons';
 import { FolderIcon } from '../../../../../icons';
-import { AppDispatch, StorageState } from '../../../../../../viewModel/store';
-import {
-    onFolderButtonClickedRequest,
-    onCloneProjectRequest,
-} from '../../../../../../controller';
+import { AppDispatch, StorageState } from '../../../../../store';
 import { Typography } from '../../../../../components/typography';
 import { Button } from '../../../../../components/button';
-import { useDictionary } from '../../../../../../viewModel/store/selectors/translations';
+import { useDictionary } from '../../../../../store/selectors/translations';
+import { controller } from '../../../../../../main.tsx';
 
 export const IdeHeader = () => {
     const program = useSelector(useCurrentProgram);
@@ -36,7 +33,9 @@ export const IdeHeader = () => {
                 {!!project && !showFileManager ? (
                     <div
                         className="file-manager-button "
-                        onClick={() => dispatch(onFolderButtonClickedRequest())}
+                        onClick={() =>
+                            dispatch(controller.onFolderButtonClickedRequest())
+                        }
                     >
                         <FolderIcon />
                     </div>
@@ -75,7 +74,7 @@ export const IdeHeader = () => {
                                           : undefined
                                 }
                                 onPress={() =>
-                                    dispatch(onCloneProjectRequest())
+                                    dispatch(controller.onCloneProjectRequest())
                                 }
                             />
                         );

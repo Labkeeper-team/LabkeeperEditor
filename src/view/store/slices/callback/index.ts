@@ -3,13 +3,6 @@ import { LOGOUT_TYPE } from '../../actions';
 import { callbackInitialState } from '../index.ts';
 import { TypeOptions } from 'react-toastify';
 
-export interface CallbackState {
-    navigateTo?: string;
-    showToastMessage?: string;
-    toastType?: TypeOptions;
-    scrollEditorToBottom: boolean;
-}
-
 export const callbackSlice = createSlice({
     name: 'callbackSlice',
     initialState: callbackInitialState,

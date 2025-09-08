@@ -1,112 +1,13 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { LOGOUT_TYPE } from '../../actions';
 import { authInitialState } from '../index.ts';
-
-export type AuthView =
-    | 'login'
-    | 'email'
-    | 'code'
-    | 'password'
-    | 'success'
-    | 'closed';
-export type EmailRequestState =
-    | 'unknown'
-    | 'loading'
-    | 'ok'
-    | 'userNotFound'
-    | 'userExists'
-    | 'validationError'
-    | 'unknownError';
-export type CodeRequestState =
-    | 'unknown'
-    | 'loading'
-    | 'ok'
-    | 'invalid'
-    | 'unknownError';
-export type PasswordRequestState =
-    | 'unknown'
-    | 'loading'
-    | 'ok'
-    | 'userNotFound'
-    | 'userExists'
-    | 'validationError'
-    | 'unknownError';
-export type LoginRequestState =
-    | 'unknown'
-    | 'loading'
-    | 'ok'
-    | 'bad_credentials'
-    | 'oauth_error'
-    | 'unknownError';
-
-export interface AuthState {
-    currentView: AuthView;
-    currentEmail: string | null;
-    lastVerifiedCode: string | null;
-    emailRequest: EmailRequestState;
-    codeCheckRequest: CodeRequestState;
-    passwordSetRequest: PasswordRequestState;
-    loginRequest: LoginRequestState;
-    isRegistration: boolean;
-}
-/*
-// Async thunks
-export const sendEmailWithCode = createAsyncThunk(
-    'auth/sendEmailWithCode',
-    async (
-        { email, captcha }: { email: string; captcha: string },
-        { rejectWithValue, getState }
-    ) => {
-        const state = getState() as StorageState;
-        const result = await rpi.sendEmailWithCodeRequest(
-            email,
-            state.auth.isRegistration,
-            state.persistence.language,
-            captcha
-        );
-        if (!result.isOk) {
-            return rejectWithValue({ code: result.code, email });
-        }
-        return { email };
-    }
-);
-
-export const checkCode = createAsyncThunk(
-    'auth/checkCode',
-    async ({ code }: { code: string }, { rejectWithValue, getState }) => {
-        const state = getState() as StorageState;
-        const result = await rpi.checkCodeRequest(
-            state.auth.currentEmail || '',
-            code
-        );
-        if (!result.isOk) {
-            return rejectWithValue(result.code);
-        }
-        const body = result.body as { valid: boolean };
-        return { valid: body.valid, code };
-    }
-);
-
-export const setPassword = createAsyncThunk(
-    'auth/setPassword',
-    async (
-        { password }: { email: string; code: string; password: string },
-        { rejectWithValue, getState }
-    ) => {
-        const state = getState() as StorageState;
-        const result = await rpi.setPasswordRequest(
-            state.auth.currentEmail || '',
-            state.auth.lastVerifiedCode || '',
-            password,
-            state.auth.isRegistration
-        );
-        if (!result.isOk) {
-            return rejectWithValue(result.code);
-        }
-    }
-);
-
- */
+import {
+    AuthView,
+    CodeRequestState,
+    EmailRequestState,
+    LoginRequestState,
+    PasswordRequestState,
+} from '../../../../viewModel/viewModelState';
 
 export const authSlice = createSlice({
     name: 'authSlice',

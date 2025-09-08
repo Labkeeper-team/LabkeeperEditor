@@ -1,6 +1,6 @@
 import classNames from 'classnames';
 import Markdown from 'react-markdown';
-import { useIsSegmentIsActive } from '../../../../../../viewModel/store/selectors/program';
+import { useIsSegmentIsActive } from '../../../../../store/selectors/program';
 import { useSelector } from 'react-redux';
 import { forwardRef, memo, useRef } from 'react';
 import remarkMath from 'remark-math';

@@ -8,14 +8,10 @@ import { FileIcon, PencilIcon, PlusIcon } from '../../../../icons';
 import { colors } from '../../../../styles/colors';
 
 import './file-item.style.scss';
-import { useDictionary } from '../../../../../viewModel/store/selectors/translations';
-import { AppDispatch, StorageState } from '../../../../../viewModel/store';
+import { useDictionary } from '../../../../store/selectors/translations';
+import { AppDispatch, StorageState } from '../../../../store';
 import { LabkeeperFile } from '../../../../../model/domain.ts';
-import {
-    onDeleteFileRequest,
-    onFileNameChangedRequest,
-    onFileRenameButtonClickedRequest,
-} from '../../../../../controller';
+import { controller } from '../../../../../main.tsx';
 
 export const FileItem = (props: {
     file: LabkeeperFile;
@@ -53,7 +49,7 @@ export const FileItem = (props: {
      */
     const onPressChangeButton = useCallback(async () => {
         setEditItem(true);
-        dispatch(onFileRenameButtonClickedRequest());
+        dispatch(controller.onFileRenameButtonClickedRequest());
 
         setTimeout(() => {
             setShowDropdown(false);
@@ -72,7 +68,7 @@ export const FileItem = (props: {
             setFileName(props.file.fileName);
         }
         dispatch(
-            onFileNameChangedRequest({
+            controller.onFileNameChangedRequest({
                 oldName: props.file.fileName,
                 newName: fileName,
             })
@@ -114,7 +110,7 @@ export const FileItem = (props: {
                             <div
                                 onClick={() =>
                                     dispatch(
-                                        onDeleteFileRequest({
+                                        controller.onDeleteFileRequest({
                                             fileName: props.file.fileName,
                                         })
                                     )

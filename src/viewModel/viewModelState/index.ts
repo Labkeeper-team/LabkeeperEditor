@@ -6,251 +6,136 @@ import {
     Program,
     Project,
     ProjectShort,
+    UserInfo,
 } from '../../model/domain.ts';
-import {
-    AuthView,
-    CodeRequestState,
-    EmailRequestState,
-    LoginRequestState,
-    PasswordRequestState,
-    setCodeCheckRequest,
-    setCurrentEmail,
-    setCurrentView,
-    setEmailRequest,
-    setLastVerifiedCode,
-    setLoginRequest,
-    setPasswordRequest,
-    setRegistration,
-} from '../store/slices/auth';
-import {
-    dictionary,
-    Language,
-    Translations,
-} from '../store/shared/dictionaries';
-import { setUser, UserInfo } from '../store/slices/user';
-import { EnhancedStore } from '@reduxjs/toolkit';
-import {
-    clearLastProgram,
-    setInstructionExpanded,
-    setLanguage,
-    setLastOpenedProjectUuid,
-    setLastProgram,
-} from '../store/slices/persistence';
-import {
-    setNavigateTo,
-    setScrollEditorToBottom,
-    setShowToast,
-} from '../store/slices/callback';
-import {
-    clearProject,
-    setCompileError,
-    setCompileResult,
-    setCompileResultForSegment,
-    setCompileResultSegmentsSize,
-    setCurrentProgram,
-    setFiles,
-    setProject,
-    setReadOnly,
-} from '../store/slices/project';
+
+import { Language, Translations } from '../dictionaries';
+
 import { TypeOptions } from 'react-toastify';
-import { logoutAction } from '../store/actions';
-import {
-    setIsCompiling,
-    setEditModeForFilename,
-    setEditModeForProjectTitle,
-    setExpandProblemViewer,
-    setIsFileDraggedToFileManager,
-    setShoFileManager,
-    setShowSearch,
-    setTourVisibility,
-} from '../store/slices/settings';
-import {
-    CloneRequestState,
-    GetFilesRequestState,
-    GetProjectsRequestState,
-    GetProjectRequestState,
-    setActiveSegmentIndex,
-    setCloneRequestState,
-    setGetFilesRequestState,
-    setGetProjectsRequestState,
-    setGetProjectRequestState,
-    setPreviousActiveSegmentIndex,
-    setRedoEnabled,
-    setSearch,
-    setUndoEnabled,
-} from '../store/slices/ide';
-import { setProjects } from '../store/slices/projects';
-import { appRouter } from '../../view/routing';
-import { store } from '../store';
+import { en } from '../dictionaries/en.ts';
 
-export const createViewModelStateFromStore = (
-    store: EnhancedStore
-): ViewModelState => {
-    return {
-        location: () => appRouter.state.location.pathname,
-        authViewModelState: {
-            codeCheckRequest: () => store.getState().auth.codeCheckRequest,
-            currentEmail: () => store.getState().auth.currentEmail,
-            currentView: () => store.getState().auth.currentView,
-            emailRequest: () => store.getState().auth.emailRequest,
-            lastVerifiedCode: () => store.getState().auth.lastVerifiedCode,
-            passwordSetRequest: () => store.getState().auth.passwordSetRequest,
-            loginRequest: () => store.getState().auth.loginRequest,
-            isRegistration: () => store.getState().auth.isRegistration,
+export interface CallbackState {
+    navigateTo?: string;
+    showToastMessage?: string;
+    toastType?: TypeOptions;
+    scrollEditorToBottom: boolean;
+}
 
-            setCurrentEmail: (email) => store.dispatch(setCurrentEmail(email)),
-            setPasswordRequest: (password) =>
-                store.dispatch(setPasswordRequest(password)),
-            setLoginRequest: (request) =>
-                store.dispatch(setLoginRequest(request)),
-            setEmailRequest: (request) =>
-                store.dispatch(setEmailRequest(request)),
-            setLastVerifiedCode: (code) =>
-                store.dispatch(setLastVerifiedCode(code)),
-            setCodeCheckRequest: (request) =>
-                store.dispatch(setCodeCheckRequest(request)),
-            setCurrentView: (view) => store.dispatch(setCurrentView(view)),
-            setIsRegistration: (v) => store.dispatch(setRegistration(v)),
-        },
-        ideViewModelState: {
-            activeSegmentIndex: () => store.getState().ide.activeSegmentIndex,
-            search: () => store.getState().ide.search,
-            previousActiveSegmentIndex: () =>
-                store.getState().ide.previousActiveSegmentIndex,
-            redoEnabled: () => store.getState().ide.redoEnabled,
-            undoEnabled: () => store.getState().ide.undoEnabled,
-            cloneRequestState: () => store.getState().ide.cloneRequestState,
-            getProjectRequestState: () =>
-                store.getState().ide.getProjectRequestState,
-            getFilesRequestState: () =>
-                store.getState().ide.getFilesRequestState,
-            getProjectsRequestState: () =>
-                store.getState().ide.getProjectsRequestState,
+export interface SettingsState {
+    showTour: boolean;
+    showFileManager: boolean;
+    expandProblemViewer: boolean;
+    showSearch: boolean;
+    editModeForProjectTitle: boolean;
+    editModeForFilename: boolean;
+    isFileDraggedToManager: boolean;
+    isCompiling: boolean;
+    showShareModal: boolean;
+    showContactModal: boolean;
+}
 
-            setCloneRequestState: (v: CloneRequestState) =>
-                store.dispatch(setCloneRequestState(v)),
-            setGetProjectRequestState: (v: GetProjectRequestState) =>
-                store.dispatch(setGetProjectRequestState(v)),
-            setGetFilesRequestState: (v: GetFilesRequestState) =>
-                store.dispatch(setGetFilesRequestState(v)),
-            setGetProjectsRequestState: (v: GetProjectsRequestState) =>
-                store.dispatch(setGetProjectsRequestState(v)),
-            setUndoEnabled: (v: boolean) => store.dispatch(setUndoEnabled(v)),
-            setRedoEnabled: (v: boolean) => store.dispatch(setRedoEnabled(v)),
-            setSearch: (search: string) => store.dispatch(setSearch(search)),
-            setActiveSegmentIndex: (index: number) =>
-                store.dispatch(setActiveSegmentIndex(index)),
-            setPreviousActiveSegmentIndex: (index: number) =>
-                store.dispatch(setPreviousActiveSegmentIndex(index)),
-        },
-        persistenceViewModelState: {
-            instructionExpanded: () =>
-                store.getState().persistence.instructionExpanded,
-            language: () => store.getState().persistence.language,
-            lastProgram: () => store.getState().persistence.lastProgram,
-            lastOpenedProjectUuid: () =>
-                store.getState().persistence.lastOpenedProjectUuid,
+export interface ProjectsState {
+    projects: ProjectShort[];
+}
 
-            setLastOpenedProjectUuid: (uuid) =>
-                store.dispatch(setLastOpenedProjectUuid(uuid)),
-            setInstructionExpanded: (instructionExpanded) =>
-                store.dispatch(setInstructionExpanded(instructionExpanded)),
-            setLanguage: (language) => store.dispatch(setLanguage(language)),
-            setLastProgram: (lastProgram) =>
-                store.dispatch(setLastProgram(lastProgram)),
-            clearLastProgram: () => store.dispatch(clearLastProgram()),
-        },
-        projectViewModelState: {
-            compileErrorResult: () =>
-                store.getState().project.compileErrorResult,
-            compileSuccessResult: () =>
-                store.getState().project.compileSuccessResult,
-            project: () => store.getState().project.project,
-            projectIsReadonly: () => store.getState().project.projectIsReadonly,
-            currentProgram: () => store.getState().project.currentProgram,
-            files: () => store.getState().project.files,
+export interface ProjectState {
+    project?: Project;
+    compileSuccessResult: CompileSuccessResult;
+    compileErrorResult?: CompileErrorResultList;
+    currentProgram: Program;
+    projectIsReadonly: boolean;
+    files: LabkeeperFile[];
+}
 
-            setCompileResultSegmentsSize: (size: number) =>
-                store.dispatch(setCompileResultSegmentsSize(size)),
-            setCompileResultForSegment: (
-                index: number,
-                segment: OutputSegment
-            ) =>
-                store.dispatch(
-                    setCompileResultForSegment({
-                        segment: segment,
-                        index: index,
-                    })
-                ),
-            setReadOnly: (value: boolean) => store.dispatch(setReadOnly(value)),
-            setProject: (project: Project) =>
-                store.dispatch(setProject(project)),
-            setCompileResult: (compileResult: CompileSuccessResult) =>
-                store.dispatch(setCompileResult(compileResult)),
-            setCompileErrorResult: (
-                compileErrorResultList: CompileErrorResultList
-            ) => store.dispatch(setCompileError(compileErrorResultList)),
-            setFiles: (files: LabkeeperFile[]) =>
-                store.dispatch(setFiles(files)),
-            resetToInitialState: () => store.dispatch(clearProject()),
-            setCurrentProgram: (program) =>
-                store.dispatch(setCurrentProgram(program)),
-        },
-        projectsViewModelState: {
-            projects: () => store.getState().projects.projects,
+export type AuthView =
+    | 'login'
+    | 'email'
+    | 'code'
+    | 'password'
+    | 'success'
+    | 'closed';
+export type EmailRequestState =
+    | 'unknown'
+    | 'loading'
+    | 'ok'
+    | 'userNotFound'
+    | 'userExists'
+    | 'validationError'
+    | 'unknownError';
+export type CodeRequestState =
+    | 'unknown'
+    | 'loading'
+    | 'ok'
+    | 'invalid'
+    | 'unknownError';
+export type PasswordRequestState =
+    | 'unknown'
+    | 'loading'
+    | 'ok'
+    | 'userNotFound'
+    | 'userExists'
+    | 'validationError'
+    | 'unknownError';
+export type LoginRequestState =
+    | 'unknown'
+    | 'loading'
+    | 'ok'
+    | 'bad_credentials'
+    | 'oauth_error'
+    | 'unknownError';
 
-            setProjects: (projects: ProjectShort[]) =>
-                store.dispatch(setProjects(projects)),
-        },
-        settingsViewModelState: {
-            isAutocompleteLoading: () => store.getState().settings.isCompiling,
-            editModeForFilename: () =>
-                store.getState().settings.editModeForFilename,
-            editModeForProjectTitle: () =>
-                store.getState().settings.editModeForProjectTitle,
-            expandProblemViewer: () =>
-                store.getState().settings.expandProblemViewer,
-            isFileDraggedToManager: () =>
-                store.getState().settings.isFileDraggedToManager,
-            showFileManager: () => store.getState().settings.showFileManager,
-            showSearch: () => store.getState().settings.showSearch,
-            showShareModal: () => store.getState().settings.showShareModal,
-            showTour: () => store.getState().settings.showTour,
+export interface AuthState {
+    currentView: AuthView;
+    currentEmail: string | null;
+    lastVerifiedCode: string | null;
+    emailRequest: EmailRequestState;
+    codeCheckRequest: CodeRequestState;
+    passwordSetRequest: PasswordRequestState;
+    loginRequest: LoginRequestState;
+    isRegistration: boolean;
+}
 
-            setShowSearch: (show: boolean) =>
-                store.dispatch(setShowSearch(show)),
-            setShowFileManager: (show: boolean) =>
-                store.dispatch(setShoFileManager(show)),
-            setExpandProblemViewer: (expand: boolean) =>
-                store.dispatch(setExpandProblemViewer(expand)),
-            setTourVisibility: (visible: boolean) =>
-                store.dispatch(setTourVisibility(visible)),
-            setEditModeForFilename: (edit: boolean) =>
-                store.dispatch(setEditModeForFilename(edit)),
-            setEditModeForProjectTitle: (edit: boolean) =>
-                store.dispatch(setEditModeForProjectTitle(edit)),
-            setIsCompiling: (value: boolean) =>
-                store.dispatch(setIsCompiling(value)),
-            setIsFileDraggedToFileManager: (edit: boolean) =>
-                store.dispatch(setIsFileDraggedToFileManager(edit)),
-        },
-        userViewModelState: {
-            email: () => store.getState().user.email,
-            id: () => store.getState().user.id,
-            isAuthenticated: () => store.getState().user.isAuthenticated,
+export type CloneRequestState = 'unknown' | 'ok' | 'error' | 'loading';
+export type GetProjectRequestState =
+    | 'unknown'
+    | 'ok'
+    | 'error'
+    | 'loading'
+    | 'forbidden'
+    | 'not_found';
 
-            setUserInfo: (userInfo) => store.dispatch(setUser(userInfo)),
-        },
+export type GetFilesRequestState =
+    | 'unknown'
+    | 'ok'
+    | 'error'
+    | 'loading'
+    | 'forbidden';
 
-        navigate: (url: string) => store.dispatch(setNavigateTo(url)),
-        dictionary: dictionary[store.getState().persistence.language],
-        toast: (message: string, type: TypeOptions) =>
-            store.dispatch(setShowToast({ message, type })),
-        scrollEditorToBottom: () =>
-            store.dispatch(setScrollEditorToBottom(true)),
-        resetToInitialState: () => store.dispatch(logoutAction),
-    };
-};
+export type GetProjectsRequestState =
+    | 'unknown'
+    | 'ok'
+    | 'error'
+    | 'loading'
+    | 'unauth';
+
+export interface IdeState {
+    search?: string;
+    activeSegmentIndex: number;
+    previousActiveSegmentIndex: number;
+    undoEnabled: boolean;
+    redoEnabled: boolean;
+    cloneRequestState: CloneRequestState;
+    getProjectRequestState: GetProjectRequestState;
+    getFilesRequestState: GetFilesRequestState;
+    getProjectsRequestState: GetProjectsRequestState;
+}
+
+export interface PersistenceState {
+    language: Language;
+    lastProgram: Program;
+    instructionExpanded: boolean;
+    lastOpenedProjectUuid?: string;
+}
 
 export const mockViewModelState = (): ViewModelState => {
     let location = '/';
@@ -453,7 +338,7 @@ export const mockViewModelState = (): ViewModelState => {
         },
 
         navigate: (url: string) => (location = url),
-        dictionary: dictionary[store.getState().persistence.language],
+        dictionary: en,
         toast: (message: string, type: TypeOptions) =>
             console.log('Show toast:', message, type),
         resetToInitialState: () => console.log('resetToInitialState'),

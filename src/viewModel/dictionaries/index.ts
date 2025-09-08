@@ -1,6 +1,6 @@
-import { CompileError } from '../../../../model/domain';
-import { en } from './en';
-import { ru } from './ru';
+import { CompileError } from '../../model/domain.ts';
+import { en } from './en.ts';
+import { ru } from './ru.ts';
 
 export type Language = 'ru' | 'en';
 

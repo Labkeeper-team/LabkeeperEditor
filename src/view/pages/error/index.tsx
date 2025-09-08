@@ -1,8 +1,7 @@
 import * as Sentry from '@sentry/react';
 import { isRouteErrorResponse, useRouteError } from 'react-router-dom';
 import React from 'react';
-import { observerService } from '../../../main.tsx';
-import { Events } from '../../../model/service/observer.ts';
+import { controller } from '../../../main.tsx';
 
 export const RouterErrorBoundary: React.FC = () => {
     const error = useRouteError();
@@ -10,7 +9,7 @@ export const RouterErrorBoundary: React.FC = () => {
     React.useEffect(() => {
         // Захватываем ошибку один раз при монтировании страницы ошибки
         if (error) {
-            observerService.onEvent(Events.FRONTEND_ERROR);
+            controller.onUndefinedError();
             if (isRouteErrorResponse(error)) {
                 Sentry.captureMessage(
                     `Route error response: ${error.status} ${error.statusText}`,

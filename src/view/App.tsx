@@ -3,19 +3,18 @@ import * as Sentry from '@sentry/react';
 import { ToastContainer } from 'react-toastify';
 import { PersistGate } from 'redux-persist/integration/react';
 import './App.scss';
-import { persist, store } from '../viewModel/store';
+import { persist, store } from './store';
 import { RouterProvider } from 'react-router-dom';
 import { appRouter } from './routing';
 import ScaleWrapper from './components/scaleWrapper';
-import { observerService } from '../main.tsx';
-import { Events } from '../model/service/observer.ts';
+import { controller } from '../main.tsx';
 
 function App() {
     return (
         <Sentry.ErrorBoundary
             showDialog
             beforeCapture={() => {
-                observerService.onEvent(Events.FRONTEND_ERROR);
+                controller.onUndefinedError();
             }}
             fallback={({ resetError }) => (
                 <div

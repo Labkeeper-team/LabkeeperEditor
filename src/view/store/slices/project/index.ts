@@ -7,18 +7,9 @@ import {
     Program,
     Project,
     Segment,
-} from '../../../../model/domain';
+} from '../../../../model/domain.ts';
 import { LOGOUT_TYPE } from '../../actions';
 import { projectInitialState } from '../index.ts';
-
-export interface ProjectState {
-    project?: Project;
-    compileSuccessResult: CompileSuccessResult;
-    compileErrorResult?: CompileErrorResultList;
-    currentProgram: Program;
-    projectIsReadonly: boolean;
-    files: LabkeeperFile[];
-}
 
 export const projectSlice = createSlice({
     name: 'projectSlice',

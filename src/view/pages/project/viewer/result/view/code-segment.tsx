@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import { useIsSegmentIsActive } from '../../../../../../viewModel/store/selectors/program';
+import { useIsSegmentIsActive } from '../../../../../store/selectors/program';
 import { useSelector } from 'react-redux';
 import { forwardRef, memo, useMemo, useRef } from 'react';
 import { AssignStatement } from './segments/assignment-segment.tsx';

@@ -6,9 +6,9 @@ import { Button } from '../../../components/button';
 import { RightArrowIcon } from '../../../icons';
 import { colors } from '../../../styles/colors';
 import { useDispatch, useSelector } from 'react-redux';
-import { useDictionary } from '../../../../viewModel/store/selectors/translations';
-import { AppDispatch } from '../../../../viewModel/store';
-import { onProjectCreateRequest } from '../../../../controller';
+import { useDictionary } from '../../../store/selectors/translations';
+import { AppDispatch } from '../../../store';
+import { controller } from '../../../../main.tsx';
 
 export const AddProjectModal = (props: { onClose: () => unknown }) => {
     const dispatch = useDispatch<AppDispatch>();
@@ -23,7 +23,7 @@ export const AddProjectModal = (props: { onClose: () => unknown }) => {
             e?.preventDefault?.();
 
             dispatch(
-                onProjectCreateRequest({
+                controller.onProjectCreateRequest({
                     projectName: projectName,
                     errorCallback: (message) => {
                         setProjectNameError(message);

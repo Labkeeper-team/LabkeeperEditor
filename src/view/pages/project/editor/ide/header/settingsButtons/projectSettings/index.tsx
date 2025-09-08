@@ -1,13 +1,13 @@
 import { useDispatch, useSelector } from 'react-redux';
-import { useCurrentProgram } from '../../../../../../../../viewModel/store/selectors/program';
+import { useCurrentProgram } from '../../../../../../../store/selectors/program';
 
 import './style.scss';
 import { Typography } from '../../../../../../../components/typography';
 import { colors } from '../../../../../../../styles/colors';
 import { Radio } from '../../../../../../../components/radiobutton';
-import { useDictionary } from '../../../../../../../../viewModel/store/selectors/translations';
-import { AppDispatch } from '../../../../../../../../viewModel/store';
-import { onRoundStrategySetRequest } from '../../../../../../../../controller';
+import { useDictionary } from '../../../../../../../store/selectors/translations';
+import { AppDispatch } from '../../../../../../../store';
+import { controller } from '../../../../../../../../main.tsx';
 
 export const ProjectSettings = () => {
     const activeProgram = useSelector(useCurrentProgram);
@@ -37,7 +37,9 @@ export const ProjectSettings = () => {
                     }
                     onChange={() =>
                         dispatch(
-                            onRoundStrategySetRequest({ strategy: 'noRound' })
+                            controller.onRoundStrategySetRequest({
+                                strategy: 'noRound',
+                            })
                         )
                     }
                     title={dictionary.rounding_mode.without_round}
@@ -49,7 +51,9 @@ export const ProjectSettings = () => {
                     }
                     onChange={() =>
                         dispatch(
-                            onRoundStrategySetRequest({ strategy: 'oneDigit' })
+                            controller.onRoundStrategySetRequest({
+                                strategy: 'oneDigit',
+                            })
                         )
                     }
                     title={dictionary.rounding_mode.one_digit}
@@ -61,7 +65,9 @@ export const ProjectSettings = () => {
                     }
                     onChange={() =>
                         dispatch(
-                            onRoundStrategySetRequest({ strategy: 'twoDigits' })
+                            controller.onRoundStrategySetRequest({
+                                strategy: 'twoDigits',
+                            })
                         )
                     }
                     title={dictionary.rounding_mode.two_digits}
@@ -74,7 +80,7 @@ export const ProjectSettings = () => {
                     }
                     onChange={() =>
                         dispatch(
-                            onRoundStrategySetRequest({
+                            controller.onRoundStrategySetRequest({
                                 strategy: 'threeDigits',
                             })
                         )
@@ -88,7 +94,7 @@ export const ProjectSettings = () => {
                     }
                     onChange={() =>
                         dispatch(
-                            onRoundStrategySetRequest({
+                            controller.onRoundStrategySetRequest({
                                 strategy: 'fiveDigits',
                             })
                         )
@@ -103,7 +109,7 @@ export const ProjectSettings = () => {
                     }
                     onChange={() =>
                         dispatch(
-                            onRoundStrategySetRequest({
+                            controller.onRoundStrategySetRequest({
                                 strategy: 'firstMeaningDigit',
                             })
                         )

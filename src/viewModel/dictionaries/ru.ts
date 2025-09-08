@@ -1,5 +1,5 @@
-import { Translations } from '.';
-import { CompileError } from '../../../../model/domain';
+import { Translations } from './index.ts';
+import { CompileError } from '../../model/domain.ts';
 
 export const ru: Translations = {
     or: 'или',

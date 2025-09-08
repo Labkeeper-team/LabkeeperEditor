@@ -3,10 +3,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import { SegmentEditor } from './segment';
 
 import './style.scss';
-import { useInputSegmentsSize } from '../../../../../../viewModel/store/selectors/program';
+import { useInputSegmentsSize } from '../../../../../store/selectors/program';
 import { useEffect, useRef } from 'react';
-import { AppDispatch, StorageState } from '../../../../../../viewModel/store';
-import { setScrollEditorToBottom } from '../../../../../../viewModel/store/slices/callback';
+import { AppDispatch, StorageState } from '../../../../../store';
+import { setScrollEditorToBottom } from '../../../../../store/slices/callback';
 import { SegmentDivider } from './segment-divider';
 import React from 'react';
 

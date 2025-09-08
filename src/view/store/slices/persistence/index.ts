@@ -1,15 +1,8 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { LOGOUT_TYPE } from '../../actions';
-import { Language } from '../../shared/dictionaries';
+import { Language } from '../../../../viewModel/dictionaries';
 import { Program } from '../../../../model/domain.ts';
 import { initialProgram, persistenceInitialState } from '../index.ts';
-
-export interface PersistenceState {
-    language: Language;
-    lastProgram: Program;
-    instructionExpanded: boolean;
-    lastOpenedProjectUuid?: string;
-}
 
 export const persistenceSlice = createSlice({
     name: 'persistenceSlice',

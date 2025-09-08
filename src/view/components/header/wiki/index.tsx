@@ -3,7 +3,7 @@ import { Button } from '../../button';
 import {
     useCurrentLanguage,
     useDictionary,
-} from '../../../../viewModel/store/selectors/translations';
+} from '../../../store/selectors/translations';
 import { GithubIcon } from '../../../icons';
 
 export const WikiButton = () => {

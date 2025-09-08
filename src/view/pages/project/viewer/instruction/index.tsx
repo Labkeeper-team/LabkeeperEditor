@@ -18,10 +18,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import {
     useCurrentLanguage,
     useDictionary,
-} from '../../../../../viewModel/store/selectors/translations';
+} from '../../../../store/selectors/translations';
 import { instructions } from '../../../../../model/help';
-import { setInstructionExpanded } from '../../../../../viewModel/store/slices/persistence';
-import { useInstructionsExpanded } from '../../../../../viewModel/store/selectors/program';
+import { setInstructionExpanded } from '../../../../store/slices/persistence';
+import { useInstructionsExpanded } from '../../../../store/selectors/program';
 
 export const Instruction = () => {
     const swiperRef = useRef<SwiperType | null>(null);
