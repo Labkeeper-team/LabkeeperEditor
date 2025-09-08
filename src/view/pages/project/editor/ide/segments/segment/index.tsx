@@ -6,6 +6,7 @@ import CodeMirror, {
     StateField,
     Range,
 } from '@uiw/react-codemirror';
+import { EditorSelection } from '@codemirror/state';
 import { langs } from '@uiw/codemirror-extensions-langs';
 import { content, dom } from '@uiw/codemirror-extensions-events';
 import { lineNumbers } from '@codemirror/view';
@@ -131,6 +132,77 @@ export const SegmentEditor = memo(
             }
             processDecorations(view, search, segmentTempErrors);
         }, [search, segmentTempErrors, editor?.current?.view]);
+        // Фиксируем горизонтальный скролл на 0, чтобы сегмент не смещался при выделении
+        useEffect(() => {
+            const view = editor?.current?.view;
+            if (!view) {
+                return;
+            }
+            const scroller = view.scrollDOM;
+            const lockHorizontalScroll = () => {
+                if (scroller.scrollLeft !== 0) {
+                    scroller.scrollLeft = 0;
+                }
+            };
+            scroller.addEventListener('scroll', lockHorizontalScroll, {
+                passive: true,
+            });
+            return () => {
+                scroller.removeEventListener('scroll', lockHorizontalScroll);
+            };
+        }, [editor?.current?.view]);
+
+        // Дополнительно удерживаем scrollLeft=0 во время drag-выделения мышью
+        useEffect(() => {
+            const view = editor?.current?.view;
+            if (!view) {
+                return;
+            }
+            const scroller = view.scrollDOM;
+            let rafId: number | null = null;
+            const enforce = () => {
+                if (scroller.scrollLeft !== 0) {
+                    scroller.scrollLeft = 0;
+                }
+                rafId = requestAnimationFrame(enforce);
+            };
+            const onMouseDown = (e: MouseEvent) => {
+                if (e.buttons & 1) {
+                    if (rafId == null) {
+                        enforce();
+                    }
+                }
+            };
+            const onMouseUp = () => {
+                if (rafId != null) {
+                    cancelAnimationFrame(rafId);
+                    rafId = null;
+                }
+            };
+            scroller.addEventListener('mousedown', onMouseDown);
+            window.addEventListener('mouseup', onMouseUp);
+            return () => {
+                if (rafId != null) {
+                    cancelAnimationFrame(rafId);
+                }
+                scroller.removeEventListener('mousedown', onMouseDown);
+                window.removeEventListener('mouseup', onMouseUp);
+            };
+        }, [editor?.current?.view]);
+        // Если сегмент перестал быть активным — снимаем выделение в редакторе
+        useEffect(() => {
+            if (isActiveSegment) {
+                return;
+            }
+            const view = editor?.current?.view;
+            if (!view) {
+                return;
+            }
+            const head = view.state.selection.main.head;
+            view.dispatch({
+                selection: EditorSelection.cursor(head),
+            });
+        }, [isActiveSegment]);
         // При изменении текста сегмента создаем таймер
         useEffect(() => {
             if (timeout) {
