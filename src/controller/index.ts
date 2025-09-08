@@ -2,19 +2,39 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 import { ProgramRoundStrategy, SegmentType } from '../model/domain.ts';
 import { HeaderHelpItem } from '../model/help';
 import * as Sentry from '@sentry/react';
-import { Events, ObserverService } from '../model/service/observer.ts';
-import { SystemService } from '../viewModel';
+import { Events, ObserverService } from '../model/service/ObserverService.ts';
+import { AuthService } from '../viewModel/operation/AuthService.ts';
+import { FileManagerService } from '../viewModel/operation/FileManagerService.ts';
+import { ProgramEditorService } from '../viewModel/operation/ProgramEditorService.ts';
+import { ProjectPageService } from '../viewModel/operation/ProjectPageService.ts';
+import { ProjectsPageService } from '../viewModel/operation/ProjectsPageService.ts';
+import { StartupService } from '../viewModel/operation/StartupService.ts';
 
 export class Controller {
-    systemService: SystemService;
+    authService: AuthService;
+    fileManagerService: FileManagerService;
+    programEditorService: ProgramEditorService;
+    projectPageService: ProjectPageService;
+    projectsPageService: ProjectsPageService;
+    startupService: StartupService;
     observerService: ObserverService;
 
     constructor(
-        systemService: SystemService,
+        authService: AuthService,
+        fileManagerService: FileManagerService,
+        programEditorService: ProgramEditorService,
+        projectPageService: ProjectPageService,
+        projectsPageService: ProjectsPageService,
+        startupService: StartupService,
         observerService: ObserverService
     ) {
-        this.systemService = systemService;
         this.observerService = observerService;
+        this.authService = authService;
+        this.fileManagerService = fileManagerService;
+        this.programEditorService = programEditorService;
+        this.projectPageService = projectPageService;
+        this.projectsPageService = projectsPageService;
+        this.startupService = startupService;
     }
 
     onFormLoginClickedRequest = createAsyncThunk(
@@ -29,11 +49,7 @@ export class Controller {
             captcha: string;
         }) => {
             this.wrapper('onFormLoginClicked', () =>
-                this.systemService.onFormLoginClicked(
-                    userName,
-                    password,
-                    captcha
-                )
+                this.authService.onFormLoginClicked(userName, password, captcha)
             );
         }
     );
@@ -42,7 +58,7 @@ export class Controller {
         'onQrPageEnter',
         async ({ version }: { version: string }) => {
             this.wrapper('onQrPageEnter', () =>
-                this.systemService.onQrPageEnter(version)
+                this.startupService.onQrPageEnter(version)
             );
         }
     );
@@ -51,7 +67,7 @@ export class Controller {
         'onProgramSaveTimeout',
         async () => {
             this.wrapper('onProgramSaveTimeout', () =>
-                this.systemService.onProgramSaveTimeout()
+                this.programEditorService.onProgramSaveTimeout()
             );
         }
     );
@@ -60,7 +76,7 @@ export class Controller {
         'onAppEnterWithOauthCode',
         async ({ code, state }: { code: string; state: string }) => {
             this.wrapper('onAppEnterWithOauthCode', () =>
-                this.systemService.onAppEnterWithOauthCode(code, state)
+                this.startupService.onAppEnterWithOauthCode(code, state)
             );
         }
     );
@@ -69,7 +85,7 @@ export class Controller {
         'onLogoutButtonClicked',
         async () => {
             this.wrapper('onLogoutButtonClicked', () =>
-                this.systemService.onLogoutButtonClicked()
+                this.authService.onLogoutButtonClicked()
             );
         }
     );
@@ -78,20 +94,20 @@ export class Controller {
         'onAuthButtonClicked',
         async () => {
             this.wrapper('onAuthButtonClicked', () =>
-                this.systemService.onAuthButtonClicked()
+                this.authService.onAuthButtonClicked()
             );
         }
     );
 
     onAuthClosedRequest = createAsyncThunk('onAuthClosed', async () => {
-        this.wrapper('onAuthClosed', () => this.systemService.onAuthClosed());
+        this.wrapper('onAuthClosed', () => this.authService.onAuthClosed());
     });
 
     onRegistrationButtonClickedRequest = createAsyncThunk(
         'onRegistrationButtonClicked',
         async () => {
             this.wrapper('onRegistrationButtonClicked', () =>
-                this.systemService.onRegistrationButtonClicked()
+                this.authService.onRegistrationButtonClicked()
             );
         }
     );
@@ -100,7 +116,7 @@ export class Controller {
         'onForgotPasswordButtonClicked',
         async () => {
             this.wrapper('onForgotPasswordButtonClicked', () =>
-                this.systemService.onForgotPasswordButtonClicked()
+                this.authService.onForgotPasswordButtonClicked()
             );
         }
     );
@@ -109,7 +125,7 @@ export class Controller {
         'onEmailSendButtonClicked',
         async ({ email, captcha }: { email: string; captcha: string }) => {
             this.wrapper('onEmailSendButtonClicked', () =>
-                this.systemService.onEmailSendButtonClicked(email, captcha)
+                this.authService.onEmailSendButtonClicked(email, captcha)
             );
         }
     );
@@ -118,7 +134,7 @@ export class Controller {
         'onSendPasswordButtonClicked',
         async ({ password }: { password: string }) => {
             this.wrapper('onSendPasswordButtonClicked', () =>
-                this.systemService.onSendPasswordButtonClicked(password)
+                this.authService.onSendPasswordButtonClicked(password)
             );
         }
     );
@@ -127,7 +143,7 @@ export class Controller {
         'onSendCodeButtonClicked',
         async ({ code }: { code: string }) => {
             this.wrapper('onSendCodeButtonClicked', () =>
-                this.systemService.onSendCodeButtonClicked(code)
+                this.authService.onSendCodeButtonClicked(code)
             );
         }
     );
@@ -136,7 +152,7 @@ export class Controller {
         'onAppEnter',
         async ({ from }: { from?: string }) => {
             this.wrapper('onAppEnter', () =>
-                this.systemService.onAppStartup(from)
+                this.startupService.onAppStartup(from)
             );
         }
     );
@@ -145,7 +161,7 @@ export class Controller {
         'onPrintButtonPressedRequest',
         async () => {
             this.wrapper('onPrintButtonPressedRequest', () =>
-                this.systemService.onPrintButtonPressed()
+                this.projectPageService.onPrintButtonPressed()
             );
         }
     );
@@ -154,7 +170,7 @@ export class Controller {
         'onProjectPageEscButtonClicked',
         async () => {
             this.wrapper('onProjectPageEscButtonClicked', () =>
-                this.systemService.onProjectPageEscButtonPressed()
+                this.projectPageService.onProjectPageEscButtonPressed()
             );
         }
     );
@@ -167,7 +183,7 @@ export class Controller {
         'onRunButtonPressed',
         async () => {
             this.wrapper('onRunButtonPressed', () =>
-                this.systemService.onRunButtonClicked()
+                this.projectPageService.onRunButtonClicked()
             );
         }
     );
@@ -182,7 +198,7 @@ export class Controller {
             segmentIndex: number;
         }) => {
             this.wrapper('segmentEditorChangeSegmentPositionRequest', () =>
-                this.systemService.segmentEditorChangeSegmentPosition(
+                this.programEditorService.segmentEditorChangeSegmentPosition(
                     direction,
                     segmentIndex
                 )
@@ -202,7 +218,7 @@ export class Controller {
             segmentIndex: number;
         }) => {
             this.wrapper('segmentEditorChangeSegmentVisibilityRequest', () =>
-                this.systemService.segmentEditorChangeSegmentVisibility(
+                this.programEditorService.segmentEditorChangeSegmentVisibility(
                     visible,
                     parameterName,
                     segmentIndex
@@ -215,7 +231,7 @@ export class Controller {
         'deleteSegmentRequest',
         async ({ segmentIndex }: { segmentIndex: number }) => {
             this.wrapper('deleteSegmentRequest', () =>
-                this.systemService.deleteSegment(segmentIndex)
+                this.programEditorService.deleteSegment(segmentIndex)
             );
         }
     );
@@ -232,7 +248,7 @@ export class Controller {
             editorCallback: (insert: string) => void;
         }) => {
             this.wrapper('onAddedFilesToSegmentEditorRequest', () =>
-                this.systemService.onAddedFilesToSegmentEditor(
+                this.programEditorService.onAddedFilesToSegmentEditor(
                     items,
                     segmentIndex,
                     editorCallback
@@ -251,7 +267,10 @@ export class Controller {
             after: number;
         }) => {
             this.wrapper('onSegmentAdded', () =>
-                this.systemService.onSegmentAddedViaDivider(segmentType, after)
+                this.programEditorService.onSegmentAddedViaDivider(
+                    segmentType,
+                    after
+                )
             );
         }
     );
@@ -260,7 +279,7 @@ export class Controller {
         'onFocusSegmentRequest',
         async ({ segmentIndex }: { segmentIndex: number }) => {
             this.wrapper('onFocusSegmentRequest', () =>
-                this.systemService.onFocusSegment(segmentIndex)
+                this.programEditorService.onFocusSegment(segmentIndex)
             );
         }
     );
@@ -275,7 +294,10 @@ export class Controller {
             segmentText: string;
         }) => {
             this.wrapper('onBlurSegmentRequest', () =>
-                this.systemService.onBlurSegment(segmentIndex, segmentText)
+                this.programEditorService.onBlurSegment(
+                    segmentIndex,
+                    segmentText
+                )
             );
         }
     );
@@ -290,7 +312,7 @@ export class Controller {
             segmentText: string;
         }) => {
             this.wrapper('onSegmentTextChanged', () =>
-                this.systemService.onSegmentTextEdited(
+                this.programEditorService.onSegmentTextEdited(
                     segmentIndex,
                     segmentText
                 )
@@ -302,7 +324,7 @@ export class Controller {
         'onAddSegmentButtonClickedRequest',
         async ({ type }: { type: SegmentType }) => {
             this.wrapper('onAddSegmentButtonClickedRequest', () =>
-                this.systemService.onAddSegmentClicked(type)
+                this.programEditorService.onAddSegmentClicked(type)
             );
         }
     );
@@ -311,7 +333,7 @@ export class Controller {
         'onFolderButtonClickedRequest',
         async () => {
             this.wrapper('onFolderButtonClickedRequest', () =>
-                this.systemService.onFolderButtonClicked()
+                this.fileManagerService.onFolderButtonClicked()
             );
         }
     );
@@ -320,7 +342,7 @@ export class Controller {
         'onPrevVersionButtonClickedRequest',
         async () => {
             this.wrapper('onPrevVersionButtonClickedRequest', () =>
-                this.systemService.onPrevVersionButtonClicked()
+                this.programEditorService.onPrevVersionButtonClicked()
             );
         }
     );
@@ -329,7 +351,7 @@ export class Controller {
         'onNextVersionButtonClickedRequest',
         async () => {
             this.wrapper('onNextVersionButtonClickedRequest', () =>
-                this.systemService.onNextVersionButtonClicked()
+                this.programEditorService.onNextVersionButtonClicked()
             );
         }
     );
@@ -338,7 +360,7 @@ export class Controller {
         'onSearchIconPressRequest',
         async () => {
             this.wrapper('onSearchIconPressRequest', () =>
-                this.systemService.onSearchIconPress()
+                this.projectPageService.onSearchIconPress()
             );
         }
     );
@@ -347,14 +369,14 @@ export class Controller {
         'onSearchInputChangedRequest',
         async ({ text }: { text: string }) => {
             this.wrapper('onSearchInputChangedRequest', () =>
-                this.systemService.onSearchInputChanged(text)
+                this.projectPageService.onSearchInputChanged(text)
             );
         }
     );
 
     onOauthLoginRequest = createAsyncThunk('onOauthLoginRequest', async () => {
         this.wrapper('onOauthLoginRequest', () =>
-            this.systemService.onOauthLogin()
+            this.authService.onOauthLogin()
         );
     });
 
@@ -362,7 +384,7 @@ export class Controller {
         'onRoundStrategySetRequest',
         async ({ strategy }: { strategy: ProgramRoundStrategy }) => {
             this.wrapper('onRoundStrategySetRequest', () =>
-                this.systemService.onRoundStrategySet(strategy)
+                this.programEditorService.onRoundStrategySet(strategy)
             );
         }
     );
@@ -371,7 +393,7 @@ export class Controller {
         'onHelpItemCreatedRequest',
         async ({ item }: { item: HeaderHelpItem }) => {
             this.wrapper('onHelpItemCreatedRequest', () =>
-                this.systemService.onHelpItemCreated(item)
+                this.projectPageService.onHelpItemCreated(item)
             );
         }
     );
@@ -380,7 +402,7 @@ export class Controller {
         'onExpandErrorsClickedRequest',
         async () => {
             this.wrapper('onExpandErrorsClickedRequest', () =>
-                this.systemService.onExpandErrorsClicked()
+                this.projectPageService.onExpandErrorsClicked()
             );
         }
     );
@@ -389,7 +411,7 @@ export class Controller {
         'onCrossButtonInFileManagerClickedRequest',
         async () => {
             this.wrapper('onCrossButtonInFileManagerClickedRequest', () =>
-                this.systemService.onCrossButtonInFileManagerClicked()
+                this.fileManagerService.onCrossButtonInFileManagerClicked()
             );
         }
     );
@@ -398,7 +420,7 @@ export class Controller {
         'onUploadFileRequest',
         async ({ file }: { file: File }) => {
             this.wrapper('onUploadFileRequest', () =>
-                this.systemService.onUploadFile(file)
+                this.fileManagerService.onUploadFile(file)
             );
         }
     );
@@ -407,7 +429,7 @@ export class Controller {
         'onDeleteFileRequest',
         async ({ fileName }: { fileName: string }) => {
             this.wrapper('onDeleteFileRequest', () =>
-                this.systemService.onDeleteFile(fileName)
+                this.fileManagerService.onDeleteFile(fileName)
             );
         }
     );
@@ -416,7 +438,7 @@ export class Controller {
         'onFileNameChangedRequest',
         async ({ oldName, newName }: { oldName: string; newName: string }) => {
             this.wrapper('onFileNameChangedRequest', () =>
-                this.systemService.onFileNameChanged(oldName, newName)
+                this.fileManagerService.onFileNameChanged(oldName, newName)
             );
         }
     );
@@ -425,7 +447,7 @@ export class Controller {
         'onFileRenameButtonClickedRequest',
         async () => {
             this.wrapper('onFileRenameButtonClickedRequest', () =>
-                this.systemService.onFileRenameButtonClicked()
+                this.fileManagerService.onFileRenameButtonClicked()
             );
         }
     );
@@ -434,7 +456,7 @@ export class Controller {
         'onRowClickedInProjectsListRequest',
         async ({ projectId }: { projectId: string }) => {
             this.wrapper('onRowClickedInProjectsListRequest', () =>
-                this.systemService.onRowClickedInProjectsList(projectId)
+                this.projectsPageService.onRowClickedInProjectsList(projectId)
             );
         }
     );
@@ -453,7 +475,7 @@ export class Controller {
             failCallback: () => void;
         }) => {
             this.wrapper('onProjectTitleChangedRequest', () =>
-                this.systemService.onProjectTitleChanged(
+                this.projectPageService.onProjectTitleChanged(
                     projectId,
                     title,
                     okCallback,
@@ -467,7 +489,7 @@ export class Controller {
         'onProjectVisibilityChangeRequest',
         async ({ visible }: { visible: boolean }) => {
             this.wrapper('onProjectVisibilityChangeRequest', () =>
-                this.systemService.onProjectVisibilityChange(visible)
+                this.projectPageService.onProjectVisibilityChange(visible)
             );
         }
     );
@@ -484,7 +506,7 @@ export class Controller {
             errorCallback: (message: string) => void;
         }) => {
             this.wrapper('onProjectCreateRequest', () =>
-                this.systemService.onProjectCreate(
+                this.projectsPageService.onProjectCreate(
                     projectName,
                     okCallback,
                     errorCallback
@@ -497,7 +519,7 @@ export class Controller {
         'onBackButtonClickedRequest',
         async () => {
             this.wrapper('onBackButtonClickedRequest', () =>
-                this.systemService.onBackButtonClicked()
+                this.projectPageService.onBackButtonClicked()
             );
         }
     );
@@ -506,7 +528,7 @@ export class Controller {
         'onContactUsFormSubmittedRequest',
         async ({ body, subject }: { body: string; subject: string }) => {
             this.wrapper('onContactUsFormSubmittedRequest', () =>
-                this.systemService.onContactUsFormSubmitted(subject, body)
+                this.projectPageService.onContactUsFormSubmitted(subject, body)
             );
         }
     );
@@ -521,7 +543,7 @@ export class Controller {
             okCallback: () => void;
         }) => {
             this.wrapper('onDeleteProjectRequest', () =>
-                this.systemService.onDeleteProject(projectId, okCallback)
+                this.projectsPageService.onDeleteProject(projectId, okCallback)
             );
         }
     );
@@ -530,7 +552,7 @@ export class Controller {
         'onCloneProjectRequest',
         async () => {
             this.wrapper('onCloneProjectRequest', () =>
-                this.systemService.onCloneProject()
+                this.projectPageService.onCloneProject()
             );
         }
     );

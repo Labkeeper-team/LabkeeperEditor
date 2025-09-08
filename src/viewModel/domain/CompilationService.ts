@@ -1,14 +1,17 @@
-import { ViewModelRepository } from './repository';
-import { CompilationResponse, RequestResult, Rpi } from '../model/rpi';
+import { ViewModelRepository } from '../repository';
+import { CompilationResponse, RequestResult, Rpi } from '../../model/rpi';
 import {
     CompileError,
     CompileErrorResultList,
     CompileSuccessResult,
-} from '../model/domain.ts';
-import { Events, ObserverService } from '../model/service/observer.ts';
-import { ProgramService } from '../model/service/program.ts';
-import { LoaderService } from './project.ts';
-import { IdeService } from './ide.ts';
+} from '../../model/domain.ts';
+import {
+    Events,
+    ObserverService,
+} from '../../model/service/ObserverService.ts';
+import { ProgramService } from '../../model/service/ProgramService.ts';
+import { LoaderService } from './LoaderService.ts';
+import { IdeService } from './IdeService.ts';
 
 export class CompilationService {
     repository: ViewModelRepository;

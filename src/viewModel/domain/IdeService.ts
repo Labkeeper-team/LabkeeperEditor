@@ -1,11 +1,11 @@
-import { ViewModelRepository } from './repository';
-import { ProgramService } from '../model/service/program.ts';
+import { ViewModelRepository } from '../repository';
+import { ProgramService } from '../../model/service/ProgramService.ts';
 import {
     CompileSuccessResult,
     ComputationalOutputSegment,
     Program,
     TextOutputSegment,
-} from '../model/domain.ts';
+} from '../../model/domain.ts';
 
 const dollarPattern = /\$\{[\w|\p{Script=Cyrillic}]+\}/u;
 

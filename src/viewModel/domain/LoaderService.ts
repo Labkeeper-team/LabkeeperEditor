@@ -1,7 +1,7 @@
-import { ProjectShort } from '../model/domain.ts';
-import { ViewModelRepository } from './repository';
-import { Rpi } from '../model/rpi';
-import { IdeService } from './ide.ts';
+import { ProjectShort } from '../../model/domain.ts';
+import { ViewModelRepository } from '../repository';
+import { Rpi } from '../../model/rpi';
+import { IdeService } from './IdeService.ts';
 
 export class LoaderService {
     rpi: Rpi;

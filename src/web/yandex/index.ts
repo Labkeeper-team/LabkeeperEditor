@@ -1,4 +1,4 @@
-import { ObserverService } from '../../model/service/observer.ts';
+import { ObserverService } from '../../model/service/ObserverService.ts';
 import { Secrets } from '../../constants.ts';
 
 export class MetrikaService implements ObserverService {

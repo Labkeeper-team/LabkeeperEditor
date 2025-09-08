@@ -2,19 +2,19 @@ import {
     CompileSuccessResult,
     Program,
     TextOutputSegment,
-} from '../model/domain.ts';
-import seg_input_ru1 from '../model/examples/1/seg_input_ru.json';
-import seg_output_ru1 from '../model/examples/1/seg_output_ru.json';
+} from '../../model/domain.ts';
+import seg_input_ru1 from '../../model/examples/1/seg_input_ru.json';
+import seg_output_ru1 from '../../model/examples/1/seg_output_ru.json';
 //import seg_input_en1 from '../model/examples/1/seg_input_en.json';
 //import seg_output_en1 from '../model/examples/1/seg_output_en.json';
 
-import seg_input_ru2 from '../model/examples/2/seg_input_ru.json';
-import seg_output_ru2 from '../model/examples/2/seg_output_ru.json';
-import seg_input_en2 from '../model/examples/2/seg_input_en.json';
-import seg_output_en2 from '../model/examples/2/seg_output_en.json';
+import seg_input_ru2 from '../../model/examples/2/seg_input_ru.json';
+import seg_output_ru2 from '../../model/examples/2/seg_output_ru.json';
+import seg_input_en2 from '../../model/examples/2/seg_input_en.json';
+import seg_output_en2 from '../../model/examples/2/seg_output_en.json';
 
-import { Language } from './dictionaries';
-import { Rpi } from '../model/rpi';
+import { Language } from '../dictionaries';
+import { Rpi } from '../../model/rpi';
 
 interface Lab {
     name: string;

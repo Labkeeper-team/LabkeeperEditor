@@ -1,22 +1,28 @@
 import { Rpi } from '../model/rpi';
 import { ViewModelRepository } from './repository';
-import { ObserverService } from '../model/service/observer.ts';
-import { ProgramService } from '../model/service/program.ts';
-import { LoaderService } from './project.ts';
-import { StartupService } from './init.ts';
-import { CompilationService } from './compile.ts';
-import { IdeService } from './ide.ts';
-import { SystemService } from './index.ts';
-import { AuthService } from './auth.ts';
-import { FileService } from './file.ts';
-import { ExampleService } from './example.ts';
+import { ObserverService } from '../model/service/ObserverService.ts';
+import { ProgramService } from '../model/service/ProgramService.ts';
+import { LoaderService } from './domain/LoaderService.ts';
+import { StartupService } from './operation/StartupService.ts';
+import { CompilationService } from './domain/CompilationService.ts';
+import { IdeService } from './domain/IdeService.ts';
+import { FileService } from './domain/FileService.ts';
+import { ExampleService } from './domain/ExampleService.ts';
 import { Controller } from '../controller';
+import { AuthService } from './operation/AuthService.ts';
+import { FileManagerService } from './operation/FileManagerService.ts';
+import { ProgramEditorService } from './operation/ProgramEditorService.ts';
+import { ProjectPageService } from './operation/ProjectPageService.ts';
+import { ProjectsPageService } from './operation/ProjectsPageService.ts';
 
 export function setupContext(
     rpi: Rpi,
     repository: ViewModelRepository,
     observerService: ObserverService
 ) {
+    /*
+    DOMAIN
+     */
     const programService: ProgramService = new ProgramService();
     const ideService: IdeService = new IdeService(repository, programService);
     const loaderService: LoaderService = new LoaderService(
@@ -26,6 +32,18 @@ export function setupContext(
     );
     const fileService: FileService = new FileService(repository);
     const exampleService: ExampleService = new ExampleService(rpi);
+    const compilationService: CompilationService = new CompilationService(
+        repository,
+        rpi,
+        programService,
+        loaderService,
+        observerService,
+        ideService
+    );
+
+    /*
+    OPERATION
+     */
     const startupService: StartupService = new StartupService(
         rpi,
         programService,
@@ -35,42 +53,79 @@ export function setupContext(
         ideService,
         exampleService
     );
-    const compilationService: CompilationService = new CompilationService(
+    const authService: AuthService = new AuthService(
         repository,
         rpi,
-        programService,
-        loaderService,
-        observerService,
-        ideService
+        ideService,
+        startupService
     );
-    const authService: AuthService = new AuthService(repository);
-    const systemService: SystemService = new SystemService(
+    const fileManagerService: FileManagerService = new FileManagerService(
         repository,
         rpi,
         programService,
         loaderService,
         ideService,
-        startupService,
-        compilationService,
-        observerService,
-        authService,
-        fileService,
-        exampleService
+        fileService
     );
-    const controller = new Controller(systemService, observerService);
+    const programEditorService: ProgramEditorService = new ProgramEditorService(
+        repository,
+        rpi,
+        programService,
+        loaderService,
+        ideService,
+        observerService,
+        fileService
+    );
+    const projectPageService: ProjectPageService = new ProjectPageService(
+        repository,
+        rpi,
+        programService,
+        loaderService,
+        ideService,
+        observerService,
+        compilationService
+    );
+    const projectsPageService: ProjectsPageService = new ProjectsPageService(
+        repository,
+        rpi,
+        loaderService,
+        ideService,
+        startupService
+    );
+
+    /*
+    FACADE
+     */
+    const controller = new Controller(
+        authService,
+        fileManagerService,
+        programEditorService,
+        projectPageService,
+        projectsPageService,
+        startupService,
+        observerService
+    );
 
     return {
-        observerService,
-        mvs: repository,
-        programService,
+        /*
+        MISC
+         */
+        repository,
         rpi,
-        loaderService,
-        startupService,
-        compilationService,
-        ideService,
-        systemService,
-        fileService,
-        exampleService,
         controller,
+        /*
+        OPERATION
+         */
+        startupService,
+        authService,
+        fileManagerService,
+        programEditorService,
+        projectPageService,
+        projectsPageService,
+        /*
+        DOMAIN
+         */
+        fileService,
+        programService,
     };
 }

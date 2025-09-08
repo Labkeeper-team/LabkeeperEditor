@@ -1,4 +1,4 @@
-import { ProgramService } from '../../model/service/program.ts';
+import { ProgramService } from '../../model/service/ProgramService.ts';
 import { Program, Segment } from '../../model/domain.ts';
 
 test('program-service-test', () => {

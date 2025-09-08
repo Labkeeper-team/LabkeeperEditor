@@ -23,7 +23,10 @@ import {
     UserInfo,
 } from '../../model/domain.ts';
 import { setupContext } from '../../viewModel/context.ts';
-import { mockObserver, ObserverService } from '../../model/service/observer.ts';
+import {
+    mockObserver,
+    ObserverService,
+} from '../../model/service/ObserverService.ts';
 
 const defaultParams = {
     visible: true,
@@ -73,10 +76,11 @@ function createDefaultUserInfo(
 }
 
 test('help-items-add-test', async () => {
-    const { programService, systemService } = mockContext();
+    const { repository, programEditorService, projectPageService } =
+        mockContext();
 
-    systemService.onHelpItemCreated(headerHelpItems[0]);
-    let program = programService.getCurrentProgram();
+    projectPageService.onHelpItemCreated(headerHelpItems[0]);
+    let program = repository.projectViewModelRepository.currentProgram();
     expect(program).toEqual({
         parameters: {
             roundStrategy: 'firstMeaningDigit',
@@ -90,8 +94,8 @@ test('help-items-add-test', async () => {
         ],
     } as Program);
 
-    systemService.onHelpItemCreated(headerHelpItems[0]);
-    program = programService.getCurrentProgram();
+    projectPageService.onHelpItemCreated(headerHelpItems[0]);
+    program = repository.projectViewModelRepository.currentProgram();
     expect(program).toEqual({
         parameters: {
             roundStrategy: 'firstMeaningDigit',
@@ -110,10 +114,10 @@ test('help-items-add-test', async () => {
         ],
     } as Program);
 
-    await systemService.onFocusSegment(0);
-    systemService.onHelpItemCreated(headerHelpItems[0]);
+    await programEditorService.onFocusSegment(0);
+    projectPageService.onHelpItemCreated(headerHelpItems[0]);
 
-    program = programService.getCurrentProgram();
+    program = repository.projectViewModelRepository.currentProgram();
     expect(program).toEqual({
         parameters: {
             roundStrategy: 'firstMeaningDigit',
@@ -134,31 +138,39 @@ test('help-items-add-test', async () => {
 });
 
 test('add-segment-between-active-index-test', async () => {
-    const { mvs, systemService } = mockContext();
+    const { repository, programEditorService } = mockContext();
 
-    systemService.onAddSegmentClicked('md');
-    systemService.onAddSegmentClicked('md');
-    systemService.onAddSegmentClicked('md');
-    systemService.onAddSegmentClicked('md');
+    programEditorService.onAddSegmentClicked('md');
+    programEditorService.onAddSegmentClicked('md');
+    programEditorService.onAddSegmentClicked('md');
+    programEditorService.onAddSegmentClicked('md');
 
-    expect(mvs.ideViewModelRepository.activeSegmentIndex()).toBe(4);
+    expect(repository.ideViewModelRepository.activeSegmentIndex()).toBe(4);
 
-    await systemService.onSegmentAddedViaDivider('computational', 2);
+    await programEditorService.onSegmentAddedViaDivider('computational', 2);
 
-    expect(mvs.ideViewModelRepository.activeSegmentIndex()).toBe(3);
-    expect(mvs.ideViewModelRepository.previousActiveSegmentIndex()).toBe(4);
+    expect(repository.ideViewModelRepository.activeSegmentIndex()).toBe(3);
+    expect(repository.ideViewModelRepository.previousActiveSegmentIndex()).toBe(
+        4
+    );
 
-    await systemService.onSegmentTextEdited(3, 'text');
+    await programEditorService.onSegmentTextEdited(3, 'text');
 
     expect(
-        mvs.projectViewModelRepository
+        repository.projectViewModelRepository
             .currentProgram()
             .segments.map((s) => s.text)
     ).toStrictEqual(['', '', '', 'text', '']);
 });
 
 test('login-and-logout-history-test', async () => {
-    const { mvs, systemService, rpi } = mockContext();
+    const {
+        repository,
+        rpi,
+        startupService,
+        authService,
+        programEditorService,
+    } = mockContext();
 
     rpi.getUserInfoRequest = jest
         .fn()
@@ -171,11 +183,11 @@ test('login-and-logout-history-test', async () => {
         isForbidden: false,
     });
 
-    await systemService.onAppStartup();
-    await systemService.onFormLoginClicked('a@gmail.com', 'a', 'biba');
+    await startupService.onAppStartup();
+    await authService.onFormLoginClicked('a@gmail.com', 'a', 'biba');
 
-    systemService.onAddSegmentClicked('md');
-    await systemService.onSegmentTextEdited(0, 'aaa');
+    programEditorService.onAddSegmentClicked('md');
+    await programEditorService.onSegmentTextEdited(0, 'aaa');
 
     rpi.logoutRequest = jest.fn().mockResolvedValue({
         code: 200,
@@ -185,16 +197,23 @@ test('login-and-logout-history-test', async () => {
         isForbidden: false,
     });
 
-    await systemService.onLogoutButtonClicked();
+    await authService.onLogoutButtonClicked();
 
-    systemService.onAddSegmentClicked('md');
+    programEditorService.onAddSegmentClicked('md');
 
-    const currentProgram = mvs.projectViewModelRepository.currentProgram();
+    const currentProgram =
+        repository.projectViewModelRepository.currentProgram();
     expect(currentProgram.segments.map((s) => s.text)).toStrictEqual(['']);
 });
 
 test('remove-readonly-when-project-is-create-test', async () => {
-    const { mvs, systemService, rpi } = mockContext();
+    const {
+        repository,
+        rpi,
+        startupService,
+        projectPageService,
+        projectsPageService,
+    } = mockContext();
     const uuid = '2cd18704-6c3f-48cb-96f1-9a923930f8cb';
 
     rpi.getUserInfoRequest = jest
@@ -224,21 +243,29 @@ test('remove-readonly-when-project-is-create-test', async () => {
         body: createDefaultProject(uuid, 'Default Project2'),
     } as RequestResult<Project>);
 
-    await systemService.onAppStartup();
+    await startupService.onAppStartup();
 
-    await systemService.onBackButtonClicked();
+    await projectPageService.onBackButtonClicked();
 
-    await systemService.onProjectCreate(
+    await projectsPageService.onProjectCreate(
         'biba',
         () => {},
         () => {}
     );
 
-    expect(mvs.projectViewModelRepository.projectIsReadonly()).toBe(false);
+    expect(repository.projectViewModelRepository.projectIsReadonly()).toBe(
+        false
+    );
 });
 
 test('help-items-create-new-test', async () => {
-    const { mvs, systemService, rpi } = mockContext();
+    const {
+        repository,
+        rpi,
+        startupService,
+        projectPageService,
+        programEditorService,
+    } = mockContext();
 
     rpi.getUserInfoRequest = jest
         .fn()
@@ -246,17 +273,17 @@ test('help-items-create-new-test', async () => {
 
     const item = headerHelpItems[1];
 
-    await systemService.onAppStartup(); // приложение запустилось
-    systemService.onHelpItemCreated(item); // нажали на подсказку
-    await systemService.onFocusSegment(0); // нажали на сегмент
-    await systemService.deleteSegment(0); // удалили сегмент
+    await startupService.onAppStartup(); // приложение запустилось
+    projectPageService.onHelpItemCreated(item); // нажали на подсказку
+    await programEditorService.onFocusSegment(0); // нажали на сегмент
+    await programEditorService.deleteSegment(0); // удалили сегмент
     expect(
-        mvs.projectViewModelRepository.currentProgram().segments.length
+        repository.projectViewModelRepository.currentProgram().segments.length
     ).toBe(0);
-    systemService.onHelpItemCreated(item); // снова нажали на подсказку
+    projectPageService.onHelpItemCreated(item); // снова нажали на подсказку
     // должен остаться один сегмент
     expect(
-        mvs.projectViewModelRepository.currentProgram().segments.length
+        repository.projectViewModelRepository.currentProgram().segments.length
     ).toBe(1);
 });
 
@@ -268,7 +295,13 @@ test('help-items-create-new-test', async () => {
 5. Сравнивается список проектов с предыдущим списком + новым проектом
  */
 test('display-name-new-project-test', async () => {
-    const { mvs, systemService, rpi } = mockContext();
+    const {
+        repository,
+        rpi,
+        startupService,
+        projectPageService,
+        projectsPageService,
+    } = mockContext();
 
     rpi.getUserInfoRequest = jest
         .fn()
@@ -329,8 +362,8 @@ test('display-name-new-project-test', async () => {
         ),
     } as RequestResult<Project>); // создание нового проекта
 
-    await systemService.onAppStartup(); // приложение запустилось
-    await systemService.onBackButtonClicked(); // перейти на экран с проектами
+    await startupService.onAppStartup(); // приложение запустилось
+    await projectPageService.onBackButtonClicked(); // перейти на экран с проектами
     rpi.getAllProjectsRequest = jest.fn().mockResolvedValue({
         code: 200,
         isOk: true,
@@ -340,13 +373,13 @@ test('display-name-new-project-test', async () => {
             projects: allprojects,
         },
     } as RequestResult<ListProjectsResponse>); //запрос остальных проектов
-    await systemService.onProjectCreate(
+    await projectsPageService.onProjectCreate(
         'New Project',
         () => {},
         () => {}
     ); // создать новый проект
-    await systemService.onBackButtonClicked(); // перейти на экран с проектами
-    expect(mvs.projectsViewModelRepository.projects()).toBe(allprojects);
+    await projectPageService.onBackButtonClicked(); // перейти на экран с проектами
+    expect(repository.projectsViewModelRepository.projects()).toBe(allprojects);
 });
 
 /*
@@ -371,11 +404,11 @@ test('add-new-file-via-CtrV-test_1', () => {
 версией file_segm${segment_id}(1).png
  */
 test('add-new-file-via-CtrV-test_2', () => {
-    const { mvs, fileService } = mockContext();
+    const { repository, fileService } = mockContext();
     const files: LabkeeperFile[] = [
         { autogenerated: true, fileName: 'file_seg5.png', url: '25' },
     ];
-    mvs.projectViewModelRepository.setFiles(files);
+    repository.projectViewModelRepository.setFiles(files);
     const segment_id = 5;
     expect(fileService.calculateNumberFile(segment_id, 'vghvgvh.png')).toBe(
         'file_seg5(1).png'
@@ -391,7 +424,7 @@ test('add-new-file-via-CtrV-test_2', () => {
 версией file_segm${segment_id}(5).png
  */
 test('add-new-file-via-CtrV-test_3', () => {
-    const { mvs, fileService } = mockContext();
+    const { repository, fileService } = mockContext();
     const files: LabkeeperFile[] = [
         { autogenerated: true, fileName: 'file_seg5.png', url: '25' },
         { autogenerated: true, fileName: 'file_seg5(1).png', url: '25' },
@@ -399,7 +432,7 @@ test('add-new-file-via-CtrV-test_3', () => {
         { autogenerated: true, fileName: 'file_seg5(3).png', url: '25' },
         { autogenerated: true, fileName: 'file_seg5(4).png', url: '25' },
     ];
-    mvs.projectViewModelRepository.setFiles(files);
+    repository.projectViewModelRepository.setFiles(files);
     const segment_id = 5;
     expect(fileService.calculateNumberFile(segment_id, 'vgh87ygvh.png')).toBe(
         'file_seg5(5).png'
@@ -418,14 +451,14 @@ file_segm${segment_id}(7).png
 Вывод: file_segm${segment_id}(2).png
  */
 test('add-new-file-via-CtrV-test_4', () => {
-    const { mvs, fileService } = mockContext();
+    const { repository, fileService } = mockContext();
     const files: LabkeeperFile[] = [
         { autogenerated: true, fileName: 'file_seg5.png', url: '25' },
         { autogenerated: true, fileName: 'file_seg5(1).png', url: '25' },
         { autogenerated: true, fileName: 'file_seg5(7).png', url: '25' },
         { autogenerated: true, fileName: 'file_seg5(3).png', url: '25' },
     ];
-    mvs.projectViewModelRepository.setFiles(files);
+    repository.projectViewModelRepository.setFiles(files);
     const segment_id = 5;
     expect(fileService.calculateNumberFile(segment_id, 'vgh87ygvh.png')).toBe(
         'file_seg5(2).png'
@@ -443,7 +476,13 @@ test('add-new-file-via-CtrV-test_4', () => {
 6. результат компиляции для первого вычислительного сегмента должен быть не определен
  */
 test('segments-move-with-result-test', async () => {
-    const { rpi, mvs, systemService } = mockContext();
+    const {
+        rpi,
+        repository,
+        programEditorService,
+        projectPageService,
+        startupService,
+    } = mockContext();
 
     rpi.getUserInfoRequest = jest.fn().mockResolvedValue({
         code: 200,
@@ -490,23 +529,23 @@ test('segments-move-with-result-test', async () => {
         isForbidden: false,
     } as RequestResult<CompileSuccessResult>);
 
-    await systemService.onAppStartup();
+    await startupService.onAppStartup();
 
-    systemService.onAddSegmentClicked('computational');
-    await systemService.onSegmentTextEdited(0, 'a1 = 10');
+    programEditorService.onAddSegmentClicked('computational');
+    await programEditorService.onSegmentTextEdited(0, 'a1 = 10');
 
-    systemService.onAddSegmentClicked('md');
-    await systemService.onSegmentTextEdited(1, 'md1');
+    programEditorService.onAddSegmentClicked('md');
+    await programEditorService.onSegmentTextEdited(1, 'md1');
 
-    systemService.onAddSegmentClicked('computational');
-    await systemService.onSegmentTextEdited(2, 'a2 = 10');
+    programEditorService.onAddSegmentClicked('computational');
+    await programEditorService.onSegmentTextEdited(2, 'a2 = 10');
 
-    await systemService.onRunButtonClicked();
+    await projectPageService.onRunButtonClicked();
 
-    await systemService.segmentEditorChangeSegmentPosition('up', 1);
+    await programEditorService.segmentEditorChangeSegmentPosition('up', 1);
 
     const segments =
-        mvs.projectViewModelRepository.compileSuccessResult().segments;
+        repository.projectViewModelRepository.compileSuccessResult().segments;
 
     expect(segments).toStrictEqual([
         {
@@ -547,7 +586,8 @@ https://github.com/Labkeeper-team/TypeThree/issues/303
 8. проверяем, что все ок
  */
 test('hint-erase-other-segments-test', async () => {
-    const { rpi, mvs, systemService } = mockContext();
+    const { rpi, repository, programEditorService, projectPageService } =
+        mockContext();
 
     rpi.getUserInfoRequest = jest.fn().mockResolvedValue({
         code: 200,
@@ -561,17 +601,18 @@ test('hint-erase-other-segments-test', async () => {
         isForbidden: false,
     } as RequestResult<UserInfo>);
 
-    systemService.onAddSegmentClicked('computational');
-    await systemService.onSegmentTextEdited(0, 'a = 19');
-    systemService.onAddSegmentClicked('md');
-    await systemService.onSegmentTextEdited(1, 'biba');
+    programEditorService.onAddSegmentClicked('computational');
+    await programEditorService.onSegmentTextEdited(0, 'a = 19');
+    programEditorService.onAddSegmentClicked('md');
+    await programEditorService.onSegmentTextEdited(1, 'biba');
 
-    await systemService.onFocusSegment(1);
-    await systemService.onBlurSegment(1, 'biba');
+    await programEditorService.onFocusSegment(1);
+    await programEditorService.onBlurSegment(1, 'biba');
 
-    systemService.onHelpItemCreated(headerHelpItems[0]);
+    projectPageService.onHelpItemCreated(headerHelpItems[0]);
 
-    const segments = mvs.projectViewModelRepository.currentProgram().segments;
+    const segments =
+        repository.projectViewModelRepository.currentProgram().segments;
     expect(segments.map((s) => s.text)).toStrictEqual([
         'a = 19',
         'my_array = [1, 2, 3, 4]',

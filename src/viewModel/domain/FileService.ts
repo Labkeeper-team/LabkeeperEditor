@@ -1,6 +1,6 @@
 import { toast } from 'react-toastify';
-import { Translations } from './dictionaries';
-import { ViewModelRepository } from './repository';
+import { Translations } from '../dictionaries';
+import { ViewModelRepository } from '../repository';
 
 export const checkFileErrorMessage = 'CheckFileErrorMessage';
 

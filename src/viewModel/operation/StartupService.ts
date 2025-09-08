@@ -1,12 +1,16 @@
-import { ViewModelRepository } from './repository';
-import { Routes } from './routes.ts';
-import { Project, UserInfo } from '../model/domain.ts';
-import { RequestResult, RichProject, Rpi } from '../model/rpi';
-import { ProgramService } from '../model/service/program.ts';
-import { LoaderService } from './project.ts';
-import { ObserverService, States } from '../model/service/observer.ts';
-import { IdeService } from './ide.ts';
-import { ExampleService } from './example.ts';
+import { ViewModelRepository } from '../repository';
+import { Routes } from '../routes.ts';
+import { Project, UserInfo } from '../../model/domain.ts';
+import { RequestResult, RichProject, Rpi } from '../../model/rpi';
+import { ProgramService } from '../../model/service/ProgramService.ts';
+import { LoaderService } from '../domain/LoaderService.ts';
+import {
+    Events,
+    ObserverService,
+    States,
+} from '../../model/service/ObserverService.ts';
+import { IdeService } from '../domain/IdeService.ts';
+import { ExampleService } from '../domain/ExampleService.ts';
 
 const qrPagePattern = /\/qr\/v\d+/i;
 const projectPagePattern = /\/project\/\S+/i;
@@ -37,6 +41,25 @@ export class StartupService {
         this.ideService = ideService;
         this.exampleService = exampleService;
     }
+
+    onAppEnterWithOauthCode = async (code: string, state: string) => {
+        const response = await this.rpi.oauthCodeRequest(code, state);
+
+        if (!response.isOk) {
+            this.repository.authViewModelRepository.setCurrentView('login');
+            this.repository.authViewModelRepository.setLoginRequest(
+                'oauth_error'
+            );
+        }
+
+        await this.onAppStartup();
+    };
+
+    onQrPageEnter = (version: string) => {
+        if (version === 'v1') {
+            this.observerService.onEvent(Events.EVENT_QR_V1);
+        }
+    };
 
     onAppStartup = async (from?: string): Promise<void> => {
         const result: RequestResult<UserInfo> =
