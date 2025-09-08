@@ -1,5 +1,5 @@
 import { Rpi } from '../model/rpi';
-import { ViewModelState } from './viewModelState';
+import { ViewModelRepository } from './repository';
 import { ObserverService } from '../model/service/observer.ts';
 import { ProgramService } from '../model/service/program.ts';
 import { LoaderService } from './project.ts';
@@ -14,38 +14,38 @@ import { Controller } from '../controller';
 
 export function setupContext(
     rpi: Rpi,
-    vms: ViewModelState,
+    repository: ViewModelRepository,
     observerService: ObserverService
 ) {
     const programService: ProgramService = new ProgramService();
-    const ideService: IdeService = new IdeService(vms, programService);
+    const ideService: IdeService = new IdeService(repository, programService);
     const loaderService: LoaderService = new LoaderService(
         rpi,
-        vms,
+        repository,
         ideService
     );
-    const fileService: FileService = new FileService(vms);
+    const fileService: FileService = new FileService(repository);
     const exampleService: ExampleService = new ExampleService(rpi);
     const startupService: StartupService = new StartupService(
         rpi,
         programService,
         loaderService,
-        vms,
+        repository,
         observerService,
         ideService,
         exampleService
     );
     const compilationService: CompilationService = new CompilationService(
-        vms,
+        repository,
         rpi,
         programService,
         loaderService,
         observerService,
         ideService
     );
-    const authService: AuthService = new AuthService(vms);
+    const authService: AuthService = new AuthService(repository);
     const systemService: SystemService = new SystemService(
-        vms,
+        repository,
         rpi,
         programService,
         loaderService,
@@ -61,7 +61,7 @@ export function setupContext(
 
     return {
         observerService,
-        mvs: vms,
+        mvs: repository,
         programService,
         rpi,
         loaderService,

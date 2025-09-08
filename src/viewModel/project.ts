@@ -1,51 +1,73 @@
 import { ProjectShort } from '../model/domain.ts';
-import { ViewModelState } from './viewModelState';
+import { ViewModelRepository } from './repository';
 import { Rpi } from '../model/rpi';
 import { IdeService } from './ide.ts';
 
 export class LoaderService {
     rpi: Rpi;
-    vms: ViewModelState;
+    repository: ViewModelRepository;
     ideService: IdeService;
 
-    constructor(rpi: Rpi, vms: ViewModelState, ideService: IdeService) {
+    constructor(
+        rpi: Rpi,
+        repository: ViewModelRepository,
+        ideService: IdeService
+    ) {
         this.rpi = rpi;
-        this.vms = vms;
+        this.repository = repository;
         this.ideService = ideService;
     }
 
     loadFiles = async (projectId: string) => {
-        this.vms.ideViewModelState.setGetFilesRequestState('loading');
+        this.repository.ideViewModelRepository.setGetFilesRequestState(
+            'loading'
+        );
         const result = await this.rpi.listFilesRequest(projectId);
 
         if (result.isOk) {
-            this.vms.projectViewModelState.setFiles(result.body.files);
-            this.vms.ideViewModelState.setGetFilesRequestState('ok');
+            this.repository.projectViewModelRepository.setFiles(
+                result.body.files
+            );
+            this.repository.ideViewModelRepository.setGetFilesRequestState(
+                'ok'
+            );
         } else if (result.isUnauth) {
-            this.vms.toast(
-                this.vms.dictionary.filemanager.errors.sessionExpired,
+            this.repository.toast(
+                this.repository.dictionary.filemanager.errors.sessionExpired,
                 'error'
             );
             this.ideService.resetEditor();
         } else if (result.isForbidden) {
-            this.vms.ideViewModelState.setGetFilesRequestState('forbidden');
+            this.repository.ideViewModelRepository.setGetFilesRequestState(
+                'forbidden'
+            );
         } else {
-            this.vms.ideViewModelState.setGetFilesRequestState('error');
+            this.repository.ideViewModelRepository.setGetFilesRequestState(
+                'error'
+            );
         }
     };
 
     loadProjects = async () => {
-        this.vms.ideViewModelState.setGetProjectsRequestState('loading');
+        this.repository.ideViewModelRepository.setGetProjectsRequestState(
+            'loading'
+        );
         const result = await this.rpi.getAllProjectsRequest();
         if (result.isOk) {
-            this.vms.projectsViewModelState.setProjects(
+            this.repository.projectsViewModelRepository.setProjects(
                 (result.body as { projects: ProjectShort[] }).projects.reverse()
             );
-            this.vms.ideViewModelState.setGetProjectsRequestState('ok');
+            this.repository.ideViewModelRepository.setGetProjectsRequestState(
+                'ok'
+            );
         } else if (result.isUnauth) {
-            this.vms.ideViewModelState.setGetProjectsRequestState('unauth');
+            this.repository.ideViewModelRepository.setGetProjectsRequestState(
+                'unauth'
+            );
         } else {
-            this.vms.ideViewModelState.setGetProjectsRequestState('error');
+            this.repository.ideViewModelRepository.setGetProjectsRequestState(
+                'error'
+            );
         }
     };
 }

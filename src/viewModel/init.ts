@@ -1,4 +1,4 @@
-import { ViewModelState } from './viewModelState';
+import { ViewModelRepository } from './repository';
 import { Routes } from './routes.ts';
 import { Project, UserInfo } from '../model/domain.ts';
 import { RequestResult, RichProject, Rpi } from '../model/rpi';
@@ -15,7 +15,7 @@ export class StartupService {
     rpi: Rpi;
     programService: ProgramService;
     loader: LoaderService;
-    vms: ViewModelState;
+    repository: ViewModelRepository;
     observerService: ObserverService;
     ideService: IdeService;
     exampleService: ExampleService;
@@ -24,7 +24,7 @@ export class StartupService {
         rpi: Rpi,
         programService: ProgramService,
         loader: LoaderService,
-        vms: ViewModelState,
+        repository: ViewModelRepository,
         observerService: ObserverService,
         ideService: IdeService,
         exampleService: ExampleService
@@ -33,7 +33,7 @@ export class StartupService {
         this.rpi = rpi;
         this.programService = programService;
         this.loader = loader;
-        this.vms = vms;
+        this.repository = repository;
         this.ideService = ideService;
         this.exampleService = exampleService;
     }
@@ -43,16 +43,16 @@ export class StartupService {
             await this.rpi.getUserInfoRequest();
 
         if (!result.isOk) {
-            this.vms.toast(
-                this.vms.dictionary.filemanager.errors.noNetwork,
+            this.repository.toast(
+                this.repository.dictionary.filemanager.errors.noNetwork,
                 'error'
             );
-            this.vms.navigate(Routes.Home);
+            this.repository.navigate(Routes.Home);
             return;
         }
 
         const userInfo = result.body;
-        this.vms.userViewModelState.setUserInfo(userInfo);
+        this.repository.userViewModelRepository.setUserInfo(userInfo);
 
         if (userInfo.isAuthenticated) {
             this.observerService.setUserState(States.STATE_ONLINE, 'online');
@@ -67,7 +67,7 @@ export class StartupService {
         );
 
         const locationWithoutLastSlash = this.cutOfLastSlash(
-            this.vms.location()
+            this.repository.location()
         );
         const version = qrPagePattern.test(locationWithoutLastSlash)
             ? locationWithoutLastSlash.split('/').pop()
@@ -83,8 +83,8 @@ export class StartupService {
         // OAUTH
         else if (locationWithoutLastSlash === Routes.CodePage) {
             const lastOpenedProjectUuid =
-                this.vms.persistenceViewModelState.lastOpenedProjectUuid();
-            this.vms.persistenceViewModelState.setLastOpenedProjectUuid(
+                this.repository.persistenceViewModelRepository.lastOpenedProjectUuid();
+            this.repository.persistenceViewModelRepository.setLastOpenedProjectUuid(
                 undefined
             );
             if (!lastOpenedProjectUuid) {
@@ -108,7 +108,7 @@ export class StartupService {
 
         // PROJECT BY ID PAGE ENTER
         else if (projectPagePattern.test(locationWithoutLastSlash)) {
-            const id = this.extractProjectIdFromUrl(this.vms.location());
+            const id = this.extractProjectIdFromUrl(this.repository.location());
             await this.openProjectById(userInfo, id);
         }
 
@@ -137,54 +137,66 @@ export class StartupService {
     }
 
     async openProjectById(userInfo: UserInfo, id: string): Promise<void> {
-        this.vms.ideViewModelState.setGetProjectRequestState('loading');
+        this.repository.ideViewModelRepository.setGetProjectRequestState(
+            'loading'
+        );
         const result = await this.rpi.getProjectRequest(id);
         if (result.isUnauth) {
-            this.vms.toast(
-                this.vms.dictionary.filemanager.errors.sessionExpired,
+            this.repository.toast(
+                this.repository.dictionary.filemanager.errors.sessionExpired,
                 'error'
             );
             this.ideService.resetEditor();
             return;
         }
         if (result.isForbidden) {
-            this.vms.ideViewModelState.setGetProjectRequestState('forbidden');
-            this.vms.toast(
-                this.vms.dictionary.filemanager.errors.notEnoughRights,
+            this.repository.ideViewModelRepository.setGetProjectRequestState(
+                'forbidden'
+            );
+            this.repository.toast(
+                this.repository.dictionary.filemanager.errors.notEnoughRights,
                 'error'
             );
-            this.vms.projectViewModelState.setReadOnly(true);
+            this.repository.projectViewModelRepository.setReadOnly(true);
             return;
         }
         if (result.code === 404) {
-            this.vms.ideViewModelState.setGetProjectRequestState('not_found');
-            this.vms.toast(
-                this.vms.dictionary.filemanager.errors.notFound,
+            this.repository.ideViewModelRepository.setGetProjectRequestState(
+                'not_found'
+            );
+            this.repository.toast(
+                this.repository.dictionary.filemanager.errors.notFound,
                 'error'
             );
-            this.vms.projectViewModelState.setReadOnly(true);
+            this.repository.projectViewModelRepository.setReadOnly(true);
             return;
         }
         if (result.isOk) {
             const project = result.body as RichProject;
-            this.vms.projectViewModelState.setProject(project);
-            this.vms.projectViewModelState.setReadOnly(
+            this.repository.projectViewModelRepository.setProject(project);
+            this.repository.projectViewModelRepository.setReadOnly(
                 userInfo.id !== (result.body as Project).userId
             );
             this.ideService.setNewProgram(
                 project.program,
                 project.lastProgramResult
             );
-            this.vms.navigate(Routes.Project.replace(':id', project.projectId));
+            this.repository.navigate(
+                Routes.Project.replace(':id', project.projectId)
+            );
             this.observerService.setUserState(
                 States.STATE_PROJECT,
                 project.projectId
             );
-            this.vms.ideViewModelState.setGetProjectRequestState('ok');
+            this.repository.ideViewModelRepository.setGetProjectRequestState(
+                'ok'
+            );
             return;
         }
         if (!result.isOk) {
-            this.vms.ideViewModelState.setGetProjectRequestState('error');
+            this.repository.ideViewModelRepository.setGetProjectRequestState(
+                'error'
+            );
         }
     }
 
@@ -193,41 +205,45 @@ export class StartupService {
         version: string | undefined,
         from: string | undefined
     ): Promise<void> {
-        this.vms.projectViewModelState.setReadOnly(false);
+        this.repository.projectViewModelRepository.setReadOnly(false);
         if (userInfo.isAuthenticated) {
             const result = await this.rpi.getDefaultProjectRequest(
-                this.vms.persistenceViewModelState.language(),
-                this.vms.persistenceViewModelState.lastProgram()
+                this.repository.persistenceViewModelRepository.language(),
+                this.repository.persistenceViewModelRepository.lastProgram()
             );
             if (result.isOk) {
                 const project = result.body as RichProject;
-                this.vms.projectViewModelState.setProject(project);
+                this.repository.projectViewModelRepository.setProject(project);
                 this.ideService.setNewProgram(
                     project.program,
                     project.lastProgramResult
                 );
-                this.vms.projectViewModelState.setCompileResult({
+                this.repository.projectViewModelRepository.setCompileResult({
                     segments: [],
                 });
-                this.vms.projectViewModelState.setCompileErrorResult({
-                    errors: [],
-                });
-                this.vms.navigate(
+                this.repository.projectViewModelRepository.setCompileErrorResult(
+                    {
+                        errors: [],
+                    }
+                );
+                this.repository.navigate(
                     Routes.Project.replace(':id', project.projectId)
                 );
             }
             if (result.isUnauth) {
-                this.vms.navigate(Routes.ProjectDefault);
-                this.vms.toast(
-                    this.vms.dictionary.filemanager.errors.sessionExpired,
+                this.repository.navigate(Routes.ProjectDefault);
+                this.repository.toast(
+                    this.repository.dictionary.filemanager.errors
+                        .sessionExpired,
                     'error'
                 );
                 this.ideService.resetEditor();
             }
         } else {
-            this.vms.navigate(Routes.ProjectDefault);
+            this.repository.navigate(Routes.ProjectDefault);
             // on default uri but unauth
-            const language = this.vms.persistenceViewModelState.language();
+            const language =
+                this.repository.persistenceViewModelRepository.language();
             if (version) {
                 const result = await this.exampleService.exampleForQR(
                     version,
@@ -252,7 +268,7 @@ export class StartupService {
                 }
             } else {
                 this.programService.setNewProgram(
-                    this.vms.persistenceViewModelState.lastProgram()
+                    this.repository.persistenceViewModelRepository.lastProgram()
                 );
                 /* закоменчено, так как не выбрали какой пример показывать на странице labkeeper.io
                 const [program, result] =

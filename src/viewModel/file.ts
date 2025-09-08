@@ -1,14 +1,14 @@
 import { toast } from 'react-toastify';
 import { Translations } from './dictionaries';
-import { ViewModelState } from './viewModelState';
+import { ViewModelRepository } from './repository';
 
 export const checkFileErrorMessage = 'CheckFileErrorMessage';
 
 export class FileService {
-    vms: ViewModelState;
+    repository: ViewModelRepository;
 
-    constructor(vms: ViewModelState) {
-        this.vms = vms;
+    constructor(repository: ViewModelRepository) {
+        this.repository = repository;
     }
     checkFile = (file: File, dictionary: Translations) => {
         const mbInBytes = 1048576;
@@ -39,7 +39,7 @@ export class FileService {
         let name = `file_seg${segmentId}`;
         let count = 0;
         while (
-            this.vms.projectViewModelState
+            this.repository.projectViewModelRepository
                 .files()
                 .find((s) => s.fileName === name + `.${ext}`)
         ) {

@@ -1,17 +1,17 @@
-import { ViewModelState } from './viewModelState';
+import { ViewModelRepository } from './repository';
 
 export class AuthService {
-    vms: ViewModelState;
+    repository: ViewModelRepository;
 
-    constructor(vms: ViewModelState) {
-        this.vms = vms;
+    constructor(repository: ViewModelRepository) {
+        this.repository = repository;
     }
 
     restartPasswordPipeline = () => {
-        this.vms.authViewModelState.setEmailRequest('unknown');
-        this.vms.authViewModelState.setPasswordRequest('unknown');
-        this.vms.authViewModelState.setCodeCheckRequest('unknown');
-        this.vms.authViewModelState.setCurrentEmail(null);
-        this.vms.authViewModelState.setLastVerifiedCode(null);
+        this.repository.authViewModelRepository.setEmailRequest('unknown');
+        this.repository.authViewModelRepository.setPasswordRequest('unknown');
+        this.repository.authViewModelRepository.setCodeCheckRequest('unknown');
+        this.repository.authViewModelRepository.setCurrentEmail(null);
+        this.repository.authViewModelRepository.setLastVerifiedCode(null);
     };
 }

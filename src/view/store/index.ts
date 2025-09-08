@@ -88,8 +88,8 @@ import {
     GetFilesRequestState,
     GetProjectRequestState,
     GetProjectsRequestState,
-    ViewModelState,
-} from '../../viewModel/viewModelState';
+    ViewModelRepository,
+} from '../../viewModel/repository';
 
 export const store = configureStore({
     reducer: createRootReducer(),
@@ -126,10 +126,10 @@ export type AppThunk<R = void> = ThunkAction<
 
 export const createViewModelStateFromStore = (
     store: EnhancedStore
-): ViewModelState => {
+): ViewModelRepository => {
     return {
         location: () => appRouter.state.location.pathname,
-        authViewModelState: {
+        authViewModelRepository: {
             codeCheckRequest: () => store.getState().auth.codeCheckRequest,
             currentEmail: () => store.getState().auth.currentEmail,
             currentView: () => store.getState().auth.currentView,
@@ -153,7 +153,7 @@ export const createViewModelStateFromStore = (
             setCurrentView: (view) => store.dispatch(setCurrentView(view)),
             setIsRegistration: (v) => store.dispatch(setRegistration(v)),
         },
-        ideViewModelState: {
+        ideViewModelRepository: {
             activeSegmentIndex: () => store.getState().ide.activeSegmentIndex,
             search: () => store.getState().ide.search,
             previousActiveSegmentIndex: () =>
@@ -184,7 +184,7 @@ export const createViewModelStateFromStore = (
             setPreviousActiveSegmentIndex: (index: number) =>
                 store.dispatch(setPreviousActiveSegmentIndex(index)),
         },
-        persistenceViewModelState: {
+        persistenceViewModelRepository: {
             instructionExpanded: () =>
                 store.getState().persistence.instructionExpanded,
             language: () => store.getState().persistence.language,
@@ -201,7 +201,7 @@ export const createViewModelStateFromStore = (
                 store.dispatch(setLastProgram(lastProgram)),
             clearLastProgram: () => store.dispatch(clearLastProgram()),
         },
-        projectViewModelState: {
+        projectViewModelRepository: {
             compileErrorResult: () =>
                 store.getState().project.compileErrorResult,
             compileSuccessResult: () =>
@@ -237,13 +237,13 @@ export const createViewModelStateFromStore = (
             setCurrentProgram: (program) =>
                 store.dispatch(setCurrentProgram(program)),
         },
-        projectsViewModelState: {
+        projectsViewModelRepository: {
             projects: () => store.getState().projects.projects,
 
             setProjects: (projects: ProjectShort[]) =>
                 store.dispatch(setProjects(projects)),
         },
-        settingsViewModelState: {
+        settingsViewModelRepository: {
             isAutocompleteLoading: () => store.getState().settings.isCompiling,
             editModeForFilename: () =>
                 store.getState().settings.editModeForFilename,
@@ -275,7 +275,7 @@ export const createViewModelStateFromStore = (
             setIsFileDraggedToFileManager: (edit: boolean) =>
                 store.dispatch(setIsFileDraggedToFileManager(edit)),
         },
-        userViewModelState: {
+        userViewModelRepository: {
             email: () => store.getState().user.email,
             id: () => store.getState().user.id,
             isAuthenticated: () => store.getState().user.isAuthenticated,

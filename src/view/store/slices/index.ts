@@ -1,13 +1,89 @@
-import { Program, UserInfo } from '../../../model/domain.ts';
 import {
-    AuthState,
-    CallbackState,
-    IdeState,
-    PersistenceState,
-    ProjectsState,
-    ProjectState,
-    SettingsState,
-} from '../../../viewModel/viewModelState';
+    CompileErrorResultList,
+    CompileSuccessResult,
+    LabkeeperFile,
+    Program,
+    Project,
+    ProjectShort,
+    UserInfo,
+} from '../../../model/domain.ts';
+
+import { TypeOptions } from 'react-toastify';
+import { Language } from '../../../viewModel/dictionaries';
+import {
+    AuthView,
+    CloneRequestState,
+    CodeRequestState,
+    EmailRequestState,
+    GetFilesRequestState,
+    GetProjectRequestState,
+    GetProjectsRequestState,
+    LoginRequestState,
+    PasswordRequestState,
+} from '../../../viewModel/repository';
+
+interface CallbackState {
+    navigateTo?: string;
+    showToastMessage?: string;
+    toastType?: TypeOptions;
+    scrollEditorToBottom: boolean;
+}
+
+interface SettingsState {
+    showTour: boolean;
+    showFileManager: boolean;
+    expandProblemViewer: boolean;
+    showSearch: boolean;
+    editModeForProjectTitle: boolean;
+    editModeForFilename: boolean;
+    isFileDraggedToManager: boolean;
+    isCompiling: boolean;
+    showShareModal: boolean;
+    showContactModal: boolean;
+}
+
+interface ProjectsState {
+    projects: ProjectShort[];
+}
+
+interface ProjectState {
+    project?: Project;
+    compileSuccessResult: CompileSuccessResult;
+    compileErrorResult?: CompileErrorResultList;
+    currentProgram: Program;
+    projectIsReadonly: boolean;
+    files: LabkeeperFile[];
+}
+
+interface AuthState {
+    currentView: AuthView;
+    currentEmail: string | null;
+    lastVerifiedCode: string | null;
+    emailRequest: EmailRequestState;
+    codeCheckRequest: CodeRequestState;
+    passwordSetRequest: PasswordRequestState;
+    loginRequest: LoginRequestState;
+    isRegistration: boolean;
+}
+
+interface IdeState {
+    search?: string;
+    activeSegmentIndex: number;
+    previousActiveSegmentIndex: number;
+    undoEnabled: boolean;
+    redoEnabled: boolean;
+    cloneRequestState: CloneRequestState;
+    getProjectRequestState: GetProjectRequestState;
+    getFilesRequestState: GetFilesRequestState;
+    getProjectsRequestState: GetProjectsRequestState;
+}
+
+interface PersistenceState {
+    language: Language;
+    lastProgram: Program;
+    instructionExpanded: boolean;
+    lastOpenedProjectUuid?: string;
+}
 
 export const authInitialState: AuthState = {
     currentView: 'closed',

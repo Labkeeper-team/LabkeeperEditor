@@ -6,7 +6,7 @@ import {
     GetFilesRequestState,
     GetProjectRequestState,
     GetProjectsRequestState,
-} from '../../../../viewModel/viewModelState';
+} from '../../../../viewModel/repository';
 
 export const ideSlice = createSlice({
     name: 'ideSlice',

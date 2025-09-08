@@ -7,7 +7,7 @@ import {
     EmailRequestState,
     LoginRequestState,
     PasswordRequestState,
-} from '../../../../viewModel/viewModelState';
+} from '../../../../viewModel/repository';
 
 export const authSlice = createSlice({
     name: 'authSlice',

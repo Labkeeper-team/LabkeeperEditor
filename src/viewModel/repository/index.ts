@@ -14,39 +14,6 @@ import { Language, Translations } from '../dictionaries';
 import { TypeOptions } from 'react-toastify';
 import { en } from '../dictionaries/en.ts';
 
-export interface CallbackState {
-    navigateTo?: string;
-    showToastMessage?: string;
-    toastType?: TypeOptions;
-    scrollEditorToBottom: boolean;
-}
-
-export interface SettingsState {
-    showTour: boolean;
-    showFileManager: boolean;
-    expandProblemViewer: boolean;
-    showSearch: boolean;
-    editModeForProjectTitle: boolean;
-    editModeForFilename: boolean;
-    isFileDraggedToManager: boolean;
-    isCompiling: boolean;
-    showShareModal: boolean;
-    showContactModal: boolean;
-}
-
-export interface ProjectsState {
-    projects: ProjectShort[];
-}
-
-export interface ProjectState {
-    project?: Project;
-    compileSuccessResult: CompileSuccessResult;
-    compileErrorResult?: CompileErrorResultList;
-    currentProgram: Program;
-    projectIsReadonly: boolean;
-    files: LabkeeperFile[];
-}
-
 export type AuthView =
     | 'login'
     | 'email'
@@ -84,17 +51,6 @@ export type LoginRequestState =
     | 'oauth_error'
     | 'unknownError';
 
-export interface AuthState {
-    currentView: AuthView;
-    currentEmail: string | null;
-    lastVerifiedCode: string | null;
-    emailRequest: EmailRequestState;
-    codeCheckRequest: CodeRequestState;
-    passwordSetRequest: PasswordRequestState;
-    loginRequest: LoginRequestState;
-    isRegistration: boolean;
-}
-
 export type CloneRequestState = 'unknown' | 'ok' | 'error' | 'loading';
 export type GetProjectRequestState =
     | 'unknown'
@@ -118,26 +74,7 @@ export type GetProjectsRequestState =
     | 'loading'
     | 'unauth';
 
-export interface IdeState {
-    search?: string;
-    activeSegmentIndex: number;
-    previousActiveSegmentIndex: number;
-    undoEnabled: boolean;
-    redoEnabled: boolean;
-    cloneRequestState: CloneRequestState;
-    getProjectRequestState: GetProjectRequestState;
-    getFilesRequestState: GetFilesRequestState;
-    getProjectsRequestState: GetProjectsRequestState;
-}
-
-export interface PersistenceState {
-    language: Language;
-    lastProgram: Program;
-    instructionExpanded: boolean;
-    lastOpenedProjectUuid?: string;
-}
-
-export const mockViewModelState = (): ViewModelState => {
+export const mockViewModelState = (): ViewModelRepository => {
     let location = '/';
 
     let activeSegmentIndex = -1;
@@ -197,7 +134,7 @@ export const mockViewModelState = (): ViewModelState => {
     return {
         scrollEditorToBottom: () => ({}),
         location: () => location,
-        authViewModelState: {
+        authViewModelRepository: {
             codeCheckRequest: () => codeCheckRequest,
             currentEmail: () => currentEmail,
             currentView: () => currentView,
@@ -216,7 +153,7 @@ export const mockViewModelState = (): ViewModelState => {
             setPasswordRequest: (request) => (passwordSetRequest = request),
             setIsRegistration: (v) => (isRegistration = v),
         },
-        ideViewModelState: {
+        ideViewModelRepository: {
             activeSegmentIndex: () => activeSegmentIndex,
             search: () => search,
             previousActiveSegmentIndex: () => previousActiveSegmentIndex,
@@ -243,7 +180,7 @@ export const mockViewModelState = (): ViewModelState => {
             setPreviousActiveSegmentIndex: (index: number) =>
                 (previousActiveSegmentIndex = index),
         },
-        persistenceViewModelState: {
+        persistenceViewModelRepository: {
             instructionExpanded: () => instructionExpanded,
             language: () => language,
             lastProgram: () => lastProgram,
@@ -259,7 +196,7 @@ export const mockViewModelState = (): ViewModelState => {
                     parameters: { roundStrategy: 'firstMeaningDigit' },
                 }),
         },
-        projectViewModelState: {
+        projectViewModelRepository: {
             compileErrorResult: () => compileErrorResult,
             compileSuccessResult: () => compileSuccessResult,
             project: () => project,
@@ -298,12 +235,12 @@ export const mockViewModelState = (): ViewModelState => {
             },
             setCurrentProgram: (v) => (currentProgram = v),
         },
-        projectsViewModelState: {
+        projectsViewModelRepository: {
             projects: () => projects,
 
             setProjects: (v: ProjectShort[]) => (projects = v),
         },
-        settingsViewModelState: {
+        settingsViewModelRepository: {
             isAutocompleteLoading: () => isAutocompleteLoading,
             editModeForFilename: () => editModeForFilename,
             editModeForProjectTitle: () => editModeForProjectTitle,
@@ -325,7 +262,7 @@ export const mockViewModelState = (): ViewModelState => {
             setIsFileDraggedToFileManager: (v: boolean) =>
                 (isFileDraggedToManager = v),
         },
-        userViewModelState: {
+        userViewModelRepository: {
             email: () => email,
             id: () => id,
             isAuthenticated: () => isAuthenticated,
@@ -345,7 +282,7 @@ export const mockViewModelState = (): ViewModelState => {
     };
 };
 
-export interface ProjectViewModelState {
+export interface ProjectViewModelRepository {
     project: () => Project | undefined;
     compileSuccessResult: () => CompileSuccessResult;
     compileErrorResult: () => CompileErrorResultList | undefined;
@@ -366,7 +303,7 @@ export interface ProjectViewModelState {
     setCurrentProgram: (program: Program) => void;
 }
 
-export interface IdeViewModelState {
+export interface IdeViewModelRepository {
     search: () => string | undefined;
     activeSegmentIndex: () => number;
     previousActiveSegmentIndex: () => number;
@@ -388,7 +325,7 @@ export interface IdeViewModelState {
     setGetProjectsRequestState: (state: GetProjectsRequestState) => void;
 }
 
-export interface SettingsViewModelState {
+export interface SettingsViewModelRepository {
     showTour: () => boolean;
     showFileManager: () => boolean;
     expandProblemViewer: () => boolean;
@@ -409,13 +346,13 @@ export interface SettingsViewModelState {
     setIsFileDraggedToFileManager: (value: boolean) => void;
 }
 
-export interface ProjectsViewModelState {
+export interface ProjectsViewModelRepository {
     projects: () => ProjectShort[];
 
     setProjects: (projects: ProjectShort[]) => void;
 }
 
-export interface AuthViewModelState {
+export interface AuthViewModelRepository {
     currentView: () => AuthView;
     currentEmail: () => string | null;
     lastVerifiedCode: () => string | null;
@@ -435,7 +372,7 @@ export interface AuthViewModelState {
     setIsRegistration: (v: boolean) => void;
 }
 
-export interface UserViewModelState {
+export interface UserViewModelRepository {
     email: () => string;
     id: () => number;
     isAuthenticated: () => boolean;
@@ -443,7 +380,7 @@ export interface UserViewModelState {
     setUserInfo: (userInfo: UserInfo) => void;
 }
 
-export interface PersistenceViewModelState {
+export interface PersistenceViewModelRepository {
     language: () => Language;
     lastProgram: () => Program;
     instructionExpanded: () => boolean;
@@ -456,14 +393,14 @@ export interface PersistenceViewModelState {
     clearLastProgram: () => void;
 }
 
-export interface ViewModelState {
-    projectViewModelState: ProjectViewModelState;
-    ideViewModelState: IdeViewModelState;
-    persistenceViewModelState: PersistenceViewModelState;
-    userViewModelState: UserViewModelState;
-    authViewModelState: AuthViewModelState;
-    projectsViewModelState: ProjectsViewModelState;
-    settingsViewModelState: SettingsViewModelState;
+export interface ViewModelRepository {
+    projectViewModelRepository: ProjectViewModelRepository;
+    ideViewModelRepository: IdeViewModelRepository;
+    persistenceViewModelRepository: PersistenceViewModelRepository;
+    userViewModelRepository: UserViewModelRepository;
+    authViewModelRepository: AuthViewModelRepository;
+    projectsViewModelRepository: ProjectsViewModelRepository;
+    settingsViewModelRepository: SettingsViewModelRepository;
     navigate: (url: string) => void;
     toast: (message: string, type: TypeOptions) => void;
     dictionary: Translations;

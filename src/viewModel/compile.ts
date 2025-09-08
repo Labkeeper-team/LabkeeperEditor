@@ -1,4 +1,4 @@
-import { ViewModelState } from './viewModelState';
+import { ViewModelRepository } from './repository';
 import { CompilationResponse, RequestResult, Rpi } from '../model/rpi';
 import {
     CompileError,
@@ -11,7 +11,7 @@ import { LoaderService } from './project.ts';
 import { IdeService } from './ide.ts';
 
 export class CompilationService {
-    vms: ViewModelState;
+    repository: ViewModelRepository;
     rpi: Rpi;
     programService: ProgramService;
     loaderService: LoaderService;
@@ -19,14 +19,14 @@ export class CompilationService {
     ideService: IdeService;
 
     constructor(
-        vms: ViewModelState,
+        repository: ViewModelRepository,
         rpi: Rpi,
         programService: ProgramService,
         loaderService: LoaderService,
         observerService: ObserverService,
         ideService: IdeService
     ) {
-        this.vms = vms;
+        this.repository = repository;
         this.rpi = rpi;
         this.programService = programService;
         this.loaderService = loaderService;
@@ -35,14 +35,15 @@ export class CompilationService {
     }
 
     runCompilation = async () => {
-        const projectId = this.vms.projectViewModelState.project()?.projectId;
+        const projectId =
+            this.repository.projectViewModelRepository.project()?.projectId;
         const program = this.programService.getCurrentProgram();
 
         if (!program) {
             return;
         }
 
-        this.vms.settingsViewModelState.setIsCompiling(true);
+        this.repository.settingsViewModelRepository.setIsCompiling(true);
 
         let result: RequestResult<CompilationResponse>;
         if (projectId) {
@@ -51,38 +52,44 @@ export class CompilationService {
             result = await this.rpi.compilationRequest(program);
         }
 
-        this.vms.settingsViewModelState.setIsCompiling(false);
+        this.repository.settingsViewModelRepository.setIsCompiling(false);
 
         if (result.code === 401 || result.code === 403) {
-            this.vms.toast(
-                this.vms.dictionary.filemanager.errors.sessionExpired,
+            this.repository.toast(
+                this.repository.dictionary.filemanager.errors.sessionExpired,
                 'error'
             );
             this.ideService.resetEditor();
         } else if (result.code === 200) {
-            this.vms.projectViewModelState.setCompileResult(
+            this.repository.projectViewModelRepository.setCompileResult(
                 result.body as CompileSuccessResult
             );
-            this.vms.projectViewModelState.setCompileErrorResult({
+            this.repository.projectViewModelRepository.setCompileErrorResult({
                 errors: [],
             });
             if (
                 projectId &&
-                !this.vms.projectViewModelState.projectIsReadonly()
+                !this.repository.projectViewModelRepository.projectIsReadonly()
             ) {
                 await this.loaderService.loadFiles(projectId);
             }
         } else if (result.code === 203) {
             const compileResult = result.body as CompileErrorResultList;
-            this.vms.projectViewModelState.setCompileErrorResult(compileResult);
-            this.vms.settingsViewModelState.setExpandProblemViewer(true);
+            this.repository.projectViewModelRepository.setCompileErrorResult(
+                compileResult
+            );
+            this.repository.settingsViewModelRepository.setExpandProblemViewer(
+                true
+            );
             compileResult.errors.map((error) => {
                 if (error.code === 308) {
-                    this.vms.authViewModelState.setCurrentView('login');
+                    this.repository.authViewModelRepository.setCurrentView(
+                        'login'
+                    );
                 }
             });
         } else if (result.code === 425) {
-            this.vms.projectViewModelState.setCompileErrorResult({
+            this.repository.projectViewModelRepository.setCompileErrorResult({
                 errors: [
                     {
                         payload: {
@@ -94,11 +101,13 @@ export class CompilationService {
                     },
                 ],
             });
-            this.vms.settingsViewModelState.setExpandProblemViewer(true);
-            this.vms.authViewModelState.setCurrentView('login');
+            this.repository.settingsViewModelRepository.setExpandProblemViewer(
+                true
+            );
+            this.repository.authViewModelRepository.setCurrentView('login');
         } else {
-            this.vms.toast(
-                this.vms.dictionary.filemanager.errors.internalError,
+            this.repository.toast(
+                this.repository.dictionary.filemanager.errors.internalError,
                 'error'
             );
             this.observerService.onEvent(Events.EVENT_ERROR);

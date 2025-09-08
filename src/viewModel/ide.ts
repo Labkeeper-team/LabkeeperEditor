@@ -1,4 +1,4 @@
-import { ViewModelState } from './viewModelState';
+import { ViewModelRepository } from './repository';
 import { ProgramService } from '../model/service/program.ts';
 import {
     CompileSuccessResult,
@@ -10,29 +10,36 @@ import {
 const dollarPattern = /\$\{[\w|\p{Script=Cyrillic}]+\}/u;
 
 export class IdeService {
-    vms: ViewModelState;
+    repository: ViewModelRepository;
     programService: ProgramService;
 
-    constructor(vms: ViewModelState, programService: ProgramService) {
-        this.vms = vms;
+    constructor(
+        repository: ViewModelRepository,
+        programService: ProgramService
+    ) {
+        this.repository = repository;
         this.programService = programService;
     }
 
     setActiveSegmentIndexAndPreviousSegmentIndex = (activeIndex: number) => {
-        if (this.vms.ideViewModelState.activeSegmentIndex() !== -1) {
-            this.vms.ideViewModelState.setPreviousActiveSegmentIndex(
-                this.vms.ideViewModelState.activeSegmentIndex()
+        if (
+            this.repository.ideViewModelRepository.activeSegmentIndex() !== -1
+        ) {
+            this.repository.ideViewModelRepository.setPreviousActiveSegmentIndex(
+                this.repository.ideViewModelRepository.activeSegmentIndex()
             );
         } else if (activeIndex !== -1) {
-            this.vms.ideViewModelState.setPreviousActiveSegmentIndex(
+            this.repository.ideViewModelRepository.setPreviousActiveSegmentIndex(
                 activeIndex
             );
         }
-        this.vms.ideViewModelState.setActiveSegmentIndex(activeIndex);
+        this.repository.ideViewModelRepository.setActiveSegmentIndex(
+            activeIndex
+        );
     };
 
     resetEditor = () => {
-        this.vms.resetToInitialState();
+        this.repository.resetToInitialState();
         this.programService.clearHistory();
     };
 
@@ -42,7 +49,7 @@ export class IdeService {
                 .type !== 'computational'
         ) {
             if (dollarPattern.test(segmentText)) {
-                this.vms.projectViewModelState.setCompileResultForSegment(
+                this.repository.projectViewModelRepository.setCompileResultForSegment(
                     segmentIndex,
                     {
                         type: 'computational',
@@ -50,7 +57,7 @@ export class IdeService {
                     } as ComputationalOutputSegment
                 );
             } else {
-                this.vms.projectViewModelState.setCompileResultForSegment(
+                this.repository.projectViewModelRepository.setCompileResultForSegment(
                     segmentIndex,
                     {
                         text: segmentText,
@@ -62,40 +69,38 @@ export class IdeService {
             }
         }
 
-        this.vms.ideViewModelState.setUndoEnabled(
+        this.repository.ideViewModelRepository.setUndoEnabled(
             this.programService.canUndo()
         );
-        this.vms.ideViewModelState.setRedoEnabled(
+        this.repository.ideViewModelRepository.setRedoEnabled(
             this.programService.canRedo()
         );
     };
 
     onProgramUpdated = () => {
         const program = this.programService.getCurrentProgram();
-        this.vms.projectViewModelState.setCurrentProgram(program);
+        this.repository.projectViewModelRepository.setCurrentProgram(program);
         if (
-            !this.vms.userViewModelState.isAuthenticated() &&
-            !this.vms.projectViewModelState.projectIsReadonly()
+            !this.repository.userViewModelRepository.isAuthenticated() &&
+            !this.repository.projectViewModelRepository.projectIsReadonly()
         ) {
-            this.vms.persistenceViewModelState.setLastProgram(
+            this.repository.persistenceViewModelRepository.setLastProgram(
                 structuredClone(program)
             );
         } else {
-            this.vms.persistenceViewModelState.clearLastProgram();
+            this.repository.persistenceViewModelRepository.clearLastProgram();
         }
 
-        this.vms.projectViewModelState.setCompileResultSegmentsSize(
+        this.repository.projectViewModelRepository.setCompileResultSegmentsSize(
             program.segments.length
         );
         for (let i = 0; i < program.segments.length; i++) {
             let output =
-                this.vms.projectViewModelState.compileSuccessResult().segments[
-                    i
-                ];
+                this.repository.projectViewModelRepository.compileSuccessResult()
+                    .segments[i];
             if (
-                !this.vms.projectViewModelState.compileSuccessResult().segments[
-                    i
-                ]
+                !this.repository.projectViewModelRepository.compileSuccessResult()
+                    .segments[i]
             ) {
                 if (
                     program.segments[i].type === 'computational' ||
@@ -121,9 +126,8 @@ export class IdeService {
                 } as TextOutputSegment;
             } else if (
                 program.segments[i].type === 'computational' &&
-                this.vms.projectViewModelState.compileSuccessResult().segments[
-                    i
-                ].type !== 'computational' &&
+                this.repository.projectViewModelRepository.compileSuccessResult()
+                    .segments[i].type !== 'computational' &&
                 program.segments[i].parameters.visible
             ) {
                 output = {
@@ -135,21 +139,21 @@ export class IdeService {
             if (
                 JSON.stringify(output) !==
                 JSON.stringify(
-                    this.vms.projectViewModelState.compileSuccessResult()
+                    this.repository.projectViewModelRepository.compileSuccessResult()
                         .segments[i]
                 )
             ) {
-                this.vms.projectViewModelState.setCompileResultForSegment(
+                this.repository.projectViewModelRepository.setCompileResultForSegment(
                     i,
                     output
                 );
             }
         }
 
-        this.vms.ideViewModelState.setUndoEnabled(
+        this.repository.ideViewModelRepository.setUndoEnabled(
             this.programService.canUndo()
         );
-        this.vms.ideViewModelState.setRedoEnabled(
+        this.repository.ideViewModelRepository.setRedoEnabled(
             this.programService.canRedo()
         );
     };
@@ -157,7 +161,7 @@ export class IdeService {
     setNewProgram = (program: Program, result?: CompileSuccessResult) => {
         this.programService.setNewProgram(program);
         if (result) {
-            this.vms.projectViewModelState.setCompileResult(result);
+            this.repository.projectViewModelRepository.setCompileResult(result);
         }
         this.onProgramUpdated();
     };
