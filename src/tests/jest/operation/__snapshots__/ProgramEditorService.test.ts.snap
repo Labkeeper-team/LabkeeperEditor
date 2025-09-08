@@ -1,0 +1,217 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`double-md-test 1`] = `
+MockViewModelRepositoryState {
+  "activeSegmentIndex": 1,
+  "cloneRequestState": "unknown",
+  "codeCheckRequest": "unknown",
+  "compileErrorResult": {
+    "errors": [],
+  },
+  "compileSuccessResult": {
+    "segments": [
+      {
+        "text": "my md",
+        "type": "md",
+      },
+      {
+        "type": "empty",
+      },
+    ],
+  },
+  "currentEmail": null,
+  "currentProgram": {
+    "parameters": {
+      "roundStrategy": "firstMeaningDigit",
+    },
+    "segments": [
+      {
+        "parameters": {
+          "visible": true,
+        },
+        "text": "my md",
+        "type": "md",
+      },
+      {
+        "parameters": {
+          "visible": false,
+        },
+        "text": "a = 10",
+        "type": "computational",
+      },
+    ],
+  },
+  "currentView": "closed",
+  "editModeForFilename": false,
+  "editModeForProjectTitle": false,
+  "email": "",
+  "emailRequest": "unknown",
+  "expandProblemViewer": false,
+  "files": [],
+  "getFilesRequestState": "unknown",
+  "getProjectRequestState": "unknown",
+  "getProjectsRequestState": "unknown",
+  "id": 0,
+  "instructionExpanded": false,
+  "isAuthenticated": false,
+  "isAutocompleteLoading": false,
+  "isFileDraggedToManager": false,
+  "isRegistration": false,
+  "language": "ru",
+  "lastOpenedProjectUuid": undefined,
+  "lastProgram": {
+    "parameters": {
+      "roundStrategy": "firstMeaningDigit",
+    },
+    "segments": [
+      {
+        "parameters": {
+          "visible": true,
+        },
+        "text": "my md",
+        "type": "md",
+      },
+      {
+        "parameters": {
+          "visible": false,
+        },
+        "text": "a = 10",
+        "type": "computational",
+      },
+    ],
+  },
+  "lastVerifiedCode": null,
+  "location": "/project/default",
+  "loginRequest": "unknown",
+  "passwordSetRequest": "unknown",
+  "previousActiveSegmentIndex": 0,
+  "project": undefined,
+  "projectIsReadonly": false,
+  "projects": [],
+  "redoEnabled": false,
+  "search": undefined,
+  "showFileManager": false,
+  "showSearch": false,
+  "showShareModal": false,
+  "showTour": false,
+  "toasts": [],
+  "undoEnabled": true,
+}
+`;
+
+exports[`double-md-test 2`] = `
+MockViewModelRepositoryState {
+  "activeSegmentIndex": 1,
+  "cloneRequestState": "unknown",
+  "codeCheckRequest": "unknown",
+  "compileErrorResult": {
+    "errors": [],
+  },
+  "compileSuccessResult": {
+    "segments": [
+      {
+        "text": "my md",
+        "type": "md",
+      },
+      {
+        "text": "",
+        "type": "md",
+      },
+      {
+        "type": "empty",
+      },
+    ],
+  },
+  "currentEmail": null,
+  "currentProgram": {
+    "parameters": {
+      "roundStrategy": "firstMeaningDigit",
+    },
+    "segments": [
+      {
+        "parameters": {
+          "visible": true,
+        },
+        "text": "my md",
+        "type": "md",
+      },
+      {
+        "parameters": {
+          "visible": true,
+        },
+        "text": "",
+        "type": "md",
+      },
+      {
+        "parameters": {
+          "visible": false,
+        },
+        "text": "a = 10",
+        "type": "computational",
+      },
+    ],
+  },
+  "currentView": "closed",
+  "editModeForFilename": false,
+  "editModeForProjectTitle": false,
+  "email": "",
+  "emailRequest": "unknown",
+  "expandProblemViewer": false,
+  "files": [],
+  "getFilesRequestState": "unknown",
+  "getProjectRequestState": "unknown",
+  "getProjectsRequestState": "unknown",
+  "id": 0,
+  "instructionExpanded": false,
+  "isAuthenticated": false,
+  "isAutocompleteLoading": false,
+  "isFileDraggedToManager": false,
+  "isRegistration": false,
+  "language": "ru",
+  "lastOpenedProjectUuid": undefined,
+  "lastProgram": {
+    "parameters": {
+      "roundStrategy": "firstMeaningDigit",
+    },
+    "segments": [
+      {
+        "parameters": {
+          "visible": true,
+        },
+        "text": "my md",
+        "type": "md",
+      },
+      {
+        "parameters": {
+          "visible": true,
+        },
+        "text": "",
+        "type": "md",
+      },
+      {
+        "parameters": {
+          "visible": false,
+        },
+        "text": "a = 10",
+        "type": "computational",
+      },
+    ],
+  },
+  "lastVerifiedCode": null,
+  "location": "/project/default",
+  "loginRequest": "unknown",
+  "passwordSetRequest": "unknown",
+  "previousActiveSegmentIndex": 1,
+  "project": undefined,
+  "projectIsReadonly": false,
+  "projects": [],
+  "redoEnabled": false,
+  "search": undefined,
+  "showFileManager": false,
+  "showSearch": false,
+  "showShareModal": false,
+  "showTour": false,
+  "toasts": [],
+  "undoEnabled": true,
+}
+`;

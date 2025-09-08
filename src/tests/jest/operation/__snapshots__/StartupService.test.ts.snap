@@ -1,0 +1,191 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`onAppStartup-qr-test 1`] = `
+MockViewModelRepositoryState {
+  "activeSegmentIndex": -1,
+  "cloneRequestState": "unknown",
+  "codeCheckRequest": "unknown",
+  "compileErrorResult": undefined,
+  "compileSuccessResult": {
+    "segments": [
+      {
+        "text": "### Пример",
+        "type": "md",
+      },
+      {
+        "statements": [
+          {
+            "latex": "\\begin{equation}
+\\normalsize
+d
+\\ = \\
+0.56
+\\pm
+0.01
+\\end{equation}\\begin{equation}
+\\normalsize
+S
+\\ = \\
+\\frac{\\pi \\cdot d^{2}}{4}
+\\ = \\
+\\frac{\\pi \\cdot 0.56^{2}}{4}
+\\ = \\
+0.25
+\\pm
+0.0088
+\\end{equation}\\begin{equation}
+\\small
+\\sigma(
+S
+)
+\\ = \\
+\\sqrt{
+\\left ( \\frac{\\partial S}{\\partial d} \\cdot \\sigma \\left ( d \\right ) \\right )^{2}
+}
+\\ = \\
+\\sqrt{
+\\frac{1}{4} \\cdot \\sigma \\left ( d \\right )^{2} \\cdot d^{2} \\cdot \\pi^{2}
+}
+\\ = \\
+\\sqrt{
+\\frac{1}{4} \\cdot 0.01^{2} \\cdot 0.56^{2} \\cdot \\pi^{2}
+}
+\\ = \\
+\\end{equation}\\begin{equation}
+\\normalsize
+\\ = \\
+0.0088
+\\end{equation}",
+            "type": "latex",
+          },
+        ],
+        "type": "computational",
+      },
+      {
+        "text": "* *Результат* ~можно~ вставить в **маркдаун**.
+ $$
+ S = (\\pi * d^2) / 4 = 0.56
+\\pm
+0.01
+ $$
+> В маркдауне можно использовать latex-математику $\\int$
+
+Примеры оформления лаб:
+* [**biba**](https://labkeeper.io/project/244383)",
+        "type": "md",
+      },
+    ],
+  },
+  "currentEmail": null,
+  "currentProgram": {
+    "parameters": {
+      "roundStrategy": "twoDigits",
+    },
+    "segments": [
+      {
+        "parameters": {
+          "visible": true,
+        },
+        "text": "### Пример",
+        "type": "md",
+      },
+      {
+        "parameters": {
+          "visible": true,
+        },
+        "text": "//Вычисления на Python-подобном языке с поддержкой погрешности #
+ d = 0.56 # 0.01 
+ S = (pi * d^2) / 4 
+ //При необходимости можно скрыть все вычисления сверху или только часть формулы (нажать ...)",
+        "type": "computational",
+      },
+      {
+        "parameters": {
+          "visible": true,
+        },
+        "text": "* *Результат* ~можно~ вставить в **маркдаун**.
+ $$
+ S = (\\pi * d^2) / 4 = \${S}
+ $$
+> В маркдауне можно использовать latex-математику $\\int$
+
+Примеры оформления лаб:
+* [**biba**](https://labkeeper.io/project/244383)",
+        "type": "md",
+      },
+    ],
+  },
+  "currentView": "closed",
+  "editModeForFilename": false,
+  "editModeForProjectTitle": false,
+  "email": "",
+  "emailRequest": "unknown",
+  "expandProblemViewer": false,
+  "files": [],
+  "getFilesRequestState": "unknown",
+  "getProjectRequestState": "unknown",
+  "getProjectsRequestState": "unknown",
+  "id": 0,
+  "instructionExpanded": false,
+  "isAuthenticated": false,
+  "isAutocompleteLoading": false,
+  "isFileDraggedToManager": false,
+  "isRegistration": false,
+  "language": "ru",
+  "lastOpenedProjectUuid": undefined,
+  "lastProgram": {
+    "parameters": {
+      "roundStrategy": "twoDigits",
+    },
+    "segments": [
+      {
+        "parameters": {
+          "visible": true,
+        },
+        "text": "### Пример",
+        "type": "md",
+      },
+      {
+        "parameters": {
+          "visible": true,
+        },
+        "text": "//Вычисления на Python-подобном языке с поддержкой погрешности #
+ d = 0.56 # 0.01 
+ S = (pi * d^2) / 4 
+ //При необходимости можно скрыть все вычисления сверху или только часть формулы (нажать ...)",
+        "type": "computational",
+      },
+      {
+        "parameters": {
+          "visible": true,
+        },
+        "text": "* *Результат* ~можно~ вставить в **маркдаун**.
+ $$
+ S = (\\pi * d^2) / 4 = \${S}
+ $$
+> В маркдауне можно использовать latex-математику $\\int$
+
+Примеры оформления лаб:
+* [**biba**](https://labkeeper.io/project/244383)",
+        "type": "md",
+      },
+    ],
+  },
+  "lastVerifiedCode": null,
+  "location": "/project/default",
+  "loginRequest": "unknown",
+  "passwordSetRequest": "unknown",
+  "previousActiveSegmentIndex": -1,
+  "project": undefined,
+  "projectIsReadonly": false,
+  "projects": [],
+  "redoEnabled": false,
+  "search": undefined,
+  "showFileManager": false,
+  "showSearch": false,
+  "showShareModal": false,
+  "showTour": false,
+  "toasts": [],
+  "undoEnabled": false,
+}
+`;

@@ -77,12 +77,6 @@ export class StartupService {
         const userInfo = result.body;
         this.repository.userViewModelRepository.setUserInfo(userInfo);
 
-        if (userInfo.isAuthenticated) {
-            this.observerService.setUserState(States.STATE_ONLINE, 'online');
-        } else {
-            this.observerService.setUserState(States.STATE_ONLINE, 'anonymous');
-        }
-
         this.observerService.setUserState(States.USER_ID, String(userInfo.id));
         this.observerService.setUserState(
             States.STATE_ONLINE,

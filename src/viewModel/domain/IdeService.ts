@@ -109,10 +109,16 @@ export class IdeService {
                     program.segments[i].type === 'computational' ||
                     dollarPattern.test(program.segments[i].text)
                 ) {
-                    output = {
-                        type: 'computational',
-                        statements: [{ type: 'no_result' }],
-                    } as ComputationalOutputSegment;
+                    if (program.segments[i].parameters.visible) {
+                        output = {
+                            type: 'computational',
+                            statements: [{ type: 'no_result' }],
+                        } as ComputationalOutputSegment;
+                    } else {
+                        output = {
+                            type: 'empty',
+                        };
+                    }
                 } else {
                     output = {
                         type: program.segments[i].type,
@@ -137,6 +143,10 @@ export class IdeService {
                     type: 'computational',
                     statements: [{ type: 'no_result' }],
                 } as ComputationalOutputSegment;
+            } else if (!program.segments[i].parameters.visible) {
+                output = {
+                    type: 'empty',
+                };
             }
 
             if (

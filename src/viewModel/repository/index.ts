@@ -74,199 +74,239 @@ export type GetProjectsRequestState =
     | 'loading'
     | 'unauth';
 
-export const mockViewModelState = (): ViewModelRepository => {
-    let location = '/';
+class MockViewModelRepositoryState {
+    location = '/';
 
-    let activeSegmentIndex = -1;
-    let search: string | undefined = undefined;
-    let previousActiveSegmentIndex = -1;
-    let redoEnabled: boolean = false;
-    let undoEnabled: boolean = false;
-    let cloneRequestState: CloneRequestState = 'unknown';
-    let getProjectRequestState: GetProjectRequestState = 'unknown';
-    let getFilesRequestState: GetFilesRequestState = 'unknown';
-    let getProjectsRequestState: GetProjectsRequestState = 'unknown';
+    activeSegmentIndex = -1;
+    search: string | undefined = undefined;
+    previousActiveSegmentIndex = -1;
+    redoEnabled: boolean = false;
+    undoEnabled: boolean = false;
+    cloneRequestState: CloneRequestState = 'unknown';
+    getProjectRequestState: GetProjectRequestState = 'unknown';
+    getFilesRequestState: GetFilesRequestState = 'unknown';
+    getProjectsRequestState: GetProjectsRequestState = 'unknown';
 
-    let instructionExpanded = false;
-    let language: 'ru' | 'en' = 'ru';
-    let lastProgram: Program = {
+    instructionExpanded = false;
+    language: 'ru' | 'en' = 'ru';
+    lastProgram: Program = {
         segments: [],
         parameters: {
             roundStrategy: 'firstMeaningDigit',
         },
     };
-    let lastOpenedProjectUuid: string | undefined = undefined;
+    lastOpenedProjectUuid: string | undefined = undefined;
 
-    let compileErrorResult: CompileErrorResultList | undefined = undefined;
-    let compileSuccessResult: CompileSuccessResult = { segments: [] };
-    let project: Project | undefined = undefined;
-    let projectIsReadonly = false;
-    let currentProgram: Program = {
+    compileErrorResult: CompileErrorResultList | undefined = undefined;
+    compileSuccessResult: CompileSuccessResult = { segments: [] };
+    project: Project | undefined = undefined;
+    projectIsReadonly = false;
+    currentProgram: Program = {
         segments: [],
         parameters: { roundStrategy: 'firstMeaningDigit' },
     };
-    let files: LabkeeperFile[] = [];
+    files: LabkeeperFile[] = [];
 
-    let projects: ProjectShort[] = [];
+    projects: ProjectShort[] = [];
 
-    let isAutocompleteLoading = false;
-    let editModeForFilename = false;
-    let editModeForProjectTitle = false;
-    let expandProblemViewer = false;
-    let isFileDraggedToManager = false;
-    let showFileManager = false;
-    let showSearch = false;
-    const showShareModal = false;
-    let showTour = false;
+    isAutocompleteLoading = false;
+    editModeForFilename = false;
+    editModeForProjectTitle = false;
+    expandProblemViewer = false;
+    isFileDraggedToManager = false;
+    showFileManager = false;
+    showSearch = false;
+    showShareModal = false;
+    showTour = false;
 
-    let email: string = '';
-    let id: number = -1;
-    let isAuthenticated: boolean = false;
+    email: string = '';
+    id: number = -1;
+    isAuthenticated: boolean = false;
 
-    let loginRequest: LoginRequestState = 'unknown';
-    let codeCheckRequest: CodeRequestState = 'unknown';
-    let currentEmail: string | null = null;
-    let currentView: AuthView = 'closed';
-    let emailRequest: EmailRequestState = 'unknown';
-    let lastVerifiedCode: string | null = null;
-    let passwordSetRequest: PasswordRequestState = 'unknown';
-    let isRegistration: boolean = false;
+    loginRequest: LoginRequestState = 'unknown';
+    codeCheckRequest: CodeRequestState = 'unknown';
+    currentEmail: string | null = null;
+    currentView: AuthView = 'closed';
+    emailRequest: EmailRequestState = 'unknown';
+    lastVerifiedCode: string | null = null;
+    passwordSetRequest: PasswordRequestState = 'unknown';
+    isRegistration: boolean = false;
+
+    toasts: { message: string; type: TypeOptions }[] = [];
+}
+
+export interface MockViewModelRepository extends ViewModelRepository {
+    mockState: () => MockViewModelRepositoryState;
+}
+
+export const mockViewModelState = (): MockViewModelRepository => {
+    const mockViewModelState = new MockViewModelRepositoryState();
     return {
+        mockState: () => mockViewModelState,
         scrollEditorToBottom: () => ({}),
-        location: () => location,
+        location: () => mockViewModelState.location,
         authViewModelRepository: {
-            codeCheckRequest: () => codeCheckRequest,
-            currentEmail: () => currentEmail,
-            currentView: () => currentView,
-            emailRequest: () => emailRequest,
-            lastVerifiedCode: () => lastVerifiedCode,
-            passwordSetRequest: () => passwordSetRequest,
-            loginRequest: () => loginRequest,
-            isRegistration: () => isRegistration,
+            codeCheckRequest: () => mockViewModelState.codeCheckRequest,
+            currentEmail: () => mockViewModelState.currentEmail,
+            currentView: () => mockViewModelState.currentView,
+            emailRequest: () => mockViewModelState.emailRequest,
+            lastVerifiedCode: () => mockViewModelState.lastVerifiedCode,
+            passwordSetRequest: () => mockViewModelState.passwordSetRequest,
+            loginRequest: () => mockViewModelState.loginRequest,
+            isRegistration: () => mockViewModelState.isRegistration,
 
-            setCurrentEmail: (email) => (currentEmail = email),
-            setEmailRequest: (request) => (emailRequest = request),
-            setCurrentView: (view) => (currentView = view),
-            setCodeCheckRequest: (request) => (codeCheckRequest = request),
-            setLastVerifiedCode: (code) => (lastVerifiedCode = code),
-            setLoginRequest: (request) => (loginRequest = request),
-            setPasswordRequest: (request) => (passwordSetRequest = request),
-            setIsRegistration: (v) => (isRegistration = v),
+            setCurrentEmail: (email) =>
+                (mockViewModelState.currentEmail = email),
+            setEmailRequest: (request) =>
+                (mockViewModelState.emailRequest = request),
+            setCurrentView: (view) => (mockViewModelState.currentView = view),
+            setCodeCheckRequest: (request) =>
+                (mockViewModelState.codeCheckRequest = request),
+            setLastVerifiedCode: (code) =>
+                (mockViewModelState.lastVerifiedCode = code),
+            setLoginRequest: (request) =>
+                (mockViewModelState.loginRequest = request),
+            setPasswordRequest: (request) =>
+                (mockViewModelState.passwordSetRequest = request),
+            setIsRegistration: (v) => (mockViewModelState.isRegistration = v),
         },
         ideViewModelRepository: {
-            activeSegmentIndex: () => activeSegmentIndex,
-            search: () => search,
-            previousActiveSegmentIndex: () => previousActiveSegmentIndex,
-            redoEnabled: () => redoEnabled,
-            undoEnabled: () => undoEnabled,
-            cloneRequestState: () => cloneRequestState,
-            getProjectRequestState: () => getProjectRequestState,
-            getFilesRequestState: () => getFilesRequestState,
-            getProjectsRequestState: () => getProjectsRequestState,
+            activeSegmentIndex: () => mockViewModelState.activeSegmentIndex,
+            search: () => mockViewModelState.search,
+            previousActiveSegmentIndex: () =>
+                mockViewModelState.previousActiveSegmentIndex,
+            redoEnabled: () => mockViewModelState.redoEnabled,
+            undoEnabled: () => mockViewModelState.undoEnabled,
+            cloneRequestState: () => mockViewModelState.cloneRequestState,
+            getProjectRequestState: () =>
+                mockViewModelState.getProjectRequestState,
+            getFilesRequestState: () => mockViewModelState.getFilesRequestState,
+            getProjectsRequestState: () =>
+                mockViewModelState.getProjectsRequestState,
 
             setGetProjectsRequestState: (v: GetProjectsRequestState) =>
-                (getProjectsRequestState = v),
+                (mockViewModelState.getProjectsRequestState = v),
             setGetFilesRequestState: (v: GetFilesRequestState) =>
-                (getFilesRequestState = v),
+                (mockViewModelState.getFilesRequestState = v),
             setCloneRequestState: (v: CloneRequestState) =>
-                (cloneRequestState = v),
+                (mockViewModelState.cloneRequestState = v),
             setGetProjectRequestState: (v: GetProjectRequestState) =>
-                (getProjectRequestState = v),
-            setUndoEnabled: (v: boolean) => (undoEnabled = v),
-            setRedoEnabled: (v: boolean) => (redoEnabled = v),
-            setSearch: (v: string | undefined) => (search = v),
+                (mockViewModelState.getProjectRequestState = v),
+            setUndoEnabled: (v: boolean) =>
+                (mockViewModelState.undoEnabled = v),
+            setRedoEnabled: (v: boolean) =>
+                (mockViewModelState.redoEnabled = v),
+            setSearch: (v: string | undefined) =>
+                (mockViewModelState.search = v),
             setActiveSegmentIndex: (index: number) =>
-                (activeSegmentIndex = index),
+                (mockViewModelState.activeSegmentIndex = index),
             setPreviousActiveSegmentIndex: (index: number) =>
-                (previousActiveSegmentIndex = index),
+                (mockViewModelState.previousActiveSegmentIndex = index),
         },
         persistenceViewModelRepository: {
-            instructionExpanded: () => instructionExpanded,
-            language: () => language,
-            lastProgram: () => lastProgram,
-            lastOpenedProjectUuid: () => lastOpenedProjectUuid,
+            instructionExpanded: () => mockViewModelState.instructionExpanded,
+            language: () => mockViewModelState.language,
+            lastProgram: () => mockViewModelState.lastProgram,
+            lastOpenedProjectUuid: () =>
+                mockViewModelState.lastOpenedProjectUuid,
 
-            setLastOpenedProjectUuid: (uuid) => (lastOpenedProjectUuid = uuid),
-            setInstructionExpanded: (v) => (instructionExpanded = v),
-            setLanguage: (v) => (language = v),
-            setLastProgram: (v) => (lastProgram = v),
+            setLastOpenedProjectUuid: (uuid) =>
+                (mockViewModelState.lastOpenedProjectUuid = uuid),
+            setInstructionExpanded: (v) =>
+                (mockViewModelState.instructionExpanded = v),
+            setLanguage: (v) => (mockViewModelState.language = v),
+            setLastProgram: (v) => (mockViewModelState.lastProgram = v),
             clearLastProgram: () =>
-                (lastProgram = {
+                (mockViewModelState.lastProgram = {
                     segments: [],
                     parameters: { roundStrategy: 'firstMeaningDigit' },
                 }),
         },
         projectViewModelRepository: {
-            compileErrorResult: () => compileErrorResult,
-            compileSuccessResult: () => compileSuccessResult,
-            project: () => project,
-            projectIsReadonly: () => projectIsReadonly,
-            currentProgram: () => currentProgram,
-            files: () => files,
+            compileErrorResult: () => mockViewModelState.compileErrorResult,
+            compileSuccessResult: () => mockViewModelState.compileSuccessResult,
+            project: () => mockViewModelState.project,
+            projectIsReadonly: () => mockViewModelState.projectIsReadonly,
+            currentProgram: () => mockViewModelState.currentProgram,
+            files: () => mockViewModelState.files,
 
             setCompileResultSegmentsSize: (size: number) => {
-                compileSuccessResult.segments.length = size;
+                mockViewModelState.compileSuccessResult.segments.length = size;
             },
             setCompileResultForSegment: (
                 index: number,
                 segment: OutputSegment
             ) => {
-                if (compileSuccessResult.segments.length > index) {
-                    compileSuccessResult.segments[index] = segment;
+                if (
+                    mockViewModelState.compileSuccessResult.segments.length >
+                    index
+                ) {
+                    mockViewModelState.compileSuccessResult.segments[index] =
+                        segment;
                 }
             },
-            setReadOnly: (v: boolean) => (projectIsReadonly = v),
-            setProject: (v?: Project) => (project = v),
+            setReadOnly: (v: boolean) =>
+                (mockViewModelState.projectIsReadonly = v),
+            setProject: (v?: Project) => (mockViewModelState.project = v),
             setCompileResult: (v: CompileSuccessResult) =>
-                (compileSuccessResult = v),
+                (mockViewModelState.compileSuccessResult = v),
             setCompileErrorResult: (v: CompileErrorResultList) =>
-                (compileErrorResult = v),
-            setFiles: (v: LabkeeperFile[]) => (files = v),
-            setCurrentProgram: (v) => (currentProgram = v),
+                (mockViewModelState.compileErrorResult = v),
+            setFiles: (v: LabkeeperFile[]) => (mockViewModelState.files = v),
+            setCurrentProgram: (v) => (mockViewModelState.currentProgram = v),
         },
         projectsViewModelRepository: {
-            projects: () => projects,
+            projects: () => mockViewModelState.projects,
 
-            setProjects: (v: ProjectShort[]) => (projects = v),
+            setProjects: (v: ProjectShort[]) =>
+                (mockViewModelState.projects = v),
         },
         settingsViewModelRepository: {
-            isAutocompleteLoading: () => isAutocompleteLoading,
-            editModeForFilename: () => editModeForFilename,
-            editModeForProjectTitle: () => editModeForProjectTitle,
-            expandProblemViewer: () => expandProblemViewer,
-            isFileDraggedToManager: () => isFileDraggedToManager,
-            showFileManager: () => showFileManager,
-            showSearch: () => showSearch,
-            showShareModal: () => showShareModal,
-            showTour: () => showTour,
+            isAutocompleteLoading: () =>
+                mockViewModelState.isAutocompleteLoading,
+            editModeForFilename: () => mockViewModelState.editModeForFilename,
+            editModeForProjectTitle: () =>
+                mockViewModelState.editModeForProjectTitle,
+            expandProblemViewer: () => mockViewModelState.expandProblemViewer,
+            isFileDraggedToManager: () =>
+                mockViewModelState.isFileDraggedToManager,
+            showFileManager: () => mockViewModelState.showFileManager,
+            showSearch: () => mockViewModelState.showSearch,
+            showShareModal: () => mockViewModelState.showShareModal,
+            showTour: () => mockViewModelState.showTour,
 
-            setShowSearch: (v: boolean) => (showSearch = v),
-            setShowFileManager: (v: boolean) => (showFileManager = v),
-            setExpandProblemViewer: (v: boolean) => (expandProblemViewer = v),
-            setTourVisibility: (v: boolean) => (showTour = v),
-            setEditModeForFilename: (v: boolean) => (editModeForFilename = v),
+            setShowSearch: (v: boolean) => (mockViewModelState.showSearch = v),
+            setShowFileManager: (v: boolean) =>
+                (mockViewModelState.showFileManager = v),
+            setExpandProblemViewer: (v: boolean) =>
+                (mockViewModelState.expandProblemViewer = v),
+            setTourVisibility: (v: boolean) =>
+                (mockViewModelState.showTour = v),
+            setEditModeForFilename: (v: boolean) =>
+                (mockViewModelState.editModeForFilename = v),
             setEditModeForProjectTitle: (v: boolean) =>
-                (editModeForProjectTitle = v),
-            setIsCompiling: (v: boolean) => (isAutocompleteLoading = v),
+                (mockViewModelState.editModeForProjectTitle = v),
+            setIsCompiling: (v: boolean) =>
+                (mockViewModelState.isAutocompleteLoading = v),
             setIsFileDraggedToFileManager: (v: boolean) =>
-                (isFileDraggedToManager = v),
+                (mockViewModelState.isFileDraggedToManager = v),
         },
         userViewModelRepository: {
-            email: () => email,
-            id: () => id,
-            isAuthenticated: () => isAuthenticated,
+            email: () => mockViewModelState.email,
+            id: () => mockViewModelState.id,
+            isAuthenticated: () => mockViewModelState.isAuthenticated,
 
             setUserInfo: (userInfo) => {
-                email = userInfo.email;
-                isAuthenticated = userInfo.isAuthenticated;
-                id = userInfo.id;
+                mockViewModelState.email = userInfo.email;
+                mockViewModelState.isAuthenticated = userInfo.isAuthenticated;
+                mockViewModelState.id = userInfo.id;
             },
         },
 
-        setLocation: (url: string) => (location = url),
+        setLocation: (url: string) => (mockViewModelState.location = url),
         dictionary: en,
         toast: (message: string, type: TypeOptions) =>
-            console.log('Show toast:', message, type),
+            mockViewModelState.toasts.push({ message, type }),
     };
 };
 
