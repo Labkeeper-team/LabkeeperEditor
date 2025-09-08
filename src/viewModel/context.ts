@@ -14,6 +14,10 @@ import { FileManagerService } from './operation/FileManagerService.ts';
 import { ProgramEditorService } from './operation/ProgramEditorService.ts';
 import { ProjectPageService } from './operation/ProjectPageService.ts';
 import { ProjectsPageService } from './operation/ProjectsPageService.ts';
+import {
+    InMemoryProgramRepository,
+    ProgramRepository,
+} from '../model/repository/ProgramRepository.ts';
 
 export function setupContext(
     rpi: Rpi,
@@ -23,7 +27,11 @@ export function setupContext(
     /*
     DOMAIN
      */
-    const programService: ProgramService = new ProgramService();
+    const programRepository: ProgramRepository =
+        new InMemoryProgramRepository();
+    const programService: ProgramService = new ProgramService(
+        programRepository
+    );
     const ideService: IdeService = new IdeService(repository, programService);
     const loaderService: LoaderService = new LoaderService(
         rpi,

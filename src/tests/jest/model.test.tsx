@@ -1,8 +1,9 @@
 import { ProgramService } from '../../model/service/ProgramService.ts';
 import { Program, Segment } from '../../model/domain.ts';
+import { InMemoryProgramRepository } from '../../model/repository/ProgramRepository.ts';
 
 test('program-service-test', () => {
-    const service: ProgramService = new ProgramService();
+    const service: ProgramService = new ProgramService(new InMemoryProgramRepository());
 
     service.addSegmentToLastPosition('md');
     service.changeSegmentTextByPositionIndex(0, 'biba');
@@ -140,7 +141,7 @@ test('program-service-test', () => {
 });
 
 test('limit-history-test', () => {
-    const service: ProgramService = new ProgramService();
+    const service: ProgramService = new ProgramService(new InMemoryProgramRepository());
 
     for (let i = 0; i < 27; i++) {
         service.addSegmentToLastPosition('md');
@@ -166,7 +167,7 @@ test('limit-history-test', () => {
 });
 
 test('no-duplicate-text-changes-test', () => {
-    const service: ProgramService = new ProgramService();
+    const service: ProgramService = new ProgramService(new InMemoryProgramRepository());
 
     service.addSegmentToLastPosition('md');
     service.changeSegmentTextByPositionIndex(0, 'abl');
