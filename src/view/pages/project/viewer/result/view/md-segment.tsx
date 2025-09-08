@@ -63,7 +63,11 @@ export const MdSegment = memo(
                                     children
                                 ) {
                                     return (
-                                        <MathJax>{`$$${children}$$`}</MathJax>
+                                        <MathJax
+                                            style={{
+                                                fontSize: '17.8px',
+                                            }}
+                                        >{`$$${children}$$`}</MathJax>
                                     );
                                 }
 
