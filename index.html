@@ -19,6 +19,15 @@
         <link rel="manifest" href="/icons/site.webmanifest" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Labkeeper</title>
+        <script>
+            // Global secrets configuration
+            window.__SECRETS__ = {
+                yandexCaptchaSiteKey:
+                    'IO_LABKEEPER_FRONTEND_YANDEX_CAPTCHA_SITE_KEY',
+                sentryDsn: 'IO_LABKEEPER_FRONTEND_SENTRY_DSN',
+                yandexMetrikaKey: 'IO_LABKEEPER_FRONTEND_YANDEX_METRIKA_KEY',
+            };
+        </script>
         <!-- Social / Open Graph -->
         <meta
             name="description"
@@ -85,12 +94,17 @@
                 'ym'
             );
 
-            ym(101239047, 'init', {
-                clickmap: true,
-                trackLinks: true,
-                accurateTrackBounce: true,
-                webvisor: true,
-            });
+            var lkMetrikaKey =
+                (window.__SECRETS__ && window.__SECRETS__.yandexMetrikaKey) ||
+                '';
+            if (lkMetrikaKey) {
+                ym(Number(lkMetrikaKey), 'init', {
+                    clickmap: true,
+                    trackLinks: true,
+                    accurateTrackBounce: true,
+                    webvisor: true,
+                });
+            }
         </script>
         <noscript
             ><div>

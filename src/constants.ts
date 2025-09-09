@@ -38,11 +38,29 @@ export const URLS = {
     Logout: `/api/${version}/sec/logout`,
 };
 
-// TODO научиться прокидывать во время сборки из консоли
-export const Secrets = {
-    yandexCaptchaSiteKey: `ysc1_hGTLsqtwdF4rdRDCezgRRJNM9St2o0vBCZOC97qMd63bcd7e`,
-    sentryDsn: `https://af23cdab17f74894b4ca0d09cd8c57b5@app.glitchtip.com/11474`,
-    yandexMetrikaKey: `101239047`,
+type SecretsShape = {
+    yandexCaptchaSiteKey: string;
+    sentryDsn: string;
+    yandexMetrikaKey: string;
+};
+
+declare global {
+    interface Window {
+        __SECRETS__?: Partial<SecretsShape>;
+    }
+}
+
+const DEFAULT_SECRETS: SecretsShape = {
+    yandexCaptchaSiteKey: '',
+    sentryDsn: '',
+    yandexMetrikaKey: '',
+};
+
+export const Secrets: SecretsShape = {
+    ...DEFAULT_SECRETS,
+    ...(typeof window !== 'undefined' && window.__SECRETS__
+        ? window.__SECRETS__
+        : {}),
 };
 
 export const Providers = ['yandex'];
