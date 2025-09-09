@@ -13,7 +13,7 @@ import classNames from 'classnames';
 import { InterfaceTourAnchorClassnames } from '../../../../components/tour/helpers';
 
 import { AppDispatch, StorageState } from '../../../../store';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useDictionary } from '../../../../store/selectors/translations.ts';
 import { controller } from '../../../../../main.tsx';
 
@@ -58,6 +58,31 @@ export const Ide = () => {
         disabled,
         dictionary,
     ]);
+
+    /*
+    Горячая клавиша для запуска программы
+     */
+    useEffect(() => {
+        const onKeyDown = (event: KeyboardEvent) => {
+            const isModifierPressed = event.ctrlKey || event.metaKey;
+            const isSpace = event.code === 'Space' || event.key === ' ';
+            if (!isModifierPressed || !isSpace) return;
+
+            // Предотвращаем стандартное действие (прокрутка/спотлайт в браузере, если возможно)
+            event.preventDefault();
+
+            if (disabled) return;
+
+            setFlag(true);
+            setTimeout(() => {
+                setFlag(false);
+            }, 1000);
+            dispatch(controller.onRunButtonPressedRequest());
+        };
+
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [dispatch, disabled]);
 
     return (
         <div className="ide-container">
