@@ -6,11 +6,9 @@ import { HistoryChangerIcon } from '../../../../../../icons';
 
 import './style.scss';
 import { AppDispatch, StorageState } from '../../../../../../store';
-import { useActiveElement } from '../../../../../../store/selectors/program.ts';
 import { controller } from '../../../../../../../main.tsx';
 
 export const HistoryButtons = () => {
-    const activeSegmentIndex = useSelector(useActiveElement);
     const dispatch = useDispatch<AppDispatch>();
     const undoEnabled = useSelector(
         (state: StorageState) => state.ide.undoEnabled
@@ -22,11 +20,9 @@ export const HistoryButtons = () => {
     useHotkeys(
         'ctrl+z, cmd+z, shift+ctrl+z, shift+cmd+z',
         (e) => {
-            if (activeSegmentIndex === undefined || activeSegmentIndex < 0) {
-                e?.preventDefault();
-                e?.stopPropagation();
-                dispatch(controller.onPrevVersionButtonClickedRequest());
-            }
+            e?.preventDefault();
+            e?.stopPropagation();
+            dispatch(controller.onPrevVersionButtonClickedRequest());
         },
         {
             enableOnFormTags: true,
@@ -37,11 +33,9 @@ export const HistoryButtons = () => {
     useHotkeys(
         'ctrl+y, cmd+shift+z',
         (e) => {
-            if (activeSegmentIndex === undefined || activeSegmentIndex < 0) {
-                e?.preventDefault();
-                e?.stopPropagation();
-                dispatch(controller.onNextVersionButtonClickedRequest());
-            }
+            e?.preventDefault();
+            e?.stopPropagation();
+            dispatch(controller.onNextVersionButtonClickedRequest());
         },
         {
             enableOnFormTags: true,

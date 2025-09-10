@@ -68,7 +68,6 @@ export const SegmentEditor = memo(
             (state: StorageState) =>
                 state.project.currentProgram?.segments[props.index]
         );
-        console.info('input', props.index);
         const editor = useRef<ReactCodeMirrorRef | undefined>();
         const dispatch = useDispatch<AppDispatch>();
         const dictionary = useSelector(useDictionary);
@@ -88,8 +87,6 @@ export const SegmentEditor = memo(
          */
         // Переменная необходима, чтобы CodeMirror не сразу прогружался, иначе будет мигать
         const [isLoaded, setIsLoaded] = useState(false);
-        // Промежуточный текст необходим по той же причине
-        const [tempText, setTempText] = useState(segment.text);
         // Промежуточные ошибки нужны для того, чтобы при вводе текста их можно было скрывать
         const [segmentTempErrors, setTempSegmentErrors] = useState<
             CompileErrorResult[]
@@ -98,15 +95,6 @@ export const SegmentEditor = memo(
         /*
         Events
          */
-        // При изменении глобального текста устанавливаем значение
-        useEffect(() => {
-            if (segment.text !== tempText) {
-                setTempSegmentErrors([]);
-                setTempText(segment.text);
-            }
-            // eslint-disable-next-line react-hooks/exhaustive-deps
-        }, [segment.text]);
-
         // При обновлении глобального списка ошибок фильтруем и устанавливаем локальный
         useEffect(() => {
             setTempSegmentErrors(
@@ -211,7 +199,7 @@ export const SegmentEditor = memo(
             timeout = setTimeout(() => {
                 dispatch(controller.onProgramSaveTimeoutRequest());
             }, 1000);
-        }, [tempText]);
+        }, [segment?.text]);
 
         /*
          * Callbacks
@@ -221,15 +209,12 @@ export const SegmentEditor = memo(
         // Таймер тоже тут нужен из-за CodeMirror
         const onBlur = useCallback(async () => {
             editor?.current?.editor?.blur?.();
-            setTimeout(async () => {
-                dispatch(
-                    controller.onBlurSegmentRequest({
-                        segmentText: tempText,
-                        segmentIndex: props.index,
-                    })
-                );
-            });
-        }, [props.index, dispatch, tempText]);
+            dispatch(
+                controller.onBlurSegmentRequest({
+                    segmentIndex: props.index,
+                })
+            );
+        }, [props.index, dispatch, segment?.text]);
 
         // События редактора
         const eventsExt = useMemo(() => {
@@ -245,10 +230,18 @@ export const SegmentEditor = memo(
             });
         }, [dispatch, onBlur, props.index]);
 
-        // Вставка файлов
+        // Вставка файлов и обработка клавиш
         const eventsDom = dom({
-            paste: async (ev: ClipboardEvent) => {
-                const items = (ev?.clipboardData?.items ??
+            keydown: (ev: KeyboardEvent | ClipboardEvent) => {
+                if ('key' in ev && ev.key === 'Enter') {
+                    dispatch(controller.onGapRequest());
+                }
+            },
+            paste: async (ev: ClipboardEvent | KeyboardEvent) => {
+                if (!('clipboardData' in ev)) {
+                    return;
+                }
+                const items = (ev.clipboardData?.items ??
                     []) as DataTransferItemList;
                 dispatch(
                     controller.onAddedFilesToSegmentEditorRequest({
@@ -259,7 +252,7 @@ export const SegmentEditor = memo(
                                 editor?.current?.view?.state.selection.main
                                     .head; // Получаем позицию курсора
                             onChange(
-                                `${tempText.slice(0, cursorPosition)}\n${insert}${tempText.slice(cursorPosition)}`
+                                `${segment?.text.slice(0, cursorPosition)}\n${insert}${segment?.text.slice(cursorPosition)}`
                             );
                         },
                     })
@@ -274,7 +267,6 @@ export const SegmentEditor = memo(
                 editor?.current?.view?.dispatch({
                     effects: setDecorationsEffect.of(Decoration.none as never),
                 });
-                setTempText(value);
                 setTempSegmentErrors([]);
                 setTimeout(() => {
                     dispatch(
@@ -285,7 +277,7 @@ export const SegmentEditor = memo(
                     );
                 });
             },
-            [setTempText, setTempSegmentErrors, props.index, dispatch]
+            [segment?.text, setTempSegmentErrors, props.index, dispatch]
         );
 
         // Первую прорисовку пропускаем
@@ -302,7 +294,7 @@ export const SegmentEditor = memo(
             >
                 <CodeMirror
                     ref={editor as LegacyRef<ReactCodeMirrorRef>}
-                    value={tempText}
+                    value={segment?.text}
                     onChange={onChange}
                     readOnly={projectIsReadonly}
                     extensions={[
@@ -325,6 +317,7 @@ export const SegmentEditor = memo(
                     ].filter((e) => !!e)}
                     basicSetup={{
                         lineNumbers: true,
+                        history: false,
                     }}
                 />
                 <div className="editor-rules">

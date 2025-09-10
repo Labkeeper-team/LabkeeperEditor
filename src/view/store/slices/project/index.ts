@@ -55,6 +55,15 @@ export const projectSlice = createSlice({
                 state.compileSuccessResult = structuredClone(payload);
             }
         },
+        setInputSegmentText: (
+            state,
+            { payload }: PayloadAction<{ index: number; text: string }>
+        ) => {
+            state.currentProgram.segments[payload.index] = {
+                ...state.currentProgram.segments[payload.index],
+                text: payload.text,
+            };
+        },
         setCompileError: (
             state,
             { payload }: PayloadAction<CompileErrorResultList>
@@ -130,4 +139,5 @@ export const {
     setCurrentProgram,
     setCompileResultForSegment,
     setCompileResultSegmentsSize,
+    setInputSegmentText,
 } = projectSlice.actions;

@@ -233,6 +233,9 @@ export const mockViewModelState = (): MockViewModelRepository => {
             currentProgram: () => mockViewModelState.currentProgram,
             files: () => mockViewModelState.files,
 
+            setInputSegmentText: (index, text) => {
+                mockViewModelState.currentProgram.segments[index].text = text;
+            },
             setCompileResultSegmentsSize: (size: number) => {
                 mockViewModelState.compileSuccessResult.segments.length = size;
             },
@@ -327,6 +330,7 @@ export interface ProjectViewModelRepository {
     currentProgram: () => Program;
     files: () => LabkeeperFile[];
 
+    setInputSegmentText: (index: number, text: string) => void;
     setCompileResultSegmentsSize: (size: number) => void;
     setCompileResultForSegment: (index: number, segment: OutputSegment) => void;
     setReadOnly: (value: boolean) => void;

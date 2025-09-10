@@ -284,20 +284,15 @@ export class Controller {
         }
     );
 
+    onGapRequest = createAsyncThunk('onGapRequest', async () => {
+        this.wrapper('onGapRequest', () => this.programEditorService.onGap());
+    });
+
     onBlurSegmentRequest = createAsyncThunk(
         'onBlurSegmentRequest',
-        async ({
-            segmentIndex,
-            segmentText,
-        }: {
-            segmentIndex: number;
-            segmentText: string;
-        }) => {
+        async ({ segmentIndex }: { segmentIndex: number }) => {
             this.wrapper('onBlurSegmentRequest', () =>
-                this.programEditorService.onBlurSegment(
-                    segmentIndex,
-                    segmentText
-                )
+                this.programEditorService.onBlurSegment(segmentIndex)
             );
         }
     );

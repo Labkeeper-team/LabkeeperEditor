@@ -142,6 +142,40 @@ test('program-service-test', () => {
     ] as Segment[]);
 });
 
+test('gaps-test', () => {
+    const service: ProgramService = new ProgramService(
+        new InMemoryProgramRepository()
+    );
+
+    service.addSegmentToLastPosition('md');
+    service.changeSegmentTextByPositionIndex(0, 'biba');
+    service.gap();
+    service.gap();
+    service.gap();
+    service.changeSegmentTextByPositionIndex(0, 'bibaboba');
+    service.undo();
+
+    expect(service.getCurrentProgram().segments).toStrictEqual([
+        {
+            type: 'md',
+            text: 'biba',
+            parameters: { visible: true },
+        },
+    ] as Segment[]);
+
+    service.gap();
+    service.redo();
+    service.gap();
+
+    expect(service.getCurrentProgram().segments).toStrictEqual([
+        {
+            type: 'md',
+            text: 'bibaboba',
+            parameters: { visible: true },
+        },
+    ] as Segment[]);
+});
+
 test('limit-history-test', () => {
     const service: ProgramService = new ProgramService(
         new InMemoryProgramRepository()

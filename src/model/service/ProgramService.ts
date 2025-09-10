@@ -93,6 +93,21 @@ export class ProgramService {
         this.applyChange(new MoveSegmentsAction(upperSegment));
     };
 
+    gap = () => {
+        const last =
+            this.programRepository.history[
+                this.programRepository.history.length - 1
+            ];
+        if (!last) {
+            return;
+        }
+        if (last instanceof GapAction) {
+            return;
+        }
+        const gap = new GapAction();
+        this.applyChange(gap);
+    };
+
     changeSegmentTextByPositionIndex = (index: number, text: string) => {
         const last: ProgramChangeAction | undefined =
             this.programRepository.history[
@@ -121,12 +136,18 @@ export class ProgramService {
     };
 
     undo = () => {
-        const last = this.programRepository.history.pop();
-        if (!last) {
-            return;
+        while (true) {
+            const last = this.programRepository.history.pop();
+            if (!last) {
+                return;
+            }
+            last.revert(this.programRepository.program);
+            this.programRepository.redoHistory.push(last);
+
+            if (!(last instanceof GapAction)) {
+                return;
+            }
         }
-        last.revert(this.programRepository.program);
-        this.programRepository.redoHistory.push(last);
     };
 
     canUndo = () => {
@@ -134,14 +155,20 @@ export class ProgramService {
     };
 
     redo = () => {
-        const redo = this.programRepository.redoHistory.pop();
-        if (!redo) {
-            return;
-        }
-        redo.apply(this.programRepository.program);
-        this.programRepository.history.push(redo);
-        if (this.programRepository.history.length > historyLimit) {
-            this.programRepository.history.shift();
+        while (true) {
+            const redo = this.programRepository.redoHistory.pop();
+            if (!redo) {
+                return;
+            }
+            redo.apply(this.programRepository.program);
+            this.programRepository.history.push(redo);
+            if (this.programRepository.history.length > historyLimit) {
+                this.programRepository.history.shift();
+            }
+
+            if (!(redo instanceof GapAction)) {
+                return;
+            }
         }
     };
 
@@ -158,6 +185,12 @@ export class ProgramService {
         this.programRepository.redoHistory = [];
         this.programRepository.program = createEmptyProgram();
     };
+}
+
+class GapAction implements ProgramChangeAction {
+    apply = () => {};
+
+    revert = () => {};
 }
 
 class VisibilityChangeAction implements ProgramChangeAction {

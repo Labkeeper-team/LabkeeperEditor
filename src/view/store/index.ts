@@ -51,6 +51,7 @@ import {
     setCompileResultSegmentsSize,
     setCurrentProgram,
     setFiles,
+    setInputSegmentText,
     setProject,
     setReadOnly,
 } from './slices/project';
@@ -206,6 +207,8 @@ export const createViewModelStateFromStore = (
             currentProgram: () => store.getState().project.currentProgram,
             files: () => store.getState().project.files,
 
+            setInputSegmentText: (index, text) =>
+                store.dispatch(setInputSegmentText({ index, text })),
             setCompileResultSegmentsSize: (size: number) =>
                 store.dispatch(setCompileResultSegmentsSize(size)),
             setCompileResultForSegment: (

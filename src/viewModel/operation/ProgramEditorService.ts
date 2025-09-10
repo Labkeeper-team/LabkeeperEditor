@@ -256,17 +256,19 @@ export class ProgramEditorService {
         );
     };
 
-    onBlurSegment = async (segmentIndex: number, segmentText: string) => {
+    onGap = () => {
+        this.programService.gap();
+    };
+
+    onBlurSegment = async (segmentIndex: number) => {
         if (
             this.repository.ideViewModelRepository.activeSegmentIndex() ===
             segmentIndex
         ) {
             this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(-1);
         }
-        this.programService.changeSegmentTextByPositionIndex(
-            segmentIndex,
-            segmentText
-        );
+
+        this.programService.gap();
 
         /*
         Files comparing
@@ -298,6 +300,10 @@ export class ProgramEditorService {
         );
 
         this.ideService.onSegmentUpdate(segmentIndex, segmentText);
+        this.repository.projectViewModelRepository.setInputSegmentText(
+            segmentIndex,
+            segmentText
+        );
     };
 
     onAddSegmentClicked = (type: SegmentType) => {
