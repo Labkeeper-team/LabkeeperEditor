@@ -356,6 +356,24 @@ export class Controller {
         }
     );
 
+    onDeleteFilesConfirmRequest = createAsyncThunk(
+        'onDeleteFilesConfirmRequest',
+        async () => {
+            this.wrapper('onDeleteFilesConfirmRequest', () =>
+                this.fileManagerService.onConfirmDeleteFiles()
+            );
+        }
+    );
+
+    onDeleteFilesCancelRequest = createAsyncThunk(
+        'onDeleteFilesCancelRequest',
+        async () => {
+            this.wrapper('onDeleteFilesCancelRequest', () =>
+                this.fileManagerService.onCancelDeleteFiles()
+            );
+        }
+    );
+
     onSearchIconPressRequest = createAsyncThunk(
         'onSearchIconPressRequest',
         async () => {

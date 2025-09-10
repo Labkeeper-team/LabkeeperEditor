@@ -118,6 +118,7 @@ class MockViewModelRepositoryState {
     showSearch = false;
     showShareModal = false;
     showTour = false;
+    filesToDelete: LabkeeperFile[] = [];
 
     email: string = '';
     id: number = -1;
@@ -214,8 +215,10 @@ export const mockViewModelState = (): MockViewModelRepository => {
                 (mockViewModelState.lastOpenedProjectUuid = uuid),
             setInstructionExpanded: (v) =>
                 (mockViewModelState.instructionExpanded = v),
-            setLanguage: (v) => (mockViewModelState.language = v),
-            setLastProgram: (v) => (mockViewModelState.lastProgram = v),
+            setLanguage: (v) =>
+                (mockViewModelState.language = structuredClone(v)),
+            setLastProgram: (v) =>
+                (mockViewModelState.lastProgram = structuredClone(v)),
             clearLastProgram: () =>
                 (mockViewModelState.lastProgram = {
                     segments: [],
@@ -247,19 +250,22 @@ export const mockViewModelState = (): MockViewModelRepository => {
             },
             setReadOnly: (v: boolean) =>
                 (mockViewModelState.projectIsReadonly = v),
-            setProject: (v?: Project) => (mockViewModelState.project = v),
+            setProject: (v?: Project) =>
+                (mockViewModelState.project = structuredClone(v)),
             setCompileResult: (v: CompileSuccessResult) =>
-                (mockViewModelState.compileSuccessResult = v),
+                (mockViewModelState.compileSuccessResult = structuredClone(v)),
             setCompileErrorResult: (v: CompileErrorResultList) =>
-                (mockViewModelState.compileErrorResult = v),
-            setFiles: (v: LabkeeperFile[]) => (mockViewModelState.files = v),
-            setCurrentProgram: (v) => (mockViewModelState.currentProgram = v),
+                (mockViewModelState.compileErrorResult = structuredClone(v)),
+            setFiles: (v: LabkeeperFile[]) =>
+                (mockViewModelState.files = structuredClone(v)),
+            setCurrentProgram: (v) =>
+                (mockViewModelState.currentProgram = structuredClone(v)),
         },
         projectsViewModelRepository: {
             projects: () => mockViewModelState.projects,
 
             setProjects: (v: ProjectShort[]) =>
-                (mockViewModelState.projects = v),
+                (mockViewModelState.projects = structuredClone(v)),
         },
         settingsViewModelRepository: {
             isAutocompleteLoading: () =>
@@ -274,6 +280,7 @@ export const mockViewModelState = (): MockViewModelRepository => {
             showSearch: () => mockViewModelState.showSearch,
             showShareModal: () => mockViewModelState.showShareModal,
             showTour: () => mockViewModelState.showTour,
+            filesToDelete: () => mockViewModelState.filesToDelete,
 
             setShowSearch: (v: boolean) => (mockViewModelState.showSearch = v),
             setShowFileManager: (v: boolean) =>
@@ -290,6 +297,8 @@ export const mockViewModelState = (): MockViewModelRepository => {
                 (mockViewModelState.isAutocompleteLoading = v),
             setIsFileDraggedToFileManager: (v: boolean) =>
                 (mockViewModelState.isFileDraggedToManager = v),
+            setFilesToDelete: (v: LabkeeperFile[]) =>
+                (mockViewModelState.filesToDelete = structuredClone(v)),
         },
         userViewModelRepository: {
             email: () => mockViewModelState.email,
@@ -362,6 +371,7 @@ export interface SettingsViewModelRepository {
     isFileDraggedToManager: () => boolean;
     isAutocompleteLoading: () => boolean;
     showShareModal: () => boolean;
+    filesToDelete: () => LabkeeperFile[];
 
     setTourVisibility: (visible: boolean) => void;
     setEditModeForFilename: (edit: boolean) => void;
@@ -371,6 +381,7 @@ export interface SettingsViewModelRepository {
     setShowFileManager: (showFileManager: boolean) => void;
     setIsCompiling: (value: boolean) => void;
     setIsFileDraggedToFileManager: (value: boolean) => void;
+    setFilesToDelete: (files: LabkeeperFile[]) => void;
 }
 
 export interface ProjectsViewModelRepository {

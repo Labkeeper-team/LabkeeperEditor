@@ -3,6 +3,7 @@ import { ProgramService } from '../../model/service/ProgramService.ts';
 import {
     CompileSuccessResult,
     ComputationalOutputSegment,
+    LabkeeperFile,
     Program,
     TextOutputSegment,
 } from '../../model/domain.ts';
@@ -80,8 +81,33 @@ export class IdeService {
         );
     };
 
+    private findUnusedFileLinks = (
+        program: Program,
+        files: LabkeeperFile[]
+    ) => {
+        return files.filter(
+            (file) =>
+                !program.segments.find((s) => s.text.includes(file.fileName))
+        );
+    };
+
+    calculateFilesToDelete = (program: Program) => {
+        if (
+            this.repository.userViewModelRepository.isAuthenticated() &&
+            this.repository.projectViewModelRepository.project() &&
+            !this.repository.projectViewModelRepository.projectIsReadonly()
+        ) {
+            return this.findUnusedFileLinks(
+                program,
+                this.repository.projectViewModelRepository.files()
+            );
+        }
+        return [];
+    };
+
     onProgramUpdated = () => {
         const program = this.programService.getCurrentProgram();
+
         this.repository.projectViewModelRepository.setCurrentProgram(program);
         if (
             !this.repository.userViewModelRepository.isAuthenticated() &&

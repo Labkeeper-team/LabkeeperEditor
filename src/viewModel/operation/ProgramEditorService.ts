@@ -82,6 +82,12 @@ export class ProgramEditorService {
                                 return;
                             }
 
+                            thisCopy.repository.settingsViewModelRepository.setShowFileManager(
+                                true
+                            );
+                            thisCopy.repository.ideViewModelRepository.setGetFilesRequestState(
+                                'loading'
+                            );
                             const res = await thisCopy.rpi.uploadFileRequest(
                                 formData,
                                 project.projectId,
@@ -153,6 +159,10 @@ export class ProgramEditorService {
                                 );
                                 editorCallback(itemToInsert);
                                 reslv(null);
+                            } else {
+                                thisCopy.repository.ideViewModelRepository.setGetFilesRequestState(
+                                    'error'
+                                );
                             }
                         };
                         reader.readAsDataURL(file);
@@ -184,32 +194,7 @@ export class ProgramEditorService {
     };
 
     onProgramSaveTimeout = async () => {
-        await this.segmentEditorSaveProgram();
-    };
-
-    private segmentEditorSaveProgram = async (): Promise<void> => {
-        if (this.repository.projectViewModelRepository.projectIsReadonly()) {
-            return;
-        }
-        const savedProgram = this.programService.getCurrentProgram();
-        const project = this.repository.projectViewModelRepository.project();
-        if (project) {
-            const result = await this.rpi.saveProgramRequest(
-                project.projectId,
-                savedProgram
-            );
-            if (result.isUnauth) {
-                this.repository.toast(
-                    this.repository.dictionary.filemanager.errors
-                        .sessionExpired,
-                    'error'
-                );
-                this.ideService.resetEditor();
-            }
-            if (!result.isOk) {
-                return;
-            }
-        }
+        await this.loaderService.segmentEditorSaveProgram();
     };
 
     segmentEditorChangeSegmentPosition = async (
@@ -218,7 +203,7 @@ export class ProgramEditorService {
     ): Promise<void> => {
         this.observerService.onEvent(Events.EVENT_MOVE_SEGMENT);
         this.programService.moveSegment(segmentIndex, direction);
-        await this.segmentEditorSaveProgram();
+        await this.loaderService.segmentEditorSaveProgram();
         this.ideService.onProgramUpdated();
     };
 
@@ -236,8 +221,21 @@ export class ProgramEditorService {
     };
 
     deleteSegment = async (segmentIndex: number) => {
+        const filesBefore = this.ideService.calculateFilesToDelete(
+            this.programService.getCurrentProgram()
+        );
         this.programService.deleteSegmentByIndex(segmentIndex);
-        await this.segmentEditorSaveProgram();
+        const filesAfter = this.ideService.calculateFilesToDelete(
+            this.programService.getCurrentProgram()
+        );
+
+        if (filesAfter.length > filesBefore.length) {
+            this.repository.settingsViewModelRepository.setFilesToDelete(
+                filesAfter
+            );
+        }
+
+        await this.loaderService.segmentEditorSaveProgram();
         this.ideService.onProgramUpdated();
     };
 
@@ -248,7 +246,7 @@ export class ProgramEditorService {
         // TODO observer service call
         this.programService.addSegmentAfterIndex(segmentType, after);
         this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(after + 1);
-        await this.segmentEditorSaveProgram();
+        await this.loaderService.segmentEditorSaveProgram();
         this.ideService.onProgramUpdated();
     };
 
@@ -269,7 +267,24 @@ export class ProgramEditorService {
             segmentIndex,
             segmentText
         );
-        await this.segmentEditorSaveProgram();
+
+        /*
+        Files comparing
+         */
+        const programBefore =
+            this.repository.projectViewModelRepository.currentProgram();
+        const programAfter = this.programService.getCurrentProgram();
+        const filesBefore =
+            this.ideService.calculateFilesToDelete(programBefore);
+        const filesAfter = this.ideService.calculateFilesToDelete(programAfter);
+
+        if (filesAfter.length > filesBefore.length) {
+            this.repository.settingsViewModelRepository.setFilesToDelete(
+                filesAfter
+            );
+        }
+
+        await this.loaderService.segmentEditorSaveProgram();
         this.ideService.onProgramUpdated();
     };
 

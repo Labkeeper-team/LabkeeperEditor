@@ -1668,7 +1668,7 @@ test('compilation-401-test', async ({ page }) => {
 401 при открытии файлового менеджера
  */
 test('file-manager-401-test', async ({ page }) => {
-    let auth = true;
+    const auth = true;
     // Перехватываем запрос user-info
     await page.route('/api/v2/public/user-info', async (route) => {
         await route.fulfill({
@@ -1747,7 +1747,6 @@ test('file-manager-401-test', async ({ page }) => {
     await page.route(
         `/api/v2/public/project/${uuid}/file/list`,
         async (route) => {
-            auth = false;
             await route.fulfill({
                 status: 401,
                 contentType: 'application/json',
@@ -1761,9 +1760,6 @@ test('file-manager-401-test', async ({ page }) => {
     await page.waitForLoadState('domcontentloaded');
     // Ждем редиректа на конкретный проект
     await expect(page).toHaveURL(`/project/${uuid}`);
-
-    // Открываем файловый менеджер
-    await page.locator('div.file-manager-button').click();
 
     // ждем появления toast с ошибкой
     await expect(page.locator('div.Toastify__toast')).toBeVisible();

@@ -2,20 +2,24 @@ import { ProjectShort } from '../../model/domain.ts';
 import { ViewModelRepository } from '../repository';
 import { Rpi } from '../../model/rpi';
 import { IdeService } from './IdeService.ts';
+import { ProgramService } from '../../model/service/ProgramService.ts';
 
 export class LoaderService {
     rpi: Rpi;
     repository: ViewModelRepository;
     ideService: IdeService;
+    programService: ProgramService;
 
     constructor(
         rpi: Rpi,
         repository: ViewModelRepository,
-        ideService: IdeService
+        ideService: IdeService,
+        programService: ProgramService
     ) {
         this.rpi = rpi;
         this.repository = repository;
         this.ideService = ideService;
+        this.programService = programService;
     }
 
     loadFiles = async (projectId: string) => {
@@ -45,6 +49,31 @@ export class LoaderService {
             this.repository.ideViewModelRepository.setGetFilesRequestState(
                 'error'
             );
+        }
+    };
+
+    segmentEditorSaveProgram = async (): Promise<void> => {
+        if (this.repository.projectViewModelRepository.projectIsReadonly()) {
+            return;
+        }
+        const savedProgram = this.programService.getCurrentProgram();
+        const project = this.repository.projectViewModelRepository.project();
+        if (project) {
+            const result = await this.rpi.saveProgramRequest(
+                project.projectId,
+                savedProgram
+            );
+            if (result.isUnauth) {
+                this.repository.toast(
+                    this.repository.dictionary.filemanager.errors
+                        .sessionExpired,
+                    'error'
+                );
+                this.ideService.resetEditor();
+            }
+            if (!result.isOk) {
+                return;
+            }
         }
     };
 

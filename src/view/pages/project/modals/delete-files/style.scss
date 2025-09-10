@@ -1,0 +1,52 @@
+@use '../../../../styles/colors' as *;
+
+.delete-files-modal {
+    background-color: $white;
+    border-radius: 8px;
+    min-width: 520px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.delete-files-modal > .typography {
+    font-size: 18px;
+    font-weight: 600;
+    padding: 20px 32px;
+    background-color: $gray-60;
+    margin-bottom: 0;
+}
+
+.delete-files-list {
+    max-height: 260px;
+    overflow: auto;
+    padding: 16px 32px 0 32px;
+}
+
+.delete-files-item {
+    font-size: 14px;
+    color: $gray-10;
+    padding: 4px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.delete-files-item__icon {
+    display: inline-flex;
+    width: 18px;
+    height: 18px;
+    opacity: 0.8;
+}
+
+.delete-files-item__name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.delete-files-actions {
+    display: flex;
+    gap: 12px;
+    padding: 16px 32px 24px 32px;
+}

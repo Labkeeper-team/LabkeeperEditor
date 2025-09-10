@@ -19,10 +19,6 @@ export class ProgramService {
         this.programRepository = programRepository;
     }
 
-    /*
-    System operations
-     */
-
     getCurrentProgram = (): Program => {
         return this.programRepository.program;
     };
@@ -49,6 +45,14 @@ export class ProgramService {
     ) => {
         this.applyChange(
             new VisibilityChangeAction(visible, segmentIndex, parameterName)
+        );
+    };
+
+    replaceAllInProgram = (from: string, to: string) => {
+        this.programRepository.history = [];
+        this.programRepository.redoHistory = [];
+        this.programRepository.program.segments.forEach(
+            (s) => (s.text = s.text.replaceAll(from, to))
         );
     };
 

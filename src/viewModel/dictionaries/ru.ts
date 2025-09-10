@@ -103,12 +103,13 @@ export const ru: Translations = {
         code: 'код',
         markdown: 'маркдаун',
         visible: 'Показывать',
-        hide_assignment_with_values: 'Скрыть формулу со значениями',
+        hide_assignment_with_values: 'Скрыть формулу с подставленными числами',
         hide_array: 'Скрыть массив',
-        hide_general_formula: 'Скрыть общую формулу',
+        hide_general_formula:
+            'Скрыть общую формулу погрешности с частными производными',
         hide_infl_assignment: 'Скрыть формулу погрешности',
         hide_infl_assignment_with_values:
-            'Скрыть формулу погрешности со значениями',
+            'Скрыть формулу погрешности с подставленными числами',
         errors: {
             non_authorized_paste_image:
                 'Что бы вставить изображение вам необходимо авторизоваться',
@@ -117,9 +118,10 @@ export const ru: Translations = {
         asciimath: 'простая формула',
         no_computation_result: 'Отсутствует результат вычислений',
         run_to_view: 'Нажмите кнопку "Выполнить"',
-        hide_assignment: 'Скрыть формулу',
-        hide_value: 'Скрыть результат вычислений',
-        hide_infl: 'Скрыть погрешность',
+        hide_assignment:
+            'Скрыть основную формулу по которой делаются вычисления',
+        hide_value: 'Скрыть конечный числовой результат',
+        hide_infl: 'Скрыть конечный результат погрешности',
     },
 
     instructions: {
@@ -246,6 +248,7 @@ export const ru: Translations = {
             notEnoughRights: 'Не хватает прав для просмотра проекта',
             notFound: 'Такого проекта не существует',
             noNetwork: 'Отсутствует соединение с сервером',
+            bad_name: 'Не используйте слэши в названии файла',
         },
     },
     share_modal: {
@@ -255,6 +258,9 @@ export const ru: Translations = {
         copy_link: 'Копировать ссылку для шаринга',
         link_copied: 'Ссылка скопирована в буфер обмена',
         copy_error: 'Не удалось скопировать ссылку',
+    },
+    delete_files_modal: {
+        title: 'Вы удалили все ссылки на файлы из вашего кода. Хотите удалить следующие файлы из проекта?',
     },
     wiki: 'wiki',
     readonly_public_project: 'Публичный проект, доступный только для чтения',

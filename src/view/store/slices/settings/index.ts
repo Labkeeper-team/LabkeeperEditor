@@ -1,10 +1,17 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { settingsInitialState } from '../index.ts';
+import { LabkeeperFile } from '../../../../model/domain.ts';
 
 export const settingsSlice = createSlice({
     name: 'settingsSlice',
     initialState: settingsInitialState,
     reducers: {
+        setFilesToDelete: (
+            state,
+            { payload }: PayloadAction<LabkeeperFile[]>
+        ) => {
+            state.filesToDelete = payload;
+        },
         setIsCompiling: (state, { payload }: PayloadAction<boolean>) => {
             state.isCompiling = payload;
         },
@@ -60,4 +67,5 @@ export const {
     setIsFileDraggedToFileManager,
     setShowShareModal,
     setShowContactModal,
+    setFilesToDelete,
 } = settingsSlice.actions;

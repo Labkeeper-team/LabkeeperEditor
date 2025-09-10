@@ -67,6 +67,7 @@ import {
     setEditModeForFilename,
     setEditModeForProjectTitle,
     setExpandProblemViewer,
+    setFilesToDelete,
     setIsCompiling,
     setIsFileDraggedToFileManager,
     setShoFileManager,
@@ -250,6 +251,7 @@ export const createViewModelStateFromStore = (
             showSearch: () => store.getState().settings.showSearch,
             showShareModal: () => store.getState().settings.showShareModal,
             showTour: () => store.getState().settings.showTour,
+            filesToDelete: () => store.getState().settings.filesToDelete,
 
             setShowSearch: (show: boolean) =>
                 store.dispatch(setShowSearch(show)),
@@ -267,6 +269,8 @@ export const createViewModelStateFromStore = (
                 store.dispatch(setIsCompiling(value)),
             setIsFileDraggedToFileManager: (edit: boolean) =>
                 store.dispatch(setIsFileDraggedToFileManager(edit)),
+            setFilesToDelete: (files: LabkeeperFile[]) =>
+                store.dispatch(setFilesToDelete(files)),
         },
         userViewModelRepository: {
             email: () => store.getState().user.email,

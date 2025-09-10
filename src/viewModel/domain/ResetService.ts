@@ -66,6 +66,7 @@ export class ResetService {
         this.repository.settingsViewModelRepository.setTourVisibility(false);
         this.repository.settingsViewModelRepository.setIsCompiling(false);
         this.repository.settingsViewModelRepository.setShowSearch(false);
+        this.repository.settingsViewModelRepository.setFilesToDelete([]);
 
         // User
         this.repository.userViewModelRepository.setUserInfo({

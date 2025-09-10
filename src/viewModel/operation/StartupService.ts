@@ -208,6 +208,9 @@ export class StartupService {
             this.repository.ideViewModelRepository.setGetProjectRequestState(
                 'ok'
             );
+            if (userInfo.isAuthenticated) {
+                await this.loader.loadFiles(project.projectId);
+            }
             return;
         }
         if (!result.isOk) {
@@ -246,6 +249,9 @@ export class StartupService {
                 this.repository.setLocation(
                     Routes.Project.replace(':id', project.projectId)
                 );
+                if (userInfo.isAuthenticated) {
+                    await this.loader.loadFiles(project.projectId);
+                }
             }
             if (result.isUnauth) {
                 this.repository.setLocation(Routes.ProjectDefault);

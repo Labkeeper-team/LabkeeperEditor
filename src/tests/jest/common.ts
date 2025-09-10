@@ -15,12 +15,15 @@ export const USER_ID = 111;
 export const USER_EMAIL = 'a@gmail.com';
 export const PROJECT_ID = '2cd18704-6c3f-48cb-96f1-9a923930f8cb';
 export const PROJECT_TITLE = 'biba project';
-export const FILE_NAME = 'my file';
+export const FILE_NAME = 'myfile.txt';
 export const FILE_URL =
     'https://files.labkeeper.io/project/348484/user/43444/myfile.txt';
 export const DEFAULT_INSTANT: Date = new Date('2025-09-08T12:15:38.514Z');
 
 global.structuredClone = (val) => {
+    if (val === undefined) {
+        return undefined;
+    }
     return JSON.parse(JSON.stringify(val));
 };
 
@@ -162,6 +165,16 @@ export function matchRepositorySnapshot(repository: ViewModelRepository) {
     expect(
         (repository as MockViewModelRepository).mockState()
     ).toMatchSnapshot();
+}
+
+export function mockSaveProgramRequest(rpi: Rpi) {
+    rpi.saveProgramRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+        body: {},
+    });
 }
 
 export function mockAuthenticatedStartup(rpi: Rpi) {

@@ -45,7 +45,8 @@ export function setupContext(
     const loaderService: LoaderService = new LoaderService(
         rpi,
         repository,
-        ideService
+        ideService,
+        programService
     );
     const fileService: FileService = new FileService(repository);
     const exampleService: ExampleService = new ExampleService(rpi);

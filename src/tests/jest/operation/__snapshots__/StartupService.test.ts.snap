@@ -122,6 +122,7 @@ S
   "emailRequest": "unknown",
   "expandProblemViewer": false,
   "files": [],
+  "filesToDelete": [],
   "getFilesRequestState": "unknown",
   "getProjectRequestState": "unknown",
   "getProjectsRequestState": "unknown",

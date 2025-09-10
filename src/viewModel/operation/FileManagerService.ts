@@ -115,12 +115,66 @@ export class FileManagerService {
         }
     };
 
+    onConfirmDeleteFiles = async () => {
+        const files =
+            this.repository.settingsViewModelRepository.filesToDelete();
+        if (!files?.length) {
+            this.repository.settingsViewModelRepository.setFilesToDelete([]);
+            return;
+        }
+        const project = this.repository.projectViewModelRepository.project();
+        if (!project) {
+            this.repository.settingsViewModelRepository.setFilesToDelete([]);
+            return;
+        }
+        for (const file of files) {
+            const result = await this.rpi.deleteFileRequest(
+                file.fileName,
+                project.projectId
+            );
+            if (result.isUnauth) {
+                this.repository.toast(
+                    this.repository.dictionary.filemanager.errors
+                        .sessionExpired,
+                    'error'
+                );
+                this.ideService.resetEditor();
+                this.repository.settingsViewModelRepository.setFilesToDelete(
+                    []
+                );
+                return;
+            }
+            if (result.code === 404) {
+                this.repository.toast(
+                    this.repository.dictionary.filemanager.errors.notFound,
+                    'error'
+                );
+                this.repository.settingsViewModelRepository.setFilesToDelete(
+                    []
+                );
+            }
+        }
+        await this.loaderService.loadFiles(project.projectId);
+        this.repository.settingsViewModelRepository.setFilesToDelete([]);
+    };
+
+    onCancelDeleteFiles = () => {
+        this.repository.settingsViewModelRepository.setFilesToDelete([]);
+    };
+
     onFileNameChanged = async (oldName: string, newName: string) => {
         this.repository.settingsViewModelRepository.setEditModeForFilename(
             false
         );
         const project = this.repository.projectViewModelRepository.project();
         if (!project || oldName === newName) {
+            return;
+        }
+        if (newName.includes('/')) {
+            this.repository.toast(
+                this.repository.dictionary.filemanager.errors.bad_name,
+                'error'
+            );
             return;
         }
 

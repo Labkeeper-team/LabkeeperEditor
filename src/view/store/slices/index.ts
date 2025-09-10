@@ -37,6 +37,7 @@ interface SettingsState {
     isCompiling: boolean;
     showShareModal: boolean;
     showContactModal: boolean;
+    filesToDelete: LabkeeperFile[];
 }
 
 interface ProjectsState {
@@ -135,6 +136,7 @@ export const settingsInitialState: SettingsState = {
     isCompiling: false,
     showShareModal: false,
     showContactModal: false,
+    filesToDelete: [],
 };
 
 export const userInitialState: UserInfo = {

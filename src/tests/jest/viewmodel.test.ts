@@ -7,6 +7,9 @@
 } from '../../model/rpi';
 
 global.structuredClone = (val) => {
+    if (val === undefined) {
+        return undefined;
+    }
     return JSON.parse(JSON.stringify(val));
 };
 
@@ -27,6 +30,7 @@ import {
     mockObserver,
     ObserverService,
 } from '../../model/service/ObserverService.ts';
+import { mockListFilesRequestWithDefaultFile } from './common.ts';
 
 const defaultParams = {
     visible: true,
@@ -156,6 +160,8 @@ test('add-segment-between-active-index-test', async () => {
 
     await programEditorService.onSegmentTextEdited(3, 'text');
 
+    await programEditorService.onBlurSegment(3, 'text');
+
     expect(
         repository.projectViewModelRepository
             .currentProgram()
@@ -215,6 +221,7 @@ test('remove-readonly-when-project-is-create-test', async () => {
         projectsPageService,
     } = mockContext();
     const uuid = '2cd18704-6c3f-48cb-96f1-9a923930f8cb';
+    mockListFilesRequestWithDefaultFile(rpi);
 
     rpi.getUserInfoRequest = jest
         .fn()
@@ -302,6 +309,7 @@ test('display-name-new-project-test', async () => {
         projectPageService,
         projectsPageService,
     } = mockContext();
+    mockListFilesRequestWithDefaultFile(rpi);
 
     rpi.getUserInfoRequest = jest
         .fn()
@@ -379,7 +387,11 @@ test('display-name-new-project-test', async () => {
         () => {}
     ); // создать новый проект
     await projectPageService.onBackButtonClicked(); // перейти на экран с проектами
-    expect(repository.projectsViewModelRepository.projects()).toBe(allprojects);
+    expect(
+        repository.projectsViewModelRepository
+            .projects()
+            .map((p) => p.projectId + p.title)
+    ).toStrictEqual(allprojects.map((p) => p.projectId + p.title));
 });
 
 /*

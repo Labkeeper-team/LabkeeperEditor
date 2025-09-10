@@ -98,11 +98,13 @@ export const en: Translations = {
         code: 'code',
         markdown: 'markdown',
         visible: 'Visible',
-        hide_assignment_with_values: 'Hide assignment with values',
+        hide_assignment_with_values: 'Hide a formula with substituted numbers',
         hide_array: 'Hide array',
-        hide_general_formula: 'Hide general formula',
-        hide_infl_assignment: 'Hide infl assignment',
-        hide_infl_assignment_with_values: 'Hide infl assignment with values',
+        hide_general_formula:
+            'Hide the general partial differential error formula',
+        hide_infl_assignment: 'Hide the error formula',
+        hide_infl_assignment_with_values:
+            'Hide the error formula with substituted numbers',
         errors: {
             non_authorized_paste_image: 'You need authorize to paste images',
         },
@@ -110,9 +112,9 @@ export const en: Translations = {
         asciimath: 'simple-math',
         no_computation_result: 'No computation result',
         run_to_view: 'Press the run button to see computations',
-        hide_assignment: 'Hide assignment',
-        hide_value: 'Hide computed value',
-        hide_infl: 'Hide computed error',
+        hide_assignment: 'Hide the main formula used for calculations',
+        hide_value: 'Hide the final numeric result',
+        hide_infl: 'Hide the final error result',
     },
 
     instructions: {
@@ -234,6 +236,7 @@ export const en: Translations = {
             notSupported: 'Media type is not supported',
             notFound: 'Project not found',
             noNetwork: 'No connection with backend',
+            bad_name: 'Do not use slashes in filename',
         },
     },
     share_modal: {
@@ -243,6 +246,9 @@ export const en: Translations = {
         copy_link: 'Copy the link for sharing',
         link_copied: 'Link copied to clipboard',
         copy_error: 'Failed to copy link',
+    },
+    delete_files_modal: {
+        title: 'You removed all file links from your code. Do you want to delete the following files from the project?',
     },
     wiki: 'wiki',
     readonly_public_project: 'readonly public project',

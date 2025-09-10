@@ -223,6 +223,7 @@ export interface Translations {
             notSupported: string;
             notEnoughRights: string;
             notFound: string;
+            bad_name: string;
         };
     };
 
@@ -233,6 +234,9 @@ export interface Translations {
         copy_link: string;
         link_copied: string;
         copy_error: string;
+    };
+    delete_files_modal: {
+        title: string;
     };
     wiki: string;
     readonly_public_project: string;
