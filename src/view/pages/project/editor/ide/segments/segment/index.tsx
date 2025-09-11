@@ -281,14 +281,9 @@ export const SegmentEditor = memo(
                     controller.onAddedFilesToSegmentEditorRequest({
                         items: items,
                         segmentIndex: props.index,
-                        editorCallback: (insert: string) => {
-                            const cursorPosition =
-                                editor?.current?.view?.state.selection.main
-                                    .head; // Получаем позицию курсора
-                            onChange(
-                                `${segment?.text.slice(0, cursorPosition)}\n${insert}${segment?.text.slice(cursorPosition)}`
-                            );
-                        },
+                        cursorPosition:
+                            editor?.current?.view?.state.selection.main.head ??
+                            0,
                     })
                 );
                 ev.preventDefault();

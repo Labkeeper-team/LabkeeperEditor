@@ -74,6 +74,8 @@ export type GetProjectsRequestState =
     | 'loading'
     | 'unauth';
 
+export type SaveProjectRequestState = 'unknown' | 'ok' | 'error' | 'loading';
+
 class MockViewModelRepositoryState {
     location = '/';
 
@@ -86,6 +88,7 @@ class MockViewModelRepositoryState {
     getProjectRequestState: GetProjectRequestState = 'unknown';
     getFilesRequestState: GetFilesRequestState = 'unknown';
     getProjectsRequestState: GetProjectsRequestState = 'unknown';
+    saveProjectRequestState: SaveProjectRequestState = 'unknown';
 
     instructionExpanded = false;
     language: 'ru' | 'en' = 'ru';
@@ -184,6 +187,8 @@ export const mockViewModelState = (): MockViewModelRepository => {
             getFilesRequestState: () => mockViewModelState.getFilesRequestState,
             getProjectsRequestState: () =>
                 mockViewModelState.getProjectsRequestState,
+            saveProjectRequestState: () =>
+                mockViewModelState.saveProjectRequestState,
 
             setGetProjectsRequestState: (v: GetProjectsRequestState) =>
                 (mockViewModelState.getProjectsRequestState = v),
@@ -193,6 +198,8 @@ export const mockViewModelState = (): MockViewModelRepository => {
                 (mockViewModelState.cloneRequestState = v),
             setGetProjectRequestState: (v: GetProjectRequestState) =>
                 (mockViewModelState.getProjectRequestState = v),
+            setSaveProjectRequestState: (v: SaveProjectRequestState) =>
+                (mockViewModelState.saveProjectRequestState = v),
             setUndoEnabled: (v: boolean) =>
                 (mockViewModelState.undoEnabled = v),
             setRedoEnabled: (v: boolean) =>
@@ -353,6 +360,7 @@ export interface IdeViewModelRepository {
     getProjectRequestState: () => GetProjectRequestState;
     getFilesRequestState: () => GetFilesRequestState;
     getProjectsRequestState: () => GetProjectsRequestState;
+    saveProjectRequestState: () => SaveProjectRequestState;
 
     setRedoEnabled: (v: boolean) => void;
     setUndoEnabled: (v: boolean) => void;
@@ -363,6 +371,7 @@ export interface IdeViewModelRepository {
     setGetProjectRequestState: (state: GetProjectRequestState) => void;
     setGetFilesRequestState: (state: GetFilesRequestState) => void;
     setGetProjectsRequestState: (state: GetProjectsRequestState) => void;
+    setSaveProjectRequestState: (state: SaveProjectRequestState) => void;
 }
 
 export interface SettingsViewModelRepository {

@@ -181,6 +181,7 @@ S
   "projectIsReadonly": false,
   "projects": [],
   "redoEnabled": false,
+  "saveProjectRequestState": "unknown",
   "search": undefined,
   "showFileManager": false,
   "showSearch": false,

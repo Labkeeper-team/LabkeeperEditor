@@ -241,17 +241,17 @@ export class Controller {
         async ({
             items,
             segmentIndex,
-            editorCallback,
+            cursorPosition,
         }: {
             items: DataTransferItemList;
             segmentIndex: number;
-            editorCallback: (insert: string) => void;
+            cursorPosition: number;
         }) => {
             this.wrapper('onAddedFilesToSegmentEditorRequest', () =>
                 this.programEditorService.onAddedFilesToSegmentEditor(
                     items,
                     segmentIndex,
-                    editorCallback
+                    cursorPosition
                 )
             );
         }

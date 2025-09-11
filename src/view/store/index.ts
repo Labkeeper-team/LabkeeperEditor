@@ -32,6 +32,7 @@ import {
     setGetFilesRequestState,
     setGetProjectRequestState,
     setGetProjectsRequestState,
+    setSaveProjectRequestState,
     setPreviousActiveSegmentIndex,
     setRedoEnabled,
     setSearch,
@@ -84,6 +85,7 @@ import {
     GetFilesRequestState,
     GetProjectRequestState,
     GetProjectsRequestState,
+    SaveProjectRequestState,
     ViewModelRepository,
 } from '../../viewModel/repository';
 
@@ -163,6 +165,8 @@ export const createViewModelStateFromStore = (
                 store.getState().ide.getFilesRequestState,
             getProjectsRequestState: () =>
                 store.getState().ide.getProjectsRequestState,
+            saveProjectRequestState: () =>
+                store.getState().ide.saveProjectRequestState,
 
             setCloneRequestState: (v: CloneRequestState) =>
                 store.dispatch(setCloneRequestState(v)),
@@ -172,6 +176,8 @@ export const createViewModelStateFromStore = (
                 store.dispatch(setGetFilesRequestState(v)),
             setGetProjectsRequestState: (v: GetProjectsRequestState) =>
                 store.dispatch(setGetProjectsRequestState(v)),
+            setSaveProjectRequestState: (v: SaveProjectRequestState) =>
+                store.dispatch(setSaveProjectRequestState(v)),
             setUndoEnabled: (v: boolean) => store.dispatch(setUndoEnabled(v)),
             setRedoEnabled: (v: boolean) => store.dispatch(setRedoEnabled(v)),
             setSearch: (search?: string) => store.dispatch(setSearch(search)),

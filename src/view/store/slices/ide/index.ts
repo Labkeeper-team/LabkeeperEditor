@@ -5,6 +5,7 @@ import {
     GetFilesRequestState,
     GetProjectRequestState,
     GetProjectsRequestState,
+    SaveProjectRequestState,
 } from '../../../../viewModel/repository';
 
 export const ideSlice = createSlice({
@@ -53,6 +54,12 @@ export const ideSlice = createSlice({
         ) => {
             state.getProjectsRequestState = payload;
         },
+        setSaveProjectRequestState: (
+            state,
+            { payload }: PayloadAction<SaveProjectRequestState>
+        ) => {
+            state.saveProjectRequestState = payload;
+        },
     },
 });
 export const {
@@ -65,4 +72,5 @@ export const {
     setGetProjectRequestState,
     setGetFilesRequestState,
     setGetProjectsRequestState,
+    setSaveProjectRequestState,
 } = ideSlice.actions;

@@ -19,6 +19,7 @@ import {
     GetProjectsRequestState,
     LoginRequestState,
     PasswordRequestState,
+    SaveProjectRequestState,
 } from '../../../viewModel/repository';
 import { createEmptyProgram } from '../../../model/repository/ProgramRepository.ts';
 
@@ -74,6 +75,7 @@ interface IdeState {
     getProjectRequestState: GetProjectRequestState;
     getFilesRequestState: GetFilesRequestState;
     getProjectsRequestState: GetProjectsRequestState;
+    saveProjectRequestState: SaveProjectRequestState;
 }
 
 interface PersistenceState {
@@ -104,6 +106,7 @@ export const ideInitialState: IdeState = {
     getProjectRequestState: 'unknown',
     getFilesRequestState: 'unknown',
     getProjectsRequestState: 'unknown',
+    saveProjectRequestState: 'unknown',
 };
 
 export const persistenceInitialState: PersistenceState = {

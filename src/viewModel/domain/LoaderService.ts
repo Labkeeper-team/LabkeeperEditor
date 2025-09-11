@@ -60,6 +60,9 @@ export class LoaderService {
         const savedProgram = this.programService.getCurrentProgram();
         const project = this.repository.projectViewModelRepository.project();
         if (project) {
+            this.repository.ideViewModelRepository.setSaveProjectRequestState(
+                'loading'
+            );
             const result = await this.rpi.saveProgramRequest(
                 project.projectId,
                 savedProgram
@@ -73,8 +76,14 @@ export class LoaderService {
                 this.ideService.resetEditor();
             }
             if (!result.isOk) {
+                this.repository.ideViewModelRepository.setSaveProjectRequestState(
+                    'error'
+                );
                 return;
             }
+            this.repository.ideViewModelRepository.setSaveProjectRequestState(
+                'ok'
+            );
         }
     };
 

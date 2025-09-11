@@ -299,25 +299,7 @@ export class ProjectPageService {
                 !this.repository.projectViewModelRepository.projectIsReadonly() &&
                 lastProgram
             ) {
-                const result = await this.rpi.saveProgramRequest(
-                    project.projectId,
-                    lastProgram
-                );
-                if (result.isUnauth || result.isForbidden) {
-                    this.repository.toast(
-                        this.repository.dictionary.filemanager.errors
-                            .sessionExpired,
-                        'error'
-                    );
-                    this.ideService.resetEditor();
-                }
-                if (!result.isOk) {
-                    this.repository.toast(
-                        this.repository.dictionary.filemanager.errors.noNetwork,
-                        'error'
-                    );
-                    return;
-                }
+                await this.loaderService.segmentEditorSaveProgram();
             }
             this.observerService.onEvent(Events.EVENT_RUN);
             await this.compilationService.runCompilation();

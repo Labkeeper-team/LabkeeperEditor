@@ -40,139 +40,144 @@ export class ProgramEditorService {
     onAddedFilesToSegmentEditor = async (
         items: DataTransferItemList,
         segmentIndex: number,
-        editorCallback: (insert: string) => void
+        cursorPosition: number
     ) => {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const thisCopy = this;
+        let itemIndex = 0;
         for (const item of items) {
-            await new Promise((reslv) => {
-                try {
-                    if (item.kind === 'file') {
-                        const project =
-                            this.repository.projectViewModelRepository.project();
-                        if (!project) {
-                            this.repository.toast(
-                                this.repository.dictionary.segment.errors
-                                    .non_authorized_paste_image,
-                                'error'
-                            );
-                            return reslv(null);
-                        }
-                        const file = item.getAsFile();
-                        if (!file) {
-                            return reslv(null);
-                        }
-                        this.fileService.checkFile(
-                            file,
-                            this.repository.dictionary
-                        );
-                        const reader = new FileReader();
-                        reader.onload = async function () {
-                            const fileToUpload = file;
-                            const name =
-                                thisCopy.fileService.calculateNumberFile(
-                                    segmentIndex + 1,
-                                    file.name
-                                );
-                            const formData = new FormData();
-                            const filename = name ?? 'Файлнейм';
-                            formData.append('file', fileToUpload);
-
-                            if (!project.projectId) {
-                                return;
-                            }
-
-                            thisCopy.repository.settingsViewModelRepository.setShowFileManager(
-                                true
-                            );
-                            thisCopy.repository.ideViewModelRepository.setGetFilesRequestState(
-                                'loading'
-                            );
-                            const res = await thisCopy.rpi.uploadFileRequest(
-                                formData,
-                                project.projectId,
-                                name
-                            );
-
-                            if (res.code === 413) {
-                                thisCopy.repository.toast(
-                                    thisCopy.repository.dictionary.filemanager.errors.tooBigFile.replace(
-                                        '${replace1}',
-                                        '10Mb'
-                                    ),
-                                    'error'
-                                );
-                                reslv(null);
-                            }
-                            if (res.code === 409) {
-                                thisCopy.repository.toast(
-                                    thisCopy.repository.dictionary.filemanager
-                                        .errors.tooMuchFiles,
-                                    'error'
-                                );
-                                reslv(null);
-                            }
-                            if (res.isUnauth) {
-                                thisCopy.repository.toast(
-                                    thisCopy.repository.dictionary.filemanager
-                                        .errors.sessionExpired,
-                                    'error'
-                                );
-                                thisCopy.ideService.resetEditor();
-                                reslv(null);
-                            }
-                            if (res.isForbidden) {
-                                thisCopy.repository.toast(
-                                    thisCopy.repository.dictionary.filemanager
-                                        .errors.notEnoughRights,
-                                    'error'
-                                );
-                                thisCopy.ideService.resetEditor();
-                                reslv(null);
-                            }
-
-                            if (res.isOk) {
-                                const lastProgram =
-                                    thisCopy.programService.getCurrentProgram();
-                                const url = res.body;
-                                const segmentType =
-                                    lastProgram.segments[segmentIndex]?.type;
-                                let itemToInsert = '';
-                                switch (segmentType) {
-                                    case 'md':
-                                        if (file.type.includes('image')) {
-                                            itemToInsert = `!['image.png'](${url})`;
-                                        }
-                                        break;
-                                    case 'computational':
-                                    default: {
-                                        if (file.type.includes('image')) {
-                                            itemToInsert = `image("${url}")`;
-                                        } else {
-                                            itemToInsert = `load_csv("${filename}")`;
-                                        }
-                                        break;
-                                    }
-                                }
-                                await thisCopy.loaderService.loadFiles(
-                                    project.projectId
-                                );
-                                editorCallback(itemToInsert);
-                                reslv(null);
-                            } else {
-                                thisCopy.repository.ideViewModelRepository.setGetFilesRequestState(
-                                    'error'
-                                );
-                            }
-                        };
-                        reader.readAsDataURL(file);
-                    } else {
-                        reslv(null);
-                    }
-                } catch {
-                    reslv(null);
+            if (item.kind === 'file') {
+                const project =
+                    this.repository.projectViewModelRepository.project();
+                if (
+                    !project ||
+                    this.repository.projectViewModelRepository.projectIsReadonly()
+                ) {
+                    this.repository.toast(
+                        this.repository.dictionary.segment.errors
+                            .non_authorized_paste_image,
+                        'error'
+                    );
+                    return;
                 }
-            });
+                const file = item.getAsFile();
+                if (!file) {
+                    return;
+                }
+                this.fileService.checkFile(file, this.repository.dictionary);
+                const finalItemIndex = itemIndex;
+                const reader = new FileReader();
+                reader.onload = async function () {
+                    const fileToUpload = file;
+                    const name = thisCopy.fileService.calculateNumberFile(
+                        segmentIndex + 1 + finalItemIndex,
+                        file.name
+                    );
+                    const formData = new FormData();
+                    const filename = name ?? 'Файлнейм';
+                    formData.append('file', fileToUpload);
+
+                    if (!project.projectId) {
+                        return;
+                    }
+
+                    thisCopy.repository.settingsViewModelRepository.setShowFileManager(
+                        true
+                    );
+                    thisCopy.repository.ideViewModelRepository.setGetFilesRequestState(
+                        'loading'
+                    );
+                    thisCopy.repository.ideViewModelRepository.setGetProjectRequestState(
+                        'loading'
+                    );
+                    const res = await thisCopy.rpi.uploadFileRequest(
+                        formData,
+                        project.projectId,
+                        name
+                    );
+                    thisCopy.repository.ideViewModelRepository.setGetProjectRequestState(
+                        'ok'
+                    );
+
+                    if (res.isOk) {
+                        const lastProgram =
+                            thisCopy.programService.getCurrentProgram();
+                        const url = res.body;
+                        const segmentType =
+                            lastProgram.segments[segmentIndex]?.type;
+                        let itemToInsert = '';
+                        switch (segmentType) {
+                            case 'md':
+                                if (file.type.includes('image')) {
+                                    itemToInsert = `!['image.png'](${url})`;
+                                }
+                                break;
+                            case 'computational':
+                            default: {
+                                if (file.type.includes('image')) {
+                                    itemToInsert = `image("${url}")`;
+                                } else {
+                                    itemToInsert = `load_csv("${filename}")`;
+                                }
+                                break;
+                            }
+                        }
+                        await thisCopy.loaderService.loadFiles(
+                            project.projectId
+                        );
+                        const segmentText =
+                            thisCopy.programService.getCurrentProgram()
+                                ?.segments[segmentIndex]?.text;
+                        await thisCopy.onSegmentTextEdited(
+                            segmentIndex,
+                            `${segmentText.slice(0, cursorPosition)}\n${itemToInsert}\n${segmentText.slice(cursorPosition)}`
+                        );
+                    } else if (res.code === 413) {
+                        thisCopy.repository.ideViewModelRepository.setGetFilesRequestState(
+                            'ok'
+                        );
+                        thisCopy.repository.toast(
+                            thisCopy.repository.dictionary.filemanager.errors.tooBigFile.replace(
+                                '${replace1}',
+                                '10Mb'
+                            ),
+                            'error'
+                        );
+                    } else if (res.code === 409) {
+                        thisCopy.repository.ideViewModelRepository.setGetFilesRequestState(
+                            'ok'
+                        );
+                        thisCopy.repository.toast(
+                            thisCopy.repository.dictionary.filemanager.errors
+                                .tooMuchFiles,
+                            'error'
+                        );
+                    } else if (res.isUnauth) {
+                        thisCopy.repository.toast(
+                            thisCopy.repository.dictionary.filemanager.errors
+                                .sessionExpired,
+                            'error'
+                        );
+                        thisCopy.ideService.resetEditor();
+                    } else if (res.isForbidden) {
+                        thisCopy.repository.ideViewModelRepository.setGetFilesRequestState(
+                            'forbidden'
+                        );
+                        thisCopy.repository.toast(
+                            thisCopy.repository.dictionary.filemanager.errors
+                                .notEnoughRights,
+                            'error'
+                        );
+                        thisCopy.ideService.resetEditor();
+                    } else {
+                        thisCopy.repository.ideViewModelRepository.setGetFilesRequestState(
+                            'error'
+                        );
+                    }
+                };
+                reader.readAsDataURL(file);
+                itemIndex++;
+            }
         }
     };
 
@@ -262,7 +267,6 @@ export class ProgramEditorService {
             this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(-1);
         }
 
-        await this.loaderService.segmentEditorSaveProgram();
         this.ideService.onProgramUpdated();
     };
 
