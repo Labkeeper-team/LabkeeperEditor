@@ -67,7 +67,12 @@ const SegmentWrapper = memo(({ index }: { index: number }) => {
         const containerRect = container.getBoundingClientRect();
 
         // Корректируем позицию с учётом scale
-        const offsetY = (rect.top - containerRect.top) * (1 / scaleFactor);
+        const offsetY1 = (rect.top - containerRect.top) * (1 / scaleFactor);
+        const offsetY2 =
+            (rect.bottom - containerRect.bottom) * (1 / scaleFactor);
+
+        const offsetY =
+            Math.abs(offsetY1) > Math.abs(offsetY2) ? offsetY2 : offsetY1;
 
         // Прокручиваем контейнер
         if (container.scrollTo) {
