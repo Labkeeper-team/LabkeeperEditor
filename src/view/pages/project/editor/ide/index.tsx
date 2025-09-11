@@ -65,8 +65,8 @@ export const Ide = () => {
     useEffect(() => {
         const onKeyDown = (event: KeyboardEvent) => {
             const isModifierPressed = event.ctrlKey || event.metaKey;
-            const isSpace = event.code === 'Space' || event.key === ' ';
-            if (!isModifierPressed || !isSpace) return;
+            const isS = event.code === 'KeyS';
+            if (!isModifierPressed || !isS) return;
 
             // Предотвращаем стандартное действие (прокрутка/спотлайт в браузере, если возможно)
             event.preventDefault();

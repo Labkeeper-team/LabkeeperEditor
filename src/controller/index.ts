@@ -284,10 +284,6 @@ export class Controller {
         }
     );
 
-    onGapRequest = createAsyncThunk('onGapRequest', async () => {
-        this.wrapper('onGapRequest', () => this.programEditorService.onGap());
-    });
-
     onBlurSegmentRequest = createAsyncThunk(
         'onBlurSegmentRequest',
         async ({ segmentIndex }: { segmentIndex: number }) => {

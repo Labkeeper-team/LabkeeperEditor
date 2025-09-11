@@ -88,12 +88,7 @@ test('delete-files-modal-popup-when-delete-segment', async () => {
     ![image](${FILE_URL})
     `
     );
-    await programEditorService.onBlurSegment(
-        0,
-        `
-    ![image](${FILE_URL})
-    `
-    );
+    await programEditorService.onBlurSegment(0);
 
     await programEditorService.deleteSegment(0);
 
@@ -123,23 +118,7 @@ test('delete-files-modal-popup-when-delete-edit-segment', async () => {
     ![image](${FILE_URL})
     `
     );
-    await programEditorService.onBlurSegment(
-        0,
-        `
-    ![image](${FILE_URL})
-    `
-    );
-    await programEditorService.onFocusSegment(0);
-    await programEditorService.onSegmentTextEdited(
-        0,
-        `
-    `
-    );
-    await programEditorService.onBlurSegment(
-        0,
-        `
-    `
-    );
+    await programEditorService.onSegmentTextEdited(0, '');
 
     expect(
         repository.settingsViewModelRepository.filesToDelete()

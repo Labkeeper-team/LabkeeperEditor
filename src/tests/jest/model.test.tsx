@@ -176,6 +176,52 @@ test('gaps-test', () => {
     ] as Segment[]);
 });
 
+test('redo-enabled-test', () => {
+    const service: ProgramService = new ProgramService(
+        new InMemoryProgramRepository()
+    );
+
+    service.addSegmentToLastPosition('md');
+    service.changeSegmentTextByPositionIndex(0, 'aaa');
+    service.gap();
+    service.undo();
+    expect(service.canRedo()).toBe(true);
+    service.redo();
+
+    expect(service.canRedo()).toBe(false);
+});
+
+test('auto-gaps-test', () => {
+    const service: ProgramService = new ProgramService(
+        new InMemoryProgramRepository()
+    );
+
+    service.addSegmentToLastPosition('md');
+    service.changeSegmentTextByPositionIndex(0, 'aaaa\nbbbbb\ncccc\n');
+    service.gap();
+    service.changeSegmentTextByPositionIndex(0, 'aaaa\nbbbbb\ncccc1111\n');
+    service.changeSegmentTextByPositionIndex(0, 'aaaa\nbbbbb2222\ncccc\n');
+    service.undo();
+
+    expect(service.getCurrentProgram().segments).toStrictEqual([
+        {
+            type: 'md',
+            text: 'aaaa\nbbbbb\ncccc1111\n',
+            parameters: { visible: true },
+        },
+    ] as Segment[]);
+
+    service.undo();
+
+    expect(service.getCurrentProgram().segments).toStrictEqual([
+        {
+            type: 'md',
+            text: 'aaaa\nbbbbb\ncccc\n',
+            parameters: { visible: true },
+        },
+    ] as Segment[]);
+});
+
 test('limit-history-test', () => {
     const service: ProgramService = new ProgramService(
         new InMemoryProgramRepository()
@@ -212,6 +258,27 @@ test('no-duplicate-text-changes-test', () => {
     service.addSegmentToLastPosition('md');
     service.changeSegmentTextByPositionIndex(0, 'abl');
     service.changeSegmentTextByPositionIndex(0, 'abl');
+
+    service.undo();
+
+    expect(service.getCurrentProgram()).toStrictEqual({
+        segments: [
+            { type: 'md', text: '', parameters: { visible: true } } as Segment,
+        ],
+        parameters: { roundStrategy: 'firstMeaningDigit' },
+    } as Program);
+});
+
+test('unite-changes-test', () => {
+    const service: ProgramService = new ProgramService(
+        new InMemoryProgramRepository()
+    );
+
+    service.addSegmentToLastPosition('md');
+    service.changeSegmentTextByPositionIndex(0, 'abl');
+    service.changeSegmentTextByPositionIndex(0, 'abl2');
+    service.changeSegmentTextByPositionIndex(0, 'abl22');
+    service.changeSegmentTextByPositionIndex(0, 'abl222');
 
     service.undo();
 

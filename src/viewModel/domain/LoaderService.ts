@@ -56,6 +56,7 @@ export class LoaderService {
         if (this.repository.projectViewModelRepository.projectIsReadonly()) {
             return;
         }
+        this.programService.gap();
         const savedProgram = this.programService.getCurrentProgram();
         const project = this.repository.projectViewModelRepository.project();
         if (project) {

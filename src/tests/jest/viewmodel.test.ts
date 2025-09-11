@@ -160,7 +160,7 @@ test('add-segment-between-active-index-test', async () => {
 
     await programEditorService.onSegmentTextEdited(3, 'text');
 
-    await programEditorService.onBlurSegment(3, 'text');
+    await programEditorService.onBlurSegment(3);
 
     expect(
         repository.projectViewModelRepository
@@ -619,7 +619,7 @@ test('hint-erase-other-segments-test', async () => {
     await programEditorService.onSegmentTextEdited(1, 'biba');
 
     await programEditorService.onFocusSegment(1);
-    await programEditorService.onBlurSegment(1, 'biba');
+    await programEditorService.onBlurSegment(1);
 
     projectPageService.onHelpItemCreated(headerHelpItems[0]);
 

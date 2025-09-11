@@ -108,6 +108,52 @@ export class ProgramService {
         this.applyChange(gap);
     };
 
+    private getLineDiff(text1: string, text2: string) {
+        let count1 = 0;
+        let count2 = 0;
+        for (const c of text1) {
+            if (c === '\n') {
+                count1++;
+            }
+        }
+        for (const c of text2) {
+            if (c === '\n') {
+                count2++;
+            }
+        }
+        if (count1 !== count2) {
+            return Math.abs(count1 - count2);
+        }
+
+        let diff = 0;
+        for (
+            let index1 = 0, index2 = 0;
+            index1 < text1.length && index2 < text2.length;
+            index1++, index2++
+        ) {
+            const c1 = text1[index1];
+            const c2 = text2[index2];
+
+            if (c1 !== c2 || c1 === '\n' || c2 === '\n') {
+                if (c1 !== c2) {
+                    diff++;
+                }
+                while (index2 < text2.length && text2[index2] !== '\n') {
+                    index2++;
+                }
+                while (index1 < text1.length && text1[index1] !== '\n') {
+                    index1++;
+                }
+            }
+        }
+
+        if (diff === 0 && text1.length !== text2.length) {
+            return 1;
+        }
+
+        return diff;
+    }
+
     changeSegmentTextByPositionIndex = (index: number, text: string) => {
         const last: ProgramChangeAction | undefined =
             this.programRepository.history[
@@ -124,6 +170,17 @@ export class ProgramService {
             this.applyChange(new SegmentTextChangedAction(index, text));
         } else {
             const lastTextChangeAction = last as SegmentTextChangedAction;
+            if (lastTextChangeAction.oldValue === undefined) {
+                throw new Error('missing old value');
+            }
+            if (
+                this.getLineDiff(lastTextChangeAction.newValue, text) > 1 ||
+                this.getLineDiff(lastTextChangeAction.oldValue, text) > 1
+            ) {
+                this.gap();
+                this.changeSegmentTextByPositionIndex(index, text);
+                return;
+            }
             lastTextChangeAction.newValue = text;
             this.programRepository.program.segments[index].text = text;
             if (
@@ -139,26 +196,31 @@ export class ProgramService {
         while (true) {
             const last = this.programRepository.history.pop();
             if (!last) {
-                return;
+                break;
             }
             last.revert(this.programRepository.program);
             this.programRepository.redoHistory.push(last);
 
             if (!(last instanceof GapAction)) {
-                return;
+                break;
             }
         }
     };
 
     canUndo = () => {
-        return this.programRepository.history.length > 0;
+        return (
+            this.programRepository.history.length > 0 &&
+            !!this.programRepository.history.find(
+                (h) => !(h instanceof GapAction)
+            )
+        );
     };
 
     redo = () => {
         while (true) {
             const redo = this.programRepository.redoHistory.pop();
             if (!redo) {
-                return;
+                break;
             }
             redo.apply(this.programRepository.program);
             this.programRepository.history.push(redo);
@@ -167,13 +229,18 @@ export class ProgramService {
             }
 
             if (!(redo instanceof GapAction)) {
-                return;
+                break;
             }
         }
     };
 
     canRedo = () => {
-        return this.programRepository.redoHistory.length > 0;
+        return (
+            this.programRepository.redoHistory.length > 0 &&
+            !!this.programRepository.redoHistory.find(
+                (h) => !(h instanceof GapAction)
+            )
+        );
     };
 
     changeRoundStrategy = (strategy: ProgramRoundStrategy) => {

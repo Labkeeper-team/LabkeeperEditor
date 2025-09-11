@@ -179,13 +179,11 @@ export class ProgramEditorService {
     onPrevVersionButtonClicked = () => {
         this.programService.undo();
         this.ideService.onProgramUpdated();
-        this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(-1);
     };
 
     onNextVersionButtonClicked = () => {
         this.programService.redo();
         this.ideService.onProgramUpdated();
-        this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(-1);
     };
 
     onRoundStrategySet = (strategy: ProgramRoundStrategy) => {
@@ -256,34 +254,12 @@ export class ProgramEditorService {
         );
     };
 
-    onGap = () => {
-        this.programService.gap();
-    };
-
     onBlurSegment = async (segmentIndex: number) => {
         if (
             this.repository.ideViewModelRepository.activeSegmentIndex() ===
             segmentIndex
         ) {
             this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(-1);
-        }
-
-        this.programService.gap();
-
-        /*
-        Files comparing
-         */
-        const programBefore =
-            this.repository.projectViewModelRepository.currentProgram();
-        const programAfter = this.programService.getCurrentProgram();
-        const filesBefore =
-            this.ideService.calculateFilesToDelete(programBefore);
-        const filesAfter = this.ideService.calculateFilesToDelete(programAfter);
-
-        if (filesAfter.length > filesBefore.length) {
-            this.repository.settingsViewModelRepository.setFilesToDelete(
-                filesAfter
-            );
         }
 
         await this.loaderService.segmentEditorSaveProgram();
@@ -294,10 +270,21 @@ export class ProgramEditorService {
         this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(
             segmentIndex
         );
+        const programBefore = this.programService.getCurrentProgram();
+        const filesBefore =
+            this.ideService.calculateFilesToDelete(programBefore);
         this.programService.changeSegmentTextByPositionIndex(
             segmentIndex,
             segmentText
         );
+        const programAfter = this.programService.getCurrentProgram();
+        const filesAfter = this.ideService.calculateFilesToDelete(programAfter);
+
+        if (filesAfter.length > filesBefore.length) {
+            this.repository.settingsViewModelRepository.setFilesToDelete(
+                filesAfter
+            );
+        }
 
         this.ideService.onSegmentUpdate(segmentIndex, segmentText);
         this.repository.projectViewModelRepository.setInputSegmentText(

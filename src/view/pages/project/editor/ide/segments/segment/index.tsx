@@ -41,6 +41,9 @@ import { colors } from '../../../../../../styles/colors';
 import { DropdownMenuContent } from './dropdownMenuContent';
 import { useDictionary } from '../../../../../../store/selectors/translations.ts';
 import { controller } from '../../../../../../../main.tsx';
+import { LRUMap } from 'lru_map';
+
+const CURSOR_MAP_CAPACITY = 100;
 
 const setDecorationsEffect = StateEffect.define();
 
@@ -62,6 +65,15 @@ const decorationsField = StateField.define<unknown>({
 
 let timeout: NodeJS.Timeout | null = null;
 
+function computeDocKey(text: string): string {
+    let hash = 5381;
+    for (let i = 0; i < text.length; i++) {
+        // djb2 с XOR, быстрый и достаточно устойчивый для ключа
+        hash = (hash * 33) ^ text.charCodeAt(i);
+    }
+    return `${text.length}:${hash >>> 0}`;
+}
+
 export const SegmentEditor = memo(
     (props: { index: number; isLast: boolean }) => {
         const segment = useSelector(
@@ -69,6 +81,11 @@ export const SegmentEditor = memo(
                 state.project.currentProgram?.segments[props.index]
         );
         const editor = useRef<ReactCodeMirrorRef | undefined>();
+        const lastCursorPosRef = useRef<number | null>(null);
+        const cursorByDocKeyRef = useRef<LRUMap<string, number>>(
+            new LRUMap(CURSOR_MAP_CAPACITY)
+        );
+        const currentDocKeyRef = useRef<string | null>(null);
         const dispatch = useDispatch<AppDispatch>();
         const dictionary = useSelector(useDictionary);
 
@@ -201,6 +218,28 @@ export const SegmentEditor = memo(
             }, 1000);
         }, [segment?.text]);
 
+        // Восстанавливаем позицию курсора после внешнего обновления текста сегмента
+        useEffect(() => {
+            const view = editor?.current?.view;
+            if (!view) {
+                return;
+            }
+            const docText = view.state.doc.toString();
+            const docKey = currentDocKeyRef.current ?? computeDocKey(docText);
+            const storedForDoc = cursorByDocKeyRef.current.get(docKey);
+            const preserved =
+                typeof storedForDoc === 'number'
+                    ? storedForDoc
+                    : typeof lastCursorPosRef.current === 'number'
+                      ? lastCursorPosRef.current
+                      : view.state.selection.main.head;
+            const docLength = view.state.doc.length;
+            const clamped = Math.max(0, Math.min(preserved, docLength));
+            view.dispatch({
+                selection: EditorSelection.cursor(clamped),
+            });
+        }, [segment?.text]);
+
         /*
          * Callbacks
          */
@@ -232,11 +271,6 @@ export const SegmentEditor = memo(
 
         // Вставка файлов и обработка клавиш
         const eventsDom = dom({
-            keydown: (ev: KeyboardEvent | ClipboardEvent) => {
-                if ('key' in ev && ev.key === 'Enter') {
-                    dispatch(controller.onGapRequest());
-                }
-            },
             paste: async (ev: ClipboardEvent | KeyboardEvent) => {
                 if (!('clipboardData' in ev)) {
                     return;
@@ -308,6 +342,20 @@ export const SegmentEditor = memo(
                                 : undefined,
                         eventsExt,
                         eventsDom,
+                        EditorView.updateListener.of((update) => {
+                            if (update.docChanged) {
+                                const text = update.state.doc.toString();
+                                currentDocKeyRef.current = computeDocKey(text);
+                            }
+                            if (update.selectionSet) {
+                                const head = update.state.selection.main.head;
+                                lastCursorPosRef.current = head;
+                                const key =
+                                    currentDocKeyRef.current ??
+                                    computeDocKey(update.state.doc.toString());
+                                cursorByDocKeyRef.current.set(key, head);
+                            }
+                        }),
                         EditorView.lineWrapping,
                         lineNumbers({
                             formatNumber: (lineNo) => {

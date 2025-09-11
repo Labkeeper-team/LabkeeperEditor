@@ -30,6 +30,7 @@
         "date-fns": "4.1.0",
         "html2canvas": "1.4.1",
         "jspdf": "2.5.2",
+        "lru_map": "^0.4.1",
         "mathjax": "3.2.2",
         "mathjax-full": "3.2.2",
         "plotly.js": "^3.0.1",
