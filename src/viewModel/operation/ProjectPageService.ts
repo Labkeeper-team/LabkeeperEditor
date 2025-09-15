@@ -66,6 +66,7 @@ export class ProjectPageService {
         } else {
             this.repository.setLocation(Routes.ProjectDefault);
         }
+        await this.loaderService.loadProjects();
     };
 
     onSearchIconPress = () => {

@@ -61,8 +61,14 @@ export const headerHelpItems: HeaderHelpItem[] = [
         },
         segmentType: 'computational',
         text: {
-            ru: `plot(x1=[1, 2, 3], y1=[2, 3, 1], type1="line", color1="red", x2=[1, 2, 3], y2=[3,4,1], type2="scatter", color2="blue")`,
-            en: `plot(x1=[1, 2, 3], y1=[2, 3, 1], type1="line", color1="red", x2=[1, 2, 3], y2=[3,4,1], type2="scatter", color2="blue")`,
+            ru: `plot(
+    x1=[1, 2, 3], y1=[2, 3, 1], type1="line", color1="red", 
+    x2=[1, 2, 3], y2=[3,4,1], type2="scatter", color2="blue"
+)`,
+            en: `plot(
+    x1=[1, 2, 3], y1=[2, 3, 1], type1="line", color1="red",
+    x2=[1, 2, 3], y2=[3,4,1], type2="scatter", color2="blue"
+)`,
         },
     },
     {
@@ -146,10 +152,10 @@ plot(x_1 = x, y_1 = y, color1="blue", x_2 = x, y_2 = Y, color2="red", type2="lin
         segmentType: 'computational',
         text: {
             ru: `// Добавьте файл с таким названием через файловый менеджер
-            load_csv(file_name = "myfile.csv")
+load_csv(file_name = "myfile.csv")
             `,
             en: `// Add file with such via file manager
-            load_csv(file_name = "myfile.csv")
+load_csv(file_name = "myfile.csv")
             `,
         },
     },
@@ -161,10 +167,10 @@ plot(x_1 = x, y_1 = y, color1="blue", x_2 = x, y_2 = Y, color2="red", type2="lin
         segmentType: 'computational',
         text: {
             ru: `a = [1, 2, 3] // ваши данные
-            save_csv(a)
+save_csv(a)
             `,
             en: `a = [1, 2, 3] // your data
-            save_csv(a)
+save_csv(a)
             `,
         },
     },
@@ -189,7 +195,9 @@ export const editorHelpItems: EditorHelpItem[] = [
     },
     {
         description: 'Plot',
-        text: 'plot(x1 = [1, 2, 3], y1 = [2, 1, 3], type1="line", x2=[1, 2, 3], y2=[3, 4, 5])',
+        text: `plot(
+    x1 = [1, 2, 3], y1 = [2, 1, 3], type1="line", x2=[1, 2, 3], y2=[3, 4, 5]
+)`,
     },
     {
         description: 'Table',

@@ -114,6 +114,7 @@ export class CompilationService {
                 'error'
             );
             this.observerService.onEvent(Events.EVENT_ERROR);
+            this.observerService.onEvent(Events.FRONTEND_ERROR);
         }
     };
 }
