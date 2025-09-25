@@ -167,6 +167,8 @@ export const ru: Translations = {
             'Погрешность нельзя задавать массивом',
         [CompileError.INCORRECT_INFL_DEFINITION_VALUE_WITH_INFL]:
             'Погрешность не должна задаваться значением, у которого уже есть погрешность',
+        [CompileError.ARRAY_HAVE_ONLY_ZERO_VALUES]:
+            'Массив не может содержать только нули. Возможно, стоит проверить погрешность и режим округления.',
     },
     error_common: {
         segment: 'Сегмент',

@@ -142,6 +142,7 @@ export interface Translations {
         [CompileError.NAME_RESERVED]: string;
         [CompileError.INCORRECT_INFL_DEFINITION_ARRAY_SIZE]: string;
         [CompileError.INCORRECT_INFL_DEFINITION_VALUE_WITH_INFL]: string;
+        [CompileError.ARRAY_HAVE_ONLY_ZERO_VALUES]: string;
     };
 
     error_common: {
