@@ -7,7 +7,9 @@ export type ProgramRoundStrategy =
     | 'twoDigits'
     | 'oneDigit'
     | 'fiveDigits'
-    | 'firstMeaningDigit';
+    | 'firstMeaningDigit'
+    | 'twoMeaningDigits'
+    | 'threeMeaningDigits';
 export type SegmentType =
     | 'md'
     | 'computational'

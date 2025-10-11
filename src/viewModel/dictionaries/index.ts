@@ -71,6 +71,8 @@ export interface Translations {
         label: string;
         without_round: string;
         first_digit: string;
+        two_meaning_digits: string;
+        three_meaning_digits: string;
         five_digits: string;
         one_digit: string;
         two_digits: string;

@@ -79,6 +79,8 @@ export const en: Translations = {
         one_digit: 'One digit',
         two_digits: 'Two digits',
         three_digits: 'Three digits',
+        two_meaning_digits: 'First two significant digits of the error',
+        three_meaning_digits: 'First three significant digits of the error',
     },
     label_syntax_highlight: 'Syntax highlighting',
     label_autocompilation: 'Autocompilation',

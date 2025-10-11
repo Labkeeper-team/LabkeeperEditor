@@ -82,6 +82,8 @@ export const ru: Translations = {
         one_digit: '1 знак',
         two_digits: '2 знака',
         three_digits: '3 знака',
+        two_meaning_digits: 'Первые две значащие цифры погрешности',
+        three_meaning_digits: 'Первые три значащие цифры погрешности',
     },
     label_syntax_highlight: 'Подсветка синтаксиса',
     label_autocompilation: 'Автокомпиляция',

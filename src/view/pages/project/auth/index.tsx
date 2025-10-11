@@ -58,6 +58,7 @@ const LoginView = () => {
     const [login, setLogin] = useState('');
     const [password, setPassword] = useState('');
     const [token, setToken] = useState('');
+    const [captchaKey, setCaptchaKey] = useState(0);
 
     // Selectors
     const dictionary = useSelector(useDictionary);
@@ -82,6 +83,20 @@ const LoginView = () => {
     }, [loginRequest]);
 
     const isLoading = loginRequest === 'loading';
+
+    // Сбрасываем капчу при ошибке входа по форме
+    useEffect(() => {
+        if (!Secrets.yandexCaptchaSiteKey) {
+            return;
+        }
+        if (
+            loginRequest === 'bad_credentials' ||
+            loginRequest === 'unknownError'
+        ) {
+            setToken('');
+            setCaptchaKey((k) => k + 1);
+        }
+    }, [loginRequest]);
 
     return (
         <div
@@ -166,6 +181,7 @@ const LoginView = () => {
                     )}
                     {password && !!Secrets.yandexCaptchaSiteKey && (
                         <SmartCaptcha
+                            key={captchaKey}
                             language={language}
                             sitekey={Secrets.yandexCaptchaSiteKey}
                             onSuccess={setToken}
