@@ -34,7 +34,8 @@
     /* Отступ справа у первых двух видимых строк, чтобы не было наслоения с блоком правил редактора */
     .cm-content {
         .cm-line:nth-child(-n + 2) {
-            padding-right: 205px;
+          max-width: 80%;
+          //padding-right: 205px;
         }
     }
     .highlight-text-editor {
