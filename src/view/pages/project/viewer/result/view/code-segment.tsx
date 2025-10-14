@@ -30,8 +30,8 @@ import { NoResultSegment } from './segments/no-result-segment.tsx';
 export const CodeSegment = memo(
     forwardRef<
         HTMLDivElement,
-        { segment: ComputationalOutputSegment; index: number }
-    >(({ segment, index }, ref) => {
+        { segment: ComputationalOutputSegment; index: number;  onClick: () => void }
+    >(({ segment, index, onClick }, ref) => {
         const segmentRef = useRef<HTMLDivElement>(null);
         const statements = segment.statements;
         const activeIndex = useSelector(useIsSegmentIsActive(index));
@@ -48,6 +48,7 @@ export const CodeSegment = memo(
 
         return (
             <div
+                onClick={onClick}
                 ref={ref ?? segmentRef}
                 className={classNames({
                     'active-result-block-container': activeIndex,

@@ -9,8 +9,8 @@ import { parser } from './utils.tsx';
 const SPLIT_REGEX = /[\n|\r]/;
 
 export const AsciimathSegment = memo(
-    forwardRef<HTMLDivElement, { segment: TextOutputSegment; index: number }>(
-        ({ segment, index }, ref) => {
+    forwardRef<HTMLDivElement, { segment: TextOutputSegment; index: number; onClick: () => void }>(
+        ({ segment, index, onClick }, ref) => {
             const activeIndex = useSelector(useIsSegmentIsActive(index));
             const segmentRef = useRef<HTMLDivElement>(null);
 
@@ -20,6 +20,7 @@ export const AsciimathSegment = memo(
 
             return (
                 <div
+                    onClick={onClick}
                     ref={ref ?? segmentRef}
                     className={classNames({
                         'active-result-block-container': activeIndex,

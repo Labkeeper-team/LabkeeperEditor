@@ -11,13 +11,14 @@ import remarkGfm from 'remark-gfm';
 import { TextOutputSegment } from '../../../../../../model/domain.ts';
 
 export const MdSegment = memo(
-    forwardRef<HTMLDivElement, { segment: TextOutputSegment; index: number }>(
-        ({ segment, index }, ref) => {
+    forwardRef<HTMLDivElement, { segment: TextOutputSegment; index: number; onClick: () => void }>(
+        ({ segment, index, onClick }, ref) => {
             const activeIndex = useSelector(useIsSegmentIsActive(index));
             const segmentRef = useRef<HTMLDivElement>(null);
 
             return (
                 <div
+                    onClick={onClick}
                     ref={ref ?? segmentRef}
                     className={classNames({
                         'active-result-block-container': activeIndex,

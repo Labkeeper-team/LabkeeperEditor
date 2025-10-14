@@ -11,6 +11,7 @@ import { langs } from '@uiw/codemirror-extensions-langs';
 import { content, dom } from '@uiw/codemirror-extensions-events';
 import { lineNumbers } from '@codemirror/view';
 import {
+    createRef,
     LegacyRef,
     memo,
     useCallback,
@@ -42,6 +43,7 @@ import { DropdownMenuContent } from './dropdownMenuContent';
 import { useDictionary } from '../../../../../../store/selectors/translations.ts';
 import { controller } from '../../../../../../../main.tsx';
 import { LRUMap } from 'lru_map';
+import { useScrollableToActive } from '../../../../../../hooks/useScrollableToActive.ts';
 
 const CURSOR_MAP_CAPACITY = 100;
 
@@ -80,6 +82,7 @@ export const SegmentEditor = memo(
             (state: StorageState) =>
                 state.project.currentProgram?.segments[props.index]
         );
+        const ref = createRef<HTMLDivElement>();
         const editor = useRef<ReactCodeMirrorRef | undefined>();
         const lastCursorPosRef = useRef<number | null>(null);
         const cursorByDocKeyRef = useRef<LRUMap<string, number>>(
@@ -240,6 +243,8 @@ export const SegmentEditor = memo(
             });
         }, [segment?.text]);
 
+        useScrollableToActive(ref, 'segments-container', props.index)
+
         /*
          * Callbacks
          */
@@ -316,6 +321,7 @@ export const SegmentEditor = memo(
 
         return (
             <div
+                ref={ref}
                 className={classNames('segment-editor-container', {
                     'is-active': isActiveSegment,
                     'not-visible': !segment.parameters.visible,
