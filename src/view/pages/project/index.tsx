@@ -35,3 +35,5 @@ export const ProjectPage = () => {
         </div>
     );
 };
+
+export default ProjectPage;
