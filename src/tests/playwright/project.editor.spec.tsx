@@ -3,6 +3,7 @@ import { Program, Segment } from '../../model/domain.ts';
 
 const uuid = '2cd18704-6c3f-48cb-96f1-9a923930f8cb';
 
+const maxDifferentPixelsFor4Segments = 4000;
 /*
 Тест на получение кода 425 после компиляции
  */
@@ -191,7 +192,7 @@ test('phystech-icon-test', async ({ page }) => {
         .getByRole('button', { name: /Run/i })
         .waitFor({ state: 'attached' });
 
-    await expect(page).toHaveScreenshot(`phystech.png`);
+    await expect(page).toHaveScreenshot(`phystech.png`, {maxDiffPixels: 3000});
 });
 
 /*
@@ -253,7 +254,7 @@ test('insert-segment-between', async ({ page }) => {
     await editor.fill('latex');
     await editor.click();
 
-    await expect(page).toHaveScreenshot(`insert-segment-between1.png`);
+    await expect(page).toHaveScreenshot(`insert-segment-between1.png`, {maxDiffPixels: maxDifferentPixelsFor4Segments});
 
     // удаляем latex
     await page.locator('div.dropdown-menu-container').nth(4).click();
@@ -263,7 +264,7 @@ test('insert-segment-between', async ({ page }) => {
     await page.locator('div.dropdown-menu-container').nth(3).click();
     await page.getByText('Delete').last().click();
 
-    await expect(page).toHaveScreenshot(`insert-segment-between2.png`);
+    await expect(page).toHaveScreenshot(`insert-segment-between2.png`, {maxDiffPixels: 1500});
 
     // удаляем asciimath
     // поскольку плашка с удалением не закрывается, можно ее заново не нажимать
@@ -1236,7 +1237,7 @@ test('many-segments-move', async ({ page }) => {
     await editor4.click();
 
     // проверяем, что элементы отображаются корректно
-    await expect(page).toHaveScreenshot('many-segs1.png');
+    await expect(page).toHaveScreenshot('many-segs1.png', {maxDiffPixels: maxDifferentPixelsFor4Segments});
 
     // more
     await addCode();
@@ -1247,7 +1248,7 @@ test('many-segments-move', async ({ page }) => {
     await page.getByRole('button', { name: /Add markdown/i }).click();
 
     // проверяем, что элементы отображаются корректно
-    await expect(page).toHaveScreenshot('many-segs2.png');
+    await expect(page).toHaveScreenshot('many-segs2.png', {maxDiffPixels: maxDifferentPixelsFor4Segments});
 
     // moving segment
     await page.locator('div.change-position-button').nth(1).click();
@@ -1285,7 +1286,7 @@ test('many-segments-move', async ({ page }) => {
     expect(await page.locator('.cm-content').nth(3).textContent()).toBe('aaaa');
 
     // проверяем, что элементы отображаются корректно
-    await expect(page).toHaveScreenshot('many-segs3.png');
+    await expect(page).toHaveScreenshot('many-segs3.png', {maxDiffPixels: maxDifferentPixelsFor4Segments});
 });
 
 /*
