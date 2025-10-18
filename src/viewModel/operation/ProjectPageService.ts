@@ -11,6 +11,7 @@ import { HeaderHelpItem } from '../../model/help';
 import { Routes } from '../routes.ts';
 import { CompilationService } from '../domain/CompilationService.ts';
 import { ResetService } from '../domain/ResetService.ts';
+import { ProjectMode } from '../../model/domain.ts';
 
 export class ProjectPageService {
     repository: ViewModelRepository;
@@ -313,5 +314,10 @@ export class ProjectPageService {
                 1000
             );
         }
+    };
+
+    setProjectMode = async (mode: ProjectMode): Promise<void> => {
+        this.repository.projectViewModelRepository.setProjectMode(mode);
+        this.ideService.onProgramUpdated();
     };
 }

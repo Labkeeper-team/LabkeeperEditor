@@ -1,3 +1,5 @@
+@use '../../../styles/colors' as *;
+
 .viewer-container {
     display: flex;
     flex-direction: column;
@@ -6,4 +8,29 @@
     gap: 8px;
     max-width: 50%;
     min-width: 50%;
+}
+
+.viewer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    height: 50px;
+    min-height: 50px;
+    background: $gray-50;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    padding-left: 14px;
+    padding-right: 14px;
+    .ide-wrapper {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 24px;
+    }
+}
+
+/* Убираем только зазор между хедером и результатом */
+.viewer-container > .result-container {
+    margin-top: -8px;
 }

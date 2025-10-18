@@ -6,6 +6,7 @@ import {
     Project,
     ProjectShort,
     UserInfo,
+    ProjectMode,
 } from '../../../model/domain.ts';
 
 import { Language } from '../../../viewModel/dictionaries';
@@ -53,6 +54,8 @@ interface ProjectState {
     currentProgram: Program;
     projectIsReadonly: boolean;
     files: LabkeeperFile[];
+    mode: ProjectMode;
+    pdfUri?: string;
 }
 
 interface AuthState {
@@ -77,6 +80,7 @@ interface IdeState {
     getFilesRequestState: GetFilesRequestState;
     getProjectsRequestState: GetProjectsRequestState;
     saveProjectRequestState: SaveProjectRequestState;
+    pdfUpdated: number;
 }
 
 interface PersistenceState {
@@ -108,6 +112,7 @@ export const ideInitialState: IdeState = {
     getFilesRequestState: 'unknown',
     getProjectsRequestState: 'unknown',
     saveProjectRequestState: 'unknown',
+    pdfUpdated: 0,
 };
 
 export const persistenceInitialState: PersistenceState = {
@@ -123,6 +128,8 @@ export const projectInitialState: ProjectState = {
     compileSuccessResult: { segments: [] },
     files: [],
     currentProgram: createEmptyProgram(),
+    mode: 'markdown',
+    pdfUri: undefined,
 };
 
 export const projectsInitialState: ProjectsState = {

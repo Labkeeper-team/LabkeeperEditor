@@ -7,6 +7,7 @@ import {
     Program,
     Project,
     Segment,
+    ProjectMode,
 } from '../../../../model/domain.ts';
 import { projectInitialState } from '../index.ts';
 
@@ -127,6 +128,12 @@ export const projectSlice = createSlice({
         ) => {
             state.project = payload;
         },
+        setProjectMode: (state, { payload }: PayloadAction<ProjectMode>) => {
+            state.mode = payload;
+        },
+        setPdfUri: (state, { payload }: PayloadAction<string | undefined>) => {
+            state.pdfUri = payload;
+        },
     },
 });
 
@@ -140,4 +147,6 @@ export const {
     setCompileResultForSegment,
     setCompileResultSegmentsSize,
     setInputSegmentText,
+    setProjectMode,
+    setPdfUri,
 } = projectSlice.actions;

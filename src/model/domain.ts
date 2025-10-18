@@ -14,6 +14,9 @@ export type SegmentType =
     | 'latex'
     | 'asciimath'
     | 'empty';
+
+// Viewer/Project display mode for result rendering
+export type ProjectMode = 'markdown' | 'latex';
 export type StatementType =
     | 'assignment'
     | 'calculation'

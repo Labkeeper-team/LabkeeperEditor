@@ -10,6 +10,7 @@ const uri = '';
 export const URLS = {
     compile: `${uri}/api/${version}/public/compile`,
     compileProject: `${uri}/api/${version}/public/project/{id}/compile`,
+    compileProjectPdf: `${uri}/api/${version}/public/project/{id}/compile/pdf`,
     getAllProjects: `${uri}/api/${version}/public/project/all`,
     getDefaultProject: `${uri}/api/${version}/public/project/default`,
     createProject: `${uri}/api/${version}/public/project/create`,

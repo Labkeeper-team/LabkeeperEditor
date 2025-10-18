@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import './style.scss';
 import { EmptyResultContainer } from './empty';
 import { ViewResult } from './view';
+import { PdfResultViewer } from './pdf';
 import { Button } from '../../../../components/button';
 import { SavePdfIcon } from '../../../../icons';
 import { InterfaceTourAnchorClassnames } from '../../../../components/tour/helpers';
@@ -12,9 +13,9 @@ import {
     useUser,
 } from '../../../../store/selectors/program';
 import { useReactToPrint } from 'react-to-print';
-import { useMemo, useRef } from 'react';
+import { useRef } from 'react';
 import { useDictionary } from '../../../../store/selectors/translations';
-import { AppDispatch } from '../../../../store';
+import { AppDispatch, StorageState } from '../../../../store';
 import { controller } from '../../../../../main.tsx';
 
 declare global {
@@ -31,6 +32,8 @@ export const Result = () => {
     const compileResult = useSelector(useCompiledSuccesInfo);
     const currentProject = useSelector(useCurrentProject);
     const dictionary = useSelector(useDictionary);
+    const mode = useSelector((state: StorageState) => state.project.mode);
+    const pdfUri = useSelector((state: StorageState) => state.project.pdfUri);
 
     const contentRef = useRef<HTMLDivElement>(null);
     const reactToPrintFn = useReactToPrint({
@@ -116,20 +119,17 @@ export const Result = () => {
         }, 100);
     };
 
-    const Container = useMemo(() => {
-        return compileResult === undefined ||
-            compileResult.segments === undefined ||
-            compileResult.segments.length === 0 ? (
-            <EmptyResultContainer />
-        ) : (
-            <ViewResult ref={contentRef} />
-        );
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [contentRef, compileResult.segments]);
-
     return (
         <div className="result-container">
-            {Container}
+            {mode === 'latex' && pdfUri ? (
+                <PdfResultViewer pdfUri={pdfUri} />
+            ) : compileResult === undefined ||
+              compileResult.segments === undefined ||
+              compileResult.segments.length === 0 ? (
+                <EmptyResultContainer />
+            ) : (
+                <ViewResult ref={contentRef} />
+            )}
             <Button
                 classname={`save-to-pdf-button ${InterfaceTourAnchorClassnames.SavePdf}`}
                 title={dictionary.label_save_to_pdf}

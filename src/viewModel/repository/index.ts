@@ -5,6 +5,7 @@ import {
     OutputSegment,
     Program,
     Project,
+    ProjectMode,
     ProjectShort,
     UserInfo,
 } from '../../model/domain.ts';
@@ -90,6 +91,8 @@ class MockViewModelRepositoryState {
     getProjectsRequestState: GetProjectsRequestState = 'unknown';
     saveProjectRequestState: SaveProjectRequestState = 'unknown';
 
+    pdfUri: string | undefined;
+    mode: ProjectMode = 'markdown';
     instructionExpanded = false;
     language: 'ru' | 'en' = 'ru';
     lastProgram: Program = {
@@ -112,6 +115,7 @@ class MockViewModelRepositoryState {
 
     projects: ProjectShort[] = [];
 
+    pdfUpdated: number = 0;
     isAutocompleteLoading = false;
     editModeForFilename = false;
     editModeForProjectTitle = false;
@@ -190,7 +194,9 @@ export const mockViewModelState = (): MockViewModelRepository => {
                 mockViewModelState.getProjectsRequestState,
             saveProjectRequestState: () =>
                 mockViewModelState.saveProjectRequestState,
+            pdfUpdated: () => mockViewModelState.pdfUpdated,
 
+            setPdfUpdated: (v) => (mockViewModelState.pdfUpdated = v),
             setGetProjectsRequestState: (v: GetProjectsRequestState) =>
                 (mockViewModelState.getProjectsRequestState = v),
             setGetFilesRequestState: (v: GetFilesRequestState) =>
@@ -234,13 +240,17 @@ export const mockViewModelState = (): MockViewModelRepository => {
                 }),
         },
         projectViewModelRepository: {
+            mode: () => mockViewModelState.mode,
             compileErrorResult: () => mockViewModelState.compileErrorResult,
             compileSuccessResult: () => mockViewModelState.compileSuccessResult,
             project: () => mockViewModelState.project,
             projectIsReadonly: () => mockViewModelState.projectIsReadonly,
             currentProgram: () => mockViewModelState.currentProgram,
             files: () => mockViewModelState.files,
+            pdfUri: () => mockViewModelState.pdfUri,
 
+            setPdfUri: (uri) => (mockViewModelState.pdfUri = uri),
+            setProjectMode: (mode) => (mockViewModelState.mode = mode),
             setInputSegmentText: (index, text) => {
                 mockViewModelState.currentProgram.segments[index].text = text;
             },
@@ -340,7 +350,11 @@ export interface ProjectViewModelRepository {
     projectIsReadonly: () => boolean;
     currentProgram: () => Program;
     files: () => LabkeeperFile[];
+    mode: () => ProjectMode;
+    pdfUri: () => string | undefined;
 
+    setPdfUri: (uri: string | undefined) => void;
+    setProjectMode: (mode: ProjectMode) => void;
     setInputSegmentText: (index: number, text: string) => void;
     setCompileResultSegmentsSize: (size: number) => void;
     setCompileResultForSegment: (index: number, segment: OutputSegment) => void;
@@ -365,7 +379,9 @@ export interface IdeViewModelRepository {
     getFilesRequestState: () => GetFilesRequestState;
     getProjectsRequestState: () => GetProjectsRequestState;
     saveProjectRequestState: () => SaveProjectRequestState;
+    pdfUpdated: () => number;
 
+    setPdfUpdated: (v: number) => void;
     setRedoEnabled: (v: boolean) => void;
     setUndoEnabled: (v: boolean) => void;
     setSearch: (search: string | undefined) => void;

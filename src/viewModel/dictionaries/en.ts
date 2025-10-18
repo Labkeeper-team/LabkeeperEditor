@@ -121,6 +121,13 @@ export const en: Translations = {
         adding_segment: 'Adding a segment',
         label: 'Instructions',
     },
+
+    viewer: {
+        mode: {
+            markdown: 'markdown',
+            latex: 'latex',
+        },
+    },
     compile_error: {
         [CompileError.CODE_NO_END_QUOTES]: 'No closing quotes',
         [CompileError.UNKNOWN_SYMBOL]: 'Unknown symbol',

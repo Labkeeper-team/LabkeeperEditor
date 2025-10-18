@@ -37,6 +37,7 @@ import {
     setRedoEnabled,
     setSearch,
     setUndoEnabled,
+    setPdfUpdated,
 } from './slices/ide';
 import {
     clearLastProgram,
@@ -55,6 +56,8 @@ import {
     setInputSegmentText,
     setProject,
     setReadOnly,
+    setProjectMode,
+    setPdfUri,
 } from './slices/project';
 import {
     CompileErrorResultList,
@@ -62,6 +65,7 @@ import {
     LabkeeperFile,
     OutputSegment,
     Project,
+    ProjectMode,
     ProjectShort,
 } from '../../model/domain.ts';
 import { setProjects } from './slices/projects';
@@ -168,7 +172,9 @@ export const createViewModelStateFromStore = (
                 store.getState().ide.getProjectsRequestState,
             saveProjectRequestState: () =>
                 store.getState().ide.saveProjectRequestState,
+            pdfUpdated: () => store.getState().ide.pdfUpdated,
 
+            setPdfUpdated: (v) => store.dispatch(setPdfUpdated(v)),
             setCloneRequestState: (v: CloneRequestState) =>
                 store.dispatch(setCloneRequestState(v)),
             setGetProjectRequestState: (v: GetProjectRequestState) =>
@@ -213,6 +219,8 @@ export const createViewModelStateFromStore = (
             projectIsReadonly: () => store.getState().project.projectIsReadonly,
             currentProgram: () => store.getState().project.currentProgram,
             files: () => store.getState().project.files,
+            mode: () => store.getState().project.mode,
+            pdfUri: () => store.getState().project.pdfUri,
 
             setInputSegmentText: (index, text) =>
                 store.dispatch(setInputSegmentText({ index, text })),
@@ -240,6 +248,9 @@ export const createViewModelStateFromStore = (
                 store.dispatch(setFiles(files)),
             setCurrentProgram: (program) =>
                 store.dispatch(setCurrentProgram(program)),
+            setProjectMode: (mode: ProjectMode) =>
+                store.dispatch(setProjectMode(mode)),
+            setPdfUri: (uri?: string) => store.dispatch(setPdfUri(uri)),
         },
         projectsViewModelRepository: {
             projects: () => store.getState().projects.projects,
