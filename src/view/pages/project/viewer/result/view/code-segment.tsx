@@ -1,6 +1,4 @@
 import classNames from 'classnames';
-import { useIsSegmentIsActive } from '../../../../../store/selectors/program';
-import { useSelector } from 'react-redux';
 import { forwardRef, memo, useMemo, useRef } from 'react';
 import { AssignStatement } from './segments/assignment-segment.tsx';
 import { DetailedStatement } from './segments/calculation-segment.tsx';
@@ -16,6 +14,7 @@ import {
 } from '../../../../../../model/domain.ts';
 import { LatexSegment } from './segments/latex-segment.tsx';
 import { NoResultSegment } from './segments/no-result-segment.tsx';
+import { useIsDelayedSegmentIsActive } from '../../../../../hooks/useIsDelayedSegmentIsActive.ts';
 
 /**
  * Стили дяя отображения fontsize
@@ -30,11 +29,15 @@ import { NoResultSegment } from './segments/no-result-segment.tsx';
 export const CodeSegment = memo(
     forwardRef<
         HTMLDivElement,
-        { segment: ComputationalOutputSegment; index: number;  onClick: () => void }
+        {
+            segment: ComputationalOutputSegment;
+            index: number;
+            onClick: () => void;
+        }
     >(({ segment, index, onClick }, ref) => {
         const segmentRef = useRef<HTMLDivElement>(null);
         const statements = segment.statements;
-        const activeIndex = useSelector(useIsSegmentIsActive(index));
+        const activeIndex = useIsDelayedSegmentIsActive(index);
 
         const variables = useMemo(() => {
             const vars = statements

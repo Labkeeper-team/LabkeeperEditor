@@ -34,7 +34,6 @@ import { ArrowUp } from '../../../../../../icons';
 import { AppDispatch, StorageState } from '../../../../../../store';
 import {
     useIsProjectReadonly,
-    useIsSegmentIsActive,
     useSearch,
 } from '../../../../../../store/selectors/program';
 import classNames from 'classnames';
@@ -44,6 +43,7 @@ import { useDictionary } from '../../../../../../store/selectors/translations.ts
 import { controller } from '../../../../../../../main.tsx';
 import { LRUMap } from 'lru_map';
 import { useScrollableToActive } from '../../../../../../hooks/useScrollableToActive.ts';
+import { useIsDelayedSegmentIsActive } from '../../../../../../hooks/useIsDelayedSegmentIsActive.ts';
 
 const CURSOR_MAP_CAPACITY = 100;
 
@@ -96,7 +96,7 @@ export const SegmentEditor = memo(
         GLOBAL STATE
          */
         const search = useSelector(useSearch);
-        const isActiveSegment = useSelector(useIsSegmentIsActive(props.index));
+        const isActiveSegment = useIsDelayedSegmentIsActive(props.index);
         const compileErrors = useSelector(
             (state: StorageState) => state.project.compileErrorResult?.errors
         );
@@ -115,6 +115,16 @@ export const SegmentEditor = memo(
         /*
         Events
          */
+        useEffect(() => {
+            if (!isActiveSegment) {
+                return;
+            }
+            const view = editor?.current?.view;
+            view?.dispatch({
+                selection: EditorSelection.cursor(0),
+            });
+            view?.focus();
+        }, [isActiveSegment]);
         // При обновлении глобального списка ошибок фильтруем и устанавливаем локальный
         useEffect(() => {
             setTempSegmentErrors(
@@ -243,7 +253,7 @@ export const SegmentEditor = memo(
             });
         }, [segment?.text]);
 
-        useScrollableToActive(ref, 'segments-container', props.index)
+        useScrollableToActive(ref, 'segments-container', props.index);
 
         /*
          * Callbacks
@@ -252,6 +262,7 @@ export const SegmentEditor = memo(
         // Отдельный вызов для того, чтобы можно было таймер использовать
         // Таймер тоже тут нужен из-за CodeMirror
         const onBlur = useCallback(async () => {
+            console.log('blur');
             editor?.current?.editor?.blur?.();
             dispatch(
                 controller.onBlurSegmentRequest({
@@ -264,6 +275,7 @@ export const SegmentEditor = memo(
         const eventsExt = useMemo(() => {
             return content({
                 focus: () => {
+                    console.log(1123);
                     dispatch(
                         controller.onFocusSegmentRequest({
                             segmentIndex: props.index,

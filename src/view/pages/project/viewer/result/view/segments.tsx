@@ -1,4 +1,4 @@
-import { createRef, memo } from 'react';
+import { createRef, memo, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import {
@@ -33,16 +33,15 @@ const SegmentWrapper = memo(({ index }: { index: number }) => {
     const dispatch = useDispatch<AppDispatch>();
     const segment = useSelector(useSegment(index));
     const ref = createRef<HTMLDivElement>();
-
     useScrollableToActive(ref, 'compile-result', index);
 
-    const onClick = () => {
+    const onClick = useCallback(() => {
         dispatch(
             controller.onFocusSegmentRequest({
                 segmentIndex: index,
             })
         );
-    };
+    }, [dispatch, index]);
 
     if (!segment) {
         return <div key={index} />;

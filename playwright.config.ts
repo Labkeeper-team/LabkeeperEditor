@@ -25,7 +25,7 @@ export default defineConfig({
     expect: {
         toHaveScreenshot: {
             maxDiffPixels: 750,
-        }
+        },
     },
     projects: [
         {

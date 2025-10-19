@@ -1,8 +1,12 @@
-import { RefObject, useCallback, useEffect, useState } from "react";
-import { useSelector } from "react-redux";
-import { useIsSegmentIsActive } from "../store/selectors/program";
+import { RefObject, useCallback, useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { useIsSegmentIsActive } from '../store/selectors/program';
 
-export const useScrollableToActive = (ref: RefObject<HTMLDivElement>, mainContainerid: string, index: number) => {
+export const useScrollableToActive = (
+    ref: RefObject<HTMLDivElement>,
+    mainContainerid: string,
+    index: number
+) => {
     const isActive = useSelector(useIsSegmentIsActive(index));
     const [prevIsActive, setPrevIsActive] = useState(false);
 
@@ -67,5 +71,4 @@ export const useScrollableToActive = (ref: RefObject<HTMLDivElement>, mainContai
             }
         }
     }, [isActive]);
-
-}
+};

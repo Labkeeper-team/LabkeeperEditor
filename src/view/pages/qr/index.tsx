@@ -13,7 +13,7 @@ export const QrPage = () => {
         if (version) {
             dispatch(controller.onQrPageEnterRequest({ version: version }));
         }
-    }, [version]);
+    }, [version, dispatch]);
 
     return <></>;
 };
