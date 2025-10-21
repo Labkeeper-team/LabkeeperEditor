@@ -55,13 +55,14 @@ import {
     setInputSegmentText,
     setProject,
     setReadOnly,
+    setProjectMode,
 } from './slices/project';
 import {
     CompileErrorResultList,
     CompileSuccessResult,
     LabkeeperFile,
     OutputSegment,
-    Project,
+    Project, ProjectMode,
     ProjectShort,
 } from '../../model/domain.ts';
 import { setProjects } from './slices/projects';
@@ -212,6 +213,7 @@ export const createViewModelStateFromStore = (
             projectIsReadonly: () => store.getState().project.projectIsReadonly,
             currentProgram: () => store.getState().project.currentProgram,
             files: () => store.getState().project.files,
+            mode: () => store.getState().project.mode,
 
             setInputSegmentText: (index, text) =>
                 store.dispatch(setInputSegmentText({ index, text })),
@@ -239,6 +241,8 @@ export const createViewModelStateFromStore = (
                 store.dispatch(setFiles(files)),
             setCurrentProgram: (program) =>
                 store.dispatch(setCurrentProgram(program)),
+            setProjectMode: (mode: ProjectMode) =>
+                store.dispatch(setProjectMode(mode)),
         },
         projectsViewModelRepository: {
             projects: () => store.getState().projects.projects,

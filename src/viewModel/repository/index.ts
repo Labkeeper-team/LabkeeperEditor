@@ -4,7 +4,7 @@ import {
     LabkeeperFile,
     OutputSegment,
     Program,
-    Project,
+    Project, ProjectMode,
     ProjectShort,
     UserInfo,
 } from '../../model/domain.ts';
@@ -90,6 +90,7 @@ class MockViewModelRepositoryState {
     getProjectsRequestState: GetProjectsRequestState = 'unknown';
     saveProjectRequestState: SaveProjectRequestState = 'unknown';
 
+    mode: ProjectMode = 'markdown';
     instructionExpanded = false;
     language: 'ru' | 'en' = 'ru';
     lastProgram: Program = {
@@ -233,6 +234,7 @@ export const mockViewModelState = (): MockViewModelRepository => {
                 }),
         },
         projectViewModelRepository: {
+            mode: () => mockViewModelState.mode,
             compileErrorResult: () => mockViewModelState.compileErrorResult,
             compileSuccessResult: () => mockViewModelState.compileSuccessResult,
             project: () => mockViewModelState.project,
@@ -240,6 +242,7 @@ export const mockViewModelState = (): MockViewModelRepository => {
             currentProgram: () => mockViewModelState.currentProgram,
             files: () => mockViewModelState.files,
 
+            setProjectMode: (mode) => mockViewModelState.mode = mode,
             setInputSegmentText: (index, text) => {
                 mockViewModelState.currentProgram.segments[index].text = text;
             },
@@ -336,7 +339,9 @@ export interface ProjectViewModelRepository {
     projectIsReadonly: () => boolean;
     currentProgram: () => Program;
     files: () => LabkeeperFile[];
+    mode: () => ProjectMode;
 
+    setProjectMode: (mode: ProjectMode) => void;
     setInputSegmentText: (index: number, text: string) => void;
     setCompileResultSegmentsSize: (size: number) => void;
     setCompileResultForSegment: (index: number, segment: OutputSegment) => void;

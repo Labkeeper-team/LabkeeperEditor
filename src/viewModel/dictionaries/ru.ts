@@ -131,6 +131,13 @@ export const ru: Translations = {
         adding_segment: 'Добавить сегмент',
     },
 
+    viewer: {
+        mode: {
+            markdown: 'markdown',
+            latex: 'latex',
+        },
+    },
+
     compile_error: {
         [CompileError.CODE_NO_END_QUOTES]: 'Нет закрывающих кавычек',
         [CompileError.UNKNOWN_SYMBOL]: 'Неизвестный символ',

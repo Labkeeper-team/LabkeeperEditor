@@ -118,6 +118,13 @@ export interface Translations {
         adding_segment: string;
     };
 
+    viewer: {
+        mode: {
+            markdown: string;
+            latex: string;
+        };
+    };
+
     compile_error: {
         [CompileError.CODE_NO_END_QUOTES]: string;
         [CompileError.UNKNOWN_SYMBOL]: string;

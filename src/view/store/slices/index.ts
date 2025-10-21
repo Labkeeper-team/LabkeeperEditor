@@ -6,6 +6,7 @@ import {
     Project,
     ProjectShort,
     UserInfo,
+    ProjectMode,
 } from '../../../model/domain.ts';
 
 import { Language } from '../../../viewModel/dictionaries';
@@ -52,6 +53,7 @@ interface ProjectState {
     currentProgram: Program;
     projectIsReadonly: boolean;
     files: LabkeeperFile[];
+    mode: ProjectMode;
 }
 
 interface AuthState {
@@ -122,6 +124,7 @@ export const projectInitialState: ProjectState = {
     compileSuccessResult: { segments: [] },
     files: [],
     currentProgram: createEmptyProgram(),
+    mode: 'markdown',
 };
 
 export const projectsInitialState: ProjectsState = {

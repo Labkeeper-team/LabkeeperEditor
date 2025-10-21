@@ -1,5 +1,5 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { ProgramRoundStrategy, SegmentType } from '../model/domain.ts';
+import { ProgramRoundStrategy, ProjectMode, SegmentType } from '../model/domain.ts';
 import { HeaderHelpItem } from '../model/help';
 import * as Sentry from '@sentry/react';
 import { Events, ObserverService } from '../model/service/ObserverService.ts';
@@ -562,6 +562,15 @@ export class Controller {
         async () => {
             this.wrapper('onCloneProjectRequest', () =>
                 this.projectPageService.onCloneProject()
+            );
+        }
+    );
+
+    onProjectModeChangeRequest = createAsyncThunk(
+        'onProjectModeChangeRequest',
+        async ({ mode }: { mode: ProjectMode }) => {
+            this.wrapper('onProjectModeChangeRequest', () =>
+                this.projectPageService.setProjectMode(mode)
             );
         }
     );
