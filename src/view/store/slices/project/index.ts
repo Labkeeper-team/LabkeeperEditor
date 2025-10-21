@@ -128,11 +128,11 @@ export const projectSlice = createSlice({
         ) => {
             state.project = payload;
         },
-        setProjectMode: (
-            state,
-            { payload }: PayloadAction<ProjectMode>
-        ) => {
+        setProjectMode: (state, { payload }: PayloadAction<ProjectMode>) => {
             state.mode = payload;
+        },
+        setPdfUri: (state, { payload }: PayloadAction<string | undefined>) => {
+            state.pdfUri = payload;
         },
     },
 });
@@ -148,4 +148,5 @@ export const {
     setCompileResultSegmentsSize,
     setInputSegmentText,
     setProjectMode,
+    setPdfUri,
 } = projectSlice.actions;

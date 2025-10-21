@@ -1,5 +1,9 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { ProgramRoundStrategy, ProjectMode, SegmentType } from '../model/domain.ts';
+import {
+    ProgramRoundStrategy,
+    ProjectMode,
+    SegmentType,
+} from '../model/domain.ts';
 import { HeaderHelpItem } from '../model/help';
 import * as Sentry from '@sentry/react';
 import { Events, ObserverService } from '../model/service/ObserverService.ts';

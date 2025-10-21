@@ -17,9 +17,16 @@ export interface RequestResult<T = object> {
 }
 
 export type CompilationResponse = CompileSuccessResult | CompileErrorResultList;
+export type PdfCompilationResponse =
+    | CompileSuccessPdfResponse
+    | CompileErrorResultList;
 
 export interface UploadFileResponse {
     url: string;
+}
+
+export interface CompileSuccessPdfResponse {
+    pdfUri: string;
 }
 
 export interface ListFilesResponse {
@@ -41,13 +48,17 @@ export interface RichProject extends Project {
 export interface Rpi {
     compilationRequest(
         program: Program
-    ): Promise<RequestResult<CompileSuccessResult | CompileErrorResultList>>;
+    ): Promise<RequestResult<CompilationResponse>>;
 
     contactFormRequest(subject: string, body: string): Promise<RequestResult>;
 
     compileProjectRequest(
         projectId: string
     ): Promise<RequestResult<CompilationResponse>>;
+
+    compileProjectPdfRequest(
+        projectId: string
+    ): Promise<RequestResult<PdfCompilationResponse>>;
 
     uploadFileRequest(
         formData: FormData,

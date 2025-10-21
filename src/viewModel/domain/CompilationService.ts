@@ -1,5 +1,11 @@
 import { ViewModelRepository } from '../repository';
-import { CompilationResponse, RequestResult, Rpi } from '../../model/rpi';
+import {
+    CompilationResponse,
+    RequestResult,
+    Rpi,
+    CompileSuccessPdfResponse,
+    PdfCompilationResponse,
+} from '../../model/rpi';
 import {
     CompileError,
     CompileErrorResultList,
@@ -48,9 +54,16 @@ export class CompilationService {
 
         this.repository.settingsViewModelRepository.setIsCompiling(true);
 
-        let result: RequestResult<CompilationResponse>;
+        const mode = this.repository.projectViewModelRepository.mode();
+        let result:
+            | RequestResult<CompilationResponse>
+            | RequestResult<PdfCompilationResponse>;
         if (projectId) {
-            result = await this.rpi.compileProjectRequest(projectId);
+            if (mode === 'latex') {
+                result = await this.rpi.compileProjectPdfRequest(projectId);
+            } else {
+                result = await this.rpi.compileProjectRequest(projectId);
+            }
         } else {
             result = await this.rpi.compilationRequest(program);
         }
@@ -64,9 +77,16 @@ export class CompilationService {
             );
             this.ideService.resetEditor();
         } else if (result.code === 200) {
-            this.repository.projectViewModelRepository.setCompileResult(
-                result.body as CompileSuccessResult
-            );
+            if (mode === 'latex') {
+                const body = result.body as CompileSuccessPdfResponse;
+                this.repository.projectViewModelRepository.setPdfUri(
+                    body.pdfUri
+                );
+            } else {
+                this.repository.projectViewModelRepository.setCompileResult(
+                    result.body as CompileSuccessResult
+                );
+            }
             this.repository.projectViewModelRepository.setCompileErrorResult({
                 errors: [],
             });

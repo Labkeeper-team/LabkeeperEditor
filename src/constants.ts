@@ -10,6 +10,7 @@ const version = `v${BUILD_INFO.major}`;
 export const URLS = {
     compile: `/api/${version}/public/compile`,
     compileProject: `/api/${version}/public/project/{id}/compile`,
+    compileProjectPdf: `/api/${version}/public/project/{id}/compile/pdf`,
     getAllProjects: `/api/${version}/public/project/all`,
     getDefaultProject: `/api/${version}/public/project/default`,
     createProject: `/api/${version}/public/project/create`,

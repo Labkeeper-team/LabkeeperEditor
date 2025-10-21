@@ -54,6 +54,7 @@ interface ProjectState {
     projectIsReadonly: boolean;
     files: LabkeeperFile[];
     mode: ProjectMode;
+    pdfUri?: string;
 }
 
 interface AuthState {
@@ -125,6 +126,7 @@ export const projectInitialState: ProjectState = {
     files: [],
     currentProgram: createEmptyProgram(),
     mode: 'markdown',
+    pdfUri: undefined,
 };
 
 export const projectsInitialState: ProjectsState = {

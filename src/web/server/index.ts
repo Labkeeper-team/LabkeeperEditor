@@ -17,6 +17,7 @@ import {
     RichProject,
     Rpi,
     UploadFileResponse,
+    CompileSuccessPdfResponse,
 } from '../../model/rpi';
 
 async function requestWrapper<T>(
@@ -86,6 +87,14 @@ export class WebRpi implements Rpi {
     ): Promise<RequestResult<CompilationResponse>> {
         return requestWrapper(async () =>
             axios.post(URLS.compileProject.replace('{id}', projectId))
+        );
+    }
+
+    async compileProjectPdfRequest(
+        projectId: string
+    ): Promise<RequestResult<CompileSuccessPdfResponse>> {
+        return requestWrapper(async () =>
+            axios.post(URLS.compileProjectPdf.replace('{id}', projectId))
         );
     }
 

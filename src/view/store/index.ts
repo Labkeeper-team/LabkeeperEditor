@@ -56,13 +56,15 @@ import {
     setProject,
     setReadOnly,
     setProjectMode,
+    setPdfUri,
 } from './slices/project';
 import {
     CompileErrorResultList,
     CompileSuccessResult,
     LabkeeperFile,
     OutputSegment,
-    Project, ProjectMode,
+    Project,
+    ProjectMode,
     ProjectShort,
 } from '../../model/domain.ts';
 import { setProjects } from './slices/projects';
@@ -214,6 +216,7 @@ export const createViewModelStateFromStore = (
             currentProgram: () => store.getState().project.currentProgram,
             files: () => store.getState().project.files,
             mode: () => store.getState().project.mode,
+            pdfUri: () => store.getState().project.pdfUri,
 
             setInputSegmentText: (index, text) =>
                 store.dispatch(setInputSegmentText({ index, text })),
@@ -243,6 +246,7 @@ export const createViewModelStateFromStore = (
                 store.dispatch(setCurrentProgram(program)),
             setProjectMode: (mode: ProjectMode) =>
                 store.dispatch(setProjectMode(mode)),
+            setPdfUri: (uri?: string) => store.dispatch(setPdfUri(uri)),
         },
         projectsViewModelRepository: {
             projects: () => store.getState().projects.projects,
