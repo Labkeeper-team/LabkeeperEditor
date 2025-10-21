@@ -37,6 +37,7 @@ import {
     setRedoEnabled,
     setSearch,
     setUndoEnabled,
+    setPdfUpdated,
 } from './slices/ide';
 import {
     clearLastProgram,
@@ -170,7 +171,9 @@ export const createViewModelStateFromStore = (
                 store.getState().ide.getProjectsRequestState,
             saveProjectRequestState: () =>
                 store.getState().ide.saveProjectRequestState,
+            pdfUpdated: () => store.getState().ide.pdfUpdated,
 
+            setPdfUpdated: (v) => store.dispatch(setPdfUpdated(v)),
             setCloneRequestState: (v: CloneRequestState) =>
                 store.dispatch(setCloneRequestState(v)),
             setGetProjectRequestState: (v: GetProjectRequestState) =>

@@ -79,6 +79,7 @@ interface IdeState {
     getFilesRequestState: GetFilesRequestState;
     getProjectsRequestState: GetProjectsRequestState;
     saveProjectRequestState: SaveProjectRequestState;
+    pdfUpdated: number;
 }
 
 interface PersistenceState {
@@ -110,6 +111,7 @@ export const ideInitialState: IdeState = {
     getFilesRequestState: 'unknown',
     getProjectsRequestState: 'unknown',
     saveProjectRequestState: 'unknown',
+    pdfUpdated: 0,
 };
 
 export const persistenceInitialState: PersistenceState = {

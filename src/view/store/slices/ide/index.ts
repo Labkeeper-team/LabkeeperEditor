@@ -60,6 +60,9 @@ export const ideSlice = createSlice({
         ) => {
             state.saveProjectRequestState = payload;
         },
+        setPdfUpdated: (state, { payload }: PayloadAction<number>) => {
+            state.pdfUpdated = payload;
+        },
     },
 });
 export const {
@@ -73,4 +76,5 @@ export const {
     setGetFilesRequestState,
     setGetProjectsRequestState,
     setSaveProjectRequestState,
+    setPdfUpdated,
 } = ideSlice.actions;

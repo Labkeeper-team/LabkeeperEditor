@@ -115,6 +115,7 @@ class MockViewModelRepositoryState {
 
     projects: ProjectShort[] = [];
 
+    pdfUpdated: number = 0;
     isAutocompleteLoading = false;
     editModeForFilename = false;
     editModeForProjectTitle = false;
@@ -192,7 +193,9 @@ export const mockViewModelState = (): MockViewModelRepository => {
                 mockViewModelState.getProjectsRequestState,
             saveProjectRequestState: () =>
                 mockViewModelState.saveProjectRequestState,
+            pdfUpdated: () => mockViewModelState.pdfUpdated,
 
+            setPdfUpdated: (v) => (mockViewModelState.pdfUpdated = v),
             setGetProjectsRequestState: (v: GetProjectsRequestState) =>
                 (mockViewModelState.getProjectsRequestState = v),
             setGetFilesRequestState: (v: GetFilesRequestState) =>
@@ -372,7 +375,9 @@ export interface IdeViewModelRepository {
     getFilesRequestState: () => GetFilesRequestState;
     getProjectsRequestState: () => GetProjectsRequestState;
     saveProjectRequestState: () => SaveProjectRequestState;
+    pdfUpdated: () => number;
 
+    setPdfUpdated: (v: number) => void;
     setRedoEnabled: (v: boolean) => void;
     setUndoEnabled: (v: boolean) => void;
     setSearch: (search: string | undefined) => void;

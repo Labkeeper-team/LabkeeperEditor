@@ -82,6 +82,9 @@ export class CompilationService {
                 this.repository.projectViewModelRepository.setPdfUri(
                     body.pdfUri
                 );
+                this.repository.ideViewModelRepository.setPdfUpdated(
+                    this.repository.ideViewModelRepository.pdfUpdated() + 1
+                );
             } else {
                 this.repository.projectViewModelRepository.setCompileResult(
                     result.body as CompileSuccessResult
