@@ -113,7 +113,7 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
                 itemStyle: { color: plot.color },
                 lineStyle:
                     plot.type === 'dotted' ? { type: 'dotted' } : { width: 2 },
-                symbolSize: 8,
+                symbolSize: 0,
                 smooth: false,
                 stack: 'total',
                 ...(plot.type === 'histogram' && {
