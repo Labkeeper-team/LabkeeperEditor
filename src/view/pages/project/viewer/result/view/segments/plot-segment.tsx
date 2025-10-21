@@ -113,7 +113,7 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
                 itemStyle: { color: plot.color },
                 lineStyle:
                     plot.type === 'dotted' ? { type: 'dotted' } : { width: 2 },
-                symbolSize: 0,
+                symbolSize: plot.type === 'scatter' ? 8 : 0,
                 smooth: false,
                 stack: 'total',
                 ...(plot.type === 'histogram' && {
@@ -239,6 +239,38 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
             return errorSeries;
         });
         const isHisto = statement.plots.every((p) => p.type === 'histogram');
+        const showGrid = statement.plotGridVisible !== false;
+        const showGridDirectly = statement.plotGridVisible === true;
+
+        const splitLineConfig = showGridDirectly
+            ? {
+                  splitLine: {
+                      show: true,
+                      lineStyle: {
+                          color: '#e5e7eb',
+                          width: 1,
+                          type: 'solid',
+                      },
+                  },
+                  axisLine: {
+                      show: true,
+                      lineStyle: {
+                          color: '#6b7280',
+                          width: 1.5,
+                      },
+                  },
+                  axisTick: {
+                      show: true,
+                      length: 6,
+                      lineStyle: {
+                          color: '#6b7280',
+                          width: 1.5,
+                      },
+                  },
+              }
+            : showGrid
+              ? { show: showGrid }
+              : {};
         return {
             legend: {
                 show: false,
@@ -248,13 +280,12 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
             xAxis: {
                 type: isHisto ? 'category' : 'value',
                 nameGap: isHisto ? 20 : 40,
-                splitLine: { show: !!statement.plotGridVisible },
+                ...splitLineConfig
             },
             yAxis: {
                 type: 'value',
                 nameGap: 50,
-                splitLine: { show: !!statement.plotGridVisible },
-                // max: (value) => value.max + 1,
+                ...splitLineConfig
             },
             series,
         };
@@ -265,7 +296,9 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const renderMath = () => (window.MathJax as any)?.typesetPromise?.();
         chart?.on('finished', renderMath);
-        return () => { chart?.off('finished', renderMath) };
+        return () => {
+            chart?.off('finished', renderMath);
+        };
     }, []);
 
     const handleLegendClick = (plotName: string) => {
