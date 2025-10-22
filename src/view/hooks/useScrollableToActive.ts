@@ -30,7 +30,7 @@ export const useScrollableToActive = (
         const visibilityRatio = visibleHeight / elementRect.height;
 
         return visibilityRatio >= 0.3;
-    }, [ref]);
+    }, [ref, mainContainerid]);
 
     const handleClick = useCallback(() => {
         const container = ref?.current?.parentElement; // Родительский scroll-контейнер
@@ -70,5 +70,6 @@ export const useScrollableToActive = (
                 handleClick();
             }
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isActive]);
 };

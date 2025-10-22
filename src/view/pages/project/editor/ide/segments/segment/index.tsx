@@ -229,6 +229,7 @@ export const SegmentEditor = memo(
             timeout = setTimeout(() => {
                 dispatch(controller.onProgramSaveTimeoutRequest());
             }, 1000);
+            // eslint-disable-next-line react-hooks/exhaustive-deps
         }, [segment?.text]);
 
         // Восстанавливаем позицию курсора после внешнего обновления текста сегмента
@@ -262,14 +263,13 @@ export const SegmentEditor = memo(
         // Отдельный вызов для того, чтобы можно было таймер использовать
         // Таймер тоже тут нужен из-за CodeMirror
         const onBlur = useCallback(async () => {
-            console.log('blur');
             editor?.current?.editor?.blur?.();
             dispatch(
                 controller.onBlurSegmentRequest({
                     segmentIndex: props.index,
                 })
             );
-        }, [props.index, dispatch, segment?.text]);
+        }, [props.index, dispatch]);
 
         // События редактора
         const eventsExt = useMemo(() => {
@@ -323,7 +323,7 @@ export const SegmentEditor = memo(
                     );
                 });
             },
-            [segment?.text, setTempSegmentErrors, props.index, dispatch]
+            [setTempSegmentErrors, props.index, dispatch]
         );
 
         // Первую прорисовку пропускаем

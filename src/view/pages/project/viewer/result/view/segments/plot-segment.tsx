@@ -280,12 +280,12 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
             xAxis: {
                 type: isHisto ? 'category' : 'value',
                 nameGap: isHisto ? 20 : 40,
-                ...splitLineConfig
+                ...splitLineConfig,
             },
             yAxis: {
                 type: 'value',
                 nameGap: 50,
-                ...splitLineConfig
+                ...splitLineConfig,
             },
             series,
         };

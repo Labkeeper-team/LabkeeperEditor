@@ -79,7 +79,7 @@ const LoginView = () => {
             return dictionary.authorization.errors.unknownError;
         }
         return '';
-    }, [loginRequest]);
+    }, [loginRequest, dictionary]);
 
     const isLoading = loginRequest === 'loading';
 
