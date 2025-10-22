@@ -159,6 +159,34 @@ test('plotly-with-grid', async ({ page }) => {
     await expect(page).toHaveScreenshot('plotly-with-grid.png');
 });
 
+test('plotly-with-matjax', async ({ page }) => {
+    await plotlyTest(
+        {
+            type: 'plot',
+            plotName: '\\int f(x) dx\\:интегралы,\\:integrals',
+            plotXAxisName: 'MyX',
+            plotYAxisName: 'MyY',
+            legendVisible: true,
+            plotGridVisible: true,
+            plots: [
+                {
+                    x: [1, 2, 3, 4, 5],
+                    y: [1, 2, 1, 3, 1],
+                    type: 'line',
+                    color: 'blue',
+                    name: 'MyLine',
+                    xInfl: [],
+                    yInfl: [],
+                },
+            ],
+        },
+        page
+    );
+
+    await expect(page).toHaveScreenshot('plotly-with-mathjax.png');
+});
+
+
 /*
 Тест на рисование гистограмм в plotly
  */
