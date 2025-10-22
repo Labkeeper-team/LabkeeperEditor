@@ -159,6 +159,9 @@ test('plotly-with-grid', async ({ page }) => {
     await expect(page).toHaveScreenshot('plotly-with-grid.png');
 });
 
+/*
+Тест на рисование mathjax через es-chart
+ */
 test('plotly-with-matjax', async ({ page }) => {
     await plotlyTest(
         {
@@ -185,7 +188,6 @@ test('plotly-with-matjax', async ({ page }) => {
 
     await expect(page).toHaveScreenshot('plotly-with-mathjax.png');
 });
-
 
 /*
 Тест на рисование гистограмм в plotly
