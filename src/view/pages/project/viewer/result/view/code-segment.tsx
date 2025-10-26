@@ -4,7 +4,7 @@ import { AssignStatement } from './segments/assignment-segment.tsx';
 import { DetailedStatement } from './segments/calculation-segment.tsx';
 import { FileSegment } from './segments/file-segment.tsx';
 import { TableSegment } from './segments/table-segment.tsx';
-import { PlotSegment } from './segments/plot-segment.tsx';
+import { PlotSegment } from './segments/plot-segment';
 import {
     CalcStatement,
     ComputationalOutputSegment,
@@ -48,10 +48,13 @@ export const CodeSegment = memo(
                 ); // чтобы не повторялись переменные
             return vars;
         }, [statements]);
-
+        const onClickTimeout = () => {
+            setTimeout(onClick, 1);
+        };
         return (
             <div
-                onClick={onClick}
+                id={`result-segment-${index}`}
+                onMouseDown={onClickTimeout}
                 ref={ref ?? segmentRef}
                 className={classNames({
                     'active-result-block-container': activeIndex,

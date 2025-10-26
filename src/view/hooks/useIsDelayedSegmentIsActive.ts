@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useIsSegmentIsActive } from '../store/selectors/program';
 
-const timeoutMs = 200;
+const timeoutMs = 10;
 
 export const useIsDelayedSegmentIsActive = (index) => {
     const activeIndex = useSelector(useIsSegmentIsActive(index));

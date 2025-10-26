@@ -1,4 +1,4 @@
-import { createRef, memo, useCallback } from 'react';
+import { memo, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import {
@@ -16,6 +16,8 @@ import {
 import { useScrollableToActive } from '../../../../../hooks/useScrollableToActive.ts';
 import { AppDispatch } from '../../../../../store/index.ts';
 import { controller } from '../../../../../../main.tsx';
+import useClickOutside from '../../../../../hooks/useClickOutside.ts';
+import { useIsDelayedSegmentIsActive } from '../../../../../hooks/useIsDelayedSegmentIsActive.ts';
 
 export const Segments = memo(() => {
     const segmentsSize = useSelector(useCompiledSegmentsSize);
@@ -32,7 +34,21 @@ export const Segments = memo(() => {
 const SegmentWrapper = memo(({ index }: { index: number }) => {
     const dispatch = useDispatch<AppDispatch>();
     const segment = useSelector(useSegment(index));
-    const ref = createRef<HTMLDivElement>();
+    const activeIndex = useIsDelayedSegmentIsActive(index);
+    const onOutisde = useCallback(() => {
+        dispatch(
+            controller.onBlurSegmentRequest({
+                segmentIndex: index,
+            })
+        );
+    }, [dispatch, index]);
+
+    const ref = useClickOutside(
+        onOutisde,
+        [`#ide-segment-${index}`],
+        activeIndex
+    );
+
     useScrollableToActive(ref, 'compile-result', index);
 
     const onClick = useCallback(() => {

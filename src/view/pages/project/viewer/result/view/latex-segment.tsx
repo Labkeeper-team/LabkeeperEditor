@@ -11,10 +11,13 @@ export const LatexSegment = memo(
     >(({ segment, index, onClick }, ref) => {
         const activeIndex = useIsDelayedSegmentIsActive(index);
         const segmentRef = useRef<HTMLDivElement>(null);
-
+        const onClickTimeout = () => {
+            setTimeout(onClick, 1);
+        };
         return (
             <div
-                onClick={onClick}
+                id={`result-segment-${index}`}
+                onMouseDown={onClickTimeout}
                 ref={ref ?? segmentRef}
                 className={classNames({
                     'active-result-block-container': activeIndex,

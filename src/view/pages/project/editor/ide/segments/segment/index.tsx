@@ -115,16 +115,6 @@ export const SegmentEditor = memo(
         /*
         Events
          */
-        useEffect(() => {
-            if (!isActiveSegment) {
-                return;
-            }
-            const view = editor?.current?.view;
-            view?.dispatch({
-                selection: EditorSelection.cursor(0),
-            });
-            view?.focus();
-        }, [isActiveSegment]);
         // При обновлении глобального списка ошибок фильтруем и устанавливаем локальный
         useEffect(() => {
             setTempSegmentErrors(
@@ -275,7 +265,6 @@ export const SegmentEditor = memo(
         const eventsExt = useMemo(() => {
             return content({
                 focus: () => {
-                    console.log(1123);
                     dispatch(
                         controller.onFocusSegmentRequest({
                             segmentIndex: props.index,
@@ -341,6 +330,7 @@ export const SegmentEditor = memo(
             >
                 <CodeMirror
                     ref={editor as LegacyRef<ReactCodeMirrorRef>}
+                    id={`ide-segment-${props.index}`}
                     value={segment?.text}
                     onChange={onChange}
                     readOnly={projectIsReadonly}

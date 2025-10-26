@@ -1,12 +1,19 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef, useMemo, useState } from 'react';
 import ReactECharts from 'echarts-for-react';
 import './plot-segment.scss';
-import { PlotStatement } from '../../../../../../../model/domain.ts';
+import { PlotStatement } from '../../../../../../../../model/domain.ts';
+import { Legend, LegendPosition } from './legend.tsx';
+import { renderErrorItem } from './helpers/renderErrorItem.ts';
+import { Plotname } from './plotname.tsx';
 
 export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
     const chartRef = useRef<ReactECharts | null>(null);
     const legendRef = useRef<HTMLDivElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
 
+    const [legendPosition, setLegendPosition] =
+        useState<LegendPosition>('right');
     const [seriesVisibility, setSeriesVisibility] = useState<
         Record<string, boolean>
     >(() =>
@@ -142,94 +149,7 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
             const errorSeries = {
                 name: `${plot.name}-errors`,
                 type: 'custom',
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                renderItem: (params: any, api: any) => {
-                    const xValue = api.value(0);
-                    const yValue = api.value(1);
-                    const xLow = api.value(2);
-                    const xHigh = api.value(3);
-                    const yLow = api.value(4);
-                    const yHigh = api.value(5);
-
-                    const center = api.coord([xValue, yValue]);
-                    const xLowCoord = api.coord([xLow, yValue])[0];
-                    const xHighCoord = api.coord([xHigh, yValue])[0];
-                    const yLowCoord = api.coord([xValue, yLow])[1];
-                    const yHighCoord = api.coord([xValue, yHigh])[1];
-
-                    const style = api.style({
-                        stroke: plot.color,
-                        fill: null,
-                        width: 2,
-                    });
-
-                    // Рисуем крест — вертикальные и горизонтальные error bars
-                    return {
-                        type: 'group',
-                        children: [
-                            {
-                                type: 'line',
-                                shape: {
-                                    x1: xLowCoord,
-                                    y1: center[1],
-                                    x2: xHighCoord,
-                                    y2: center[1],
-                                },
-                                style,
-                            },
-                            {
-                                type: 'line',
-                                shape: {
-                                    x1: center[0],
-                                    y1: yLowCoord,
-                                    x2: center[0],
-                                    y2: yHighCoord,
-                                },
-                                style,
-                            },
-                            {
-                                type: 'line',
-                                shape: {
-                                    x1: xLowCoord,
-                                    y1: center[1] - 3,
-                                    x2: xLowCoord,
-                                    y2: center[1] + 3,
-                                },
-                                style,
-                            },
-                            {
-                                type: 'line',
-                                shape: {
-                                    x1: xHighCoord,
-                                    y1: center[1] - 3,
-                                    x2: xHighCoord,
-                                    y2: center[1] + 3,
-                                },
-                                style,
-                            },
-                            {
-                                type: 'line',
-                                shape: {
-                                    x1: center[0] - 3,
-                                    y1: yLowCoord,
-                                    x2: center[0] + 3,
-                                    y2: yLowCoord,
-                                },
-                                style,
-                            },
-                            {
-                                type: 'line',
-                                shape: {
-                                    x1: center[0] - 3,
-                                    y1: yHighCoord,
-                                    x2: center[0] + 3,
-                                    y2: yHighCoord,
-                                },
-                                style,
-                            },
-                        ],
-                    };
-                },
+                renderItem: renderErrorItem(plot),
                 encode: { x: 0, y: 1 },
                 data: errorData,
                 z: 10,
@@ -241,7 +161,6 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
         const isHisto = statement.plots.every((p) => p.type === 'histogram');
         const showGrid = statement.plotGridVisible !== false;
         const showGridDirectly = statement.plotGridVisible === true;
-
         const splitLineConfig = showGridDirectly
             ? {
                   splitLine: {
@@ -276,7 +195,13 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
                 show: false,
                 selected: seriesVisibility,
             },
-            grid: { top: 65, bottom: 65, left: 70, right: 120 },
+            grid: {
+                height: 300,
+                top: 65,
+                bottom: legendPosition === 'right' ? 65 : 120,
+                left: 70,
+                right: legendPosition === 'right' ? 120 : 25,
+            },
             xAxis: {
                 type: isHisto ? 'category' : 'value',
                 nameGap: isHisto ? 20 : 40,
@@ -289,11 +214,10 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
             },
             series,
         };
-    }, [statement, seriesVisibility]);
+    }, [statement, seriesVisibility, legendPosition]);
 
     useEffect(() => {
         const chart = chartRef.current?.getEchartsInstance();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const renderMath = () => (window.MathJax as any)?.typesetPromise?.();
         chart?.on('finished', renderMath);
         return () => {
@@ -314,127 +238,57 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
             name: plotName,
         });
     };
-
+    const chartHeight = useMemo(() => {
+        const baseHeight = 415;
+        const plotLegengItemHeight = 27;
+        return (
+            baseHeight +
+            (legendPosition === 'right'
+                ? 0
+                : statement.plots.length * plotLegengItemHeight)
+        );
+    }, [legendPosition, statement.plots.length]);
     return (
         <div
+            ref={containerRef}
             className="plot-container"
-            style={{ position: 'relative', width: '100%', height: 400 }}
+            style={{ position: 'relative', width: '100%' }}
         >
             <ReactECharts
                 ref={chartRef}
                 option={option}
-                style={{ width: '100%', height: '100%' }}
+                style={{ width: '100%', height: chartHeight }}
                 opts={{ renderer: 'svg' }}
+                notMerge={true}
+                lazyUpdate={true}
             />
-
-            {statement.plotName && (
-                <div
-                    className="plot-title"
-                    style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        fontSize: '14px',
-                        textAlign: 'center',
-                        pointerEvents: 'none',
-                    }}
-                >
-                    $${statement.plotName}$$
-                </div>
-            )}
-
-            {statement.legendVisible && (
-                <div
-                    ref={legendRef}
-                    className="custom-legend"
-                    style={{
-                        position: 'absolute',
-                        right: 10,
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '4px',
-                        fontSize: '12px',
-                        pointerEvents: 'auto',
-                    }}
-                >
-                    {statement.plots.map((plot, idx) => {
-                        const isVisible = seriesVisibility[plot.name];
-                        return (
-                            <div
-                                key={idx}
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '6px',
-                                    cursor: 'pointer',
-                                    opacity: isVisible ? 1 : 0.4,
-                                    transition: 'opacity 0.2s',
-                                }}
-                                onClick={() => handleLegendClick(plot.name)}
-                            >
-                                <span
-                                    style={{
-                                        display: 'inline-block',
-                                        width: 20,
-                                        height:
-                                            plot.type === 'histogram' ? 12 : 2,
-                                        backgroundColor: isVisible
-                                            ? plot.color
-                                            : '#ccc',
-                                        borderRadius:
-                                            plot.type === 'scatter' ? '50%' : 0,
-                                        flexShrink: 0,
-                                        transition: 'background-color 0.2s',
-                                    }}
-                                />
-                                <span
-                                    style={{
-                                        color: isVisible ? 'inherit' : '#999',
-                                        transition: 'color 0.2s',
-                                    }}
-                                >
-                                    $${plot.name}$$
-                                </span>
-                            </div>
-                        );
-                    })}
-                </div>
-            )}
+            <Plotname name={statement.plotName} />
+            <Legend
+                show={statement.legendVisible}
+                containerRef={containerRef}
+                handleLegendClick={handleLegendClick}
+                ref={legendRef}
+                plots={statement.plots}
+                legendPosition={legendPosition}
+                setLegendPosition={setLegendPosition}
+                seriesVisibility={seriesVisibility}
+            />
             {statement.plotXAxisName && (
                 <div
                     className="plot-xaxis-label"
                     style={{
-                        position: 'absolute',
-                        bottom: -10,
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        fontSize: '12px',
-                        textAlign: 'center',
-                        pointerEvents: 'none',
+                        bottom:
+                            legendPosition === 'right'
+                                ? -10
+                                : statement.plots.length * 27,
                     }}
                 >
-                    $${statement.plotXAxisName}$$
+                    $${statement.plotXAxisName.replaceAll(' ', '\\:')}$$
                 </div>
             )}
-
             {statement.plotYAxisName && (
-                <div
-                    className="plot-yaxis-label"
-                    style={{
-                        position: 'absolute',
-                        top: '50%',
-                        left: -10,
-                        transform: 'translateY(-50%) rotate(-90deg)',
-                        transformOrigin: 'left top',
-                        fontSize: '12px',
-                        textAlign: 'center',
-                        pointerEvents: 'none',
-                    }}
-                >
-                    $${statement.plotYAxisName}$$
+                <div className="plot-yaxis-label">
+                    $${statement.plotYAxisName.replaceAll(' ', '\\:')}$$
                 </div>
             )}
         </div>
