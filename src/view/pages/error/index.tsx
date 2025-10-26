@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/react';
 import { isRouteErrorResponse, useRouteError } from 'react-router-dom';
 import React from 'react';
-import { controller } from '../../../main.tsx';
+import { controller } from '../../../controller.tsx';
 
 export const RouterErrorBoundary: React.FC = () => {
     const error = useRouteError();

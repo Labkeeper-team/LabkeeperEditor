@@ -10,7 +10,7 @@ import { useHotkeys } from 'react-hotkeys-hook';
 import { useDispatch } from 'react-redux';
 import { ProjectShort } from '../../../../model/domain.ts';
 import { AppDispatch } from '../../../store';
-import { controller } from '../../../../main.tsx';
+import { controller } from '../../../../controller.ts';
 
 export const ProjectTitle = (props: { project: ProjectShort }) => {
     const ref = useRef<HTMLInputElement>(null);

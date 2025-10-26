@@ -13,7 +13,8 @@ exports[`Simple segment 1`] = `
           style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
         >
           <div
-            class="result-segment"
+            class="active-result-block-container result-segment"
+            id="result-segment-0"
           >
             <span
               style="display: block;"
@@ -443,7 +444,8 @@ exports[`Simple segment 1`] = `
         style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
       >
         <div
-          class="result-segment"
+          class="active-result-block-container result-segment"
+          id="result-segment-0"
         >
           <span
             style="display: block;"
@@ -930,7 +932,8 @@ exports[`greek-test 1`] = `
           style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
         >
           <div
-            class="result-segment"
+            class="active-result-block-container result-segment"
+            id="result-segment-0"
           >
             <span
               style="display: block;"
@@ -1000,7 +1003,8 @@ exports[`greek-test 1`] = `
         style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
       >
         <div
-          class="result-segment"
+          class="active-result-block-container result-segment"
+          id="result-segment-0"
         >
           <span
             style="display: block;"
@@ -1127,7 +1131,8 @@ exports[`lots of _ 1`] = `
           style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
         >
           <div
-            class="result-segment"
+            class="active-result-block-container result-segment"
+            id="result-segment-0"
           >
             <span
               style="display: block;"
@@ -1251,7 +1256,8 @@ exports[`lots of _ 1`] = `
         style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
       >
         <div
-          class="result-segment"
+          class="active-result-block-container result-segment"
+          id="result-segment-0"
         >
           <span
             style="display: block;"

@@ -27,7 +27,7 @@ import { ShareModal } from './share/modal';
 import { ContactModal } from './contact/modal';
 import { setShowContactModal } from '../../store/slices/settings';
 import { AppDispatch } from '../../store';
-import { controller } from '../../../main.tsx';
+import { controller } from '../../../controller.tsx';
 
 const languageOptions = [
     {

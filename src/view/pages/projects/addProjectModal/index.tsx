@@ -8,7 +8,7 @@ import { colors } from '../../../styles/colors';
 import { useDispatch, useSelector } from 'react-redux';
 import { useDictionary } from '../../../store/selectors/translations';
 import { AppDispatch } from '../../../store';
-import { controller } from '../../../../main.tsx';
+import { controller } from '../../../../controller.tsx';
 
 export const AddProjectModal = (props: { onClose: () => unknown }) => {
     const dispatch = useDispatch<AppDispatch>();

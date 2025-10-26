@@ -1,7 +1,7 @@
 import { ImageButton } from '../../imageButton';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '../../../store';
-import { controller } from '../../../../main.tsx';
+import { controller } from '../../../../controller.tsx';
 
 export const Back = () => {
     const dispatch = useDispatch<AppDispatch>();

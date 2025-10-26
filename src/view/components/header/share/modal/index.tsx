@@ -9,7 +9,7 @@ import { setShowShareModal } from '../../../../store/slices/settings';
 import { AppDispatch, StorageState } from '../../../../store';
 import { toast } from 'react-toastify';
 import { useDictionary } from '../../../../store/selectors/translations';
-import { controller } from '../../../../../main.tsx';
+import { controller } from '../../../../../controller.tsx';
 
 export const ShareModal = () => {
     const dispatch = useDispatch<AppDispatch>();

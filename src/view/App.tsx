@@ -7,7 +7,7 @@ import { persist, store } from './store';
 import { RouterProvider } from 'react-router-dom';
 import { appRouter } from './routing';
 import ScaleWrapper from './components/scaleWrapper';
-import { controller } from '../main.tsx';
+import { controller } from '../controller.tsx';
 
 function App() {
     return (

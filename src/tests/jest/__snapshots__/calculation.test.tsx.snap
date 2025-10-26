@@ -13,7 +13,8 @@ exports[`Simple array 1`] = `
           style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
         >
           <div
-            class="result-segment"
+            class="active-result-block-container result-segment"
+            id="result-segment-0"
           >
             <span
               style="display: block;"
@@ -159,7 +160,8 @@ exports[`Simple array 1`] = `
         style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
       >
         <div
-          class="result-segment"
+          class="active-result-block-container result-segment"
+          id="result-segment-0"
         >
           <span
             style="display: block;"
@@ -362,7 +364,8 @@ exports[`Simple detailed segment 1`] = `
           style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
         >
           <div
-            class="result-segment"
+            class="active-result-block-container result-segment"
+            id="result-segment-0"
           >
             <div
               style="display: flex; flex-direction: column; gap: 5px; overflow-wrap: break-word; word-wrap: break-word; white-space: normal; max-width: 100%;"
@@ -602,7 +605,8 @@ exports[`Simple detailed segment 1`] = `
         style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
       >
         <div
-          class="result-segment"
+          class="active-result-block-container result-segment"
+          id="result-segment-0"
         >
           <div
             style="display: flex; flex-direction: column; gap: 5px; overflow-wrap: break-word; word-wrap: break-word; white-space: normal; max-width: 100%;"

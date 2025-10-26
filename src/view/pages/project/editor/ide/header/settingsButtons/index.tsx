@@ -17,7 +17,7 @@ import { useSearch } from '../../../../../../store/selectors/program';
 import { useDictionary } from '../../../../../../store/selectors/translations';
 import { AppDispatch, StorageState } from '../../../../../../store';
 import { setShowSearch } from '../../../../../../store/slices/settings';
-import { controller } from '../../../../../../../main.tsx';
+import { controller } from '../../../../../../../controller.tsx';
 
 export const SettingsButton = () => {
     const dispatch = useDispatch<AppDispatch>();

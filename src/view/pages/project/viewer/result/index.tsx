@@ -15,7 +15,7 @@ import { useReactToPrint } from 'react-to-print';
 import { useRef } from 'react';
 import { useDictionary } from '../../../../store/selectors/translations';
 import { AppDispatch } from '../../../../store';
-import { controller } from '../../../../../main.tsx';
+import { controller } from '../../../../../controller.tsx';
 
 declare global {
     interface Window {

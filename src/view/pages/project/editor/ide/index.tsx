@@ -15,7 +15,7 @@ import { InterfaceTourAnchorClassnames } from '../../../../components/tour/helpe
 import { AppDispatch, StorageState } from '../../../../store';
 import { useEffect, useMemo, useState } from 'react';
 import { useDictionary } from '../../../../store/selectors/translations.ts';
-import { controller } from '../../../../../main.tsx';
+import { controller } from '../../../../../controller.tsx';
 
 export const Ide = () => {
     const dispatch = useDispatch<AppDispatch>();

@@ -60,9 +60,17 @@ let testSegment: any = {
     ],
 };
 
+jest.mock('../../controller.ts', () => ({
+    controller: {
+        onFocusSegmentRequest: jest.fn(),
+        onBlurSegmentRequest: jest.fn(),
+    },
+}));
 let i = 0;
 jest.mock('react-redux', () => {
     return {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+        useDispatch: () => (e?: any) => {},
         useSelector: () => {
             if (i === 0) {
                 i++;

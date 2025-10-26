@@ -10,7 +10,7 @@ import {
     DropdownSegmentMenuContentProps,
 } from './model';
 import { useMemo } from 'react';
-import { controller } from '../../../../../../../../main.tsx';
+import { controller } from '../../../../../../../../controller.tsx';
 
 export const DropdownMenuContent = ({
     index,
