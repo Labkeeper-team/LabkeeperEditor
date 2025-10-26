@@ -5,7 +5,7 @@ import { Typography } from '../../../../components/typography';
 import { Modal } from '../../../../components/modal';
 import { AppDispatch, StorageState } from '../../../../store';
 import { useDictionary } from '../../../../store/selectors/translations.ts';
-import { controller } from '../../../../../controller.tsx';
+import { controller } from '../../../../../controller.ts';
 import { FileIcon } from '../../../../icons';
 
 export const DeleteFilesModal = () => {

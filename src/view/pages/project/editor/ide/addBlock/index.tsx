@@ -14,7 +14,7 @@ import { SelectClassNames } from '../../../../../components/select/model';
 import { AppDispatch } from '../../../../../store';
 import classNames from 'classnames';
 import { useIsMobile } from '../../../../../hooks/useMobile';
-import { controller } from '../../../../../../controller.tsx';
+import { controller } from '../../../../../../controller.ts';
 
 export const AddBlock = (props: AddBlockProps) => {
     const dispatch = useDispatch<AppDispatch>();

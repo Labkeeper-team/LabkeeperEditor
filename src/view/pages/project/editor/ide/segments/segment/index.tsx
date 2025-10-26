@@ -40,7 +40,7 @@ import classNames from 'classnames';
 import { colors } from '../../../../../../styles/colors';
 import { DropdownMenuContent } from './dropdownMenuContent';
 import { useDictionary } from '../../../../../../store/selectors/translations.ts';
-import { controller } from '../../../../../../../controller.tsx';
+import { controller } from '../../../../../../../controller.ts';
 import { LRUMap } from 'lru_map';
 import { useScrollableToActive } from '../../../../../../hooks/useScrollableToActive.ts';
 import { useIsDelayedSegmentIsActive } from '../../../../../../hooks/useIsDelayedSegmentIsActive.ts';

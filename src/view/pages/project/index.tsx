@@ -5,7 +5,7 @@ import { useDispatch } from 'react-redux';
 import { FileManager } from './fileManager';
 import { AppDispatch } from '../../store';
 import { useHotkeys } from 'react-hotkeys-hook';
-import { controller } from '../../../controller.tsx';
+import { controller } from '../../../controller.ts';
 import { DeleteFilesModal } from './modals/delete-files';
 
 export const ProjectPage = () => {

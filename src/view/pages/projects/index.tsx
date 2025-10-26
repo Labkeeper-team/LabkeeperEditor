@@ -19,7 +19,7 @@ import {
     useDictionary,
 } from '../../store/selectors/translations';
 import { AppDispatch, StorageState } from '../../store';
-import { controller } from '../../../controller.tsx';
+import { controller } from '../../../controller.ts';
 
 export const ProjectsPage = () => {
     const [showAddModal, setShowAddModal] = useState(false);

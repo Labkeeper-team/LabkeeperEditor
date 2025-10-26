@@ -12,7 +12,7 @@ import { StorageState } from '../../../store';
 import { AppDispatch } from '../../../store';
 import { SmartCaptcha } from '@yandex/smart-captcha';
 import { Providers, Secrets, URLS } from '../../../../constants.ts';
-import { controller } from '../../../../controller.tsx';
+import { controller } from '../../../../controller.ts';
 
 // Компонент спиннера загрузки
 const LoadingSpinner = () => (

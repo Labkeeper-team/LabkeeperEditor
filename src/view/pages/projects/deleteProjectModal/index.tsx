@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { colors } from '../../../styles/colors';
 import { useDictionary } from '../../../store/selectors/translations';
 import { AppDispatch } from '../../../store';
-import { controller } from '../../../../controller.tsx';
+import { controller } from '../../../../controller.ts';
 
 export const DeleteProjectModal = (props: {
     onClose: () => void;
