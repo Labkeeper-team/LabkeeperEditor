@@ -11,7 +11,7 @@ import './file-item.style.scss';
 import { useDictionary } from '../../../../store/selectors/translations';
 import { AppDispatch, StorageState } from '../../../../store';
 import { LabkeeperFile } from '../../../../../model/domain.ts';
-import { controller } from '../../../../../controller.ts';
+import { controller } from '../../../../../main.tsx';
 
 export const FileItem = (props: {
     file: LabkeeperFile;

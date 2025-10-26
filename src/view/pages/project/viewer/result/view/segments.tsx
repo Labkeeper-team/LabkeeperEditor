@@ -15,7 +15,7 @@ import {
 } from '../../../../../../model/domain.ts';
 import { useScrollableToActive } from '../../../../../hooks/useScrollableToActive.ts';
 import { AppDispatch } from '../../../../../store/index.ts';
-import { controller } from '../../../../../../controller.ts';
+import { controller } from '../../../../../../main.tsx';
 import useClickOutside from '../../../../../hooks/useClickOutside.ts';
 import { useIsDelayedSegmentIsActive } from '../../../../../hooks/useIsDelayedSegmentIsActive.ts';
 

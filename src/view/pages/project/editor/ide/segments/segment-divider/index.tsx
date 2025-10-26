@@ -5,7 +5,7 @@ import classNames from 'classnames';
 import { useDictionary } from '../../../../../../store/selectors/translations';
 
 import { SegmentType } from '../../../../../../../model/domain.ts';
-import { controller } from '../../../../../../../controller.ts';
+import { controller } from '../../../../../../../main.tsx';
 import { AppDispatch } from '../../../../../../store';
 import { EditorTypeDivider, SegmentDividerProps } from './model.ts';
 

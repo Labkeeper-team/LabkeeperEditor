@@ -15,7 +15,7 @@ import {
     useShowFileManager,
 } from '../../../store/selectors/program.ts';
 import { StorageState } from '../../../store';
-import { controller } from '../../../../controller.ts';
+import { controller } from '../../../../main.tsx';
 
 export const FileManager = () => {
     const dispatch = useDispatch<AppDispatch>();

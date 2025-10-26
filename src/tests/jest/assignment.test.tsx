@@ -28,7 +28,7 @@ const TestSegment = () => (
 );
 
 let i = 0;
-jest.mock('../../controller.ts', () => ({
+jest.mock('../../main.tsx', () => ({
     controller: {
         onFocusSegmentRequest: jest.fn(),
         onBlurSegmentRequest: jest.fn(),

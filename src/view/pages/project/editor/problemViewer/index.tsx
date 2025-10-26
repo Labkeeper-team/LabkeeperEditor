@@ -10,7 +10,7 @@ import { useDictionary } from '../../../../store/selectors/translations';
 import { CompileErrorResult } from '../../../../../model/domain';
 import { ErrorGroupedItem } from './errorGroupItem';
 import { AppDispatch, StorageState } from '../../../../store';
-import { controller } from '../../../../../controller.ts';
+import { controller } from '../../../../../main.tsx';
 
 type SegmentId = number;
 export const ProblemViewer = () => {

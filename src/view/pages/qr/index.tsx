@@ -2,7 +2,7 @@ import { useDispatch } from 'react-redux';
 import { AppDispatch } from '../../store';
 import { useParams } from 'react-router-dom';
 import { useEffect } from 'react';
-import { controller } from '../../../controller.ts';
+import { controller } from '../../../main.tsx';
 
 export const QrPage = () => {
     const dispatch = useDispatch<AppDispatch>();

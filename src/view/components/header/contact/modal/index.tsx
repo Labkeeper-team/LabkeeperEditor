@@ -10,7 +10,7 @@ import { setShowContactModal } from '../../../../store/slices/settings';
 import { useState } from 'react';
 import { colors } from '../../../../styles/colors.ts';
 import { useUser } from '../../../../store/selectors/program.ts';
-import { controller } from '../../../../../controller.ts';
+import { controller } from '../../../../../main.tsx';
 
 const contactEmail = 'contact@labkeeper.io';
 

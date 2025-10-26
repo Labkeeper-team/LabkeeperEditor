@@ -13,7 +13,7 @@ import {
     useIsDraggedToFileManager,
     useIsProjectReadonly,
 } from '../../store/selectors/program';
-import { controller } from '../../../controller.ts';
+import { controller } from '../../../main.tsx';
 
 let loaded = false;
 

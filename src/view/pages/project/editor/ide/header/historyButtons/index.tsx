@@ -8,7 +8,7 @@ import { CheckIcon, WarningIcon } from '../../../../../../icons';
 
 import './style.scss';
 import { AppDispatch, StorageState } from '../../../../../../store';
-import { controller } from '../../../../../../../controller.ts';
+import { controller } from '../../../../../../../main.tsx';
 
 export const HistoryButtons = () => {
     const dispatch = useDispatch<AppDispatch>();

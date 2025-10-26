@@ -60,7 +60,7 @@ let testSegment: any = {
     ],
 };
 
-jest.mock('../../controller.ts', () => ({
+jest.mock('../../main.tsx', () => ({
     controller: {
         onFocusSegmentRequest: jest.fn(),
         onBlurSegmentRequest: jest.fn(),

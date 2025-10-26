@@ -5,7 +5,7 @@ import { DragEvent, useCallback } from 'react';
 import { useCurrentProject } from '../../../../store/selectors/program';
 import { useDictionary } from '../../../../store/selectors/translations';
 import { AppDispatch } from '../../../../store';
-import { controller } from '../../../../../controller.ts';
+import { controller } from '../../../../../main.tsx';
 
 export const FileManagerDragZone = () => {
     const dispatch = useDispatch<AppDispatch>();

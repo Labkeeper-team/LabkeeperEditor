@@ -7,7 +7,7 @@ import { colors } from '../../../../../../../styles/colors';
 import { Radio } from '../../../../../../../components/radiobutton';
 import { useDictionary } from '../../../../../../../store/selectors/translations';
 import { AppDispatch } from '../../../../../../../store';
-import { controller } from '../../../../../../../../controller.ts';
+import { controller } from '../../../../../../../../main.tsx';
 
 export const ProjectSettings = () => {
     const activeProgram = useSelector(useCurrentProgram);

@@ -4,7 +4,7 @@ import './style.scss';
 import { AppDispatch } from '../../../../../../../store';
 import { headerHelpItems } from '../../../../../../../../model/help';
 import { useCurrentLanguage } from '../../../../../../../store/selectors/translations';
-import { controller } from '../../../../../../../../controller.ts';
+import { controller } from '../../../../../../../../main.tsx';
 
 export const HeaderHelperItems = () => {
     const language = useSelector(useCurrentLanguage);

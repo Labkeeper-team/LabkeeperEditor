@@ -10,7 +10,7 @@ import './style.scss';
 import classNames from 'classnames';
 import { AppDispatch, StorageState } from '../../../store';
 import { setEditModeForProjectTitle } from '../../../store/slices/settings';
-import { controller } from '../../../../controller.ts';
+import { controller } from '../../../../main.tsx';
 
 export const ProjectTitle = () => {
     const project = useSelector(useCurrentProject);

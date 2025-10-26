@@ -14,7 +14,7 @@ import { AppDispatch, StorageState } from '../../../../../store';
 import { Typography } from '../../../../../components/typography';
 import { Button } from '../../../../../components/button';
 import { useDictionary } from '../../../../../store/selectors/translations';
-import { controller } from '../../../../../../controller.ts';
+import { controller } from '../../../../../../main.tsx';
 
 export const IdeHeader = () => {
     const program = useSelector(useCurrentProgram);
