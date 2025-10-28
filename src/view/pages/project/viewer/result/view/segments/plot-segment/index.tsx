@@ -1,11 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useRef, useMemo, useState } from 'react';
+import { useRef, useMemo, useState } from 'react';
 import ReactECharts from 'echarts-for-react';
 import './plot-segment.scss';
 import { PlotStatement } from '../../../../../../../../model/domain.ts';
 import { Legend, LegendPosition } from './legend.tsx';
 import { renderErrorItem } from './helpers/renderErrorItem.ts';
 import { Plotname } from './plotname.tsx';
+
+import { MathJax } from 'better-react-mathjax';
 
 export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
     const chartRef = useRef<ReactECharts | null>(null);
@@ -216,14 +218,6 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
         };
     }, [statement, seriesVisibility, legendPosition]);
 
-    useEffect(() => {
-        const chart = chartRef.current?.getEchartsInstance();
-        const renderMath = () => (window.MathJax as any)?.typesetPromise?.();
-        chart?.on('finished', renderMath);
-        return () => {
-            chart?.off('finished', renderMath);
-        };
-    }, []);
 
     const handleLegendClick = (plotName: string) => {
         const chart = chartRef.current?.getEchartsInstance();
@@ -283,12 +277,12 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
                                 : statement.plots.length * 27,
                     }}
                 >
-                    $${statement.plotXAxisName.replaceAll(' ', '\\:')}$$
+                    <MathJax>$${statement.plotXAxisName.replaceAll(' ', '\\:')}$$</MathJax>
                 </div>
             )}
             {statement.plotYAxisName && (
                 <div className="plot-yaxis-label">
-                    $${statement.plotYAxisName.replaceAll(' ', '\\:')}$$
+                    <MathJax>$${statement.plotYAxisName.replaceAll(' ', '\\:')}$$</MathJax>
                 </div>
             )}
         </div>

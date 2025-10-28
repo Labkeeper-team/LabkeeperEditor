@@ -1,4 +1,4 @@
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import {
@@ -21,10 +21,13 @@ import { useIsDelayedSegmentIsActive } from '../../../../../hooks/useIsDelayedSe
 
 export const Segments = memo(() => {
     const segmentsSize = useSelector(useCompiledSegmentsSize);
-
+    const segmentIndexes = useMemo(
+        () => Array.from({ length: segmentsSize || 0 }, (_, i) => i),
+        [segmentsSize]
+    );
     return (
         <>
-            {Array.from(Array(segmentsSize).keys()).map((_, index) => {
+            {segmentIndexes.map((_, index) => {
                 return <SegmentWrapper index={index} key={index} />;
             })}
         </>
@@ -34,6 +37,7 @@ export const Segments = memo(() => {
 const SegmentWrapper = memo(({ index }: { index: number }) => {
     const dispatch = useDispatch<AppDispatch>();
     const segment = useSelector(useSegment(index));
+    console.log('rerender index', index, segment);
     const activeIndex = useIsDelayedSegmentIsActive(index);
     const onOutisde = useCallback(() => {
         dispatch(
@@ -43,11 +47,9 @@ const SegmentWrapper = memo(({ index }: { index: number }) => {
         );
     }, [dispatch, index]);
 
-    const ref = useClickOutside(
-        onOutisde,
-        [`#ide-segment-${index}`],
-        activeIndex
-    );
+    const ignoreSelectors = useMemo(() => [`#ide-segment-${index}`], [index]);
+
+    const ref = useClickOutside(onOutisde, ignoreSelectors, activeIndex);
 
     useScrollableToActive(ref, 'compile-result', index);
 
@@ -59,56 +61,64 @@ const SegmentWrapper = memo(({ index }: { index: number }) => {
         );
     }, [dispatch, index]);
 
-    if (!segment) {
-        return <div key={index} />;
-    }
+    const key = useMemo(() => {
+        return `${index}-${segment?.type}`;
+    }, [segment, index]);
 
-    switch (segment.type) {
-        case 'computational': {
-            return (
-                <CodeSegment
-                    onClick={onClick}
-                    segment={segment as ComputationalOutputSegment}
-                    index={index}
-                    key={`${index}-${JSON.stringify(segment)}`}
-                    ref={ref}
-                />
-            );
+    const Component = useMemo(() => {
+        if (!segment) {
+            return <div key={index} />;
         }
-        case 'md': {
-            return (
-                <MdSegment
-                    onClick={onClick}
-                    key={`${index}-${JSON.stringify(segment)}`}
-                    index={index}
-                    ref={ref}
-                    segment={segment as TextOutputSegment}
-                />
-            );
+
+        switch (segment.type) {
+            case 'computational': {
+                return (
+                    <CodeSegment
+                        onClick={onClick}
+                        segment={segment as ComputationalOutputSegment}
+                        index={index}
+                        key={key}
+                        ref={ref}
+                    />
+                );
+            }
+            case 'md': {
+                return (
+                    <MdSegment
+                        onClick={onClick}
+                        key={key}
+                        index={index}
+                        ref={ref}
+                        segment={segment as TextOutputSegment}
+                    />
+                );
+            }
+            case 'latex': {
+                return (
+                    <LatexSegment
+                        onClick={onClick}
+                        key={key}
+                        index={index}
+                        ref={ref}
+                        segment={segment as TextOutputSegment}
+                    />
+                );
+            }
+            case 'asciimath': {
+                return (
+                    <AsciimathSegment
+                        onClick={onClick}
+                        key={key}
+                        segment={segment as TextOutputSegment}
+                        index={index}
+                        ref={ref}
+                    />
+                );
+            }
+            default:
+                return <div />;
         }
-        case 'latex': {
-            return (
-                <LatexSegment
-                    onClick={onClick}
-                    key={`${index}-${JSON.stringify(segment)}`}
-                    index={index}
-                    ref={ref}
-                    segment={segment as TextOutputSegment}
-                />
-            );
-        }
-        case 'asciimath': {
-            return (
-                <AsciimathSegment
-                    onClick={onClick}
-                    key={`${index}-${JSON.stringify(segment)}`}
-                    segment={segment as TextOutputSegment}
-                    index={index}
-                    ref={ref}
-                />
-            );
-        }
-        default:
-            return <div />;
-    }
+    }, [segment, key, index, onClick, ref]);
+
+    return  Component;
 });

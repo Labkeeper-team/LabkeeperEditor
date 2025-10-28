@@ -265,6 +265,9 @@ export const SegmentEditor = memo(
         const eventsExt = useMemo(() => {
             return content({
                 focus: () => {
+                    if (isActiveSegment) {
+                        return;
+                    }
                     dispatch(
                         controller.onFocusSegmentRequest({
                             segmentIndex: props.index,
@@ -273,7 +276,7 @@ export const SegmentEditor = memo(
                 },
                 blur: onBlur,
             });
-        }, [dispatch, onBlur, props.index]);
+        }, [dispatch, onBlur, props.index, isActiveSegment]);
 
         // Вставка файлов и обработка клавиш
         const eventsDom = dom({

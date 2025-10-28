@@ -1,6 +1,7 @@
 import { forwardRef, useCallback, useEffect } from 'react';
 import { PlotDto } from '../../../../../../../../model/domain';
 import classNames from 'classnames';
+import { MathJax } from 'better-react-mathjax';
 export type LegendPosition = 'bottom' | 'right';
 
 export interface LegendProps {
@@ -99,7 +100,7 @@ export const Legend = forwardRef<HTMLDivElement, LegendProps>(
                                     whiteSpace: 'nowrap',
                                 }}
                             >
-                                $${plot.name.replaceAll(' ', '\\:')}$$
+                                <MathJax>$${plot.name.replaceAll(' ', '\\:')}$$</MathJax>
                             </span>
                         </div>
                     );
