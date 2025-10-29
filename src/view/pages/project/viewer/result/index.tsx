@@ -120,12 +120,12 @@ export const Result = () => {
         return compileResult === undefined ||
             compileResult.segments === undefined ||
             compileResult.segments.length === 0 ? (
-                <EmptyResultContainer />
-            ) : (
-                <ViewResult ref={contentRef} />
-            )
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [contentRef, compileResult.segments])
+            <EmptyResultContainer />
+        ) : (
+            <ViewResult ref={contentRef} />
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [contentRef, compileResult.segments]);
 
     return (
         <div className="result-container">

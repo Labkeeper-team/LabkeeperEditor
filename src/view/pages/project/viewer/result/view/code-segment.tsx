@@ -14,7 +14,6 @@ import {
 } from '../../../../../../model/domain.ts';
 import { LatexSegment } from './segments/latex-segment.tsx';
 import { NoResultSegment } from './segments/no-result-segment.tsx';
-import { useIsDelayedSegmentIsActive } from '../../../../../hooks/useIsDelayedSegmentIsActive.ts';
 
 /**
  * Стили дяя отображения fontsize
@@ -37,7 +36,6 @@ export const CodeSegment = memo(
     >(({ segment, index, onClick }, ref) => {
         const segmentRef = useRef<HTMLDivElement>(null);
         const statements = segment.statements;
-        const activeIndex = useIsDelayedSegmentIsActive(index);
 
         const variables = useMemo(() => {
             const vars = statements
@@ -57,7 +55,6 @@ export const CodeSegment = memo(
                 onMouseDown={onClickTimeout}
                 ref={ref ?? segmentRef}
                 className={classNames({
-                    'active-result-block-container': activeIndex,
                     'result-segment': true,
                 })}
             >

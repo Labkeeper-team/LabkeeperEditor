@@ -1,31 +1,28 @@
 import classNames from 'classnames';
 import Markdown from 'react-markdown';
-import { forwardRef, memo, useRef } from 'react';
+import { forwardRef, memo, useCallback, useRef } from 'react';
 import remarkMath from 'remark-math';
 
 import remarkBreaks from 'remark-breaks';
 import { MathJax } from 'better-react-mathjax';
 import remarkGfm from 'remark-gfm';
 import { TextOutputSegment } from '../../../../../../model/domain.ts';
-import { useIsDelayedSegmentIsActive } from '../../../../../hooks/useIsDelayedSegmentIsActive.ts';
 
 export const MdSegment = memo(
     forwardRef<
         HTMLDivElement,
         { segment: TextOutputSegment; index: number; onClick: () => void }
     >(({ segment, index, onClick }, ref) => {
-        const activeIndex = useIsDelayedSegmentIsActive(index);
         const segmentRef = useRef<HTMLDivElement>(null);
-        const onClickTimeout = () => {
+        const onClickTimeout = useCallback(() => {
             setTimeout(onClick, 1);
-        };
+        }, [onClick]);
         return (
             <div
                 id={`result-segment-${index}`}
                 onMouseDown={onClickTimeout}
                 ref={ref ?? segmentRef}
                 className={classNames({
-                    'active-result-block-container': activeIndex,
                     'markdown-body': true,
                     'result-segment': true,
                 })}

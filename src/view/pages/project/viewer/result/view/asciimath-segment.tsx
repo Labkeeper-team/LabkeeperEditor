@@ -3,7 +3,6 @@ import { forwardRef, memo, useRef } from 'react';
 import { MathJax } from 'better-react-mathjax';
 import { TextOutputSegment } from '../../../../../../model/domain.ts';
 import { parser } from './utils.tsx';
-import { useIsDelayedSegmentIsActive } from '../../../../../hooks/useIsDelayedSegmentIsActive.ts';
 
 const SPLIT_REGEX = /[\n|\r]/;
 
@@ -12,7 +11,6 @@ export const AsciimathSegment = memo(
         HTMLDivElement,
         { segment: TextOutputSegment; index: number; onClick: () => void }
     >(({ segment, index, onClick }, ref) => {
-        const activeIndex = useIsDelayedSegmentIsActive(index);
         const segmentRef = useRef<HTMLDivElement>(null);
         const onClickTimeout = () => {
             setTimeout(onClick, 1);
@@ -27,7 +25,6 @@ export const AsciimathSegment = memo(
                 onMouseDown={onClickTimeout}
                 ref={ref ?? segmentRef}
                 className={classNames({
-                    'active-result-block-container': activeIndex,
                     'markdown-body': true,
                     'result-segment': true,
                 })}

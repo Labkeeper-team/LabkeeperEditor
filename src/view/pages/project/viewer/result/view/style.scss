@@ -1,10 +1,12 @@
 @use '../../../../../styles/colors' as *;
 
 .result-segment {
-    border: 1px solid transparent;
     padding-left: 5px;
     padding-right: 5px;
     padding-top: 5px;
+}
+.result-segment-container {
+    border: 1px solid transparent !important;
 }
 .active-result-block-container {
     max-width: 100%;

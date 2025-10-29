@@ -54,9 +54,10 @@ export const useIsSegmentIsActive = (id: number) =>
 export const useSegment = (id: number) =>
     createSelector(
         [
-            (state: StorageState) => state.project.compileSuccessResult?.segments,
+            (state: StorageState) =>
+                state.project.compileSuccessResult?.segments,
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            (_: StorageState) => id
+            (_: StorageState) => id,
         ],
         (segments, id) => segments?.find((_, i) => i === id)
     );

@@ -5,5 +5,9 @@ export const Plotname = memo(({ name }: { name?: string }) => {
     if (!name) {
         return null;
     }
-    return <div className="plot-title"><MathJax>$${name.replaceAll(' ', '\\:')}$$</MathJax></div>;
+    return (
+        <div className="plot-title">
+            <MathJax>$${name.replaceAll(' ', '\\:')}$$</MathJax>
+        </div>
+    );
 });

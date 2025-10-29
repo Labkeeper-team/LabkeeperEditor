@@ -37,7 +37,6 @@ export const useScrollableToActive = (
         const element = ref?.current;
 
         if (!container || !element) return;
-
         const scaleFactor =
             +document.documentElement.style.getPropertyValue('--mobile-scale');
         const rect = element.getBoundingClientRect();
@@ -50,14 +49,11 @@ export const useScrollableToActive = (
 
         const offsetY =
             Math.abs(offsetY1) > Math.abs(offsetY2) ? offsetY2 : offsetY1;
-
-        // Прокручиваем контейнер
-        if (container.scrollTo) {
-            container.scrollTo({
-                top: container.scrollTop + offsetY,
-                behavior: 'smooth',
-            });
-        }
+        const top = container.scrollTop + offsetY;
+        container?.scrollTo?.({
+            top,
+            behavior: 'smooth',
+        });
     }, [ref]);
 
     useEffect(() => {

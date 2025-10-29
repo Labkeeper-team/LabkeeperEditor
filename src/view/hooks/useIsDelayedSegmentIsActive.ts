@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useTransition } from 'react';
 import { useSelector } from 'react-redux';
 import { useIsSegmentIsActive } from '../store/selectors/program';
 
@@ -6,37 +6,27 @@ const timeoutMs = 10;
 
 export const useIsDelayedSegmentIsActive = (index) => {
     const activeIndex = useSelector(useIsSegmentIsActive(index));
-    const [internalState, setInternalState] = useState(activeIndex);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const timeoutRef = useRef<any>(null);
-    const previousValueRef = useRef(activeIndex);
+    const [, startTransition] = useTransition();
+    const internalStateRef = useRef(activeIndex);
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
-        // Если значение изменилось
-        if (activeIndex !== previousValueRef.current) {
-            // Очищаем предыдущий таймаут, если он есть
-            if (timeoutRef.current) {
-                clearTimeout(timeoutRef.current);
-                timeoutRef.current = null;
-            }
-
-            // Устанавливаем новый таймаут
-            timeoutRef.current = setTimeout(() => {
-                setInternalState(activeIndex);
-                timeoutRef.current = null;
-            }, timeoutMs);
-
-            // Сохраняем текущее значение
-            previousValueRef.current = activeIndex;
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
         }
 
-        // Cleanup function
+        timeoutRef.current = setTimeout(() => {
+            startTransition(() => {
+                internalStateRef.current = activeIndex;
+            });
+        }, timeoutMs);
+
         return () => {
             if (timeoutRef.current) {
                 clearTimeout(timeoutRef.current);
             }
         };
-    }, [activeIndex]);
+    }, [activeIndex, startTransition]);
 
-    return internalState;
+    return internalStateRef.current;
 };

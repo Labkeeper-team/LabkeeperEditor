@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useRef, useMemo, useState } from 'react';
 import ReactECharts from 'echarts-for-react';
 import './plot-segment.scss';
@@ -218,7 +217,6 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
         };
     }, [statement, seriesVisibility, legendPosition]);
 
-
     const handleLegendClick = (plotName: string) => {
         const chart = chartRef.current?.getEchartsInstance();
         if (!chart) return;
@@ -277,12 +275,16 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
                                 : statement.plots.length * 27,
                     }}
                 >
-                    <MathJax>$${statement.plotXAxisName.replaceAll(' ', '\\:')}$$</MathJax>
+                    <MathJax>
+                        $${statement.plotXAxisName.replaceAll(' ', '\\:')}$$
+                    </MathJax>
                 </div>
             )}
             {statement.plotYAxisName && (
                 <div className="plot-yaxis-label">
-                    <MathJax>$${statement.plotYAxisName.replaceAll(' ', '\\:')}$$</MathJax>
+                    <MathJax>
+                        $${statement.plotYAxisName.replaceAll(' ', '\\:')}$$
+                    </MathJax>
                 </div>
             )}
         </div>

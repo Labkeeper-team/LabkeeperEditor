@@ -2,14 +2,12 @@ import classNames from 'classnames';
 import { forwardRef, memo, useRef } from 'react';
 import { TextOutputSegment } from '../../../../../../model/domain.ts';
 import { MathJax } from 'better-react-mathjax';
-import { useIsDelayedSegmentIsActive } from '../../../../../hooks/useIsDelayedSegmentIsActive.ts';
 
 export const LatexSegment = memo(
     forwardRef<
         HTMLDivElement,
         { segment: TextOutputSegment; index: number; onClick: () => void }
     >(({ segment, index, onClick }, ref) => {
-        const activeIndex = useIsDelayedSegmentIsActive(index);
         const segmentRef = useRef<HTMLDivElement>(null);
         const onClickTimeout = () => {
             setTimeout(onClick, 1);
@@ -20,7 +18,6 @@ export const LatexSegment = memo(
                 onMouseDown={onClickTimeout}
                 ref={ref ?? segmentRef}
                 className={classNames({
-                    'active-result-block-container': activeIndex,
                     'markdown-body': true,
                     'result-segment': true,
                 })}

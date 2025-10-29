@@ -100,7 +100,9 @@ export const Legend = forwardRef<HTMLDivElement, LegendProps>(
                                     whiteSpace: 'nowrap',
                                 }}
                             >
-                                <MathJax>$${plot.name.replaceAll(' ', '\\:')}$$</MathJax>
+                                <MathJax>
+                                    $${plot.name.replaceAll(' ', '\\:')}$$
+                                </MathJax>
                             </span>
                         </div>
                     );
