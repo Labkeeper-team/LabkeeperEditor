@@ -223,6 +223,14 @@ export const en: Translations = {
         '5': 'Constants are too large',
         '6': 'Program execution time exceeded',
     },
+    quota_help: {
+        '1': "Write to our support if you don't have enough resources.",
+        '2': "Write to our support if you don't have enough resources.",
+        '3': "Write to our support if you don't have enough resources.",
+        '4': "Write to our support if you don't have enough resources.",
+        '5': "Write to our support if you don't have enough resources.",
+        '6': 'Perhaps you should hide some of the calculations, this will speed up the program, this can be done by clicking on the three dots in the segment panel.',
+    },
     filemanager: {
         title: 'Files',
         add: 'Add files',
