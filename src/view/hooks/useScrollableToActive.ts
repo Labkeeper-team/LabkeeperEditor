@@ -19,7 +19,17 @@ export const useScrollableToActive = (
         const containerRect = container.getBoundingClientRect();
         const elementRect = ref.current.getBoundingClientRect();
 
-        // Проверяем, что элемент виден на 30% или больше
+        // Если элемент выше видимой области контейнера,
+        // считаем его «достаточно видимым», если центр контейнера находится внутри элемента
+        if (elementRect.height > containerRect.height) {
+            const containerCenter = containerRect.top + containerRect.height / 2;
+            return (
+                elementRect.top <= containerCenter &&
+                elementRect.bottom >= containerCenter
+            );
+        }
+
+        // Иначе проверяем, что элемент виден на 30% или больше
         const visibleTop = Math.max(elementRect.top, containerRect.top);
         const visibleBottom = Math.min(
             elementRect.bottom,

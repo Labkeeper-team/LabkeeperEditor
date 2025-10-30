@@ -7,6 +7,10 @@ import { renderErrorItem } from './helpers/renderErrorItem.ts';
 import { Plotname } from './plotname.tsx';
 
 import { MathJax } from 'better-react-mathjax';
+import { getBaseSeries } from './helpers/getSeries.ts';
+import { getGrid } from './helpers/getGrid.ts';
+import { getXYData } from './helpers/getXYData.ts';
+import { LegendItemHeight } from './constant/index.ts';
 
 export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
     const chartRef = useRef<ReactECharts | null>(null);
@@ -25,126 +29,33 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
     );
 
     const option = useMemo(() => {
+        const histogramPlots = statement.plots.filter((p) => p.type === 'histogram');
+        const histogramMin =
+            histogramPlots.length > 0
+                ? Math.min(
+                      ...histogramPlots.flatMap((p) => p.x.map(Number))
+                  )
+                : undefined;
         const series = statement.plots.map((plot) => {
-            let xData: number[] = [];
-            let yData: number[] = [];
-            if (plot.type !== 'histogram') {
-                xData = plot.x.map(Number);
-                yData = plot.y?.map(Number);
-            } else {
-                const hasYData = plot.y && plot.y.length > 0;
-                const histFunc = hasYData ? 'sum' : 'count';
-
-                if (plot.x.length < 20) {
-                    if (histFunc === 'sum') {
-                        const sumMap = plot.x.reduce(
-                            (acc, v, idx) => {
-                                const num = Number(v);
-                                const yVal = Number(plot.y![idx]) || 0;
-                                acc[num] = (acc[num] || 0) + yVal;
-                                return acc;
-                            },
-                            {} as Record<number, number>
-                        );
-
-                        const uniqueX = Object.keys(sumMap)
-                            .map(Number)
-                            .sort((a, b) => a - b);
-                        xData = uniqueX;
-                        yData = uniqueX.map((x) => sumMap[x]);
-                    } else {
-                        const freqMap = plot.x.reduce(
-                            (acc, v) => {
-                                const num = Number(v);
-                                acc[num] = (acc[num] || 0) + 1;
-                                return acc;
-                            },
-                            {} as Record<number, number>
-                        );
-
-                        const uniqueX = Object.keys(freqMap)
-                            .map(Number)
-                            .sort((a, b) => a - b);
-                        xData = uniqueX;
-                        yData = uniqueX.map((x) => freqMap[x]);
-                    }
-                } else {
-                    const values = plot.x.map(Number);
-                    const min = Math.min(...values);
-                    const max = Math.max(...values);
-                    const binCount = 20;
-                    const step = (max - min) / binCount;
-
-                    const bins = new Array(binCount).fill(0);
-
-                    if (histFunc === 'sum') {
-                        values.forEach((v, idx) => {
-                            const binIdx = Math.min(
-                                Math.floor((v - min) / step),
-                                binCount - 1
-                            );
-                            const yVal = Number(plot.y![idx]) || 0;
-                            bins[binIdx] += yVal;
-                        });
-                    } else {
-                        values.forEach((v) => {
-                            const binIdx = Math.min(
-                                Math.floor((v - min) / step),
-                                binCount - 1
-                            );
-                            bins[binIdx]++;
-                        });
-                    }
-                    xData = Array.from(
-                        { length: binCount },
-                        (_, i) => min + (i + 0.5) * step
-                    );
-                    yData = bins;
-                }
-            }
-            const baseSeries = {
-                name: plot.name,
-                type:
-                    plot.type === 'line' || plot.type === 'dotted'
-                        ? 'line'
-                        : plot.type === 'histogram'
-                          ? 'bar'
-                          : 'scatter',
-                data: xData.map((x, i) => [
-                    x,
-                    yData?.[i] ? yData?.[i] : 0,
-                    plot.xInfl?.[i],
-                    plot.xInfl?.[i],
-                    plot.yInfl?.[i],
-                    plot.yInfl?.[i],
-                ]),
-                itemStyle: { color: plot.color },
-                lineStyle:
-                    plot.type === 'dotted' ? { type: 'dotted' } : { width: 2 },
-                symbolSize: plot.type === 'scatter' ? 8 : 0,
-                smooth: false,
-                stack: 'total',
-                ...(plot.type === 'histogram' && {
-                    barGap: '10%',
-                    barCategoryGap: '10%',
-                    barWidth: 35,
-                }),
-            };
+            const [xData, yData] = getXYData(plot);
+            const baseSeries = getBaseSeries(plot,  xData, yData);
 
             const hasError =
                 plot.type === 'scatter' &&
                 ((plot.yInfl && plot.yInfl.some((v: number) => v > 0)) ||
                     (plot.xInfl && plot.xInfl.some((v: number) => v > 0)));
 
-            if (!hasError) return baseSeries;
+            if (!hasError) {
+                return baseSeries;
+            }
 
             const errorData = xData.map((x, i) => [
-                x,
-                yData[i],
-                x - (plot.xInfl?.[i] || 0),
-                x + (plot.xInfl?.[i] || 0),
-                yData[i] - (plot.yInfl?.[i] || 0),
-                yData[i] + (plot.yInfl?.[i] || 0),
+                +x,
+                +yData[i],
+                +x - +(plot.xInfl?.[i] || 0),
+                +x + +(plot.xInfl?.[i] || 0),
+                +yData[i] - +(plot.yInfl?.[i] || 0),
+                +yData[i] + +(plot.yInfl?.[i] || 0),
             ]);
 
             const errorSeries = {
@@ -163,31 +74,7 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
         const showGrid = statement.plotGridVisible !== false;
         const showGridDirectly = statement.plotGridVisible === true;
         const splitLineConfig = showGridDirectly
-            ? {
-                  splitLine: {
-                      show: true,
-                      lineStyle: {
-                          color: '#e5e7eb',
-                          width: 1,
-                          type: 'solid',
-                      },
-                  },
-                  axisLine: {
-                      show: true,
-                      lineStyle: {
-                          color: '#6b7280',
-                          width: 1.5,
-                      },
-                  },
-                  axisTick: {
-                      show: true,
-                      length: 6,
-                      lineStyle: {
-                          color: '#6b7280',
-                          width: 1.5,
-                      },
-                  },
-              }
+            ? getGrid()
             : showGrid
               ? { show: showGrid }
               : {};
@@ -201,16 +88,24 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
                 top: 65,
                 bottom: legendPosition === 'right' ? 65 : 120,
                 left: 70,
-                right: legendPosition === 'right' ? 120 : 25,
+                right: statement.legendVisible ? legendPosition === 'right' ? 120 : 25 : 25,
             },
             xAxis: {
                 type: isHisto ? 'category' : 'value',
                 nameGap: isHisto ? 20 : 40,
+                splitNumber: 8, // Увеличиваем количество делений для более детальной сетки
+                minInterval: 0.25, // Минимальный интервал между делениями
+                boundaryGap: isHisto ? ['0%', '0%'] : ['10%', '10%'], 
+                // Если есть гистограмма и ось числовая, используем минимальное значение гистограммы
+                min: !isHisto && histogramMin !== undefined ? histogramMin - 10 : undefined,
                 ...splitLineConfig,
             },
             yAxis: {
                 type: 'value',
                 nameGap: 50,
+                splitNumber: 8, // Увеличиваем количество делений для более детальной сетки
+                minInterval: 0.25, // Минимальный интервал между делениями
+                boundaryGap: ['10%', '10%'], // Добавляем отступы по краям
                 ...splitLineConfig,
             },
             series,
@@ -232,12 +127,11 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
     };
     const chartHeight = useMemo(() => {
         const baseHeight = 415;
-        const plotLegengItemHeight = 27;
         return (
             baseHeight +
             (legendPosition === 'right'
                 ? 0
-                : statement.plots.length * plotLegengItemHeight)
+                : statement.plots.length * LegendItemHeight)
         );
     }, [legendPosition, statement.plots.length]);
     return (
@@ -272,7 +166,7 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
                         bottom:
                             legendPosition === 'right'
                                 ? -10
-                                : statement.plots.length * 27,
+                                : statement.plots.length * LegendItemHeight - 6,
                     }}
                 >
                     <MathJax>

@@ -24,9 +24,9 @@
     .plot-yaxis-label {
         position: absolute;
         top: 50%;
-        left: -10px;
-        transform: translateY(-50%) rotate(-90deg);
-        transform-origin: left top;
+        left: 25px;
+        transform: rotate(-90deg);
+        transform-origin: left;
         font-size: 12px;
         text-align: center;
         pointer-events: none;
