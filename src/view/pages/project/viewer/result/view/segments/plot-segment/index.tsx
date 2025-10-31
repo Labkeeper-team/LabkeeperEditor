@@ -76,8 +76,8 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
         const splitLineConfig = showGridDirectly
             ? getGrid()
             : showGrid
-                ? { show: showGrid }
-                : {};
+              ? { show: showGrid }
+              : {};
         return {
             legend: {
                 show: false,

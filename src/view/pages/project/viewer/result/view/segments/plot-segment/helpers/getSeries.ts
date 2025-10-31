@@ -11,8 +11,8 @@ export const getBaseSeries = (
             plot.type === 'line' || plot.type === 'dotted'
                 ? 'line'
                 : plot.type === 'histogram'
-                    ? 'bar'
-                    : 'scatter',
+                  ? 'bar'
+                  : 'scatter',
         data: xData.map((x, i) => [
             +x,
             yData?.[i] ? +yData?.[i] : 0,
