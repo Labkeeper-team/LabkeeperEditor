@@ -1,6 +1,10 @@
-import { PlotDto } from "../../../../../../../../../model/domain"
+import { PlotDto } from '../../../../../../../../../model/domain';
 
-export const getBaseSeries = (plot: PlotDto, xData: number[], yData: number[]) => {
+export const getBaseSeries = (
+    plot: PlotDto,
+    xData: number[],
+    yData: number[]
+) => {
     return {
         name: plot.name,
         type:
@@ -18,8 +22,7 @@ export const getBaseSeries = (plot: PlotDto, xData: number[], yData: number[]) =
             plot.yInfl?.[i] ? +plot.yInfl?.[i] : 0,
         ]),
         itemStyle: { color: plot.color },
-        lineStyle:
-            plot.type === 'dotted' ? { type: 'dotted' } : { width: 2 },
+        lineStyle: plot.type === 'dotted' ? { type: 'dotted' } : { width: 2 },
         symbolSize: plot.type === 'scatter' ? 8 : 0,
         encode: { x: 0, y: 1 },
         smooth: false,
@@ -29,5 +32,5 @@ export const getBaseSeries = (plot: PlotDto, xData: number[], yData: number[]) =
             barCategoryGap: '10%',
             barWidth: '95%',
         }),
-    }
-}
+    };
+};

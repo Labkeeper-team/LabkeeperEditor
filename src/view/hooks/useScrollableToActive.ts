@@ -22,7 +22,8 @@ export const useScrollableToActive = (
         // Если элемент выше видимой области контейнера,
         // считаем его «достаточно видимым», если центр контейнера находится внутри элемента
         if (elementRect.height > containerRect.height) {
-            const containerCenter = containerRect.top + containerRect.height / 2;
+            const containerCenter =
+                containerRect.top + containerRect.height / 2;
             return (
                 elementRect.top <= containerCenter &&
                 elementRect.bottom >= containerCenter

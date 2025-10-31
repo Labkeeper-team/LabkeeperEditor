@@ -1,5 +1,5 @@
-import { PlotDto } from "../../../../../../../../../model/domain";
-import { groupByStep } from "./calculateHistorgram";
+import { PlotDto } from '../../../../../../../../../model/domain';
+import { groupByStep } from './calculateHistorgram';
 
 export const getXYData = (plot: PlotDto) => {
     let xData: number[] = [];
@@ -15,7 +15,8 @@ export const getXYData = (plot: PlotDto) => {
         const dataMax = Math.max(...valuesX);
         const step = plot.size
             ? Number(plot.size)
-            : (dataMax - dataMin) / Math.max(1, Math.ceil(Math.sqrt(valuesX.length)));
+            : (dataMax - dataMin) /
+              Math.max(1, Math.ceil(Math.sqrt(valuesX.length)));
 
         const { centers, values } = groupByStep(
             valuesX,
@@ -28,4 +29,4 @@ export const getXYData = (plot: PlotDto) => {
     }
 
     return [xData, yData];
-}
+};

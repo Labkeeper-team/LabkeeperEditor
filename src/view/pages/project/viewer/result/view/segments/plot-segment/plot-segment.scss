@@ -5,6 +5,7 @@
         align-items: center;
         page-break-inside: avoid;
         margin: 0 auto;
+
         & > div {
             margin: 0 auto;
         }
@@ -25,12 +26,13 @@
         position: absolute;
         top: 50%;
         left: 25px;
-        transform:rotate(-90deg) translateX(-50%);
+        transform: rotate(-90deg) translateX(-50%);
         transform-origin: left;
         font-size: 12px;
         text-align: center;
         pointer-events: none;
     }
+
     .plot-title {
         position: absolute;
         top: 0;
@@ -40,6 +42,7 @@
         text-align: center;
         pointer-events: none;
     }
+
     .custom-legend {
         &.right {
             position: absolute;
@@ -68,6 +71,7 @@
             padding: 8px;
             background-color: rgba(255, 255, 255, 0.9);
         }
+
         mjx-container[jax='CHTML'] {
             font-size: 12px !important;
             margin: 0 !important;

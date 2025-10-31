@@ -29,12 +29,12 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
     );
 
     const option = useMemo(() => {
-        const histogramPlots = statement.plots.filter((p) => p.type === 'histogram');
+        const histogramPlots = statement.plots.filter(
+            (p) => p.type === 'histogram'
+        );
         const histogramMin =
             histogramPlots.length > 0
-                ? Math.min(
-                    ...histogramPlots.flatMap((p) => p.x.map(Number))
-                )
+                ? Math.min(...histogramPlots.flatMap((p) => p.x.map(Number)))
                 : undefined;
         const series = statement.plots.map((plot) => {
             const [xData, yData] = getXYData(plot);
@@ -76,8 +76,8 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
         const splitLineConfig = showGridDirectly
             ? getGrid()
             : showGrid
-                ? { show: showGrid }
-                : {};
+              ? { show: showGrid }
+              : {};
         return {
             legend: {
                 show: false,
@@ -88,7 +88,11 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
                 top: 65,
                 bottom: legendPosition === 'right' ? 65 : 120,
                 left: 70,
-                right: statement.legendVisible ? legendPosition === 'right' ? 120 : 25 : 25,
+                right: statement.legendVisible
+                    ? legendPosition === 'right'
+                        ? 120
+                        : 25
+                    : 25,
             },
             xAxis: {
                 type: isHisto ? 'category' : 'value',
@@ -97,7 +101,10 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
                 minInterval: 0.25, // Минимальный интервал между делениями
                 boundaryGap: isHisto ? ['0%', '0%'] : ['10%', '10%'],
                 // Если есть гистограмма и ось числовая, используем минимальное значение гистограммы
-                min: !isHisto && histogramMin !== undefined ? histogramMin - 10 : undefined,
+                min:
+                    !isHisto && histogramMin !== undefined
+                        ? histogramMin - 10
+                        : undefined,
                 ...splitLineConfig,
             },
             yAxis: {
@@ -175,12 +182,22 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
                     </MathJax>
                 </div>
             )}
-            <div style={{ position: 'absolute', height: 415, width: 40, top: 0 }}>
-                <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+            <div
+                style={{ position: 'absolute', height: 415, width: 40, top: 0 }}
+            >
+                <div
+                    style={{
+                        position: 'relative',
+                        width: '100%',
+                        height: '100%',
+                    }}
+                >
                     {statement.plotYAxisName && (
                         <div className="plot-yaxis-label">
                             <MathJax>
-                                $${statement.plotYAxisName.replaceAll(' ', '\\:')}$$
+                                $$
+                                {statement.plotYAxisName.replaceAll(' ', '\\:')}
+                                $$
                             </MathJax>
                         </div>
                     )}

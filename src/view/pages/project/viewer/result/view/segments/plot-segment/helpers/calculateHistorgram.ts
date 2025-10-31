@@ -28,7 +28,8 @@ export function groupByStep(
 
     const alignedStart =
         start !== undefined ? start : Math.floor(dataMin / step) * step;
-    const alignedEnd = end !== undefined ? end : Math.ceil(dataMax / step) * step;
+    const alignedEnd =
+        end !== undefined ? end : Math.ceil(dataMax / step) * step;
 
     const binCount = Math.max(1, Math.ceil((alignedEnd - alignedStart) / step));
 
@@ -56,8 +57,9 @@ export function groupByStep(
         histFunc === 'avg' ? (counts[i] > 0 ? v / counts[i] : 0) : v
     );
 
-    const centers = Array.from({ length: binCount }, (_, i) =>
-        alignedStart + (i + 0.5) * step
+    const centers = Array.from(
+        { length: binCount },
+        (_, i) => alignedStart + (i + 0.5) * step
     );
 
     return { centers, values };
