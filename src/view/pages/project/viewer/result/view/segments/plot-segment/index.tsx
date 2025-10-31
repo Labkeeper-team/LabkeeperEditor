@@ -33,12 +33,12 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
         const histogramMin =
             histogramPlots.length > 0
                 ? Math.min(
-                      ...histogramPlots.flatMap((p) => p.x.map(Number))
-                  )
+                    ...histogramPlots.flatMap((p) => p.x.map(Number))
+                )
                 : undefined;
         const series = statement.plots.map((plot) => {
             const [xData, yData] = getXYData(plot);
-            const baseSeries = getBaseSeries(plot,  xData, yData);
+            const baseSeries = getBaseSeries(plot, xData, yData);
 
             const hasError =
                 plot.type === 'scatter' &&
@@ -76,8 +76,8 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
         const splitLineConfig = showGridDirectly
             ? getGrid()
             : showGrid
-              ? { show: showGrid }
-              : {};
+                ? { show: showGrid }
+                : {};
         return {
             legend: {
                 show: false,
@@ -95,7 +95,7 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
                 nameGap: isHisto ? 20 : 40,
                 splitNumber: 8, // Увеличиваем количество делений для более детальной сетки
                 minInterval: 0.25, // Минимальный интервал между делениями
-                boundaryGap: isHisto ? ['0%', '0%'] : ['10%', '10%'], 
+                boundaryGap: isHisto ? ['0%', '0%'] : ['10%', '10%'],
                 // Если есть гистограмма и ось числовая, используем минимальное значение гистограммы
                 min: !isHisto && histogramMin !== undefined ? histogramMin - 10 : undefined,
                 ...splitLineConfig,
@@ -159,6 +159,7 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
                 setLegendPosition={setLegendPosition}
                 seriesVisibility={seriesVisibility}
             />
+
             {statement.plotXAxisName && (
                 <div
                     className="plot-xaxis-label"
@@ -174,13 +175,17 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
                     </MathJax>
                 </div>
             )}
-            {statement.plotYAxisName && (
-                <div className="plot-yaxis-label">
-                    <MathJax>
-                        $${statement.plotYAxisName.replaceAll(' ', '\\:')}$$
-                    </MathJax>
+            <div style={{ position: 'absolute', height: 415, width: 40, top: 0 }}>
+                <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                    {statement.plotYAxisName && (
+                        <div className="plot-yaxis-label">
+                            <MathJax>
+                                $${statement.plotYAxisName.replaceAll(' ', '\\:')}$$
+                            </MathJax>
+                        </div>
+                    )}
                 </div>
-            )}
+            </div>
         </div>
     );
 };
