@@ -6,7 +6,7 @@ export interface BuildInfo {
 }
 
 const version = `v3`;
-const uri = 'https://labkeeper.io';
+const uri = '';
 export const URLS = {
     compile: `${uri}/api/${version}/public/compile`,
     compileProject: `${uri}/api/${version}/public/project/{id}/compile`,
