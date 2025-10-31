@@ -5,7 +5,7 @@ export interface BuildInfo {
     minor: string;
 }
 
-const version = `v3`;
+const version = `v${BUILD_INFO.major}`;
 const uri = '';
 export const URLS = {
     compile: `${uri}/api/${version}/public/compile`,
@@ -35,7 +35,7 @@ export const URLS = {
     FormLogin: `${uri}/api/${version}/sec/formlogin`,
     OauthCode: `${uri}/api/${version}/sec/login/oauth2/code`,
     YandexOidcLogin: `${uri}/api/${version}/sec/oauth2/authorization/yandex`,
-    Logout: `${uri}/api/${version}/sec/logout`,
+    Logout: `/api/${version}/sec/logout`,
 };
 
 type SecretsShape = {
