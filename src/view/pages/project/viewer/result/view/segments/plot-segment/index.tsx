@@ -64,7 +64,7 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
                 renderItem: renderErrorItem(plot),
                 encode: { x: 0, y: 1 },
                 data: errorData,
-                z: 10,
+                z: 2,
                 silent: true, // не перехватывает события
             };
 
@@ -76,8 +76,8 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
         const splitLineConfig = showGridDirectly
             ? getGrid()
             : showGrid
-              ? { show: showGrid }
-              : {};
+                ? { show: showGrid }
+                : {};
         return {
             legend: {
                 show: false,

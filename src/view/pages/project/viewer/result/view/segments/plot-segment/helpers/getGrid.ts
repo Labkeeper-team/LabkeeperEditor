@@ -62,5 +62,6 @@ export const getGrid = () => {
                 return index % 4 !== 0;
             },
         },
+        z: 10,
     };
 };

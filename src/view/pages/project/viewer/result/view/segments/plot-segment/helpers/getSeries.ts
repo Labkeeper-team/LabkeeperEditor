@@ -11,8 +11,8 @@ export const getBaseSeries = (
             plot.type === 'line' || plot.type === 'dotted'
                 ? 'line'
                 : plot.type === 'histogram'
-                  ? 'bar'
-                  : 'scatter',
+                    ? 'bar'
+                    : 'scatter',
         data: xData.map((x, i) => [
             +x,
             yData?.[i] ? +yData?.[i] : 0,
@@ -28,9 +28,10 @@ export const getBaseSeries = (
         smooth: false,
         ...(plot.type === 'histogram' && {
             stack: 'total',
-            barGap: '10%',
-            barCategoryGap: '10%',
-            barWidth: '95%',
+            barGap: '0%',
+            barCategoryGap: '0%',
+            barWidth: '100%',
         }),
+        z: 1,
     };
 };
