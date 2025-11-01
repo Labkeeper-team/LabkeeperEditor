@@ -3,9 +3,10 @@ export const getGrid = () => {
         splitLine: {
             show: true,
             lineStyle: {
-                color: '#bdc1c7 ',
+                color: '#bdc1c7',
                 width: 1,
                 type: 'solid',
+                opacity: 0.5,
             },
         },
         axisLine: {
@@ -13,6 +14,7 @@ export const getGrid = () => {
             lineStyle: {
                 color: '#6b7280',
                 width: 1.5,
+                opacity: 0.8,
             },
         },
         axisTick: {
@@ -21,6 +23,7 @@ export const getGrid = () => {
             lineStyle: {
                 color: '#6b7280',
                 width: 1.5,
+                opacity: 0.7,
             },
             interval: (index: number) => {
                 return index % 4 === 0;
@@ -32,6 +35,7 @@ export const getGrid = () => {
             lineStyle: {
                 color: '#9ca3af',
                 width: 0.5,
+                opacity: 0.4,
             },
             interval: (index: number) => {
                 return index % 4 !== 0;
@@ -57,6 +61,7 @@ export const getGrid = () => {
                 color: '#d1d5db',
                 width: 0.6,
                 type: 'solid',
+                opacity: 0.3,
             },
             interval: (index: number) => {
                 return index % 4 !== 0;

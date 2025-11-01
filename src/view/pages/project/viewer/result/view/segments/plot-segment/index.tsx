@@ -138,9 +138,9 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
             baseHeight +
             (legendPosition === 'right'
                 ? 0
-                : statement.plots.length * LegendItemHeight)
+                : legendRef.current?.clientHeight ?? 0)
         );
-    }, [legendPosition, statement.plots.length]);
+    }, [legendPosition, legendRef]);
     return (
         <div
             ref={containerRef}
@@ -174,7 +174,7 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
                         bottom:
                             legendPosition === 'right'
                                 ? -10
-                                : statement.plots.length * LegendItemHeight - 6,
+                                : (legendRef?.current?.clientHeight ?? 0) - 6
                     }}
                 >
                     <MathJax>
