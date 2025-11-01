@@ -12,13 +12,13 @@ export function groupByStep(
     const step = step_ ? step_ : 1;
     const dataMin = Math.min(...xValues);
     const dataMax = Math.max(...xValues);
-    const isStepWasSet = !Number.isNaN(+step_)  
+    const isStepWasSet = step_ !== 0;
     const alignedStart =
         start !== undefined ? start : Math.floor(dataMin / step) * step;
     const alignedEnd =
         end !== undefined ? end : Math.ceil(dataMax / step) * step;
 
-    const binCount =  Math.floor((alignedEnd - alignedStart) / step) + 1;
+    const binCount = Math.floor((alignedEnd - alignedStart) / step) + 1;
 
     const accum: number[] = new Array(binCount).fill(0);
     const counts: number[] = new Array(binCount).fill(0);
@@ -26,7 +26,6 @@ export function groupByStep(
     for (let i = 0; i < xValues.length; i++) {
         const x = xValues[i];
         const y = yValues?.[i] ?? 1;
-        console.log(x, alignedEnd,  alignedStart);
         if (x < alignedStart || x > alignedEnd) continue;
 
         let idx = Math.floor((x - alignedStart) / step);

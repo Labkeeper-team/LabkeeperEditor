@@ -10,7 +10,6 @@ import { MathJax } from 'better-react-mathjax';
 import { getBaseSeries } from './helpers/getSeries.ts';
 import { getGrid } from './helpers/getGrid.ts';
 import { getXYData } from './helpers/getXYData.ts';
-import { LegendItemHeight } from './constant/index.ts';
 
 export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
     const chartRef = useRef<ReactECharts | null>(null);
@@ -73,6 +72,7 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
         const isHisto = statement.plots.every((p) => p.type === 'histogram');
         const showGrid = statement.plotGridVisible !== false;
         const showGridDirectly = statement.plotGridVisible === true;
+        const isPlotContainsHisto = !isHisto && !!histogramMin;
         const splitLineConfig = showGridDirectly
             ? getGrid()
             : showGrid
@@ -101,10 +101,9 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
                 minInterval: 0.25, // Минимальный интервал между делениями
                 boundaryGap: isHisto ? ['0%', '0%'] : ['10%', '10%'],
                 // Если есть гистограмма и ось числовая, используем минимальное значение гистограммы
-                min:
-                    !isHisto && histogramMin !== undefined
-                        ? histogramMin - 10
-                        : undefined,
+                min: isPlotContainsHisto
+                    ? histogramMin - 0.003 * histogramMin
+                    : undefined,
                 ...splitLineConfig,
             },
             yAxis: {
@@ -112,7 +111,7 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
                 nameGap: 50,
                 splitNumber: 8, // Увеличиваем количество делений для более детальной сетки
                 minInterval: 0.25, // Минимальный интервал между делениями
-                boundaryGap: ['10%', '10%'], // Добавляем отступы по краям
+                boundaryGap: isHisto ? ['0%', '0%'] : ['10%', '10%'], // Добавляем отступы по краям
                 ...splitLineConfig,
             },
             series,
@@ -138,7 +137,7 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
             baseHeight +
             (legendPosition === 'right'
                 ? 0
-                : legendRef.current?.clientHeight ?? 0)
+                : (legendRef.current?.clientHeight ?? 0))
         );
     }, [legendPosition, legendRef]);
     return (
@@ -174,7 +173,7 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
                         bottom:
                             legendPosition === 'right'
                                 ? -10
-                                : (legendRef?.current?.clientHeight ?? 0) - 6
+                                : (legendRef?.current?.clientHeight ?? 0) - 6,
                     }}
                 >
                     <MathJax>
