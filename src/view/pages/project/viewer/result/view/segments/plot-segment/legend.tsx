@@ -66,6 +66,9 @@ export const Legend = forwardRef<HTMLDivElement, LegendProps>(
             >
                 {plots.map((plot, idx) => {
                     const isVisible = seriesVisibility[plot.name];
+                    if (!plot.name) {
+                        return null;
+                    }
                     return (
                         <div
                             key={idx}

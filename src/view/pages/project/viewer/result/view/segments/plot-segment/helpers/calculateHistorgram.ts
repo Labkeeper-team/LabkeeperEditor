@@ -13,6 +13,7 @@ export function groupByStep(
     const dataMin = Math.min(...xValues);
     const dataMax = Math.max(...xValues);
     const isStepWasSet = step_ !== 0;
+    const isMinIsMax = dataMax === dataMin;
     const alignedStart =
         start !== undefined ? start : Math.floor(dataMin / step) * step;
     const alignedEnd =
@@ -41,7 +42,7 @@ export function groupByStep(
 
     const values = accum;
 
-    const centerOffset = isStepWasSet ? 0 : 0.5;
+    const centerOffset = isStepWasSet || isMinIsMax ? 0 : 0.5;
 
     const centers = Array.from(
         { length: binCount },

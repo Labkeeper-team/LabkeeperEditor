@@ -98,21 +98,23 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
                 type: isHisto ? 'category' : 'value',
                 nameGap: isHisto ? 20 : 40,
                 splitNumber: 8, // Увеличиваем количество делений для более детальной сетки
-                minInterval: 0.25, // Минимальный интервал между делениями
+                minInterval: isHisto ? undefined : 0.25, // Минимальный интервал между делениями
                 boundaryGap: isHisto ? ['0%', '0%'] : ['10%', '10%'],
                 // Если есть гистограмма и ось числовая, используем минимальное значение гистограммы
                 min: isPlotContainsHisto
                     ? histogramMin - 0.003 * histogramMin
                     : undefined,
                 ...splitLineConfig,
+                z: 0
             },
             yAxis: {
                 type: 'value',
                 nameGap: 50,
                 splitNumber: 8, // Увеличиваем количество делений для более детальной сетки
-                minInterval: 0.25, // Минимальный интервал между делениями
+                minInterval: isHisto ? undefined : 0.25, // Минимальный интервал между делениями
                 boundaryGap: isHisto ? ['0%', '0%'] : ['10%', '10%'], // Добавляем отступы по краям
                 ...splitLineConfig,
+                z: 0
             },
             series,
         };
@@ -140,6 +142,7 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
                 : (legendRef.current?.clientHeight ?? 0))
         );
     }, [legendPosition, legendRef]);
+    console.log(statement.plots)
     return (
         <div
             ref={containerRef}
