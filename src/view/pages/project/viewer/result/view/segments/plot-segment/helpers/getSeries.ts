@@ -33,5 +33,9 @@ export const getBaseSeries = (
             barWidth: '100%',
         }),
         z: 1,
+
+        // 👇 добавляем осевые индексы
+        xAxisIndex: 1,
+        yAxisIndex: 1,
     };
 };

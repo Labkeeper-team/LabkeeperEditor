@@ -64,7 +64,9 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
                 encode: { x: 0, y: 1 },
                 data: errorData,
                 z: 2,
-                silent: true, // не перехватывает события
+                silent: true, // не перехватывает события,
+                xAxisIndex: 1,
+                yAxisIndex: 1,
             };
 
             return errorSeries;
@@ -94,28 +96,215 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
                         : 25
                     : 25,
             },
-            xAxis: {
-                type: isHisto ? 'category' : 'value',
-                nameGap: isHisto ? 20 : 40,
-                splitNumber: 8, // Увеличиваем количество делений для более детальной сетки
-                minInterval: isHisto ? undefined : 0.25, // Минимальный интервал между делениями
-                boundaryGap: isHisto ? ['0%', '0%'] : ['10%', '10%'],
-                // Если есть гистограмма и ось числовая, используем минимальное значение гистограммы
-                min: isPlotContainsHisto
-                    ? histogramMin - 0.003 * histogramMin
-                    : undefined,
-                ...splitLineConfig,
-                z: 0
-            },
-            yAxis: {
-                type: 'value',
-                nameGap: 50,
-                splitNumber: 8, // Увеличиваем количество делений для более детальной сетки
-                minInterval: isHisto ? undefined : 0.25, // Минимальный интервал между делениями
-                boundaryGap: isHisto ? ['0%', '0%'] : ['10%', '10%'], // Добавляем отступы по краям
-                ...splitLineConfig,
-                z: 0
-            },
+            xAxis: [
+                {
+                    type: isHisto ? 'category' : 'value',
+                    nameGap: isHisto ? 20 : 40,
+                    splitNumber: 8,
+                    minInterval: isHisto ? undefined : 0.25,
+                    boundaryGap: isHisto ? ['0%', '0%'] : ['0%', '0%'],
+                    min: isPlotContainsHisto
+                        ? histogramMin - 0.01 * histogramMin
+                        : undefined,
+                    axisLine: {
+                        show: showGrid,
+                        onZero: true,
+                        onZeroAxisIndex: 1,
+                        lineStyle: {
+                            color: '#6b7280',
+                            width: 2,
+                            opacity: 0.8,
+                        },
+                    },
+                    axisLabel: {
+                        show: false,
+                    },
+                    axisTick: { show: false },
+                    splitLine: { show: false },
+                    minorTick: { show: false },
+                    minorSplitLine: { show: false },
+                    z: 10,
+                    position: 'bottom',
+                },
+                {
+                    position: 'bottom',
+                    type: isHisto ? 'category' : 'value',
+                    nameGap: isHisto ? 20 : 40,
+                    splitNumber: 8,
+                    minInterval: isHisto ? undefined : 0.25,
+                    boundaryGap: isHisto ? ['0%', '0%'] : ['10%', '10%'],
+                    min: isPlotContainsHisto
+                        ? histogramMin - 0.01 * histogramMin
+                        : undefined,
+                    axisLine: { show: false, onZero: true, onZeroAxisIndex: 1 },
+                    axisLabel: {
+                        show: showGrid,
+                        interval: (index: number) => {
+                            return index % 4 === 0;
+                        },
+                        formatter: function (value: number) {
+                            if (value > 1000000) {
+                                return value.toExponential(2);
+                            } else if (value >= 1000) {
+                                return (value / 1000).toFixed(1) + 'K';
+                            }
+                            return value;
+                        },
+                    },
+                    axisTick: {
+                        show: showGrid,
+                        length: 6,
+                        lineStyle: {
+                            color: '#6b7280',
+                            width: 1,
+                        },
+
+                        alignWithLabel: true,
+                        interval: (index: number) => {
+                            return index % 4 === 0;
+                        },
+                    },
+                    splitLine: {
+                        show: showGrid,
+                        lineStyle: {
+                            color: '#bdc1c7',
+                            width: 1,
+                            type: 'solid',
+                            opacity: 0.5,
+                        },
+                        alignWithLabel: true,
+                    },
+                    minorTick: {
+                        show: showGrid,
+                        length: 3,
+                        lineStyle: {
+                            color: '#9ca3af',
+                            width: 0.5,
+                            opacity: 0.4,
+                        },
+                        interval: (index: number) => {
+                            return index % 4 !== 0;
+                        },
+                    },
+                    minorSplitLine: {
+                        show: showGrid,
+                        lineStyle: {
+                            color: '#d1d5db',
+                            width: 0.6,
+                            type: 'solid',
+                            opacity: 0.3,
+                        },
+                        interval: (index: number) => {
+                            return index % 4 !== 0;
+                        },
+                    },
+                    z: 0,
+                },
+            ],
+            yAxis: [
+                {
+                    type: 'value',
+                    nameGap: 50,
+                    splitNumber: 8,
+                    minInterval: isHisto ? undefined : 0.25,
+                    boundaryGap: isHisto ? ['0%', '0%'] : ['10%', '10%'],
+                    // Задний слой: показываем только сетку
+                    axisLine: {
+                        show: showGrid,
+                        onZero: true,
+                        onZeroAxisIndex: 1,
+                        lineStyle: {
+                            color: '#6b7280',
+                            width: 2,
+                            opacity: 0.8,
+                        },
+                    },
+                    axisLabel: {
+                        show: false,
+                    },
+                    axisTick: { show: false },
+                    splitLine: { show: false },
+                    minorTick: { show: false },
+                    minorSplitLine: { show: false },
+                    z: 10,
+                    position: 'left',
+                },
+                {
+                    position: 'left',
+                    type: 'value',
+                    nameGap: 50,
+                    splitNumber: 8,
+                    minInterval: isHisto ? undefined : 0.25,
+                    boundaryGap: isHisto ? ['0%', '0%'] : ['10%', '10%'],
+                    axisLabel: {
+                        show: showGrid,
+
+                        interval: (index: number) => {
+                            return index % 4 === 0;
+                        },
+                        formatter: function (value: number) {
+                            if (value > 1000000) {
+                                return value.toExponential(2);
+                            } else if (value >= 1000) {
+                                return (value / 1000).toFixed(1) + 'K';
+                            }
+                            return value;
+                        },
+                    },
+                    axisLine: { show: false, onZero: true, onZeroAxisIndex: 1 },
+                    axisTick: {
+                        show: showGrid,
+                        length: 6,
+                        onZeroAxisIndex: 1,
+                        lineStyle: {
+                            color: '#6b7280',
+                            width: 1,
+                        },
+
+                        alignWithLabel: true,
+                        interval: (index: number) => {
+                            return index % 4 === 0;
+                        },
+                    },
+                    splitLine: {
+                        show: showGrid,
+                        onZeroAxisIndex: 1,
+                        lineStyle: {
+                            color: '#bdc1c7',
+                            width: 1,
+                            type: 'solid',
+                            opacity: 0.5,
+                        },
+                        alignWithLabel: true,
+                    },
+                    minorTick: {
+                        show: showGrid,
+                        length: 3,
+                        lineStyle: {
+                            color: '#9ca3af',
+                            width: 0.5,
+                            opacity: 0.4,
+                        },
+                        interval: (index: number) => {
+                            return index % 4 !== 0;
+                        },
+                    },
+                    minorSplitLine: {
+                        show: showGrid,
+                        onZeroAxisIndex: 1,
+                        lineStyle: {
+                            color: '#d1d5db',
+                            width: 0.6,
+                            type: 'solid',
+                            opacity: 0.3,
+                        },
+                        interval: (index: number) => {
+                            return index % 4 !== 0;
+                        },
+                    },
+                    z: 0,
+                },
+            ],
             series,
         };
     }, [statement, seriesVisibility, legendPosition]);
@@ -142,7 +331,7 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
                 : (legendRef.current?.clientHeight ?? 0))
         );
     }, [legendPosition, legendRef]);
-    console.log(statement.plots)
+    console.log(statement.plots);
     return (
         <div
             ref={containerRef}

@@ -8,6 +8,7 @@ export const getGrid = () => {
                 type: 'solid',
                 opacity: 0.5,
             },
+            alignWithLabel: true,
         },
         axisLine: {
             show: true,
@@ -22,9 +23,10 @@ export const getGrid = () => {
             length: 6,
             lineStyle: {
                 color: '#6b7280',
-                width: 1.5,
-                opacity: 0.7,
+                width: 1,
             },
+
+            alignWithLabel: true,
             interval: (index: number) => {
                 return index % 4 === 0;
             },
@@ -67,6 +69,5 @@ export const getGrid = () => {
                 return index % 4 !== 0;
             },
         },
-        z: 10,
     };
 };
