@@ -12,6 +12,26 @@ import {
 
 const historyLimit = 50;
 
+function newSegment(segmentType: SegmentType): Segment {
+    if (segmentType === 'computational') {
+        return {
+            parameters: {
+                visible: true,
+                hideInflAssignmentWithValues: true,
+            },
+            text: '',
+            type: segmentType,
+        };
+    }
+    return {
+        parameters: {
+            visible: true,
+        },
+        text: '',
+        type: segmentType,
+    };
+}
+
 export class ProgramService {
     programRepository: ProgramRepository;
 
@@ -62,13 +82,7 @@ export class ProgramService {
 
     addSegmentAfterIndex = (segmentType: SegmentType, after: number) => {
         this.applyChange(
-            new AddSegmentAction(after + 1, {
-                parameters: {
-                    visible: true,
-                },
-                text: '',
-                type: segmentType,
-            })
+            new AddSegmentAction(after + 1, newSegment(segmentType))
         );
     };
 
@@ -76,13 +90,7 @@ export class ProgramService {
         this.applyChange(
             new AddSegmentAction(
                 this.programRepository.program.segments.length,
-                {
-                    parameters: {
-                        visible: true,
-                    },
-                    text: '',
-                    type: segmentType,
-                }
+                newSegment(segmentType)
             )
         );
     };

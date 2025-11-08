@@ -34,6 +34,7 @@ MockViewModelRepositoryState {
       },
       {
         "parameters": {
+          "hideInflAssignmentWithValues": true,
           "visible": false,
         },
         "text": "a = 10",
@@ -74,6 +75,7 @@ MockViewModelRepositoryState {
       },
       {
         "parameters": {
+          "hideInflAssignmentWithValues": true,
           "visible": false,
         },
         "text": "a = 10",
@@ -148,6 +150,7 @@ MockViewModelRepositoryState {
       },
       {
         "parameters": {
+          "hideInflAssignmentWithValues": true,
           "visible": false,
         },
         "text": "a = 10",
@@ -195,6 +198,7 @@ MockViewModelRepositoryState {
       },
       {
         "parameters": {
+          "hideInflAssignmentWithValues": true,
           "visible": false,
         },
         "text": "a = 10",

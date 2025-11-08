@@ -39,7 +39,7 @@ test('program-service-test', () => {
         {
             type: 'computational',
             text: '',
-            parameters: { visible: true },
+            parameters: { visible: true, hideInflAssignmentWithValues: true },
         },
     ] as Segment[]);
 
@@ -54,7 +54,7 @@ test('program-service-test', () => {
         {
             type: 'computational',
             text: 'boba',
-            parameters: { visible: true },
+            parameters: { visible: true, hideInflAssignmentWithValues: true },
         },
     ] as Segment[]);
 
@@ -74,7 +74,7 @@ test('program-service-test', () => {
         {
             type: 'computational',
             text: 'boba',
-            parameters: { visible: true },
+            parameters: { visible: true, hideInflAssignmentWithValues: true },
         },
     ] as Segment[]);
 
@@ -90,7 +90,7 @@ test('program-service-test', () => {
         {
             type: 'computational',
             text: '',
-            parameters: { visible: true },
+            parameters: { visible: true, hideInflAssignmentWithValues: true },
         },
     ] as Segment[]);
 
@@ -105,7 +105,7 @@ test('program-service-test', () => {
         {
             type: 'computational',
             text: 'boba',
-            parameters: { visible: true },
+            parameters: { visible: true, hideInflAssignmentWithValues: true },
         },
     ] as Segment[]);
 
@@ -120,7 +120,7 @@ test('program-service-test', () => {
         {
             type: 'computational',
             text: 'boba',
-            parameters: { visible: true },
+            parameters: { visible: true, hideInflAssignmentWithValues: true },
         },
     ] as Segment[]);
 
@@ -137,7 +137,7 @@ test('program-service-test', () => {
         {
             type: 'computational',
             text: 'boba',
-            parameters: { visible: true },
+            parameters: { visible: true, hideInflAssignmentWithValues: true },
         },
     ] as Segment[]);
 });

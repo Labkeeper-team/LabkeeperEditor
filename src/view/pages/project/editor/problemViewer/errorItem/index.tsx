@@ -34,7 +34,7 @@ export const ErrorItem = ({ code, payload }: ErrorItemProps) => {
                 text={
                     dictionary.compile_error[code] +
                     (code === CompileError.QUOTA_EXCEEDED
-                        ? `. ${dictionary.quota_definition[quotaPayload.quotaIndex]}. ${dictionary.error_common.now}: ${quotaPayload.value}; ${dictionary.error_common.max}: ${quotaPayload.limit}`
+                        ? `. ${dictionary.quota_definition[quotaPayload.quotaIndex]}. ${dictionary.error_common.now}: ${quotaPayload.value}; ${dictionary.error_common.max}: ${quotaPayload.limit}. ${dictionary.quota_help[quotaPayload.quotaIndex]}`
                         : '') +
                     (code === CompileError.OPERATOR_EXPECTED
                         ? ' ' +
