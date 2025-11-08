@@ -32,7 +32,7 @@ export const getBaseSeries = (
             barCategoryGap: '0%',
             barWidth: '100%',
         }),
-        z: 1,
+        z: plot.type === 'histogram' ? 1 : 2,
 
         // 👇 добавляем осевые индексы
         xAxisIndex: 1,

@@ -1,7 +1,6 @@
 @media print {
     .plot-container {
         display: flex;
-        justify-content: center;
         align-items: center;
         page-break-inside: avoid;
         margin: 0 auto;

@@ -46,8 +46,7 @@ export function groupByStep(
 
     const centers = Array.from(
         { length: binCount },
-        (_, i) => alignedStart + (i + centerOffset) * step
+        (_, i) => +(alignedStart + (i + centerOffset) * step).toFixed(2)
     );
-
     return { centers, values };
 }

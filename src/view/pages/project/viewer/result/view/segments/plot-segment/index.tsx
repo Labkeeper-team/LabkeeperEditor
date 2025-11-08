@@ -8,7 +8,6 @@ import { Plotname } from './plotname.tsx';
 
 import { MathJax } from 'better-react-mathjax';
 import { getBaseSeries } from './helpers/getSeries.ts';
-import { getGrid } from './helpers/getGrid.ts';
 import { getXYData } from './helpers/getXYData.ts';
 
 export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
@@ -63,7 +62,7 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
                 renderItem: renderErrorItem(plot),
                 encode: { x: 0, y: 1 },
                 data: errorData,
-                z: 2,
+                z: 3,
                 silent: true, // не перехватывает события,
                 xAxisIndex: 1,
                 yAxisIndex: 1,
@@ -71,15 +70,32 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
 
             return errorSeries;
         });
+
         const isHisto = statement.plots.every((p) => p.type === 'histogram');
+
         const showGrid = statement.plotGridVisible !== false;
-        const showGridDirectly = statement.plotGridVisible === true;
         const isPlotContainsHisto = !isHisto && !!histogramMin;
-        const splitLineConfig = showGridDirectly
-            ? getGrid()
-            : showGrid
-              ? { show: showGrid }
-              : {};
+        const calcualteXInterval = (index: number, value: number) => {
+            if (isHisto && series.length === 1) {
+                const plot = series[0];
+                const integerCount = plot.data.filter((item) =>
+                    Number.isInteger(item[0])
+                ).length;
+                const percentage = (integerCount / plot.data.length) * 100;
+                if (percentage >= 33) {
+                    return Number.isInteger(+value);
+                }
+            }
+            return index % 4 === 0;
+        };
+
+        const calcualteYInterval = (index: number) => {
+            return index % 4 === 0;
+        };
+
+        const calcualteMinorInterval = (index: number) => {
+            return index % 4 !== 0;
+        };
         return {
             legend: {
                 show: false,
@@ -139,9 +155,7 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
                     axisLine: { show: false, onZero: true, onZeroAxisIndex: 1 },
                     axisLabel: {
                         show: showGrid,
-                        interval: (index: number) => {
-                            return index % 4 === 0;
-                        },
+                        interval: calcualteXInterval,
                         formatter: function (value: number) {
                             if (value > 1000000) {
                                 return value.toExponential(2);
@@ -160,9 +174,7 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
                         },
 
                         alignWithLabel: true,
-                        interval: (index: number) => {
-                            return index % 4 === 0;
-                        },
+                        interval: calcualteXInterval,
                     },
                     splitLine: {
                         show: showGrid,
@@ -182,9 +194,7 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
                             width: 0.5,
                             opacity: 0.4,
                         },
-                        interval: (index: number) => {
-                            return index % 4 !== 0;
-                        },
+                        interval: calcualteMinorInterval,
                     },
                     minorSplitLine: {
                         show: showGrid,
@@ -194,9 +204,7 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
                             type: 'solid',
                             opacity: 0.3,
                         },
-                        interval: (index: number) => {
-                            return index % 4 !== 0;
-                        },
+                        interval: calcualteMinorInterval,
                     },
                     z: 0,
                 },
@@ -238,10 +246,7 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
                     boundaryGap: isHisto ? ['0%', '0%'] : ['10%', '10%'],
                     axisLabel: {
                         show: showGrid,
-
-                        interval: (index: number) => {
-                            return index % 4 === 0;
-                        },
+                        interval: calcualteYInterval,
                         formatter: function (value: number) {
                             if (value > 1000000) {
                                 return value.toExponential(2);
@@ -262,9 +267,7 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
                         },
 
                         alignWithLabel: true,
-                        interval: (index: number) => {
-                            return index % 4 === 0;
-                        },
+                        interval: calcualteYInterval,
                     },
                     splitLine: {
                         show: showGrid,
@@ -285,9 +288,7 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
                             width: 0.5,
                             opacity: 0.4,
                         },
-                        interval: (index: number) => {
-                            return index % 4 !== 0;
-                        },
+                        interval: calcualteMinorInterval,
                     },
                     minorSplitLine: {
                         show: showGrid,
@@ -298,9 +299,7 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
                             type: 'solid',
                             opacity: 0.3,
                         },
-                        interval: (index: number) => {
-                            return index % 4 !== 0;
-                        },
+                        interval: calcualteMinorInterval,
                     },
                     z: 0,
                 },
@@ -331,7 +330,6 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
                 : (legendRef.current?.clientHeight ?? 0))
         );
     }, [legendPosition, legendRef]);
-    console.log(statement.plots);
     return (
         <div
             ref={containerRef}
