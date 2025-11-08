@@ -82,7 +82,7 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
                     Number.isInteger(item[0])
                 ).length;
                 const percentage = (integerCount / plot.data.length) * 100;
-                if (percentage >= 33) {
+                if (percentage >= 33 && percentage < 66) {
                     return Number.isInteger(+value);
                 }
             }
@@ -94,7 +94,7 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
         };
 
         const calcualteMinorInterval = (index: number) => {
-            return index % 4 !== 0;
+            return index % 4 === 0;
         };
         return {
             legend: {
