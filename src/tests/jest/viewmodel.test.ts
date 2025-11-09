@@ -34,7 +34,6 @@ import { mockListFilesRequestWithDefaultFile } from './common.ts';
 
 const defaultParams = {
     visible: true,
-    hideInflAssignmentWithValues: true,
 };
 
 const mockContext = () => {

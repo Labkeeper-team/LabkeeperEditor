@@ -160,6 +160,75 @@ test('plotly-with-grid', async ({ page }) => {
 });
 
 /*
+Тест на рисование mathjax через es-chart
+ */
+test('plotly-with-matjax', async ({ page }) => {
+    await plotlyTest(
+        {
+            type: 'plot',
+            plotName: '\\int f(x) dx\\:интегралы,\\:integrals',
+            plotXAxisName: 'MyX',
+            plotYAxisName: 'MyY',
+            legendVisible: true,
+            plotGridVisible: true,
+            plots: [
+                {
+                    x: [1, 2, 3, 4, 5],
+                    y: [1, 2, 1, 3, 1],
+                    type: 'line',
+                    color: 'blue',
+                    name: 'MyLine',
+                    xInfl: [],
+                    yInfl: [],
+                },
+            ],
+        },
+        page
+    );
+
+    await expect(page).toHaveScreenshot('plotly-with-mathjax.png');
+});
+
+/*
+Тест на рисование mathjax через es-chart
+ */
+test('plotly-with-matjax-longvalues', async ({ page }) => {
+    await plotlyTest(
+        {
+            type: 'plot',
+            plotName: '\\int f(x) dx\\:интегралы,\\:integrals',
+            plotXAxisName: 'MyX',
+            plotYAxisName: 'MyY',
+            legendVisible: true,
+            plotGridVisible: true,
+            plots: [
+                {
+                    x: [1, 2, 3, 4, 5],
+                    y: [1, 2, 1, 3, 1],
+                    type: 'line',
+                    color: 'blue',
+                    name: '\\intG very long text with vveeery long values',
+                    xInfl: [],
+                    yInfl: [],
+                },
+                {
+                    x: [1, 2, 3, 4, 5],
+                    y: [1, 2, 1, 3, 2],
+                    type: 'line',
+                    color: 'red',
+                    name: '\\intG very long text with vveeery long values 2',
+                    xInfl: [],
+                    yInfl: [],
+                },
+            ],
+        },
+        page
+    );
+
+    await expect(page).toHaveScreenshot('plotly-with-mathjax-longvalues.png');
+});
+
+/*
 Тест на рисование гистограмм в plotly
  */
 test('plotly-histogram', async ({ page }) => {

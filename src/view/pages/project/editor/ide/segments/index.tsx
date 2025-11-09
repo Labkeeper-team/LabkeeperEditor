@@ -33,7 +33,7 @@ export const Segments = () => {
     }, [scrollEditorToBottom, dispatch]);
 
     return (
-        <div ref={ref} className="segments-container">
+        <div ref={ref} id="segments-container" className="segments-container">
             {Array.from(Array(segmentsSize).keys()).map((_, index) => {
                 return (
                     <SegmentEditorWrapper

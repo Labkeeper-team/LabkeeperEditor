@@ -11,6 +11,7 @@ import { langs } from '@uiw/codemirror-extensions-langs';
 import { content, dom } from '@uiw/codemirror-extensions-events';
 import { lineNumbers } from '@codemirror/view';
 import {
+    createRef,
     LegacyRef,
     memo,
     useCallback,
@@ -33,7 +34,6 @@ import { ArrowUp } from '../../../../../../icons';
 import { AppDispatch, StorageState } from '../../../../../../store';
 import {
     useIsProjectReadonly,
-    useIsSegmentIsActive,
     useSearch,
 } from '../../../../../../store/selectors/program';
 import classNames from 'classnames';
@@ -42,6 +42,8 @@ import { DropdownMenuContent } from './dropdownMenuContent';
 import { useDictionary } from '../../../../../../store/selectors/translations.ts';
 import { controller } from '../../../../../../../main.tsx';
 import { LRUMap } from 'lru_map';
+import { useScrollableToActive } from '../../../../../../hooks/useScrollableToActive.ts';
+import { useIsDelayedSegmentIsActive } from '../../../../../../hooks/useIsDelayedSegmentIsActive.ts';
 
 const CURSOR_MAP_CAPACITY = 100;
 
@@ -80,6 +82,7 @@ export const SegmentEditor = memo(
             (state: StorageState) =>
                 state.project.currentProgram?.segments[props.index]
         );
+        const ref = createRef<HTMLDivElement>();
         const editor = useRef<ReactCodeMirrorRef | undefined>();
         const lastCursorPosRef = useRef<number | null>(null);
         const cursorByDocKeyRef = useRef<LRUMap<string, number>>(
@@ -93,7 +96,7 @@ export const SegmentEditor = memo(
         GLOBAL STATE
          */
         const search = useSelector(useSearch);
-        const isActiveSegment = useSelector(useIsSegmentIsActive(props.index));
+        const isActiveSegment = useIsDelayedSegmentIsActive(props.index);
         const compileErrors = useSelector(
             (state: StorageState) => state.project.compileErrorResult?.errors
         );
@@ -216,6 +219,7 @@ export const SegmentEditor = memo(
             timeout = setTimeout(() => {
                 dispatch(controller.onProgramSaveTimeoutRequest());
             }, 1000);
+            // eslint-disable-next-line react-hooks/exhaustive-deps
         }, [segment?.text]);
 
         // Восстанавливаем позицию курсора после внешнего обновления текста сегмента
@@ -240,6 +244,8 @@ export const SegmentEditor = memo(
             });
         }, [segment?.text]);
 
+        useScrollableToActive(ref, 'segments-container', props.index);
+
         /*
          * Callbacks
          */
@@ -253,12 +259,15 @@ export const SegmentEditor = memo(
                     segmentIndex: props.index,
                 })
             );
-        }, [props.index, dispatch, segment?.text]);
+        }, [props.index, dispatch]);
 
         // События редактора
         const eventsExt = useMemo(() => {
             return content({
                 focus: () => {
+                    if (isActiveSegment) {
+                        return;
+                    }
                     dispatch(
                         controller.onFocusSegmentRequest({
                             segmentIndex: props.index,
@@ -267,7 +276,7 @@ export const SegmentEditor = memo(
                 },
                 blur: onBlur,
             });
-        }, [dispatch, onBlur, props.index]);
+        }, [dispatch, onBlur, props.index, isActiveSegment]);
 
         // Вставка файлов и обработка клавиш
         const eventsDom = dom({
@@ -306,7 +315,7 @@ export const SegmentEditor = memo(
                     );
                 });
             },
-            [segment?.text, setTempSegmentErrors, props.index, dispatch]
+            [setTempSegmentErrors, props.index, dispatch]
         );
 
         // Первую прорисовку пропускаем
@@ -316,6 +325,7 @@ export const SegmentEditor = memo(
 
         return (
             <div
+                ref={ref}
                 className={classNames('segment-editor-container', {
                     'is-active': isActiveSegment,
                     'not-visible': !segment.parameters.visible,
@@ -323,6 +333,7 @@ export const SegmentEditor = memo(
             >
                 <CodeMirror
                     ref={editor as LegacyRef<ReactCodeMirrorRef>}
+                    id={`ide-segment-${props.index}`}
                     value={segment?.text}
                     onChange={onChange}
                     readOnly={projectIsReadonly}

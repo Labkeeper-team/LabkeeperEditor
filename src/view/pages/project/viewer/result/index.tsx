@@ -12,7 +12,7 @@ import {
     useUser,
 } from '../../../../store/selectors/program';
 import { useReactToPrint } from 'react-to-print';
-import { useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import { useDictionary } from '../../../../store/selectors/translations';
 import { AppDispatch } from '../../../../store';
 import { controller } from '../../../../../main.tsx';
@@ -116,15 +116,20 @@ export const Result = () => {
         }, 100);
     };
 
-    return (
-        <div className="result-container">
-            {compileResult === undefined ||
+    const Container = useMemo(() => {
+        return compileResult === undefined ||
             compileResult.segments === undefined ||
             compileResult.segments.length === 0 ? (
-                <EmptyResultContainer />
-            ) : (
-                <ViewResult ref={contentRef} />
-            )}
+            <EmptyResultContainer />
+        ) : (
+            <ViewResult ref={contentRef} />
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [contentRef, compileResult.segments]);
+
+    return (
+        <div className="result-container">
+            {Container}
             <Button
                 classname={`save-to-pdf-button ${InterfaceTourAnchorClassnames.SavePdf}`}
                 title={dictionary.label_save_to_pdf}

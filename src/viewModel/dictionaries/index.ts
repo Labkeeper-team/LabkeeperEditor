@@ -71,8 +71,6 @@ export interface Translations {
         label: string;
         without_round: string;
         first_digit: string;
-        two_meaning_digits: string;
-        three_meaning_digits: string;
         five_digits: string;
         one_digit: string;
         two_digits: string;
@@ -201,14 +199,6 @@ export interface Translations {
         description: string;
     };
     quota_definition: {
-        1: string;
-        2: string;
-        3: string;
-        4: string;
-        5: string;
-        6: string;
-    };
-    quota_help: {
         1: string;
         2: string;
         3: string;
