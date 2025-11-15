@@ -240,7 +240,7 @@ test('insert-segment-between', async ({ page }) => {
 
     // Добавляем маркдаун между
     await page.getByText('Add', { exact: true }).click();
-    await page.getByText('markdown', { exact: true }).click();
+    await page.getByText('markdown', { exact: true }).first().click();
 
     // пишем в него
     editor = page.locator('.cm-content').nth(1);
