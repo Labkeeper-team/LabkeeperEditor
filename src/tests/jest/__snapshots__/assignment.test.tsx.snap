@@ -13,7 +13,446 @@ exports[`Simple segment 1`] = `
           style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
         >
           <div
+            class="result-segment-container"
+          >
+            <div
+              class="result-segment"
+              id="result-segment-0"
+            >
+              <span
+                style="display: block;"
+              >
+                \\begin{equation}
+    \\displaystyle
+    a\\ = \\
+    
+    
+    \\begin{array}{c}
+        
+    \\end{array}
+    \\displaystyle
+    
+    
+    
+    \\end{equation}
+    
+              </span>
+              <span
+                style="display: block;"
+              >
+                \\begin{equation}
+    \\displaystyle
+    a\\ = \\
+    
+    
+    \\begin{array}{c}
+        10\\pm 1
+    \\end{array}
+    \\displaystyle
+    
+    
+    
+    \\end{equation}
+    
+              </span>
+              <span
+                style="display: block;"
+              >
+                \\begin{equation}
+    \\displaystyle
+    a_{f}\\ = \\
+    
+    
+    \\begin{array}{c}
+        10\\pm 1
+    \\end{array}
+    \\displaystyle
+    
+    
+    
+    \\end{equation}
+    
+              </span>
+              <span
+                style="display: block;"
+              >
+                \\begin{equation}
+    \\displaystyle
+    \\text{aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}\\ = \\
+    \\end{equation}\\begin{equation}\\displaystyle \\ =
+    
+    \\begin{array}{c}
+        10\\pm 1
+    \\end{array}
+    \\displaystyle
+    
+    
+    
+    \\end{equation}
+    
+              </span>
+              <span
+                style="display: block;"
+              >
+                \\begin{equation}
+    \\displaystyle
+    a\\ = \\
+    
+    
+    \\begin{array}{c}
+        1000000000000000000000000\\pm 10^{- 100}
+    \\end{array}
+    \\displaystyle
+    
+    
+    
+    \\end{equation}
+    
+              </span>
+              <span
+                style="display: block;"
+              >
+                \\begin{equation}
+    \\displaystyle
+    \\text{a-a-d-d-d-sc-d-d}\\ = \\
+    
+    
+    \\begin{array}{c}
+        1000000000000000000000000\\pm 10^{- 1000000000000000}
+    \\end{array}
+    \\displaystyle
+    
+    
+    
+    \\end{equation}
+    
+              </span>
+              <span
+                style="display: block;"
+              >
+                \\begin{equation}
+    \\displaystyle
+    my_{\\text{biba}}\\ = \\
+    
+    
+    \\begin{array}{c}
+        \\scriptstyle- 10000000000000000000000000000000000000000000000000000000000\\\\\\scriptstyle\\pm 100000000000000000000000000000000000000000000000000000000000000^{- 100000000000000000000000000}\\\\
+    \\end{array}
+    \\displaystyle
+    
+    
+    
+    \\end{equation}
+    
+              </span>
+              <span
+                style="display: block;"
+              >
+                \\begin{equation}
+    \\displaystyle
+    my_{\\text{biba}}\\ = \\
+    
+    
+    \\begin{array}{c}
+        \\scriptstyle- 1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\\\\\\scriptstyle\\pm 100000000000000000000000000000000000000000000000000000000000000^{- 100000000000000000000000000}\\\\
+    \\end{array}
+    \\displaystyle
+    
+    
+    
+    \\end{equation}
+    
+              </span>
+              <span
+                style="display: block;"
+              >
+                \\begin{equation}
+    \\displaystyle
+    a\\ = \\
+    
+    \\left[
+    \\begin{array}{c}
+        10,\\ 10,\\ 10,\\ 10,\\ 10,\\ 10
+    \\end{array}
+    \\displaystyle
+    \\right]
+    \\pm 1
+    
+    \\end{equation}
+    
+              </span>
+              <span
+                style="display: block;"
+              >
+                \\begin{equation}
+    \\displaystyle
+    a\\ = \\
+    
+    \\left[
+    \\begin{array}{c}
+        1000000000000000000,\\ 1000000000000000000,\\ \\\\ 1000000000000000000,\\ 1000000000000000000,\\ \\\\ 1000000000000000000,\\ 1000000000000000000,\\ \\\\ 1000000000000000000,\\ 1000000000000000000,\\ \\\\ 1000000000000000000,\\ 1000000000000000000,\\ \\\\ 1000000000000000000
+    \\end{array}
+    \\displaystyle
+    \\right]
+    \\pm 1000000000000
+    
+    \\end{equation}
+    
+              </span>
+              <span
+                style="display: block;"
+              >
+                \\begin{equation}
+    \\displaystyle
+    a\\ = \\
+    
+    \\left[
+    \\begin{array}{c}
+        1000000000000000000000000000000000000000000,\\ \\\\ 1000000000000000000000000000000000000000000,\\ \\\\ 1000000000000000000000000000000000000000000,\\ \\\\ 1000000000000000000000000000000000000000000,\\ \\\\ 1000000000000000000000000000000000000000000,\\ \\\\ 1000000000000000000000000000000000000000000,\\ \\\\ 1000000000000000000000000000000000000000000,\\ \\\\ 1000000000000000000000000000000000000000000,\\ \\\\ 1000000000000000000000000000000000000000000,\\ \\\\ 1000000000000000000000000000000000000000000,\\ \\\\ 1000000000000000000000000000000000000000000,\\ \\\\ 1000000000000000000000000000000000000000000,\\ \\\\ 1000000000000000000000000000000000000000000,\\ \\\\ 1000000000000000000000000000000000000000000
+    \\end{array}
+    \\displaystyle
+    \\right]
+    
+    \\end{equation}\\begin{equation}\\displaystyle\\pm 1000000000000000000000
+    \\end{equation}
+    
+              </span>
+              <span
+                style="display: block;"
+              >
+                \\begin{equation}
+    \\displaystyle
+    a\\ = \\
+    
+    \\left[
+    \\begin{array}{c}
+        \\scriptstyle100000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle100000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle100000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle100000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle100000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle100000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle100000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle100000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle100000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle100000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle100000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle100000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle100000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle100000000000000000000000000000000000000000000000000000000000000000000000000000000000\\\\
+    \\end{array}
+    \\displaystyle
+    \\right]
+    
+    \\end{equation}\\begin{equation}\\displaystyle\\pm 1000000000000000000000
+    \\end{equation}
+    
+              </span>
+              <span
+                style="display: block;"
+              >
+                \\begin{equation}
+    \\displaystyle
+    a\\ = \\
+    
+    \\left[
+    \\begin{array}{c}
+        \\scriptstyle10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\\\\
+    \\end{array}
+    \\displaystyle
+    \\right]
+    
+    \\end{equation}\\begin{equation}\\displaystyle\\pm 1000000000000000000000
+    \\end{equation}
+    
+              </span>
+              <span
+                style="display: block;"
+              >
+                \\begin{equation}
+    \\displaystyle
+    \\text{a-f-g}\\ = \\
+    
+    
+    \\begin{array}{c}
+        2.3 \\cdot 10^{20}\\pm 1.0 \\cdot 10^{21}
+    \\end{array}
+    \\displaystyle
+    
+    
+    
+    \\end{equation}
+    
+              </span>
+              <span
+                style="display: block;"
+              >
+                \\begin{equation}
+    \\displaystyle
+    f\\ = \\
+    
+    
+    \\begin{array}{c}
+        2.3 \\cdot 10^{20}\\pm 1.0 \\cdot 10^{21}
+    \\end{array}
+    \\displaystyle
+    
+    
+    
+    \\end{equation}
+    
+              </span>
+              <span
+                style="display: block;"
+              >
+                \\begin{equation}
+    \\displaystyle
+    a\\ = \\
+    
+    \\left[
+    \\begin{array}{c}
+        221,\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ \\\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ \\\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ \\\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ 221
+    \\end{array}
+    \\displaystyle
+    \\right]
+    \\pm 3
+    
+    \\end{equation}
+    
+              </span>
+              <span
+                style="display: block;"
+              >
+                \\begin{equation}
+    \\displaystyle
+    \\text{electron}_{\\text{mass}}\\ = \\
+    
+    \\left[
+    \\begin{array}{c}
+        123\\pm 3,\\ 123\\pm 3,\\ 123\\pm 3,\\ 123\\pm 3,\\ 123\\pm 3,\\ 123\\\\ \\pm 3,\\ 123\\pm 3,\\ 123\\pm 3,\\ 123\\pm 3,\\ 123\\pm 3,\\ 123\\\\ \\pm 3,\\ 123\\pm 3,\\ 123\\pm 3,\\ 123\\pm 4,\\ 123\\pm 3,\\ 123\\\\ \\pm 3,\\ 123\\pm 3,\\ 123\\pm 3,\\ 123\\pm 3,\\ 123\\pm 3,\\ 123\\\\ \\pm 5,\\ 123\\pm 3,\\ 123\\pm 3,\\ 123\\pm 4,\\ 123\\pm 3,\\ 123\\\\ \\pm 3,\\ 123\\pm 3
+    \\end{array}
+    \\displaystyle
+    \\right]
+    
+    
+    \\end{equation}
+    
+              </span>
+              <span
+                style="display: block;"
+              >
+                \\begin{equation}
+    \\displaystyle
+    \\text{electron-mass-and-without-something}\\ = \\
+    \\end{equation}\\begin{equation}\\displaystyle \\ =
+    
+    \\begin{array}{c}
+        2.34473711 \\cdot 10^{20}\\pm 12332.03221 \\cdot 10^{21}
+    \\end{array}
+    \\displaystyle
+    
+    
+    
+    \\end{equation}
+    
+              </span>
+              <span
+                style="display: block;"
+              >
+                \\begin{equation}
+    \\displaystyle
+    \\text{longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong}\\ = \\
+    \\end{equation}\\begin{equation}\\displaystyle \\ =
+    \\left[
+    \\begin{array}{c}
+        11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11
+    \\end{array}
+    \\displaystyle
+    \\right]
+    \\pm 1
+    
+    \\end{equation}
+    
+              </span>
+              <span
+                style="display: block;"
+              >
+                \\begin{equation}
+    \\displaystyle
+    \\text{longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong}\\ = \\
+    \\end{equation}\\begin{equation}\\displaystyle \\ =
+    \\left[
+    \\begin{array}{c}
+        11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ \\\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ \\\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11
+    \\end{array}
+    \\displaystyle
+    \\right]
+    \\pm 1
+    
+    \\end{equation}
+    
+              </span>
+              <span
+                style="display: block;"
+              >
+                \\begin{equation}
+    \\displaystyle
+    \\text{longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong}\\ = \\
+    \\end{equation}\\begin{equation}\\displaystyle \\ =
+    \\left[
+    \\begin{array}{c}
+        11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ \\\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ \\\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ \\\\ 112222222222222.33333333333333,\\ \\\\ 112222222222222.33333333333333,\\ \\\\ 112222222222222.33333333333333,\\ \\\\ 112222222222222.33333333333333,\\ \\\\ 112222222222222.33333333333333,\\ \\\\ 112222222222222.33333333333333,\\ \\\\ 112222222222222.33333333333333,\\ \\\\ 112222222222222.33333333333333,\\ \\\\ 112222222222222.33333333333333,\\ \\\\ 112222222222222.33333333333333
+    \\end{array}
+    \\displaystyle
+    \\right]
+    \\pm 1
+    
+    \\end{equation}
+    
+              </span>
+              <span
+                style="display: block;"
+              >
+                \\begin{equation}
+    \\displaystyle
+    \\text{longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong}\\ = \\
+    \\end{equation}\\begin{equation}\\displaystyle \\ =
+    \\left[
+    \\begin{array}{c}
+        111111111111111111111111111111111,\\ \\\\ 111111111111111111111111111111111
+    \\end{array}
+    \\displaystyle
+    \\right]
+    
+    \\end{equation}\\begin{equation}\\displaystyle\\pm 111111111111111111111111111111
+    \\end{equation}
+    
+              </span>
+              <span
+                style="display: block;"
+              >
+                \\begin{equation}
+    \\displaystyle
+    a\\ = \\
+    
+    \\left[
+    \\begin{array}{c}
+        1,\\ 2,\\ 3
+    \\end{array}
+    \\displaystyle
+    \\right]
+    
+    
+    \\end{equation}
+    
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>,
+  "container": <div>
+    <div
+      style="position: absolute; width: 100%; border-style: dashed; border-color: black;"
+    >
+      <div
+        id="compile-result"
+        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+      >
+        <div
+          class="result-segment-container"
+        >
+          <div
             class="result-segment"
+            id="result-segment-0"
           >
             <span
               style="display: block;"
@@ -430,435 +869,6 @@ exports[`Simple segment 1`] = `
     
             </span>
           </div>
-        </div>
-      </div>
-    </div>
-  </body>,
-  "container": <div>
-    <div
-      style="position: absolute; width: 100%; border-style: dashed; border-color: black;"
-    >
-      <div
-        id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
-      >
-        <div
-          class="result-segment"
-        >
-          <span
-            style="display: block;"
-          >
-            \\begin{equation}
-    \\displaystyle
-    a\\ = \\
-    
-    
-    \\begin{array}{c}
-        
-    \\end{array}
-    \\displaystyle
-    
-    
-    
-    \\end{equation}
-    
-          </span>
-          <span
-            style="display: block;"
-          >
-            \\begin{equation}
-    \\displaystyle
-    a\\ = \\
-    
-    
-    \\begin{array}{c}
-        10\\pm 1
-    \\end{array}
-    \\displaystyle
-    
-    
-    
-    \\end{equation}
-    
-          </span>
-          <span
-            style="display: block;"
-          >
-            \\begin{equation}
-    \\displaystyle
-    a_{f}\\ = \\
-    
-    
-    \\begin{array}{c}
-        10\\pm 1
-    \\end{array}
-    \\displaystyle
-    
-    
-    
-    \\end{equation}
-    
-          </span>
-          <span
-            style="display: block;"
-          >
-            \\begin{equation}
-    \\displaystyle
-    \\text{aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}\\ = \\
-    \\end{equation}\\begin{equation}\\displaystyle \\ =
-    
-    \\begin{array}{c}
-        10\\pm 1
-    \\end{array}
-    \\displaystyle
-    
-    
-    
-    \\end{equation}
-    
-          </span>
-          <span
-            style="display: block;"
-          >
-            \\begin{equation}
-    \\displaystyle
-    a\\ = \\
-    
-    
-    \\begin{array}{c}
-        1000000000000000000000000\\pm 10^{- 100}
-    \\end{array}
-    \\displaystyle
-    
-    
-    
-    \\end{equation}
-    
-          </span>
-          <span
-            style="display: block;"
-          >
-            \\begin{equation}
-    \\displaystyle
-    \\text{a-a-d-d-d-sc-d-d}\\ = \\
-    
-    
-    \\begin{array}{c}
-        1000000000000000000000000\\pm 10^{- 1000000000000000}
-    \\end{array}
-    \\displaystyle
-    
-    
-    
-    \\end{equation}
-    
-          </span>
-          <span
-            style="display: block;"
-          >
-            \\begin{equation}
-    \\displaystyle
-    my_{\\text{biba}}\\ = \\
-    
-    
-    \\begin{array}{c}
-        \\scriptstyle- 10000000000000000000000000000000000000000000000000000000000\\\\\\scriptstyle\\pm 100000000000000000000000000000000000000000000000000000000000000^{- 100000000000000000000000000}\\\\
-    \\end{array}
-    \\displaystyle
-    
-    
-    
-    \\end{equation}
-    
-          </span>
-          <span
-            style="display: block;"
-          >
-            \\begin{equation}
-    \\displaystyle
-    my_{\\text{biba}}\\ = \\
-    
-    
-    \\begin{array}{c}
-        \\scriptstyle- 1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\\\\\\scriptstyle\\pm 100000000000000000000000000000000000000000000000000000000000000^{- 100000000000000000000000000}\\\\
-    \\end{array}
-    \\displaystyle
-    
-    
-    
-    \\end{equation}
-    
-          </span>
-          <span
-            style="display: block;"
-          >
-            \\begin{equation}
-    \\displaystyle
-    a\\ = \\
-    
-    \\left[
-    \\begin{array}{c}
-        10,\\ 10,\\ 10,\\ 10,\\ 10,\\ 10
-    \\end{array}
-    \\displaystyle
-    \\right]
-    \\pm 1
-    
-    \\end{equation}
-    
-          </span>
-          <span
-            style="display: block;"
-          >
-            \\begin{equation}
-    \\displaystyle
-    a\\ = \\
-    
-    \\left[
-    \\begin{array}{c}
-        1000000000000000000,\\ 1000000000000000000,\\ \\\\ 1000000000000000000,\\ 1000000000000000000,\\ \\\\ 1000000000000000000,\\ 1000000000000000000,\\ \\\\ 1000000000000000000,\\ 1000000000000000000,\\ \\\\ 1000000000000000000,\\ 1000000000000000000,\\ \\\\ 1000000000000000000
-    \\end{array}
-    \\displaystyle
-    \\right]
-    \\pm 1000000000000
-    
-    \\end{equation}
-    
-          </span>
-          <span
-            style="display: block;"
-          >
-            \\begin{equation}
-    \\displaystyle
-    a\\ = \\
-    
-    \\left[
-    \\begin{array}{c}
-        1000000000000000000000000000000000000000000,\\ \\\\ 1000000000000000000000000000000000000000000,\\ \\\\ 1000000000000000000000000000000000000000000,\\ \\\\ 1000000000000000000000000000000000000000000,\\ \\\\ 1000000000000000000000000000000000000000000,\\ \\\\ 1000000000000000000000000000000000000000000,\\ \\\\ 1000000000000000000000000000000000000000000,\\ \\\\ 1000000000000000000000000000000000000000000,\\ \\\\ 1000000000000000000000000000000000000000000,\\ \\\\ 1000000000000000000000000000000000000000000,\\ \\\\ 1000000000000000000000000000000000000000000,\\ \\\\ 1000000000000000000000000000000000000000000,\\ \\\\ 1000000000000000000000000000000000000000000,\\ \\\\ 1000000000000000000000000000000000000000000
-    \\end{array}
-    \\displaystyle
-    \\right]
-    
-    \\end{equation}\\begin{equation}\\displaystyle\\pm 1000000000000000000000
-    \\end{equation}
-    
-          </span>
-          <span
-            style="display: block;"
-          >
-            \\begin{equation}
-    \\displaystyle
-    a\\ = \\
-    
-    \\left[
-    \\begin{array}{c}
-        \\scriptstyle100000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle100000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle100000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle100000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle100000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle100000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle100000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle100000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle100000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle100000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle100000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle100000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle100000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle100000000000000000000000000000000000000000000000000000000000000000000000000000000000\\\\
-    \\end{array}
-    \\displaystyle
-    \\right]
-    
-    \\end{equation}\\begin{equation}\\displaystyle\\pm 1000000000000000000000
-    \\end{equation}
-    
-          </span>
-          <span
-            style="display: block;"
-          >
-            \\begin{equation}
-    \\displaystyle
-    a\\ = \\
-    
-    \\left[
-    \\begin{array}{c}
-        \\scriptstyle10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000,\\ \\\\\\scriptstyle10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\\\\
-    \\end{array}
-    \\displaystyle
-    \\right]
-    
-    \\end{equation}\\begin{equation}\\displaystyle\\pm 1000000000000000000000
-    \\end{equation}
-    
-          </span>
-          <span
-            style="display: block;"
-          >
-            \\begin{equation}
-    \\displaystyle
-    \\text{a-f-g}\\ = \\
-    
-    
-    \\begin{array}{c}
-        2.3 \\cdot 10^{20}\\pm 1.0 \\cdot 10^{21}
-    \\end{array}
-    \\displaystyle
-    
-    
-    
-    \\end{equation}
-    
-          </span>
-          <span
-            style="display: block;"
-          >
-            \\begin{equation}
-    \\displaystyle
-    f\\ = \\
-    
-    
-    \\begin{array}{c}
-        2.3 \\cdot 10^{20}\\pm 1.0 \\cdot 10^{21}
-    \\end{array}
-    \\displaystyle
-    
-    
-    
-    \\end{equation}
-    
-          </span>
-          <span
-            style="display: block;"
-          >
-            \\begin{equation}
-    \\displaystyle
-    a\\ = \\
-    
-    \\left[
-    \\begin{array}{c}
-        221,\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ \\\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ \\\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ \\\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ 221,\\ 221
-    \\end{array}
-    \\displaystyle
-    \\right]
-    \\pm 3
-    
-    \\end{equation}
-    
-          </span>
-          <span
-            style="display: block;"
-          >
-            \\begin{equation}
-    \\displaystyle
-    \\text{electron}_{\\text{mass}}\\ = \\
-    
-    \\left[
-    \\begin{array}{c}
-        123\\pm 3,\\ 123\\pm 3,\\ 123\\pm 3,\\ 123\\pm 3,\\ 123\\pm 3,\\ 123\\\\ \\pm 3,\\ 123\\pm 3,\\ 123\\pm 3,\\ 123\\pm 3,\\ 123\\pm 3,\\ 123\\\\ \\pm 3,\\ 123\\pm 3,\\ 123\\pm 3,\\ 123\\pm 4,\\ 123\\pm 3,\\ 123\\\\ \\pm 3,\\ 123\\pm 3,\\ 123\\pm 3,\\ 123\\pm 3,\\ 123\\pm 3,\\ 123\\\\ \\pm 5,\\ 123\\pm 3,\\ 123\\pm 3,\\ 123\\pm 4,\\ 123\\pm 3,\\ 123\\\\ \\pm 3,\\ 123\\pm 3
-    \\end{array}
-    \\displaystyle
-    \\right]
-    
-    
-    \\end{equation}
-    
-          </span>
-          <span
-            style="display: block;"
-          >
-            \\begin{equation}
-    \\displaystyle
-    \\text{electron-mass-and-without-something}\\ = \\
-    \\end{equation}\\begin{equation}\\displaystyle \\ =
-    
-    \\begin{array}{c}
-        2.34473711 \\cdot 10^{20}\\pm 12332.03221 \\cdot 10^{21}
-    \\end{array}
-    \\displaystyle
-    
-    
-    
-    \\end{equation}
-    
-          </span>
-          <span
-            style="display: block;"
-          >
-            \\begin{equation}
-    \\displaystyle
-    \\text{longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong}\\ = \\
-    \\end{equation}\\begin{equation}\\displaystyle \\ =
-    \\left[
-    \\begin{array}{c}
-        11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11
-    \\end{array}
-    \\displaystyle
-    \\right]
-    \\pm 1
-    
-    \\end{equation}
-    
-          </span>
-          <span
-            style="display: block;"
-          >
-            \\begin{equation}
-    \\displaystyle
-    \\text{longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong}\\ = \\
-    \\end{equation}\\begin{equation}\\displaystyle \\ =
-    \\left[
-    \\begin{array}{c}
-        11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ \\\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ \\\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11
-    \\end{array}
-    \\displaystyle
-    \\right]
-    \\pm 1
-    
-    \\end{equation}
-    
-          </span>
-          <span
-            style="display: block;"
-          >
-            \\begin{equation}
-    \\displaystyle
-    \\text{longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong}\\ = \\
-    \\end{equation}\\begin{equation}\\displaystyle \\ =
-    \\left[
-    \\begin{array}{c}
-        11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ \\\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ \\\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ 11,\\ \\\\ 112222222222222.33333333333333,\\ \\\\ 112222222222222.33333333333333,\\ \\\\ 112222222222222.33333333333333,\\ \\\\ 112222222222222.33333333333333,\\ \\\\ 112222222222222.33333333333333,\\ \\\\ 112222222222222.33333333333333,\\ \\\\ 112222222222222.33333333333333,\\ \\\\ 112222222222222.33333333333333,\\ \\\\ 112222222222222.33333333333333,\\ \\\\ 112222222222222.33333333333333
-    \\end{array}
-    \\displaystyle
-    \\right]
-    \\pm 1
-    
-    \\end{equation}
-    
-          </span>
-          <span
-            style="display: block;"
-          >
-            \\begin{equation}
-    \\displaystyle
-    \\text{longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong}\\ = \\
-    \\end{equation}\\begin{equation}\\displaystyle \\ =
-    \\left[
-    \\begin{array}{c}
-        111111111111111111111111111111111,\\ \\\\ 111111111111111111111111111111111
-    \\end{array}
-    \\displaystyle
-    \\right]
-    
-    \\end{equation}\\begin{equation}\\displaystyle\\pm 111111111111111111111111111111
-    \\end{equation}
-    
-          </span>
-          <span
-            style="display: block;"
-          >
-            \\begin{equation}
-    \\displaystyle
-    a\\ = \\
-    
-    \\left[
-    \\begin{array}{c}
-        1,\\ 2,\\ 3
-    \\end{array}
-    \\displaystyle
-    \\right]
-    
-    
-    \\end{equation}
-    
-          </span>
         </div>
       </div>
     </div>
@@ -930,7 +940,86 @@ exports[`greek-test 1`] = `
           style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
         >
           <div
+            class="result-segment-container"
+          >
+            <div
+              class="result-segment"
+              id="result-segment-0"
+            >
+              <span
+                style="display: block;"
+              >
+                \\begin{equation}
+    \\displaystyle
+    \\alpha\\ = \\
+    
+    
+    \\begin{array}{c}
+        1.0\\pm 0.1
+    \\end{array}
+    \\displaystyle
+    
+    
+    
+    \\end{equation}
+    
+              </span>
+              <span
+                style="display: block;"
+              >
+                \\begin{equation}
+    \\displaystyle
+    \\alpha_{t}\\ = \\
+    
+    
+    \\begin{array}{c}
+        3.0\\pm 0.5
+    \\end{array}
+    \\displaystyle
+    
+    
+    
+    \\end{equation}
+    
+              </span>
+              <span
+                style="display: block;"
+              >
+                \\begin{equation}
+    \\displaystyle
+    \\alpha_{\\beta}\\ = \\
+    
+    
+    \\begin{array}{c}
+        5.0\\pm 0.9
+    \\end{array}
+    \\displaystyle
+    
+    
+    
+    \\end{equation}
+    
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>,
+  "container": <div>
+    <div
+      style="position: absolute; width: 100%; border-style: dashed; border-color: black;"
+    >
+      <div
+        id="compile-result"
+        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+      >
+        <div
+          class="result-segment-container"
+        >
+          <div
             class="result-segment"
+            id="result-segment-0"
           >
             <span
               style="display: block;"
@@ -987,75 +1076,6 @@ exports[`greek-test 1`] = `
     
             </span>
           </div>
-        </div>
-      </div>
-    </div>
-  </body>,
-  "container": <div>
-    <div
-      style="position: absolute; width: 100%; border-style: dashed; border-color: black;"
-    >
-      <div
-        id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
-      >
-        <div
-          class="result-segment"
-        >
-          <span
-            style="display: block;"
-          >
-            \\begin{equation}
-    \\displaystyle
-    \\alpha\\ = \\
-    
-    
-    \\begin{array}{c}
-        1.0\\pm 0.1
-    \\end{array}
-    \\displaystyle
-    
-    
-    
-    \\end{equation}
-    
-          </span>
-          <span
-            style="display: block;"
-          >
-            \\begin{equation}
-    \\displaystyle
-    \\alpha_{t}\\ = \\
-    
-    
-    \\begin{array}{c}
-        3.0\\pm 0.5
-    \\end{array}
-    \\displaystyle
-    
-    
-    
-    \\end{equation}
-    
-          </span>
-          <span
-            style="display: block;"
-          >
-            \\begin{equation}
-    \\displaystyle
-    \\alpha_{\\beta}\\ = \\
-    
-    
-    \\begin{array}{c}
-        5.0\\pm 0.9
-    \\end{array}
-    \\displaystyle
-    
-    
-    
-    \\end{equation}
-    
-          </span>
         </div>
       </div>
     </div>
@@ -1127,7 +1147,140 @@ exports[`lots of _ 1`] = `
           style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
         >
           <div
+            class="result-segment-container"
+          >
+            <div
+              class="result-segment"
+              id="result-segment-0"
+            >
+              <span
+                style="display: block;"
+              >
+                \\begin{equation}
+    \\displaystyle
+    \\text{biba-boba-two}\\ = \\
+    
+    
+    \\begin{array}{c}
+        1.0\\pm 0.1
+    \\end{array}
+    \\displaystyle
+    
+    
+    
+    \\end{equation}
+    
+              </span>
+              <span
+                style="display: block;"
+              >
+                \\begin{equation}
+    \\displaystyle
+    \\text{a--b}\\ = \\
+    
+    
+    \\begin{array}{c}
+        1.0\\pm 0.1
+    \\end{array}
+    \\displaystyle
+    
+    
+    
+    \\end{equation}
+    
+              </span>
+              <span
+                style="display: block;"
+              >
+                \\begin{equation}
+    \\displaystyle
+    \\text{a-----b}\\ = \\
+    
+    
+    \\begin{array}{c}
+        1.0\\pm 0.1
+    \\end{array}
+    \\displaystyle
+    
+    
+    
+    \\end{equation}
+    
+              </span>
+              <span
+                style="display: block;"
+              >
+                \\begin{equation}
+    \\displaystyle
+    \\text{a--b--}\\ = \\
+    
+    
+    \\begin{array}{c}
+        1.0\\pm 0.1
+    \\end{array}
+    \\displaystyle
+    
+    
+    
+    \\end{equation}
+    
+              </span>
+              <span
+                style="display: block;"
+              >
+                \\begin{equation}
+    \\displaystyle
+    \\ = \\
+    
+    
+    \\begin{array}{c}
+        1.0\\pm 0.1
+    \\end{array}
+    \\displaystyle
+    
+    
+    
+    \\end{equation}
+    
+              </span>
+              <span
+                style="display: block;"
+              >
+                \\begin{equation}
+    \\displaystyle
+    \\text{biba-boba-two-three}\\ = \\
+    
+    
+    \\begin{array}{c}
+        1.0\\pm 0.1
+    \\end{array}
+    \\displaystyle
+    
+    
+    
+    \\end{equation}
+    
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>,
+  "container": <div>
+    <div
+      style="position: absolute; width: 100%; border-style: dashed; border-color: black;"
+    >
+      <div
+        id="compile-result"
+        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+      >
+        <div
+          class="result-segment-container"
+        >
+          <div
             class="result-segment"
+            id="result-segment-0"
           >
             <span
               style="display: block;"
@@ -1238,129 +1391,6 @@ exports[`lots of _ 1`] = `
     
             </span>
           </div>
-        </div>
-      </div>
-    </div>
-  </body>,
-  "container": <div>
-    <div
-      style="position: absolute; width: 100%; border-style: dashed; border-color: black;"
-    >
-      <div
-        id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
-      >
-        <div
-          class="result-segment"
-        >
-          <span
-            style="display: block;"
-          >
-            \\begin{equation}
-    \\displaystyle
-    \\text{biba-boba-two}\\ = \\
-    
-    
-    \\begin{array}{c}
-        1.0\\pm 0.1
-    \\end{array}
-    \\displaystyle
-    
-    
-    
-    \\end{equation}
-    
-          </span>
-          <span
-            style="display: block;"
-          >
-            \\begin{equation}
-    \\displaystyle
-    \\text{a--b}\\ = \\
-    
-    
-    \\begin{array}{c}
-        1.0\\pm 0.1
-    \\end{array}
-    \\displaystyle
-    
-    
-    
-    \\end{equation}
-    
-          </span>
-          <span
-            style="display: block;"
-          >
-            \\begin{equation}
-    \\displaystyle
-    \\text{a-----b}\\ = \\
-    
-    
-    \\begin{array}{c}
-        1.0\\pm 0.1
-    \\end{array}
-    \\displaystyle
-    
-    
-    
-    \\end{equation}
-    
-          </span>
-          <span
-            style="display: block;"
-          >
-            \\begin{equation}
-    \\displaystyle
-    \\text{a--b--}\\ = \\
-    
-    
-    \\begin{array}{c}
-        1.0\\pm 0.1
-    \\end{array}
-    \\displaystyle
-    
-    
-    
-    \\end{equation}
-    
-          </span>
-          <span
-            style="display: block;"
-          >
-            \\begin{equation}
-    \\displaystyle
-    \\ = \\
-    
-    
-    \\begin{array}{c}
-        1.0\\pm 0.1
-    \\end{array}
-    \\displaystyle
-    
-    
-    
-    \\end{equation}
-    
-          </span>
-          <span
-            style="display: block;"
-          >
-            \\begin{equation}
-    \\displaystyle
-    \\text{biba-boba-two-three}\\ = \\
-    
-    
-    \\begin{array}{c}
-        1.0\\pm 0.1
-    \\end{array}
-    \\displaystyle
-    
-    
-    
-    \\end{equation}
-    
-          </span>
         </div>
       </div>
     </div>

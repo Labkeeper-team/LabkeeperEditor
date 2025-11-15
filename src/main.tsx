@@ -3,8 +3,9 @@ import { createRoot } from 'react-dom/client';
 import * as Sentry from '@sentry/react';
 
 import App from './view/App.tsx';
-import { createViewModelStateFromStore, store } from './view/store';
 import { Secrets } from './constants.ts';
+
+import { createViewModelStateFromStore, store } from './view/store';
 import { setupContext } from './viewModel/context.ts';
 import { MetrikaService } from './web/yandex';
 import { WebRpi } from './web/server';

@@ -1,0 +1,397 @@
+import { useRef, useMemo, useState } from 'react';
+import ReactECharts from 'echarts-for-react';
+import './plot-segment.scss';
+import { PlotStatement } from '../../../../../../../../model/domain.ts';
+import { Legend, LegendPosition } from './legend.tsx';
+import { renderErrorItem } from './helpers/renderErrorItem.ts';
+import { Plotname } from './plotname.tsx';
+
+import { MathJax } from 'better-react-mathjax';
+import { getBaseSeries } from './helpers/getSeries.ts';
+import { getXYData } from './helpers/getXYData.ts';
+
+export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
+    const chartRef = useRef<ReactECharts | null>(null);
+    const legendRef = useRef<HTMLDivElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    const [legendPosition, setLegendPosition] =
+        useState<LegendPosition>('right');
+    const [seriesVisibility, setSeriesVisibility] = useState<
+        Record<string, boolean>
+    >(() =>
+        statement.plots.reduce(
+            (acc, plot) => ({ ...acc, [plot.name]: true }),
+            {}
+        )
+    );
+
+    const option = useMemo(() => {
+        const histogramPlots = statement.plots.filter(
+            (p) => p.type === 'histogram'
+        );
+        const histogramMin =
+            histogramPlots.length > 0
+                ? Math.min(...histogramPlots.flatMap((p) => p.x.map(Number)))
+                : undefined;
+        const series = statement.plots.map((plot) => {
+            const [xData, yData] = getXYData(plot);
+            const baseSeries = getBaseSeries(plot, xData, yData);
+
+            const hasError =
+                plot.type === 'scatter' &&
+                ((plot.yInfl && plot.yInfl.some((v: number) => v > 0)) ||
+                    (plot.xInfl && plot.xInfl.some((v: number) => v > 0)));
+
+            if (!hasError) {
+                return baseSeries;
+            }
+
+            const errorData = xData.map((x, i) => [
+                +x,
+                +yData[i],
+                +x - +(plot.xInfl?.[i] || 0),
+                +x + +(plot.xInfl?.[i] || 0),
+                +yData[i] - +(plot.yInfl?.[i] || 0),
+                +yData[i] + +(plot.yInfl?.[i] || 0),
+            ]);
+
+            const errorSeries = {
+                name: `${plot.name}-errors`,
+                type: 'custom',
+                renderItem: renderErrorItem(plot),
+                encode: { x: 0, y: 1 },
+                data: errorData,
+                z: 3,
+                silent: true, // не перехватывает события,
+                xAxisIndex: 1,
+                yAxisIndex: 1,
+            };
+
+            return errorSeries;
+        });
+
+        const isHisto = statement.plots.every((p) => p.type === 'histogram');
+
+        const showGrid = statement.plotGridVisible !== false;
+        const isPlotContainsHisto = !isHisto && !!histogramMin;
+        const calcualteXInterval = (index: number, value: number) => {
+            if (isHisto && series.length === 1) {
+                const plot = series[0];
+                const integerCount = plot.data.filter((item) =>
+                    Number.isInteger(item[0])
+                ).length;
+                const percentage = (integerCount / plot.data.length) * 100;
+                if (percentage >= 33 && percentage < 66) {
+                    return Number.isInteger(+value);
+                }
+            }
+            return index % 4 === 0;
+        };
+
+        const calcualteYInterval = (index: number) => {
+            return index % 4 === 0;
+        };
+
+        const calcualteMinorInterval = (index: number) => {
+            return index % 4 === 0;
+        };
+        return {
+            legend: {
+                show: false,
+                selected: seriesVisibility,
+            },
+            grid: {
+                height: 300,
+                top: 65,
+                bottom: legendPosition === 'right' ? 65 : 120,
+                left: 70,
+                right: statement.legendVisible
+                    ? legendPosition === 'right'
+                        ? 120
+                        : 25
+                    : 25,
+            },
+            xAxis: [
+                {
+                    type: isHisto ? 'category' : 'value',
+                    nameGap: isHisto ? 20 : 40,
+                    splitNumber: 8,
+                    minInterval: isHisto ? undefined : 0.25,
+                    boundaryGap: isHisto ? ['0%', '0%'] : ['0%', '0%'],
+                    min: isPlotContainsHisto
+                        ? histogramMin - 0.01 * histogramMin
+                        : undefined,
+                    axisLine: {
+                        show: showGrid,
+                        onZero: true,
+                        onZeroAxisIndex: 1,
+                        lineStyle: {
+                            color: '#6b7280',
+                            width: 2,
+                            opacity: 0.8,
+                        },
+                    },
+                    axisLabel: {
+                        show: false,
+                    },
+                    axisTick: { show: false },
+                    splitLine: { show: false },
+                    minorTick: { show: false },
+                    minorSplitLine: { show: false },
+                    z: 10,
+                    position: 'bottom',
+                },
+                {
+                    position: 'bottom',
+                    type: isHisto ? 'category' : 'value',
+                    nameGap: isHisto ? 20 : 40,
+                    splitNumber: 8,
+                    minInterval: isHisto ? undefined : 0.25,
+                    boundaryGap: isHisto ? ['0%', '0%'] : ['10%', '10%'],
+                    min: isPlotContainsHisto
+                        ? histogramMin - 0.01 * histogramMin
+                        : undefined,
+                    axisLine: { show: false, onZero: true, onZeroAxisIndex: 1 },
+                    axisLabel: {
+                        show: showGrid,
+                        interval: calcualteXInterval,
+                        formatter: function (value: number) {
+                            if (value > 1000000) {
+                                return value.toExponential(2);
+                            } else if (value >= 1000) {
+                                return (value / 1000).toFixed(1) + 'K';
+                            }
+                            return value;
+                        },
+                    },
+                    axisTick: {
+                        show: showGrid,
+                        length: 6,
+                        lineStyle: {
+                            color: '#6b7280',
+                            width: 1,
+                        },
+
+                        alignWithLabel: true,
+                        interval: calcualteXInterval,
+                    },
+                    splitLine: {
+                        show: showGrid,
+                        lineStyle: {
+                            color: '#bdc1c7',
+                            width: 1,
+                            type: 'solid',
+                            opacity: 0.5,
+                        },
+                        alignWithLabel: true,
+                    },
+                    minorTick: {
+                        show: showGrid,
+                        length: 3,
+                        lineStyle: {
+                            color: '#9ca3af',
+                            width: 0.5,
+                            opacity: 0.4,
+                        },
+                        interval: calcualteMinorInterval,
+                    },
+                    minorSplitLine: {
+                        show: showGrid,
+                        lineStyle: {
+                            color: '#d1d5db',
+                            width: 0.6,
+                            type: 'solid',
+                            opacity: 0.3,
+                        },
+                        interval: calcualteMinorInterval,
+                    },
+                    z: 0,
+                },
+            ],
+            yAxis: [
+                {
+                    type: 'value',
+                    nameGap: 50,
+                    splitNumber: 8,
+                    minInterval: isHisto ? undefined : 0.25,
+                    boundaryGap: isHisto ? ['0%', '0%'] : ['10%', '10%'],
+                    // Задний слой: показываем только сетку
+                    axisLine: {
+                        show: showGrid,
+                        onZero: true,
+                        onZeroAxisIndex: 1,
+                        lineStyle: {
+                            color: '#6b7280',
+                            width: 2,
+                            opacity: 0.8,
+                        },
+                    },
+                    axisLabel: {
+                        show: false,
+                    },
+                    axisTick: { show: false },
+                    splitLine: { show: false },
+                    minorTick: { show: false },
+                    minorSplitLine: { show: false },
+                    z: 10,
+                    position: 'left',
+                },
+                {
+                    position: 'left',
+                    type: 'value',
+                    nameGap: 50,
+                    splitNumber: 8,
+                    minInterval: isHisto ? undefined : 0.25,
+                    boundaryGap: isHisto ? ['0%', '0%'] : ['10%', '10%'],
+                    axisLabel: {
+                        show: showGrid,
+                        interval: calcualteYInterval,
+                        formatter: function (value: number) {
+                            if (value > 1000000) {
+                                return value.toExponential(2);
+                            } else if (value >= 1000) {
+                                return (value / 1000).toFixed(1) + 'K';
+                            }
+                            return value;
+                        },
+                    },
+                    axisLine: { show: false, onZero: true, onZeroAxisIndex: 1 },
+                    axisTick: {
+                        show: showGrid,
+                        length: 6,
+                        onZeroAxisIndex: 1,
+                        lineStyle: {
+                            color: '#6b7280',
+                            width: 1,
+                        },
+
+                        alignWithLabel: true,
+                        interval: calcualteYInterval,
+                    },
+                    splitLine: {
+                        show: showGrid,
+                        onZeroAxisIndex: 1,
+                        lineStyle: {
+                            color: '#bdc1c7',
+                            width: 1,
+                            type: 'solid',
+                            opacity: 0.5,
+                        },
+                        alignWithLabel: true,
+                    },
+                    minorTick: {
+                        show: showGrid,
+                        length: 3,
+                        lineStyle: {
+                            color: '#9ca3af',
+                            width: 0.5,
+                            opacity: 0.4,
+                        },
+                        interval: calcualteMinorInterval,
+                    },
+                    minorSplitLine: {
+                        show: showGrid,
+                        onZeroAxisIndex: 1,
+                        lineStyle: {
+                            color: '#d1d5db',
+                            width: 0.6,
+                            type: 'solid',
+                            opacity: 0.3,
+                        },
+                        interval: calcualteMinorInterval,
+                    },
+                    z: 0,
+                },
+            ],
+            series,
+        };
+    }, [statement, seriesVisibility, legendPosition]);
+
+    const handleLegendClick = (plotName: string) => {
+        const chart = chartRef.current?.getEchartsInstance();
+        if (!chart) return;
+        setSeriesVisibility((prev) => ({
+            ...prev,
+            [plotName]: !prev[plotName],
+        }));
+
+        chart.dispatchAction({
+            type: 'legendToggleSelect',
+            name: plotName,
+        });
+    };
+    const chartHeight = useMemo(() => {
+        const baseHeight = 415;
+        return (
+            baseHeight +
+            (legendPosition === 'right'
+                ? 0
+                : (legendRef.current?.clientHeight ?? 0))
+        );
+    }, [legendPosition, legendRef]);
+    return (
+        <div
+            ref={containerRef}
+            className="plot-container"
+            style={{ position: 'relative', width: '100%' }}
+        >
+            <ReactECharts
+                ref={chartRef}
+                option={option}
+                style={{ width: '100%', height: chartHeight }}
+                opts={{ renderer: 'svg' }}
+                notMerge={true}
+                lazyUpdate={true}
+            />
+            <Plotname name={statement.plotName} />
+            <Legend
+                show={statement.legendVisible}
+                containerRef={containerRef}
+                handleLegendClick={handleLegendClick}
+                ref={legendRef}
+                plots={statement.plots}
+                legendPosition={legendPosition}
+                setLegendPosition={setLegendPosition}
+                seriesVisibility={seriesVisibility}
+            />
+
+            {statement.plotXAxisName && (
+                <div
+                    className="plot-xaxis-label"
+                    style={{
+                        bottom:
+                            legendPosition === 'right'
+                                ? -10
+                                : (legendRef?.current?.clientHeight ?? 0) - 6,
+                    }}
+                >
+                    <MathJax>
+                        $${statement.plotXAxisName.replaceAll(' ', '\\:')}$$
+                    </MathJax>
+                </div>
+            )}
+            <div
+                style={{ position: 'absolute', height: 415, width: 40, top: 0 }}
+            >
+                <div
+                    style={{
+                        position: 'relative',
+                        width: '100%',
+                        height: '100%',
+                    }}
+                >
+                    {statement.plotYAxisName && (
+                        <div className="plot-yaxis-label">
+                            <MathJax>
+                                $$
+                                {statement.plotYAxisName.replaceAll(' ', '\\:')}
+                                $$
+                            </MathJax>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};

@@ -50,13 +50,16 @@ export const useIsSegmentIsActive = (id: number) =>
         (state: StorageState) => state.ide.activeSegmentIndex,
         (index) => index === id
     );
+
 export const useSegment = (id: number) =>
     createSelector(
-        (state: StorageState) =>
-            state.project.compileSuccessResult?.segments.filter(
-                (_, i) => i === id
-            ),
-        (s) => (s.length > 0 ? s[0] : undefined)
+        [
+            (state: StorageState) =>
+                state.project.compileSuccessResult?.segments,
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            (_: StorageState) => id,
+        ],
+        (segments, id) => segments?.find((_, i) => i === id)
     );
 export const useShowTour = createSelector(
     (state: StorageState) => state.settings,

@@ -8,7 +8,7 @@ import { CompilationService } from './domain/CompilationService.ts';
 import { IdeService } from './domain/IdeService.ts';
 import { FileService } from './domain/FileService.ts';
 import { ExampleService } from './domain/ExampleService.ts';
-import { Controller } from '../controller';
+
 import { AuthService } from './operation/AuthService.ts';
 import { FileManagerService } from './operation/FileManagerService.ts';
 import { ProgramEditorService } from './operation/ProgramEditorService.ts';
@@ -19,6 +19,7 @@ import {
     ProgramRepository,
 } from '../model/repository/ProgramRepository.ts';
 import { ResetService } from './domain/ResetService.ts';
+import { Controller } from '../controller/index.ts';
 
 export function setupContext(
     rpi: Rpi,

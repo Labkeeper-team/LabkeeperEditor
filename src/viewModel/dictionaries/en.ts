@@ -79,8 +79,6 @@ export const en: Translations = {
         one_digit: 'One digit',
         two_digits: 'Two digits',
         three_digits: 'Three digits',
-        two_meaning_digits: 'First two significant digits of the error',
-        three_meaning_digits: 'First three significant digits of the error',
     },
     label_syntax_highlight: 'Syntax highlighting',
     label_autocompilation: 'Autocompilation',
@@ -229,14 +227,6 @@ export const en: Translations = {
         '4': 'Too many functions',
         '5': 'Constants are too large',
         '6': 'Program execution time exceeded',
-    },
-    quota_help: {
-        '1': "Write to our support if you don't have enough resources.",
-        '2': "Write to our support if you don't have enough resources.",
-        '3': "Write to our support if you don't have enough resources.",
-        '4': "Write to our support if you don't have enough resources.",
-        '5': "Write to our support if you don't have enough resources.",
-        '6': 'Perhaps you should hide some of the calculations, this will speed up the program, this can be done by clicking on the three dots in the segment panel.',
     },
     filemanager: {
         title: 'Files',

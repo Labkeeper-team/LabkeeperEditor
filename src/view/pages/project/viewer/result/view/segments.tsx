@@ -1,26 +1,39 @@
-import { createRef, memo, useCallback, useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
+import { forwardRef, memo, useCallback, useMemo, useRef } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import classNames from 'classnames';
 
 import {
     useCompiledSegmentsSize,
-    useIsSegmentIsActive,
     useSegment,
 } from '../../../../../store/selectors/program';
 import { CodeSegment } from './code-segment';
 import { MdSegment } from './md-segment';
 import { LatexSegment } from './latex-segment.tsx';
 import { AsciimathSegment } from './asciimath-segment.tsx';
-import {
-    ComputationalOutputSegment,
-    TextOutputSegment,
-} from '../../../../../../model/domain.ts';
+import { useScrollableToActive } from '../../../../../hooks/useScrollableToActive.ts';
+import { AppDispatch } from '../../../../../store/index.ts';
+import { controller } from '../../../../../../main.tsx';
+import useClickOutside from '../../../../../hooks/useClickOutside.ts';
+import { useIsDelayedSegmentIsActive } from '../../../../../hooks/useIsDelayedSegmentIsActive.ts';
+import { OutputSegment } from '../../../../../../model/domain.ts';
+
+interface IActiveSegmentWrapperProps {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    Component: any;
+    segment?: OutputSegment;
+    index: number;
+    onClick: () => void;
+}
 
 export const Segments = memo(() => {
     const segmentsSize = useSelector(useCompiledSegmentsSize);
-
+    const segmentIndexes = useMemo(
+        () => Array.from({ length: segmentsSize || 0 }, (_, i) => i),
+        [segmentsSize]
+    );
     return (
         <>
-            {Array.from(Array(segmentsSize).keys()).map((_, index) => {
+            {segmentIndexes.map((_, index) => {
                 return <SegmentWrapper index={index} key={index} />;
             })}
         </>
@@ -28,119 +41,78 @@ export const Segments = memo(() => {
 });
 
 const SegmentWrapper = memo(({ index }: { index: number }) => {
+    const dispatch = useDispatch<AppDispatch>();
     const segment = useSelector(useSegment(index));
-    const isActive = useSelector(useIsSegmentIsActive(index));
-    const [prevIsActive, setPrevIsActive] = useState(false);
-    const ref = createRef<HTMLDivElement>();
+    const onClick = useCallback(() => {
+        dispatch(controller.onFocusSegmentRequest({ segmentIndex: index }));
+    }, [dispatch, index]);
 
-    const isElementVisible = useCallback(() => {
-        if (!ref?.current) return false;
+    const key = useMemo(() => {
+        return `${index}-${segment?.type}`;
+    }, [segment, index]);
 
-        const container = document.getElementById('compile-result');
-        if (!container) return false;
+    const Component = useMemo(() => {
+        if (!segment) return <div key={index} />;
 
-        const containerRect = container.getBoundingClientRect();
-        const elementRect = ref.current.getBoundingClientRect();
-
-        // Проверяем, что элемент виден на 30% или больше
-        const visibleTop = Math.max(elementRect.top, containerRect.top);
-        const visibleBottom = Math.min(
-            elementRect.bottom,
-            containerRect.bottom
-        );
-        const visibleHeight = Math.max(0, visibleBottom - visibleTop);
-
-        const visibilityRatio = visibleHeight / elementRect.height;
-
-        return visibilityRatio >= 0.3;
-    }, [ref]);
-
-    const handleClick = useCallback(() => {
-        const container = ref?.current?.parentElement; // Родительский scroll-контейнер
-        const element = ref?.current;
-
-        if (!container || !element) return;
-
-        const scaleFactor =
-            +document.documentElement.style.getPropertyValue('--mobile-scale');
-        const rect = element.getBoundingClientRect();
-        const containerRect = container.getBoundingClientRect();
-
-        // Корректируем позицию с учётом scale
-        const offsetY1 = (rect.top - containerRect.top) * (1 / scaleFactor);
-        const offsetY2 =
-            (rect.bottom - containerRect.bottom) * (1 / scaleFactor);
-
-        const offsetY =
-            Math.abs(offsetY1) > Math.abs(offsetY2) ? offsetY2 : offsetY1;
-
-        // Прокручиваем контейнер
-        if (container.scrollTo) {
-            container.scrollTo({
-                top: container.scrollTop + offsetY,
-                behavior: 'smooth',
-            });
+        switch (segment.type) {
+            case 'computational':
+                return CodeSegment;
+            case 'md':
+                return MdSegment;
+            case 'latex':
+                return LatexSegment;
+            case 'asciimath':
+                return AsciimathSegment;
+            default:
+                return () => <div />;
         }
-    }, [ref]);
+    }, [segment, index]);
 
-    useEffect(() => {
-        if (isActive) {
-            const shouldScroll =
-                isActive !== prevIsActive || !isElementVisible();
-
-            if (shouldScroll) {
-                setPrevIsActive(isActive);
-                handleClick();
-            }
-        }
-    }, [isActive]);
-
-    if (!segment) {
-        return <div key={index} />;
-    }
-
-    switch (segment.type) {
-        case 'computational': {
-            return (
-                <CodeSegment
-                    segment={segment as ComputationalOutputSegment}
-                    index={index}
-                    key={`${index}-${JSON.stringify(segment)}`}
-                    ref={ref}
-                />
-            );
-        }
-        case 'md': {
-            return (
-                <MdSegment
-                    key={`${index}-${JSON.stringify(segment)}`}
-                    index={index}
-                    ref={ref}
-                    segment={segment as TextOutputSegment}
-                />
-            );
-        }
-        case 'latex': {
-            return (
-                <LatexSegment
-                    key={`${index}-${JSON.stringify(segment)}`}
-                    index={index}
-                    ref={ref}
-                    segment={segment as TextOutputSegment}
-                />
-            );
-        }
-        case 'asciimath': {
-            return (
-                <AsciimathSegment
-                    key={`${index}-${JSON.stringify(segment)}`}
-                    segment={segment as TextOutputSegment}
-                    index={index}
-                    ref={ref}
-                />
-            );
-        }
-        default:
-            return <div />;
-    }
+    return (
+        <SegmentContent
+            Component={Component}
+            segment={segment}
+            index={index}
+            onClick={onClick}
+            key={key}
+        />
+    );
 });
+
+const SegmentContent = memo(
+    forwardRef<
+        HTMLDivElement,
+        IActiveSegmentWrapperProps
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    >(({ Component, segment, index, onClick }, _) => {
+        const dispatch = useDispatch<AppDispatch>();
+        const activeIndex = useIsDelayedSegmentIsActive(index);
+
+        const ignoreSelectors = useMemo(
+            () => [`#ide-segment-${index}`],
+            [index]
+        );
+        const onOutisde = useCallback(() => {
+            dispatch(controller.onBlurSegmentRequest({ segmentIndex: index }));
+        }, [dispatch, index]);
+
+        const activeWrapperRef = useRef<HTMLDivElement>(null);
+        const ref = useClickOutside(onOutisde, ignoreSelectors, activeIndex);
+        useScrollableToActive(activeWrapperRef, 'compile-result', index);
+        return (
+            <div
+                ref={activeWrapperRef}
+                className={classNames('result-segment-container', {
+                    'active-result-block-container': activeIndex,
+                })}
+            >
+                <Component
+                    segment={segment}
+                    index={index}
+                    onClick={onClick}
+                    ref={ref}
+                />
+            </div>
+        );
+    })
+);

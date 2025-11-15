@@ -13,7 +13,7 @@ import {
     useUser,
 } from '../../../../store/selectors/program';
 import { useReactToPrint } from 'react-to-print';
-import { useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import { useDictionary } from '../../../../store/selectors/translations';
 import { AppDispatch, StorageState } from '../../../../store';
 import { controller } from '../../../../../main.tsx';
@@ -119,17 +119,22 @@ export const Result = () => {
         }, 100);
     };
 
+    const Container = useMemo(() => {
+        return mode === 'latex' && pdfUri ? (
+            <PdfResultViewer pdfUri={pdfUri} />
+        ) : compileResult === undefined ||
+          compileResult.segments === undefined ||
+          compileResult.segments.length === 0 ? (
+            <EmptyResultContainer />
+        ) : (
+            <ViewResult ref={contentRef} />
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [contentRef, compileResult.segments]);
+
     return (
         <div className="result-container">
-            {mode === 'latex' && pdfUri ? (
-                <PdfResultViewer pdfUri={pdfUri} />
-            ) : compileResult === undefined ||
-              compileResult.segments === undefined ||
-              compileResult.segments.length === 0 ? (
-                <EmptyResultContainer />
-            ) : (
-                <ViewResult ref={contentRef} />
-            )}
+            {Container}
             <Button
                 classname={`save-to-pdf-button ${InterfaceTourAnchorClassnames.SavePdf}`}
                 title={dictionary.label_save_to_pdf}

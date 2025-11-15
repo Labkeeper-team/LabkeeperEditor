@@ -1,12 +1,10 @@
 import classNames from 'classnames';
-import { useIsSegmentIsActive } from '../../../../../store/selectors/program';
-import { useSelector } from 'react-redux';
 import { forwardRef, memo, useMemo, useRef } from 'react';
 import { AssignStatement } from './segments/assignment-segment.tsx';
 import { DetailedStatement } from './segments/calculation-segment.tsx';
 import { FileSegment } from './segments/file-segment.tsx';
 import { TableSegment } from './segments/table-segment.tsx';
-import { PlotSegment } from './segments/plot-segment.tsx';
+import { PlotSegment } from './segments/plot-segment';
 import {
     CalcStatement,
     ComputationalOutputSegment,
@@ -30,11 +28,14 @@ import { NoResultSegment } from './segments/no-result-segment.tsx';
 export const CodeSegment = memo(
     forwardRef<
         HTMLDivElement,
-        { segment: ComputationalOutputSegment; index: number }
-    >(({ segment, index }, ref) => {
+        {
+            segment: ComputationalOutputSegment;
+            index: number;
+            onClick: () => void;
+        }
+    >(({ segment, index, onClick }, ref) => {
         const segmentRef = useRef<HTMLDivElement>(null);
         const statements = segment.statements;
-        const activeIndex = useSelector(useIsSegmentIsActive(index));
 
         const variables = useMemo(() => {
             const vars = statements
@@ -45,12 +46,15 @@ export const CodeSegment = memo(
                 ); // чтобы не повторялись переменные
             return vars;
         }, [statements]);
-
+        const onClickTimeout = () => {
+            setTimeout(onClick, 1);
+        };
         return (
             <div
+                id={`result-segment-${index}`}
+                onMouseDown={onClickTimeout}
                 ref={ref ?? segmentRef}
                 className={classNames({
-                    'active-result-block-container': activeIndex,
                     'result-segment': true,
                 })}
             >

@@ -13,7 +13,162 @@ exports[`Simple array 1`] = `
           style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
         >
           <div
+            class="result-segment-container"
+          >
+            <div
+              class="result-segment"
+              id="result-segment-0"
+            >
+              <span
+                style="display: block;"
+              >
+                \\begin{equation}
+    \\displaystyle
+    a\\ = \\
+    
+    
+    \\begin{array}{c}
+        1\\pm 1
+    \\end{array}
+    \\displaystyle
+    
+    
+    
+    \\end{equation}
+    
+              </span>
+              <div
+                style="display: flex; flex-direction: column; gap: 5px; overflow-wrap: break-word; word-wrap: break-word; white-space: normal; max-width: 100%;"
+              >
+                <span
+                  style="display: block;"
+                >
+                  
+        \\begin{equation}
+        \\displaystyle
+        b \\ = \\ 
+  \\displaystyle
+  a^{2}
+  \\displaystyle
+   \\ = \\
+        \\end{equation}
+                </span>
+                <span
+                  style="display: block;"
+                >
+                  
+        \\begin{equation}
+        \\displaystyle
+        \\ = \\ 
+    \\left[
+    \\begin{array}{c}
+        10^{2},\\ 10^{2}
+    \\end{array}
+    \\right]
+    \\displaystyle
+     \\ = \\
+        \\end{equation}
+                </span>
+                <span
+                  style="display: block;"
+                >
+                  
+        \\begin{equation} 
+        \\ = \\ 
+    \\left[
+    \\begin{array}{c}
+        100,\\ 100
+    \\end{array}
+    \\displaystyle
+    \\right]
+    \\pm 20
+    
+        \\end{equation}
+                </span>
+                <span
+                  style="display: block;"
+                >
+                  
+        \\begin{equation}
+        \\displaystyle
+        \\sigma(b) \\ = \\ 
+  \\displaystyle
+  \\sqrt{\\left ( \\frac{\\partial b}{\\partial a} \\cdot \\sigma(a) \\right )^{2}}
+  \\displaystyle
+   \\ = \\
+        \\end{equation}
+                </span>
+                <span
+                  style="display: block;"
+                >
+                  
+        \\begin{equation}
+        \\displaystyle
+        = \\ 
+  \\displaystyle
+  \\sqrt{4 \\cdot a^{2} \\cdot \\sigma(a)^{2}}
+  \\displaystyle
+   \\ =
+        \\end{equation}
+                </span>
+                <span
+                  style="display: block;"
+                >
+                  
+        \\begin{equation}
+        \\displaystyle
+        \\ = \\ 
+    \\left[
+    \\begin{array}{c}
+        \\sqrt{
+  \\begin{array}{l}
+  4 \\cdot 10^{2} \\cdot 1^{2}
+  \\end{array}
+  },\\ \\sqrt{
+  \\begin{array}{l}
+  4 \\cdot 10^{2} \\cdot 1^{2}
+  \\end{array}
+  }
+    \\end{array}
+    \\right]
+    \\displaystyle
+     \\ = \\
+        \\end{equation}
+                </span>
+                <span
+                  style="display: block;"
+                >
+                  
+        \\begin{equation}
+        \\displaystyle
+        = \\left[
+        \\begin{array}{c}
+        20,\\ 20
+        \\end{array}
+       \\right]
+        \\end{equation}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>,
+  "container": <div>
+    <div
+      style="position: absolute; width: 100%; border-style: dashed; border-color: black;"
+    >
+      <div
+        id="compile-result"
+        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+      >
+        <div
+          class="result-segment-container"
+        >
+          <div
             class="result-segment"
+            id="result-segment-0"
           >
             <span
               style="display: block;"
@@ -149,151 +304,6 @@ exports[`Simple array 1`] = `
         </div>
       </div>
     </div>
-  </body>,
-  "container": <div>
-    <div
-      style="position: absolute; width: 100%; border-style: dashed; border-color: black;"
-    >
-      <div
-        id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
-      >
-        <div
-          class="result-segment"
-        >
-          <span
-            style="display: block;"
-          >
-            \\begin{equation}
-    \\displaystyle
-    a\\ = \\
-    
-    
-    \\begin{array}{c}
-        1\\pm 1
-    \\end{array}
-    \\displaystyle
-    
-    
-    
-    \\end{equation}
-    
-          </span>
-          <div
-            style="display: flex; flex-direction: column; gap: 5px; overflow-wrap: break-word; word-wrap: break-word; white-space: normal; max-width: 100%;"
-          >
-            <span
-              style="display: block;"
-            >
-              
-        \\begin{equation}
-        \\displaystyle
-        b \\ = \\ 
-  \\displaystyle
-  a^{2}
-  \\displaystyle
-   \\ = \\
-        \\end{equation}
-            </span>
-            <span
-              style="display: block;"
-            >
-              
-        \\begin{equation}
-        \\displaystyle
-        \\ = \\ 
-    \\left[
-    \\begin{array}{c}
-        10^{2},\\ 10^{2}
-    \\end{array}
-    \\right]
-    \\displaystyle
-     \\ = \\
-        \\end{equation}
-            </span>
-            <span
-              style="display: block;"
-            >
-              
-        \\begin{equation} 
-        \\ = \\ 
-    \\left[
-    \\begin{array}{c}
-        100,\\ 100
-    \\end{array}
-    \\displaystyle
-    \\right]
-    \\pm 20
-    
-        \\end{equation}
-            </span>
-            <span
-              style="display: block;"
-            >
-              
-        \\begin{equation}
-        \\displaystyle
-        \\sigma(b) \\ = \\ 
-  \\displaystyle
-  \\sqrt{\\left ( \\frac{\\partial b}{\\partial a} \\cdot \\sigma(a) \\right )^{2}}
-  \\displaystyle
-   \\ = \\
-        \\end{equation}
-            </span>
-            <span
-              style="display: block;"
-            >
-              
-        \\begin{equation}
-        \\displaystyle
-        = \\ 
-  \\displaystyle
-  \\sqrt{4 \\cdot a^{2} \\cdot \\sigma(a)^{2}}
-  \\displaystyle
-   \\ =
-        \\end{equation}
-            </span>
-            <span
-              style="display: block;"
-            >
-              
-        \\begin{equation}
-        \\displaystyle
-        \\ = \\ 
-    \\left[
-    \\begin{array}{c}
-        \\sqrt{
-  \\begin{array}{l}
-  4 \\cdot 10^{2} \\cdot 1^{2}
-  \\end{array}
-  },\\ \\sqrt{
-  \\begin{array}{l}
-  4 \\cdot 10^{2} \\cdot 1^{2}
-  \\end{array}
-  }
-    \\end{array}
-    \\right]
-    \\displaystyle
-     \\ = \\
-        \\end{equation}
-            </span>
-            <span
-              style="display: block;"
-            >
-              
-        \\begin{equation}
-        \\displaystyle
-        = \\left[
-        \\begin{array}{c}
-        20,\\ 20
-        \\end{array}
-       \\right]
-        \\end{equation}
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>,
   "debug": [Function],
   "findAllByAltText": [Function],
@@ -362,15 +372,19 @@ exports[`Simple detailed segment 1`] = `
           style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
         >
           <div
-            class="result-segment"
+            class="result-segment-container"
           >
             <div
-              style="display: flex; flex-direction: column; gap: 5px; overflow-wrap: break-word; word-wrap: break-word; white-space: normal; max-width: 100%;"
+              class="result-segment"
+              id="result-segment-0"
             >
-              <span
-                style="display: block;"
+              <div
+                style="display: flex; flex-direction: column; gap: 5px; overflow-wrap: break-word; word-wrap: break-word; white-space: normal; max-width: 100%;"
               >
-                
+                <span
+                  style="display: block;"
+                >
+                  
         \\begin{equation}
         \\displaystyle
         b \\ = \\ 
@@ -379,11 +393,11 @@ exports[`Simple detailed segment 1`] = `
   \\displaystyle
    \\ = \\
         \\end{equation}
-              </span>
-              <span
-                style="display: block;"
-              >
-                
+                </span>
+                <span
+                  style="display: block;"
+                >
+                  
         \\begin{equation}
         \\displaystyle
         \\ = \\ 
@@ -395,11 +409,11 @@ exports[`Simple detailed segment 1`] = `
     \\displaystyle
      \\ = \\
         \\end{equation}
-              </span>
-              <span
-                style="display: block;"
-              >
-                
+                </span>
+                <span
+                  style="display: block;"
+                >
+                  
         \\begin{equation} 
         \\ = \\ 
     
@@ -411,11 +425,11 @@ exports[`Simple detailed segment 1`] = `
     
     
         \\end{equation}
-              </span>
-              <span
-                style="display: block;"
-              >
-                
+                </span>
+                <span
+                  style="display: block;"
+                >
+                  
         \\begin{equation}
         \\displaystyle
         \\sigma(b) \\ = \\ 
@@ -424,11 +438,11 @@ exports[`Simple detailed segment 1`] = `
   \\displaystyle
    \\ = \\
         \\end{equation}
-              </span>
-              <span
-                style="display: block;"
-              >
-                
+                </span>
+                <span
+                  style="display: block;"
+                >
+                  
         \\begin{equation}
         \\displaystyle
         = \\ 
@@ -437,11 +451,11 @@ exports[`Simple detailed segment 1`] = `
   \\displaystyle
    \\ =
         \\end{equation}
-              </span>
-              <span
-                style="display: block;"
-              >
-                
+                </span>
+                <span
+                  style="display: block;"
+                >
+                  
         \\begin{equation}
         \\displaystyle
         \\ = \\ 
@@ -457,11 +471,11 @@ exports[`Simple detailed segment 1`] = `
     \\displaystyle
      \\ = \\
         \\end{equation}
-              </span>
-              <span
-                style="display: block;"
-              >
-                
+                </span>
+                <span
+                  style="display: block;"
+                >
+                  
         \\begin{equation}
         \\displaystyle
         = 
@@ -470,15 +484,15 @@ exports[`Simple detailed segment 1`] = `
         \\end{array}
        
         \\end{equation}
-              </span>
-            </div>
-            <div
-              style="display: flex; flex-direction: column; gap: 5px; overflow-wrap: break-word; word-wrap: break-word; white-space: normal; max-width: 100%;"
-            >
-              <span
-                style="display: block;"
+                </span>
+              </div>
+              <div
+                style="display: flex; flex-direction: column; gap: 5px; overflow-wrap: break-word; word-wrap: break-word; white-space: normal; max-width: 100%;"
               >
-                
+                <span
+                  style="display: block;"
+                >
+                  
         \\begin{equation}
         \\displaystyle
         b \\ = \\ 
@@ -487,11 +501,11 @@ exports[`Simple detailed segment 1`] = `
   \\displaystyle
    \\ = \\
         \\end{equation}
-              </span>
-              <span
-                style="display: block;"
-              >
-                
+                </span>
+                <span
+                  style="display: block;"
+                >
+                  
         \\begin{equation}
         \\displaystyle
         \\ = \\ 
@@ -503,11 +517,11 @@ exports[`Simple detailed segment 1`] = `
     \\displaystyle
      \\ = \\
         \\end{equation}
-              </span>
-              <span
-                style="display: block;"
-              >
-                
+                </span>
+                <span
+                  style="display: block;"
+                >
+                  
         \\begin{equation} 
         \\ = \\ 
     \\left[
@@ -519,11 +533,11 @@ exports[`Simple detailed segment 1`] = `
     \\pm 20
     
         \\end{equation}
-              </span>
-              <span
-                style="display: block;"
-              >
-                
+                </span>
+                <span
+                  style="display: block;"
+                >
+                  
         \\begin{equation}
         \\displaystyle
         \\sigma(b) \\ = \\ 
@@ -532,11 +546,11 @@ exports[`Simple detailed segment 1`] = `
   \\displaystyle
    \\ = \\
         \\end{equation}
-              </span>
-              <span
-                style="display: block;"
-              >
-                
+                </span>
+                <span
+                  style="display: block;"
+                >
+                  
         \\begin{equation}
         \\displaystyle
         = \\ 
@@ -549,11 +563,11 @@ exports[`Simple detailed segment 1`] = `
   \\displaystyle
    \\ =
         \\end{equation}
-              </span>
-              <span
-                style="display: block;"
-              >
-                
+                </span>
+                <span
+                  style="display: block;"
+                >
+                  
         \\begin{equation}
         \\displaystyle
         \\ = \\ 
@@ -573,11 +587,11 @@ exports[`Simple detailed segment 1`] = `
     \\displaystyle
      \\ = \\
         \\end{equation}
-              </span>
-              <span
-                style="display: block;"
-              >
-                
+                </span>
+                <span
+                  style="display: block;"
+                >
+                  
         \\begin{equation}
         \\displaystyle
         = \\left[
@@ -586,7 +600,8 @@ exports[`Simple detailed segment 1`] = `
         \\end{array}
        \\right]
         \\end{equation}
-              </span>
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -602,15 +617,19 @@ exports[`Simple detailed segment 1`] = `
         style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
       >
         <div
-          class="result-segment"
+          class="result-segment-container"
         >
           <div
-            style="display: flex; flex-direction: column; gap: 5px; overflow-wrap: break-word; word-wrap: break-word; white-space: normal; max-width: 100%;"
+            class="result-segment"
+            id="result-segment-0"
           >
-            <span
-              style="display: block;"
+            <div
+              style="display: flex; flex-direction: column; gap: 5px; overflow-wrap: break-word; word-wrap: break-word; white-space: normal; max-width: 100%;"
             >
-              
+              <span
+                style="display: block;"
+              >
+                
         \\begin{equation}
         \\displaystyle
         b \\ = \\ 
@@ -619,11 +638,11 @@ exports[`Simple detailed segment 1`] = `
   \\displaystyle
    \\ = \\
         \\end{equation}
-            </span>
-            <span
-              style="display: block;"
-            >
-              
+              </span>
+              <span
+                style="display: block;"
+              >
+                
         \\begin{equation}
         \\displaystyle
         \\ = \\ 
@@ -635,11 +654,11 @@ exports[`Simple detailed segment 1`] = `
     \\displaystyle
      \\ = \\
         \\end{equation}
-            </span>
-            <span
-              style="display: block;"
-            >
-              
+              </span>
+              <span
+                style="display: block;"
+              >
+                
         \\begin{equation} 
         \\ = \\ 
     
@@ -651,11 +670,11 @@ exports[`Simple detailed segment 1`] = `
     
     
         \\end{equation}
-            </span>
-            <span
-              style="display: block;"
-            >
-              
+              </span>
+              <span
+                style="display: block;"
+              >
+                
         \\begin{equation}
         \\displaystyle
         \\sigma(b) \\ = \\ 
@@ -664,11 +683,11 @@ exports[`Simple detailed segment 1`] = `
   \\displaystyle
    \\ = \\
         \\end{equation}
-            </span>
-            <span
-              style="display: block;"
-            >
-              
+              </span>
+              <span
+                style="display: block;"
+              >
+                
         \\begin{equation}
         \\displaystyle
         = \\ 
@@ -677,11 +696,11 @@ exports[`Simple detailed segment 1`] = `
   \\displaystyle
    \\ =
         \\end{equation}
-            </span>
-            <span
-              style="display: block;"
-            >
-              
+              </span>
+              <span
+                style="display: block;"
+              >
+                
         \\begin{equation}
         \\displaystyle
         \\ = \\ 
@@ -697,11 +716,11 @@ exports[`Simple detailed segment 1`] = `
     \\displaystyle
      \\ = \\
         \\end{equation}
-            </span>
-            <span
-              style="display: block;"
-            >
-              
+              </span>
+              <span
+                style="display: block;"
+              >
+                
         \\begin{equation}
         \\displaystyle
         = 
@@ -710,15 +729,15 @@ exports[`Simple detailed segment 1`] = `
         \\end{array}
        
         \\end{equation}
-            </span>
-          </div>
-          <div
-            style="display: flex; flex-direction: column; gap: 5px; overflow-wrap: break-word; word-wrap: break-word; white-space: normal; max-width: 100%;"
-          >
-            <span
-              style="display: block;"
+              </span>
+            </div>
+            <div
+              style="display: flex; flex-direction: column; gap: 5px; overflow-wrap: break-word; word-wrap: break-word; white-space: normal; max-width: 100%;"
             >
-              
+              <span
+                style="display: block;"
+              >
+                
         \\begin{equation}
         \\displaystyle
         b \\ = \\ 
@@ -727,11 +746,11 @@ exports[`Simple detailed segment 1`] = `
   \\displaystyle
    \\ = \\
         \\end{equation}
-            </span>
-            <span
-              style="display: block;"
-            >
-              
+              </span>
+              <span
+                style="display: block;"
+              >
+                
         \\begin{equation}
         \\displaystyle
         \\ = \\ 
@@ -743,11 +762,11 @@ exports[`Simple detailed segment 1`] = `
     \\displaystyle
      \\ = \\
         \\end{equation}
-            </span>
-            <span
-              style="display: block;"
-            >
-              
+              </span>
+              <span
+                style="display: block;"
+              >
+                
         \\begin{equation} 
         \\ = \\ 
     \\left[
@@ -759,11 +778,11 @@ exports[`Simple detailed segment 1`] = `
     \\pm 20
     
         \\end{equation}
-            </span>
-            <span
-              style="display: block;"
-            >
-              
+              </span>
+              <span
+                style="display: block;"
+              >
+                
         \\begin{equation}
         \\displaystyle
         \\sigma(b) \\ = \\ 
@@ -772,11 +791,11 @@ exports[`Simple detailed segment 1`] = `
   \\displaystyle
    \\ = \\
         \\end{equation}
-            </span>
-            <span
-              style="display: block;"
-            >
-              
+              </span>
+              <span
+                style="display: block;"
+              >
+                
         \\begin{equation}
         \\displaystyle
         = \\ 
@@ -789,11 +808,11 @@ exports[`Simple detailed segment 1`] = `
   \\displaystyle
    \\ =
         \\end{equation}
-            </span>
-            <span
-              style="display: block;"
-            >
-              
+              </span>
+              <span
+                style="display: block;"
+              >
+                
         \\begin{equation}
         \\displaystyle
         \\ = \\ 
@@ -813,11 +832,11 @@ exports[`Simple detailed segment 1`] = `
     \\displaystyle
      \\ = \\
         \\end{equation}
-            </span>
-            <span
-              style="display: block;"
-            >
-              
+              </span>
+              <span
+                style="display: block;"
+              >
+                
         \\begin{equation}
         \\displaystyle
         = \\left[
@@ -826,7 +845,8 @@ exports[`Simple detailed segment 1`] = `
         \\end{array}
        \\right]
         \\end{equation}
-            </span>
+              </span>
+            </div>
           </div>
         </div>
       </div>

@@ -116,36 +116,6 @@ export const ProjectSettings = () => {
                     }
                     title={dictionary.rounding_mode.first_digit}
                 />
-                <Radio
-                    id="twoMeaningDigits"
-                    checked={
-                        activeProgram?.parameters.roundStrategy ===
-                        'twoMeaningDigits'
-                    }
-                    onChange={() =>
-                        dispatch(
-                            controller.onRoundStrategySetRequest({
-                                strategy: 'twoMeaningDigits',
-                            })
-                        )
-                    }
-                    title={dictionary.rounding_mode.two_meaning_digits}
-                />
-                <Radio
-                    id="threeMeaningDigits"
-                    checked={
-                        activeProgram?.parameters.roundStrategy ===
-                        'threeMeaningDigits'
-                    }
-                    onChange={() =>
-                        dispatch(
-                            controller.onRoundStrategySetRequest({
-                                strategy: 'threeMeaningDigits',
-                            })
-                        )
-                    }
-                    title={dictionary.rounding_mode.three_meaning_digits}
-                />
             </div>
         </div>
     );
