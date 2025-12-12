@@ -425,11 +425,11 @@ export class Controller {
         }
     );
 
-    onUploadFileRequest = createAsyncThunk(
-        'onUploadFileRequest',
-        async ({ file }: { file: File }) => {
-            this.wrapper('onUploadFileRequest', () =>
-                this.fileManagerService.onUploadFile(file)
+    onUploadFilesRequest = createAsyncThunk(
+        'onUploadFilesRequest',
+        async ({ files }: { files: File[] }) => {
+            this.wrapper('onUploadFilesRequest', () =>
+                this.fileManagerService.onUploadFiles(files)
             );
         }
     );

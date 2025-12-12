@@ -18,9 +18,9 @@ export const FileManagerDragZone = () => {
     const onDrop = useCallback(
         async (e: DragEvent<HTMLDivElement>) => {
             e.preventDefault();
-            const files = e.dataTransfer.files;
+            const files = Array.from(e.dataTransfer.files);
             if (files.length > 0) {
-                dispatch(controller.onUploadFileRequest({ file: files[0] }));
+                dispatch(controller.onUploadFilesRequest({ files: files }));
             }
         },
         [dispatch]
