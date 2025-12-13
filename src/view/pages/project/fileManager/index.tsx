@@ -39,13 +39,13 @@ export const FileManager = () => {
     const onSelectFile = useCallback(
         async (e: ChangeEvent<HTMLInputElement>) => {
             if (e.target.files?.length) {
-                const fileToUpload: File = e.target.files[0];
-                if (!fileToUpload) {
+                const filesToUpload: File[] = Array.from(e.target.files);
+                if (!filesToUpload) {
                     return;
                 }
 
                 dispatch(
-                    controller.onUploadFileRequest({ file: fileToUpload })
+                    controller.onUploadFilesRequest({ files: filesToUpload })
                 );
             }
         },

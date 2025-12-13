@@ -48,7 +48,7 @@ export class FileManagerService {
         this.repository.settingsViewModelRepository.setShowFileManager(false);
     };
 
-    onUploadFile = async (file: File) => {
+    onUploadFiles = async (files: File[]) => {
         this.repository.settingsViewModelRepository.setIsFileDraggedToFileManager(
             false
         );
@@ -56,40 +56,48 @@ export class FileManagerService {
         if (!project) {
             return;
         }
+        let isResultOk = false;
+        for (const file of files) {
+            this.fileService.checkFile(file, this.repository.dictionary);
+            const name = file.name;
+            const formData = new FormData();
+            formData.append('file', file);
 
-        this.fileService.checkFile(file, this.repository.dictionary);
-        const name = file.name;
-        const formData = new FormData();
-        formData.append('file', file);
-
-        const result = await this.rpi.uploadFileRequest(
-            formData,
-            project.projectId,
-            name
-        );
-        if (result.code === 413) {
-            this.repository.toast(
-                this.repository.dictionary.filemanager.errors.tooBigFile.replace(
-                    '${replace1}',
-                    '10Mb'
-                ),
-                'error'
+            const result = await this.rpi.uploadFileRequest(
+                formData,
+                project.projectId,
+                name
             );
+            if (result.code === 413) {
+                this.repository.toast(
+                    this.repository.dictionary.filemanager.errors.tooBigFile.replace(
+                        '${replace1}',
+                        '10Mb'
+                    ),
+                    'error'
+                );
+            }
+            if (result.code === 409) {
+                this.repository.toast(
+                    this.repository.dictionary.filemanager.errors.tooMuchFiles,
+                    'error'
+                );
+                break;
+            }
+            if (result.isUnauth) {
+                this.repository.toast(
+                    this.repository.dictionary.filemanager.errors
+                        .sessionExpired,
+                    'error'
+                );
+                this.ideService.resetEditor();
+                break;
+            }
+            if (result.isOk) {
+                isResultOk = true;
+            }
         }
-        if (result.code === 409) {
-            this.repository.toast(
-                this.repository.dictionary.filemanager.errors.tooMuchFiles,
-                'error'
-            );
-        }
-        if (result.isUnauth) {
-            this.repository.toast(
-                this.repository.dictionary.filemanager.errors.sessionExpired,
-                'error'
-            );
-            this.ideService.resetEditor();
-        }
-        if (result.isOk) {
+        if (isResultOk) {
             await this.loaderService.loadFiles(project.projectId);
         }
     };

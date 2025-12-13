@@ -78,8 +78,8 @@ export const headerHelpItems: HeaderHelpItem[] = [
         },
         segmentType: 'computational',
         text: {
-            ru: `my_var = [3, 4, 5]\ntable(my_var, [1, 2, 3])`,
-            en: `my_var = [3, 4, 5]\ntable(my_var, [1, 2, 3])`,
+            ru: `var_1 = [1, 2, 3]\ntable(var_1, [4, 5, 6], name_2="текст")`,
+            en: `var_1 = [1, 2, 3]\ntable(var_1, [4, 5, 6], name_2="text")`,
         },
     },
     {
