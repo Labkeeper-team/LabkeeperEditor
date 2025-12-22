@@ -59,7 +59,7 @@ export class FileManagerService {
         let isResultOk = false;
         for (const file of files) {
             this.fileService.checkFile(file, this.repository.dictionary);
-            const name = file.name;
+            const name = this.fileService.calculateNumberFile(null, file.name);
             const formData = new FormData();
             formData.append('file', file);
 
@@ -188,7 +188,7 @@ export class FileManagerService {
 
         const result = await this.rpi.renameFileRequest(
             oldName,
-            newName,
+            this.fileService.calculateNumberFile(null, newName),
             project.projectId
         );
         if (result.isUnauth) {

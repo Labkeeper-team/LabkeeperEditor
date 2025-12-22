@@ -70,7 +70,11 @@ export interface Rpi {
 
     getProjectRequest(projectId: string): Promise<RequestResult<RichProject>>;
 
-    renameFileRequest(oldName: string, newName: string, projectId: string);
+    renameFileRequest(
+        oldName: string,
+        newName: string,
+        projectId: string
+    ): Promise<RequestResult>;
 
     getAllProjectsRequest(): Promise<RequestResult<ListProjectsResponse>>;
 

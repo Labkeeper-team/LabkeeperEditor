@@ -10,6 +10,7 @@ export class FileService {
     constructor(repository: ViewModelRepository) {
         this.repository = repository;
     }
+
     checkFile = (file: File, dictionary: Translations) => {
         const mbInBytes = 1048576;
         const maxSizeInMb = 5;
@@ -34,19 +35,35 @@ export class FileService {
         }
     };
 
-    calculateNumberFile = (segmentId: number, filename: string) => {
-        const [, ext] = filename.split('.');
+    /*
+    Если добавление происходит через Ctr+V, то segmentId is number(передается для названия),
+    а в случае переименования или добавление через Add Files segmentId undefined(не передается)
+     */
+    calculateNumberFile = (segmentId: number | null, filename: string) => {
+        let ext;
         let name = `file_seg${segmentId}`;
-        let count = 0;
+        const indexLastDot = filename.lastIndexOf('.');
+        if (indexLastDot == -1) {
+            if (segmentId == null) {
+                name = filename;
+            }
+            ext = '';
+        } else {
+            ext = filename.slice(indexLastDot);
+            if (segmentId == null) {
+                name = filename.slice(0, indexLastDot);
+            }
+        }
+        let resName = name + ext;
+        let count = 1;
         while (
             this.repository.projectViewModelRepository
                 .files()
-                .find((s) => s.fileName === name + `.${ext}`)
+                .find((s) => s.fileName === resName)
         ) {
+            resName = name + `(${count})` + ext;
             count += 1;
-            name = name.split('(')[0] + `(${count})`;
         }
-        name += `.${ext}`;
-        return name;
+        return resName;
     };
 }

@@ -166,7 +166,7 @@ export class WebRpi implements Rpi {
         oldName: string,
         newName: string,
         projectId: string
-    ) {
+    ): Promise<RequestResult> {
         return requestWrapper(async () =>
             axios.post(
                 `${URLS.renameFile.replace('{id}', projectId)}?old=${oldName}&new=${newName}`
