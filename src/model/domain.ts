@@ -141,7 +141,10 @@ export enum CompileError {
 
     // OTHER
     MULTIPLE_ERROR = 600,
-    LOGIN_REQUIRED = 700, // USED ONLY AT FRONTEND
+    LOGIN_REQUIRED = 7777, // USED ONLY AT FRONTEND
+
+    // Latex
+    LATEX_ERROR = 700,
 }
 
 export interface CalcStatement extends Statement {
@@ -212,6 +215,10 @@ export interface QuotaPayload {
 
 export interface NoSuchVariablePayload {
     variable: string;
+}
+
+export interface LatexErrorPayload {
+    latexErrorMessage: string;
 }
 
 export interface FunctionErrorPayload {

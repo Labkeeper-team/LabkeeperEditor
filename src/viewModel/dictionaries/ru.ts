@@ -176,6 +176,7 @@ export const ru: Translations = {
             'Погрешность не должна задаваться значением, у которого уже есть погрешность',
         [CompileError.ARRAY_HAVE_ONLY_ZERO_VALUES]:
             'Массив не может содержать только нули. Возможно, стоит проверить погрешность и режим округления.',
+        [CompileError.LATEX_ERROR]: 'Ошибка компиляции latex',
     },
     error_common: {
         segment: 'Сегмент',

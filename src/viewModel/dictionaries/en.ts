@@ -166,6 +166,7 @@ export const en: Translations = {
             'The error should not be set to a value that already has an error',
         [CompileError.ARRAY_HAVE_ONLY_ZERO_VALUES]:
             'Array may not contain only zero values. Check array error and round mode.',
+        [CompileError.LATEX_ERROR]: 'Latex error',
     },
     error_common: {
         segment: 'Segment',
