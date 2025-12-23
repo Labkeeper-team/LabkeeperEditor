@@ -4,6 +4,7 @@ import { WarningIcon } from '../../../../../icons';
 import {
     CompileError,
     FunctionErrorPayload,
+    LatexErrorPayload,
     NoSuchVariablePayload,
     OperatorExcepctedpayload,
     QuotaPayload,
@@ -19,6 +20,7 @@ export const ErrorItem = ({ code, payload }: ErrorItemProps) => {
         payload as unknown as OperatorExcepctedpayload;
     const functionErrorPayload = payload as unknown as FunctionErrorPayload;
     const noSuchVariablePayload = payload as unknown as NoSuchVariablePayload;
+    const latexErrorPayload = payload as unknown as LatexErrorPayload;
     return (
         <div
             style={{
@@ -53,6 +55,9 @@ export const ErrorItem = ({ code, payload }: ErrorItemProps) => {
                     code === CompileError.NO_SUCH_FUNCTION ||
                     code === CompileError.FUNCTION_HAS_NO_RETURN_VALUE
                         ? ` ${functionErrorPayload.functionName}`
+                        : '') +
+                    (code === CompileError.LATEX_ERROR
+                        ? `: ${latexErrorPayload.latexErrorMessage}`
                         : '')
                 }
             />

@@ -146,6 +146,7 @@ export interface Translations {
         [CompileError.FUNCTION_HAS_NO_RETURN_VALUE]: string;
         [CompileError.MULTIPLE_ERROR]: string;
         [CompileError.LOGIN_REQUIRED]: string;
+        [CompileError.LATEX_ERROR]: string;
         [CompileError.NAME_RESERVED]: string;
         [CompileError.INCORRECT_INFL_DEFINITION_ARRAY_SIZE]: string;
         [CompileError.INCORRECT_INFL_DEFINITION_VALUE_WITH_INFL]: string;
