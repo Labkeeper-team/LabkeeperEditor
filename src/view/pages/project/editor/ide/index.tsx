@@ -33,14 +33,18 @@ export const Ide = () => {
     const getProjectRequestState = useSelector(
         (state: StorageState) => state.ide.getProjectRequestState
     );
+    const isLatexMode = useSelector(
+        (state: StorageState) => state.project.mode === 'latex'
+    );
 
     const disabled = useMemo(
         () =>
             !program.segments.length ||
             isAutocompleteLoading ||
-            !program.segments.find((s) => s.type === 'computational') ||
+            (!program.segments.find((s) => s.type === 'computational') &&
+                !isLatexMode) ||
             flag,
-        [flag, isAutocompleteLoading, program.segments]
+        [isLatexMode, flag, isAutocompleteLoading, program.segments]
     );
 
     const title = useMemo(() => {

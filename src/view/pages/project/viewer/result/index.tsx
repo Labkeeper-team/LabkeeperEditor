@@ -129,8 +129,7 @@ export const Result = () => {
         ) : (
             <ViewResult ref={contentRef} />
         );
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [contentRef, compileResult, pdfUri]);
+    }, [contentRef, compileResult, pdfUri, mode]);
 
     return (
         <div className="result-container">
