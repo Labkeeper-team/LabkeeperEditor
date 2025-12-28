@@ -114,6 +114,12 @@ export class CompilationService {
                     );
                 }
             });
+            this.repository.projectViewModelRepository.setPdfUri(
+                compileResult.unfinishedPdfUri
+            );
+            this.repository.ideViewModelRepository.setPdfUpdated(
+                this.repository.ideViewModelRepository.pdfUpdated() + 1
+            );
         } else if (result.code === 425) {
             this.repository.projectViewModelRepository.setCompileErrorResult({
                 errors: [
