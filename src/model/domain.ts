@@ -196,6 +196,7 @@ export interface PlotDto {
 
 export interface CompileErrorResultList {
     errors: CompileErrorResult[];
+    unfinishedPdfUri?: string;
 }
 
 export interface CompileErrorResult {
