@@ -317,7 +317,11 @@ export class ProjectPageService {
     };
 
     setProjectMode = async (mode: ProjectMode): Promise<void> => {
-        this.repository.projectViewModelRepository.setProjectMode(mode);
+        if (!this.repository.userViewModelRepository.isAuthenticated()) {
+            this.repository.authViewModelRepository.setCurrentView('login');
+        } else {
+            this.repository.projectViewModelRepository.setProjectMode(mode);
+        }
         this.ideService.onProgramUpdated();
     };
 }
