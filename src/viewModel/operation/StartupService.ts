@@ -193,7 +193,10 @@ export class StartupService {
         }
         if (result.isOk) {
             const project = result.body as RichProject;
-            if (this.repository.projectViewModelRepository.project()?.projectId !== project.projectId) {
+            if (
+                this.repository.projectViewModelRepository.project()
+                    ?.projectId !== project.projectId
+            ) {
                 this.repository.projectViewModelRepository.setPdfUri(undefined);
                 this.repository.ideViewModelRepository.setPdfUpdated(0);
             }
@@ -219,9 +222,11 @@ export class StartupService {
                 await this.loader.loadFiles(project.projectId);
                 const pdfFile = this.repository.projectViewModelRepository
                     .files()
-                    .find(file => file.fileName.endsWith(".pdf"))
+                    .find((file) => file.fileName.endsWith('.pdf'));
                 if (pdfFile) {
-                    this.repository.projectViewModelRepository.setPdfUri(pdfFile.url);
+                    this.repository.projectViewModelRepository.setPdfUri(
+                        pdfFile.url
+                    );
                 }
             }
             return;
