@@ -43,6 +43,10 @@ export const Result = () => {
 
     const onPress = () => {
         dispatch(controller.onPrintButtonPressedRequest());
+        if (mode === 'latex' && pdfUri) {
+            window.open(pdfUri);
+            return;
+        }
         const isMobile =
             /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(
                 navigator.userAgent

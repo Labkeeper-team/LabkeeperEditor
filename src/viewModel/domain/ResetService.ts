@@ -92,5 +92,7 @@ export class ResetService {
         this.repository.projectViewModelRepository.setCompileErrorResult({
             errors: [],
         });
+        this.repository.projectViewModelRepository.setPdfUri(undefined);
+        this.repository.projectViewModelRepository.setProjectMode('markdown');
     }
 }
