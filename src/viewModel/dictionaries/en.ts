@@ -27,7 +27,7 @@ export const en: Translations = {
     short_segment: {
         md: 'Markdown',
         computational: 'Computation',
-        latex: 'Latex-formula',
+        latex: 'Latex',
         asciimath: 'Simple-formula',
     },
 

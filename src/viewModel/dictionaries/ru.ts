@@ -22,14 +22,14 @@ export const ru: Translations = {
     label_save_to_pdf: 'Сохранить в PDF',
     label_problems: 'Проблемы',
     label_add_code: 'Вычисление',
-    label_add_latex: 'Latex-формула',
+    label_add_latex: 'Latex',
     label_add_more: 'Добавить еще',
     label_add_more_short: 'Еще',
 
     short_segment: {
         md: 'Макрдаун',
         computational: 'Вычисление',
-        latex: 'Latex-формула',
+        latex: 'Latex',
         asciimath: 'Простая формула',
     },
 
@@ -37,7 +37,7 @@ export const ru: Translations = {
         add: 'Добавить',
         computation: 'Вычисления',
         markdown: 'Маркдаун',
-        latex: 'Latex-формула',
+        latex: 'Latex',
         asciimath: 'Простая формула',
     },
 
@@ -114,7 +114,7 @@ export const ru: Translations = {
             non_authorized_paste_image:
                 'Что бы вставить изображение вам необходимо авторизоваться',
         },
-        latex: 'latex-формула',
+        latex: 'latex',
         asciimath: 'простая формула',
         no_computation_result: 'Отсутствует результат вычислений',
         run_to_view: 'Нажмите кнопку "Выполнить"',

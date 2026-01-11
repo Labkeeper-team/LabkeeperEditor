@@ -41,7 +41,9 @@ export const Ide = () => {
         () =>
             !program.segments.length ||
             isAutocompleteLoading ||
-            (!program.segments.find((s) => s.type === 'computational') &&
+            (!program.segments.find(
+                (s) => s.type === 'computational' || s.type === 'latex'
+            ) &&
                 !isLatexMode) ||
             flag,
         [isLatexMode, flag, isAutocompleteLoading, program.segments]

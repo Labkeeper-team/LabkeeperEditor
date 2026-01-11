@@ -5,6 +5,7 @@ import {
     ComputationalOutputSegment,
     LabkeeperFile,
     Program,
+    Segment,
     TextOutputSegment,
 } from '../../model/domain.ts';
 import { ResetService } from './ResetService.ts';
@@ -47,10 +48,15 @@ export class IdeService {
         this.resetService.resetAll();
     };
 
+    private isRenderedOnServer(segment: Segment): boolean {
+        return segment.type === 'latex' || segment.type === 'computational';
+    }
+
     onSegmentUpdate = (segmentIndex: number, segmentText: string) => {
         if (
-            this.programService.getCurrentProgram().segments[segmentIndex]
-                .type !== 'computational'
+            !this.isRenderedOnServer(
+                this.programService.getCurrentProgram().segments[segmentIndex]
+            )
         ) {
             if (dollarPattern.test(segmentText)) {
                 this.repository.projectViewModelRepository.setCompileResultForSegment(
@@ -132,7 +138,7 @@ export class IdeService {
                     .segments[i]
             ) {
                 if (
-                    program.segments[i].type === 'computational' ||
+                    this.isRenderedOnServer(program.segments[i]) ||
                     dollarPattern.test(program.segments[i].text)
                 ) {
                     if (program.segments[i].parameters.visible) {
@@ -152,7 +158,7 @@ export class IdeService {
                     } as TextOutputSegment;
                 }
             } else if (
-                program.segments[i].type !== 'computational' &&
+                !this.isRenderedOnServer(program.segments[i]) &&
                 !dollarPattern.test(program.segments[i].text)
             ) {
                 output = {
@@ -160,9 +166,12 @@ export class IdeService {
                     text: program.segments[i].text,
                 } as TextOutputSegment;
             } else if (
-                program.segments[i].type === 'computational' &&
-                this.repository.projectViewModelRepository.compileSuccessResult()
-                    .segments[i].type !== 'computational' &&
+                ((program.segments[i].type === 'computational' &&
+                    this.repository.projectViewModelRepository.compileSuccessResult()
+                        .segments[i].type !== 'computational') ||
+                    (program.segments[i].type === 'latex' &&
+                        this.repository.projectViewModelRepository.compileSuccessResult()
+                            .segments[i].type !== 'md')) &&
                 program.segments[i].parameters.visible
             ) {
                 output = {

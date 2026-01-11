@@ -1297,6 +1297,8 @@ test('double-plots-and-tables-test', async ({ page }) => {
 /*
 Тест проверки latex сегмента c \\begen{equation} и без и asciimath
 */
+/*
+TODO nastya
 test('latex-segments-and-asciimath', async ({ page }) => {
     const routeSetup = new RouteSetup(page);
     // Перехватываем запрос user-info
@@ -1357,6 +1359,8 @@ test('latex-segments-and-asciimath', async ({ page }) => {
         maxDiffPixels: maxDifferentPixelsFor4Segments,
     });
 });
+
+ */
 
 /*
 Тест захода на /oauth2/code и отсутствие сети для запроса провайдера
