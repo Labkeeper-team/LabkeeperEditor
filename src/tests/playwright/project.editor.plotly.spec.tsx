@@ -1,18 +1,10 @@
 import { test, expect } from '@playwright/test';
+import { RouteSetup } from './mock.routeSetUp.tsx';
 
 async function plotlyTest(statement, page) {
+    const routeSetUp = new RouteSetup(page);
     // Перехватываем запрос user-info
-    await page.route('/api/v2/public/user-info', async (route) => {
-        await route.fulfill({
-            status: 200,
-            contentType: 'application/json',
-            body: JSON.stringify({
-                isAuthenticated: false,
-                email: null,
-                id: null,
-            }),
-        });
-    });
+    await routeSetUp.setupGetUserInfoRequest(false);
 
     await page.goto('/');
 
@@ -30,21 +22,12 @@ async function plotlyTest(statement, page) {
     await editor.click();
 
     // Перехватываем запрос на компиляцию
-    await page.route('/api/v2/public/compile', async (route) => {
-        await route.fulfill({
-            status: 200,
-            contentType: 'application/json',
-            body: JSON.stringify({
-                segments: [
-                    {
-                        id: 0,
-                        type: 'computational',
-                        statements: [statement],
-                    },
-                ],
-            }),
-        });
-    });
+    await routeSetUp.setupCompilationRequest(
+        200,
+        'computationalTypeBody',
+        undefined,
+        [statement]
+    );
 
     // компилируем
     await page.getByRole('button', { name: /Run/i }).click();

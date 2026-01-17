@@ -2,6 +2,7 @@ import classNames from 'classnames';
 import { forwardRef, memo, useRef } from 'react';
 import { TextOutputSegment } from '../../../../../../model/domain.ts';
 import { MathJax } from 'better-react-mathjax';
+import hash from 'string-hash';
 
 export const LatexSegment = memo(
     forwardRef<
@@ -27,7 +28,9 @@ export const LatexSegment = memo(
                     .replaceAll('\\end{equation}', '')
                     .split(/\\newline|\\\\/i)
                     .map((line, index) => (
-                        <MathJax key={index}>{`\\begin{equation}${line
+                        <MathJax
+                            key={index + hash(line)}
+                        >{`\\begin{equation}${line
                             .replaceAll('\\begin{equation}', '')
                             .replaceAll(
                                 '\\end{equation}',

@@ -35,7 +35,7 @@ export const ru: Translations = {
 
     segment_divider: {
         add: 'Добавить',
-        computation: 'вычисления',
+        computation: 'Вычисления',
         markdown: 'Маркдаун',
         latex: 'Latex-формула',
         asciimath: 'Простая формула',

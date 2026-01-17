@@ -1,8 +1,10 @@
 import { test, expect } from '@playwright/test';
 import { CompileError } from '../../model/domain.ts';
+import { RouteSetup } from './mock.routeSetUp.tsx';
 
 async function testError(page, error, name) {
     await page.goto('/');
+    const routeSetUp = new RouteSetup(page);
 
     // Ждем загрузки страницы
     await page.waitForLoadState('domcontentloaded');
@@ -25,15 +27,7 @@ async function testError(page, error, name) {
     await page.getByRole('listitem').filter({ hasText: 'Computation' }).click();
 
     // Перехватываем запрос на компиляцию
-    await page.route('/api/v2/public/compile', async (route) => {
-        await route.fulfill({
-            status: 203,
-            contentType: 'application/json',
-            body: JSON.stringify({
-                errors: [error],
-            }),
-        });
-    });
+    await routeSetUp.setupCompilationRequest(203, 'errorBody', [error]);
 
     // компилируем
     await page.getByRole('button', { name: /Run/i }).click();

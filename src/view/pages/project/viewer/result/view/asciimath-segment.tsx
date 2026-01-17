@@ -3,6 +3,7 @@ import { forwardRef, memo, useRef } from 'react';
 import { MathJax } from 'better-react-mathjax';
 import { TextOutputSegment } from '../../../../../../model/domain.ts';
 import { parser } from './utils.tsx';
+import hash from 'string-hash';
 
 const SPLIT_REGEX = /[\n|\r]/;
 
@@ -33,7 +34,7 @@ export const AsciimathSegment = memo(
                     .split(SPLIT_REGEX)
                     .filter((s) => s.length > 0)
                     .map((part, index) => (
-                        <MathJax key={index}>
+                        <MathJax key={index + hash(part)}>
                             {`\\begin{equation}\n${parser.parse(part)}\n\\end{equation}\n`}
                         </MathJax>
                     ))}
