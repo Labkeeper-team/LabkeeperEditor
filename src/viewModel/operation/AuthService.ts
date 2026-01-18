@@ -25,13 +25,29 @@ export class AuthService {
     onFormLoginClicked = async (
         userName: string,
         password: string,
-        captcha: string
+        captcha?: string
     ) => {
         this.repository.authViewModelRepository.setLoginRequest('loading');
+        const captchaBypassToken =
+            this.repository.settingsViewModelRepository.captchaBypassToken();
+        let captchaRequest: string | undefined = undefined;
+
+        if (captcha) {
+            captchaRequest = captcha;
+        }
+
+        if (captchaBypassToken) {
+            captchaRequest = captchaBypassToken;
+        }
+
+        if (!captchaRequest) {
+            throw Error('Captcha token not provided');
+        }
+
         const response = await this.rpi.formLoginRequest(
             userName,
             password,
-            captcha
+            captchaRequest
         );
 
         if (response.isOk) {

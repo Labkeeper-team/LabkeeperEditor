@@ -67,6 +67,9 @@ const LoginView = () => {
     const loginRequest = useSelector(
         (state: StorageState) => state.auth.loginRequest
     );
+    const showCaptcha = useSelector(
+        (state: StorageState) => state.settings.captchaBypassToken === undefined
+    );
 
     const errorMessage = useMemo((): string => {
         if (loginRequest === 'bad_credentials') {
@@ -111,12 +114,12 @@ const LoginView = () => {
                 <form
                     onSubmit={(e) => {
                         e.preventDefault();
-                        const userName =
+                        const userName: string =
                             e.currentTarget.elements['username'].value;
-                        const password =
+                        const password: string =
                             e.currentTarget.elements['password'].value;
-                        const captcha =
-                            e.currentTarget.elements['captcha'].value;
+                        const captcha: string | undefined =
+                            e.currentTarget.elements['captcha']?.value;
 
                         dispatch(
                             controller.onFormLoginClickedRequest({
@@ -152,7 +155,7 @@ const LoginView = () => {
                         placeholder={dictionary.authorization.password}
                         type="password"
                     />
-                    {!!Secrets.yandexCaptchaSiteKey && (
+                    {!!Secrets.yandexCaptchaSiteKey && showCaptcha && (
                         <input required hidden value={token} name="captcha" />
                     )}
                     {errorMessage && (
@@ -164,19 +167,23 @@ const LoginView = () => {
                             />
                         </div>
                     )}
-                    {password && !!Secrets.yandexCaptchaSiteKey && (
-                        <SmartCaptcha
-                            language={language}
-                            sitekey={Secrets.yandexCaptchaSiteKey}
-                            onSuccess={setToken}
-                        />
-                    )}
+                    {showCaptcha &&
+                        password &&
+                        !!Secrets.yandexCaptchaSiteKey && (
+                            <SmartCaptcha
+                                language={language}
+                                sitekey={Secrets.yandexCaptchaSiteKey}
+                                onSuccess={setToken}
+                            />
+                        )}
                     <Button
                         classname="full-width"
                         title={dictionary.authorization.login}
                         color="blue"
                         disabled={
-                            (!token && !!Secrets.yandexCaptchaSiteKey) ||
+                            (!token &&
+                                !!Secrets.yandexCaptchaSiteKey &&
+                                showCaptcha) ||
                             isLoading
                         }
                         rounded

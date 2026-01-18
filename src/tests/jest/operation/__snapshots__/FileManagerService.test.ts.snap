@@ -3,6 +3,7 @@
 exports[`file-manager-test-onFolderButtonClicked-authorized 1`] = `
 MockViewModelRepositoryState {
   "activeSegmentIndex": -1,
+  "captchaBypassToken": undefined,
   "cloneRequestState": "unknown",
   "codeCheckRequest": "unknown",
   "compileErrorResult": {
@@ -92,6 +93,7 @@ MockViewModelRepositoryState {
 exports[`file-manager-test-onFolderButtonClicked-unauthorized-on-default 1`] = `
 MockViewModelRepositoryState {
   "activeSegmentIndex": -1,
+  "captchaBypassToken": undefined,
   "cloneRequestState": "unknown",
   "codeCheckRequest": "unknown",
   "compileErrorResult": undefined,

@@ -39,6 +39,7 @@ interface SettingsState {
     showShareModal: boolean;
     showContactModal: boolean;
     filesToDelete: LabkeeperFile[];
+    captchaBypassToken: string | undefined;
 }
 
 interface ProjectsState {
@@ -140,6 +141,7 @@ export const settingsInitialState: SettingsState = {
     showShareModal: false,
     showContactModal: false,
     filesToDelete: [],
+    captchaBypassToken: undefined,
 };
 
 export const userInitialState: UserInfo = {

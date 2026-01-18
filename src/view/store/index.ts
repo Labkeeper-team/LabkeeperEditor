@@ -66,6 +66,7 @@ import {
 } from '../../model/domain.ts';
 import { setProjects } from './slices/projects';
 import {
+    setCaptchaBypassToken,
     setEditModeForFilename,
     setEditModeForProjectTitle,
     setExpandProblemViewer,
@@ -261,7 +262,11 @@ export const createViewModelStateFromStore = (
             showShareModal: () => store.getState().settings.showShareModal,
             showTour: () => store.getState().settings.showTour,
             filesToDelete: () => store.getState().settings.filesToDelete,
+            captchaBypassToken: () =>
+                store.getState().settings.captchaBypassToken,
 
+            setCaptchaBypassToken: (token) =>
+                store.dispatch(setCaptchaBypassToken(token)),
             setShowSearch: (show: boolean) =>
                 store.dispatch(setShowSearch(show)),
             setShowFileManager: (show: boolean) =>

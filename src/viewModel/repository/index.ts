@@ -122,6 +122,7 @@ class MockViewModelRepositoryState {
     showShareModal = false;
     showTour = false;
     filesToDelete: LabkeeperFile[] = [];
+    captchaBypassToken: string | undefined = undefined;
 
     email: string = '';
     id: number = -1;
@@ -291,7 +292,10 @@ export const mockViewModelState = (): MockViewModelRepository => {
             showShareModal: () => mockViewModelState.showShareModal,
             showTour: () => mockViewModelState.showTour,
             filesToDelete: () => mockViewModelState.filesToDelete,
+            captchaBypassToken: () => mockViewModelState.captchaBypassToken,
 
+            setCaptchaBypassToken: (token) =>
+                (mockViewModelState.captchaBypassToken = token),
             setShowSearch: (v: boolean) => (mockViewModelState.showSearch = v),
             setShowFileManager: (v: boolean) =>
                 (mockViewModelState.showFileManager = v),
@@ -384,8 +388,10 @@ export interface SettingsViewModelRepository {
     isFileDraggedToManager: () => boolean;
     isAutocompleteLoading: () => boolean;
     showShareModal: () => boolean;
+    captchaBypassToken: () => string | undefined;
     filesToDelete: () => LabkeeperFile[];
 
+    setCaptchaBypassToken: (token?: string) => void;
     setTourVisibility: (visible: boolean) => void;
     setEditModeForFilename: (edit: boolean) => void;
     setEditModeForProjectTitle: (edit: boolean) => void;

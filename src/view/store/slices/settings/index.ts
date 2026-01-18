@@ -54,6 +54,12 @@ export const settingsSlice = createSlice({
         setShowContactModal: (state, { payload }: PayloadAction<boolean>) => {
             state.showContactModal = payload;
         },
+        setCaptchaBypassToken: (
+            state,
+            { payload }: PayloadAction<string | undefined>
+        ) => {
+            state.captchaBypassToken = payload;
+        },
     },
 });
 export const {
@@ -68,4 +74,5 @@ export const {
     setShowShareModal,
     setShowContactModal,
     setFilesToDelete,
+    setCaptchaBypassToken,
 } = settingsSlice.actions;

@@ -3,6 +3,7 @@
 exports[`double-md-test 1`] = `
 MockViewModelRepositoryState {
   "activeSegmentIndex": 1,
+  "captchaBypassToken": undefined,
   "cloneRequestState": "unknown",
   "codeCheckRequest": "unknown",
   "compileErrorResult": {
@@ -104,6 +105,7 @@ MockViewModelRepositoryState {
 exports[`double-md-test 2`] = `
 MockViewModelRepositoryState {
   "activeSegmentIndex": 1,
+  "captchaBypassToken": undefined,
   "cloneRequestState": "unknown",
   "codeCheckRequest": "unknown",
   "compileErrorResult": {

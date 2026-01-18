@@ -46,7 +46,7 @@ export class Controller {
         }: {
             userName: string;
             password: string;
-            captcha: string;
+            captcha?: string;
         }) => {
             this.wrapper('onFormLoginClicked', () =>
                 this.authService.onFormLoginClicked(userName, password, captcha)
@@ -150,9 +150,9 @@ export class Controller {
 
     onAppEnterRequest = createAsyncThunk(
         'onAppEnter',
-        async ({ from }: { from?: string }) => {
+        async ({ from, captcha }: { from?: string; captcha?: string }) => {
             this.wrapper('onAppEnter', () =>
-                this.startupService.onAppStartup(from)
+                this.startupService.onAppStartup(from, captcha)
             );
         }
     );

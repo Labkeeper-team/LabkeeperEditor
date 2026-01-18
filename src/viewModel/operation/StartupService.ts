@@ -61,7 +61,7 @@ export class StartupService {
         }
     };
 
-    onAppStartup = async (from?: string): Promise<void> => {
+    onAppStartup = async (from?: string, captcha?: string): Promise<void> => {
         const result: RequestResult<UserInfo> =
             await this.rpi.getUserInfoRequest();
 
@@ -81,6 +81,9 @@ export class StartupService {
         this.observerService.setUserState(
             States.STATE_ONLINE,
             String(userInfo.isAuthenticated)
+        );
+        this.repository.settingsViewModelRepository.setCaptchaBypassToken(
+            captcha
         );
 
         const locationWithoutLastSlash = this.cutOfLastSlash(

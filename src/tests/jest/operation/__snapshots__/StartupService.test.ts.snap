@@ -3,6 +3,7 @@
 exports[`onAppStartup-qr-test 1`] = `
 MockViewModelRepositoryState {
   "activeSegmentIndex": -1,
+  "captchaBypassToken": undefined,
   "cloneRequestState": "unknown",
   "codeCheckRequest": "unknown",
   "compileErrorResult": undefined,

@@ -25,6 +25,7 @@ export const BaseLayout = () => {
     const code = searchParams.get('code') || '';
     const from = searchParams.get('from') || undefined;
     const dragCounter = useRef(0);
+    const captcha = searchParams.get('captcha') || undefined;
 
     /*
     GLOBAL STATE
@@ -77,7 +78,7 @@ export const BaseLayout = () => {
                     })
                 );
             } else {
-                dispatch(controller.onAppEnterRequest({ from }));
+                dispatch(controller.onAppEnterRequest({ from, captcha }));
             }
             loaded = true;
         }
