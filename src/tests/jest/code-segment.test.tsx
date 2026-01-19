@@ -60,6 +60,7 @@ let testSegment: any = {
     ],
 };
 
+jest.mock('rehype-raw', () => {});
 jest.mock('../../main.tsx', () => ({
     controller: {
         onFocusSegmentRequest: jest.fn(),

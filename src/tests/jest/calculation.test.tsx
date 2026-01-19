@@ -51,6 +51,7 @@ jest.mock('../../main.tsx', () => ({
         onBlurSegmentRequest: jest.fn(),
     },
 }));
+jest.mock('rehype-raw', () => {});
 let i = 0;
 jest.mock('react-redux', () => {
     return {

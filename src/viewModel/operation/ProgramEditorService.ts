@@ -112,8 +112,14 @@ export class ProgramEditorService {
                                     itemToInsert = `!['image.png'](${url})`;
                                 }
                                 break;
-                            case 'computational':
-                            default: {
+                            case 'latex':
+                                if (file.type.includes('image')) {
+                                    itemToInsert = `\\begin{center}
+\\includegraphics{${url}}
+\\end{center}`;
+                                }
+                                break;
+                            case 'computational': {
                                 if (file.type.includes('image')) {
                                     itemToInsert = `image("${url}")`;
                                 } else {
@@ -121,6 +127,8 @@ export class ProgramEditorService {
                                 }
                                 break;
                             }
+                            case 'asciimath':
+                                return;
                         }
                         await thisCopy.loaderService.loadFiles(
                             project.projectId

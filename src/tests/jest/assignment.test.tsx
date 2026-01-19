@@ -34,7 +34,7 @@ jest.mock('../../main.tsx', () => ({
         onBlurSegmentRequest: jest.fn(),
     },
 }));
-
+jest.mock('rehype-raw', () => {});
 jest.mock('react-redux', () => {
     return {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars

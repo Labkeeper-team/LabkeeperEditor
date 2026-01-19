@@ -6,6 +6,7 @@ import remarkMath from 'remark-math';
 import remarkBreaks from 'remark-breaks';
 import { MathJax } from 'better-react-mathjax';
 import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 import { TextOutputSegment } from '../../../../../../model/domain.ts';
 
 export const MdSegment = memo(
@@ -29,6 +30,7 @@ export const MdSegment = memo(
             >
                 <Markdown
                     remarkPlugins={[remarkBreaks, remarkMath, remarkGfm]}
+                    rehypePlugins={[rehypeRaw]}
                     components={{
                         img(props) {
                             return (
