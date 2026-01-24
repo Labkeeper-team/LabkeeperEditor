@@ -1,32 +1,100 @@
 import { useSelector } from 'react-redux';
 import { StorageState } from '../../../../store';
-import { useEffect } from 'react';
+import * as pdfjs from 'pdfjs-dist';
+import { useEffect, useRef, useState } from 'react';
 
 type Props = {
     pdfUri: string;
+    date: string;
 };
 
-export const PdfResultViewer = ({ pdfUri }: Props) => {
-    const pdfUpdated = useSelector(
-        (state: StorageState) => state.ide.pdfUpdated
-    );
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+    'pdfjs-dist/build/pdf.worker.min.mjs',
+    import.meta.url
+  ).toString();
+
+export const PdfResultViewer = ({ pdfUri, date }: Props) => {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const pdfRef = useRef<pdfjs.PDFDocumentProxy | null>(null);
+
     const activeIndex = useSelector(
         (state: StorageState) => state.ide.activeSegmentIndex
     );
 
+    const [pageElements, setPageElements] = useState<HTMLElement[]>([]);
+    console.log(date)
     useEffect(() => {
-        // TODO scroll the pdf
-    }, [activeIndex]);
+      const loadPdf = async () => {
+        const loadingTask = pdfjs.getDocument(pdfUri);
+        const pdf = await loadingTask.promise;
+        pdfRef.current = pdf;
+  
+        const pages: HTMLElement[] = [];
+        if (containerRef.current) containerRef.current.innerHTML = '';
+  
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const viewport = page.getViewport({ scale: 1 });
+  
+          const canvas = document.createElement('canvas');
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+  
+          if (containerRef.current) containerRef.current.appendChild(canvas);
+          pages.push(canvas);
+  
+          await page.render({canvas, viewport }).promise;
+        }
+  
+        setPageElements(pages);
+      };
+  
+      loadPdf();
+    }, [pdfUri]);
+
+  useEffect(() => {
+    if (!activeIndex || !pdfRef.current || pageElements.length === 0) return;
+
+    const scrollToSegment = async (segmentName: string) => {
+        if (!pdfRef.current || pageElements.length === 0) return;
+      
+        const pdf = pdfRef.current
+        const dest = await pdf.getDestination(segmentName);
+        if (!dest) return;
+        const pageRef = dest[0];
+        const pageIndex = await pdf.getPageIndex(pageRef); // 0-based
+        const offsetY = typeof dest[3] === 'number' ? dest[3] : 0;
+      
+        const pageEl = pageElements[pageIndex];
+        if (!pageEl || !containerRef.current) return;
+        const scrollTop = pageEl.scrollHeight -  offsetY;
+        containerRef.current.scrollTo({
+          top: scrollTop,
+          behavior: 'smooth',
+        });
+      };
+    /*
+    if (activeIndex === 0 || activeIndex === 1) {
+        scrollToSegment(`segment1`);
+        return
+    }
+    if (activeIndex === 2 || activeIndex === 3) {
+        scrollToSegment(`segment2`);
+        return
+    }
+    if (activeIndex === 4 || activeIndex === 5) {
+        scrollToSegment(`segment3`);
+        return
+    }
+        */
+    scrollToSegment(`segment${activeIndex}`);
+  }, [activeIndex, pageElements]);
 
     return (
         <div
             style={{ margin: 6, flex: 1, overflow: 'hidden', display: 'flex' }}
         >
-            <iframe
-                src={`${pdfUri}#toolbar=0`}
-                key={pdfUpdated}
-                style={{ border: 'none', width: '100%', height: '100%' }}
-            ></iframe>
+            <div ref={containerRef} style={{ overflow: 'auto', height: '100%' }} />;
         </div>
     );
 };

@@ -108,6 +108,7 @@ export const Result = () => {
             }, 100);
             return;
         }
+
         setTimeout(() => {
             const print = async () => {
                 const mathElements =
@@ -120,20 +121,24 @@ export const Result = () => {
     };
 
     const Container = useMemo(() => {
-        return mode === 'latex' && pdfUri ? (
-            <PdfResultViewer pdfUri={pdfUri} />
-        ) : compileResult === undefined ||
-          compileResult.segments === undefined ||
-          compileResult.segments.length === 0 ? (
-            <EmptyResultContainer />
-        ) : (
-            <ViewResult ref={contentRef} />
-        );
-    }, [contentRef, compileResult, pdfUri, mode]);
+        const ViewMap = {
+            'pdf': PdfResultViewer, // pdfUri={pdfUri!}
+            'empty': EmptyResultContainer ,
+            'markdown': ViewResult, //ref={contentRef}
+        }
 
+        let viewMode =  'empty';
+        if (mode === 'latex' && pdfUri) {
+            viewMode = 'pdf';
+        }  else if (compileResult?.segments?.length) {
+            viewMode = 'markdown';
+        }
+        return ViewMap[viewMode];
+    
+    }, [compileResult, pdfUri, mode]);
     return (
         <div className="result-container">
-            {Container}
+            <Container ref={contentRef}  pdfUri={pdfUri} date={Date.now()}/>
             <Button
                 classname={`save-to-pdf-button ${InterfaceTourAnchorClassnames.SavePdf}`}
                 title={dictionary.label_save_to_pdf}
