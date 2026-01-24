@@ -7,6 +7,7 @@ import { Button } from '../../../../components/button';
 import { RightArrowIcon } from '../../../../icons';
 import {
     useCurrentProgram,
+    useCurrentProject,
     useIsProjectReadonly,
 } from '../../../../store/selectors/program';
 import classNames from 'classnames';
@@ -28,14 +29,22 @@ export const Ide = () => {
         (state: StorageState) => state.settings.isCompiling
     );
     const program = useSelector(useCurrentProgram);
+    const project = useSelector(useCurrentProject);
     const isReadonly = useSelector(useIsProjectReadonly);
     const dictionary = useSelector(useDictionary);
     const getProjectRequestState = useSelector(
         (state: StorageState) => state.ide.getProjectRequestState
     );
-    const isLatexMode = useSelector(
+
+    const  currentPersistValue = useSelector(
+        (state: StorageState) => state.persistence.projectCompileModes[project?.projectId || 'default']
+    )
+    const currentRunTimeValue = useSelector(
         (state: StorageState) => state.project.mode === 'latex'
     );
+
+    const mode = currentPersistValue ?? currentRunTimeValue;
+    const isLatexMode = mode === 'latex';
 
     const disabled = useMemo(
         () =>

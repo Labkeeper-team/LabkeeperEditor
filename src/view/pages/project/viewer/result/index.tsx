@@ -15,8 +15,9 @@ import {
 import { useReactToPrint } from 'react-to-print';
 import { useMemo, useRef } from 'react';
 import { useDictionary } from '../../../../store/selectors/translations';
-import { AppDispatch, StorageState } from '../../../../store';
+import { AppDispatch } from '../../../../store';
 import { controller } from '../../../../../main.tsx';
+import { ProjectMode } from '../../../../../model/domain.ts';
 
 declare global {
     interface Window {
@@ -26,14 +27,12 @@ declare global {
     }
 }
 
-export const Result = () => {
+export const Result = ({mode = 'markdown'}: {mode?: ProjectMode}) => {
     const user = useSelector(useUser);
     const dispatch = useDispatch<AppDispatch>();
     const compileResult = useSelector(useCompiledSuccesInfo);
     const currentProject = useSelector(useCurrentProject);
     const dictionary = useSelector(useDictionary);
-    const mode = useSelector((state: StorageState) => state.project.mode);
-    const pdfUri = useSelector((state: StorageState) => state.project.pdfUri);
 
     const contentRef = useRef<HTMLDivElement>(null);
     const reactToPrintFn = useReactToPrint({
@@ -128,17 +127,17 @@ export const Result = () => {
         }
 
         let viewMode =  'empty';
-        if (mode === 'latex' && pdfUri) {
+        if (mode === 'latex') {
             viewMode = 'pdf';
         }  else if (compileResult?.segments?.length) {
             viewMode = 'markdown';
         }
         return ViewMap[viewMode];
     
-    }, [compileResult, pdfUri, mode]);
+    }, [compileResult, mode]);
     return (
         <div className="result-container">
-            <Container ref={contentRef}  pdfUri={pdfUri} date={Date.now()}/>
+            <Container ref={contentRef}/>
             <Button
                 classname={`save-to-pdf-button ${InterfaceTourAnchorClassnames.SavePdf}`}
                 title={dictionary.label_save_to_pdf}

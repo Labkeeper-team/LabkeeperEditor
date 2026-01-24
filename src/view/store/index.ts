@@ -45,6 +45,7 @@ import {
     setLanguage,
     setLastOpenedProjectUuid,
     setLastProgram,
+    setModeToProject,
 } from './slices/persistence';
 import {
     setCompileError,
@@ -208,6 +209,7 @@ export const createViewModelStateFromStore = (
             setLastProgram: (lastProgram) =>
                 store.dispatch(setLastProgram(lastProgram)),
             clearLastProgram: () => store.dispatch(clearLastProgram()),
+            setModeToProject: (id: string, mode: ProjectMode) => store.dispatch(setModeToProject({id, mode}))
         },
         projectViewModelRepository: {
             compileErrorResult: () =>

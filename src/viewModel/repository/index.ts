@@ -457,6 +457,7 @@ export interface PersistenceViewModelRepository {
     setLanguage: (language: Language) => void;
     setInstructionExpanded: (instructionExpanded: boolean) => void;
     setLastProgram: (lastProgram: Program) => void;
+    setModeToProject: (id: string, mode: ProjectMode) => void;
     clearLastProgram: () => void;
 }
 
