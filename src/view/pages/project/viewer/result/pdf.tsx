@@ -2,11 +2,14 @@ import { useSelector } from 'react-redux';
 import { StorageState } from '../../../../store';
 import * as pdfjs from 'pdfjs-dist';
 import { useEffect, useRef, useState } from 'react';
+
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
     'pdfjs-dist/build/pdf.worker.min.mjs',
     import.meta.url
 ).toString();
+
 const scale = 1.3;
+
 export const PdfResultViewer = () => {
     const pdfUri = useSelector((state: StorageState) => state.project.pdfUri);
 
@@ -17,27 +20,53 @@ export const PdfResultViewer = () => {
         (state: StorageState) => state.ide.activeSegmentIndex
     );
 
+
+    const scrollTopRef = useRef<number>(0);
+    const isRestoringRef = useRef<boolean>(true);
+
     const [pageElements, setPageElements] = useState<HTMLElement[]>([]);
+
+    useEffect(() => {
+        const container = containerRef.current;
+        if (!container) return;
+
+        const onScroll = () => {
+            if (isRestoringRef.current) return;
+            scrollTopRef.current = container.scrollTop;
+        };
+
+        container.addEventListener('scroll', onScroll);
+
+        return () => {
+            container.removeEventListener('scroll', onScroll);
+        };
+    }, []);
+
     useEffect(() => {
         let cancelled = false;
+        isRestoringRef.current = true;
+
         const loadPdf = async () => {
-            const loadingTask = pdfjs.getDocument(pdfUri);
-            const pdf = await loadingTask.promise;
-            pdfRef.current = pdf;
+            const pdf = await pdfjs.getDocument(pdfUri).promise;
             if (cancelled) return;
 
+            pdfRef.current = pdf;
+
+            if (containerRef.current) {
+                containerRef.current.innerHTML = '';
+            }
+
             const pages: HTMLElement[] = [];
-            if (containerRef.current) containerRef.current.innerHTML = '';
+
             for (let i = 1; i <= pdf.numPages; i++) {
                 const page = await pdf.getPage(i);
-                const viewport = page.getViewport({ scale: scale });
+                const viewport = page.getViewport({ scale });
 
                 const canvas = document.createElement('canvas');
                 canvas.width = viewport.width;
                 canvas.height = viewport.height;
 
-                if (containerRef.current)
-                    containerRef.current.appendChild(canvas);
+                containerRef.current?.appendChild(canvas);
                 pages.push(canvas);
 
                 await page.render({ canvas, viewport }).promise;
@@ -50,48 +79,55 @@ export const PdfResultViewer = () => {
 
         return () => {
             cancelled = true;
-            if (containerRef.current) containerRef.current.innerHTML = '';
         };
     }, [pdfUri]);
 
     useEffect(() => {
-        if (!activeIndex || !pdfRef.current || pageElements.length === 0)
+        if (!containerRef.current || pageElements.length === 0) return;
+
+        containerRef.current.scrollTo({
+            top: scrollTopRef.current,
+            behavior: 'auto',
+        });
+
+        requestAnimationFrame(() => {
+            isRestoringRef.current = false;
+        });
+    }, [pageElements]);
+
+    useEffect(() => {
+        if (
+            activeIndex == null ||
+            !pdfRef.current ||
+            pageElements.length === 0
+        )
             return;
 
-        const scrollToSegment = async (segmentName: string) => {
-            console.log('tratr');
-            if (!pdfRef.current || pageElements.length === 0) return;
+        const scrollToSegment = async (activeIndex_: number) => {
+            const pdf = pdfRef.current!;
+            const dest = await pdf.getDestination(`segment${activeIndex_}`);
+            if (!dest || !containerRef.current) return;
 
-            const pdf = pdfRef.current;
-            const dest = await pdf.getDestination(segmentName);
-            if (!dest) return;
-            const pageRef = dest[0];
-            const pageIndex = await pdf.getPageIndex(pageRef); // 0-based
+            const pageIndex = await pdf.getPageIndex(dest[0]);
             const offsetY = typeof dest[3] === 'number' ? dest[3] : 0;
 
             const pageEl = pageElements[pageIndex];
-            if (!pageEl || !containerRef.current) return;
+            if (!pageEl) return;
+
+            isRestoringRef.current = true;
             const scrollTop = pageEl.scrollHeight - offsetY * scale;
+
+
             containerRef.current.scrollTo({
                 top: scrollTop,
                 behavior: 'smooth',
             });
+
+            requestAnimationFrame(() => {
+                isRestoringRef.current = false;
+            });
         };
-        /*
-    if (activeIndex === 0 || activeIndex === 1) {
-        scrollToSegment(`segment1`);
-        return
-    }
-    if (activeIndex === 2 || activeIndex === 3) {
-        scrollToSegment(`segment2`);
-        return
-    }
-    if (activeIndex === 4 || activeIndex === 5) {
-        scrollToSegment(`segment3`);
-        return
-    }
-        */
-        scrollToSegment(`segment${activeIndex}`);
+        scrollToSegment(activeIndex);
     }, [activeIndex, pageElements]);
 
     return (
@@ -107,7 +143,11 @@ export const PdfResultViewer = () => {
         >
             <div
                 ref={containerRef}
-                style={{ overflow: 'auto', height: '100%',  width: 'min-content' }}
+                style={{
+                    overflow: 'auto',
+                    height: '100%',
+                    width: 'min-content',
+                }}
             />
         </div>
     );

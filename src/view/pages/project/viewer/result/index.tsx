@@ -27,7 +27,7 @@ declare global {
     }
 }
 
-export const Result = ({mode = 'markdown'}: {mode?: ProjectMode}) => {
+export const Result = ({ mode = 'markdown' }: { mode?: ProjectMode }) => {
     const user = useSelector(useUser);
     const dispatch = useDispatch<AppDispatch>();
     const compileResult = useSelector(useCompiledSuccesInfo);
@@ -119,25 +119,11 @@ export const Result = ({mode = 'markdown'}: {mode?: ProjectMode}) => {
         }, 100);
     };
 
-    const Container = useMemo(() => {
-        const ViewMap = {
-            'pdf': PdfResultViewer, // pdfUri={pdfUri!}
-            'empty': EmptyResultContainer ,
-            'markdown': ViewResult, //ref={contentRef}
-        }
-
-        let viewMode =  'empty';
-        if (mode === 'latex') {
-            viewMode = 'pdf';
-        }  else if (compileResult?.segments?.length) {
-            viewMode = 'markdown';
-        }
-        return ViewMap[viewMode];
-    
-    }, [compileResult, mode]);
     return (
         <div className="result-container">
-            <Container ref={contentRef}/>
+            {mode === 'latex' && <PdfResultViewer />}
+            {mode !== 'latex' && compileResult?.segments?.length && <ViewResult ref={contentRef} />}
+            {mode !== 'latex' && !compileResult?.segments?.length &&<EmptyResultContainer />}
             <Button
                 classname={`save-to-pdf-button ${InterfaceTourAnchorClassnames.SavePdf}`}
                 title={dictionary.label_save_to_pdf}
