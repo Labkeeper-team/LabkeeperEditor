@@ -2,7 +2,7 @@
 @use '../../styles/common' as *;
 
 .suspnese-loader {
-    height: calc(100vh - $header-height - $main-margin);
+    height: calc($screen-height - $header-height - $main-margin);
     display: flex;
     flex-direction: row;
     justify-content: center;
