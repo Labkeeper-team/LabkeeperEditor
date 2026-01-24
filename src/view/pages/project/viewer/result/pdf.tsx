@@ -6,7 +6,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
     'pdfjs-dist/build/pdf.worker.min.mjs',
     import.meta.url
 ).toString();
-
+const scale = 1.3;
 export const PdfResultViewer = () => {
     const pdfUri = useSelector((state: StorageState) => state.project.pdfUri);
 
@@ -30,7 +30,7 @@ export const PdfResultViewer = () => {
             if (containerRef.current) containerRef.current.innerHTML = '';
             for (let i = 1; i <= pdf.numPages; i++) {
                 const page = await pdf.getPage(i);
-                const viewport = page.getViewport({ scale: 1 });
+                const viewport = page.getViewport({ scale: scale });
 
                 const canvas = document.createElement('canvas');
                 canvas.width = viewport.width;
@@ -71,7 +71,7 @@ export const PdfResultViewer = () => {
 
             const pageEl = pageElements[pageIndex];
             if (!pageEl || !containerRef.current) return;
-            const scrollTop = pageEl.scrollHeight - offsetY;
+            const scrollTop = pageEl.scrollHeight - offsetY * scale;
             containerRef.current.scrollTo({
                 top: scrollTop,
                 behavior: 'smooth',

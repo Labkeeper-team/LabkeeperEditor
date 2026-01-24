@@ -196,6 +196,7 @@ export const createViewModelStateFromStore = (
         persistenceViewModelRepository: {
             instructionExpanded: () =>
                 store.getState().persistence.instructionExpanded,
+            projectCompileModes: () => store.getState().persistence.projectCompileModes,
             language: () => store.getState().persistence.language,
             lastProgram: () => store.getState().persistence.lastProgram,
             lastOpenedProjectUuid: () =>

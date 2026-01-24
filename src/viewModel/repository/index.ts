@@ -95,6 +95,7 @@ class MockViewModelRepositoryState {
     mode: ProjectMode = 'markdown';
     instructionExpanded = false;
     language: 'ru' | 'en' = 'ru';
+    mockProgramMode = {};
     lastProgram: Program = {
         segments: [],
         parameters: {
@@ -220,10 +221,13 @@ export const mockViewModelState = (): MockViewModelRepository => {
         persistenceViewModelRepository: {
             instructionExpanded: () => mockViewModelState.instructionExpanded,
             language: () => mockViewModelState.language,
+            projectCompileModes: () =>  mockViewModelState.mockProgramMode,
             lastProgram: () => mockViewModelState.lastProgram,
             lastOpenedProjectUuid: () =>
                 mockViewModelState.lastOpenedProjectUuid,
-
+            setModeToProject(id, mode) {
+                mockViewModelState.mockProgramMode[id] = mode;
+            },
             setLastOpenedProjectUuid: (uuid) =>
                 (mockViewModelState.lastOpenedProjectUuid = uuid),
             setInstructionExpanded: (v) =>
@@ -450,6 +454,7 @@ export interface UserViewModelRepository {
 export interface PersistenceViewModelRepository {
     language: () => Language;
     lastProgram: () => Program;
+    projectCompileModes: () => Record<string, ProjectMode>;
     instructionExpanded: () => boolean;
     lastOpenedProjectUuid: () => string | undefined;
 
