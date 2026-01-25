@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 import svgr from 'vite-plugin-svgr';
 
 export default defineConfig(({ mode }) => {
-    const DEFAULT_MAJOR = '2';
+    const DEFAULT_MAJOR = '4';
     const DEFAULT_MINOR = '';
     const revision = mode as string;
     let major = DEFAULT_MAJOR;
@@ -24,12 +24,12 @@ export default defineConfig(({ mode }) => {
             port: 3000,
         },
         define: {
-            __BUILD_INFO__: JSON.stringify({ major: major, minor: minor }),
+            __BUILD_INFO__: JSON.stringify({ major, minor }),
         },
         css: {
             preprocessorOptions: {
                 scss: {
-                    api: 'modern-compiler', // or "modern"
+                    api: 'modern-compiler',
                 },
             },
         },
