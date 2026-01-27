@@ -13,7 +13,7 @@ import {
     useUser,
 } from '../../../../store/selectors/program';
 import { useReactToPrint } from 'react-to-print';
-import { useMemo, useRef } from 'react';
+import { useRef } from 'react';
 import { useDictionary } from '../../../../store/selectors/translations';
 import { AppDispatch } from '../../../../store';
 import { controller } from '../../../../../main.tsx';
