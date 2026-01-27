@@ -42,10 +42,12 @@ export const PdfResultViewer = () => {
     }, []);
 
     useEffect(() => {
+        let lastDpr = window.devicePixelRatio;
         let cancelled = false;
         isRestoringRef.current = true;
 
         const loadPdf = async () => {
+            const dpr = window.devicePixelRatio || 1;
             const pdf = await pdfjs.getDocument(pdfUri).promise;
             if (cancelled) return;
 
@@ -60,23 +62,36 @@ export const PdfResultViewer = () => {
             for (let i = 1; i <= pdf.numPages; i++) {
                 const page = await pdf.getPage(i);
                 const viewport = page.getViewport({ scale });
+                const scaledViewport = page.getViewport({ scale: scale * dpr });
 
                 const canvas = document.createElement('canvas');
-                canvas.width = viewport.width;
-                canvas.height = viewport.height;
+                canvas.width = scaledViewport.width;
+                canvas.height = scaledViewport.height;
+
+                canvas.style.width = `${viewport.width}px`;
+                canvas.style.height = `${viewport.height}px`;
 
                 containerRef.current?.appendChild(canvas);
                 pages.push(canvas);
 
-                await page.render({ canvas, viewport }).promise;
+                await page.render({ canvas, viewport: scaledViewport }).promise;
             }
 
             setPageElements(pages);
         };
 
-        loadPdf();
+        const onResize = () => {
+            const currentDpr = window.devicePixelRatio;
+            if (currentDpr !== lastDpr) {
+                lastDpr = currentDpr;
+                loadPdf();
+            }
+        };
 
+        loadPdf();
+        window.addEventListener('resize', onResize);
         return () => {
+            window.removeEventListener('resize', onResize);
             cancelled = true;
         };
     }, [pdfUri]);
@@ -100,7 +115,7 @@ export const PdfResultViewer = () => {
 
         const scrollToSegment = async (activeIndex_: number) => {
             const pdf = pdfRef.current!;
-            const destinationIndex = `segment${activeIndex_}`; 
+            const destinationIndex = `segment${activeIndex_}`;
             const dest = await pdf.getDestination(destinationIndex);
             if (!dest || !containerRef.current) return;
             const pageIndex = await pdf.getPageIndex(dest[0]);
@@ -110,7 +125,8 @@ export const PdfResultViewer = () => {
             if (!pageEl) return;
 
             isRestoringRef.current = true;
-            const scrollTop =  (pageIndex + 1) *pageEl.scrollHeight - offsetY * scale;
+            const scrollTop =
+                (pageIndex + 1) * pageEl.scrollHeight - offsetY * scale;
 
             containerRef.current.scrollTo({
                 top: scrollTop,
