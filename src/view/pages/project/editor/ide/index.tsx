@@ -36,9 +36,12 @@ export const Ide = () => {
         (state: StorageState) => state.ide.getProjectRequestState
     );
 
-    const  currentPersistValue = useSelector(
-        (state: StorageState) => state.persistence.projectCompileModes[project?.projectId || 'default']
-    )
+    const currentPersistValue = useSelector(
+        (state: StorageState) =>
+            state.persistence.projectCompileModes[
+                project?.projectId || 'default'
+            ]
+    );
     const currentRunTimeValue = useSelector(
         (state: StorageState) => state.project.mode === 'latex'
     );

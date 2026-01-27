@@ -221,7 +221,7 @@ export const mockViewModelState = (): MockViewModelRepository => {
         persistenceViewModelRepository: {
             instructionExpanded: () => mockViewModelState.instructionExpanded,
             language: () => mockViewModelState.language,
-            projectCompileModes: () =>  mockViewModelState.mockProgramMode,
+            projectCompileModes: () => mockViewModelState.mockProgramMode,
             lastProgram: () => mockViewModelState.lastProgram,
             lastOpenedProjectUuid: () =>
                 mockViewModelState.lastOpenedProjectUuid,

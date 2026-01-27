@@ -20,7 +20,6 @@ export const PdfResultViewer = () => {
         (state: StorageState) => state.ide.activeSegmentIndex
     );
 
-
     const scrollTopRef = useRef<number>(0);
     const isRestoringRef = useRef<boolean>(true);
 
@@ -96,11 +95,7 @@ export const PdfResultViewer = () => {
     }, [pageElements]);
 
     useEffect(() => {
-        if (
-            activeIndex == null ||
-            !pdfRef.current ||
-            pageElements.length === 0
-        )
+        if (activeIndex == null || !pdfRef.current || pageElements.length === 0)
             return;
 
         const scrollToSegment = async (activeIndex_: number) => {
@@ -116,7 +111,6 @@ export const PdfResultViewer = () => {
 
             isRestoringRef.current = true;
             const scrollTop = pageEl.scrollHeight - offsetY * scale;
-
 
             containerRef.current.scrollTo({
                 top: scrollTop,

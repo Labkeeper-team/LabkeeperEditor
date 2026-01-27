@@ -14,7 +14,7 @@ import { useCurrentProject } from '../../../store/selectors/program.ts';
 export const Viewer = () => {
     const dispatch = useDispatch<AppDispatch>();
     const dictionary = useSelector(useDictionary);
-    const project = useSelector(useCurrentProject)
+    const project = useSelector(useCurrentProject);
     const options = [
         { label: dictionary.viewer.mode.markdown, value: 'markdown' },
         { label: dictionary.viewer.mode.latex, value: 'latex' },
@@ -23,9 +23,12 @@ export const Viewer = () => {
         (state: StorageState) => state.project.mode
     );
 
-    const  currentPersistValue = useSelector(
-        (state: StorageState) => state.persistence.projectCompileModes[project?.projectId || 'default']
-    )
+    const currentPersistValue = useSelector(
+        (state: StorageState) =>
+            state.persistence.projectCompileModes[
+                project?.projectId || 'default'
+            ]
+    );
 
     const mode = currentPersistValue ?? currentRunTimeValue;
 

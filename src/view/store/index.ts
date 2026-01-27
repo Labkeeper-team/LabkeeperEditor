@@ -196,7 +196,8 @@ export const createViewModelStateFromStore = (
         persistenceViewModelRepository: {
             instructionExpanded: () =>
                 store.getState().persistence.instructionExpanded,
-            projectCompileModes: () => store.getState().persistence.projectCompileModes,
+            projectCompileModes: () =>
+                store.getState().persistence.projectCompileModes,
             language: () => store.getState().persistence.language,
             lastProgram: () => store.getState().persistence.lastProgram,
             lastOpenedProjectUuid: () =>
@@ -210,7 +211,8 @@ export const createViewModelStateFromStore = (
             setLastProgram: (lastProgram) =>
                 store.dispatch(setLastProgram(lastProgram)),
             clearLastProgram: () => store.dispatch(clearLastProgram()),
-            setModeToProject: (id: string, mode: ProjectMode) => store.dispatch(setModeToProject({id, mode}))
+            setModeToProject: (id: string, mode: ProjectMode) =>
+                store.dispatch(setModeToProject({ id, mode })),
         },
         projectViewModelRepository: {
             compileErrorResult: () =>
