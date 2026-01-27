@@ -8,7 +8,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
     import.meta.url
 ).toString();
 
-const scale = 1.3;
+const scale = 1;
 
 export const PdfResultViewer = () => {
     const pdfUri = useSelector((state: StorageState) => state.project.pdfUri);
@@ -95,19 +95,6 @@ export const PdfResultViewer = () => {
             cancelled = true;
         };
     }, [pdfUri]);
-
-    useEffect(() => {
-        if (!containerRef.current || pageElements.length === 0) return;
-
-        containerRef.current.scrollTo({
-            top: scrollTopRef.current,
-            behavior: 'auto',
-        });
-
-        requestAnimationFrame(() => {
-            isRestoringRef.current = false;
-        });
-    }, [pageElements]);
 
     useEffect(() => {
         if (activeIndex == null || !pdfRef.current || pageElements.length === 0)
