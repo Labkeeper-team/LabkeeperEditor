@@ -100,9 +100,9 @@ export const PdfResultViewer = () => {
 
         const scrollToSegment = async (activeIndex_: number) => {
             const pdf = pdfRef.current!;
-            const dest = await pdf.getDestination(`segment${activeIndex_}`);
+            const destinationIndex = `segment${activeIndex_}`; 
+            const dest = await pdf.getDestination(destinationIndex);
             if (!dest || !containerRef.current) return;
-
             const pageIndex = await pdf.getPageIndex(dest[0]);
             const offsetY = typeof dest[3] === 'number' ? dest[3] : 0;
 
@@ -110,7 +110,7 @@ export const PdfResultViewer = () => {
             if (!pageEl) return;
 
             isRestoringRef.current = true;
-            const scrollTop = pageEl.scrollHeight - offsetY * scale;
+            const scrollTop =  (pageIndex + 1) *pageEl.scrollHeight - offsetY * scale;
 
             containerRef.current.scrollTo({
                 top: scrollTop,
