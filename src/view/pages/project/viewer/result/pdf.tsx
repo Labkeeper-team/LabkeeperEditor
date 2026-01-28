@@ -173,23 +173,21 @@ export const PdfResultViewer = () => {
             const pageEl = pageElements[pageIndex];
             if (!pageEl) return;
 
-            const scrollbarWidth = 8;
-
-            const firstPage = await pdf.getPage(activeIndex + 1);
-            console.log('fP', firstPage)
-            const unscaledViewport = firstPage.getViewport({ scale: scaledRef.current });
+            const currentPage = await pdf.getPage(pageIndex + 1);
+            const unscaledViewport = currentPage.getViewport({
+                scale: scaledRef.current,
+            });
             const pageCSSHeight = pageEl.scrollHeight;
-            const containerCSSHEight =  containerRef.current.scrollHeight;
             const pagePdfHeight = unscaledViewport.viewBox[3];
             const scaleBetweenPdfAndCss = pageCSSHeight / pagePdfHeight;
-            console.log(pageCSSHeight, containerCSSHEight, pagePdfHeight, scaleBetweenPdfAndCss, offsetYPdf)
+            const offSetCSS = offsetYPdf * scaleBetweenPdfAndCss;
             isRestoringRef.current = true;
             const scrollTop =
-            containerRef.current.scrollHeight -  
-                ((pageIndex + 1) * pageEl.scrollHeight - offsetYPdf);
-            console.log('scrollTop', scrollTop);
+                containerRef.current.scrollHeight -
+                (pdf.numPages - (pageIndex + 1)) * pageCSSHeight -
+                offSetCSS;
             containerRef.current.scrollTo({
-                top: 1797,
+                top: scrollTop,
                 behavior: 'smooth',
             });
 
@@ -206,7 +204,7 @@ export const PdfResultViewer = () => {
                 flex: 1,
                 overflow: 'hidden',
                 display: 'flex',
-                background: 'gray'
+                background: 'gray',
             }}
         >
             <div
