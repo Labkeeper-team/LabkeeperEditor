@@ -1,10 +1,12 @@
 import { useSelector } from 'react-redux';
 import { StorageState } from '../../../../store';
 import * as pdfjs from 'pdfjs-dist';
+import { Util } from 'pdfjs-dist';
 import { useEffect, useRef, useState } from 'react';
 
 import './style.scss';
 import 'pdfjs-dist/web/pdf_viewer.css';
+
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
     'pdfjs-dist/build/pdf.worker.min.mjs',
     import.meta.url
@@ -94,22 +96,33 @@ export const PdfResultViewer = () => {
                     viewport: scaledViewport,
                 }).promise;
 
-                // render text layer
+                const textViewport = page.getViewport({ scale });
                 const textContent = await page.getTextContent();
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 textContent.items.forEach((item: any) => {
+
+                    const transform = Util.transform(
+                        textViewport.transform,
+                        item.transform
+                    );
                     const span = document.createElement('span');
                     span.textContent = item.str;
 
-                    const [ , , , height, x, y ] = item.transform;
-
                     span.style.position = 'absolute';
-                    span.style.left = `${x}px`;
-                    span.style.top = `${viewport.height - y - height}px`;
-                    span.style.fontSize = `${height}px`;
+                    const [a, b, c, d, e, f] = transform;
+                    span.style.transform = `matrix(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`;
+                    span.style.transformOrigin = '0 0';
+                    span.style.fontSize = '1px';
                     span.style.whiteSpace = 'pre';
                     span.style.color = 'transparent';
 
                     textLayer.appendChild(span);
+
+                    const measuredWidth = span.getBoundingClientRect().width;
+                    if (measuredWidth > 0) {
+                        const scaleX = item.width / measuredWidth;
+                        span.style.transform += ` scaleX(${scaleX})`;
+                    }
                 });
             }
 
