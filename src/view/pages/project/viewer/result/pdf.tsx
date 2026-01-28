@@ -51,7 +51,8 @@ export const PdfResultViewer = () => {
             if (cancelled) return;
 
             const scrollbarWidth = 8;
-            const containerWidth = containerRef.current!.clientWidth - scrollbarWidth;
+            const containerWidth =
+                containerRef.current!.clientWidth - scrollbarWidth;
 
             const firstPage = await pdf.getPage(1);
             const unscaledViewport = firstPage.getViewport({ scale: 1 });
@@ -105,7 +106,6 @@ export const PdfResultViewer = () => {
                 const textContent = await page.getTextContent();
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 textContent.items.forEach((item: any) => {
-
                     const transform = Util.transform(
                         textViewport.transform,
                         item.transform
@@ -146,7 +146,6 @@ export const PdfResultViewer = () => {
         window.addEventListener('resize', onResize);
 
         return () => {
-
             window.removeEventListener('resize', onResize);
             cancelled = true;
         };
@@ -184,21 +183,21 @@ export const PdfResultViewer = () => {
     }, [activeIndex, pageElements]);
 
     return (
-<div
-    style={{
-        flex: 1,
-        overflow: 'hidden',
-        display: 'flex',
-    }}
->
-    <div
-        ref={containerRef}
-        style={{
-            overflow: 'auto',
-            height: '100%',
-            width: '100%',
-        }}
-    />
-</div>
+        <div
+            style={{
+                flex: 1,
+                overflow: 'hidden',
+                display: 'flex',
+            }}
+        >
+            <div
+                ref={containerRef}
+                style={{
+                    overflow: 'auto',
+                    height: '100%',
+                    width: '100%',
+                }}
+            />
+        </div>
     );
 };

@@ -31,7 +31,9 @@ export const Result = ({ mode = 'markdown' }: { mode?: ProjectMode }) => {
     const user = useSelector(useUser);
     const dispatch = useDispatch<AppDispatch>();
     const compileResult = useSelector(useCompiledSuccesInfo);
-    const { project: currentProject, pdfUri } = useSelector(useCurrentFullProject);
+    const { project: currentProject, pdfUri } = useSelector(
+        useCurrentFullProject
+    );
 
     const dictionary = useSelector(useDictionary);
 
@@ -42,17 +44,16 @@ export const Result = ({ mode = 'markdown' }: { mode?: ProjectMode }) => {
     });
 
     const onPress = () => {
-
         if (mode === 'latex') {
             if (!pdfUri) {
                 return;
             }
             fetch(pdfUri)
-                .then(res => res.blob())
-                .then(blob => {
+                .then((res) => res.blob())
+                .then((blob) => {
                     const a = document.createElement('a');
                     a.href = URL.createObjectURL(blob);
-                    a.download = `result.pdf`
+                    a.download = `result.pdf`;
                     a.click();
                 });
             return;
