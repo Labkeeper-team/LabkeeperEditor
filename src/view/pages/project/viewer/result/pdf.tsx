@@ -23,6 +23,7 @@ export const PdfResultViewer = () => {
     );
 
     const scrollTopRef = useRef<number>(0);
+    const scaledRef = useRef<number>(1);
     const isRestoringRef = useRef<boolean>(true);
 
     const [pageElements, setPageElements] = useState<HTMLDivElement[]>([]);
@@ -68,12 +69,17 @@ export const PdfResultViewer = () => {
 
                 const viewport = page.getViewport({ scale });
                 const scaledViewport = page.getViewport({ scale: scale * dpr });
-
+                scaledRef.current = scale * dpr;
                 // ===== page wrapper =====
                 const wrapper = document.createElement('div');
                 wrapper.style.position = 'relative';
                 wrapper.style.width = `${viewport.width}px`;
                 wrapper.style.height = `${viewport.height}px`;
+                wrapper.style.position = 'relative';
+                wrapper.style.marginBottom = '4px';
+                wrapper.style.background = '#fff';
+                wrapper.style.borderRadius = '4px';
+                wrapper.style.boxShadow = '0 1px 4px rgba(0,0,0,0.1)';
 
                 // ===== canvas =====
                 const canvas = document.createElement('canvas');
@@ -159,19 +165,31 @@ export const PdfResultViewer = () => {
             const pdf = pdfRef.current!;
             const destinationIndex = `segment${activeIndex_}`;
             const dest = await pdf.getDestination(destinationIndex);
+            console.log('dest: ', dest);
             if (!dest || !containerRef.current) return;
             const pageIndex = await pdf.getPageIndex(dest[0]);
-            const offsetY = typeof dest[3] === 'number' ? dest[3] : 0;
+            const offsetYPdf = typeof dest[3] === 'number' ? dest[3] : 0;
 
             const pageEl = pageElements[pageIndex];
             if (!pageEl) return;
 
+            const scrollbarWidth = 8;
+
+            const firstPage = await pdf.getPage(activeIndex + 1);
+            console.log('fP', firstPage)
+            const unscaledViewport = firstPage.getViewport({ scale: scaledRef.current });
+            const pageCSSHeight = pageEl.scrollHeight;
+            const containerCSSHEight =  containerRef.current.scrollHeight;
+            const pagePdfHeight = unscaledViewport.viewBox[3];
+            const scaleBetweenPdfAndCss = pageCSSHeight / pagePdfHeight;
+            console.log(pageCSSHeight, containerCSSHEight, pagePdfHeight, scaleBetweenPdfAndCss, offsetYPdf)
             isRestoringRef.current = true;
             const scrollTop =
-                (pageIndex + 1) * pageEl.scrollHeight - offsetY * scale;
-
+            containerRef.current.scrollHeight -  
+                ((pageIndex + 1) * pageEl.scrollHeight - offsetYPdf);
+            console.log('scrollTop', scrollTop);
             containerRef.current.scrollTo({
-                top: scrollTop,
+                top: 1797,
                 behavior: 'smooth',
             });
 
@@ -188,6 +206,7 @@ export const PdfResultViewer = () => {
                 flex: 1,
                 overflow: 'hidden',
                 display: 'flex',
+                background: 'gray'
             }}
         >
             <div
