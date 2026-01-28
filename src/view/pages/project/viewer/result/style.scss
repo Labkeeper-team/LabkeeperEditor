@@ -12,3 +12,15 @@
         width: 100%;
     }
 }
+
+.textLayer {
+    pointer-events: auto;
+    color: transparent;
+  }
+  
+  .textLayer span {
+    position: absolute;
+    white-space: pre;
+    cursor: text;
+    transform-origin: 0 0;
+  }

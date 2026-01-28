@@ -3,6 +3,8 @@ import { StorageState } from '../../../../store';
 import * as pdfjs from 'pdfjs-dist';
 import { useEffect, useRef, useState } from 'react';
 
+import './style.scss';
+import 'pdfjs-dist/web/pdf_viewer.css';
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
     'pdfjs-dist/build/pdf.worker.min.mjs',
     import.meta.url
@@ -23,7 +25,7 @@ export const PdfResultViewer = () => {
     const scrollTopRef = useRef<number>(0);
     const isRestoringRef = useRef<boolean>(true);
 
-    const [pageElements, setPageElements] = useState<HTMLElement[]>([]);
+    const [pageElements, setPageElements] = useState<HTMLDivElement[]>([]);
 
     useEffect(() => {
         const container = containerRef.current;
@@ -35,10 +37,7 @@ export const PdfResultViewer = () => {
         };
 
         container.addEventListener('scroll', onScroll);
-
-        return () => {
-            container.removeEventListener('scroll', onScroll);
-        };
+        return () => container.removeEventListener('scroll', onScroll);
     }, []);
 
     useEffect(() => {
@@ -52,29 +51,66 @@ export const PdfResultViewer = () => {
             if (cancelled) return;
 
             pdfRef.current = pdf;
+            containerRef.current!.innerHTML = '';
 
-            if (containerRef.current) {
-                containerRef.current.innerHTML = '';
-            }
-
-            const pages: HTMLElement[] = [];
+            const pages: HTMLDivElement[] = [];
 
             for (let i = 1; i <= pdf.numPages; i++) {
                 const page = await pdf.getPage(i);
+
                 const viewport = page.getViewport({ scale });
                 const scaledViewport = page.getViewport({ scale: scale * dpr });
 
+                // ===== page wrapper =====
+                const wrapper = document.createElement('div');
+                wrapper.style.position = 'relative';
+                wrapper.style.width = `${viewport.width}px`;
+                wrapper.style.height = `${viewport.height}px`;
+
+                // ===== canvas =====
                 const canvas = document.createElement('canvas');
                 canvas.width = scaledViewport.width;
                 canvas.height = scaledViewport.height;
-
                 canvas.style.width = `${viewport.width}px`;
                 canvas.style.height = `${viewport.height}px`;
+                wrapper.appendChild(canvas);
 
-                containerRef.current?.appendChild(canvas);
-                pages.push(canvas);
+                // ===== text layer =====
+                const textLayer = document.createElement('div');
+                textLayer.className = 'textLayer';
+                textLayer.style.position = 'absolute';
+                textLayer.style.left = '0';
+                textLayer.style.top = '0';
+                textLayer.style.width = `${viewport.width}px`;
+                textLayer.style.height = `${viewport.height}px`;
+                wrapper.appendChild(textLayer);
 
-                await page.render({ canvas, viewport: scaledViewport }).promise;
+                containerRef.current?.appendChild(wrapper);
+                pages.push(wrapper);
+
+                // render canvas
+                await page.render({
+                    canvas,
+                    viewport: scaledViewport,
+                }).promise;
+
+                // render text layer
+                const textContent = await page.getTextContent();
+                textContent.items.forEach((item: any) => {
+                    const span = document.createElement('span');
+                    span.textContent = item.str;
+
+                    const [ , , , height, x, y ] = item.transform;
+
+                    span.style.position = 'absolute';
+                    span.style.left = `${x}px`;
+                    span.style.top = `${viewport.height - y - height}px`;
+                    span.style.fontSize = `${height}px`;
+                    span.style.whiteSpace = 'pre';
+                    span.style.color = 'transparent';
+
+                    textLayer.appendChild(span);
+                });
             }
 
             setPageElements(pages);
@@ -90,7 +126,9 @@ export const PdfResultViewer = () => {
 
         loadPdf();
         window.addEventListener('resize', onResize);
+
         return () => {
+
             window.removeEventListener('resize', onResize);
             cancelled = true;
         };
