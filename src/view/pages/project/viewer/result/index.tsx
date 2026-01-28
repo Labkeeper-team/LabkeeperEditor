@@ -9,7 +9,7 @@ import { SavePdfIcon } from '../../../../icons';
 import { InterfaceTourAnchorClassnames } from '../../../../components/tour/helpers';
 import {
     useCompiledSuccesInfo,
-    useCurrentProject,
+    useCurrentFullProject,
     useUser,
 } from '../../../../store/selectors/program';
 import { useReactToPrint } from 'react-to-print';
@@ -31,7 +31,8 @@ export const Result = ({ mode = 'markdown' }: { mode?: ProjectMode }) => {
     const user = useSelector(useUser);
     const dispatch = useDispatch<AppDispatch>();
     const compileResult = useSelector(useCompiledSuccesInfo);
-    const currentProject = useSelector(useCurrentProject);
+    const { project: currentProject, pdfUri } = useSelector(useCurrentFullProject);
+
     const dictionary = useSelector(useDictionary);
 
     const contentRef = useRef<HTMLDivElement>(null);
@@ -41,6 +42,21 @@ export const Result = ({ mode = 'markdown' }: { mode?: ProjectMode }) => {
     });
 
     const onPress = () => {
+
+        if (mode === 'latex') {
+            if (!pdfUri) {
+                return;
+            }
+            fetch(pdfUri)
+                .then(res => res.blob())
+                .then(blob => {
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = `result.pdf`
+                    a.click();
+                });
+            return;
+        }
         dispatch(controller.onPrintButtonPressedRequest());
         const isMobile =
             /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(

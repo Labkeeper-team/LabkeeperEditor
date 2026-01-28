@@ -12,8 +12,6 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
     import.meta.url
 ).toString();
 
-const scale = 1;
-
 export const PdfResultViewer = () => {
     const pdfUri = useSelector((state: StorageState) => state.project.pdfUri);
 
@@ -52,6 +50,13 @@ export const PdfResultViewer = () => {
             const pdf = await pdfjs.getDocument(pdfUri).promise;
             if (cancelled) return;
 
+            const scrollbarWidth = 8;
+            const containerWidth = containerRef.current!.clientWidth - scrollbarWidth;
+
+            const firstPage = await pdf.getPage(1);
+            const unscaledViewport = firstPage.getViewport({ scale: 1 });
+
+            const scale = containerWidth / unscaledViewport.width;
             pdfRef.current = pdf;
             containerRef.current!.innerHTML = '';
 
@@ -120,7 +125,7 @@ export const PdfResultViewer = () => {
 
                     const measuredWidth = span.getBoundingClientRect().width;
                     if (measuredWidth > 0) {
-                        const scaleX = item.width / measuredWidth;
+                        const scaleX = (item.width * scale) / measuredWidth;
                         span.style.transform += ` scaleX(${scaleX})`;
                     }
                 });
@@ -179,24 +184,21 @@ export const PdfResultViewer = () => {
     }, [activeIndex, pageElements]);
 
     return (
-        <div
-            style={{
-                margin: 6,
-                flex: 1,
-                overflow: 'hidden',
-                display: 'flex',
-                justifyContent: 'center',
-                background: 'gray',
-            }}
-        >
-            <div
-                ref={containerRef}
-                style={{
-                    overflow: 'auto',
-                    height: '100%',
-                    width: 'min-content',
-                }}
-            />
-        </div>
+<div
+    style={{
+        flex: 1,
+        overflow: 'hidden',
+        display: 'flex',
+    }}
+>
+    <div
+        ref={containerRef}
+        style={{
+            overflow: 'auto',
+            height: '100%',
+            width: '100%',
+        }}
+    />
+</div>
     );
 };
