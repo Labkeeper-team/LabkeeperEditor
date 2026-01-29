@@ -6,6 +6,8 @@ import { useEffect, useRef, useState } from 'react';
 
 import './style.scss';
 import 'pdfjs-dist/web/pdf_viewer.css';
+import { useDictionary } from '../../../../store/selectors/translations';
+import { Typography } from '../../../../components/typography';
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
     'pdfjs-dist/build/pdf.worker.min.mjs',
@@ -14,6 +16,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 
 export const PdfResultViewer = () => {
     const pdfUri = useSelector((state: StorageState) => state.project.pdfUri);
+    const dictionary = useSelector(useDictionary);
 
     const containerRef = useRef<HTMLDivElement>(null);
     const pdfRef = useRef<pdfjs.PDFDocumentProxy | null>(null);
@@ -203,10 +206,24 @@ export const PdfResultViewer = () => {
             style={{
                 flex: 1,
                 overflow: 'hidden',
-                display: 'flex',
+                display: !pdfUri ? 'initial' : 'flex',
                 background: 'gray',
             }}
         >
+            {!pdfUri ? (
+                <div
+                    style={{
+                        display: 'flex',
+                        flex: 1,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        height: '100%',
+                        width: '100%',
+                    }}
+                >
+                    <Typography text={dictionary.viewer.no_pdf} />
+                </div>
+            ) : null}
             <div
                 ref={containerRef}
                 style={{

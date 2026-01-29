@@ -117,6 +117,7 @@ export interface Translations {
     };
 
     viewer: {
+        no_pdf: string;
         mode: {
             markdown: string;
             latex: string;
