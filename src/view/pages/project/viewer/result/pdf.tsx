@@ -143,12 +143,11 @@ export const PdfResultViewer = () => {
                 });
             }
 
-
             requestAnimationFrame(() => {
                 if (containerRef?.current) {
-                    containerRef.current.scrollTop = lastScrollTopRef.current
+                    containerRef.current.scrollTop = lastScrollTopRef.current;
                 }
-            })
+            });
 
             setPageElements(pages);
         };
