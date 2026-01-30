@@ -26,6 +26,7 @@ export const PdfResultViewer = () => {
     );
 
     const scrollTopRef = useRef<number>(0);
+    const lastScrollTopRef = useRef<number>(0);
     const scaledRef = useRef<number>(1);
     const isRestoringRef = useRef<boolean>(true);
 
@@ -36,6 +37,7 @@ export const PdfResultViewer = () => {
         const container = containerRef.current;
         if (!container) return;
         if (isRestoringRef.current) return;
+        lastScrollTopRef.current = scrollTopRef.current;
         scrollTopRef.current = container.scrollTop;
     };
     useEffect(() => {
@@ -139,12 +141,14 @@ export const PdfResultViewer = () => {
                         span.style.transform += ` scaleX(${scaleX})`;
                     }
                 });
-
-                containerRef.current?.scrollTo({
-                    top: scrollTopRef.current,
-                    behavior: 'instant',
-                });
             }
+
+
+            requestAnimationFrame(() => {
+                if (containerRef?.current) {
+                    containerRef.current.scrollTop = lastScrollTopRef.current
+                }
+            })
 
             setPageElements(pages);
         };
