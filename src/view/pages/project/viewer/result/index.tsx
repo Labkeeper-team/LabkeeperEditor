@@ -139,12 +139,12 @@ export const Result = ({ mode = 'markdown' }: { mode?: ProjectMode }) => {
     return (
         <div className="result-container">
             {mode === 'latex' && <PdfResultViewer />}
-            {mode !== 'latex' && compileResult?.segments?.length && (
+            {mode !== 'latex' && compileResult?.segments?.length ? (
                 <ViewResult ref={contentRef} />
-            )}
-            {mode !== 'latex' && !compileResult?.segments?.length && (
+            ) : null}
+            {mode !== 'latex' && !compileResult?.segments?.length ? (
                 <EmptyResultContainer />
-            )}
+            ) : null}
             <Button
                 classname={`save-to-pdf-button ${InterfaceTourAnchorClassnames.SavePdf}`}
                 title={dictionary.label_save_to_pdf}
