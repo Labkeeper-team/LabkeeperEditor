@@ -54,6 +54,10 @@ export const PdfResultViewer = () => {
         isRestoringRef.current = true;
 
         const loadPdf = async () => {
+            if (!pdfUri) {
+                setIsPdfLoadingError(false);
+                return;
+            }
             try {
                 const dpr = window.devicePixelRatio || 1;
                 const pdf = await pdfjs.getDocument(pdfUri).promise;
@@ -154,9 +158,10 @@ export const PdfResultViewer = () => {
                             lastScrollTopRef.current;
                     }
                 });
-
+                setIsPdfLoadingError(false);
                 setPageElements(pages);
-            } catch {
+            } catch (e) {
+                console.log(e);
                 setIsPdfLoadingError(true);
             }
         };
