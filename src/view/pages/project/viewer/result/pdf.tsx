@@ -154,12 +154,14 @@ export const PdfResultViewer = () => {
 
                 requestAnimationFrame(() => {
                     if (containerRef?.current) {
+                        scrollTopRef.current = lastScrollTopRef.current;
                         containerRef.current.scrollTop =
                             lastScrollTopRef.current;
                     }
                 });
                 setIsPdfLoadingError(false);
                 setPageElements(pages);
+                isRestoringRef.current = false;
             } catch (e) {
                 console.log(e);
                 setIsPdfLoadingError(true);
@@ -206,7 +208,6 @@ export const PdfResultViewer = () => {
             const pagePdfHeight = unscaledViewport.viewBox[3];
             const scaleBetweenPdfAndCss = pageCSSHeight / pagePdfHeight;
             const offSetCSS = offsetYPdf * scaleBetweenPdfAndCss;
-            isRestoringRef.current = true;
             const scrollTop =
                 containerRef.current.scrollHeight -
                 (pdf.numPages - (pageIndex + 1)) * pageCSSHeight -
@@ -216,9 +217,6 @@ export const PdfResultViewer = () => {
                 behavior: 'smooth',
             });
             scrollTopRef.current = scrollTop;
-            requestAnimationFrame(() => {
-                isRestoringRef.current = false;
-            });
         };
         scrollToSegment(activeIndex);
     }, [activeIndex, pageElements]);
