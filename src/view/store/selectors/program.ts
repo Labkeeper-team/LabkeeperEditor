@@ -9,6 +9,10 @@ export const useCurrentProject = createSelector(
     (state: StorageState) => state.project,
     (p) => p.project
 );
+export const useCurrentFullProject = createSelector(
+    (state: StorageState) => state.project,
+    (p) => p
+);
 export const useCompiledSuccesInfo = createSelector(
     (state: StorageState) => state.project,
     (s) => s.compileSuccessResult

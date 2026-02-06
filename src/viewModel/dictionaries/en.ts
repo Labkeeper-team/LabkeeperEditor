@@ -123,6 +123,7 @@ export const en: Translations = {
     },
 
     viewer: {
+        no_pdf: 'Click the "Run" button to display the PDF file.',
         mode: {
             markdown: 'markdown',
             latex: 'latex',

@@ -9,18 +9,28 @@ import { controller } from '../../../../main.tsx';
 import { useDictionary } from '../../../store/selectors/translations';
 import '../editor/ide/header/settingsButtons/markdownType/style.scss';
 import { ProjectMode } from '../../../../model/domain.ts';
+import { useCurrentProject } from '../../../store/selectors/program.ts';
 
 export const Viewer = () => {
     const dispatch = useDispatch<AppDispatch>();
     const dictionary = useSelector(useDictionary);
-
+    const project = useSelector(useCurrentProject);
     const options = [
         { label: dictionary.viewer.mode.markdown, value: 'markdown' },
         { label: dictionary.viewer.mode.latex, value: 'latex' },
     ];
-    const currentValue = useSelector(
+    const currentRunTimeValue = useSelector(
         (state: StorageState) => state.project.mode
     );
+
+    const currentPersistValue = useSelector(
+        (state: StorageState) =>
+            state.persistence.projectCompileModes[
+                project?.projectId || 'default'
+            ]
+    );
+
+    const mode = currentPersistValue ?? currentRunTimeValue;
 
     return (
         <div className="viewer-container">
@@ -28,11 +38,12 @@ export const Viewer = () => {
                 <div className="ide-wrapper">
                     <Select
                         options={options}
-                        value={currentValue}
+                        value={mode}
                         onChange={(val) =>
                             dispatch(
                                 controller.onProjectModeChangeRequest({
                                     mode: val as ProjectMode,
+                                    projectId: project?.projectId || 'default',
                                 })
                             )
                         }
@@ -43,7 +54,7 @@ export const Viewer = () => {
                 <div />
                 <div />
             </div>
-            <Result />
+            <Result mode={mode} />
             <Instruction />
         </div>
     );

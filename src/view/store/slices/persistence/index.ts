@@ -20,6 +20,14 @@ export const persistenceSlice = createSlice({
         clearLastProgram(state) {
             state.lastProgram = createEmptyProgram();
         },
+        setModeToProject(
+            state,
+            {
+                payload,
+            }: PayloadAction<{ id: string; mode: 'latex' | 'markdown' }>
+        ) {
+            state.projectCompileModes[payload.id] = payload.mode;
+        },
         setLastOpenedProjectUuid(
             state,
             { payload }: PayloadAction<string | undefined>
@@ -34,4 +42,5 @@ export const {
     clearLastProgram,
     setLastProgram,
     setLastOpenedProjectUuid,
+    setModeToProject,
 } = persistenceSlice.actions;

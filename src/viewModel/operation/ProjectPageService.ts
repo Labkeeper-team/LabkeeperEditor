@@ -316,10 +316,17 @@ export class ProjectPageService {
         }
     };
 
-    setProjectMode = async (mode: ProjectMode): Promise<void> => {
+    setProjectMode = async (
+        mode: ProjectMode,
+        projectId: string
+    ): Promise<void> => {
         if (!this.repository.userViewModelRepository.isAuthenticated()) {
             this.repository.authViewModelRepository.setCurrentView('login');
         } else {
+            this.repository.persistenceViewModelRepository.setModeToProject(
+                projectId,
+                mode
+            );
             this.repository.projectViewModelRepository.setProjectMode(mode);
         }
         this.ideService.onProgramUpdated();

@@ -176,6 +176,7 @@ S
   "lastVerifiedCode": null,
   "location": "/project/default",
   "loginRequest": "unknown",
+  "mockProgramMode": {},
   "mode": "markdown",
   "passwordSetRequest": "unknown",
   "pdfUpdated": 0,

@@ -88,6 +88,7 @@ interface PersistenceState {
     lastProgram: Program;
     instructionExpanded: boolean;
     lastOpenedProjectUuid?: string;
+    projectCompileModes: Record<string, 'latex' | 'markdown'>;
 }
 
 export const authInitialState: AuthState = {
@@ -120,6 +121,7 @@ export const persistenceInitialState: PersistenceState = {
     lastProgram: createEmptyProgram(),
     instructionExpanded: true,
     lastOpenedProjectUuid: undefined,
+    projectCompileModes: {},
 };
 
 export const projectInitialState: ProjectState = {

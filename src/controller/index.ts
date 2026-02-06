@@ -572,9 +572,15 @@ export class Controller {
 
     onProjectModeChangeRequest = createAsyncThunk(
         'onProjectModeChangeRequest',
-        async ({ mode }: { mode: ProjectMode }) => {
+        async ({
+            mode,
+            projectId,
+        }: {
+            mode: ProjectMode;
+            projectId: string;
+        }) => {
             this.wrapper('onProjectModeChangeRequest', () =>
-                this.projectPageService.setProjectMode(mode)
+                this.projectPageService.setProjectMode(mode, projectId)
             );
         }
     );

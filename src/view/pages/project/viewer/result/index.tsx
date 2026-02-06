@@ -9,14 +9,15 @@ import { SavePdfIcon } from '../../../../icons';
 import { InterfaceTourAnchorClassnames } from '../../../../components/tour/helpers';
 import {
     useCompiledSuccesInfo,
-    useCurrentProject,
+    useCurrentFullProject,
     useUser,
 } from '../../../../store/selectors/program';
 import { useReactToPrint } from 'react-to-print';
 import { useRef } from 'react';
 import { useDictionary } from '../../../../store/selectors/translations';
-import { AppDispatch, StorageState } from '../../../../store';
+import { AppDispatch } from '../../../../store';
 import { controller } from '../../../../../main.tsx';
+import { ProjectMode } from '../../../../../model/domain.ts';
 
 declare global {
     interface Window {
@@ -26,14 +27,15 @@ declare global {
     }
 }
 
-export const Result = () => {
+export const Result = ({ mode = 'markdown' }: { mode?: ProjectMode }) => {
     const user = useSelector(useUser);
     const dispatch = useDispatch<AppDispatch>();
     const compileResult = useSelector(useCompiledSuccesInfo);
-    const currentProject = useSelector(useCurrentProject);
+    const { project: currentProject, pdfUri } = useSelector(
+        useCurrentFullProject
+    );
+
     const dictionary = useSelector(useDictionary);
-    const mode = useSelector((state: StorageState) => state.project.mode);
-    const pdfUri = useSelector((state: StorageState) => state.project.pdfUri);
 
     const contentRef = useRef<HTMLDivElement>(null);
     const reactToPrintFn = useReactToPrint({
@@ -42,6 +44,20 @@ export const Result = () => {
     });
 
     const onPress = () => {
+        if (mode === 'latex') {
+            if (!pdfUri) {
+                return;
+            }
+            fetch(pdfUri)
+                .then((res) => res.blob())
+                .then((blob) => {
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = `result.pdf`;
+                    a.click();
+                });
+            return;
+        }
         dispatch(controller.onPrintButtonPressedRequest());
         if (mode === 'latex' && pdfUri) {
             window.open(pdfUri);
@@ -112,6 +128,7 @@ export const Result = () => {
             }, 100);
             return;
         }
+
         setTimeout(() => {
             const print = async () => {
                 const mathElements =
@@ -125,15 +142,13 @@ export const Result = () => {
 
     return (
         <div className="result-container">
-            {mode === 'latex' && pdfUri ? (
-                <PdfResultViewer pdfUri={pdfUri} />
-            ) : compileResult === undefined ||
-              compileResult.segments === undefined ||
-              compileResult.segments.length === 0 ? (
-                <EmptyResultContainer />
-            ) : (
+            {mode === 'latex' && <PdfResultViewer />}
+            {mode !== 'latex' && compileResult?.segments?.length ? (
                 <ViewResult ref={contentRef} />
-            )}
+            ) : null}
+            {mode !== 'latex' && !compileResult?.segments?.length ? (
+                <EmptyResultContainer />
+            ) : null}
             <Button
                 classname={`save-to-pdf-button ${InterfaceTourAnchorClassnames.SavePdf}`}
                 title={dictionary.label_save_to_pdf}
