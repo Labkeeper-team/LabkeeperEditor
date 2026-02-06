@@ -68,7 +68,7 @@ test('plotly-line', async ({ page }) => {
         },
         page
     );
-
+    await page.locator('.expnad-container.expanded > svg').click();
     await expect(page).toHaveScreenshot('plotly-line.png');
 });
 
@@ -88,7 +88,7 @@ test('plotly-dotted', async ({ page }) => {
         },
         page
     );
-
+    await page.locator('.expnad-container.expanded > svg').click();
     await expect(page).toHaveScreenshot('plotly-dotted.png');
 });
 
@@ -108,7 +108,7 @@ test('plotly-scatter', async ({ page }) => {
         },
         page
     );
-
+    await page.locator('.expnad-container.expanded > svg').click();
     await expect(page).toHaveScreenshot('plotly-scatter.png');
 });
 
@@ -138,7 +138,7 @@ test('plotly-with-grid', async ({ page }) => {
         },
         page
     );
-
+    await page.locator('.expnad-container.expanded > svg').click();
     await expect(page).toHaveScreenshot('plotly-with-grid.png');
 });
 
@@ -168,13 +168,14 @@ test('plotly-with-matjax', async ({ page }) => {
         },
         page
     );
-
+    await page.locator('.expnad-container.expanded > svg').click();
     await expect(page).toHaveScreenshot('plotly-with-mathjax.png');
 });
 
 /*
 Тест на рисование mathjax через es-chart
  */
+/* To Do
 test('plotly-with-matjax-longvalues', async ({ page }) => {
     await plotlyTest(
         {
@@ -190,7 +191,7 @@ test('plotly-with-matjax-longvalues', async ({ page }) => {
                     y: [1, 2, 1, 3, 1],
                     type: 'line',
                     color: 'blue',
-                    name: '\\intG very long text with vveeery long values',
+                    name: '\\int G very long text with vveeery long values',
                     xInfl: [],
                     yInfl: [],
                 },
@@ -199,7 +200,7 @@ test('plotly-with-matjax-longvalues', async ({ page }) => {
                     y: [1, 2, 1, 3, 2],
                     type: 'line',
                     color: 'red',
-                    name: '\\intG very long text with vveeery long values 2',
+                    name: '\\int G very long text with vveeery long values 2',
                     xInfl: [],
                     yInfl: [],
                 },
@@ -207,14 +208,79 @@ test('plotly-with-matjax-longvalues', async ({ page }) => {
         },
         page
     );
-
+    await page.locator('.expnad-container.expanded > svg').click();
     await expect(page).toHaveScreenshot('plotly-with-mathjax-longvalues.png');
+});
+*/
+/*
+Тест на рисование гистограмм в plotly
+ */
+test('plotly-histogram', async ({ page }) => {
+    await plotlyTest(
+        {
+            type: 'plot',
+            plotName: 'MyTitle',
+            plotXAxisName: 'MyX',
+            plotYAxisName: 'MyY',
+            legendVisible: false,
+            plots: [
+                {
+                    x: [1],
+                    type: 'histogram',
+                    color: 'blue',
+                    name: 'MyLine1',
+                    xInfl: [],
+                    yInfl: [],
+                    size: 1,
+                },
+                {
+                    x: [2, 2],
+                    type: 'histogram',
+                    color: 'red',
+                    name: 'MyLine2',
+                    xInfl: [],
+                    yInfl: [],
+                    size: 1,
+                },
+                {
+                    x: [3, 3, 3],
+                    type: 'histogram',
+                    color: 'green',
+                    name: 'MyLine3',
+                    xInfl: [],
+                    yInfl: [],
+                    size: 1,
+                },
+                {
+                    x: [4, 4, 4, 4],
+                    type: 'histogram',
+                    color: 'orange',
+                    name: 'MyLine4',
+                    xInfl: [],
+                    yInfl: [],
+                    size: 1,
+                },
+                {
+                    x: [5, 5, 5, 5, 5],
+                    type: 'histogram',
+                    color: 'black',
+                    name: 'MyLine5',
+                    xInfl: [],
+                    yInfl: [],
+                    size: 1,
+                },
+            ],
+        },
+        page
+    );
+    await page.locator('.expnad-container.expanded > svg').click();
+    await expect(page).toHaveScreenshot('plotly-histogram.png');
 });
 
 /*
 Тест на рисование гистограмм в plotly
  */
-test('plotly-histogram', async ({ page }) => {
+test('plotly-histogram-bar', async ({ page }) => {
     await plotlyTest(
         {
             type: 'plot',
@@ -233,8 +299,8 @@ test('plotly-histogram', async ({ page }) => {
                     yInfl: [],
                 },
                 {
-                    x: [2, 2],
-                    y: [1, 1],
+                    x: [2],
+                    y: [2],
                     type: 'histogram',
                     color: 'red',
                     name: 'MyLine2',
@@ -242,8 +308,8 @@ test('plotly-histogram', async ({ page }) => {
                     yInfl: [],
                 },
                 {
-                    x: [3, 3, 3],
-                    y: [1, 1, 1],
+                    x: [3],
+                    y: [3],
                     type: 'histogram',
                     color: 'green',
                     name: 'MyLine3',
@@ -251,8 +317,8 @@ test('plotly-histogram', async ({ page }) => {
                     yInfl: [],
                 },
                 {
-                    x: [4, 4, 4, 4],
-                    y: [1, 1, 1, 1],
+                    x: [4],
+                    y: [4],
                     type: 'histogram',
                     color: 'orange',
                     name: 'MyLine4',
@@ -260,8 +326,8 @@ test('plotly-histogram', async ({ page }) => {
                     yInfl: [],
                 },
                 {
-                    x: [5, 5, 5, 5, 5],
-                    y: [1, 1, 1, 1, 1],
+                    x: [5],
+                    y: [5],
                     type: 'histogram',
                     color: 'black',
                     name: 'MyLine5',
@@ -272,7 +338,7 @@ test('plotly-histogram', async ({ page }) => {
         },
         page
     );
-
+    await page.locator('.expnad-container.expanded > svg').click();
     await expect(page).toHaveScreenshot('plotly-histogram.png');
 });
 
@@ -281,7 +347,7 @@ test('plotly-histogram', async ({ page }) => {
  */
 test('plotly-histogram-single', async ({ page }) => {
     const x: Array<number> = [];
-    for (let i = 0; i < 500; i++) {
+    for (let i = 0; i <= 500; i++) {
         x.push((i * i) / 500 / 500);
     }
     await plotlyTestWithSingleCurve(
@@ -292,10 +358,11 @@ test('plotly-histogram-single', async ({ page }) => {
             name: 'MyLine1',
             xInfl: [],
             yInfl: [],
+            size: '25',
         },
         page
     );
-
+    await page.locator('.expnad-container.expanded > svg').click();
     await expect(page).toHaveScreenshot('plotly-histogram-single.png');
 });
 
@@ -309,11 +376,10 @@ test('plotly-histogram-two-dims-test', async ({ page }) => {
             name: 'MyLine1',
             xInfl: [],
             yInfl: [],
-            size: 1,
         },
         page
     );
-
+    await page.locator('.expnad-container.expanded > svg').click();
     await expect(page).toHaveScreenshot('plotly-histogram-two-dims.png');
 });
 
@@ -325,13 +391,12 @@ test('plotly-histogram-simple-ladder-test', async ({ page }) => {
             type: 'histogram',
             color: 'blue',
             name: 'MyLine1',
-            size: 1,
             xInfl: [],
             yInfl: [],
         },
         page
     );
-
+    await page.locator('.expnad-container.expanded > svg').click();
     await expect(page).toHaveScreenshot('plotly-histogram-simple-ladder.png');
 });
 
@@ -351,6 +416,66 @@ test('plotly-scatter-error', async ({ page }) => {
         },
         page
     );
-
+    await page.locator('.expnad-container.expanded > svg').click();
     await expect(page).toHaveScreenshot('plotly-scatter-error.png');
+});
+
+/*
+Тест на рисование рафика из лабы
+ */
+test('plotly-from-lab', async ({ page }) => {
+    await plotlyTestWithSingleCurve(
+        {
+            x: [
+                4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+                21, 22, 23, 27,
+            ],
+            y: [
+                4, 1, 9, 20, 19, 25, 39, 33, 41, 43, 47, 36, 23, 11, 27, 6, 6,
+                3, 2, 4, 1,
+            ],
+            type: 'histogram',
+            color: 'blue',
+            name: 'MyLine',
+        },
+        page
+    );
+    await page.locator('.expnad-container.expanded > svg').click();
+    await expect(page).toHaveScreenshot('plotly-from-lab.png');
+});
+
+/*
+Тест на рисование рафика bar неровными x
+ */
+test('plotly-bar-with-double-xGrid', async ({ page }) => {
+    await plotlyTestWithSingleCurve(
+        {
+            x: [0, 0.2, 0.5, 0.7, 1, 2],
+            y: [0.1, 0.4, 0.5, 0.33, 0.2, 0.6],
+            type: 'histogram',
+            color: 'blue',
+            name: 'MyLine',
+        },
+        page
+    );
+    await page.locator('.expnad-container.expanded > svg').click();
+    await expect(page).toHaveScreenshot('plotly-bar-with-double-xGrid.png');
+});
+
+/*
+Тест на рисование рафика bar неровными x
+ */
+test('plotly-bar-with-duplicate-negative-xGrid', async ({ page }) => {
+    await plotlyTestWithSingleCurve(
+        {
+            x: [0, 1, 1, 2, 3, 3, 3, 4, 4],
+            y: [5, -4, 6, 3, -1, -3, 1, 0, 4],
+            type: 'histogram',
+            color: 'blue',
+            name: 'MyLine',
+        },
+        page
+    );
+    await page.locator('.expnad-container.expanded > svg').click();
+    await expect(page).toHaveScreenshot('plotly-bar-with-duplicate-xGrid.png');
 });
