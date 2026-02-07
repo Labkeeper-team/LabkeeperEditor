@@ -27,7 +27,7 @@ export const ru: Translations = {
     label_add_more_short: 'Еще',
 
     short_segment: {
-        md: 'Макрдаун',
+        md: 'Маркдаун',
         computational: 'Вычисление',
         latex: 'Latex',
         asciimath: 'Простая формула',
