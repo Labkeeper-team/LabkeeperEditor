@@ -140,6 +140,21 @@ export interface Rpi {
     oauthCodeRequest(code: string, state: string): Promise<RequestResult>;
 
     logoutRequest(): Promise<RequestResult>;
+
+    promptProjectRequest(
+        projectId: string,
+        prompt: string
+    ): Promise<RequestResult<Program>>;
+
+    generateImageInProjectRequest(
+        projectId: string,
+        prompt: string
+    ): Promise<RequestResult<Program>>;
+
+    unauthorizedPromptProjectRequest(
+        program: Program,
+        prompt: string
+    ): Promise<RequestResult<Program>>;
 }
 
 export const mockRpi = (): Rpi => {

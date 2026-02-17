@@ -20,6 +20,7 @@ import {
     GetProjectsRequestState,
     LoginRequestState,
     PasswordRequestState,
+    ProjectPromptRequestState,
     SaveProjectRequestState,
 } from '../../../viewModel/repository';
 import { createEmptyProgram } from '../../../model/repository/ProgramRepository.ts';
@@ -41,6 +42,7 @@ interface SettingsState {
     showContactModal: boolean;
     filesToDelete: LabkeeperFile[];
     captchaBypassToken: string | undefined;
+    showProjectPromptModal: boolean;
 }
 
 interface ProjectsState {
@@ -81,6 +83,7 @@ interface IdeState {
     getProjectsRequestState: GetProjectsRequestState;
     saveProjectRequestState: SaveProjectRequestState;
     pdfUpdated: number;
+    projectPromptRequestState: ProjectPromptRequestState;
 }
 
 interface PersistenceState {
@@ -114,6 +117,7 @@ export const ideInitialState: IdeState = {
     getProjectsRequestState: 'unknown',
     saveProjectRequestState: 'unknown',
     pdfUpdated: 0,
+    projectPromptRequestState: 'unknown',
 };
 
 export const persistenceInitialState: PersistenceState = {
@@ -151,6 +155,7 @@ export const settingsInitialState: SettingsState = {
     showContactModal: false,
     filesToDelete: [],
     captchaBypassToken: undefined,
+    showProjectPromptModal: false,
 };
 
 export const userInitialState: UserInfo = {

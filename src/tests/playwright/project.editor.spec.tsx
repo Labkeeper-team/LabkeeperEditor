@@ -646,6 +646,70 @@ test('rename-project-in-editor-via-enter', async ({ page }) => {
     expect(requestMade).toBeTruthy();
 });
 
+test('llm-prompt-ok-request-test', async ({ page }) => {
+    const routeSetup = new RouteSetup(page);
+    // Перехватываем запрос default project и get project
+    await routeSetup.setupGetDefaultProjectRequest();
+    await routeSetup.setupGetProjectRequest();
+    // Перехватываем запрос на список файлов
+    await routeSetup.setupListFilesRequest();
+
+    // Перехватываем запрос user-info
+    await routeSetup.setupGetUserInfoRequest();
+
+    await routeSetup.setupLlmPrompt(200);
+
+    await page.goto('/');
+
+    // Ждем загрузки страницы
+    await page.waitForLoadState('domcontentloaded');
+    // Ждем редиректа на конкретный проект
+    await expect(page).toHaveURL(`/project/${uuid}`);
+
+    await page.getByText('GPT').click();
+
+    await page.getByRole('textbox').nth(1).type('biba');
+
+    await page.getByText('Send').click();
+
+    await expect(page.getByText('LLM GENERATED').nth(0)).toBeVisible();
+    await expect(page.getByText('LLM GENERATED').nth(1)).toBeVisible();
+
+    // undo
+    await page.locator('div.history-button').first().click();
+
+    await expect(page.getByText('LLM GENERATED')).not.toBeVisible();
+});
+
+test('llm-prompt-bad-request-test', async ({ page }) => {
+    const routeSetup = new RouteSetup(page);
+    // Перехватываем запрос default project и get project
+    await routeSetup.setupGetDefaultProjectRequest();
+    await routeSetup.setupGetProjectRequest();
+    // Перехватываем запрос на список файлов
+    await routeSetup.setupListFilesRequest();
+
+    // Перехватываем запрос user-info
+    await routeSetup.setupGetUserInfoRequest();
+
+    await routeSetup.setupLlmPrompt(400);
+
+    await page.goto('/');
+
+    // Ждем загрузки страницы
+    await page.waitForLoadState('domcontentloaded');
+    // Ждем редиректа на конкретный проект
+    await expect(page).toHaveURL(`/project/${uuid}`);
+
+    await page.getByText('GPT').click();
+
+    await page.getByRole('textbox').nth(1).type('biba');
+
+    await page.getByText('Send').click();
+
+    await expect(page.getByText('Invalid request')).toBeVisible();
+});
+
 /*
 Переименование проекта через нажатие в другое место
  */

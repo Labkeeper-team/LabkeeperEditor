@@ -5,6 +5,7 @@ import {
     GetFilesRequestState,
     GetProjectRequestState,
     GetProjectsRequestState,
+    ProjectPromptRequestState,
     SaveProjectRequestState,
 } from '../../../../viewModel/repository';
 
@@ -63,6 +64,12 @@ export const ideSlice = createSlice({
         setPdfUpdated: (state, { payload }: PayloadAction<number>) => {
             state.pdfUpdated = payload;
         },
+        setProjectPromptRequestState: (
+            state,
+            { payload }: PayloadAction<ProjectPromptRequestState>
+        ) => {
+            state.projectPromptRequestState = payload;
+        },
     },
 });
 export const {
@@ -77,4 +84,5 @@ export const {
     setGetProjectsRequestState,
     setSaveProjectRequestState,
     setPdfUpdated,
+    setProjectPromptRequestState,
 } = ideSlice.actions;

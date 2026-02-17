@@ -14,6 +14,14 @@
         line-height: 18px;
         padding-left: 20px;
         transition-duration: 0.3s;
+        font-family: inherit;
+
+        &--textarea {
+            height: auto;
+            min-height: 220px;
+            padding: 12px 20px;
+            resize: vertical;
+        }
         &:hover {
             border: 2px solid $gray-30;
         }

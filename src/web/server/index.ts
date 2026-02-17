@@ -313,4 +313,41 @@ export class WebRpi implements Rpi {
     async logoutRequest(): Promise<RequestResult> {
         return requestWrapper(() => axios.post(URLS.Logout));
     }
+
+    async promptProjectRequest(
+        projectId: string,
+        prompt: string
+    ): Promise<RequestResult<Program>> {
+        return requestWrapper(() =>
+            axios.post(URLS.projectPrompt.replace('{id}', projectId), null, {
+                params: { prompt },
+            })
+        );
+    }
+
+    async unauthorizedPromptProjectRequest(
+        program: Program,
+        prompt: string
+    ): Promise<RequestResult<Program>> {
+        return requestWrapper(() =>
+            axios.post(URLS.unauthorizedPrompt, withIds(program), {
+                params: { prompt },
+            })
+        );
+    }
+
+    async generateImageInProjectRequest(
+        projectId: string,
+        prompt: string
+    ): Promise<RequestResult<Program>> {
+        return requestWrapper(() =>
+            axios.post(
+                URLS.generateImageInProjectPrompt.replace('{id}', projectId),
+                null,
+                {
+                    params: { prompt },
+                }
+            )
+        );
+    }
 }

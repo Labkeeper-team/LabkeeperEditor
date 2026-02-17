@@ -20,28 +20,49 @@ export const Input = forwardRef((props: InputProps, ref) => {
                     }
                 />
             ) : null}
-            <input
-                required={props.required}
-                ref={ref as LegacyRef<HTMLInputElement>}
-                maxLength={60}
-                value={props.value}
-                id={props.id}
-                name={props.name}
-                type={props.type || 'text'}
-                className={classNames('input-base', { error: props.error })}
-                onChange={props.onChange}
-                onBlur={props.onBlur}
-                onKeyDown={props.onKeyDown}
-                onClick={(e) => e.stopPropagation()}
-                placeholder={props.placeholder}
-                disabled={props.disabled}
-            />
+            {props.multiline ? (
+                <textarea
+                    ref={ref as LegacyRef<HTMLTextAreaElement>}
+                    value={props.value}
+                    id={props.id}
+                    name={props.name}
+                    rows={props.rows ?? 5}
+                    className={classNames(
+                        'input-base',
+                        'input-base--textarea',
+                        { error: props.error }
+                    )}
+                    onChange={props.onChange}
+                    onBlur={props.onBlur}
+                    onKeyDown={props.onKeyDown}
+                    onClick={(e) => e.stopPropagation()}
+                    placeholder={props.placeholder}
+                    disabled={props.disabled}
+                />
+            ) : (
+                <input
+                    required={props.required}
+                    ref={ref as LegacyRef<HTMLInputElement>}
+                    maxLength={60}
+                    value={props.value}
+                    id={props.id}
+                    name={props.name}
+                    type={props.type || 'text'}
+                    className={classNames('input-base', { error: props.error })}
+                    onChange={props.onChange}
+                    onBlur={props.onBlur}
+                    onKeyDown={props.onKeyDown}
+                    onClick={(e) => e.stopPropagation()}
+                    placeholder={props.placeholder}
+                    disabled={props.disabled}
+                />
+            )}
             {props.error ? (
                 <div className="error-text-container">
                     <Typography color={colors.red10} text={props.error} />
                 </div>
             ) : null}
-            {props.onClear ? (
+            {props.onClear && !props.multiline ? (
                 <div onClick={props.onClear} className="input-delete-icon">
                     <CloseIcon />
                 </div>

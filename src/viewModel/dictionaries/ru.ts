@@ -131,6 +131,7 @@ export const ru: Translations = {
 
     viewer: {
         no_pdf: 'Нажмите кнопку  "Выполнить", для отображения PDF файла',
+        gpt_prompt_button: 'GPT',
         mode: {
             markdown: 'markdown',
             latex: 'latex',
@@ -289,6 +290,18 @@ export const ru: Translations = {
         err: 'Не удалось открыть почтовый клиент',
         contact_form: 'Связаться с нами через форму',
         contact_email: 'Напишите нам на почту',
+    },
+
+    prompt_modal: {
+        title: 'Запрос к Chat GPT',
+        placeholder: 'Введите промпт',
+        generateImage: 'Генерировать изображения',
+        submit: 'Отправить',
+        sending: 'Отправка...',
+        errors: {
+            bad_request: 'Некорректный запрос. Проверьте введённый текст.',
+            unknownError: 'Непредвиденная ошибка',
+        },
     },
 
     contact_ok: 'Мы получили вашу обратную связь',

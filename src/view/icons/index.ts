@@ -26,6 +26,7 @@ import _Login1Icon from '../assets/login1.svg?react';
 import _Login2Icon from '../assets/login2.svg?react';
 import _MiptLogo from '../assets/mipt_logo.svg?react';
 import _GithubLogo from '../assets/github.svg?react';
+import _SparkleIcon from '../assets/sparkle.svg?react';
 
 export const LogoIcon = _LogoIcon;
 export const FolderIcon = _FolderIcon;
@@ -52,3 +53,4 @@ export const MiptLogo = _MiptLogo;
 export const ShareIcon = _ShareIcon;
 export const LinkIcon = _LinkIcon;
 export const GithubIcon = _GithubLogo;
+export const SparkleIcon = _SparkleIcon;

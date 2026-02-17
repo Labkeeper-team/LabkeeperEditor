@@ -38,6 +38,7 @@ import {
     setSearch,
     setUndoEnabled,
     setPdfUpdated,
+    setProjectPromptRequestState,
 } from './slices/ide';
 import {
     clearLastProgram,
@@ -79,6 +80,7 @@ import {
     setIsCompiling,
     setIsFileDraggedToFileManager,
     setShoFileManager,
+    setShowProjectPromptModal,
     setShowSearch,
     setTourVisibility,
 } from './slices/settings';
@@ -174,7 +176,11 @@ export const createViewModelStateFromStore = (
             saveProjectRequestState: () =>
                 store.getState().ide.saveProjectRequestState,
             pdfUpdated: () => store.getState().ide.pdfUpdated,
+            projectPromptRequestState: () =>
+                store.getState().ide.projectPromptRequestState(),
 
+            setProjectPromptRequestStatus: (v) =>
+                store.dispatch(setProjectPromptRequestState(v)),
             setPdfUpdated: (v) => store.dispatch(setPdfUpdated(v)),
             setCloneRequestState: (v: CloneRequestState) =>
                 store.dispatch(setCloneRequestState(v)),
@@ -280,7 +286,11 @@ export const createViewModelStateFromStore = (
             filesToDelete: () => store.getState().settings.filesToDelete,
             captchaBypassToken: () =>
                 store.getState().settings.captchaBypassToken,
+            showProjectPromptModal: () =>
+                store.getState().settings.showProjectPromptModal,
 
+            setShowProjectPromptModal: (v) =>
+                store.dispatch(setShowProjectPromptModal(v)),
             setCaptchaBypassToken: (token) =>
                 store.dispatch(setCaptchaBypassToken(token)),
             setShowSearch: (show: boolean) =>

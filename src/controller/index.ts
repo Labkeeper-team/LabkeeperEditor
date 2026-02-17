@@ -192,6 +192,42 @@ export class Controller {
         }
     );
 
+    onPromptSubmitRequest = createAsyncThunk(
+        'onPromptSubmit',
+        async ({
+            prompt,
+            generateImage,
+        }: {
+            prompt: string;
+            generateImage: boolean;
+        }) => {
+            this.wrapper('onRunButtonPressed', () =>
+                this.projectPageService.sendPromptAndReload(
+                    prompt,
+                    generateImage
+                )
+            );
+        }
+    );
+
+    onLlmButtonClickedRequest = createAsyncThunk(
+        'onLlmButtonClicked',
+        async () => {
+            this.wrapper('onLlmButtonClicked', () =>
+                this.projectPageService.onLlmButtonClicked()
+            );
+        }
+    );
+
+    onPromptModalCrossClickedRequest = createAsyncThunk(
+        'onPromptModalCrossClicked',
+        async () => {
+            this.wrapper('onPromptModalCrossClicked', () =>
+                this.projectPageService.onPromptModalCrossClicked()
+            );
+        }
+    );
+
     segmentEditorChangeSegmentPositionRequest = createAsyncThunk(
         'segmentEditorChangeSegmentPositionRequest',
         async ({

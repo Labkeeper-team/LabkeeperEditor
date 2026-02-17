@@ -9,12 +9,19 @@ import { controller } from '../../../../main.tsx';
 import { useDictionary } from '../../../store/selectors/translations';
 import '../editor/ide/header/settingsButtons/markdownType/style.scss';
 import { ProjectMode } from '../../../../model/domain.ts';
-import { useCurrentProject } from '../../../store/selectors/program.ts';
+import {
+    useCurrentProject,
+    useIsProjectReadonly,
+} from '../../../store/selectors/program.ts';
+import { Button } from '../../../components/button';
+import { PromptModal } from './promptModal';
+import { SparkleIcon } from '../../../icons';
 
 export const Viewer = () => {
     const dispatch = useDispatch<AppDispatch>();
     const dictionary = useSelector(useDictionary);
     const project = useSelector(useCurrentProject);
+    const isReadonly = useSelector(useIsProjectReadonly);
     const options = [
         { label: dictionary.viewer.mode.markdown, value: 'markdown' },
         { label: dictionary.viewer.mode.latex, value: 'latex' },
@@ -35,7 +42,10 @@ export const Viewer = () => {
     return (
         <div className="viewer-container">
             <div className="viewer-header">
-                <div className="ide-wrapper">
+                <div
+                    className="ide-wrapper"
+                    style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+                >
                     <Select
                         options={options}
                         value={mode}
@@ -50,12 +60,24 @@ export const Viewer = () => {
                         className={SelectClassNames.Default}
                         minimize
                     />
+                    {!isReadonly && (
+                        <Button
+                            title={dictionary.viewer.gpt_prompt_button}
+                            onPress={() =>
+                                dispatch(controller.onLlmButtonClickedRequest())
+                            }
+                            minimize
+                            rounded
+                            color="gray"
+                            titleIcon={() => <SparkleIcon />}
+                        />
+                    )}
                 </div>
-                <div />
                 <div />
             </div>
             <Result mode={mode} />
             <Instruction />
+            <PromptModal />
         </div>
     );
 };

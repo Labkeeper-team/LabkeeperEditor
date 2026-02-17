@@ -124,6 +124,7 @@ export const en: Translations = {
 
     viewer: {
         no_pdf: 'Click the "Run" button to display the PDF file.',
+        gpt_prompt_button: 'GPT',
         mode: {
             markdown: 'markdown',
             latex: 'latex',
@@ -277,6 +278,18 @@ export const en: Translations = {
         err: 'Failed to open mail client',
         contact_email: 'Contact email',
         contact_form: 'Contact form',
+    },
+
+    prompt_modal: {
+        title: 'Chat GPT prompt',
+        placeholder: 'Enter prompt',
+        generateImage: 'Generate images',
+        submit: 'Send',
+        sending: 'Sending...',
+        errors: {
+            bad_request: 'Invalid request. Please check your input.',
+            unknownError: 'An unexpected error occurred',
+        },
     },
 
     contact_ok: 'We have received your feedback',

@@ -48,6 +48,10 @@ export class ProgramService {
         );
     };
 
+    replaceWithNewProgram = (newProgram: Program) => {
+        this.applyChange(new ReplaceProgramAction(newProgram));
+    };
+
     replaceAllInProgram = (from: string, to: string) => {
         this.programRepository.history = [];
         this.programRepository.redoHistory = [];
@@ -322,6 +326,28 @@ class AddSegmentAction implements ProgramChangeAction {
 
     revert = (program: Program) => {
         program.segments.splice(this.afterIndex, 1);
+    };
+}
+
+class ReplaceProgramAction implements ProgramChangeAction {
+    newProgram: Program;
+    oldProgram?: Program;
+
+    constructor(newProgram: Program) {
+        this.newProgram = structuredClone(newProgram);
+    }
+
+    apply = (program: Program) => {
+        this.oldProgram = structuredClone(program);
+        program.segments = this.newProgram.segments;
+        program.parameters = this.newProgram.parameters;
+    };
+
+    revert = (program: Program) => {
+        if (this.oldProgram) {
+            program.segments = this.oldProgram.segments;
+            program.parameters = this.oldProgram.parameters;
+        }
     };
 }
 

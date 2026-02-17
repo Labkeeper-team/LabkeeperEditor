@@ -77,6 +77,13 @@ export type GetProjectsRequestState =
 
 export type SaveProjectRequestState = 'unknown' | 'ok' | 'error' | 'loading';
 
+export type ProjectPromptRequestState =
+    | 'unknown'
+    | 'loading'
+    | 'ok'
+    | 'bad_request'
+    | 'unknownError';
+
 class MockViewModelRepositoryState {
     location = '/';
 
@@ -128,6 +135,7 @@ class MockViewModelRepositoryState {
     showTour = false;
     filesToDelete: LabkeeperFile[] = [];
     captchaBypassToken: string | undefined = undefined;
+    showProjectPromptModal = false;
 
     email: string = '';
     id: number = -1;
@@ -141,6 +149,7 @@ class MockViewModelRepositoryState {
     lastVerifiedCode: string | null = null;
     passwordSetRequest: PasswordRequestState = 'unknown';
     isRegistration: boolean = false;
+    projectPromptRequestState: ProjectPromptRequestState = 'unknown';
 
     toasts: { message: string; type: TypeOptions }[] = [];
 }
@@ -196,7 +205,11 @@ export const mockViewModelState = (): MockViewModelRepository => {
             saveProjectRequestState: () =>
                 mockViewModelState.saveProjectRequestState,
             pdfUpdated: () => mockViewModelState.pdfUpdated,
+            projectPromptRequestState: () =>
+                mockViewModelState.projectPromptRequestState,
 
+            setProjectPromptRequestStatus: (v) =>
+                (mockViewModelState.projectPromptRequestState = v),
             setPdfUpdated: (v) => (mockViewModelState.pdfUpdated = v),
             setGetProjectsRequestState: (v: GetProjectsRequestState) =>
                 (mockViewModelState.getProjectsRequestState = v),
@@ -307,7 +320,11 @@ export const mockViewModelState = (): MockViewModelRepository => {
             showTour: () => mockViewModelState.showTour,
             filesToDelete: () => mockViewModelState.filesToDelete,
             captchaBypassToken: () => mockViewModelState.captchaBypassToken,
+            showProjectPromptModal: () =>
+                mockViewModelState.showProjectPromptModal,
 
+            setShowProjectPromptModal: (v) =>
+                (mockViewModelState.showProjectPromptModal = v),
             setCaptchaBypassToken: (token) =>
                 (mockViewModelState.captchaBypassToken = token),
             setShowSearch: (v: boolean) => (mockViewModelState.showSearch = v),
@@ -383,8 +400,10 @@ export interface IdeViewModelRepository {
     getFilesRequestState: () => GetFilesRequestState;
     getProjectsRequestState: () => GetProjectsRequestState;
     saveProjectRequestState: () => SaveProjectRequestState;
+    projectPromptRequestState: () => ProjectPromptRequestState;
     pdfUpdated: () => number;
 
+    setProjectPromptRequestStatus: (v: ProjectPromptRequestState) => void;
     setPdfUpdated: (v: number) => void;
     setRedoEnabled: (v: boolean) => void;
     setUndoEnabled: (v: boolean) => void;
@@ -410,7 +429,9 @@ export interface SettingsViewModelRepository {
     showShareModal: () => boolean;
     captchaBypassToken: () => string | undefined;
     filesToDelete: () => LabkeeperFile[];
+    showProjectPromptModal: () => boolean;
 
+    setShowProjectPromptModal: (v: boolean) => void;
     setCaptchaBypassToken: (token?: string) => void;
     setTourVisibility: (visible: boolean) => void;
     setEditModeForFilename: (edit: boolean) => void;

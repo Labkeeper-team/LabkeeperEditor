@@ -2,6 +2,13 @@ import { ProgramService } from '../../model/service/ProgramService.ts';
 import { Program, Segment } from '../../model/domain.ts';
 import { InMemoryProgramRepository } from '../../model/repository/ProgramRepository.ts';
 
+global.structuredClone = (val) => {
+    if (val === undefined) {
+        return undefined;
+    }
+    return JSON.parse(JSON.stringify(val));
+};
+
 test('program-service-test', () => {
     const service: ProgramService = new ProgramService(
         new InMemoryProgramRepository()
@@ -285,6 +292,57 @@ test('unite-changes-test', () => {
     expect(service.getCurrentProgram()).toStrictEqual({
         segments: [
             { type: 'md', text: '', parameters: { visible: true } } as Segment,
+        ],
+        parameters: { roundStrategy: 'firstMeaningDigit' },
+    } as Program);
+});
+
+test('replace-program-undo-redo-test', () => {
+    const service: ProgramService = new ProgramService(
+        new InMemoryProgramRepository()
+    );
+
+    service.addSegmentToLastPosition('md');
+    service.changeSegmentTextByPositionIndex(0, 'biba');
+    service.addSegmentToLastPosition('latex');
+    service.changeSegmentTextByPositionIndex(1, 'boba');
+
+    service.replaceWithNewProgram({
+        segments: [
+            {
+                type: 'md',
+                text: 'biba',
+                parameters: { visible: true },
+            },
+        ],
+        parameters: { roundStrategy: 'firstMeaningDigit' },
+    });
+
+    expect(service.getCurrentProgram()).toStrictEqual({
+        segments: [
+            {
+                type: 'md',
+                text: 'biba',
+                parameters: { visible: true },
+            } as Segment,
+        ],
+        parameters: { roundStrategy: 'firstMeaningDigit' },
+    } as Program);
+
+    service.undo();
+
+    expect(service.getCurrentProgram()).toStrictEqual({
+        segments: [
+            {
+                type: 'md',
+                text: 'biba',
+                parameters: { visible: true },
+            } as Segment,
+            {
+                type: 'latex',
+                text: 'boba',
+                parameters: { visible: true },
+            } as Segment,
         ],
         parameters: { roundStrategy: 'firstMeaningDigit' },
     } as Program);

@@ -20,6 +20,9 @@ export const URLS = {
     setProgram: `${uri}/api/${version}/public/project/{id}/program`,
     setTitle: `${uri}/api/${version}/public/project/{id}/title`,
     setVisibility: `${uri}/api/${version}/public/project/{id}/visibility`,
+    projectPrompt: `${uri}/api/${version}/public/project/{id}/prompt`,
+    generateImageInProjectPrompt: `${uri}/api/${version}/public/project/{id}/prompt/image`,
+    unauthorizedPrompt: `${uri}/api/${version}/public/prompt`,
 
     filesGetList: `${uri}/api/${version}/public/project/{id}/file/list`,
     uploadFile: `${uri}/api/${version}/public/project/{id}/file/upload`,

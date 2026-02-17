@@ -213,4 +213,9 @@ export class IdeService {
         }
         this.onProgramUpdated();
     };
+
+    replaceProgram = (program: Program) => {
+        this.programService.replaceWithNewProgram(program);
+        this.onProgramUpdated();
+    };
 }

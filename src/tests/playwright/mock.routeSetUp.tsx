@@ -1,5 +1,10 @@
 import { Page, Route } from '@playwright/test';
-import { CompileErrorResult, Segment, Statement } from '../../model/domain.ts';
+import {
+    CompileErrorResult,
+    Program,
+    Segment,
+    Statement,
+} from '../../model/domain.ts';
 
 // Типы для заглушек
 
@@ -54,6 +59,28 @@ export class RouteSetup {
                         email: email,
                         id: id,
                     }),
+                });
+            }
+        );
+    }
+
+    async setupLlmPrompt(code: number) {
+        await this.page.route(
+            `/api/${version}/public/project/${uuid}/prompt?prompt=biba`,
+            async (route) => {
+                await route.fulfill({
+                    status: code,
+                    contentType: contentType,
+                    body: JSON.stringify({
+                        segments: [
+                            {
+                                type: 'md',
+                                text: 'LLM GENERATED',
+                                parameters: { visible: true },
+                            },
+                        ],
+                        parameters: { roundStrategy: 'firstMeaningDigit' },
+                    } as Program),
                 });
             }
         );

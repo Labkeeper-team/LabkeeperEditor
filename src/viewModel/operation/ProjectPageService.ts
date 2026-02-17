@@ -331,4 +331,122 @@ export class ProjectPageService {
         }
         this.ideService.onProgramUpdated();
     };
+
+    sendPromptAndReload = async (
+        prompt: string,
+        generateImage: boolean
+    ): Promise<void> => {
+        if (!this.repository.userViewModelRepository.isAuthenticated()) {
+            if (generateImage) {
+                this.repository.authViewModelRepository.setCurrentView('login');
+                this.repository.settingsViewModelRepository.setShowProjectPromptModal(
+                    false
+                );
+                return;
+            }
+            this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
+                'loading'
+            );
+            const promptResult =
+                await this.rpi.unauthorizedPromptProjectRequest(
+                    this.repository.projectViewModelRepository.currentProgram(),
+                    prompt
+                );
+            if (promptResult.isOk) {
+                this.ideService.replaceProgram(promptResult.body);
+                this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
+                    'ok'
+                );
+                this.repository.settingsViewModelRepository.setShowProjectPromptModal(
+                    false
+                );
+            } else if (promptResult.isUnauth) {
+                this.repository.toast(
+                    this.repository.dictionary.filemanager.errors
+                        .sessionExpired,
+                    'error'
+                );
+                this.ideService.resetEditor();
+            } else if (promptResult.code === 400) {
+                this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
+                    'bad_request'
+                );
+            } else if (promptResult.code === 425) {
+                this.repository.authViewModelRepository.setCurrentView('login');
+                this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
+                    'unknown'
+                );
+                this.repository.settingsViewModelRepository.setShowProjectPromptModal(
+                    false
+                );
+            } else {
+                this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
+                    'unknownError'
+                );
+            }
+            return;
+        }
+
+        const project = this.repository.projectViewModelRepository.project();
+
+        if (!project) {
+            return;
+        }
+
+        this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
+            'loading'
+        );
+        const promptResult = generateImage
+            ? await this.rpi.generateImageInProjectRequest(
+                  project.projectId,
+                  prompt
+              )
+            : await this.rpi.promptProjectRequest(project.projectId, prompt);
+        if (promptResult.isOk) {
+            this.ideService.replaceProgram(promptResult.body);
+            this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
+                'ok'
+            );
+            this.repository.settingsViewModelRepository.setShowProjectPromptModal(
+                false
+            );
+            if (generateImage) {
+                await this.loaderService.loadFiles(project.projectId);
+                await this.compilationService.runCompilation();
+                this.repository.ideViewModelRepository.setActiveSegmentIndex(
+                    this.programService.getCurrentProgram().segments.length - 1
+                );
+                this.ideService.onProgramUpdated();
+            }
+        } else if (promptResult.isUnauth) {
+            this.repository.toast(
+                this.repository.dictionary.filemanager.errors.sessionExpired,
+                'error'
+            );
+            this.ideService.resetEditor();
+        } else if (promptResult.code === 400) {
+            this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
+                'bad_request'
+            );
+        } else {
+            this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
+                'unknownError'
+            );
+        }
+    };
+
+    onLlmButtonClicked() {
+        this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
+            'unknown'
+        );
+        this.repository.settingsViewModelRepository.setShowProjectPromptModal(
+            true
+        );
+    }
+
+    onPromptModalCrossClicked() {
+        this.repository.settingsViewModelRepository.setShowProjectPromptModal(
+            false
+        );
+    }
 }

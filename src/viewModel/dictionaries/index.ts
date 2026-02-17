@@ -118,6 +118,7 @@ export interface Translations {
 
     viewer: {
         no_pdf: string;
+        gpt_prompt_button: string;
         mode: {
             markdown: string;
             latex: string;
@@ -265,6 +266,18 @@ export interface Translations {
         warn: string;
         err: string;
     };
+    prompt_modal: {
+        title: string;
+        placeholder: string;
+        generateImage: string;
+        submit: string;
+        sending: string;
+        errors: {
+            bad_request: string;
+            unknownError: string;
+        };
+    };
+
     contact_ok: string;
     contact_error: string;
 }

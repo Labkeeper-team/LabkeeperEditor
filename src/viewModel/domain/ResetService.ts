@@ -45,6 +45,9 @@ export class ResetService {
         this.repository.ideViewModelRepository.setUndoEnabled(false);
         this.repository.ideViewModelRepository.setRedoEnabled(false);
         this.repository.ideViewModelRepository.setSearch(undefined);
+        this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
+            'unknown'
+        );
 
         // Projects
         this.repository.projectsViewModelRepository.setProjects([]);
@@ -67,6 +70,9 @@ export class ResetService {
         this.repository.settingsViewModelRepository.setIsCompiling(false);
         this.repository.settingsViewModelRepository.setShowSearch(false);
         this.repository.settingsViewModelRepository.setFilesToDelete([]);
+        this.repository.settingsViewModelRepository.setShowProjectPromptModal(
+            false
+        );
 
         // User
         this.repository.userViewModelRepository.setUserInfo({
