@@ -61,6 +61,15 @@ export class CompilationService {
             ];
 
         const mode = storeMode ?? runtimeMode;
+
+        if (
+            !this.repository.userViewModelRepository.isAuthenticated() &&
+            mode === 'latex'
+        ) {
+            this.repository.authViewModelRepository.setCurrentView('login');
+            return;
+        }
+
         let result:
             | RequestResult<CompilationResponse>
             | RequestResult<PdfCompilationResponse>;

@@ -63,6 +63,53 @@ test('project-404-test', async ({ page }) => {
 });
 
 /*
+Публичный проект: в localStorage для проекта задан режим latex, после захода нажимается кнопка компиляции
+ */
+test('public-project-latex-mode-from-localstorage-compilation', async ({
+    page,
+}) => {
+    const routeSetup = new RouteSetup(page);
+
+    // Устанавливаем в localStorage режим latex для данного проекта до загрузки страницы (формат redux-persist)
+    await page.addInitScript((projectUuid) => {
+        const PERSIST_KEY = 'persist:PERSISTENCE';
+        const state = {
+            language: JSON.stringify('en'),
+            lastProgram: JSON.stringify({
+                segments: [],
+                parameters: { roundStrategy: 'firstMeaningDigit' },
+            }),
+            instructionExpanded: JSON.stringify(true),
+            projectCompileModes: JSON.stringify({ [projectUuid]: 'latex' }),
+        };
+        localStorage.setItem(PERSIST_KEY, JSON.stringify(state));
+    }, uuid);
+
+    await routeSetup.setupApi(() => {});
+
+    await routeSetup.setupGetUserInfoRequest(false);
+    await routeSetup.setupGetProjectRequest(
+        200,
+        'withTwoSegmentsBibaAndAEqualTen'
+    );
+
+    await page.goto(`/project/${uuid}`);
+
+    await page.waitForLoadState('domcontentloaded');
+
+    // В режиме latex вызывается компиляция в PDF; перехватываем и возвращаем 401
+    await routeSetup.setupCompileProjectPdfRequest(401);
+
+    await page.getByRole('button', { name: /Run/i }).click();
+
+    await page
+        .getByRole('button', { name: /Run/i })
+        .waitFor({ state: 'attached' });
+
+    await expect(page.getByText('Authorization')).toBeVisible();
+});
+
+/*
 Успешная компиляция публичного проекта незалогиненным пользователем
  */
 test('public-project-unauth-user-compilation-ok', async ({ page }) => {

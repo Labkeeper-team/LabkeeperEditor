@@ -339,6 +339,19 @@ export class RouteSetup {
         );
     }
 
+    async setupCompileProjectPdfRequest(status: number) {
+        await this.page.route(
+            `/api/${version}/public/project/${uuid}/compile/pdf`,
+            async (route) => {
+                await route.fulfill({
+                    status,
+                    contentType: contentType,
+                    body: JSON.stringify({}),
+                });
+            }
+        );
+    }
+
     //вспомогательная функция для file list
     private getProjectBodyForFileList(
         typeBody: BodyTypeForFileListRequest,
