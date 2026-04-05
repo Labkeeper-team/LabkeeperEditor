@@ -29,6 +29,9 @@ export const PdfResultViewer = () => {
     const lastScrollTopRef = useRef<number>(0);
     const scaledRef = useRef<number>(1);
     const isRestoringRef = useRef<boolean>(true);
+    /** После перезагрузки PDF не дергать scrollToSegment (конфликтует с восстановлением позиции). */
+    const suppressNextSegmentScrollRef = useRef(false);
+    const hadPdfPagesRef = useRef(false);
 
     const [isPdfLoadingError, setIsPdfLoadingError] = useState<boolean>(false);
     const [pageElements, setPageElements] = useState<HTMLDivElement[]>([]);
@@ -56,6 +59,7 @@ export const PdfResultViewer = () => {
         const loadPdf = async () => {
             if (!pdfUri) {
                 setIsPdfLoadingError(false);
+                hadPdfPagesRef.current = false;
                 return;
             }
             try {
@@ -152,13 +156,16 @@ export const PdfResultViewer = () => {
                     });
                 }
 
-                requestAnimationFrame(() => {
-                    if (containerRef?.current) {
-                        scrollTopRef.current = lastScrollTopRef.current;
-                        containerRef.current.scrollTop =
-                            lastScrollTopRef.current;
-                    }
-                });
+                const container = containerRef.current;
+                if (container) {
+                    container.scrollTop = lastScrollTopRef.current;
+                    scrollTopRef.current = lastScrollTopRef.current;
+                }
+                if (hadPdfPagesRef.current) {
+                    suppressNextSegmentScrollRef.current = true;
+                }
+                hadPdfPagesRef.current = true;
+
                 setIsPdfLoadingError(false);
                 setPageElements(pages);
                 isRestoringRef.current = false;
@@ -188,6 +195,11 @@ export const PdfResultViewer = () => {
     useEffect(() => {
         if (activeIndex == null || !pdfRef.current || pageElements.length === 0)
             return;
+
+        if (suppressNextSegmentScrollRef.current) {
+            suppressNextSegmentScrollRef.current = false;
+            return;
+        }
 
         const scrollToSegment = async (activeIndex_: number) => {
             const pdf = pdfRef.current!;
