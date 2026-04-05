@@ -1,4 +1,9 @@
-import { autocompletion } from '@codemirror/autocomplete';
+import {
+    autocompletion,
+    completeAnyWord,
+    CompletionContext,
+    CompletionSource,
+} from '@codemirror/autocomplete';
 
 const latexCompletions = {
     commands: [
@@ -73,6 +78,8 @@ const latexCompletions = {
         { label: '\\Omega' },
 
         // Окружения
+        { label: '\\begin{' },
+        { label: '\\end{' },
         { label: '\\begin{equation}' },
         { label: '\\end{equation}' },
         { label: '\\begin{align}' },
@@ -149,10 +156,9 @@ const latexCompletions = {
     ],
 };
 
-const latexCompletionSource = (context) => {
-    const word = context.matchBefore(/\\\w*/);
+const latexCompletionSource: CompletionSource = (context: CompletionContext) => {
+    const word = context.matchBefore(/\\[\w{}]*/);
     if (!word) return null;
-    if (word.from === word.to && !context.explicit) return null;
 
     return {
         from: word.from,
@@ -167,6 +173,7 @@ const latexCompletionSource = (context) => {
     };
 };
 
+/** completeAnyWord восстанавливает поведение базового autocomplete; без него override полностью его отключает. */
 export const latexLanguageSupport = autocompletion({
-    override: [latexCompletionSource],
+    override: [latexCompletionSource, completeAnyWord],
 });
