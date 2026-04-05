@@ -20,7 +20,8 @@
     .dropdown-content-contanier-additional {
         // padding: 10px 12px;
     }
-    .cm-panels {
+    /* Панель линта (если подключена) остаётся видимой; остальные панели CM скрыты */
+    .cm-panels:not(:has(.cm-panel-lint)) {
         display: none;
     }
     .cm-editor {

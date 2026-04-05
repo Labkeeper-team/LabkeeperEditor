@@ -156,7 +156,9 @@ const latexCompletions = {
     ],
 };
 
-const latexCompletionSource: CompletionSource = (context: CompletionContext) => {
+const latexCompletionSource: CompletionSource = (
+    context: CompletionContext
+) => {
     const word = context.matchBefore(/\\[\w{}]*/);
     if (!word) return null;
 

@@ -15,6 +15,7 @@
         "reformat": "prettier --write ."
     },
     "dependencies": {
+        "@codemirror/lint": "^6.9.5",
         "@estruyf/github-actions-reporter": "^1.10.0",
         "@reduxjs/toolkit": "2.3.0",
         "@sentry/react": "^9.22.0",

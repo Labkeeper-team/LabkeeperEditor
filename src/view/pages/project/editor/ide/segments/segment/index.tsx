@@ -351,6 +351,9 @@ export const SegmentEditor = memo(
                     onChange={onChange}
                     readOnly={projectIsReadonly}
                     extensions={[
+                        EditorView.contentAttributes.of({
+                            spellcheck: 'true',
+                        }),
                         decorationsField,
                         segment.type === 'md'
                             ? langs.markdown()
