@@ -30,11 +30,10 @@
             width: 0px;
         }
     }
+    /* Отступ справа под плашку .editor-rules; без max-width на строках — иначе обрезается выделение (Ctrl+A). */
     .cm-content {
-        .cm-line:nth-child(-n + 2) {
-            max-width: 80%;
-            padding-right: 205px;
-        }
+        padding-right: 210px;
+        box-sizing: border-box;
     }
     .highlight-text-editor {
         background: yellow;
