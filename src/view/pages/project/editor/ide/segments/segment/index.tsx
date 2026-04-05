@@ -384,7 +384,6 @@ export const SegmentEditor = memo(
                     ].filter((e) => !!e)}
                     basicSetup={{
                         lineNumbers: true,
-                        history: false,
                         highlightSelectionMatches: false,
                     }}
                 />
