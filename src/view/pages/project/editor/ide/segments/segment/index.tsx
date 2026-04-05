@@ -67,6 +67,8 @@ const decorationsField = StateField.define<unknown>({
 
 let timeout: NodeJS.Timeout | null = null;
 
+const lastDecorationSignatureByView = new WeakMap<EditorView, string>();
+
 function computeDocKey(text: string): string {
     let hash = 5381;
     for (let i = 0; i < text.length; i++) {
@@ -96,6 +98,7 @@ export const SegmentEditor = memo(
         GLOBAL STATE
          */
         const search = useSelector(useSearch);
+        const [debouncedSearch, setDebouncedSearch] = useState(search);
         const isActiveSegment = useIsDelayedSegmentIsActive(props.index);
         const compileErrors = useSelector(
             (state: StorageState) => state.project.compileErrorResult?.errors
@@ -132,14 +135,21 @@ export const SegmentEditor = memo(
             return () => clearTimeout(timer);
         }, []);
 
-        // При изменении текста перерисовываем декорации
+        useEffect(() => {
+            const handle = window.setTimeout(() => {
+                setDebouncedSearch(search);
+            }, 150);
+            return () => clearTimeout(handle);
+        }, [search]);
+
+        // Ошибки компиляции — сразу (в deps); строка поиска — через debouncedSearch
         useEffect(() => {
             const view = editor?.current?.view;
             if (!view) {
                 return;
             }
-            processDecorations(view, search, segmentTempErrors);
-        }, [search, segmentTempErrors, editor?.current?.view]);
+            processDecorations(view, debouncedSearch, segmentTempErrors);
+        }, [debouncedSearch, segmentTempErrors, editor?.current?.view]);
         // Фиксируем горизонтальный скролл на 0, чтобы сегмент не смещался при выделении
         useEffect(() => {
             const view = editor?.current?.view;
@@ -222,13 +232,16 @@ export const SegmentEditor = memo(
             // eslint-disable-next-line react-hooks/exhaustive-deps
         }, [segment?.text]);
 
-        // Восстанавливаем позицию курсора после внешнего обновления текста сегмента
+        // Восстанавливаем курсор только если текст пришёл извне (не совпадает с документом CM)
         useEffect(() => {
             const view = editor?.current?.view;
             if (!view) {
                 return;
             }
             const docText = view.state.doc.toString();
+            if (docText === segment?.text) {
+                return;
+            }
             const docKey = currentDocKeyRef.current ?? computeDocKey(docText);
             const storedForDoc = cursorByDocKeyRef.current.get(docKey);
             const preserved =
@@ -372,6 +385,7 @@ export const SegmentEditor = memo(
                     basicSetup={{
                         lineNumbers: true,
                         history: false,
+                        highlightSelectionMatches: false,
                     }}
                 />
                 <div className="editor-rules">
@@ -513,6 +527,16 @@ function processDecorations(
     const decSet = Decoration.set(
         isVAlidChunkExistAndTextExist ? validChunks : []
     );
+    const signature = JSON.stringify({
+        h: computeDocKey(docText),
+        s: typeof search === 'string' ? search : '',
+        e: segmentTempErrors.map((x) => x.payload.line).join(','),
+        n: validChunks.length,
+    });
+    if (lastDecorationSignatureByView.get(view) === signature) {
+        return;
+    }
+    lastDecorationSignatureByView.set(view, signature);
     view.dispatch({
         effects: setDecorationsEffect.of(decSet as never),
     });
