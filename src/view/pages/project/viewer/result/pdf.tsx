@@ -212,7 +212,12 @@ export const PdfResultViewer = () => {
                     slots.push({ page, wrapper, viewport, scaledViewport });
                 }
 
-                for (const { page, wrapper, viewport, scaledViewport } of slots) {
+                for (const {
+                    page,
+                    wrapper,
+                    viewport,
+                    scaledViewport,
+                } of slots) {
                     if (cancelled) {
                         container.style.visibility = '';
                         setIsPdfRendering(false);
@@ -349,7 +354,11 @@ export const PdfResultViewer = () => {
         }
 
         const idx = activeIndexRef.current;
-        if (idx < 0 || !pdfRef.current || pageElementsRef.current.length === 0) {
+        if (
+            idx < 0 ||
+            !pdfRef.current ||
+            pageElementsRef.current.length === 0
+        ) {
             return;
         }
 
@@ -364,14 +373,20 @@ export const PdfResultViewer = () => {
 
         if (prev === undefined) return;
         if (prev === activeIndex) return;
-        if (activeIndex < 0 || !pdfRef.current || pageElementsRef.current.length === 0) {
+        if (
+            activeIndex < 0 ||
+            !pdfRef.current ||
+            pageElementsRef.current.length === 0
+        ) {
             return;
         }
 
         void runScrollToSegment(activeIndex);
     }, [activeIndex, runScrollToSegment]);
     const showHelpText = !pdfUri || isPdfLoadingError;
-    const showPdfLoading = Boolean(pdfUri && !isPdfLoadingError && isPdfRendering);
+    const showPdfLoading = Boolean(
+        pdfUri && !isPdfLoadingError && isPdfRendering
+    );
     return (
         <div
             style={{
