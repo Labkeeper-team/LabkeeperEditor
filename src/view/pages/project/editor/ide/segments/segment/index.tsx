@@ -546,7 +546,14 @@ function processDecorations(
         return;
     }
     lastDecorationSignatureByView.set(view, signature);
-    view.dispatch({
-        effects: setDecorationsEffect.of(decSet as never),
-    });
+    if (!view.dom?.isConnected) {
+        return;
+    }
+    try {
+        view.dispatch({
+            effects: setDecorationsEffect.of(decSet as never),
+        });
+    } catch {
+        /* view уже размонтирован между debounce и dispatch */
+    }
 }

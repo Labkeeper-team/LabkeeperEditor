@@ -214,8 +214,8 @@ export class ProgramEditorService {
     ): Promise<void> => {
         this.observerService.onEvent(Events.EVENT_MOVE_SEGMENT);
         this.programService.moveSegment(segmentIndex, direction);
-        await this.loaderService.segmentEditorSaveProgram();
         this.ideService.onProgramUpdated();
+        await this.loaderService.segmentEditorSaveProgram();
     };
 
     segmentEditorChangeSegmentVisibility = async (

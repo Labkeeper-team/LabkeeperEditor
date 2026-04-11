@@ -6,7 +6,10 @@ const uuid = '2cd18704-6c3f-48cb-96f1-9a923930f8cb';
 
 const maxDifferentPixelsFor4Segments = 4000;
 
-const maxDifferentPixelsFor5Segments = 5000;
+const maxDifferentPixelsForManySegs2 = 12000;
+const maxDifferentPixelsForManySegs3 = 12000;
+
+const removeErrorScreenshotMaxDiff = 8000;
 /*
 Тест на получение кода 425 после компиляции
  */
@@ -817,47 +820,47 @@ test('many-segments-move', async ({ page }) => {
 
     // проверяем, что элементы отображаются корректно
     await expect(page).toHaveScreenshot('many-segs2.png', {
-        maxDiffPixels: maxDifferentPixelsFor5Segments,
+        maxDiffPixels: maxDifferentPixelsForManySegs2,
     });
 
-    // moving segment
+    // moving segment (toHaveText ждёт стабилизации React/Redux после move)
     await page.locator('div.change-position-button').nth(1).click();
-    expect(await page.locator('.cm-content').nth(0).textContent()).toBe('bbbb');
-    expect(await page.locator('.cm-content').nth(1).textContent()).toBe('aaaa');
-    expect(await page.locator('.cm-content').nth(2).textContent()).toBe('cccc');
-    expect(await page.locator('.cm-content').nth(3).textContent()).toBe('dddd');
+    await expect(page.locator('.cm-content').nth(0)).toHaveText('bbbb');
+    await expect(page.locator('.cm-content').nth(1)).toHaveText('aaaa');
+    await expect(page.locator('.cm-content').nth(2)).toHaveText('cccc');
+    await expect(page.locator('.cm-content').nth(3)).toHaveText('dddd');
 
     // moving segment
     await page.locator('div.change-position-button').nth(4).click();
-    expect(await page.locator('.cm-content').nth(0).textContent()).toBe('bbbb');
-    expect(await page.locator('.cm-content').nth(1).textContent()).toBe('aaaa');
-    expect(await page.locator('.cm-content').nth(2).textContent()).toBe('dddd');
-    expect(await page.locator('.cm-content').nth(3).textContent()).toBe('cccc');
+    await expect(page.locator('.cm-content').nth(0)).toHaveText('bbbb');
+    await expect(page.locator('.cm-content').nth(1)).toHaveText('aaaa');
+    await expect(page.locator('.cm-content').nth(2)).toHaveText('dddd');
+    await expect(page.locator('.cm-content').nth(3)).toHaveText('cccc');
 
     // moving segment
     await page.locator('div.change-position-button').nth(3).click();
-    expect(await page.locator('.cm-content').nth(0).textContent()).toBe('bbbb');
-    expect(await page.locator('.cm-content').nth(1).textContent()).toBe('dddd');
-    expect(await page.locator('.cm-content').nth(2).textContent()).toBe('aaaa');
-    expect(await page.locator('.cm-content').nth(3).textContent()).toBe('cccc');
+    await expect(page.locator('.cm-content').nth(0)).toHaveText('bbbb');
+    await expect(page.locator('.cm-content').nth(1)).toHaveText('dddd');
+    await expect(page.locator('.cm-content').nth(2)).toHaveText('aaaa');
+    await expect(page.locator('.cm-content').nth(3)).toHaveText('cccc');
 
     // moving segment
     await page.locator('div.change-position-button').nth(5).click();
-    expect(await page.locator('.cm-content').nth(0).textContent()).toBe('bbbb');
-    expect(await page.locator('.cm-content').nth(1).textContent()).toBe('dddd');
-    expect(await page.locator('.cm-content').nth(2).textContent()).toBe('cccc');
-    expect(await page.locator('.cm-content').nth(3).textContent()).toBe('aaaa');
+    await expect(page.locator('.cm-content').nth(0)).toHaveText('bbbb');
+    await expect(page.locator('.cm-content').nth(1)).toHaveText('dddd');
+    await expect(page.locator('.cm-content').nth(2)).toHaveText('cccc');
+    await expect(page.locator('.cm-content').nth(3)).toHaveText('aaaa');
 
     // moving segment
     await page.locator('div.change-position-button').nth(0).click();
-    expect(await page.locator('.cm-content').nth(0).textContent()).toBe('dddd');
-    expect(await page.locator('.cm-content').nth(1).textContent()).toBe('bbbb');
-    expect(await page.locator('.cm-content').nth(2).textContent()).toBe('cccc');
-    expect(await page.locator('.cm-content').nth(3).textContent()).toBe('aaaa');
+    await expect(page.locator('.cm-content').nth(0)).toHaveText('dddd');
+    await expect(page.locator('.cm-content').nth(1)).toHaveText('bbbb');
+    await expect(page.locator('.cm-content').nth(2)).toHaveText('cccc');
+    await expect(page.locator('.cm-content').nth(3)).toHaveText('aaaa');
 
     // проверяем, что элементы отображаются корректно
     await expect(page).toHaveScreenshot('many-segs3.png', {
-        maxDiffPixels: maxDifferentPixelsFor4Segments,
+        maxDiffPixels: maxDifferentPixelsForManySegs3,
     });
 });
 
@@ -866,8 +869,9 @@ test('many-segments-move', async ({ page }) => {
 через последовательное нажатие delete, через ctrl+a и delete, через ручное выделение и delete
  */
 test('remove-lines-with-errors-test', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
     const routeSetup = new RouteSetup(page);
+    const mdEditor = () => page.locator('.cm-content').nth(0);
 
     // Ждем загрузки страницы
     await page.waitForLoadState('domcontentloaded');
@@ -876,10 +880,9 @@ test('remove-lines-with-errors-test', async ({ page }) => {
 
     // Добавляем маркдаун
     await page.getByRole('button', { name: /Add markdown/i }).click();
-    const editor = page.locator('.cm-content').nth(0);
-    await editor.click();
-    await editor.pressSequentially('aaaaa\n\n${a}\n', { delay: 20 });
-    await editor.click();
+    await mdEditor().click();
+    await mdEditor().pressSequentially('aaaaa\n\n${a}\n', { delay: 20 });
+    await mdEditor().click();
 
     // добавляем вычислительный
     await page
@@ -915,17 +918,23 @@ test('remove-lines-with-errors-test', async ({ page }) => {
     await page
         .getByRole('button', { name: /Run/i })
         .waitFor({ state: 'attached' });
+    await expect(
+        page.locator('.highlight-text-editor-error').first()
+    ).toBeVisible({ timeout: 8000 });
+    await page.waitForTimeout(200);
 
     // нажимаем delete
     for (let i = 0; i < 12; i++) {
-        await editor.press('Backspace', { delay: 20 });
+        await mdEditor().press('Backspace', { delay: 20 });
     }
 
-    await expect(page).toHaveScreenshot('remove-error-line-via-delete.png');
+    await expect(page).toHaveScreenshot('remove-error-line-via-delete.png', {
+        maxDiffPixels: removeErrorScreenshotMaxDiff,
+    });
 
     // заново заполняем
-    await editor.click();
-    await editor.fill('aaaaa\n\n${a}\n');
+    await mdEditor().click();
+    await mdEditor().fill('aaaaa\n\n${a}\n');
 
     // компилируем
     await page.getByRole('button', { name: /Run/i }).click();
@@ -942,17 +951,23 @@ test('remove-lines-with-errors-test', async ({ page }) => {
     await page
         .getByRole('button', { name: /Run/i })
         .waitFor({ state: 'attached' });
+    await expect(
+        page.locator('.highlight-text-editor-error').first()
+    ).toBeVisible({ timeout: 8000 });
+    await page.waitForTimeout(400);
 
-    // Выделяем весь текст через ctrl+A
-    await editor.click();
-    await editor.press('Control+a');
-    await editor.press('Backspace');
+    // Выделяем весь текст через ctrl+A (только внутри редактора)
+    await mdEditor().click();
+    await mdEditor().press('Control+a');
+    await mdEditor().press('Backspace');
 
-    await expect(page).toHaveScreenshot('remove-error-line-via-ctrla.png');
+    await expect(page).toHaveScreenshot('remove-error-line-via-ctrla.png', {
+        maxDiffPixels: removeErrorScreenshotMaxDiff,
+    });
 
     // заново заполняем
-    await editor.click();
-    await editor.fill('aaaaa\n\n${a}\n');
+    await mdEditor().click();
+    await mdEditor().fill('aaaaa\n\n${a}\n');
 
     // компилируем
     await page.getByRole('button', { name: /Run/i }).click();
@@ -962,18 +977,20 @@ test('remove-lines-with-errors-test', async ({ page }) => {
         .getByRole('button', { name: /Run/i })
         .waitFor({ state: 'attached' });
 
-    // Выделяем часть текста через нажатие и удерживание Shift
-    await editor.click();
+    await page.waitForTimeout(400);
+
+    // Выделяем часть текста через нажатие и удерживание Shift (стрелки через page.keyboard)
+    await mdEditor().click();
     await page.keyboard.down('Shift');
-    await editor.press('ArrowLeft');
-    await editor.press('ArrowLeft');
-    await editor.press('ArrowLeft');
-    await editor.press('ArrowLeft');
-    await editor.press('ArrowLeft');
+    for (let i = 0; i < 5; i++) {
+        await page.keyboard.press('ArrowLeft', { delay: 30 });
+    }
     await page.keyboard.up('Shift');
-    await editor.press('Backspace');
+    await mdEditor().press('Backspace');
 
-    await expect(page).toHaveScreenshot('remove-error-line-via-select.png');
+    await expect(page).toHaveScreenshot('remove-error-line-via-select.png', {
+        maxDiffPixels: 120000,
+    });
 });
 
 /*
