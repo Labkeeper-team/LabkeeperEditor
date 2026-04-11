@@ -47,6 +47,12 @@ import { useIsDelayedSegmentIsActive } from '../../../../../../hooks/useIsDelaye
 
 const CURSOR_MAP_CAPACITY = 100;
 
+/** Стабильная ссылка: иначе @uiw/react-codemirror на каждом рендере делает StateEffect.reconfigure и мигает подсветка. */
+const SEGMENT_CODE_MIRROR_BASIC_SETUP = {
+    lineNumbers: true,
+    highlightSelectionMatches: false,
+} as const;
+
 const setDecorationsEffect = StateEffect.define();
 
 const decorationsField = StateField.define<unknown>({
@@ -291,26 +297,30 @@ export const SegmentEditor = memo(
             });
         }, [dispatch, onBlur, props.index, isActiveSegment]);
 
-        // Вставка файлов и обработка клавиш
-        const eventsDom = dom({
-            paste: async (ev: ClipboardEvent | KeyboardEvent) => {
-                if (!('clipboardData' in ev)) {
-                    return;
-                }
-                const items = (ev.clipboardData?.items ??
-                    []) as DataTransferItemList;
-                dispatch(
-                    controller.onAddedFilesToSegmentEditorRequest({
-                        items: items,
-                        segmentIndex: props.index,
-                        cursorPosition:
-                            editor?.current?.view?.state.selection.main.head ??
-                            0,
-                    })
-                );
-                ev.preventDefault();
-            },
-        });
+        // Вставка файлов — extension должна быть стабильной ссылкой, иначе extensions[] пересобирается на каждый символ → reconfigure → мигание syntax highlight
+        const eventsDom = useMemo(
+            () =>
+                dom({
+                    paste: async (ev: ClipboardEvent | KeyboardEvent) => {
+                        if (!('clipboardData' in ev)) {
+                            return;
+                        }
+                        const items = (ev.clipboardData?.items ??
+                            []) as DataTransferItemList;
+                        dispatch(
+                            controller.onAddedFilesToSegmentEditorRequest({
+                                items: items,
+                                segmentIndex: props.index,
+                                cursorPosition:
+                                    editor?.current?.view?.state.selection.main
+                                        .head ?? 0,
+                            })
+                        );
+                        ev.preventDefault();
+                    },
+                }),
+            [dispatch, props.index]
+        );
 
         // Вызов, который меняет текст и сбрасывает ошибки и декорации
         const onChange = useCallback(
@@ -385,10 +395,7 @@ export const SegmentEditor = memo(
                             },
                         }),
                     ].filter((e) => !!e)}
-                    basicSetup={{
-                        lineNumbers: true,
-                        highlightSelectionMatches: false,
-                    }}
+                    basicSetup={SEGMENT_CODE_MIRROR_BASIC_SETUP}
                 />
                 <div className="editor-rules">
                     {!projectIsReadonly && (
