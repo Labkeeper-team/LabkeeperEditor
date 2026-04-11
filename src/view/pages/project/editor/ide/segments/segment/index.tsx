@@ -6,7 +6,7 @@ import CodeMirror, {
     StateField,
     Range,
 } from '@uiw/react-codemirror';
-import { EditorSelection } from '@codemirror/state';
+import { EditorSelection, type Extension } from '@codemirror/state';
 import { langs } from '@uiw/codemirror-extensions-langs';
 import { content, dom } from '@uiw/codemirror-extensions-events';
 import { lineNumbers } from '@codemirror/view';
@@ -52,6 +52,10 @@ const SEGMENT_CODE_MIRROR_BASIC_SETUP = {
     lineNumbers: true,
     highlightSelectionMatches: false,
 } as const;
+
+const SEGMENT_CM_SPELLCHECK = EditorView.contentAttributes.of({
+    spellcheck: 'true',
+});
 
 const setDecorationsEffect = StateEffect.define();
 
@@ -322,6 +326,68 @@ export const SegmentEditor = memo(
             [dispatch, props.index]
         );
 
+        const cursorPersistenceListener = useMemo(
+            () =>
+                EditorView.updateListener.of((update) => {
+                    if (update.docChanged) {
+                        const text = update.state.doc.toString();
+                        currentDocKeyRef.current = computeDocKey(text);
+                    }
+                    if (update.selectionSet) {
+                        const head = update.state.selection.main.head;
+                        lastCursorPosRef.current = head;
+                        const key =
+                            currentDocKeyRef.current ??
+                            computeDocKey(update.state.doc.toString());
+                        cursorByDocKeyRef.current.set(key, head);
+                    }
+                }),
+            []
+        );
+
+        const languageExtension = useMemo(() => {
+            const t = segment?.type;
+            if (t === 'md') {
+                return langs.markdown();
+            }
+            if (t === 'computational') {
+                return customLanguageSupport;
+            }
+            if (t === 'latex') {
+                return [langs.tex(), latexLanguageSupport];
+            }
+            return undefined;
+        }, [segment?.type]);
+
+        const lineNumbersExtension = useMemo(
+            () =>
+                lineNumbers({
+                    formatNumber: (lineNo) =>
+                        `${props.index + 1}.${lineNo}`,
+                }),
+            [props.index]
+        );
+
+        /** Новый массив на каждом рендере → useCodeMirror делает reconfigure → мигает gutter. */
+        const codeMirrorExtensions = useMemo((): Extension[] => {
+            return [
+                SEGMENT_CM_SPELLCHECK,
+                decorationsField,
+                languageExtension,
+                eventsExt,
+                eventsDom,
+                cursorPersistenceListener,
+                EditorView.lineWrapping,
+                lineNumbersExtension,
+            ].filter((e): e is Extension => e != null);
+        }, [
+            languageExtension,
+            eventsExt,
+            eventsDom,
+            cursorPersistenceListener,
+            lineNumbersExtension,
+        ]);
+
         // Вызов, который меняет текст и сбрасывает ошибки и декорации
         const onChange = useCallback(
             async (value) => {
@@ -360,41 +426,7 @@ export const SegmentEditor = memo(
                     value={segment?.text}
                     onChange={onChange}
                     readOnly={projectIsReadonly}
-                    extensions={[
-                        EditorView.contentAttributes.of({
-                            spellcheck: 'true',
-                        }),
-                        decorationsField,
-                        segment.type === 'md'
-                            ? langs.markdown()
-                            : segment.type === 'computational'
-                              ? customLanguageSupport
-                              : segment.type === 'latex'
-                                ? [langs.tex(), latexLanguageSupport]
-                                : undefined,
-                        eventsExt,
-                        eventsDom,
-                        EditorView.updateListener.of((update) => {
-                            if (update.docChanged) {
-                                const text = update.state.doc.toString();
-                                currentDocKeyRef.current = computeDocKey(text);
-                            }
-                            if (update.selectionSet) {
-                                const head = update.state.selection.main.head;
-                                lastCursorPosRef.current = head;
-                                const key =
-                                    currentDocKeyRef.current ??
-                                    computeDocKey(update.state.doc.toString());
-                                cursorByDocKeyRef.current.set(key, head);
-                            }
-                        }),
-                        EditorView.lineWrapping,
-                        lineNumbers({
-                            formatNumber: (lineNo) => {
-                                return `${props.index + 1 || '' + 1}.${lineNo}`;
-                            },
-                        }),
-                    ].filter((e) => !!e)}
+                    extensions={codeMirrorExtensions}
                     basicSetup={SEGMENT_CODE_MIRROR_BASIC_SETUP}
                 />
                 <div className="editor-rules">
