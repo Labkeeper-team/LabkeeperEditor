@@ -25,6 +25,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { CompileErrorResult } from '../../../../../../../model/domain';
 import { customLanguageSupport } from './customLanguage';
 import { latexLanguageSupport } from './latexLanguage';
+import { getMarkdownSpellcheckLint } from './segmentSpellcheck';
 
 import './style.scss';
 
@@ -55,6 +56,11 @@ const SEGMENT_CODE_MIRROR_BASIC_SETUP = {
 
 const SEGMENT_CM_SPELLCHECK = EditorView.contentAttributes.of({
     spellcheck: 'true',
+});
+
+/** Для md Hunspell через @codemirror/lint; нативный spellcheck отключаем, чтобы не дублировать подчёркивания. */
+const SEGMENT_CM_SPELLCHECK_OFF = EditorView.contentAttributes.of({
+    spellcheck: 'false',
 });
 
 const setDecorationsEffect = StateEffect.define();
@@ -368,10 +374,24 @@ export const SegmentEditor = memo(
             [props.index]
         );
 
+        const contentAttrsExtension = useMemo(
+            () =>
+                segment?.type === 'md'
+                    ? SEGMENT_CM_SPELLCHECK_OFF
+                    : SEGMENT_CM_SPELLCHECK,
+            [segment?.type]
+        );
+
+        const markdownSpellLint = useMemo(
+            () =>
+                segment?.type === 'md' ? getMarkdownSpellcheckLint() : null,
+            [segment?.type]
+        );
+
         /** Новый массив на каждом рендере → useCodeMirror делает reconfigure → мигает gutter. */
         const codeMirrorExtensions = useMemo((): Extension[] => {
             return [
-                SEGMENT_CM_SPELLCHECK,
+                contentAttrsExtension,
                 decorationsField,
                 languageExtension,
                 eventsExt,
@@ -379,13 +399,16 @@ export const SegmentEditor = memo(
                 cursorPersistenceListener,
                 EditorView.lineWrapping,
                 lineNumbersExtension,
+                markdownSpellLint,
             ].filter((e): e is Extension => e != null);
         }, [
+            contentAttrsExtension,
             languageExtension,
             eventsExt,
             eventsDom,
             cursorPersistenceListener,
             lineNumbersExtension,
+            markdownSpellLint,
         ]);
 
         // Вызов, который меняет текст и сбрасывает ошибки и декорации
