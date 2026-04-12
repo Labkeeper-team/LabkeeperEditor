@@ -180,6 +180,7 @@ S
   "mode": "markdown",
   "passwordSetRequest": "unknown",
   "pdfUpdated": 0,
+  "pendingSegmentEditorCursor": null,
   "previousActiveSegmentIndex": -1,
   "project": undefined,
   "projectIsReadonly": false,
