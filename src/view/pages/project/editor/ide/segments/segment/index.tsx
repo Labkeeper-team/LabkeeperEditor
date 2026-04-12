@@ -9,7 +9,7 @@ import CodeMirror, {
 import { EditorSelection, type Extension } from '@codemirror/state';
 import { langs } from '@uiw/codemirror-extensions-langs';
 import { content, dom } from '@uiw/codemirror-extensions-events';
-import { lineNumbers } from '@codemirror/view';
+import { lineNumbers, type ViewUpdate } from '@codemirror/view';
 import {
     createRef,
     LegacyRef,
@@ -480,15 +480,17 @@ export const SegmentEditor = memo(
         // несколько задач со старым segmentText — Redux отстаёт от CodeMirror, useCodeMirror
         // подставляет устаревший value и перезаписывает документ → курсор уезжает (часто в 0).
         const onChange = useCallback(
-            (value: string) => {
+            (value: string, update: ViewUpdate) => {
                 editor?.current?.view?.dispatch({
                     effects: setDecorationsEffect.of(Decoration.none as never),
                 });
                 setTempSegmentErrors([]);
+                const cursorHead = update.state.selection.main.head;
                 dispatch(
                     controller.onSegmentTextChangedRequest({
                         segmentIndex: props.index,
                         segmentText: value,
+                        cursorHead,
                     })
                 );
             },

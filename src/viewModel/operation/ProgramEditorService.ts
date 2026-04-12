@@ -136,9 +136,13 @@ export class ProgramEditorService {
                         const segmentText =
                             thisCopy.programService.getCurrentProgram()
                                 ?.segments[segmentIndex]?.text;
+                        const before = segmentText.slice(0, cursorPosition);
+                        const inserted = `\n${itemToInsert}\n`;
+                        const composed = `${before}${inserted}${segmentText.slice(cursorPosition)}`;
                         await thisCopy.onSegmentTextEdited(
                             segmentIndex,
-                            `${segmentText.slice(0, cursorPosition)}\n${itemToInsert}\n${segmentText.slice(cursorPosition)}`
+                            composed,
+                            before.length + inserted.length
                         );
                     } else if (res.code === 413) {
                         thisCopy.repository.ideViewModelRepository.setGetFilesRequestState(
@@ -304,7 +308,11 @@ export class ProgramEditorService {
         this.ideService.onProgramUpdated();
     };
 
-    onSegmentTextEdited = async (segmentIndex: number, segmentText: string) => {
+    onSegmentTextEdited = async (
+        segmentIndex: number,
+        segmentText: string,
+        cursorHead?: number
+    ) => {
         this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(
             segmentIndex
         );
@@ -313,7 +321,8 @@ export class ProgramEditorService {
             this.ideService.calculateFilesToDelete(programBefore);
         this.programService.changeSegmentTextByPositionIndex(
             segmentIndex,
-            segmentText
+            segmentText,
+            cursorHead
         );
         const programAfter = this.programService.getCurrentProgram();
         const filesAfter = this.ideService.calculateFilesToDelete(programAfter);

@@ -338,14 +338,18 @@ export class Controller {
         async ({
             segmentIndex,
             segmentText,
+            cursorHead,
         }: {
             segmentIndex: number;
             segmentText: string;
+            /** Позиция курсора в segmentText (для корректного undo после больших вставок). */
+            cursorHead?: number;
         }) => {
             this.wrapper('onSegmentTextChanged', () =>
                 this.programEditorService.onSegmentTextEdited(
                     segmentIndex,
-                    segmentText
+                    segmentText,
+                    cursorHead
                 )
             );
         }

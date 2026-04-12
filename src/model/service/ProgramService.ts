@@ -17,6 +17,48 @@ export type UndoRedoCursorHint = {
     cursorOffset: number;
 };
 
+/**
+ * После undo документ = oldVal. headInNew — позиция курсора в newVal до отката
+ * (одна правка между строками: общий префикс + общий суффикс).
+ */
+function mapCursorFromNewToOldAfterUndo(
+    oldVal: string,
+    newVal: string,
+    headInNew: number
+): number {
+    const oldLen = oldVal.length;
+    const newLen = newVal.length;
+    const head = Math.max(0, Math.min(headInNew, newLen));
+
+    let i = 0;
+    while (
+        i < oldLen &&
+        i < newLen &&
+        oldVal.charCodeAt(i) === newVal.charCodeAt(i)
+    ) {
+        i++;
+    }
+    let j = 0;
+    while (
+        j < oldLen - i &&
+        j < newLen - i &&
+        oldVal.charCodeAt(oldLen - 1 - j) === newVal.charCodeAt(newLen - 1 - j)
+    ) {
+        j++;
+    }
+
+    const oldMidLen = oldLen - i - j;
+    const suffixStartNew = newLen - j;
+
+    if (head <= i) {
+        return Math.min(head, oldLen);
+    }
+    if (head >= suffixStartNew) {
+        return Math.min(i + oldMidLen + (head - suffixStartNew), oldLen);
+    }
+    return Math.min(i + oldMidLen, oldLen);
+}
+
 export class ProgramService {
     programRepository: ProgramRepository;
 
@@ -163,7 +205,14 @@ export class ProgramService {
         return diff;
     }
 
-    changeSegmentTextByPositionIndex = (index: number, text: string) => {
+    changeSegmentTextByPositionIndex = (
+        index: number,
+        text: string,
+        cursorHead?: number
+    ) => {
+        const clampHead = (s: string, h?: number) =>
+            h === undefined ? s.length : Math.max(0, Math.min(h, s.length));
+
         const last: ProgramChangeAction | undefined =
             this.programRepository.history[
                 this.programRepository.history.length - 1
@@ -176,7 +225,13 @@ export class ProgramService {
             if (this.programRepository.program.segments[index].text === text) {
                 return;
             }
-            this.applyChange(new SegmentTextChangedAction(index, text));
+            this.applyChange(
+                new SegmentTextChangedAction(
+                    index,
+                    text,
+                    clampHead(text, cursorHead)
+                )
+            );
         } else {
             const lastTextChangeAction = last as SegmentTextChangedAction;
             if (lastTextChangeAction.oldValue === undefined) {
@@ -187,10 +242,14 @@ export class ProgramService {
                 this.getLineDiff(lastTextChangeAction.oldValue, text) > 1
             ) {
                 this.gap();
-                this.changeSegmentTextByPositionIndex(index, text);
+                this.changeSegmentTextByPositionIndex(index, text, cursorHead);
                 return;
             }
             lastTextChangeAction.newValue = text;
+            lastTextChangeAction.cursorHeadAfterEdit = clampHead(
+                text,
+                cursorHead
+            );
             this.programRepository.program.segments[index].text = text;
             if (
                 lastTextChangeAction.oldValue === lastTextChangeAction.newValue
@@ -217,7 +276,11 @@ export class ProgramService {
                     if (restored !== undefined) {
                         hint = {
                             segmentIndex: last.segmentIndex,
-                            cursorOffset: restored.length,
+                            cursorOffset: mapCursorFromNewToOldAfterUndo(
+                                restored,
+                                last.newValue,
+                                last.cursorHeadAfterEdit
+                            ),
                         };
                     }
                 }
@@ -253,7 +316,7 @@ export class ProgramService {
                 if (redo instanceof SegmentTextChangedAction) {
                     hint = {
                         segmentIndex: redo.segmentIndex,
-                        cursorOffset: redo.newValue.length,
+                        cursorOffset: redo.cursorHeadAfterEdit,
                     };
                 }
                 break;
@@ -403,10 +466,20 @@ class SegmentTextChangedAction implements ProgramChangeAction {
     segmentIndex: number;
     newValue: string;
     oldValue?: string;
+    /** Голова курсора в newValue после последнего изменения (для undo/redo в IDE). */
+    cursorHeadAfterEdit: number;
 
-    constructor(segmentIndex: number, newValue: string) {
+    constructor(
+        segmentIndex: number,
+        newValue: string,
+        cursorHeadAfterEdit?: number
+    ) {
         this.segmentIndex = segmentIndex;
         this.newValue = newValue;
+        this.cursorHeadAfterEdit =
+            cursorHeadAfterEdit === undefined
+                ? newValue.length
+                : Math.max(0, Math.min(cursorHeadAfterEdit, newValue.length));
     }
 
     apply = (program: Program) => {
