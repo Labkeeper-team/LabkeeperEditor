@@ -128,6 +128,14 @@ export const SegmentEditor = memo(
         const pendingSegmentEditorCursor = useSelector(
             (state: StorageState) => state.ide.pendingSegmentEditorCursor
         );
+        const pendingIdeCursorRef = useRef(pendingSegmentEditorCursor);
+        pendingIdeCursorRef.current = pendingSegmentEditorCursor;
+        const segmentTextForPendingRef = useRef(segment?.text);
+        segmentTextForPendingRef.current = segment?.text;
+        const segmentIdxForPendingRef = useRef(props.index);
+        segmentIdxForPendingRef.current = props.index;
+        const dispatchForPendingRef = useRef(dispatch);
+        dispatchForPendingRef.current = dispatch;
         const compileErrors = useSelector(
             (state: StorageState) => state.project.compileErrorResult?.errors
         );
@@ -285,59 +293,6 @@ export const SegmentEditor = memo(
             });
         }, [segment?.text]);
 
-        useEffect(() => {
-            const pending = pendingSegmentEditorCursor;
-            if (!pending || pending.segmentIndex !== props.index || !isLoaded) {
-                return;
-            }
-            let cancelled = false;
-            let attempts = 0;
-            const maxAttempts = 80;
-            const tryApply = () => {
-                if (cancelled) {
-                    return;
-                }
-                if (attempts++ > maxAttempts) {
-                    dispatch(setPendingSegmentEditorCursor(null));
-                    return;
-                }
-                const view = editor?.current?.view;
-                if (!view || !segment) {
-                    requestAnimationFrame(tryApply);
-                    return;
-                }
-                if (view.state.doc.toString() !== segment.text) {
-                    requestAnimationFrame(tryApply);
-                    return;
-                }
-                const clamped = Math.max(
-                    0,
-                    Math.min(pending.offset, view.state.doc.length)
-                );
-                ref.current?.scrollIntoView({
-                    block: 'nearest',
-                    inline: 'nearest',
-                    behavior: 'auto',
-                });
-                view.dispatch({
-                    selection: EditorSelection.cursor(clamped),
-                });
-                view.focus();
-                dispatch(setPendingSegmentEditorCursor(null));
-            };
-            requestAnimationFrame(tryApply);
-            return () => {
-                cancelled = true;
-            };
-        }, [
-            pendingSegmentEditorCursor,
-            props.index,
-            segment?.text,
-            isLoaded,
-            dispatch,
-            segment,
-        ]);
-
         useScrollableToActive(ref, 'segments-container', props.index);
 
         /*
@@ -395,6 +350,50 @@ export const SegmentEditor = memo(
                     },
                 }),
             [dispatch, props.index]
+        );
+
+        /** Курсор после undo/redo: сразу в той же транзакции, что и подстановка value (без rAF — надёжно на длинных документах). */
+        const pendingUndoRedoCursorListener = useMemo(
+            () =>
+                EditorView.updateListener.of((update) => {
+                    if (!update.docChanged) {
+                        return;
+                    }
+                    const pending = pendingIdeCursorRef.current;
+                    if (
+                        !pending ||
+                        pending.segmentIndex !== segmentIdxForPendingRef.current
+                    ) {
+                        return;
+                    }
+                    const expected = segmentTextForPendingRef.current ?? '';
+                    const doc = update.state.doc;
+                    if (doc.length !== expected.length) {
+                        return;
+                    }
+                    if (doc.toString() !== expected) {
+                        return;
+                    }
+                    const clamped = Math.max(
+                        0,
+                        Math.min(pending.offset, doc.length)
+                    );
+                    update.view.dispatch({
+                        selection: EditorSelection.cursor(clamped),
+                    });
+                    update.view.dom.scrollIntoView({
+                        block: 'nearest',
+                        inline: 'nearest',
+                        behavior: 'auto',
+                    });
+                    update.view.focus();
+                    queueMicrotask(() => {
+                        dispatchForPendingRef.current(
+                            setPendingSegmentEditorCursor(null)
+                        );
+                    });
+                }),
+            []
         );
 
         const cursorPersistenceListener = useMemo(
@@ -459,6 +458,7 @@ export const SegmentEditor = memo(
                 languageExtension,
                 eventsExt,
                 eventsDom,
+                pendingUndoRedoCursorListener,
                 cursorPersistenceListener,
                 EditorView.lineWrapping,
                 lineNumbersExtension,
@@ -469,6 +469,7 @@ export const SegmentEditor = memo(
             languageExtension,
             eventsExt,
             eventsDom,
+            pendingUndoRedoCursorListener,
             cursorPersistenceListener,
             lineNumbersExtension,
             markdownSpellLint,
