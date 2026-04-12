@@ -461,23 +461,24 @@ export const SegmentEditor = memo(
             markdownSpellLint,
         ]);
 
-        // Вызов, который меняет текст и сбрасывает ошибки и декорации
+        // Вызов, который меняет текст и сбрасывает ошибки и декорации.
+        // Нельзя откладывать dispatch (setTimeout): при зажатой клавише в очередь попадают
+        // несколько задач со старым segmentText — Redux отстаёт от CodeMirror, useCodeMirror
+        // подставляет устаревший value и перезаписывает документ → курсор уезжает (часто в 0).
         const onChange = useCallback(
-            async (value) => {
+            (value: string) => {
                 editor?.current?.view?.dispatch({
                     effects: setDecorationsEffect.of(Decoration.none as never),
                 });
                 setTempSegmentErrors([]);
-                setTimeout(() => {
-                    dispatch(
-                        controller.onSegmentTextChangedRequest({
-                            segmentIndex: props.index,
-                            segmentText: value,
-                        })
-                    );
-                });
+                dispatch(
+                    controller.onSegmentTextChangedRequest({
+                        segmentIndex: props.index,
+                        segmentText: value,
+                    })
+                );
             },
-            [setTempSegmentErrors, props.index, dispatch]
+            [props.index, dispatch]
         );
 
         // Первую прорисовку пропускаем
