@@ -4,7 +4,10 @@ import {
     ObserverService,
 } from '../../model/service/ObserverService.ts';
 import { Rpi } from '../../model/rpi';
-import { ProgramService } from '../../model/service/ProgramService.ts';
+import {
+    ProgramService,
+    type UndoRedoCursorHint,
+} from '../../model/service/ProgramService.ts';
 import { LoaderService } from '../domain/LoaderService.ts';
 import { IdeService } from '../domain/IdeService.ts';
 import { FileService } from '../domain/FileService.ts';
@@ -189,20 +192,36 @@ export class ProgramEditorService {
         }
     };
 
+    /**
+     * Pending курсор ставим после коммита с новым текстом: @uiw/react-codemirror
+     * подставляет value в useEffect ребёнка; если pending в том же тике, документ
+     * ещё старый или эффект отменяется сменой segment. Двойной rAF — после layout/paint.
+     */
+    private schedulePendingSegmentCursor = (hint: UndoRedoCursorHint) => {
+        const h = hint;
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                this.repository.ideViewModelRepository.setPendingSegmentEditorCursor(
+                    {
+                        segmentIndex: h.segmentIndex,
+                        offset: h.cursorOffset,
+                    }
+                );
+            });
+        });
+    };
+
     onPrevVersionButtonClicked = () => {
         const cursorHint = this.programService.undo();
         if (cursorHint) {
             this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(
                 cursorHint.segmentIndex
             );
-            this.repository.ideViewModelRepository.setPendingSegmentEditorCursor(
-                {
-                    segmentIndex: cursorHint.segmentIndex,
-                    offset: cursorHint.cursorOffset,
-                }
-            );
         }
         this.ideService.onProgramUpdated();
+        if (cursorHint) {
+            this.schedulePendingSegmentCursor(cursorHint);
+        }
     };
 
     onNextVersionButtonClicked = () => {
@@ -211,14 +230,11 @@ export class ProgramEditorService {
             this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(
                 cursorHint.segmentIndex
             );
-            this.repository.ideViewModelRepository.setPendingSegmentEditorCursor(
-                {
-                    segmentIndex: cursorHint.segmentIndex,
-                    offset: cursorHint.cursorOffset,
-                }
-            );
         }
         this.ideService.onProgramUpdated();
+        if (cursorHint) {
+            this.schedulePendingSegmentCursor(cursorHint);
+        }
     };
 
     onRoundStrategySet = (strategy: ProgramRoundStrategy) => {

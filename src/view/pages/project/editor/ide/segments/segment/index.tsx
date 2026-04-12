@@ -53,6 +53,9 @@ const CURSOR_MAP_CAPACITY = 100;
 const SEGMENT_CODE_MIRROR_BASIC_SETUP = {
     lineNumbers: true,
     highlightSelectionMatches: false,
+    /** Текст и undo ведёт ProgramService (кнопка и Ctrl+Z в шапке). Встроенная history CM + historyKeymap дают второй Ctrl+Z и откатывают лишние правки. */
+    history: false,
+    historyKeymap: false,
 } as const;
 
 const SEGMENT_CM_SPELLCHECK = EditorView.contentAttributes.of({
@@ -117,6 +120,11 @@ export const SegmentEditor = memo(
         const search = useSelector(useSearch);
         const [debouncedSearch, setDebouncedSearch] = useState(search);
         const isActiveSegment = useIsDelayedSegmentIsActive(props.index);
+        /** Без задержки 10 ms: иначе после undo/redo в другой сегмент считается «неактивным» и ломается фокус. */
+        const isImmediatelyActiveSegment = useSelector(
+            (state: StorageState) =>
+                state.ide.activeSegmentIndex === props.index
+        );
         const pendingSegmentEditorCursor = useSelector(
             (state: StorageState) => state.ide.pendingSegmentEditorCursor
         );
@@ -229,7 +237,7 @@ export const SegmentEditor = memo(
         }, [editor?.current?.view]);
         // Если сегмент перестал быть активным — снимаем выделение в редакторе
         useEffect(() => {
-            if (isActiveSegment) {
+            if (isActiveSegment || isImmediatelyActiveSegment) {
                 return;
             }
             const view = editor?.current?.view;
@@ -240,7 +248,7 @@ export const SegmentEditor = memo(
             view.dispatch({
                 selection: EditorSelection.cursor(head),
             });
-        }, [isActiveSegment]);
+        }, [isActiveSegment, isImmediatelyActiveSegment]);
         // При изменении текста сегмента создаем таймер
         useEffect(() => {
             if (timeout) {
@@ -284,7 +292,7 @@ export const SegmentEditor = memo(
             }
             let cancelled = false;
             let attempts = 0;
-            const maxAttempts = 30;
+            const maxAttempts = 80;
             const tryApply = () => {
                 if (cancelled) {
                     return;
@@ -306,6 +314,11 @@ export const SegmentEditor = memo(
                     0,
                     Math.min(pending.offset, view.state.doc.length)
                 );
+                ref.current?.scrollIntoView({
+                    block: 'nearest',
+                    inline: 'nearest',
+                    behavior: 'auto',
+                });
                 view.dispatch({
                     selection: EditorSelection.cursor(clamped),
                 });
