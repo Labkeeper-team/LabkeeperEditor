@@ -1,9 +1,10 @@
 version: '3.8'
+name: 'labkeeper-local-frontend'
 
 services:
   nginx:
     image: nginx:alpine
-    container_name: nginx-proxy
+    container_name: labkeeper-backend-proxy
     ports:
       - "80:80"
     volumes:
