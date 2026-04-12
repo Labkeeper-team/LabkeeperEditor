@@ -89,6 +89,7 @@ MockViewModelRepositoryState {
   "mode": "markdown",
   "passwordSetRequest": "unknown",
   "pdfUpdated": 0,
+  "pendingSegmentEditorCursor": null,
   "previousActiveSegmentIndex": 0,
   "project": undefined,
   "projectIsReadonly": false,
