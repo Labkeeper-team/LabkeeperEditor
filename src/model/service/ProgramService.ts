@@ -12,6 +12,11 @@ import {
 
 const historyLimit = 50;
 
+export type UndoRedoCursorHint = {
+    segmentIndex: number;
+    cursorOffset: number;
+};
+
 export class ProgramService {
     programRepository: ProgramRepository;
 
@@ -196,7 +201,8 @@ export class ProgramService {
         }
     };
 
-    undo = () => {
+    undo = (): UndoRedoCursorHint | undefined => {
+        let hint: UndoRedoCursorHint | undefined;
         while (true) {
             const last = this.programRepository.history.pop();
             if (!last) {
@@ -206,9 +212,19 @@ export class ProgramService {
             this.programRepository.redoHistory.push(last);
 
             if (!(last instanceof GapAction)) {
+                if (last instanceof SegmentTextChangedAction) {
+                    const restored = last.oldValue;
+                    if (restored !== undefined) {
+                        hint = {
+                            segmentIndex: last.segmentIndex,
+                            cursorOffset: restored.length,
+                        };
+                    }
+                }
                 break;
             }
         }
+        return hint;
     };
 
     canUndo = () => {
@@ -220,7 +236,8 @@ export class ProgramService {
         );
     };
 
-    redo = () => {
+    redo = (): UndoRedoCursorHint | undefined => {
+        let hint: UndoRedoCursorHint | undefined;
         while (true) {
             const redo = this.programRepository.redoHistory.pop();
             if (!redo) {
@@ -233,9 +250,16 @@ export class ProgramService {
             }
 
             if (!(redo instanceof GapAction)) {
+                if (redo instanceof SegmentTextChangedAction) {
+                    hint = {
+                        segmentIndex: redo.segmentIndex,
+                        cursorOffset: redo.newValue.length,
+                    };
+                }
                 break;
             }
         }
+        return hint;
     };
 
     canRedo = () => {

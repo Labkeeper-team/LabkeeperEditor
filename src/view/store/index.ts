@@ -33,6 +33,7 @@ import {
     setGetProjectRequestState,
     setGetProjectsRequestState,
     setSaveProjectRequestState,
+    setPendingSegmentEditorCursor,
     setPreviousActiveSegmentIndex,
     setRedoEnabled,
     setSearch,
@@ -164,6 +165,8 @@ export const createViewModelStateFromStore = (
             search: () => store.getState().ide.search,
             previousActiveSegmentIndex: () =>
                 store.getState().ide.previousActiveSegmentIndex,
+            pendingSegmentEditorCursor: () =>
+                store.getState().ide.pendingSegmentEditorCursor,
             redoEnabled: () => store.getState().ide.redoEnabled,
             undoEnabled: () => store.getState().ide.undoEnabled,
             cloneRequestState: () => store.getState().ide.cloneRequestState,
@@ -199,6 +202,8 @@ export const createViewModelStateFromStore = (
                 store.dispatch(setActiveSegmentIndex(index)),
             setPreviousActiveSegmentIndex: (index: number) =>
                 store.dispatch(setPreviousActiveSegmentIndex(index)),
+            setPendingSegmentEditorCursor: (value) =>
+                store.dispatch(setPendingSegmentEditorCursor(value)),
         },
         persistenceViewModelRepository: {
             instructionExpanded: () =>

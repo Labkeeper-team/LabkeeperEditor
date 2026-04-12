@@ -190,12 +190,34 @@ export class ProgramEditorService {
     };
 
     onPrevVersionButtonClicked = () => {
-        this.programService.undo();
+        const cursorHint = this.programService.undo();
+        if (cursorHint) {
+            this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(
+                cursorHint.segmentIndex
+            );
+            this.repository.ideViewModelRepository.setPendingSegmentEditorCursor(
+                {
+                    segmentIndex: cursorHint.segmentIndex,
+                    offset: cursorHint.cursorOffset,
+                }
+            );
+        }
         this.ideService.onProgramUpdated();
     };
 
     onNextVersionButtonClicked = () => {
-        this.programService.redo();
+        const cursorHint = this.programService.redo();
+        if (cursorHint) {
+            this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(
+                cursorHint.segmentIndex
+            );
+            this.repository.ideViewModelRepository.setPendingSegmentEditorCursor(
+                {
+                    segmentIndex: cursorHint.segmentIndex,
+                    offset: cursorHint.cursorOffset,
+                }
+            );
+        }
         this.ideService.onProgramUpdated();
     };
 

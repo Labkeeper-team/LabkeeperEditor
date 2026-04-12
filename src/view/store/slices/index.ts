@@ -20,6 +20,7 @@ import {
     GetProjectsRequestState,
     LoginRequestState,
     PasswordRequestState,
+    PendingSegmentEditorCursor,
     ProjectPromptRequestState,
     SaveProjectRequestState,
 } from '../../../viewModel/repository';
@@ -75,6 +76,7 @@ interface IdeState {
     search?: string;
     activeSegmentIndex: number;
     previousActiveSegmentIndex: number;
+    pendingSegmentEditorCursor: PendingSegmentEditorCursor | null;
     undoEnabled: boolean;
     redoEnabled: boolean;
     cloneRequestState: CloneRequestState;
@@ -109,6 +111,7 @@ export const ideInitialState: IdeState = {
     search: undefined,
     activeSegmentIndex: -1,
     previousActiveSegmentIndex: -1,
+    pendingSegmentEditorCursor: null,
     undoEnabled: false,
     redoEnabled: false,
     cloneRequestState: 'unknown',

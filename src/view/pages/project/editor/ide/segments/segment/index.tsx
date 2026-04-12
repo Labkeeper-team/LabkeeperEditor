@@ -33,6 +33,7 @@ import { Typography } from '../../../../../../components/typography';
 import { DropdownMenu } from '../../../../../../components/dropdownMenu';
 import { ArrowUp } from '../../../../../../icons';
 import { AppDispatch, StorageState } from '../../../../../../store';
+import { setPendingSegmentEditorCursor } from '../../../../../../store/slices/ide';
 import {
     useIsProjectReadonly,
     useSearch,
@@ -116,6 +117,9 @@ export const SegmentEditor = memo(
         const search = useSelector(useSearch);
         const [debouncedSearch, setDebouncedSearch] = useState(search);
         const isActiveSegment = useIsDelayedSegmentIsActive(props.index);
+        const pendingSegmentEditorCursor = useSelector(
+            (state: StorageState) => state.ide.pendingSegmentEditorCursor
+        );
         const compileErrors = useSelector(
             (state: StorageState) => state.project.compileErrorResult?.errors
         );
@@ -272,6 +276,58 @@ export const SegmentEditor = memo(
                 selection: EditorSelection.cursor(clamped),
             });
         }, [segment?.text]);
+
+        useEffect(() => {
+            const pending = pendingSegmentEditorCursor;
+            if (
+                !pending ||
+                pending.segmentIndex !== props.index ||
+                !isLoaded
+            ) {
+                return;
+            }
+            let cancelled = false;
+            let attempts = 0;
+            const maxAttempts = 30;
+            const tryApply = () => {
+                if (cancelled) {
+                    return;
+                }
+                if (attempts++ > maxAttempts) {
+                    dispatch(setPendingSegmentEditorCursor(null));
+                    return;
+                }
+                const view = editor?.current?.view;
+                if (!view || !segment) {
+                    requestAnimationFrame(tryApply);
+                    return;
+                }
+                if (view.state.doc.toString() !== segment.text) {
+                    requestAnimationFrame(tryApply);
+                    return;
+                }
+                const clamped = Math.max(
+                    0,
+                    Math.min(pending.offset, view.state.doc.length)
+                );
+                view.dispatch({
+                    selection: EditorSelection.cursor(clamped),
+                });
+                view.focus();
+                dispatch(setPendingSegmentEditorCursor(null));
+            };
+            requestAnimationFrame(tryApply);
+            return () => {
+                cancelled = true;
+            };
+        }, [
+            pendingSegmentEditorCursor,
+            props.index,
+            segment?.text,
+            isLoaded,
+            dispatch,
+            segment,
+        ]);
 
         useScrollableToActive(ref, 'segments-container', props.index);
 
