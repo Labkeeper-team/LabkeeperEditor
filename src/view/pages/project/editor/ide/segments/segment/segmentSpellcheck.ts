@@ -14,10 +14,7 @@ type NSpell = {
     correct: (word: string) => boolean;
 };
 
-const nspell = nspellFactory as unknown as (
-    aff: string,
-    dic: string
-) => NSpell;
+const nspell = nspellFactory as unknown as (aff: string, dic: string) => NSpell;
 
 const latinWordRe = /[A-Za-z]+(?:'[A-Za-z]+)?/g;
 const cyrillicWordRe = /[\u0400-\u04FFЁё]+(?:-[\u0400-\u04FFЁё]+)*/g;

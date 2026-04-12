@@ -279,11 +279,7 @@ export const SegmentEditor = memo(
 
         useEffect(() => {
             const pending = pendingSegmentEditorCursor;
-            if (
-                !pending ||
-                pending.segmentIndex !== props.index ||
-                !isLoaded
-            ) {
+            if (!pending || pending.segmentIndex !== props.index || !isLoaded) {
                 return;
             }
             let cancelled = false;
@@ -424,8 +420,7 @@ export const SegmentEditor = memo(
         const lineNumbersExtension = useMemo(
             () =>
                 lineNumbers({
-                    formatNumber: (lineNo) =>
-                        `${props.index + 1}.${lineNo}`,
+                    formatNumber: (lineNo) => `${props.index + 1}.${lineNo}`,
                 }),
             [props.index]
         );
@@ -439,8 +434,7 @@ export const SegmentEditor = memo(
         );
 
         const markdownSpellLint = useMemo(
-            () =>
-                segment?.type === 'md' ? getMarkdownSpellcheckLint() : null,
+            () => (segment?.type === 'md' ? getMarkdownSpellcheckLint() : null),
             [segment?.type]
         );
 
