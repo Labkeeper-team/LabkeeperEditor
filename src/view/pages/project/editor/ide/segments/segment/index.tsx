@@ -26,6 +26,7 @@ import { CompileErrorResult } from '../../../../../../../model/domain';
 import { customLanguageSupport } from './customLanguage';
 import { latexLanguageSupport } from './latexLanguage';
 import { getMarkdownSpellcheckLint } from './segmentSpellcheck';
+import { segmentEditorSelectionGutterFix } from './segmentEditorSelectionGutterFix';
 
 import './style.scss';
 
@@ -450,6 +451,12 @@ export const SegmentEditor = memo(
             [segment?.type]
         );
 
+        /** Стабильная ссылка: обход бага CM6 — padding первой строки обрезает drawSelection на остальных. */
+        const segmentSelectionGutterFix = useMemo(
+            () => segmentEditorSelectionGutterFix(),
+            []
+        );
+
         /** Новый массив на каждом рендере → useCodeMirror делает reconfigure → мигает gutter. */
         const codeMirrorExtensions = useMemo((): Extension[] => {
             return [
@@ -463,6 +470,7 @@ export const SegmentEditor = memo(
                 EditorView.lineWrapping,
                 lineNumbersExtension,
                 markdownSpellLint,
+                segmentSelectionGutterFix,
             ].filter((e): e is Extension => e != null);
         }, [
             contentAttrsExtension,
@@ -473,6 +481,7 @@ export const SegmentEditor = memo(
             cursorPersistenceListener,
             lineNumbersExtension,
             markdownSpellLint,
+            segmentSelectionGutterFix,
         ]);
 
         // Вызов, который меняет текст и сбрасывает ошибки и декорации.

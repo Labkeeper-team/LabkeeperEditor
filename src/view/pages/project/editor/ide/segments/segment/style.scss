@@ -1,5 +1,15 @@
 @use '../../../../../../styles/colors' as *;
 
+/**
+ * Справа под плашку `.editor-rules` только на первой строке; остальные — на всю ширину.
+ * Число должно совпадать с `SEGMENT_EDITOR_RULES_RIGHT_GUTTER_PX` в `segmentEditorSelectionGutterFix.ts`
+ * (обход бага CM6: drawSelection берёт padding только у первой `.cm-line` для всего выделения).
+ */
+$segment-editor-rules-right-gutter: 160px;
+
+.cm-tooltip-below {
+    display: none;
+}
 .segment-editor-container {
     position: relative;
     border: 1px solid $gray-40;
@@ -17,9 +27,6 @@
     .full-width-checkbox {
         width: 100%;
     }
-    .dropdown-content-contanier-additional {
-        // padding: 10px 12px;
-    }
     /* Панель линта (если подключена) остаётся видимой; остальные панели CM скрыты */
     .cm-panels:not(:has(.cm-panel-lint)) {
         display: none;
@@ -31,10 +38,16 @@
             width: 0px;
         }
     }
-    /* Отступ справа под плашку .editor-rules; без max-width на строках — иначе обрезается выделение (Ctrl+A). */
+    /* Отступ только у первой `.cm-line`, чтобы 2+ строки шли на полную ширину под плашкой. */
     .cm-content {
-        padding-right: 160px;
         box-sizing: border-box;
+
+        > .cm-line:first-of-type {
+            padding-right: $segment-editor-rules-right-gutter;
+        }
+        > .cm-line ~ .cm-line {
+            padding-right: 0;
+        }
     }
     .highlight-text-editor {
         background: yellow;
