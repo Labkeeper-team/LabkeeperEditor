@@ -208,6 +208,9 @@ export class ProgramEditorService {
                     offset: cursorHint.cursorOffset,
                 }
             );
+            // Страховка: если за 2 rAF-кадра pending не был применён слушателем CM
+            // (например, CM не получил docChanged), сбрасываем его принудительно.
+            this.scheduleStaleHintClear();
         }
     };
 
@@ -226,7 +229,23 @@ export class ProgramEditorService {
                     offset: cursorHint.cursorOffset,
                 }
             );
+            this.scheduleStaleHintClear();
         }
+    };
+
+    /** Сбрасывает pendingSegmentEditorCursor через 2 rAF-кадра, если CM-слушатель не успел его применить. */
+    private scheduleStaleHintClear = () => {
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                const still =
+                    this.repository.ideViewModelRepository.pendingSegmentEditorCursor();
+                if (still) {
+                    this.repository.ideViewModelRepository.setPendingSegmentEditorCursor(
+                        null
+                    );
+                }
+            });
+        });
     };
 
     onRoundStrategySet = (strategy: ProgramRoundStrategy) => {

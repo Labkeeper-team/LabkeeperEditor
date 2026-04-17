@@ -225,11 +225,27 @@ export class ProgramService {
             if (this.programRepository.program.segments[index].text === text) {
                 return;
             }
+            // cursorHeadBeforeEdit — точная позиция курсора перед правкой.
+            // Ищем последнюю SegmentTextChangedAction для этого сегмента в истории
+            // (может быть разделена GapAction), берём из неё cursorHeadAfterEdit.
+            // Если её нет — используем длину текущего (старого) текста.
+            const prevAction = this.programRepository.history
+                .slice()
+                .reverse()
+                .find(
+                    (a): a is SegmentTextChangedAction =>
+                        a instanceof SegmentTextChangedAction &&
+                        a.segmentIndex === index
+                );
+            const cursorHeadBeforeEdit =
+                prevAction?.cursorHeadAfterEdit ??
+                this.programRepository.program.segments[index].text.length;
             this.applyChange(
                 new SegmentTextChangedAction(
                     index,
                     text,
-                    clampHead(text, cursorHead)
+                    clampHead(text, cursorHead),
+                    cursorHeadBeforeEdit
                 )
             );
         } else {
@@ -274,13 +290,26 @@ export class ProgramService {
                 if (last instanceof SegmentTextChangedAction) {
                     const restored = last.oldValue;
                     if (restored !== undefined) {
+                        // Предпочитаем точную сохранённую позицию курсора в oldValue;
+                        // эвристика «общий префикс/суффикс» используется только как fallback
+                        // для старых action, где cursorHeadBeforeEdit не был записан.
+                        const cursorOffset =
+                            last.cursorHeadBeforeEdit !== undefined
+                                ? Math.max(
+                                      0,
+                                      Math.min(
+                                          last.cursorHeadBeforeEdit,
+                                          restored.length
+                                      )
+                                  )
+                                : mapCursorFromNewToOldAfterUndo(
+                                      restored,
+                                      last.newValue,
+                                      last.cursorHeadAfterEdit
+                                  );
                         hint = {
                             segmentIndex: last.segmentIndex,
-                            cursorOffset: mapCursorFromNewToOldAfterUndo(
-                                restored,
-                                last.newValue,
-                                last.cursorHeadAfterEdit
-                            ),
+                            cursorOffset,
                         };
                     }
                 }
@@ -466,13 +495,16 @@ class SegmentTextChangedAction implements ProgramChangeAction {
     segmentIndex: number;
     newValue: string;
     oldValue?: string;
-    /** Голова курсора в newValue после последнего изменения (для undo/redo в IDE). */
+    /** Голова курсора в newValue после последнего изменения (для redo в IDE). */
     cursorHeadAfterEdit: number;
+    /** Голова курсора в oldValue в момент создания action (для точного undo в IDE). */
+    cursorHeadBeforeEdit?: number;
 
     constructor(
         segmentIndex: number,
         newValue: string,
-        cursorHeadAfterEdit?: number
+        cursorHeadAfterEdit?: number,
+        cursorHeadBeforeEdit?: number
     ) {
         this.segmentIndex = segmentIndex;
         this.newValue = newValue;
@@ -480,6 +512,7 @@ class SegmentTextChangedAction implements ProgramChangeAction {
             cursorHeadAfterEdit === undefined
                 ? newValue.length
                 : Math.max(0, Math.min(cursorHeadAfterEdit, newValue.length));
+        this.cursorHeadBeforeEdit = cursorHeadBeforeEdit;
     }
 
     apply = (program: Program) => {

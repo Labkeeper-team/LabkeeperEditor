@@ -11,7 +11,6 @@ import { langs } from '@uiw/codemirror-extensions-langs';
 import { content, dom } from '@uiw/codemirror-extensions-events';
 import { lineNumbers, type ViewUpdate } from '@codemirror/view';
 import {
-    createRef,
     LegacyRef,
     memo,
     useCallback,
@@ -105,13 +104,15 @@ export const SegmentEditor = memo(
             (state: StorageState) =>
                 state.project.currentProgram?.segments[props.index]
         );
-        const ref = createRef<HTMLDivElement>();
+        const ref = useRef<HTMLDivElement>(null);
         const editor = useRef<ReactCodeMirrorRef | undefined>();
         const lastCursorPosRef = useRef<number | null>(null);
         const cursorByDocKeyRef = useRef<LRUMap<string, number>>(
             new LRUMap(CURSOR_MAP_CAPACITY)
         );
         const currentDocKeyRef = useRef<string | null>(null);
+        /** Последний текст, отправленный в onChange → Redux. Используется для детектирования стейл-замен от @uiw/react-codemirror. */
+        const lastSentTextRef = useRef<string | null>(null);
         const dispatch = useDispatch<AppDispatch>();
         const dictionary = useSelector(useDictionary);
 
@@ -137,6 +138,10 @@ export const SegmentEditor = memo(
         segmentIdxForPendingRef.current = props.index;
         const dispatchForPendingRef = useRef(dispatch);
         dispatchForPendingRef.current = dispatch;
+        const isImmediatelyActiveRef = useRef(isImmediatelyActiveSegment);
+        isImmediatelyActiveRef.current = isImmediatelyActiveSegment;
+        /** Счётчик docChanged-событий с висящим pending-курсором. Если текст не совпал за N попыток — сбрасываем флаг, чтобы он не применился при следующей обычной правке. */
+        const pendingMismatchCountRef = useRef(0);
         const compileErrors = useSelector(
             (state: StorageState) => state.project.compileErrorResult?.errors
         );
@@ -369,12 +374,22 @@ export const SegmentEditor = memo(
                     }
                     const expected = segmentTextForPendingRef.current ?? '';
                     const doc = update.state.doc;
-                    if (doc.length !== expected.length) {
+                    if (doc.length !== expected.length || doc.toString() !== expected) {
+                        // Текст ещё не дошёл до нужного состояния — считаем попытки.
+                        // После 5 несовпадений сбрасываем флаг, чтобы он не применился
+                        // при следующей обычной правке пользователя.
+                        pendingMismatchCountRef.current += 1;
+                        if (pendingMismatchCountRef.current >= 5) {
+                            pendingMismatchCountRef.current = 0;
+                            queueMicrotask(() => {
+                                dispatchForPendingRef.current(
+                                    setPendingSegmentEditorCursor(null)
+                                );
+                            });
+                        }
                         return;
                     }
-                    if (doc.toString() !== expected) {
-                        return;
-                    }
+                    pendingMismatchCountRef.current = 0;
                     const clamped = Math.max(
                         0,
                         Math.min(pending.offset, doc.length)
@@ -387,7 +402,12 @@ export const SegmentEditor = memo(
                         inline: 'nearest',
                         behavior: 'auto',
                     });
-                    update.view.focus();
+                    // Фокусируем редактор только если этот сегмент сейчас активен.
+                    // Безусловный focus() отбирал ввод у других элементов при undo
+                    // инициированном из другого UI-элемента (например, кнопок в хедере).
+                    if (isImmediatelyActiveRef.current) {
+                        update.view.focus();
+                    }
                     queueMicrotask(() => {
                         dispatchForPendingRef.current(
                             setPendingSegmentEditorCursor(null)
@@ -411,6 +431,64 @@ export const SegmentEditor = memo(
                             currentDocKeyRef.current ??
                             computeDocKey(update.state.doc.toString());
                         cursorByDocKeyRef.current.set(key, head);
+                    }
+                }),
+            []
+        );
+
+        /**
+         * Защита от стейл-value из @uiw/react-codemirror.
+         *
+         * @uiw делает полную замену документа (from:0, to:prevLen) с аннотацией External
+         * каждый раз, когда `value !== currentValue`. При зажатой клавише Redux может
+         * «отставать», и @uiw подставляет более старый value, сдвигая курсор в конец вставки.
+         * Этот слушатель определяет такую замену: если новый doc == lastSentTextRef (то что
+         * мы только что отправили в onChange) — это наш собственный текст, вернувшийся через
+         * Redux; восстанавливаем позицию курсора из lastCursorPosRef.
+         *
+         * Аннотация External в @uiw — приватная, поэтому детектируем паттерн «одна транзакция,
+         * полная замена документа от 0 до prevLen» (External всегда диспатчит именно так).
+         */
+        const externalValueListener = useMemo(
+            () =>
+                EditorView.updateListener.of((update) => {
+                    if (!update.docChanged) {
+                        return;
+                    }
+                    // Ищем транзакцию с полной заменой (от 0 до длины старого документа)
+                    const isFullReplace = update.transactions.some((tr) => {
+                        let foundFullReplace = false;
+                        tr.changes.iterChanges((fromA, toA, _fromB, _toB) => {
+                            if (fromA === 0 && toA === update.startState.doc.length) {
+                                foundFullReplace = true;
+                            }
+                        });
+                        return foundFullReplace;
+                    });
+                    if (!isFullReplace) {
+                        return;
+                    }
+                    const newText = update.state.doc.toString();
+                    const lastSent = lastSentTextRef.current;
+                    // Если новый текст совпадает с тем, что мы уже отправили в Redux,
+                    // это «наш» текст, вернувшийся через value. Восстанавливаем курсор.
+                    if (lastSent !== null && newText === lastSent) {
+                        const savedPos = lastCursorPosRef.current;
+                        if (savedPos !== null) {
+                            const clamped = Math.max(
+                                0,
+                                Math.min(savedPos, update.state.doc.length)
+                            );
+                            // Диспатч в следующем микротаске, чтобы не вложить транзакцию
+                            // внутрь текущей (CM не поддерживает вложенные диспатчи).
+                            queueMicrotask(() => {
+                                if (update.view.state.doc.toString() === newText) {
+                                    update.view.dispatch({
+                                        selection: EditorSelection.cursor(clamped),
+                                    });
+                                }
+                            });
+                        }
                     }
                 }),
             []
@@ -467,6 +545,7 @@ export const SegmentEditor = memo(
                 eventsDom,
                 pendingUndoRedoCursorListener,
                 cursorPersistenceListener,
+                externalValueListener,
                 EditorView.lineWrapping,
                 lineNumbersExtension,
                 markdownSpellLint,
@@ -479,6 +558,7 @@ export const SegmentEditor = memo(
             eventsDom,
             pendingUndoRedoCursorListener,
             cursorPersistenceListener,
+            externalValueListener,
             lineNumbersExtension,
             markdownSpellLint,
             segmentSelectionGutterFix,
@@ -495,6 +575,7 @@ export const SegmentEditor = memo(
                 });
                 setTempSegmentErrors([]);
                 const cursorHead = update.state.selection.main.head;
+                lastSentTextRef.current = value;
                 dispatch(
                     controller.onSegmentTextChangedRequest({
                         segmentIndex: props.index,
