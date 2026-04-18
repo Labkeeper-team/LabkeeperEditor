@@ -12,9 +12,7 @@ import {
     LabkeeperFile,
     TextOutputSegment,
 } from '../../../model/domain.ts';
-import {
-    InMemoryProgramRepository,
-} from '../../../model/repository/ProgramRepository.ts';
+import { InMemoryProgramRepository } from '../../../model/repository/ProgramRepository.ts';
 import { ProgramService } from '../../../model/service/ProgramService.ts';
 
 /*
@@ -252,7 +250,8 @@ test('pendingSegmentEditorCursor: onPrevVersionButtonClicked устанавли�
 
     programEditorService.onPrevVersionButtonClicked();
 
-    const pending = repository.ideViewModelRepository.pendingSegmentEditorCursor();
+    const pending =
+        repository.ideViewModelRepository.pendingSegmentEditorCursor();
     expect(pending).not.toBeNull();
     expect(pending?.segmentIndex).toBe(0);
     // Курсор должен быть в диапазоне длины восстановленного текста

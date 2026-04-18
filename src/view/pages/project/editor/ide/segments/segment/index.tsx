@@ -374,7 +374,10 @@ export const SegmentEditor = memo(
                     }
                     const expected = segmentTextForPendingRef.current ?? '';
                     const doc = update.state.doc;
-                    if (doc.length !== expected.length || doc.toString() !== expected) {
+                    if (
+                        doc.length !== expected.length ||
+                        doc.toString() !== expected
+                    ) {
                         // Текст ещё не дошёл до нужного состояния — считаем попытки.
                         // После 5 несовпадений сбрасываем флаг, чтобы он не применился
                         // при следующей обычной правке пользователя.
@@ -459,7 +462,10 @@ export const SegmentEditor = memo(
                     const isFullReplace = update.transactions.some((tr) => {
                         let foundFullReplace = false;
                         tr.changes.iterChanges((fromA, toA) => {
-                            if (fromA === 0 && toA === update.startState.doc.length) {
+                            if (
+                                fromA === 0 &&
+                                toA === update.startState.doc.length
+                            ) {
                                 foundFullReplace = true;
                             }
                         });
@@ -482,9 +488,12 @@ export const SegmentEditor = memo(
                             // Диспатч в следующем микротаске, чтобы не вложить транзакцию
                             // внутрь текущей (CM не поддерживает вложенные диспатчи).
                             queueMicrotask(() => {
-                                if (update.view.state.doc.toString() === newText) {
+                                if (
+                                    update.view.state.doc.toString() === newText
+                                ) {
                                     update.view.dispatch({
-                                        selection: EditorSelection.cursor(clamped),
+                                        selection:
+                                            EditorSelection.cursor(clamped),
                                     });
                                 }
                             });
