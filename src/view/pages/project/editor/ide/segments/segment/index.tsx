@@ -458,7 +458,7 @@ export const SegmentEditor = memo(
                     // Ищем транзакцию с полной заменой (от 0 до длины старого документа)
                     const isFullReplace = update.transactions.some((tr) => {
                         let foundFullReplace = false;
-                        tr.changes.iterChanges((fromA, toA, _fromB, _toB) => {
+                        tr.changes.iterChanges((fromA, toA) => {
                             if (fromA === 0 && toA === update.startState.doc.length) {
                                 foundFullReplace = true;
                             }
