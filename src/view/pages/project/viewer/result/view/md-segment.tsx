@@ -1,11 +1,6 @@
 import classNames from 'classnames';
 import Markdown from 'react-markdown';
-import {
-    forwardRef,
-    memo,
-    useCallback,
-    useRef,
-} from 'react';
+import { forwardRef, memo, useCallback, useRef } from 'react';
 import remarkMath from 'remark-math';
 
 import remarkBreaks from 'remark-breaks';
@@ -42,7 +37,9 @@ const MD_COMPONENTS = {
         }
         if (className === 'language-math math-display' && children) {
             return (
-                <MathJax style={{ fontSize: '17.8px' }}>{`$$${children}$$`}</MathJax>
+                <MathJax
+                    style={{ fontSize: '17.8px' }}
+                >{`$$${children}$$`}</MathJax>
             );
         }
 
