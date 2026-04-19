@@ -12,10 +12,15 @@ import { ResetService } from './ResetService.ts';
 
 const dollarPattern = /\$\{[\w|\p{Script=Cyrillic}]+\}/u;
 
+const PREVIEW_DEBOUNCE_MS = 200;
+
 export class IdeService {
     repository: ViewModelRepository;
     programService: ProgramService;
     resetService: ResetService;
+
+    private previewTimer: ReturnType<typeof setTimeout> | null = null;
+    private pendingPreviewApply: (() => void) | null = null;
 
     constructor(
         repository: ViewModelRepository,
@@ -25,6 +30,27 @@ export class IdeService {
         this.repository = repository;
         this.programService = programService;
         this.resetService = resetService;
+    }
+
+    private schedulePreviewUpdate(apply: () => void) {
+        if (this.previewTimer) clearTimeout(this.previewTimer);
+        this.pendingPreviewApply = apply;
+        this.previewTimer = setTimeout(() => {
+            this.previewTimer = null;
+            const fn = this.pendingPreviewApply;
+            this.pendingPreviewApply = null;
+            fn?.();
+        }, PREVIEW_DEBOUNCE_MS);
+    }
+
+    private flushPreviewUpdate() {
+        if (this.previewTimer) {
+            clearTimeout(this.previewTimer);
+            this.previewTimer = null;
+            const fn = this.pendingPreviewApply;
+            this.pendingPreviewApply = null;
+            fn?.();
+        }
     }
 
     setActiveSegmentIndexAndPreviousSegmentIndex = (activeIndex: number) => {
@@ -45,6 +71,7 @@ export class IdeService {
     };
 
     resetEditor = () => {
+        this.flushPreviewUpdate();
         this.resetService.resetAll();
     };
 
@@ -58,24 +85,29 @@ export class IdeService {
                 this.programService.getCurrentProgram().segments[segmentIndex]
             )
         ) {
+            const segmentType =
+                this.programService.getCurrentProgram().segments[segmentIndex]
+                    .type;
             if (dollarPattern.test(segmentText)) {
-                this.repository.projectViewModelRepository.setCompileResultForSegment(
-                    segmentIndex,
-                    {
-                        type: 'computational',
-                        statements: [{ type: 'no_result' }],
-                    } as ComputationalOutputSegment
-                );
+                this.schedulePreviewUpdate(() => {
+                    this.repository.projectViewModelRepository.setCompileResultForSegment(
+                        segmentIndex,
+                        {
+                            type: 'computational',
+                            statements: [{ type: 'no_result' }],
+                        } as ComputationalOutputSegment
+                    );
+                });
             } else {
-                this.repository.projectViewModelRepository.setCompileResultForSegment(
-                    segmentIndex,
-                    {
-                        text: segmentText,
-                        type: this.programService.getCurrentProgram().segments[
-                            segmentIndex
-                        ].type,
-                    } as TextOutputSegment
-                );
+                this.schedulePreviewUpdate(() => {
+                    this.repository.projectViewModelRepository.setCompileResultForSegment(
+                        segmentIndex,
+                        {
+                            text: segmentText,
+                            type: segmentType,
+                        } as TextOutputSegment
+                    );
+                });
             }
         }
 
@@ -112,6 +144,7 @@ export class IdeService {
     };
 
     onProgramUpdated = () => {
+        this.flushPreviewUpdate();
         const program = this.programService.getCurrentProgram();
 
         this.repository.projectViewModelRepository.setCurrentProgram(program);
@@ -207,6 +240,7 @@ export class IdeService {
     };
 
     setNewProgram = (program: Program, result?: CompileSuccessResult) => {
+        this.flushPreviewUpdate();
         this.programService.setNewProgram(program);
         if (result) {
             this.repository.projectViewModelRepository.setCompileResult(result);
@@ -215,6 +249,7 @@ export class IdeService {
     };
 
     replaceProgram = (program: Program) => {
+        this.flushPreviewUpdate();
         this.programService.replaceWithNewProgram(program);
         this.onProgramUpdated();
     };
