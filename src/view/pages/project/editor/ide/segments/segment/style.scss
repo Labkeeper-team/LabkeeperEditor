@@ -8,7 +8,9 @@
 $segment-editor-rules-right-gutter: 160px;
 
 /* Не скрывать cm-tooltip-autocomplete / cm-completionInfo — у них тот же cm-tooltip-below. */
-.cm-tooltip.cm-tooltip-below:not(.cm-tooltip-autocomplete):not(.cm-completionInfo) {
+.cm-tooltip.cm-tooltip-below:not(.cm-tooltip-autocomplete):not(
+        .cm-completionInfo
+    ) {
     display: none;
 }
 
