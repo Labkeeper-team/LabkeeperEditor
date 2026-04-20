@@ -7,9 +7,37 @@
  */
 $segment-editor-rules-right-gutter: 160px;
 
-.cm-tooltip-below {
+/* Не скрывать cm-tooltip-autocomplete / cm-completionInfo — у них тот же cm-tooltip-below. */
+.cm-tooltip.cm-tooltip-below:not(.cm-tooltip-autocomplete):not(.cm-completionInfo) {
     display: none;
 }
+
+/* Панель автодополнения монтируется вне .segment-editor-container (обычно у корня документа). */
+.cm-tooltip.cm-tooltip-autocomplete {
+    color: #000;
+    opacity: 1;
+    background-color: #f5f5f5;
+    border: 1px solid #bbb;
+
+    ul li {
+        color: #000;
+    }
+
+    .cm-completionMatchedText {
+        text-decoration: underline;
+        font-weight: 600;
+        color: #000;
+    }
+
+    ul li[aria-selected] {
+        color: #fff;
+    }
+
+    .cm-completionDetail {
+        color: #333;
+    }
+}
+
 .segment-editor-container {
     position: relative;
     border: 1px solid $gray-40;
@@ -41,7 +69,9 @@ $segment-editor-rules-right-gutter: 160px;
     /* Отступ только у первой `.cm-line`, чтобы 2+ строки шли на полную ширину под плашкой. */
     .cm-content {
         box-sizing: border-box;
-
+        .cm-line {
+            color: rgb(14, 22, 33);
+        }
         > .cm-line:first-of-type {
             padding-right: $segment-editor-rules-right-gutter;
         }

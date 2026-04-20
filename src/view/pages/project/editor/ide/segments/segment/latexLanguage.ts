@@ -1,6 +1,5 @@
 import {
     autocompletion,
-    completeAnyWord,
     CompletionContext,
     CompletionSource,
 } from '@codemirror/autocomplete';
@@ -175,7 +174,10 @@ const latexCompletionSource: CompletionSource = (
     };
 };
 
-/** completeAnyWord восстанавливает поведение базового autocomplete; без него override полностью его отключает. */
+/**
+ * Только подсказки по `\…` (список команд). Без completeAnyWord — иначе
+ * выпадает панель по словам из документа; обычные слова подсвечиваются синтаксисом Lezer / линтером.
+ */
 export const latexLanguageSupport = autocompletion({
-    override: [latexCompletionSource, completeAnyWord],
+    override: [latexCompletionSource],
 });
