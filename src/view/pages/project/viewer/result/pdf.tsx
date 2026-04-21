@@ -130,7 +130,7 @@ export const PdfResultViewer = () => {
         if (!container) return;
         container.addEventListener('scroll', onScroll);
         return () => container.removeEventListener('scroll', onScroll);
-    }, [onScroll]);
+    }, [onScroll, isPdfLoadingError]);
 
     useEffect(() => {
         let lastDpr = window.devicePixelRatio;
@@ -145,6 +145,8 @@ export const PdfResultViewer = () => {
                 return;
             }
             setIsPdfRendering(true);
+            /** Иначе после ошибки остаётся ветка без containerRef — loadPdf после await падает на innerHTML. */
+            setIsPdfLoadingError(false);
             userScrolledSincePdfLoadRef.current = false;
             try {
                 const dpr = window.devicePixelRatio || 1;
@@ -154,17 +156,22 @@ export const PdfResultViewer = () => {
                     return;
                 }
 
+                const container = containerRef.current;
+                if (!container) {
+                    setIsPdfRendering(false);
+                    setIsPdfLoadingError(true);
+                    return;
+                }
+
                 const scrollbarWidth = 8;
                 const containerWidth =
-                    containerRef.current!.clientWidth - scrollbarWidth;
+                    (container.clientWidth ?? 0) - scrollbarWidth;
 
                 const firstPage = await pdf.getPage(1);
                 const unscaledViewport = firstPage.getViewport({ scale: 1 });
 
                 const scale = containerWidth / unscaledViewport.width;
                 pdfRef.current = pdf;
-
-                const container = containerRef.current!;
                 const restoreScrollTop = lastScrollTopRef.current;
                 const hideUntilScrolled = restoreScrollTop > 0;
                 if (hideUntilScrolled) {
