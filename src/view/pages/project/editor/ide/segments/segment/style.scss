@@ -5,7 +5,7 @@
  * Число должно совпадать с `SEGMENT_EDITOR_RULES_RIGHT_GUTTER_PX` в `segmentEditorSelectionGutterFix.ts`
  * (обход бага CM6: drawSelection берёт padding только у первой `.cm-line` для всего выделения).
  */
-$segment-editor-rules-right-gutter: 160px;
+$segment-editor-rules-right-gutter: 170px;
 
 /* Не скрывать cm-tooltip-autocomplete / cm-completionInfo — у них тот же cm-tooltip-below. */
 .cm-tooltip.cm-tooltip-below:not(.cm-tooltip-autocomplete):not(

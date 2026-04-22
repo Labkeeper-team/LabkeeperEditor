@@ -399,11 +399,10 @@ export const SegmentEditor = memo(
                     );
                     update.view.dispatch({
                         selection: EditorSelection.cursor(clamped),
-                    });
-                    update.view.dom.scrollIntoView({
-                        block: 'nearest',
-                        inline: 'nearest',
-                        behavior: 'auto',
+                        effects: EditorView.scrollIntoView(clamped, {
+                            y: 'nearest',
+                            x: 'nearest',
+                        }),
                     });
                     // Фокусируем редактор только если этот сегмент сейчас активен.
                     // Безусловный focus() отбирал ввод у других элементов при undo
