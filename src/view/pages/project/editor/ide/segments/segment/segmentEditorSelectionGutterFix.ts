@@ -53,6 +53,11 @@ export function segmentEditorSelectionGutterFix() {
                 }
                 list.push(e);
             }
+            // Фикс нужен только для многострочного (многополосного) выделения.
+            // Иначе при выделении одного слова можно визуально «растянуть» заливку.
+            if (byBand.size < 2) {
+                return;
+            }
 
             for (const list of byBand.values()) {
                 const maxRight = Math.max(...list.map((e) => e.right));
@@ -70,6 +75,11 @@ export function segmentEditorSelectionGutterFix() {
                     }
                     const maxExtend =
                         (SEGMENT_EDITOR_RULES_RIGHT_GUTTER_PX + 24) / sx;
+                    // Корректируем только случаи с типичным «обрезанием» справа.
+                    // Если зазор намного больше правого gutter, это обычное короткое выделение.
+                    if (gap / sx > maxExtend + 1) {
+                        continue;
+                    }
                     const add = Math.min(gap / sx, maxExtend);
                     el.style.width = `${w + add}px`;
                 }

@@ -237,9 +237,19 @@ export class ProgramService {
                         a instanceof SegmentTextChangedAction &&
                         a.segmentIndex === index
                 );
+            const oldTextLength =
+                this.programRepository.program.segments[index].text.length;
             const cursorHeadBeforeEdit =
                 prevAction?.cursorHeadAfterEdit ??
-                this.programRepository.program.segments[index].text.length;
+                (cursorHead !== undefined
+                    ? Math.max(
+                          0,
+                          Math.min(
+                              cursorHead - (text.length - oldTextLength),
+                              oldTextLength
+                          )
+                      )
+                    : oldTextLength);
             this.applyChange(
                 new SegmentTextChangedAction(
                     index,
