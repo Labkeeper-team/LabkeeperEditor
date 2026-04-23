@@ -114,6 +114,91 @@ async function spellLintSource(
 }
 
 let cachedMdSpellLint: Extension | null = null;
+let cachedLatexSpellLint: Extension | null = null;
+let cachedComputationalSpellLint: Extension | null = null;
+
+function maskRange(chars: string[], from: number, to: number) {
+    const safeFrom = Math.max(0, from);
+    const safeTo = Math.min(chars.length, to);
+    for (let i = safeFrom; i < safeTo; i++) {
+        if (chars[i] !== '\n') {
+            chars[i] = ' ';
+        }
+    }
+}
+
+function maskByRegex(chars: string[], text: string, re: RegExp) {
+    re.lastIndex = 0;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(text)) !== null) {
+        maskRange(chars, m.index, m.index + m[0].length);
+        if (m[0].length === 0) {
+            re.lastIndex += 1;
+        }
+    }
+}
+
+function latexTextForSpellcheck(text: string): string {
+    const chars = text.split('');
+
+    // Комментарии до конца строки.
+    maskByRegex(chars, text, /%[^\n]*/g);
+    // Математические блоки.
+    maskByRegex(chars, text, /\$\$[\s\S]*?\$\$/g);
+    maskByRegex(chars, text, /\$[^$\n]*\$/g);
+    maskByRegex(chars, text, /\\\([\s\S]*?\\\)/g);
+    maskByRegex(chars, text, /\\\[[\s\S]*?\\\]/g);
+    // Команды и их "короткие" экранирования (\%, \_, \{ ...).
+    maskByRegex(chars, text, /\\[A-Za-z@]+[*]?/g);
+    maskByRegex(chars, text, /\\./g);
+
+    return chars.join('');
+}
+
+function computationalTextForSpellcheck(text: string): string {
+    const chars = text.split('');
+
+    // Комментарии (частые форматы).
+    maskByRegex(chars, text, /\/\/[^\n]*/g);
+    maskByRegex(chars, text, /#[^\n]*/g);
+    maskByRegex(chars, text, /\/\*[\s\S]*?\*\//g);
+
+    // Формульные/инлайновые выражения.
+    maskByRegex(chars, text, /\$\{[\s\S]*?\}/g);
+    maskByRegex(chars, text, /\$[^$\n]*\$/g);
+
+    // LaTeX-подобные команды, если встречаются в формулах.
+    maskByRegex(chars, text, /\\[A-Za-z@]+[*]?/g);
+    maskByRegex(chars, text, /\\./g);
+
+    return chars.join('');
+}
+
+async function spellLintSourceLatex(
+    view: EditorView
+): Promise<readonly Diagnostic[]> {
+    try {
+        const { en, ru } = await loadSpellers();
+        const sourceText = view.state.doc.toString();
+        const preparedText = latexTextForSpellcheck(sourceText);
+        return collectDiagnostics(preparedText, en, ru);
+    } catch {
+        return [];
+    }
+}
+
+async function spellLintSourceComputational(
+    view: EditorView
+): Promise<readonly Diagnostic[]> {
+    try {
+        const { en, ru } = await loadSpellers();
+        const sourceText = view.state.doc.toString();
+        const preparedText = computationalTextForSpellcheck(sourceText);
+        return collectDiagnostics(preparedText, en, ru);
+    } catch {
+        return [];
+    }
+}
 
 /**
  * Hunspell (en + ru) через nspell + @codemirror/lint.
@@ -128,4 +213,34 @@ export function getMarkdownSpellcheckLint(): Extension {
         });
     }
     return cachedMdSpellLint;
+}
+
+/**
+ * Hunspell (en + ru) для LaTeX. Маскируем команды/формулы/комментарии,
+ * чтобы проверять только обычный текст.
+ */
+export function getLatexSpellcheckLint(): Extension {
+    if (!cachedLatexSpellLint) {
+        cachedLatexSpellLint = linter(spellLintSourceLatex, {
+            delay: 550,
+            tooltipFilter: (diagnostics) =>
+                diagnostics.filter((d) => d.markClass !== 'cm-lint-spell'),
+        });
+    }
+    return cachedLatexSpellLint;
+}
+
+/**
+ * Hunspell (en + ru) для вычислительных сегментов. Маскируем формульный
+ * и служебный синтаксис, проверяем только обычный текст.
+ */
+export function getComputationalSpellcheckLint(): Extension {
+    if (!cachedComputationalSpellLint) {
+        cachedComputationalSpellLint = linter(spellLintSourceComputational, {
+            delay: 550,
+            tooltipFilter: (diagnostics) =>
+                diagnostics.filter((d) => d.markClass !== 'cm-lint-spell'),
+        });
+    }
+    return cachedComputationalSpellLint;
 }

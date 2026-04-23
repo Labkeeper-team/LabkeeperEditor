@@ -24,7 +24,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import { CompileErrorResult } from '../../../../../../../model/domain';
 import { customLanguageSupport } from './customLanguage';
 import { latexLanguageSupport } from './latexLanguage';
-import { getMarkdownSpellcheckLint } from './segmentSpellcheck';
+import {
+    getComputationalSpellcheckLint,
+    getLatexSpellcheckLint,
+    getMarkdownSpellcheckLint,
+} from './segmentSpellcheck';
 import { segmentEditorSelectionGutterFix } from './segmentEditorSelectionGutterFix';
 
 import './style.scss';
@@ -526,14 +530,27 @@ export const SegmentEditor = memo(
 
         const contentAttrsExtension = useMemo(
             () =>
-                segment?.type === 'md'
+                segment?.type === 'md' ||
+                segment?.type === 'latex' ||
+                segment?.type === 'computational'
                     ? SEGMENT_CM_SPELLCHECK_OFF
                     : SEGMENT_CM_SPELLCHECK,
             [segment?.type]
         );
 
-        const markdownSpellLint = useMemo(
+        const segmentSpellLint = useMemo(
             () => (segment?.type === 'md' ? getMarkdownSpellcheckLint() : null),
+            [segment?.type]
+        );
+        const latexSpellLint = useMemo(
+            () => (segment?.type === 'latex' ? getLatexSpellcheckLint() : null),
+            [segment?.type]
+        );
+        const computationalSpellLint = useMemo(
+            () =>
+                segment?.type === 'computational'
+                    ? getComputationalSpellcheckLint()
+                    : null,
             [segment?.type]
         );
 
@@ -546,7 +563,6 @@ export const SegmentEditor = memo(
         /** Новый массив на каждом рендере → useCodeMirror делает reconfigure → мигает gutter. */
         const codeMirrorExtensions = useMemo((): Extension[] => {
             return [
-                contentAttrsExtension,
                 decorationsField,
                 languageExtension,
                 eventsExt,
@@ -556,11 +572,15 @@ export const SegmentEditor = memo(
                 externalValueListener,
                 EditorView.lineWrapping,
                 lineNumbersExtension,
-                markdownSpellLint,
+                segmentSpellLint,
+                latexSpellLint,
+                computationalSpellLint,
                 segmentSelectionGutterFix,
+                // Держим contentAttributes последним, чтобы не дать языковым
+                // extension'ам (например TeX) переопределить spellcheck.
+                contentAttrsExtension,
             ].filter((e): e is Extension => e != null);
         }, [
-            contentAttrsExtension,
             languageExtension,
             eventsExt,
             eventsDom,
@@ -568,8 +588,11 @@ export const SegmentEditor = memo(
             cursorPersistenceListener,
             externalValueListener,
             lineNumbersExtension,
-            markdownSpellLint,
+            segmentSpellLint,
+            latexSpellLint,
+            computationalSpellLint,
             segmentSelectionGutterFix,
+            contentAttrsExtension,
         ]);
 
         // Вызов, который меняет текст и сбрасывает ошибки и декорации.
