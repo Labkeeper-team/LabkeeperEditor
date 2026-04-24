@@ -25,7 +25,6 @@ import { CompileErrorResult } from '../../../../../../../model/domain';
 import { customLanguageSupport } from './customLanguage';
 import { latexLanguageSupport } from './latexLanguage';
 import {
-    getComputationalSpellcheckLint,
     getLatexSpellcheckLint,
     getMarkdownSpellcheckLint,
 } from './segmentSpellcheck';
@@ -549,7 +548,7 @@ export const SegmentEditor = memo(
         const computationalSpellLint = useMemo(
             () =>
                 segment?.type === 'computational'
-                    ? getComputationalSpellcheckLint()
+                    ? null
                     : null,
             [segment?.type]
         );
