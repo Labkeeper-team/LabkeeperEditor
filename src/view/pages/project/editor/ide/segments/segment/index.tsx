@@ -546,10 +546,7 @@ export const SegmentEditor = memo(
             [segment?.type]
         );
         const computationalSpellLint = useMemo(
-            () =>
-                segment?.type === 'computational'
-                    ? null
-                    : null,
+            () => (segment?.type === 'computational' ? null : null),
             [segment?.type]
         );
 
