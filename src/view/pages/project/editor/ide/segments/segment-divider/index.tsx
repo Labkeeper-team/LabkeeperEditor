@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import classNames from 'classnames';
+import { useIsProjectReadonly } from '../../../../../../store/selectors/program';
 
 import { useDictionary } from '../../../../../../store/selectors/translations';
 
@@ -16,6 +17,8 @@ export const SegmentDivider: React.FC<SegmentDividerProps> = ({
     index,
 }) => {
     const dispatch = useDispatch<AppDispatch>();
+
+    const projectIsReadonly = useSelector(useIsProjectReadonly);
 
     const [isOpen, setIsOpen] = useState(false);
     const dictionary = useSelector(useDictionary);
@@ -72,11 +75,15 @@ export const SegmentDivider: React.FC<SegmentDividerProps> = ({
             <div className="divider-button-container">
                 <button
                     className={classNames('divider-button', { active: isOpen })}
-                    onClick={() => setIsOpen(!isOpen)}
+                    disabled={projectIsReadonly}
+                    onClick={() => {
+                        if (projectIsReadonly) return;
+                        setIsOpen(!isOpen);
+                    }}
                 >
                     {dictionary.segment_divider.add}
                 </button>
-                {isOpen && (
+                {isOpen && !projectIsReadonly && (
                     <div
                         className="divider-dropdown"
                         onMouseLeave={() => setIsOpen(false)}
