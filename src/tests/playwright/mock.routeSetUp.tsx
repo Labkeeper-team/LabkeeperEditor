@@ -94,6 +94,7 @@ export class RouteSetup {
             return {
                 projectId: uuid,
                 userId: anotherUserId,
+                isPublic: true,
                 title: 'Default Project',
                 lastModified: new Date().toISOString(),
                 program: {
