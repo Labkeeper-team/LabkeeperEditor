@@ -1,6 +1,8 @@
-import { RefObject, useCallback, useEffect, useState } from 'react';
+import { RefObject, useCallback, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useIsSegmentIsActive } from '../store/selectors/program';
+
+const SUBPIXEL = 2;
 
 export const useScrollableToActive = (
     ref: RefObject<HTMLDivElement>,
@@ -8,9 +10,9 @@ export const useScrollableToActive = (
     index: number
 ) => {
     const isActive = useSelector(useIsSegmentIsActive(index));
-    const [prevIsActive, setPrevIsActive] = useState(false);
 
-    const isElementVisible = useCallback(() => {
+    /** Сегмент целиком в видимой области скролл-контейнера (или для высоких — центр контейнера внутри сегмента). */
+    const isFullyInViewport = useCallback(() => {
         if (!ref?.current) return false;
 
         const container = document.getElementById(mainContainerid);
@@ -19,32 +21,25 @@ export const useScrollableToActive = (
         const containerRect = container.getBoundingClientRect();
         const elementRect = ref.current.getBoundingClientRect();
 
-        // Если элемент выше видимой области контейнера,
-        // считаем его «достаточно видимым», если центр контейнера находится внутри элемента
         if (elementRect.height > containerRect.height) {
             const containerCenter =
                 containerRect.top + containerRect.height / 2;
             return (
-                elementRect.top <= containerCenter &&
-                elementRect.bottom >= containerCenter
+                elementRect.top <= containerCenter + SUBPIXEL &&
+                elementRect.bottom >= containerCenter - SUBPIXEL
             );
         }
 
-        // Иначе проверяем, что элемент виден на 30% или больше
-        const visibleTop = Math.max(elementRect.top, containerRect.top);
-        const visibleBottom = Math.min(
-            elementRect.bottom,
-            containerRect.bottom
+        return (
+            elementRect.top >= containerRect.top - SUBPIXEL &&
+            elementRect.bottom <= containerRect.bottom + SUBPIXEL &&
+            elementRect.left >= containerRect.left - SUBPIXEL &&
+            elementRect.right <= containerRect.right + SUBPIXEL
         );
-        const visibleHeight = Math.max(0, visibleBottom - visibleTop);
-
-        const visibilityRatio = visibleHeight / elementRect.height;
-
-        return visibilityRatio >= 0.3;
     }, [ref, mainContainerid]);
 
-    const handleClick = useCallback(() => {
-        const container = ref?.current?.parentElement; // Родительский scroll-контейнер
+    const scrollIntoViewIfNeeded = useCallback(() => {
+        const container = ref?.current?.parentElement;
         const element = ref?.current;
 
         if (!container || !element) return;
@@ -53,7 +48,6 @@ export const useScrollableToActive = (
         const rect = element.getBoundingClientRect();
         const containerRect = container.getBoundingClientRect();
 
-        // Корректируем позицию с учётом scale
         const offsetY1 = (rect.top - containerRect.top) * (1 / scaleFactor);
         const offsetY2 =
             (rect.bottom - containerRect.bottom) * (1 / scaleFactor);
@@ -68,15 +62,12 @@ export const useScrollableToActive = (
     }, [ref]);
 
     useEffect(() => {
-        if (isActive) {
-            const shouldScroll =
-                isActive !== prevIsActive || !isElementVisible();
-
-            if (shouldScroll) {
-                setPrevIsActive(isActive);
-                handleClick();
-            }
+        if (!isActive) {
+            return;
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isActive]);
+        if (isFullyInViewport()) {
+            return;
+        }
+        scrollIntoViewIfNeeded();
+    }, [isActive, isFullyInViewport, scrollIntoViewIfNeeded]);
 };

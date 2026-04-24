@@ -131,6 +131,7 @@ export const ru: Translations = {
 
     viewer: {
         no_pdf: 'Нажмите кнопку  "Выполнить", для отображения PDF файла',
+        pdf_loading: 'Загрузка PDF…',
         gpt_prompt_button: 'GPT',
         mode: {
             markdown: 'markdown',

@@ -6,12 +6,11 @@ import CodeMirror, {
     StateField,
     Range,
 } from '@uiw/react-codemirror';
-import { EditorSelection } from '@codemirror/state';
+import { EditorSelection, type Extension } from '@codemirror/state';
 import { langs } from '@uiw/codemirror-extensions-langs';
 import { content, dom } from '@uiw/codemirror-extensions-events';
-import { lineNumbers } from '@codemirror/view';
+import { lineNumbers, type ViewUpdate } from '@codemirror/view';
 import {
-    createRef,
     LegacyRef,
     memo,
     useCallback,
@@ -25,6 +24,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import { CompileErrorResult } from '../../../../../../../model/domain';
 import { customLanguageSupport } from './customLanguage';
 import { latexLanguageSupport } from './latexLanguage';
+import {
+    getLatexSpellcheckLint,
+    getMarkdownSpellcheckLint,
+} from './segmentSpellcheck';
+import { segmentEditorSelectionGutterFix } from './segmentEditorSelectionGutterFix';
 
 import './style.scss';
 
@@ -32,6 +36,7 @@ import { Typography } from '../../../../../../components/typography';
 import { DropdownMenu } from '../../../../../../components/dropdownMenu';
 import { ArrowUp } from '../../../../../../icons';
 import { AppDispatch, StorageState } from '../../../../../../store';
+import { setPendingSegmentEditorCursor } from '../../../../../../store/slices/ide';
 import {
     useIsProjectReadonly,
     useSearch,
@@ -46,6 +51,24 @@ import { useScrollableToActive } from '../../../../../../hooks/useScrollableToAc
 import { useIsDelayedSegmentIsActive } from '../../../../../../hooks/useIsDelayedSegmentIsActive.ts';
 
 const CURSOR_MAP_CAPACITY = 100;
+
+/** Стабильная ссылка: иначе @uiw/react-codemirror на каждом рендере делает StateEffect.reconfigure и мигает подсветка. */
+const SEGMENT_CODE_MIRROR_BASIC_SETUP = {
+    lineNumbers: true,
+    highlightSelectionMatches: false,
+    /** Текст и undo ведёт ProgramService (кнопка и Ctrl+Z в шапке). Встроенная history CM + historyKeymap дают второй Ctrl+Z и откатывают лишние правки. */
+    history: false,
+    historyKeymap: false,
+} as const;
+
+const SEGMENT_CM_SPELLCHECK = EditorView.contentAttributes.of({
+    spellcheck: 'true',
+});
+
+/** Для md Hunspell через @codemirror/lint; нативный spellcheck отключаем, чтобы не дублировать подчёркивания. */
+const SEGMENT_CM_SPELLCHECK_OFF = EditorView.contentAttributes.of({
+    spellcheck: 'false',
+});
 
 const setDecorationsEffect = StateEffect.define();
 
@@ -67,6 +90,8 @@ const decorationsField = StateField.define<unknown>({
 
 let timeout: NodeJS.Timeout | null = null;
 
+const lastDecorationSignatureByView = new WeakMap<EditorView, string>();
+
 function computeDocKey(text: string): string {
     let hash = 5381;
     for (let i = 0; i < text.length; i++) {
@@ -82,13 +107,15 @@ export const SegmentEditor = memo(
             (state: StorageState) =>
                 state.project.currentProgram?.segments[props.index]
         );
-        const ref = createRef<HTMLDivElement>();
+        const ref = useRef<HTMLDivElement>(null);
         const editor = useRef<ReactCodeMirrorRef | undefined>();
         const lastCursorPosRef = useRef<number | null>(null);
         const cursorByDocKeyRef = useRef<LRUMap<string, number>>(
             new LRUMap(CURSOR_MAP_CAPACITY)
         );
         const currentDocKeyRef = useRef<string | null>(null);
+        /** Последний текст, отправленный в onChange → Redux. Используется для детектирования стейл-замен от @uiw/react-codemirror. */
+        const lastSentTextRef = useRef<string | null>(null);
         const dispatch = useDispatch<AppDispatch>();
         const dictionary = useSelector(useDictionary);
 
@@ -96,7 +123,28 @@ export const SegmentEditor = memo(
         GLOBAL STATE
          */
         const search = useSelector(useSearch);
+        const [debouncedSearch, setDebouncedSearch] = useState(search);
         const isActiveSegment = useIsDelayedSegmentIsActive(props.index);
+        /** Без задержки 10 ms: иначе после undo/redo в другой сегмент считается «неактивным» и ломается фокус. */
+        const isImmediatelyActiveSegment = useSelector(
+            (state: StorageState) =>
+                state.ide.activeSegmentIndex === props.index
+        );
+        const pendingSegmentEditorCursor = useSelector(
+            (state: StorageState) => state.ide.pendingSegmentEditorCursor
+        );
+        const pendingIdeCursorRef = useRef(pendingSegmentEditorCursor);
+        pendingIdeCursorRef.current = pendingSegmentEditorCursor;
+        const segmentTextForPendingRef = useRef(segment?.text);
+        segmentTextForPendingRef.current = segment?.text;
+        const segmentIdxForPendingRef = useRef(props.index);
+        segmentIdxForPendingRef.current = props.index;
+        const dispatchForPendingRef = useRef(dispatch);
+        dispatchForPendingRef.current = dispatch;
+        const isImmediatelyActiveRef = useRef(isImmediatelyActiveSegment);
+        isImmediatelyActiveRef.current = isImmediatelyActiveSegment;
+        /** Счётчик docChanged-событий с висящим pending-курсором. Если текст не совпал за N попыток — сбрасываем флаг, чтобы он не применился при следующей обычной правке. */
+        const pendingMismatchCountRef = useRef(0);
         const compileErrors = useSelector(
             (state: StorageState) => state.project.compileErrorResult?.errors
         );
@@ -132,14 +180,21 @@ export const SegmentEditor = memo(
             return () => clearTimeout(timer);
         }, []);
 
-        // При изменении текста перерисовываем декорации
+        useEffect(() => {
+            const handle = window.setTimeout(() => {
+                setDebouncedSearch(search);
+            }, 150);
+            return () => clearTimeout(handle);
+        }, [search]);
+
+        // Ошибки компиляции — сразу (в deps); строка поиска — через debouncedSearch
         useEffect(() => {
             const view = editor?.current?.view;
             if (!view) {
                 return;
             }
-            processDecorations(view, search, segmentTempErrors);
-        }, [search, segmentTempErrors, editor?.current?.view]);
+            processDecorations(view, debouncedSearch, segmentTempErrors);
+        }, [debouncedSearch, segmentTempErrors, editor?.current?.view]);
         // Фиксируем горизонтальный скролл на 0, чтобы сегмент не смещался при выделении
         useEffect(() => {
             const view = editor?.current?.view;
@@ -199,7 +254,7 @@ export const SegmentEditor = memo(
         }, [editor?.current?.view]);
         // Если сегмент перестал быть активным — снимаем выделение в редакторе
         useEffect(() => {
-            if (isActiveSegment) {
+            if (isActiveSegment || isImmediatelyActiveSegment) {
                 return;
             }
             const view = editor?.current?.view;
@@ -210,7 +265,7 @@ export const SegmentEditor = memo(
             view.dispatch({
                 selection: EditorSelection.cursor(head),
             });
-        }, [isActiveSegment]);
+        }, [isActiveSegment, isImmediatelyActiveSegment]);
         // При изменении текста сегмента создаем таймер
         useEffect(() => {
             if (timeout) {
@@ -222,13 +277,16 @@ export const SegmentEditor = memo(
             // eslint-disable-next-line react-hooks/exhaustive-deps
         }, [segment?.text]);
 
-        // Восстанавливаем позицию курсора после внешнего обновления текста сегмента
+        // Восстанавливаем курсор только если текст пришёл извне (не совпадает с документом CM)
         useEffect(() => {
             const view = editor?.current?.view;
             if (!view) {
                 return;
             }
             const docText = view.state.doc.toString();
+            if (docText === segment?.text) {
+                return;
+            }
             const docKey = currentDocKeyRef.current ?? computeDocKey(docText);
             const storedForDoc = cursorByDocKeyRef.current.get(docKey);
             const preserved =
@@ -278,44 +336,282 @@ export const SegmentEditor = memo(
             });
         }, [dispatch, onBlur, props.index, isActiveSegment]);
 
-        // Вставка файлов и обработка клавиш
-        const eventsDom = dom({
-            paste: async (ev: ClipboardEvent | KeyboardEvent) => {
-                if (!('clipboardData' in ev)) {
-                    return;
-                }
-                const items = (ev.clipboardData?.items ??
-                    []) as DataTransferItemList;
-                dispatch(
-                    controller.onAddedFilesToSegmentEditorRequest({
-                        items: items,
-                        segmentIndex: props.index,
-                        cursorPosition:
-                            editor?.current?.view?.state.selection.main.head ??
-                            0,
-                    })
-                );
-                ev.preventDefault();
-            },
-        });
+        // Вставка файлов — extension должна быть стабильной ссылкой, иначе extensions[] пересобирается на каждый символ → reconfigure → мигание syntax highlight
+        const eventsDom = useMemo(
+            () =>
+                dom({
+                    paste: async (ev: ClipboardEvent | KeyboardEvent) => {
+                        if (!('clipboardData' in ev)) {
+                            return;
+                        }
+                        const items = (ev.clipboardData?.items ??
+                            []) as DataTransferItemList;
+                        dispatch(
+                            controller.onAddedFilesToSegmentEditorRequest({
+                                items: items,
+                                segmentIndex: props.index,
+                                cursorPosition:
+                                    editor?.current?.view?.state.selection.main
+                                        .head ?? 0,
+                            })
+                        );
+                        ev.preventDefault();
+                    },
+                }),
+            [dispatch, props.index]
+        );
 
-        // Вызов, который меняет текст и сбрасывает ошибки и декорации
+        /** Курсор после undo/redo: сразу в той же транзакции, что и подстановка value (без rAF — надёжно на длинных документах). */
+        const pendingUndoRedoCursorListener = useMemo(
+            () =>
+                EditorView.updateListener.of((update) => {
+                    if (!update.docChanged) {
+                        return;
+                    }
+                    const pending = pendingIdeCursorRef.current;
+                    if (
+                        !pending ||
+                        pending.segmentIndex !== segmentIdxForPendingRef.current
+                    ) {
+                        return;
+                    }
+                    const expected = segmentTextForPendingRef.current ?? '';
+                    const doc = update.state.doc;
+                    if (
+                        doc.length !== expected.length ||
+                        doc.toString() !== expected
+                    ) {
+                        // Текст ещё не дошёл до нужного состояния — считаем попытки.
+                        // После 5 несовпадений сбрасываем флаг, чтобы он не применился
+                        // при следующей обычной правке пользователя.
+                        pendingMismatchCountRef.current += 1;
+                        if (pendingMismatchCountRef.current >= 5) {
+                            pendingMismatchCountRef.current = 0;
+                            queueMicrotask(() => {
+                                dispatchForPendingRef.current(
+                                    setPendingSegmentEditorCursor(null)
+                                );
+                            });
+                        }
+                        return;
+                    }
+                    pendingMismatchCountRef.current = 0;
+                    const clamped = Math.max(
+                        0,
+                        Math.min(pending.offset, doc.length)
+                    );
+                    update.view.dispatch({
+                        selection: EditorSelection.cursor(clamped),
+                        effects: EditorView.scrollIntoView(clamped, {
+                            y: 'nearest',
+                            x: 'nearest',
+                        }),
+                    });
+                    // Фокусируем редактор только если этот сегмент сейчас активен.
+                    // Безусловный focus() отбирал ввод у других элементов при undo
+                    // инициированном из другого UI-элемента (например, кнопок в хедере).
+                    if (isImmediatelyActiveRef.current) {
+                        update.view.focus();
+                    }
+                    queueMicrotask(() => {
+                        dispatchForPendingRef.current(
+                            setPendingSegmentEditorCursor(null)
+                        );
+                    });
+                }),
+            []
+        );
+
+        const cursorPersistenceListener = useMemo(
+            () =>
+                EditorView.updateListener.of((update) => {
+                    if (update.docChanged) {
+                        const text = update.state.doc.toString();
+                        currentDocKeyRef.current = computeDocKey(text);
+                    }
+                    if (update.selectionSet) {
+                        const head = update.state.selection.main.head;
+                        lastCursorPosRef.current = head;
+                        const key =
+                            currentDocKeyRef.current ??
+                            computeDocKey(update.state.doc.toString());
+                        cursorByDocKeyRef.current.set(key, head);
+                    }
+                }),
+            []
+        );
+
+        /**
+         * Защита от стейл-value из @uiw/react-codemirror.
+         *
+         * @uiw делает полную замену документа (from:0, to:prevLen) с аннотацией External
+         * каждый раз, когда `value !== currentValue`. При зажатой клавише Redux может
+         * «отставать», и @uiw подставляет более старый value, сдвигая курсор в конец вставки.
+         * Этот слушатель определяет такую замену: если новый doc == lastSentTextRef (то что
+         * мы только что отправили в onChange) — это наш собственный текст, вернувшийся через
+         * Redux; восстанавливаем позицию курсора из lastCursorPosRef.
+         *
+         * Аннотация External в @uiw — приватная, поэтому детектируем паттерн «одна транзакция,
+         * полная замена документа от 0 до prevLen» (External всегда диспатчит именно так).
+         */
+        const externalValueListener = useMemo(
+            () =>
+                EditorView.updateListener.of((update) => {
+                    if (!update.docChanged) {
+                        return;
+                    }
+                    // Ищем транзакцию с полной заменой (от 0 до длины старого документа)
+                    const isFullReplace = update.transactions.some((tr) => {
+                        let foundFullReplace = false;
+                        tr.changes.iterChanges((fromA, toA) => {
+                            if (
+                                fromA === 0 &&
+                                toA === update.startState.doc.length
+                            ) {
+                                foundFullReplace = true;
+                            }
+                        });
+                        return foundFullReplace;
+                    });
+                    if (!isFullReplace) {
+                        return;
+                    }
+                    const newText = update.state.doc.toString();
+                    const lastSent = lastSentTextRef.current;
+                    // Если новый текст совпадает с тем, что мы уже отправили в Redux,
+                    // это «наш» текст, вернувшийся через value. Восстанавливаем курсор.
+                    if (lastSent !== null && newText === lastSent) {
+                        const savedPos = lastCursorPosRef.current;
+                        if (savedPos !== null) {
+                            const clamped = Math.max(
+                                0,
+                                Math.min(savedPos, update.state.doc.length)
+                            );
+                            // Диспатч в следующем микротаске, чтобы не вложить транзакцию
+                            // внутрь текущей (CM не поддерживает вложенные диспатчи).
+                            queueMicrotask(() => {
+                                if (
+                                    update.view.state.doc.toString() === newText
+                                ) {
+                                    update.view.dispatch({
+                                        selection:
+                                            EditorSelection.cursor(clamped),
+                                    });
+                                }
+                            });
+                        }
+                    }
+                }),
+            []
+        );
+
+        const languageExtension = useMemo(() => {
+            const t = segment?.type;
+            if (t === 'md') {
+                return langs.markdown();
+            }
+            if (t === 'computational') {
+                return customLanguageSupport;
+            }
+            if (t === 'latex') {
+                return [langs.tex(), latexLanguageSupport];
+            }
+            return undefined;
+        }, [segment?.type]);
+
+        const lineNumbersExtension = useMemo(
+            () =>
+                lineNumbers({
+                    formatNumber: (lineNo) => `${props.index + 1}.${lineNo}`,
+                }),
+            [props.index]
+        );
+
+        const contentAttrsExtension = useMemo(
+            () =>
+                segment?.type === 'md' ||
+                segment?.type === 'latex' ||
+                segment?.type === 'computational'
+                    ? SEGMENT_CM_SPELLCHECK_OFF
+                    : SEGMENT_CM_SPELLCHECK,
+            [segment?.type]
+        );
+
+        const segmentSpellLint = useMemo(
+            () => (segment?.type === 'md' ? getMarkdownSpellcheckLint() : null),
+            [segment?.type]
+        );
+        const latexSpellLint = useMemo(
+            () => (segment?.type === 'latex' ? getLatexSpellcheckLint() : null),
+            [segment?.type]
+        );
+        const computationalSpellLint = useMemo(
+            () => (segment?.type === 'computational' ? null : null),
+            [segment?.type]
+        );
+
+        /** Стабильная ссылка: обход бага CM6 — padding первой строки обрезает drawSelection на остальных. */
+        const segmentSelectionGutterFix = useMemo(
+            () => segmentEditorSelectionGutterFix(),
+            []
+        );
+
+        /** Новый массив на каждом рендере → useCodeMirror делает reconfigure → мигает gutter. */
+        const codeMirrorExtensions = useMemo((): Extension[] => {
+            return [
+                decorationsField,
+                languageExtension,
+                eventsExt,
+                eventsDom,
+                pendingUndoRedoCursorListener,
+                cursorPersistenceListener,
+                externalValueListener,
+                EditorView.lineWrapping,
+                lineNumbersExtension,
+                segmentSpellLint,
+                latexSpellLint,
+                computationalSpellLint,
+                segmentSelectionGutterFix,
+                // Держим contentAttributes последним, чтобы не дать языковым
+                // extension'ам (например TeX) переопределить spellcheck.
+                contentAttrsExtension,
+            ].filter((e): e is Extension => e != null);
+        }, [
+            languageExtension,
+            eventsExt,
+            eventsDom,
+            pendingUndoRedoCursorListener,
+            cursorPersistenceListener,
+            externalValueListener,
+            lineNumbersExtension,
+            segmentSpellLint,
+            latexSpellLint,
+            computationalSpellLint,
+            segmentSelectionGutterFix,
+            contentAttrsExtension,
+        ]);
+
+        // Вызов, который меняет текст и сбрасывает ошибки и декорации.
+        // Нельзя откладывать dispatch (setTimeout): при зажатой клавише в очередь попадают
+        // несколько задач со старым segmentText — Redux отстаёт от CodeMirror, useCodeMirror
+        // подставляет устаревший value и перезаписывает документ → курсор уезжает (часто в 0).
         const onChange = useCallback(
-            async (value) => {
+            (value: string, update: ViewUpdate) => {
                 editor?.current?.view?.dispatch({
                     effects: setDecorationsEffect.of(Decoration.none as never),
                 });
                 setTempSegmentErrors([]);
-                setTimeout(() => {
-                    dispatch(
-                        controller.onSegmentTextChangedRequest({
-                            segmentIndex: props.index,
-                            segmentText: value,
-                        })
-                    );
-                });
+                const cursorHead = update.state.selection.main.head;
+                lastSentTextRef.current = value;
+                dispatch(
+                    controller.onSegmentTextChangedRequest({
+                        segmentIndex: props.index,
+                        segmentText: value,
+                        cursorHead,
+                    })
+                );
             },
-            [setTempSegmentErrors, props.index, dispatch]
+            [props.index, dispatch]
         );
 
         // Первую прорисовку пропускаем
@@ -337,42 +633,8 @@ export const SegmentEditor = memo(
                     value={segment?.text}
                     onChange={onChange}
                     readOnly={projectIsReadonly}
-                    extensions={[
-                        decorationsField,
-                        segment.type === 'md'
-                            ? langs.markdown()
-                            : segment.type === 'computational'
-                              ? customLanguageSupport
-                              : segment.type === 'latex'
-                                ? [langs.tex(), latexLanguageSupport]
-                                : undefined,
-                        eventsExt,
-                        eventsDom,
-                        EditorView.updateListener.of((update) => {
-                            if (update.docChanged) {
-                                const text = update.state.doc.toString();
-                                currentDocKeyRef.current = computeDocKey(text);
-                            }
-                            if (update.selectionSet) {
-                                const head = update.state.selection.main.head;
-                                lastCursorPosRef.current = head;
-                                const key =
-                                    currentDocKeyRef.current ??
-                                    computeDocKey(update.state.doc.toString());
-                                cursorByDocKeyRef.current.set(key, head);
-                            }
-                        }),
-                        EditorView.lineWrapping,
-                        lineNumbers({
-                            formatNumber: (lineNo) => {
-                                return `${props.index + 1 || '' + 1}.${lineNo}`;
-                            },
-                        }),
-                    ].filter((e) => !!e)}
-                    basicSetup={{
-                        lineNumbers: true,
-                        history: false,
-                    }}
+                    extensions={codeMirrorExtensions}
+                    basicSetup={SEGMENT_CODE_MIRROR_BASIC_SETUP}
                 />
                 <div className="editor-rules">
                     {!projectIsReadonly && (
@@ -513,7 +775,24 @@ function processDecorations(
     const decSet = Decoration.set(
         isVAlidChunkExistAndTextExist ? validChunks : []
     );
-    view.dispatch({
-        effects: setDecorationsEffect.of(decSet as never),
+    const signature = JSON.stringify({
+        h: computeDocKey(docText),
+        s: typeof search === 'string' ? search : '',
+        e: segmentTempErrors.map((x) => x.payload.line).join(','),
+        n: validChunks.length,
     });
+    if (lastDecorationSignatureByView.get(view) === signature) {
+        return;
+    }
+    lastDecorationSignatureByView.set(view, signature);
+    if (!view.dom?.isConnected) {
+        return;
+    }
+    try {
+        view.dispatch({
+            effects: setDecorationsEffect.of(decSet as never),
+        });
+    } catch {
+        /* view уже размонтирован между debounce и dispatch */
+    }
 }

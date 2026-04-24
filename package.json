@@ -15,6 +15,7 @@
         "reformat": "prettier --write ."
     },
     "dependencies": {
+        "@codemirror/lint": "^6.9.5",
         "@estruyf/github-actions-reporter": "^1.10.0",
         "@reduxjs/toolkit": "2.3.0",
         "@sentry/react": "^9.22.0",
@@ -28,6 +29,8 @@
         "classnames": "2.5.1",
         "codemirror": "5.65.18",
         "date-fns": "4.1.0",
+        "dictionary-en": "^4.0.0",
+        "dictionary-ru": "^3.0.0",
         "echarts": "5.0.0",
         "echarts-for-react": "3.0.2",
         "html2canvas": "1.4.1",
@@ -35,6 +38,7 @@
         "lru_map": "^0.4.1",
         "mathjax": "3.2.2",
         "mathjax-full": "3.2.2",
+        "nspell": "^2.1.5",
         "pdfjs-dist": "5.4.530",
         "react": "18.3.1",
         "react-dom": "18.3.1",

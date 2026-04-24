@@ -1,4 +1,8 @@
-import { autocompletion } from '@codemirror/autocomplete';
+import {
+    autocompletion,
+    CompletionContext,
+    CompletionSource,
+} from '@codemirror/autocomplete';
 
 const latexCompletions = {
     commands: [
@@ -73,6 +77,8 @@ const latexCompletions = {
         { label: '\\Omega' },
 
         // Окружения
+        { label: '\\begin{' },
+        { label: '\\end{' },
         { label: '\\begin{equation}' },
         { label: '\\end{equation}' },
         { label: '\\begin{align}' },
@@ -149,10 +155,11 @@ const latexCompletions = {
     ],
 };
 
-const latexCompletionSource = (context) => {
-    const word = context.matchBefore(/\\\w*/);
+const latexCompletionSource: CompletionSource = (
+    context: CompletionContext
+) => {
+    const word = context.matchBefore(/\\[\w{}]*/);
     if (!word) return null;
-    if (word.from === word.to && !context.explicit) return null;
 
     return {
         from: word.from,
@@ -167,6 +174,10 @@ const latexCompletionSource = (context) => {
     };
 };
 
+/**
+ * Только подсказки по `\…` (список команд). Без completeAnyWord — иначе
+ * выпадает панель по словам из документа; обычные слова подсвечиваются синтаксисом Lezer / линтером.
+ */
 export const latexLanguageSupport = autocompletion({
     override: [latexCompletionSource],
 });

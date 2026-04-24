@@ -12,6 +12,53 @@ import {
 
 const historyLimit = 50;
 
+export type UndoRedoCursorHint = {
+    segmentIndex: number;
+    cursorOffset: number;
+};
+
+/**
+ * После undo документ = oldVal. headInNew — позиция курсора в newVal до отката
+ * (одна правка между строками: общий префикс + общий суффикс).
+ */
+function mapCursorFromNewToOldAfterUndo(
+    oldVal: string,
+    newVal: string,
+    headInNew: number
+): number {
+    const oldLen = oldVal.length;
+    const newLen = newVal.length;
+    const head = Math.max(0, Math.min(headInNew, newLen));
+
+    let i = 0;
+    while (
+        i < oldLen &&
+        i < newLen &&
+        oldVal.charCodeAt(i) === newVal.charCodeAt(i)
+    ) {
+        i++;
+    }
+    let j = 0;
+    while (
+        j < oldLen - i &&
+        j < newLen - i &&
+        oldVal.charCodeAt(oldLen - 1 - j) === newVal.charCodeAt(newLen - 1 - j)
+    ) {
+        j++;
+    }
+
+    const oldMidLen = oldLen - i - j;
+    const suffixStartNew = newLen - j;
+
+    if (head <= i) {
+        return Math.min(head, oldLen);
+    }
+    if (head >= suffixStartNew) {
+        return Math.min(i + oldMidLen + (head - suffixStartNew), oldLen);
+    }
+    return Math.min(i + oldMidLen, oldLen);
+}
+
 export class ProgramService {
     programRepository: ProgramRepository;
 
@@ -158,7 +205,14 @@ export class ProgramService {
         return diff;
     }
 
-    changeSegmentTextByPositionIndex = (index: number, text: string) => {
+    changeSegmentTextByPositionIndex = (
+        index: number,
+        text: string,
+        cursorHead?: number
+    ) => {
+        const clampHead = (s: string, h?: number) =>
+            h === undefined ? s.length : Math.max(0, Math.min(h, s.length));
+
         const last: ProgramChangeAction | undefined =
             this.programRepository.history[
                 this.programRepository.history.length - 1
@@ -171,7 +225,39 @@ export class ProgramService {
             if (this.programRepository.program.segments[index].text === text) {
                 return;
             }
-            this.applyChange(new SegmentTextChangedAction(index, text));
+            // cursorHeadBeforeEdit — точная позиция курсора перед правкой.
+            // Ищем последнюю SegmentTextChangedAction для этого сегмента в истории
+            // (может быть разделена GapAction), берём из неё cursorHeadAfterEdit.
+            // Если её нет — используем длину текущего (старого) текста.
+            const prevAction = this.programRepository.history
+                .slice()
+                .reverse()
+                .find(
+                    (a): a is SegmentTextChangedAction =>
+                        a instanceof SegmentTextChangedAction &&
+                        a.segmentIndex === index
+                );
+            const oldTextLength =
+                this.programRepository.program.segments[index].text.length;
+            const cursorHeadBeforeEdit =
+                prevAction?.cursorHeadAfterEdit ??
+                (cursorHead !== undefined
+                    ? Math.max(
+                          0,
+                          Math.min(
+                              cursorHead - (text.length - oldTextLength),
+                              oldTextLength
+                          )
+                      )
+                    : oldTextLength);
+            this.applyChange(
+                new SegmentTextChangedAction(
+                    index,
+                    text,
+                    clampHead(text, cursorHead),
+                    cursorHeadBeforeEdit
+                )
+            );
         } else {
             const lastTextChangeAction = last as SegmentTextChangedAction;
             if (lastTextChangeAction.oldValue === undefined) {
@@ -182,10 +268,14 @@ export class ProgramService {
                 this.getLineDiff(lastTextChangeAction.oldValue, text) > 1
             ) {
                 this.gap();
-                this.changeSegmentTextByPositionIndex(index, text);
+                this.changeSegmentTextByPositionIndex(index, text, cursorHead);
                 return;
             }
             lastTextChangeAction.newValue = text;
+            lastTextChangeAction.cursorHeadAfterEdit = clampHead(
+                text,
+                cursorHead
+            );
             this.programRepository.program.segments[index].text = text;
             if (
                 lastTextChangeAction.oldValue === lastTextChangeAction.newValue
@@ -196,7 +286,8 @@ export class ProgramService {
         }
     };
 
-    undo = () => {
+    undo = (): UndoRedoCursorHint | undefined => {
+        let hint: UndoRedoCursorHint | undefined;
         while (true) {
             const last = this.programRepository.history.pop();
             if (!last) {
@@ -206,9 +297,36 @@ export class ProgramService {
             this.programRepository.redoHistory.push(last);
 
             if (!(last instanceof GapAction)) {
+                if (last instanceof SegmentTextChangedAction) {
+                    const restored = last.oldValue;
+                    if (restored !== undefined) {
+                        // Предпочитаем точную сохранённую позицию курсора в oldValue;
+                        // эвристика «общий префикс/суффикс» используется только как fallback
+                        // для старых action, где cursorHeadBeforeEdit не был записан.
+                        const cursorOffset =
+                            last.cursorHeadBeforeEdit !== undefined
+                                ? Math.max(
+                                      0,
+                                      Math.min(
+                                          last.cursorHeadBeforeEdit,
+                                          restored.length
+                                      )
+                                  )
+                                : mapCursorFromNewToOldAfterUndo(
+                                      restored,
+                                      last.newValue,
+                                      last.cursorHeadAfterEdit
+                                  );
+                        hint = {
+                            segmentIndex: last.segmentIndex,
+                            cursorOffset,
+                        };
+                    }
+                }
                 break;
             }
         }
+        return hint;
     };
 
     canUndo = () => {
@@ -220,7 +338,8 @@ export class ProgramService {
         );
     };
 
-    redo = () => {
+    redo = (): UndoRedoCursorHint | undefined => {
+        let hint: UndoRedoCursorHint | undefined;
         while (true) {
             const redo = this.programRepository.redoHistory.pop();
             if (!redo) {
@@ -233,9 +352,16 @@ export class ProgramService {
             }
 
             if (!(redo instanceof GapAction)) {
+                if (redo instanceof SegmentTextChangedAction) {
+                    hint = {
+                        segmentIndex: redo.segmentIndex,
+                        cursorOffset: redo.cursorHeadAfterEdit,
+                    };
+                }
                 break;
             }
         }
+        return hint;
     };
 
     canRedo = () => {
@@ -379,10 +505,24 @@ class SegmentTextChangedAction implements ProgramChangeAction {
     segmentIndex: number;
     newValue: string;
     oldValue?: string;
+    /** Голова курсора в newValue после последнего изменения (для redo в IDE). */
+    cursorHeadAfterEdit: number;
+    /** Голова курсора в oldValue в момент создания action (для точного undo в IDE). */
+    cursorHeadBeforeEdit?: number;
 
-    constructor(segmentIndex: number, newValue: string) {
+    constructor(
+        segmentIndex: number,
+        newValue: string,
+        cursorHeadAfterEdit?: number,
+        cursorHeadBeforeEdit?: number
+    ) {
         this.segmentIndex = segmentIndex;
         this.newValue = newValue;
+        this.cursorHeadAfterEdit =
+            cursorHeadAfterEdit === undefined
+                ? newValue.length
+                : Math.max(0, Math.min(cursorHeadAfterEdit, newValue.length));
+        this.cursorHeadBeforeEdit = cursorHeadBeforeEdit;
     }
 
     apply = (program: Program) => {

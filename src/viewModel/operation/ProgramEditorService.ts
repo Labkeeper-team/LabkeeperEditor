@@ -136,9 +136,13 @@ export class ProgramEditorService {
                         const segmentText =
                             thisCopy.programService.getCurrentProgram()
                                 ?.segments[segmentIndex]?.text;
+                        const before = segmentText.slice(0, cursorPosition);
+                        const inserted = `\n${itemToInsert}\n`;
+                        const composed = `${before}${inserted}${segmentText.slice(cursorPosition)}`;
                         await thisCopy.onSegmentTextEdited(
                             segmentIndex,
-                            `${segmentText.slice(0, cursorPosition)}\n${itemToInsert}\n${segmentText.slice(cursorPosition)}`
+                            composed,
+                            before.length + inserted.length
                         );
                     } else if (res.code === 413) {
                         thisCopy.repository.ideViewModelRepository.setGetFilesRequestState(
@@ -190,13 +194,58 @@ export class ProgramEditorService {
     };
 
     onPrevVersionButtonClicked = () => {
-        this.programService.undo();
+        const cursorHint = this.programService.undo();
+        if (cursorHint) {
+            this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(
+                cursorHint.segmentIndex
+            );
+        }
         this.ideService.onProgramUpdated();
+        if (cursorHint) {
+            this.repository.ideViewModelRepository.setPendingSegmentEditorCursor(
+                {
+                    segmentIndex: cursorHint.segmentIndex,
+                    offset: cursorHint.cursorOffset,
+                }
+            );
+            // Страховка: если за 2 rAF-кадра pending не был применён слушателем CM
+            // (например, CM не получил docChanged), сбрасываем его принудительно.
+            this.scheduleStaleHintClear();
+        }
     };
 
     onNextVersionButtonClicked = () => {
-        this.programService.redo();
+        const cursorHint = this.programService.redo();
+        if (cursorHint) {
+            this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(
+                cursorHint.segmentIndex
+            );
+        }
         this.ideService.onProgramUpdated();
+        if (cursorHint) {
+            this.repository.ideViewModelRepository.setPendingSegmentEditorCursor(
+                {
+                    segmentIndex: cursorHint.segmentIndex,
+                    offset: cursorHint.cursorOffset,
+                }
+            );
+            this.scheduleStaleHintClear();
+        }
+    };
+
+    /** Сбрасывает pendingSegmentEditorCursor через 2 rAF-кадра, если CM-слушатель не успел его применить. */
+    private scheduleStaleHintClear = () => {
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                const still =
+                    this.repository.ideViewModelRepository.pendingSegmentEditorCursor();
+                if (still) {
+                    this.repository.ideViewModelRepository.setPendingSegmentEditorCursor(
+                        null
+                    );
+                }
+            });
+        });
     };
 
     onRoundStrategySet = (strategy: ProgramRoundStrategy) => {
@@ -214,8 +263,8 @@ export class ProgramEditorService {
     ): Promise<void> => {
         this.observerService.onEvent(Events.EVENT_MOVE_SEGMENT);
         this.programService.moveSegment(segmentIndex, direction);
-        await this.loaderService.segmentEditorSaveProgram();
         this.ideService.onProgramUpdated();
+        await this.loaderService.segmentEditorSaveProgram();
     };
 
     segmentEditorChangeSegmentVisibility = async (
@@ -278,7 +327,11 @@ export class ProgramEditorService {
         this.ideService.onProgramUpdated();
     };
 
-    onSegmentTextEdited = async (segmentIndex: number, segmentText: string) => {
+    onSegmentTextEdited = async (
+        segmentIndex: number,
+        segmentText: string,
+        cursorHead?: number
+    ) => {
         this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(
             segmentIndex
         );
@@ -287,7 +340,8 @@ export class ProgramEditorService {
             this.ideService.calculateFilesToDelete(programBefore);
         this.programService.changeSegmentTextByPositionIndex(
             segmentIndex,
-            segmentText
+            segmentText,
+            cursorHead
         );
         const programAfter = this.programService.getCurrentProgram();
         const filesAfter = this.ideService.calculateFilesToDelete(programAfter);
