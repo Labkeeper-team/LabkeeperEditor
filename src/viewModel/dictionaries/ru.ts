@@ -294,8 +294,12 @@ export const ru: Translations = {
 
     prompt_modal: {
         title: 'Запрос к Chat GPT',
+        description:
+            'ИИ обработает ваш запрос и добавит новый сегмент с кодом в нужное место проекта.',
         placeholder: 'Введите промпт',
         generateImage: 'Генерировать изображения',
+        generateImageDescription:
+            'Если включено, бот сгенерирует КАРТИНКУ по вашему описанию и вставит ее в проект.',
         submit: 'Отправить',
         sending: 'Отправка...',
         errors: {

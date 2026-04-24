@@ -282,8 +282,12 @@ export const en: Translations = {
 
     prompt_modal: {
         title: 'Chat GPT prompt',
+        description:
+            'AI will process your request and add a new code segment in the right place in the project.',
         placeholder: 'Enter prompt',
         generateImage: 'Generate images',
+        generateImageDescription:
+            'When enabled, the bot will generate an IMAGE from your description and insert it into the project.',
         submit: 'Send',
         sending: 'Sending...',
         errors: {

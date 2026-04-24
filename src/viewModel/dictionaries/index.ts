@@ -268,8 +268,10 @@ export interface Translations {
     };
     prompt_modal: {
         title: string;
+        description: string;
         placeholder: string;
         generateImage: string;
+        generateImageDescription: string;
         submit: string;
         sending: string;
         errors: {

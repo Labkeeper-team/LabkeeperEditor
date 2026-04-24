@@ -45,7 +45,8 @@ export const PromptModal = () => {
                     flexDirection: 'column',
                     gap: 16,
                     padding: '24px 28px',
-                    minWidth: 420,
+                    width: 420,
+                    maxWidth: '90vw',
                     position: 'relative',
                 }}
             >
@@ -56,6 +57,18 @@ export const PromptModal = () => {
                         text={dictionary.prompt_modal.title}
                     />
                 </div>
+                {!generateImage && (
+                    <Typography
+                        type="label-small"
+                        color={colors.gray20}
+                        text={dictionary.prompt_modal.description}
+                        style={{
+                            backgroundColor: colors.gray60,
+                            borderRadius: 8,
+                            padding: '10px 12px',
+                        }}
+                    />
+                )}
                 <Input
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
@@ -77,7 +90,32 @@ export const PromptModal = () => {
                         text={errorMessage}
                     />
                 )}
-                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <div
+                    style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-end',
+                        gap: 12,
+                        width: '100%',
+                    }}
+                >
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                        <Typography
+                            type="label-small"
+                            color={colors.gray20}
+                            text={
+                                dictionary.prompt_modal.generateImageDescription
+                            }
+                            style={{
+                                whiteSpace: 'normal',
+                                wordBreak: 'break-word',
+                                lineHeight: '18px',
+                                visibility: generateImage
+                                    ? 'visible'
+                                    : 'hidden',
+                            }}
+                        />
+                    </div>
                     <Button
                         classname="full-width"
                         title={
