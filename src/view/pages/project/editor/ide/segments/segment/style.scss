@@ -68,16 +68,17 @@ $segment-editor-rules-right-gutter: 170px;
             width: 0px;
         }
     }
-    /* Отступ только у первой `.cm-line`, чтобы 2+ строки шли на полную ширину под плашкой. */
+    /* Отступ у 1–2-й `.cm-line`; с 3-й — на полную ширину под плашкой. */
     .cm-content {
         box-sizing: border-box;
         .cm-line {
             color: rgb(14, 22, 33);
         }
-        > .cm-line:first-of-type {
+        > .cm-line:first-of-type,
+        > .cm-line:nth-of-type(2) {
             padding-right: $segment-editor-rules-right-gutter;
         }
-        > .cm-line ~ .cm-line {
+        > .cm-line ~ .cm-line ~ .cm-line {
             padding-right: 0;
         }
     }
