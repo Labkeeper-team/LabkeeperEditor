@@ -118,6 +118,7 @@ export interface Translations {
 
     viewer: {
         no_pdf: string;
+        pdf_loading: string;
         gpt_prompt_button: string;
         mode: {
             markdown: string;

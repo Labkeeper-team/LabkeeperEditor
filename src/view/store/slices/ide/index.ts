@@ -5,6 +5,7 @@ import {
     GetFilesRequestState,
     GetProjectRequestState,
     GetProjectsRequestState,
+    PendingSegmentEditorCursor,
     ProjectPromptRequestState,
     SaveProjectRequestState,
 } from '../../../../viewModel/repository';
@@ -30,6 +31,12 @@ export const ideSlice = createSlice({
             { payload }: PayloadAction<number>
         ) => {
             state.previousActiveSegmentIndex = payload;
+        },
+        setPendingSegmentEditorCursor: (
+            state,
+            { payload }: PayloadAction<PendingSegmentEditorCursor | null>
+        ) => {
+            state.pendingSegmentEditorCursor = payload;
         },
         setCloneRequestState: (
             state,
@@ -76,6 +83,7 @@ export const {
     setSearch,
     setActiveSegmentIndex,
     setPreviousActiveSegmentIndex,
+    setPendingSegmentEditorCursor,
     setUndoEnabled,
     setRedoEnabled,
     setCloneRequestState,

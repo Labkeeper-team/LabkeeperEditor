@@ -124,6 +124,7 @@ export const en: Translations = {
 
     viewer: {
         no_pdf: 'Click the "Run" button to display the PDF file.',
+        pdf_loading: 'Loading PDF…',
         gpt_prompt_button: 'GPT',
         mode: {
             markdown: 'markdown',

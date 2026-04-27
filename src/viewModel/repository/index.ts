@@ -84,12 +84,18 @@ export type ProjectPromptRequestState =
     | 'bad_request'
     | 'unknownError';
 
+export type PendingSegmentEditorCursor = {
+    segmentIndex: number;
+    offset: number;
+};
+
 class MockViewModelRepositoryState {
     location = '/';
 
     activeSegmentIndex = -1;
     search: string | undefined = undefined;
     previousActiveSegmentIndex = -1;
+    pendingSegmentEditorCursor: PendingSegmentEditorCursor | null = null;
     redoEnabled: boolean = false;
     undoEnabled: boolean = false;
     cloneRequestState: CloneRequestState = 'unknown';
@@ -194,6 +200,8 @@ export const mockViewModelState = (): MockViewModelRepository => {
             search: () => mockViewModelState.search,
             previousActiveSegmentIndex: () =>
                 mockViewModelState.previousActiveSegmentIndex,
+            pendingSegmentEditorCursor: () =>
+                mockViewModelState.pendingSegmentEditorCursor,
             redoEnabled: () => mockViewModelState.redoEnabled,
             undoEnabled: () => mockViewModelState.undoEnabled,
             cloneRequestState: () => mockViewModelState.cloneRequestState,
@@ -231,6 +239,8 @@ export const mockViewModelState = (): MockViewModelRepository => {
                 (mockViewModelState.activeSegmentIndex = index),
             setPreviousActiveSegmentIndex: (index: number) =>
                 (mockViewModelState.previousActiveSegmentIndex = index),
+            setPendingSegmentEditorCursor: (value) =>
+                (mockViewModelState.pendingSegmentEditorCursor = value),
         },
         persistenceViewModelRepository: {
             instructionExpanded: () => mockViewModelState.instructionExpanded,
@@ -393,6 +403,7 @@ export interface IdeViewModelRepository {
     search: () => string | undefined;
     activeSegmentIndex: () => number;
     previousActiveSegmentIndex: () => number;
+    pendingSegmentEditorCursor: () => PendingSegmentEditorCursor | null;
     redoEnabled: () => boolean;
     undoEnabled: () => boolean;
     cloneRequestState: () => CloneRequestState;
@@ -410,6 +421,9 @@ export interface IdeViewModelRepository {
     setSearch: (search: string | undefined) => void;
     setActiveSegmentIndex: (index: number) => void;
     setPreviousActiveSegmentIndex: (index: number) => void;
+    setPendingSegmentEditorCursor: (
+        value: PendingSegmentEditorCursor | null
+    ) => void;
     setCloneRequestState: (state: CloneRequestState) => void;
     setGetProjectRequestState: (state: GetProjectRequestState) => void;
     setGetFilesRequestState: (state: GetFilesRequestState) => void;

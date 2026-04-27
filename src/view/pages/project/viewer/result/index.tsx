@@ -57,10 +57,6 @@ export const Result = ({ mode = 'markdown' }: { mode?: ProjectMode }) => {
             return;
         }
         dispatch(controller.onPrintButtonPressedRequest());
-        if (mode === 'latex' && pdfUri) {
-            window.open(pdfUri);
-            return;
-        }
         const isMobile =
             /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(
                 navigator.userAgent
