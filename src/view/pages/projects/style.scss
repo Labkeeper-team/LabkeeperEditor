@@ -88,6 +88,32 @@
         width: 300px;
         height: 90px;
     }
+    .projects-header-cell {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .projects-sort-icon-button {
+        border: none;
+        background: transparent;
+        padding: 0;
+        margin: 0;
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        line-height: 10px;
+    }
+    .sort-arrow {
+        color: $gray-30;
+        font-size: 11px;
+        user-select: none;
+        height: 10px;
+    }
+    .sort-arrow.is-active {
+        color: $blue-10;
+    }
     table {
         th:nth-child(1) {
         }
