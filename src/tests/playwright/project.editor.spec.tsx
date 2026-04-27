@@ -170,7 +170,7 @@ test('insert-segment-between', async ({ page }) => {
 
     // Добавляем latex
     await page.getByText('Add', { exact: true }).nth(1).click();
-    await page.getByText('latex-math', { exact: true }).click();
+    await page.getByText('latex', { exact: true }).click();
 
     // пишем в него
     editor = page.locator('.cm-content').nth(2);
@@ -1398,7 +1398,7 @@ test('latex-segments-and-asciimath', async ({ page }) => {
         .filter({ hasText: /^Add more$/ })
         .first()
         .click();
-    await page.getByRole('listitem').filter({ hasText: 'Latex-math' }).click();
+    await page.getByRole('listitem').filter({ hasText: 'Latex' }).click();
 
     // Пишем в него
     const firstText =
@@ -1415,7 +1415,7 @@ test('latex-segments-and-asciimath', async ({ page }) => {
         .filter({ hasText: /^Add more$/ })
         .first()
         .click();
-    await page.getByRole('listitem').filter({ hasText: 'Latex-math' }).click();
+    await page.getByRole('listitem').filter({ hasText: 'Latex' }).click();
     // Пишем в него
     editor = page.locator('.cm-content').nth(1);
     await editor.click();

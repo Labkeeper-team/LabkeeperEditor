@@ -10,7 +10,6 @@ import { InterfaceTourAnchorClassnames } from '../../../../components/tour/helpe
 import {
     useCompiledSuccesInfo,
     useCurrentFullProject,
-    useUser,
 } from '../../../../store/selectors/program';
 import { useReactToPrint } from 'react-to-print';
 import { useRef } from 'react';
@@ -28,7 +27,6 @@ declare global {
 }
 
 export const Result = ({ mode = 'markdown' }: { mode?: ProjectMode }) => {
-    const user = useSelector(useUser);
     const dispatch = useDispatch<AppDispatch>();
     const compileResult = useSelector(useCompiledSuccesInfo);
     const { project: currentProject, pdfUri } = useSelector(
@@ -152,8 +150,7 @@ export const Result = ({ mode = 'markdown' }: { mode?: ProjectMode }) => {
                 disabled={
                     compileResult === undefined ||
                     compileResult.segments === undefined ||
-                    compileResult.segments.length === 0 ||
-                    !user.isAuthenticated
+                    compileResult.segments.length === 0
                 }
                 titleIcon={() => <SavePdfIcon />}
                 color="blue"

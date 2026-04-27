@@ -18,7 +18,7 @@ export const en: Translations = {
     label_add_markdown: 'Add markdown',
     label_add_markdown_short: 'MD',
     label_add_code: 'Computation',
-    label_add_latex: 'Latex-math',
+    label_add_latex: 'Latex',
     label_add_more: 'Add more',
     label_add_more_short: 'More',
     label_save_to_pdf: 'Save to PDF',
@@ -35,7 +35,7 @@ export const en: Translations = {
         add: 'Add',
         computation: 'computation',
         markdown: 'markdown',
-        latex: 'latex-math',
+        latex: 'latex',
         asciimath: 'simple-math',
     },
 
@@ -108,7 +108,7 @@ export const en: Translations = {
         errors: {
             non_authorized_paste_image: 'You need authorize to paste images',
         },
-        latex: 'latex-math',
+        latex: 'latex',
         asciimath: 'simple-math',
         no_computation_result: 'No computation result',
         run_to_view: 'Press the run button to see computations',
@@ -283,8 +283,12 @@ export const en: Translations = {
 
     prompt_modal: {
         title: 'Chat GPT prompt',
+        description:
+            'AI will process your request and add a new code segment in the right place in the project.',
         placeholder: 'Enter prompt',
         generateImage: 'Generate images',
+        generateImageDescription:
+            'When enabled, the bot will generate an IMAGE from your description and insert it into the project.',
         submit: 'Send',
         sending: 'Sending...',
         errors: {
