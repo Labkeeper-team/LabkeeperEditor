@@ -250,6 +250,12 @@ test('remove-readonly-when-project-is-create-test', async () => {
         isForbidden: false,
         body: createDefaultProject(uuid, 'Default Project2'),
     } as RequestResult<Project>);
+    rpi.setProjectTypeRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+    } as RequestResult);
 
     await startupService.onAppStartup();
 
@@ -257,6 +263,7 @@ test('remove-readonly-when-project-is-create-test', async () => {
 
     await projectsPageService.onProjectCreate(
         'biba',
+        'markdown',
         () => {},
         () => {}
     );
@@ -316,6 +323,12 @@ test('display-name-new-project-test', async () => {
         .fn()
         .mockResolvedValue(createDefaultUserInfo(true)); // залогиниться
 
+    rpi.setProjectTypeRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+    } as RequestResult);
     rpi.getDefaultProjectRequest = jest.fn().mockResolvedValue({
         code: 200,
         isOk: true,
@@ -384,6 +397,7 @@ test('display-name-new-project-test', async () => {
     } as RequestResult<ListProjectsResponse>); //запрос остальных проектов
     await projectsPageService.onProjectCreate(
         'New Project',
+        'markdown',
         () => {},
         () => {}
     ); // создать новый проект

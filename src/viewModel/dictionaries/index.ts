@@ -62,6 +62,9 @@ export interface Translations {
         label: string;
         create: string;
         name: string;
+        project_type: string;
+        type_markdown: string;
+        type_latex: string;
         error: {
             empty_name: string;
             too_many_projects: string;

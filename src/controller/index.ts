@@ -551,16 +551,19 @@ export class Controller {
         'onProjectCreateRequest',
         async ({
             projectName,
+            projectType,
             errorCallback,
             okCallback,
         }: {
             projectName: string;
+            projectType: ProjectType;
             okCallback: () => void;
             errorCallback: (message: string) => void;
         }) => {
             this.wrapper('onProjectCreateRequest', () =>
                 this.projectsPageService.onProjectCreate(
                     projectName,
+                    projectType,
                     okCallback,
                     errorCallback
                 )

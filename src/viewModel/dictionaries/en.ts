@@ -66,6 +66,9 @@ export const en: Translations = {
         label: 'Creating a new project',
         create: 'Create',
         name: 'Project name',
+        project_type: 'Project type',
+        type_markdown: 'Markdown',
+        type_latex: 'LaTeX',
         error: {
             empty_name: 'Please input the project name',
             too_many_projects: 'Too many projects',
