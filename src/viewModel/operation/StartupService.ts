@@ -218,6 +218,9 @@ export class StartupService {
                 States.STATE_PROJECT,
                 project.projectId
             );
+            this.repository.projectViewModelRepository.setPdfUri(
+                project.lastPdf
+            );
             this.repository.ideViewModelRepository.setGetProjectRequestState(
                 'ok'
             );

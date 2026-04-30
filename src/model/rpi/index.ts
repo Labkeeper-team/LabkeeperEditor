@@ -44,6 +44,7 @@ export interface CodeValidationResponse {
 
 export interface RichProject extends Project {
     lastProgramResult?: CompileSuccessResult;
+    lastPdf?: string;
 }
 
 export interface Rpi {
