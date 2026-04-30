@@ -62,14 +62,6 @@ export class CompilationService {
 
         const mode = storeMode ?? runtimeMode;
 
-        if (
-            !this.repository.userViewModelRepository.isAuthenticated() &&
-            mode === 'latex'
-        ) {
-            this.repository.authViewModelRepository.setCurrentView('login');
-            return;
-        }
-
         let result:
             | RequestResult<CompilationResponse>
             | RequestResult<PdfCompilationResponse>;
@@ -80,7 +72,11 @@ export class CompilationService {
                 result = await this.rpi.compileProjectRequest(projectId);
             }
         } else {
-            result = await this.rpi.compilationRequest(program);
+            if (mode === 'latex') {
+                result = await this.rpi.pdfCompilationRequest(program);
+            } else {
+                result = await this.rpi.compilationRequest(program);
+            }
         }
 
         this.repository.settingsViewModelRepository.setIsCompiling(false);

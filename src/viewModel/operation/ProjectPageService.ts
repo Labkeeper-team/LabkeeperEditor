@@ -320,15 +320,11 @@ export class ProjectPageService {
         mode: ProjectMode,
         projectId: string
     ): Promise<void> => {
-        if (!this.repository.userViewModelRepository.isAuthenticated()) {
-            this.repository.authViewModelRepository.setCurrentView('login');
-        } else {
-            this.repository.persistenceViewModelRepository.setModeToProject(
-                projectId,
-                mode
-            );
-            this.repository.projectViewModelRepository.setProjectMode(mode);
-        }
+        this.repository.persistenceViewModelRepository.setModeToProject(
+            projectId,
+            mode
+        );
+        this.repository.projectViewModelRepository.setProjectMode(mode);
         this.ideService.onProgramUpdated();
     };
 

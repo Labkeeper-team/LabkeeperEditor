@@ -50,6 +50,10 @@ export interface Rpi {
         program: Program
     ): Promise<RequestResult<CompilationResponse>>;
 
+    pdfCompilationRequest(
+        program: Program
+    ): Promise<RequestResult<CompilationResponse>>;
+
     contactFormRequest(subject: string, body: string): Promise<RequestResult>;
 
     compileProjectRequest(

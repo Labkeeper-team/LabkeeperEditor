@@ -60,6 +60,13 @@ function withIds(program: Program): Program {
 }
 
 export class WebRpi implements Rpi {
+    pdfCompilationRequest(
+        program: Program
+    ): Promise<RequestResult<CompilationResponse>> {
+        return requestWrapper(async () =>
+            axios.post(URLS.compilePdf, withIds(program))
+        );
+    }
     async compilationRequest(
         program: Program
     ): Promise<RequestResult<CompileSuccessResult | CompileErrorResultList>> {
