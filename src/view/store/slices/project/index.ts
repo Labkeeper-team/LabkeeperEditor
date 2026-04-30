@@ -7,7 +7,7 @@ import {
     Program,
     Project,
     Segment,
-    ProjectMode,
+    ProjectType,
 } from '../../../../model/domain.ts';
 import { projectInitialState } from '../index.ts';
 
@@ -128,7 +128,7 @@ export const projectSlice = createSlice({
         ) => {
             state.project = payload;
         },
-        setProjectMode: (state, { payload }: PayloadAction<ProjectMode>) => {
+        setProjectMode: (state, { payload }: PayloadAction<ProjectType>) => {
             state.mode = payload;
         },
         setPdfUri: (state, { payload }: PayloadAction<string | undefined>) => {

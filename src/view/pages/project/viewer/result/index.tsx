@@ -16,7 +16,7 @@ import { useRef } from 'react';
 import { useDictionary } from '../../../../store/selectors/translations';
 import { AppDispatch } from '../../../../store';
 import { controller } from '../../../../../main.tsx';
-import { ProjectMode } from '../../../../../model/domain.ts';
+import { ProjectType } from '../../../../../model/domain.ts';
 
 declare global {
     interface Window {
@@ -26,7 +26,7 @@ declare global {
     }
 }
 
-export const Result = ({ mode = 'markdown' }: { mode?: ProjectMode }) => {
+export const Result = ({ mode = 'markdown' }: { mode?: ProjectType }) => {
     const dispatch = useDispatch<AppDispatch>();
     const compileResult = useSelector(useCompiledSuccesInfo);
     const { project: currentProject, pdfUri } = useSelector(

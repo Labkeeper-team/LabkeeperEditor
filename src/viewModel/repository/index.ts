@@ -5,7 +5,7 @@ import {
     OutputSegment,
     Program,
     Project,
-    ProjectMode,
+    ProjectType,
     ProjectShort,
     UserInfo,
 } from '../../model/domain.ts';
@@ -105,10 +105,9 @@ class MockViewModelRepositoryState {
     saveProjectRequestState: SaveProjectRequestState = 'unknown';
 
     pdfUri: string | undefined;
-    mode: ProjectMode = 'markdown';
+    mode: ProjectType = 'markdown';
     instructionExpanded = false;
     language: 'ru' | 'en' = 'ru';
-    mockProgramMode = {};
     lastProgram: Program = {
         segments: [],
         parameters: {
@@ -245,13 +244,9 @@ export const mockViewModelState = (): MockViewModelRepository => {
         persistenceViewModelRepository: {
             instructionExpanded: () => mockViewModelState.instructionExpanded,
             language: () => mockViewModelState.language,
-            projectCompileModes: () => mockViewModelState.mockProgramMode,
             lastProgram: () => mockViewModelState.lastProgram,
             lastOpenedProjectUuid: () =>
                 mockViewModelState.lastOpenedProjectUuid,
-            setModeToProject(id, mode) {
-                mockViewModelState.mockProgramMode[id] = mode;
-            },
             setLastOpenedProjectUuid: (uuid) =>
                 (mockViewModelState.lastOpenedProjectUuid = uuid),
             setInstructionExpanded: (v) =>
@@ -277,7 +272,7 @@ export const mockViewModelState = (): MockViewModelRepository => {
             pdfUri: () => mockViewModelState.pdfUri,
 
             setPdfUri: (uri) => (mockViewModelState.pdfUri = uri),
-            setProjectMode: (mode) => (mockViewModelState.mode = mode),
+            setProjectType: (mode) => (mockViewModelState.mode = mode),
             setInputSegmentText: (index, text) => {
                 mockViewModelState.currentProgram.segments[index].text = text;
             },
@@ -381,11 +376,11 @@ export interface ProjectViewModelRepository {
     projectIsReadonly: () => boolean;
     currentProgram: () => Program;
     files: () => LabkeeperFile[];
-    mode: () => ProjectMode;
+    mode: () => ProjectType;
     pdfUri: () => string | undefined;
 
     setPdfUri: (uri: string | undefined) => void;
-    setProjectMode: (mode: ProjectMode) => void;
+    setProjectType: (mode: ProjectType) => void;
     setInputSegmentText: (index: number, text: string) => void;
     setCompileResultSegmentsSize: (size: number) => void;
     setCompileResultForSegment: (index: number, segment: OutputSegment) => void;
@@ -495,7 +490,6 @@ export interface UserViewModelRepository {
 export interface PersistenceViewModelRepository {
     language: () => Language;
     lastProgram: () => Program;
-    projectCompileModes: () => Record<string, ProjectMode>;
     instructionExpanded: () => boolean;
     lastOpenedProjectUuid: () => string | undefined;
 
@@ -503,7 +497,6 @@ export interface PersistenceViewModelRepository {
     setLanguage: (language: Language) => void;
     setInstructionExpanded: (instructionExpanded: boolean) => void;
     setLastProgram: (lastProgram: Program) => void;
-    setModeToProject: (id: string, mode: ProjectMode) => void;
     clearLastProgram: () => void;
 }
 

@@ -59,6 +59,7 @@ function createDefaultProject(projectId: string, title: string): RichProject {
                 roundStrategy: 'noRound',
             },
         },
+        projectType: 'latex',
     };
 }
 

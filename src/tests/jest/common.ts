@@ -96,6 +96,7 @@ export function mockDefaultProjectRequestWithDefaultProject(rpi: Rpi) {
                     roundStrategy: 'noRound',
                 },
             },
+            projectType: 'markdown',
         },
     } as RequestResult<RichProject>);
 }
@@ -119,6 +120,7 @@ export function mockGetProjectRequestWithDefaultProject(rpi: Rpi) {
                     roundStrategy: 'noRound',
                 },
             },
+            projectType: 'markdown',
         },
     } as RequestResult<RichProject>);
 }

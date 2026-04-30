@@ -3,6 +3,7 @@ import {
     CompileSuccessResult,
     Program,
     Project,
+    ProjectType,
     Segment,
     UserInfo,
 } from '../../model/domain.ts';
@@ -60,6 +61,16 @@ function withIds(program: Program): Program {
 }
 
 export class WebRpi implements Rpi {
+    setProjectTypeRequest(
+        projectId: string,
+        type: ProjectType
+    ): Promise<RequestResult> {
+        return requestWrapper(async () =>
+            axios.post(
+                `${URLS.setType.replace('{id}', projectId)}?type=${type}`
+            )
+        );
+    }
     pdfCompilationRequest(
         program: Program
     ): Promise<RequestResult<CompilationResponse>> {

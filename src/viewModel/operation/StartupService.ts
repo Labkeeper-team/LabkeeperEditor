@@ -208,6 +208,9 @@ export class StartupService {
                 project.program,
                 project.lastProgramResult
             );
+            this.repository.projectViewModelRepository.setProjectType(
+                project.projectType
+            );
             this.repository.setLocation(
                 Routes.Project.replace(':id', project.projectId)
             );

@@ -120,6 +120,7 @@ export class RouteSetup {
                         roundStrategy: 'noRound',
                     },
                 },
+                projectType: 'markdown',
             };
         } else if (typeBody == 'default') {
             return {
@@ -133,6 +134,7 @@ export class RouteSetup {
                         roundStrategy: 'noRound',
                     },
                 },
+                projectType: 'markdown',
             };
         } else if (typeBody == 'empty') {
             return {};
@@ -155,6 +157,7 @@ export class RouteSetup {
                         roundStrategy: 'noRound',
                     },
                 },
+                projectType: 'markdown',
             };
         }
     }
@@ -428,6 +431,7 @@ export class RouteSetup {
                         roundStrategy: 'noRound',
                     },
                 },
+                projectType: 'markdown',
             };
         } else if (typeBody == 'empty') {
             return {};
@@ -488,6 +492,7 @@ export class RouteSetup {
                                 userId: defaultUserId,
                                 title: 'Тестовый проект',
                                 lastModified: '2024-03-20T12:00:00',
+                                projectType: 'markdown',
                             },
                         ],
                     }),
@@ -578,6 +583,7 @@ export class RouteSetup {
                                 roundStrategy: 'noRound',
                             },
                         },
+                        projectType: 'markdown',
                     }),
                 });
             }

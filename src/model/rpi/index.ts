@@ -5,6 +5,7 @@ import {
     Program,
     Project,
     ProjectShort,
+    ProjectType,
     UserInfo,
 } from '../domain.ts';
 
@@ -110,6 +111,11 @@ export interface Rpi {
     setProjectVisibilityRequest(
         projectId: string,
         visibility: boolean
+    ): Promise<RequestResult>;
+
+    setProjectTypeRequest(
+        projectId: string,
+        type: ProjectType
     ): Promise<RequestResult>;
 
     sendEmailWithCodeRequest(
