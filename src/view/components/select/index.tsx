@@ -1,4 +1,11 @@
-import { Key, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import {
+    Key,
+    useEffect,
+    useLayoutEffect,
+    useMemo,
+    useRef,
+    useState,
+} from 'react';
 import {
     ISelectOptions,
     SelectClassNames,
@@ -33,8 +40,7 @@ export const Select = ({
     const widthMeasurerRef = useRef<HTMLUListElement>(null);
     const selectedValue = useMemo(() => {
         return options.find(
-            (o): o is SelectOption =>
-                !isSelectSeparator(o) && o.value === value
+            (o): o is SelectOption => !isSelectSeparator(o) && o.value === value
         );
     }, [value, options]);
 

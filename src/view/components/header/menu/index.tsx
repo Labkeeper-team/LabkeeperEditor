@@ -109,7 +109,6 @@ export const HeaderMenu = () => {
             title: dictionary.header_menu.logout,
             onClick: () => setShowLogoutModal(true),
         },
-
     ];
 
     const items = isAuthenticated ? authenticatedMenuItems : publicMenuItems;
