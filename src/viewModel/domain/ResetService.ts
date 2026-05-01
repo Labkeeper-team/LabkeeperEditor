@@ -79,6 +79,7 @@ export class ResetService {
             isAuthenticated: false,
             email: '',
             id: -1,
+            tokens: 0,
         });
     }
 

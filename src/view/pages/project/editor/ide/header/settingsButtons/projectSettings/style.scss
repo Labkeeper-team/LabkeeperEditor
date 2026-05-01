@@ -2,6 +2,18 @@
 
 .project-settings-dropdown {
     width: max-content;
+
+    &__section {
+        margin: 6px 0 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
+
     span {
         width: 100%;
         text-align: end;

@@ -1,4 +1,4 @@
-﻿import {
+import {
     ListProjectsResponse,
     mockRpi,
     RequestResult,
@@ -72,6 +72,7 @@ function createDefaultUserInfo(
             isAuthenticated: isAuthenticated,
             email: 'a@gmail.com',
             id: 1,
+            tokens: 0,
         },
         isOk: true,
         isUnauth: false,
@@ -565,6 +566,7 @@ test('segments-move-with-result-test', async () => {
             isAuthenticated: false,
             email: 'a@gmail.com',
             id: 1,
+            tokens: 0,
         },
         isOk: true,
         isUnauth: false,
@@ -670,6 +672,7 @@ test('hint-erase-other-segments-test', async () => {
             isAuthenticated: false,
             email: 'a@gmail.com',
             id: 1,
+            tokens: 0,
         },
         isOk: true,
         isUnauth: false,

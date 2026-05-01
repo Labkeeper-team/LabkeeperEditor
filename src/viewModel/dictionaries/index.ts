@@ -121,9 +121,22 @@ export interface Translations {
         pdf_loading: string;
         gpt_prompt_button: string;
         mode: {
+            label: string;
             markdown: string;
             latex: string;
         };
+    };
+    header_menu: {
+        menu: string;
+        examples: string;
+        privacy_policy: string;
+        tokens: string;
+        top_up_balance: string;
+        about: string;
+        contact_us: string;
+        my_projects: string;
+        logout: string;
+        logout_confirmation: string;
     };
 
     compile_error: {
