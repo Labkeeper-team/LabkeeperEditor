@@ -104,6 +104,7 @@ MockViewModelRepositoryState {
   "showShareModal": false,
   "showTour": false,
   "toasts": [],
+  "tokens": 0,
   "undoEnabled": true,
 }
 `;
@@ -230,6 +231,7 @@ MockViewModelRepositoryState {
   "showShareModal": false,
   "showTour": false,
   "toasts": [],
+  "tokens": 0,
   "undoEnabled": true,
 }
 `;

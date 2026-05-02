@@ -2,13 +2,9 @@ import { Instruction } from './instruction';
 import { Result } from './result';
 import './style.scss';
 import { useDispatch, useSelector } from 'react-redux';
-import { Select } from '../../../components/select';
-import { SelectClassNames } from '../../../components/select/model';
 import { AppDispatch, StorageState } from '../../../store';
 import { controller } from '../../../../main.tsx';
 import { useDictionary } from '../../../store/selectors/translations';
-import '../editor/ide/header/settingsButtons/markdownType/style.scss';
-import { ProjectMode } from '../../../../model/domain.ts';
 import {
     useCurrentProject,
     useIsProjectReadonly,
@@ -22,10 +18,6 @@ export const Viewer = () => {
     const dictionary = useSelector(useDictionary);
     const project = useSelector(useCurrentProject);
     const isReadonly = useSelector(useIsProjectReadonly);
-    const options = [
-        { label: dictionary.viewer.mode.markdown, value: 'markdown' },
-        { label: dictionary.viewer.mode.latex, value: 'latex' },
-    ];
     const currentRunTimeValue = useSelector(
         (state: StorageState) => state.project.mode
     );
@@ -46,20 +38,6 @@ export const Viewer = () => {
                     className="ide-wrapper"
                     style={{ display: 'flex', alignItems: 'center', gap: 8 }}
                 >
-                    <Select
-                        options={options}
-                        value={mode}
-                        onChange={(val) =>
-                            dispatch(
-                                controller.onProjectModeChangeRequest({
-                                    mode: val as ProjectMode,
-                                    projectId: project?.projectId || 'default',
-                                })
-                            )
-                        }
-                        className={SelectClassNames.Default}
-                        minimize
-                    />
                     {!isReadonly && (
                         <Button
                             title={dictionary.viewer.gpt_prompt_button}

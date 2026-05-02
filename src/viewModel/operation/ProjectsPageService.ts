@@ -112,6 +112,7 @@ export class ProjectsPageService {
                     this.repository.userViewModelRepository.isAuthenticated(),
                 id: this.repository.userViewModelRepository.id(),
                 email: this.repository.userViewModelRepository.email(),
+                tokens: this.repository.userViewModelRepository.tokens(),
             },
             projectId
         );

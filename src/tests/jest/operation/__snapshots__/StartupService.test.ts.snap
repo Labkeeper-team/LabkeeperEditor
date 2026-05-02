@@ -195,6 +195,7 @@ S
   "showShareModal": false,
   "showTour": false,
   "toasts": [],
+  "tokens": 0,
   "undoEnabled": false,
 }
 `;
