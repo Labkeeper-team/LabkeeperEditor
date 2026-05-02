@@ -37,7 +37,7 @@ export const Select = ({
     const [isOpen, setIsOpen] = useState(false); // Состояние открытия/закрытия списка
     const [optionsWidth, setOptionsWidth] = useState<number>();
     const selectRef = useRef<HTMLDivElement>(null); // Ссылка на контейнер
-    const widthMeasurerRef = useRef<HTMLUListElement>(null);
+    const widthMeasurerRef = useRef<HTMLDivElement>(null);
     const titleWidthMeasurerRef = useRef<HTMLSpanElement>(null);
     const selectHeaderRef = useRef<HTMLDivElement>(null);
     const selectedValue = useMemo(() => {
@@ -134,27 +134,27 @@ export const Select = ({
             }
         >
             {fitToOptionsWidth ? (
-                <ul
+                <div
                     className="select-options select-width-measurer"
                     aria-hidden
                     ref={widthMeasurerRef}
                 >
                     {options.map((option, index) =>
                         isSelectSeparator(option) ? (
-                            <li
+                            <div
                                 key={getOptionKey(option, index)}
                                 className="select-option-separator"
                             />
                         ) : (
-                            <li
+                            <div
                                 key={getOptionKey(option, index)}
                                 className="select-width-measurer__option"
                             >
                                 {option.label}
-                            </li>
+                            </div>
                         )
                     )}
-                </ul>
+                </div>
             ) : null}
             <div
                 className="select-header"

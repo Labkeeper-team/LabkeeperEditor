@@ -106,7 +106,7 @@
 
     &.fit-options-width
         .select-width-measurer
-        li:not(.select-option-separator) {
+        .select-width-measurer__option {
         padding-left: 12px;
         padding-right: 12px;
         text-align: left;

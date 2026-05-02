@@ -44,6 +44,13 @@
     }
 
     &.default {
+        .select-width-measurer__option {
+            padding: 8px 6px;
+            color: $blue-20;
+            font-weight: 700;
+            text-align: center;
+        }
+
         .select-header {
             user-select: none;
             display: flex;
