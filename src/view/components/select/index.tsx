@@ -38,20 +38,43 @@ export const Select = ({
     const [optionsWidth, setOptionsWidth] = useState<number>();
     const selectRef = useRef<HTMLDivElement>(null); // Ссылка на контейнер
     const widthMeasurerRef = useRef<HTMLUListElement>(null);
+    const titleWidthMeasurerRef = useRef<HTMLSpanElement>(null);
+    const selectHeaderRef = useRef<HTMLDivElement>(null);
     const selectedValue = useMemo(() => {
         return options.find(
             (o): o is SelectOption => !isSelectSeparator(o) && o.value === value
         );
     }, [value, options]);
+    const displayTitle = title || selectedValue?.label;
 
     useLayoutEffect(() => {
-        if (!fitToOptionsWidth || !widthMeasurerRef.current) {
+        if (
+            !fitToOptionsWidth ||
+            !widthMeasurerRef.current ||
+            !titleWidthMeasurerRef.current ||
+            !selectHeaderRef.current
+        ) {
             setOptionsWidth(undefined);
             return;
         }
 
-        setOptionsWidth(widthMeasurerRef.current.getBoundingClientRect().width);
-    }, [fitToOptionsWidth, options]);
+        const headerStyles = window.getComputedStyle(selectHeaderRef.current);
+        const headerHorizontalSpacing =
+            (parseFloat(headerStyles.paddingLeft) || 0) +
+            (parseFloat(headerStyles.paddingRight) || 0) +
+            (parseFloat(headerStyles.borderLeftWidth) || 0) +
+            (parseFloat(headerStyles.borderRightWidth) || 0);
+        const titleWidth =
+            titleWidthMeasurerRef.current.getBoundingClientRect().width +
+            headerHorizontalSpacing;
+
+        setOptionsWidth(
+            Math.max(
+                widthMeasurerRef.current.getBoundingClientRect().width,
+                titleWidth
+            )
+        );
+    }, [displayTitle, fitToOptionsWidth, options]);
 
     // Обработчик клика по опции
     const handleOptionClick = (_value: SelectOption) => {
@@ -133,10 +156,21 @@ export const Select = ({
                     )}
                 </ul>
             ) : null}
-            <div className="select-header" onClick={toggleDropdown}>
-                <span className="selected-value">
-                    {title || selectedValue?.label}
-                </span>
+            <div
+                className="select-header"
+                onClick={toggleDropdown}
+                ref={selectHeaderRef}
+            >
+                {fitToOptionsWidth ? (
+                    <span
+                        className="select-title-width-measurer"
+                        aria-hidden
+                        ref={titleWidthMeasurerRef}
+                    >
+                        {displayTitle}
+                    </span>
+                ) : null}
+                <span className="selected-value">{displayTitle}</span>
             </div>
             {isOpen && (
                 <ul className="select-options">

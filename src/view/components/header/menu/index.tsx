@@ -101,13 +101,15 @@ export const HeaderMenu = () => {
         },
         {
             title: dictionary.header_menu.examples,
-            onClick: () => openExternal(LABKEEPER_URL),
+            onClick: () => openExternal('https://labkeeper.io/#examples'),
+            separatorAfter: true,
         },
+        /*
         {
             title: dictionary.header_menu.privacy_policy,
             onClick: () => openExternal(LABKEEPER_URL),
             separatorAfter: true,
-        },
+        },*/
         {
             title: dictionary.header_menu.logout,
             onClick: () => setShowLogoutModal(true),

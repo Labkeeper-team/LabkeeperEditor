@@ -94,19 +94,17 @@
     }
 
     &.default.open .select-options {
-        width: max-content;
-        min-width: calc(100% - 2px);
-        right: 0;
-        left: auto;
+        width: 100%;
+        min-width: unset;
 
-        li {
+        li:not(.select-option-separator) {
             padding-left: 12px;
             padding-right: 12px;
             text-align: left;
         }
     }
 
-    &.fit-options-width .select-width-measurer li {
+    &.fit-options-width .select-width-measurer li:not(.select-option-separator) {
         padding-left: 12px;
         padding-right: 12px;
         text-align: left;

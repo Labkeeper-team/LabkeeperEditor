@@ -8,8 +8,7 @@
     }
 
     &.open .select-options:not(.select-width-measurer) {
-        transform-origin: top;
-        animation: select-options-show 450ms cubic-bezier(0.16, 1, 0.3, 1);
+        animation: select-options-show 220ms ease-out;
     }
 
     &.fit-options-width {
@@ -34,6 +33,13 @@
             white-space: nowrap;
             width: max-content;
             min-width: unset;
+        }
+
+        .select-title-width-measurer {
+            position: absolute;
+            visibility: hidden;
+            pointer-events: none;
+            white-space: nowrap;
         }
     }
 
@@ -139,11 +145,14 @@
                     border-bottom-right-radius: 15px;
                 }
                 &.select-option-separator {
-                    height: 1px;
+                    box-sizing: border-box;
+                    height: 0;
                     padding: 0;
                     margin: 4px 12px;
-                    background-color: $gray-50;
+                    border-top: 1px solid $gray-50;
+                    background: transparent;
                     pointer-events: none;
+                    transition: none;
                 }
             }
         }
@@ -305,12 +314,12 @@
 @keyframes select-options-show {
     from {
         opacity: 0;
-        transform: translateY(-8px) scaleY(0.92);
+        clip-path: inset(0 0 100% 0);
     }
 
     to {
         opacity: 1;
-        transform: translateY(0) scaleY(1);
+        clip-path: inset(0);
     }
 }
 
