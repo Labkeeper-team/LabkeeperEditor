@@ -310,6 +310,25 @@ export class ProgramEditorService {
         this.ideService.onProgramUpdated();
     };
 
+    addLatexBoundarySegment = async (
+        text: string,
+        placement: 'start' | 'end'
+    ) => {
+        if (placement === 'start') {
+            await this.onSegmentAddedViaDivider('latex', -1);
+            await this.onSegmentTextEdited(0, text);
+            return;
+        }
+
+        this.onAddSegmentClicked('latex');
+        const targetSegmentIndex =
+            this.programService.getCurrentProgram().segments.length - 1;
+        if (targetSegmentIndex < 0) {
+            return;
+        }
+        await this.onSegmentTextEdited(targetSegmentIndex, text);
+    };
+
     onFocusSegment = async (segmentIndex: number) => {
         this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(
             segmentIndex

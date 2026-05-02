@@ -40,6 +40,11 @@ export const ru: Translations = {
         latex: 'Latex',
         asciimath: 'Простая формула',
     },
+    latex_boundary: {
+        header: 'LaTeX заголовок',
+        footer: 'LaTeX футер',
+        insert_hint: 'Нажмите, чтобы вставить редактируемый сегмент',
+    },
 
     interface_tour: {
         label: 'Тур по интерфейсу',

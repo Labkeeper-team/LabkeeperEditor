@@ -1,0 +1,93 @@
+@use '../../../../../../styles/colors' as *;
+
+.segments-container {
+    .latex-header-segment {
+        width: 100%;
+        box-sizing: border-box;
+        border: 1px solid $gray-30;
+        background: $gray-60;
+        color: $gray-20;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        padding: 12px 16px;
+        margin-bottom: 8px;
+        margin-top: 0;
+        cursor: pointer;
+        transition:
+            border-color 0.15s ease,
+            background-color 0.15s ease;
+        &:hover {
+            border-color: $blue-20;
+            background: $gray-50;
+        }
+        &:hover .latex-boundary-hint {
+            opacity: 1;
+        }
+    }
+
+    .latex-footer-segment {
+        width: 100%;
+        box-sizing: border-box;
+        border: 1px solid $gray-30;
+        background: $gray-60;
+        color: $gray-20;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        padding: 12px 16px;
+        margin-top: 8px;
+        margin-bottom: 0;
+        cursor: pointer;
+        transition:
+            border-color 0.15s ease,
+            background-color 0.15s ease;
+        &:hover {
+            border-color: $blue-20;
+            background: $gray-50;
+        }
+        &:hover .latex-boundary-hint {
+            opacity: 1;
+        }
+    }
+
+    .latex-boundary-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+
+    .latex-boundary-badge {
+        display: inline-flex;
+        align-items: center;
+        height: 20px;
+        padding: 0 8px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        color: $blue-20;
+        background: rgba(62, 116, 255, 0.1);
+        border: 1px solid rgba(62, 116, 255, 0.2);
+    }
+
+    .latex-boundary-hint {
+        color: $gray-30;
+        font-size: 11px;
+        line-height: 1;
+        user-select: none;
+        opacity: 0;
+        transition: opacity 0.12s ease;
+    }
+
+    .latex-boundary-content {
+        margin: 0;
+        white-space: pre-wrap;
+        font-family: monospace;
+        font-size: 12px;
+        line-height: 1.4;
+        color: $gray-20;
+    }
+}

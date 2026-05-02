@@ -315,6 +315,24 @@ export class Controller {
         }
     );
 
+    onAddLatexBoundarySegmentRequest = createAsyncThunk(
+        'onAddLatexBoundarySegmentRequest',
+        async ({
+            text,
+            placement,
+        }: {
+            text: string;
+            placement: 'start' | 'end';
+        }) => {
+            this.wrapper('onAddLatexBoundarySegmentRequest', () =>
+                this.programEditorService.addLatexBoundarySegment(
+                    text,
+                    placement
+                )
+            );
+        }
+    );
+
     onFocusSegmentRequest = createAsyncThunk(
         'onFocusSegmentRequest',
         async ({ segmentIndex }: { segmentIndex: number }) => {
