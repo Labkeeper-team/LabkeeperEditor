@@ -1,5 +1,5 @@
 import { useDispatch, useSelector } from 'react-redux';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 import { Button } from '../button';
 import { HeaderLogo } from './logo';
@@ -21,8 +21,8 @@ import { AuthModal } from '../../pages/project/auth';
 import { ShareModal } from './share/modal';
 import { AppDispatch } from '../../store';
 import { HeaderMenu } from './menu';
-import { Routes } from '../../../viewModel/routes.ts';
 import { controller } from '../../../main.tsx';
+import { ContactModal } from './contact/modal';
 
 const languageOptions = [
     {
@@ -38,10 +38,9 @@ const languageOptions = [
 export const Header = () => {
     const dispatch = useDispatch<AppDispatch>();
     const location = useLocation();
-    const navigate = useNavigate();
     const dictionary = useSelector(useDictionary);
     const language = useSelector(useCurrentLanguage);
-    const { isAuthenticated, tokens } = useSelector(useUser);
+    const { isAuthenticated } = useSelector(useUser);
     const projectIsReadonly = useSelector(useIsProjectReadonly);
 
     const onPress = (lang: unknown) => {
@@ -74,7 +73,7 @@ export const Header = () => {
                     {!projectIsReadonly && <ShareButton />}
                 </div>
                 <div className="labkeeper_header__right">
-                    {isAuthenticated ? (
+                    {/* {isAuthenticated ? (
                         <div className="header-tokens">
                             <span className="header-tokens__label">
                                 {dictionary.header_menu.tokens}:{' '}
@@ -95,7 +94,7 @@ export const Header = () => {
                                 </span>
                             </button>
                         </div>
-                    ) : null}
+                    ) : null} */}
                     {!isAuthenticated ? (
                         <Button
                             title={dictionary.login}
@@ -111,6 +110,7 @@ export const Header = () => {
             </div>
             <AuthModal />
             <ShareModal />
+            <ContactModal />
         </>
     );
 };

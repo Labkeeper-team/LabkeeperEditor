@@ -12,7 +12,10 @@ import {
     useDictionary,
 } from '../../../store/selectors/translations';
 import { AppDispatch } from '../../../store';
-import { setTourVisibility } from '../../../store/slices/settings';
+import {
+    setShowContactModal,
+    setTourVisibility,
+} from '../../../store/slices/settings';
 import { Modal } from '../../modal';
 import { Typography } from '../../typography';
 import { colors } from '../../../styles/colors';
@@ -29,7 +32,6 @@ type HeaderMenuItem = {
 const LABKEEPER_URL = 'https://labkeeper.io';
 const ABOUT_URL = 'https://labkeeper.io/about';
 const WIKI_URL = 'https://github.com/Labkeeper-team/Docs/wiki/';
-const CONTACT_EMAIL = 'contact@labkeeper.io';
 
 export const HeaderMenu = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -47,9 +49,9 @@ export const HeaderMenu = () => {
         openExternal(WIKI_URL + language);
     }, [language, openExternal]);
 
-    const openContactEmail = useCallback(() => {
-        window.location.href = `mailto:${CONTACT_EMAIL}`;
-    }, []);
+    const openContactModal = useCallback(() => {
+        dispatch(setShowContactModal(true));
+    }, [dispatch]);
 
     const publicMenuItems: HeaderMenuItem[] = [
         {
@@ -60,10 +62,10 @@ export const HeaderMenu = () => {
             title: dictionary.header_menu.privacy_policy,
             onClick: () => openExternal(LABKEEPER_URL),
         },
-        {
-            title: dictionary.header_menu.tokens,
-            onClick: () => navigate(Routes.Tokens),
-        },
+        // {
+        //     title: dictionary.header_menu.tokens,
+        //     onClick: () => navigate(Routes.Tokens),
+        // },
         {
             title: dictionary.header_menu.about,
             onClick: () => openExternal(ABOUT_URL),
@@ -74,19 +76,20 @@ export const HeaderMenu = () => {
         {
             title: dictionary.header_menu.my_projects,
             onClick: () => navigate(Routes.Projects),
-        },
-        {
-            title: dictionary.header_menu.top_up_balance,
-            onClick: () => navigate(Routes.Tokens),
             separatorAfter: true,
         },
+        // {
+        //     title: dictionary.header_menu.top_up_balance,
+        //     onClick: () => navigate(Routes.Tokens),
+        //     separatorAfter: true,
+        // },
         {
             title: dictionary.interface_tour.label,
             onClick: () => dispatch(setTourVisibility(true)),
         },
         {
             title: dictionary.header_menu.contact_us,
-            onClick: openContactEmail,
+            onClick: openContactModal,
         },
         {
             title: dictionary.wiki,

@@ -127,7 +127,7 @@ export const en: Translations = {
         pdf_loading: 'Loading PDF…',
         gpt_prompt_button: 'GPT',
         mode: {
-            label: 'Result mode',
+            label: 'Project type',
             markdown: 'markdown',
             latex: 'latex',
         },

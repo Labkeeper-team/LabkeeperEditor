@@ -134,7 +134,7 @@ export const ru: Translations = {
         pdf_loading: 'Загрузка PDF…',
         gpt_prompt_button: 'GPT',
         mode: {
-            label: 'Режим результата',
+            label: 'Тип проекта',
             markdown: 'markdown',
             latex: 'latex',
         },
