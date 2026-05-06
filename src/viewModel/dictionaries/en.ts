@@ -169,30 +169,27 @@ export const en: Translations = {
         usage_title: 'What tokens are used for',
         usage_items: [
             {
-                heading:
-                    'AI assistant (GPT) usage: 2 tokens = 1 text prompt.',
-                body:
-                    'Ask the model to outline a document, convert text to Markdown, or spot bugs in your code.',
+                heading: 'AI assistant (GPT) usage: 2 tokens = 1 text prompt.',
+                body: 'Ask the model to outline a document, convert text to Markdown, or spot bugs in your code.',
             },
             {
                 heading: 'Image generation: 10 tokens = 1 image.',
-                body:
-                    'Create unique illustrations and graphics for papers and lab reports from a single prompt.',
-            },
-            {
-                heading: 'Server-side LaTeX compile: 1 token = 1 second of compile time.',
-                body:
-                    'Build heavy PDF documents without freezes. Tokens are charged only while the powerful remote compiler is running.',
+                body: 'Create unique illustrations and graphics for papers and lab reports from a single prompt.',
             },
             {
                 heading:
-                    '',
+                    'Server-side LaTeX compile: 1 token = 1 second of compile time.',
+                body: 'Build heavy PDF documents without freezes. Tokens are charged only while the powerful remote compiler is running.',
+            },
+            {
+                heading: '',
                 body: 'Hybrid syntax: use lightweight Markdown snippets inside complex LaTeX to work faster.',
             },
         ],
         modal: {
             title: 'Token purchase',
-            gateway_notice: 'Payment is processed via the secure YuKassa payment gateway',
+            gateway_notice:
+                'Payment is processed via the secure YuKassa payment gateway',
             consent_offer_prefix:
                 'By clicking the “Proceed to payment” button, you accept the ',
             consent_offer_link: 'Public Offer',

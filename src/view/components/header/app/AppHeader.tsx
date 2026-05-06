@@ -5,7 +5,10 @@ import { Button } from '../../button';
 import { HeaderLogo } from '../logo';
 import { ShareButton } from '../share';
 import { Back } from '../back';
-import { useIsProjectReadonly, useUser } from '../../../store/selectors/program';
+import {
+    useIsProjectReadonly,
+    useUser,
+} from '../../../store/selectors/program';
 import {
     useCurrentLanguage,
     useDictionary,

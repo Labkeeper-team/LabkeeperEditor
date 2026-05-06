@@ -83,7 +83,10 @@
         color: $gray-10;
         font-size: 13px;
         line-height: 16px;
-        transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+        transition:
+            color 0.2s ease,
+            border-color 0.2s ease,
+            background-color 0.2s ease;
 
         &:hover:not(.marketing-header__lang-btn--active) {
             background-color: $gray-60;
@@ -120,7 +123,7 @@
         bottom: -20px;
         left: 0;
         height: 2px;
-        background-color: #4469E0;
+        background-color: #4469e0;
         pointer-events: none;
     }
 
@@ -144,7 +147,6 @@
                 color: $button-action-blue;
             }
         }
-
     }
 
     button.marketing-header__nav-link--active {
@@ -332,7 +334,7 @@
         }
 
         button.marketing-header__nav-link--active {
-            color: #4469E0;
+            color: #4469e0;
             font-weight: 400;
         }
 

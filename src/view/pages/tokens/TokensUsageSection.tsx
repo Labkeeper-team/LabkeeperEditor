@@ -32,14 +32,16 @@ export const TokensUsageSection = ({
                                 ) : null}
                                 {item.rateLines?.length ? (
                                     <div className="tokens-page__usage-item-rates">
-                                        {item.rateLines.map((line, rateIndex) => (
-                                            <p
-                                                key={`${index}-${rateIndex}`}
-                                                className="tokens-page__usage-item-heading"
-                                            >
-                                                {line}
-                                            </p>
-                                        ))}
+                                        {item.rateLines.map(
+                                            (line, rateIndex) => (
+                                                <p
+                                                    key={`${index}-${rateIndex}`}
+                                                    className="tokens-page__usage-item-heading"
+                                                >
+                                                    {line}
+                                                </p>
+                                            )
+                                        )}
                                     </div>
                                 ) : null}
                             </div>

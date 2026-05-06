@@ -21,7 +21,6 @@ import {
 import { TokensBuySection } from './TokensBuySection.tsx';
 import { TokensUsageSection } from './TokensUsageSection.tsx';
 
-
 export const TokensPage = () => {
     const dispatch = useDispatch<AppDispatch>();
     const dictionary = useSelector(useDictionary);
@@ -57,7 +56,10 @@ export const TokensPage = () => {
     return (
         <>
             <main className="tokens-page">
-                <TokensBuySection page={page} onPackageSelect={onPackageClick} />
+                <TokensBuySection
+                    page={page}
+                    onPackageSelect={onPackageClick}
+                />
                 <TokensUsageSection
                     usage_title={page.usage_title}
                     usage_items={page.usage_items}
@@ -74,8 +76,7 @@ export const TokensPage = () => {
                         <h2>{page.modal.title}</h2>
                         <div className="tokens-purchase-modal__plan">
                             <strong>
-                                +{selectedPackage.amount}{' '}
-                                {page.tokens_amount}
+                                +{selectedPackage.amount} {page.tokens_amount}
                             </strong>
                             <span className="tokens-purchase-modal__plan-price">
                                 {formatTokenPackagePrice(

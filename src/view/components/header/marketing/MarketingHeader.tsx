@@ -235,7 +235,10 @@ export const MarketingHeader = () => {
                                             closeMenuAndRun(onLoginClick)
                                         }
                                     >
-                                        {dictionary.tokens_page.navigation.login}
+                                        {
+                                            dictionary.tokens_page.navigation
+                                                .login
+                                        }
                                     </button>
                                 </>
                             )}
@@ -300,7 +303,9 @@ export const MarketingHeader = () => {
                                 <button
                                     className="marketing-header__auth-link"
                                     type="button"
-                                    onClick={() => closeMenuAndRun(onLoginClick)}
+                                    onClick={() =>
+                                        closeMenuAndRun(onLoginClick)
+                                    }
                                 >
                                     {dictionary.tokens_page.navigation.login}
                                 </button>
