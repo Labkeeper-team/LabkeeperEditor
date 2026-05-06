@@ -2,7 +2,7 @@
 import { Outlet, useLocation, useSearchParams } from 'react-router-dom';
 import { Header } from '../header';
 import { InterfaceTour } from '../tour';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { setIsFileDraggedToFileManager } from '../../store/slices/settings';
 import { AppDispatch } from '../../store';
@@ -14,6 +14,8 @@ import {
     useIsProjectReadonly,
 } from '../../store/selectors/program';
 import { controller } from '../../../main.tsx';
+import classNames from 'classnames';
+import { VIEWPORT_RESCALE_EVENT } from '../../hooks/useScaleToMinWidth';
 
 let loaded = false;
 
@@ -26,6 +28,7 @@ export const BaseLayout = () => {
     const from = searchParams.get('from') || undefined;
     const dragCounter = useRef(0);
     const captcha = searchParams.get('captcha') || undefined;
+    const isTokensPage = location.pathname === Routes.Tokens;
 
     /*
     GLOBAL STATE
@@ -84,6 +87,25 @@ export const BaseLayout = () => {
         }
     }, [dispatch]);
 
+    useEffect(() => {
+        const cls = 'tokens-route';
+        if (isTokensPage) {
+            document.documentElement.classList.add(cls);
+            document.body.classList.add(cls);
+        } else {
+            document.documentElement.classList.remove(cls);
+            document.body.classList.remove(cls);
+        }
+        return () => {
+            document.documentElement.classList.remove(cls);
+            document.body.classList.remove(cls);
+        };
+    }, [isTokensPage]);
+
+    useLayoutEffect(() => {
+        window.dispatchEvent(new Event(VIEWPORT_RESCALE_EVENT));
+    }, [location.pathname]);
+
     return (
         <div
             onDragEnter={isReadonly ? undefined : handleDragEnter}
@@ -93,7 +115,11 @@ export const BaseLayout = () => {
             onDragOver={isReadonly ? undefined : handleDragOver}
         >
             <Header />
-            <div className="layout-outlet-container">
+            <div
+                className={classNames('layout-outlet-container', {
+                    'layout-outlet-container--landing': isTokensPage,
+                })}
+            >
                 <Outlet />
             </div>
             <InterfaceTour />

@@ -1,0 +1,117 @@
+@use '../../styles/colors' as *;
+
+.tokens-page__package-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 400px;
+    max-height: 400px;
+    min-height: 280px;
+    padding: 28px 24px 24px;
+    border-width: 1px;
+    border-style: solid;
+    border-color: $gray-40;
+    border-radius: 12px;
+    background: $white;
+    overflow: hidden;
+    cursor: pointer;
+    transition:
+        border-color 0.3s ease,
+        background 0.3s ease;
+
+    &:hover {
+        border-color: rgba(68, 105, 224, 0.35);
+        background: linear-gradient(to top, $gray-50 0%, $white 100%);
+    }
+
+}
+
+.tokens-page__package-card-arrow {
+    position: absolute;
+    right: 20px;
+    bottom: 20px;
+    z-index: 1;
+    width: 20px;
+    height: 20px;
+    color: $blue-10;
+    pointer-events: none;
+}
+
+.tokens-page__package-card-inner {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    align-self: stretch;
+    min-height: 0;
+    width: 100%;
+    text-align: center;
+    gap: 10px;
+}
+
+.tokens-page__package-plus {
+    display: block;
+    width: 100%;
+    color: $blue-10;
+    font-size: 60px;
+    font-weight: 400;
+    line-height: 50px;
+    letter-spacing: -0.04em;
+    text-align: center;
+}
+
+.tokens-page__package-subline {
+    margin: 0;
+    width: 100%;
+    max-width: 100%;
+    font-size: 20px;
+    font-weight: 400;
+    line-height: 30px;
+    letter-spacing: 0;
+    text-align: center;
+    color: $blue-10;
+}
+
+.tokens-page__package-buy {
+    margin-top: auto;
+    align-self: stretch;
+    width: 100%;
+}
+
+@media screen and (max-width: 767px) {
+    .tokens-page__package-card {
+        max-width: none;
+        width: 100%;
+        max-height: none;
+        min-height: 160px;
+        padding: 12px 14px 14px;
+    }
+
+    .tokens-page__package-card-inner {
+        gap: 4px;
+    }
+
+    .tokens-page__package-plus {
+        font-size: 22px;
+        line-height: 26px;
+        letter-spacing: -0.03em;
+    }
+
+    .tokens-page__package-subline {
+        font-size: 14px;
+        line-height: 18px;
+    }
+
+    .tokens-page__package-buy {
+        margin-top: 10px;
+        min-height: 44px;
+        padding: 0 18px;
+        font-size: 13px;
+    }
+}

@@ -84,6 +84,17 @@
     &__add-icon {
         transition: opacity 0.2s ease;
     }
+
+    @media screen and (max-width: 767px) {
+        &__label {
+            font-size: 0;
+        }
+
+        &__count {
+            margin-left: 0;
+            font-size: 14px;
+        }
+    }
 }
 
 .labkeeper_select.header-menu-select {

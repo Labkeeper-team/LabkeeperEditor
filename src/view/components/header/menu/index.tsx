@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { controller } from '../../../../main.tsx';
 import { Routes } from '../../../../viewModel/routes.ts';
@@ -16,12 +16,7 @@ import {
     setShowContactModal,
     setTourVisibility,
 } from '../../../store/slices/settings';
-import { Modal } from '../../modal';
-import { Typography } from '../../typography';
-import { colors } from '../../../styles/colors';
-import { Button } from '../../button';
-
-import './style.scss';
+import { LogoutConfirmModal } from '../logout-confirm-modal';
 
 type HeaderMenuItem = {
     title: string;
@@ -36,6 +31,7 @@ const WIKI_URL = 'https://github.com/Labkeeper-team/Docs/wiki/';
 export const HeaderMenu = () => {
     const dispatch = useDispatch<AppDispatch>();
     const navigate = useNavigate();
+    const location = useLocation();
     const dictionary = useSelector(useDictionary);
     const language = useSelector(useCurrentLanguage);
     const { isAuthenticated, email } = useSelector(useUser);
@@ -53,6 +49,17 @@ export const HeaderMenu = () => {
         dispatch(setShowContactModal(true));
     }, [dispatch]);
 
+    const openAuthModal = useCallback(() => {
+        dispatch(controller.onAuthButtonClickedRequest());
+    }, [dispatch]);
+
+    const openLandingAnchor = useCallback(
+        (anchor: string) => {
+            openExternal(`${LABKEEPER_URL}/#${anchor}`);
+        },
+        [openExternal]
+    );
+
     const publicMenuItems: HeaderMenuItem[] = [
         {
             title: dictionary.header_menu.examples,
@@ -62,10 +69,10 @@ export const HeaderMenu = () => {
             title: dictionary.header_menu.privacy_policy,
             onClick: () => openExternal(LABKEEPER_URL),
         },
-        // {
-        //     title: dictionary.header_menu.tokens,
-        //     onClick: () => navigate(Routes.Tokens),
-        // },
+        {
+            title: dictionary.header_menu.tokens,
+            onClick: () => navigate(Routes.Tokens),
+        },
         {
             title: dictionary.header_menu.about,
             onClick: () => openExternal(ABOUT_URL),
@@ -78,11 +85,11 @@ export const HeaderMenu = () => {
             onClick: () => navigate(Routes.Projects),
             separatorAfter: true,
         },
-        // {
-        //     title: dictionary.header_menu.top_up_balance,
-        //     onClick: () => navigate(Routes.Tokens),
-        //     separatorAfter: true,
-        // },
+        {
+            title: dictionary.header_menu.top_up_balance,
+            onClick: () => navigate(Routes.Tokens),
+            separatorAfter: true,
+        },
         {
             title: dictionary.interface_tour.label,
             onClick: () => dispatch(setTourVisibility(true)),
@@ -116,7 +123,65 @@ export const HeaderMenu = () => {
         },
     ];
 
-    const items = isAuthenticated ? authenticatedMenuItems : publicMenuItems;
+    const tokensPageMenuItems: HeaderMenuItem[] = [
+        {
+            title: dictionary.tokens_page.navigation.advantages,
+            onClick: () => openLandingAnchor('advantages'),
+        },
+        {
+            title: dictionary.tokens_page.navigation.features,
+            onClick: () => openLandingAnchor('features'),
+        },
+        {
+            title: dictionary.tokens_page.navigation.for_whom,
+            onClick: () => openLandingAnchor('for-whom'),
+        },
+        {
+            title: dictionary.tokens_page.navigation.examples,
+            onClick: () => openLandingAnchor('examples'),
+        },
+        {
+            title: dictionary.tokens_page.navigation.tokens,
+            onClick: () => navigate(Routes.Tokens),
+        },
+        {
+            title: dictionary.tokens_page.navigation.about,
+            onClick: () => openExternal(ABOUT_URL),
+            separatorAfter: true,
+        },
+        ...(isAuthenticated
+            ? [
+                  {
+                      title: dictionary.tokens_page.navigation.logout,
+                      onClick: () => setShowLogoutModal(true),
+                  },
+              ]
+            : [
+                  {
+                      title: dictionary.tokens_page.navigation.login,
+                      onClick: openAuthModal,
+                  },
+              ]),
+        {
+            title: dictionary.tokens_page.navigation.editor,
+            onClick: () => navigate(Routes.ProjectDefault),
+        },
+        ...(isAuthenticated
+            ? [
+                  {
+                      title: dictionary.tokens_page.navigation.projects,
+                      onClick: () => navigate(Routes.Projects),
+                  },
+              ]
+            : []),
+    ];
+
+    const isTokensPage = location.pathname === Routes.Tokens;
+    const items = isTokensPage
+        ? tokensPageMenuItems
+        : isAuthenticated
+          ? authenticatedMenuItems
+          : publicMenuItems;
     const triggerTitle =
         isAuthenticated && email ? email : dictionary.header_menu.menu;
     const options = items.flatMap((item, index): SelectItem[] => {
@@ -147,34 +212,11 @@ export const HeaderMenu = () => {
                 containerClassName="header-menu-select"
                 fitToOptionsWidth
             />
-            <Modal
-                showModal={showLogoutModal}
+            <LogoutConfirmModal
+                open={showLogoutModal}
                 onClose={() => setShowLogoutModal(false)}
-            >
-                <div className="header-menu-logout-modal">
-                    <Typography
-                        text={dictionary.header_menu.logout_confirmation}
-                        type="h2"
-                        color={colors.gray10}
-                    />
-                    <Button
-                        classname="header-menu-logout-modal__button"
-                        onPress={confirmLogout}
-                        title={dictionary.yes}
-                        color="blue"
-                        rounded
-                        minimize={false}
-                    />
-                    <Button
-                        classname="header-menu-logout-modal__button"
-                        onPress={() => setShowLogoutModal(false)}
-                        title={dictionary.no}
-                        color="gray"
-                        rounded
-                        minimize={false}
-                    />
-                </div>
-            </Modal>
+                onConfirm={confirmLogout}
+            />
         </>
     );
 };
