@@ -10,7 +10,6 @@ import {
     States,
 } from '../../model/service/ObserverService.ts';
 import { IdeService } from '../domain/IdeService.ts';
-import { ExampleService } from '../domain/ExampleService.ts';
 
 const qrPagePattern = /\/qr\/v\d+/i;
 const projectPagePattern = /\/project\/\S+/i;
@@ -22,7 +21,6 @@ export class StartupService {
     repository: ViewModelRepository;
     observerService: ObserverService;
     ideService: IdeService;
-    exampleService: ExampleService;
 
     constructor(
         rpi: Rpi,
@@ -30,16 +28,14 @@ export class StartupService {
         loader: LoaderService,
         repository: ViewModelRepository,
         observerService: ObserverService,
-        ideService: IdeService,
-        exampleService: ExampleService
+        ideService: IdeService
     ) {
-        this.observerService = observerService;
         this.rpi = rpi;
         this.programService = programService;
         this.loader = loader;
         this.repository = repository;
         this.ideService = ideService;
-        this.exampleService = exampleService;
+        this.observerService = observerService;
     }
 
     onAppEnterWithOauthCode = async (code: string, state: string) => {
@@ -61,7 +57,7 @@ export class StartupService {
         }
     };
 
-    onAppStartup = async (from?: string, captcha?: string): Promise<void> => {
+    onAppStartup = async (captcha?: string): Promise<void> => {
         const result: RequestResult<UserInfo> =
             await this.rpi.getUserInfoRequest();
 
@@ -89,15 +85,12 @@ export class StartupService {
         const locationWithoutLastSlash = this.cutOfLastSlash(
             this.repository.location()
         );
-        const version = qrPagePattern.test(locationWithoutLastSlash)
-            ? locationWithoutLastSlash.split('/').pop()
-            : undefined;
         // HOME PAGE ENTER
         if (
             locationWithoutLastSlash === Routes.Home ||
             qrPagePattern.test(locationWithoutLastSlash)
         ) {
-            await this.openDefaultProject(userInfo, version, from);
+            await this.openDefaultProject(userInfo);
         }
 
         // OAUTH
@@ -108,7 +101,7 @@ export class StartupService {
                 undefined
             );
             if (!lastOpenedProjectUuid) {
-                await this.openDefaultProject(userInfo, version, from);
+                await this.openDefaultProject(userInfo);
             } else {
                 await this.openProjectById(userInfo, lastOpenedProjectUuid);
             }
@@ -116,13 +109,13 @@ export class StartupService {
 
         // PROJECT DEFAULT PAGE ENTER
         else if (locationWithoutLastSlash === Routes.ProjectDefault) {
-            await this.openDefaultProject(userInfo, version, from);
+            await this.openDefaultProject(userInfo);
         }
 
         // PROJECTS PAGE ENTER
         else if (locationWithoutLastSlash === Routes.Projects) {
             if (!userInfo.isAuthenticated) {
-                await this.openDefaultProject(userInfo, version, from);
+                await this.openDefaultProject(userInfo);
             }
         }
 
@@ -238,11 +231,7 @@ export class StartupService {
         }
     }
 
-    private async openDefaultProject(
-        userInfo: UserInfo,
-        version: string | undefined,
-        from: string | undefined
-    ): Promise<void> {
+    private async openDefaultProject(userInfo: UserInfo): Promise<void> {
         this.repository.projectViewModelRepository.setReadOnly(false);
         if (userInfo.isAuthenticated) {
             const result = await this.rpi.getDefaultProjectRequest(
@@ -282,40 +271,9 @@ export class StartupService {
             }
         } else {
             this.repository.setLocation(Routes.ProjectDefault);
-            // on default uri but unauth
-            const language =
-                this.repository.persistenceViewModelRepository.language();
-            if (version) {
-                const result = await this.exampleService.exampleForQR(
-                    version,
-                    language
-                );
-                if (result) {
-                    this.ideService.setNewProgram(
-                        result.program,
-                        result.result
-                    );
-                }
-            } else if (from) {
-                const result = await this.exampleService.exampleForFrom(
-                    from,
-                    language
-                );
-                if (result) {
-                    this.ideService.setNewProgram(
-                        result.program,
-                        result.result
-                    );
-                }
-            } else {
-                this.programService.setNewProgram(
-                    this.repository.persistenceViewModelRepository.lastProgram()
-                );
-                /* закоменчено, так как не выбрали какой пример показывать на странице labkeeper.io
-                const [program, result] =
-                    this.exampleService.exampleForUnauthorize();
-                this.ideService.setNewProgram(program, result);*/
-            }
+            this.programService.setNewProgram(
+                this.repository.persistenceViewModelRepository.lastProgram()
+            );
         }
     }
 }
