@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { setIsFileDraggedToFileManager } from '../../store/slices/settings';
 import { AppDispatch } from '../../store';
 import { Routes } from '../../../viewModel/routes.ts';
+import { OpenParams } from '../../../model/domain.ts';
 
 import './style.scss';
 import {
@@ -25,10 +26,10 @@ export const BaseLayout = () => {
     const location = useLocation();
     const state = searchParams.get('state') || '';
     const code = searchParams.get('code') || '';
-    const from = searchParams.get('from') || undefined;
     const dragCounter = useRef(0);
     const captcha = searchParams.get('captcha') || undefined;
     const isTokensPage = location.pathname === Routes.Tokens;
+    const open = (searchParams.get('open') as OpenParams) || undefined;
 
     /*
     GLOBAL STATE
@@ -81,7 +82,7 @@ export const BaseLayout = () => {
                     })
                 );
             } else {
-                dispatch(controller.onAppEnterRequest({ from, captcha }));
+                dispatch(controller.onAppEnterRequest({ captcha, open }));
             }
             loaded = true;
         }

@@ -1,8 +1,5 @@
 import { useDispatch, useSelector } from 'react-redux';
-import {
-    useCurrentProgram,
-    useCurrentProject,
-} from '../../../../../../../store/selectors/program';
+import { useCurrentProgram } from '../../../../../../../store/selectors/program';
 
 import './style.scss';
 import { Typography } from '../../../../../../../components/typography';
@@ -11,29 +8,18 @@ import { Radio } from '../../../../../../../components/radiobutton';
 import { useDictionary } from '../../../../../../../store/selectors/translations';
 import { AppDispatch, StorageState } from '../../../../../../../store';
 import { controller } from '../../../../../../../../main.tsx';
-import { ProjectMode } from '../../../../../../../../model/domain.ts';
+import { ProjectType } from '../../../../../../../../model/domain.ts';
 
 export const ProjectSettings = () => {
     const activeProgram = useSelector(useCurrentProgram);
-    const project = useSelector(useCurrentProject);
     const dictionary = useSelector(useDictionary);
-    const currentRunTimeValue = useSelector(
-        (state: StorageState) => state.project.mode
-    );
-    const currentPersistValue = useSelector(
-        (state: StorageState) =>
-            state.persistence.projectCompileModes[
-                project?.projectId || 'default'
-            ]
-    );
-    const mode = currentPersistValue ?? currentRunTimeValue;
+    const mode = useSelector((state: StorageState) => state.project.mode);
 
     const dispatch = useDispatch<AppDispatch>();
-    const onModeChange = (projectMode: ProjectMode) => {
+    const onTypeChange = (projectType: ProjectType) => {
         dispatch(
             controller.onProjectModeChangeRequest({
-                mode: projectMode,
-                projectId: project?.projectId || 'default',
+                type: projectType,
             })
         );
     };
@@ -49,13 +35,13 @@ export const ProjectSettings = () => {
                 <Radio
                     id="markdown"
                     checked={mode === 'markdown'}
-                    onChange={() => onModeChange('markdown')}
+                    onChange={() => onTypeChange('markdown')}
                     title={dictionary.viewer.mode.markdown}
                 />
                 <Radio
                     id="latex"
                     checked={mode === 'latex'}
-                    onChange={() => onModeChange('latex')}
+                    onChange={() => onTypeChange('latex')}
                     title={dictionary.viewer.mode.latex}
                 />
             </div>

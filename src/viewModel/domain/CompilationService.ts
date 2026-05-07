@@ -54,13 +54,7 @@ export class CompilationService {
 
         this.repository.settingsViewModelRepository.setIsCompiling(true);
 
-        const runtimeMode = this.repository.projectViewModelRepository.mode();
-        const storeMode =
-            this.repository.persistenceViewModelRepository.projectCompileModes()[
-                projectId || 'default'
-            ];
-
-        const mode = storeMode ?? runtimeMode;
+        const mode = this.repository.projectViewModelRepository.mode();
 
         let result:
             | RequestResult<CompilationResponse>

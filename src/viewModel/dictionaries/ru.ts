@@ -69,6 +69,9 @@ export const ru: Translations = {
         label: 'Создать новый проект',
         create: 'Создать',
         name: 'Имя проекта',
+        project_type: 'Тип проекта',
+        type_markdown: 'Markdown',
+        type_latex: 'LaTeX',
         error: {
             empty_name: 'Введите имя проекта',
             too_many_projects: 'Слишком много проектов',

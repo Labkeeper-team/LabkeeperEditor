@@ -11,7 +11,7 @@ import { HeaderHelpItem } from '../../model/help';
 import { Routes } from '../routes.ts';
 import { CompilationService } from '../domain/CompilationService.ts';
 import { ResetService } from '../domain/ResetService.ts';
-import { ProjectMode } from '../../model/domain.ts';
+import { ProjectType } from '../../model/domain.ts';
 
 export class ProjectPageService {
     repository: ViewModelRepository;
@@ -316,16 +316,35 @@ export class ProjectPageService {
         }
     };
 
-    setProjectMode = async (
-        mode: ProjectMode,
-        projectId: string
-    ): Promise<void> => {
-        this.repository.persistenceViewModelRepository.setModeToProject(
-            projectId,
-            mode
+    setProjectType = async (type: ProjectType): Promise<void> => {
+        console.log('setProjectType', type);
+        this.repository.projectViewModelRepository.setProjectType(type);
+
+        const project = this.repository.projectViewModelRepository.project();
+        if (!project) return;
+
+        if (!this.repository.userViewModelRepository.isAuthenticated()) return;
+
+        const result = await this.rpi.setProjectTypeRequest(
+            project.projectId,
+            type
         );
-        this.repository.projectViewModelRepository.setProjectMode(mode);
-        this.ideService.onProgramUpdated();
+
+        if (result.isUnauth) {
+            this.repository.toast(
+                this.repository.dictionary.filemanager.errors.sessionExpired,
+                'error'
+            );
+            this.ideService.resetEditor();
+        }
+
+        if (result.isOk) {
+            this.repository.projectViewModelRepository.setProject({
+                ...project,
+                projectType: type,
+            });
+            this.repository.projectViewModelRepository.setReadOnly(false);
+        }
     };
 
     sendPromptAndReload = async (

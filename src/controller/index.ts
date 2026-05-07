@@ -1,7 +1,8 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import {
+    OpenParams,
     ProgramRoundStrategy,
-    ProjectMode,
+    ProjectType,
     SegmentType,
 } from '../model/domain.ts';
 import { HeaderHelpItem } from '../model/help';
@@ -154,9 +155,9 @@ export class Controller {
 
     onAppEnterRequest = createAsyncThunk(
         'onAppEnter',
-        async ({ from, captcha }: { from?: string; captcha?: string }) => {
+        async ({ captcha, open }: { captcha?: string; open?: OpenParams }) => {
             this.wrapper('onAppEnter', () =>
-                this.startupService.onAppStartup(from, captcha)
+                this.startupService.onAppStartup(captcha, open)
             );
         }
     );
@@ -551,16 +552,19 @@ export class Controller {
         'onProjectCreateRequest',
         async ({
             projectName,
+            projectType,
             errorCallback,
             okCallback,
         }: {
             projectName: string;
+            projectType: ProjectType;
             okCallback: () => void;
             errorCallback: (message: string) => void;
         }) => {
             this.wrapper('onProjectCreateRequest', () =>
                 this.projectsPageService.onProjectCreate(
                     projectName,
+                    projectType,
                     okCallback,
                     errorCallback
                 )
@@ -612,15 +616,9 @@ export class Controller {
 
     onProjectModeChangeRequest = createAsyncThunk(
         'onProjectModeChangeRequest',
-        async ({
-            mode,
-            projectId,
-        }: {
-            mode: ProjectMode;
-            projectId: string;
-        }) => {
+        async ({ type }: { type: ProjectType }) => {
             this.wrapper('onProjectModeChangeRequest', () =>
-                this.projectPageService.setProjectMode(mode, projectId)
+                this.projectPageService.setProjectType(type)
             );
         }
     );
