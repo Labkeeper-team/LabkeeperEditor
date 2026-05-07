@@ -29,8 +29,9 @@ type HeaderMenuItem = {
     separatorAfter?: boolean;
 };
 
-const LABKEEPER_URL = 'https://labkeeper.io';
-const ABOUT_URL = 'https://labkeeper.io/about';
+const SITE_ORIGIN = window.location.origin;
+const ABOUT_URL = `${SITE_ORIGIN}/about`;
+const EXAMPLES_URL = `${SITE_ORIGIN}/#examples`;
 const WIKI_URL = 'https://github.com/Labkeeper-team/Docs/wiki/';
 
 export const HeaderMenu = () => {
@@ -56,12 +57,13 @@ export const HeaderMenu = () => {
     const publicMenuItems: HeaderMenuItem[] = [
         {
             title: dictionary.header_menu.examples,
-            onClick: () => openExternal(LABKEEPER_URL),
+            onClick: () => openExternal(EXAMPLES_URL),
         },
-        {
-            title: dictionary.header_menu.privacy_policy,
-            onClick: () => openExternal(LABKEEPER_URL),
-        },
+        // TODO tokens
+        // {
+        //     title: dictionary.header_menu.privacy_policy,
+        //     onClick: () => openExternal(SITE_ORIGIN),
+        // },
         // {
         //     title: dictionary.header_menu.tokens,
         //     onClick: () => navigate(Routes.Tokens),
@@ -78,6 +80,7 @@ export const HeaderMenu = () => {
             onClick: () => navigate(Routes.Projects),
             separatorAfter: true,
         },
+        // TODO tokens
         // {
         //     title: dictionary.header_menu.top_up_balance,
         //     onClick: () => navigate(Routes.Tokens),
@@ -101,10 +104,11 @@ export const HeaderMenu = () => {
         },
         {
             title: dictionary.header_menu.examples,
-            onClick: () => openExternal('https://labkeeper.io/#examples'),
+            onClick: () => openExternal(EXAMPLES_URL),
             separatorAfter: true,
         },
         /*
+        TODO tokens
         {
             title: dictionary.header_menu.privacy_policy,
             onClick: () => openExternal(LABKEEPER_URL),
