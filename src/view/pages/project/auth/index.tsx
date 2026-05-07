@@ -58,6 +58,7 @@ const LoginView = () => {
     const [login, setLogin] = useState('');
     const [password, setPassword] = useState('');
     const [token, setToken] = useState('');
+    const [captchaInstanceKey, setCaptchaInstanceKey] = useState(0);
 
     // Selectors
     const dictionary = useSelector(useDictionary);
@@ -85,6 +86,17 @@ const LoginView = () => {
     }, [loginRequest, dictionary]);
 
     const isLoading = loginRequest === 'loading';
+
+    useEffect(() => {
+        if (
+            loginRequest === 'bad_credentials' &&
+            showCaptcha &&
+            !!Secrets.yandexCaptchaSiteKey
+        ) {
+            setToken('');
+            setCaptchaInstanceKey((prev) => prev + 1);
+        }
+    }, [loginRequest, showCaptcha]);
 
     return (
         <div
@@ -171,6 +183,7 @@ const LoginView = () => {
                         password &&
                         !!Secrets.yandexCaptchaSiteKey && (
                             <SmartCaptcha
+                                key={captchaInstanceKey}
                                 language={language}
                                 sitekey={Secrets.yandexCaptchaSiteKey}
                                 onSuccess={setToken}
@@ -300,11 +313,25 @@ const EmailView = () => {
     );
     const dictionary = useSelector(useDictionary);
     const [token, setToken] = useState('');
+    const [captchaInstanceKey, setCaptchaInstanceKey] = useState(0);
     const language = useSelector(
         (state: StorageState) => state.persistence.language
     );
 
     const isLoading = status === 'loading';
+
+    useEffect(() => {
+        if (
+            (status === 'userExists' ||
+                status === 'userNotFound' ||
+                status === 'validationError' ||
+                status === 'unknownError') &&
+            !!Secrets.yandexCaptchaSiteKey
+        ) {
+            setToken('');
+            setCaptchaInstanceKey((prev) => prev + 1);
+        }
+    }, [status]);
 
     const handleSubmit = async () => {
         if (!email) {
@@ -373,6 +400,7 @@ const EmailView = () => {
                 />
                 {Secrets.yandexCaptchaSiteKey && (
                     <SmartCaptcha
+                        key={captchaInstanceKey}
                         language={language}
                         sitekey={Secrets.yandexCaptchaSiteKey}
                         onSuccess={setToken}
