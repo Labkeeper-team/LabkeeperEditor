@@ -23,7 +23,6 @@ export const BaseLayout = () => {
     const location = useLocation();
     const state = searchParams.get('state') || '';
     const code = searchParams.get('code') || '';
-    const from = searchParams.get('from') || undefined;
     const dragCounter = useRef(0);
     const captcha = searchParams.get('captcha') || undefined;
 
@@ -78,7 +77,7 @@ export const BaseLayout = () => {
                     })
                 );
             } else {
-                dispatch(controller.onAppEnterRequest({ from, captcha }));
+                dispatch(controller.onAppEnterRequest({ captcha }));
             }
             loaded = true;
         }

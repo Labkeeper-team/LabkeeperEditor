@@ -137,9 +137,22 @@ export const ru: Translations = {
         pdf_loading: 'Загрузка PDF…',
         gpt_prompt_button: 'GPT',
         mode: {
+            label: 'Тип проекта',
             markdown: 'markdown',
             latex: 'latex',
         },
+    },
+    header_menu: {
+        menu: 'Меню',
+        examples: 'Примеры проектов',
+        privacy_policy: 'Политика конфиденциальности',
+        tokens: 'Токены',
+        top_up_balance: 'Пополнить баланс',
+        about: 'О нас',
+        contact_us: 'Связаться с нами',
+        my_projects: 'Мои проекты',
+        logout: 'Выход',
+        logout_confirmation: 'Вы уверены, что хотите выйти?',
     },
 
     compile_error: {

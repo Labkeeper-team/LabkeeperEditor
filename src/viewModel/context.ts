@@ -7,7 +7,6 @@ import { StartupService } from './operation/StartupService.ts';
 import { CompilationService } from './domain/CompilationService.ts';
 import { IdeService } from './domain/IdeService.ts';
 import { FileService } from './domain/FileService.ts';
-import { ExampleService } from './domain/ExampleService.ts';
 
 import { AuthService } from './operation/AuthService.ts';
 import { FileManagerService } from './operation/FileManagerService.ts';
@@ -50,7 +49,6 @@ export function setupContext(
         programService
     );
     const fileService: FileService = new FileService(repository);
-    const exampleService: ExampleService = new ExampleService(rpi);
     const compilationService: CompilationService = new CompilationService(
         repository,
         rpi,
@@ -69,8 +67,7 @@ export function setupContext(
         loaderService,
         repository,
         observerService,
-        ideService,
-        exampleService
+        ideService
     );
     const authService: AuthService = new AuthService(
         repository,

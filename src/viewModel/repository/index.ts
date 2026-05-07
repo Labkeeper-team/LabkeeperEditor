@@ -145,6 +145,7 @@ class MockViewModelRepositoryState {
     email: string = '';
     id: number = -1;
     isAuthenticated: boolean = false;
+    tokens: number = 0;
 
     loginRequest: LoginRequestState = 'unknown';
     codeCheckRequest: CodeRequestState = 'unknown';
@@ -354,11 +355,13 @@ export const mockViewModelState = (): MockViewModelRepository => {
             email: () => mockViewModelState.email,
             id: () => mockViewModelState.id,
             isAuthenticated: () => mockViewModelState.isAuthenticated,
+            tokens: () => mockViewModelState.tokens,
 
             setUserInfo: (userInfo) => {
                 mockViewModelState.email = userInfo.email;
                 mockViewModelState.isAuthenticated = userInfo.isAuthenticated;
                 mockViewModelState.id = userInfo.id;
+                mockViewModelState.tokens = userInfo.tokens ?? 0;
             },
         },
 
@@ -483,6 +486,7 @@ export interface UserViewModelRepository {
     email: () => string;
     id: () => number;
     isAuthenticated: () => boolean;
+    tokens: () => number;
 
     setUserInfo: (userInfo: UserInfo) => void;
 }

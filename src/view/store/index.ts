@@ -316,6 +316,7 @@ export const createViewModelStateFromStore = (
             email: () => store.getState().user.email,
             id: () => store.getState().user.id,
             isAuthenticated: () => store.getState().user.isAuthenticated,
+            tokens: () => store.getState().user.tokens,
 
             setUserInfo: (userInfo) => store.dispatch(setUser(userInfo)),
         },
