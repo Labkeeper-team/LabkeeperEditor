@@ -89,6 +89,14 @@ export const en: Translations = {
         title: 'Name',
         last_modified: 'Last modified',
         add: 'Add',
+        tags: {
+            column: 'Tags',
+            add: 'Edit tags',
+            add_new: 'Create tag',
+            new_placeholder: 'New tag',
+            empty: 'No tags yet',
+            hint: 'Add tags to the project or choose from existing ones',
+        },
         errors: {
             empty_name: 'The name must not be empty or consist only of spaces.',
             sessionExpiredReload: 'Session expired. Please reload the page',

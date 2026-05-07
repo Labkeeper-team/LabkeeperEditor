@@ -1,12 +1,19 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { formatDistance } from 'date-fns';
 import { enGB, ru } from 'date-fns/locale';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, {
+    useCallback,
+    useMemo,
+    useState,
+    useEffect,
+    useLayoutEffect,
+    useRef,
+} from 'react';
 
 import './style.scss';
 import { Typography } from '../../components/typography';
 import { Button } from '../../components/button';
-import { PlusIcon } from '../../icons';
+import { CheckIcon, CloseIcon, PlusIcon } from '../../icons';
 import { Modal } from '../../components/modal';
 import { AddProjectModal } from './addProjectModal';
 import { DeleteProjectModal } from './deleteProjectModal';
@@ -20,9 +27,11 @@ import {
 } from '../../store/selectors/translations';
 import { AppDispatch, StorageState } from '../../store';
 import { controller } from '../../../main.tsx';
+import { ProjectTagsStubService } from '../../../viewModel/operation/ProjectTagsStubService.ts';
 
 type SortMode = 'time' | 'title';
 type SortDirection = 'asc' | 'desc';
+type TagDropdownPlacement = 'top' | 'bottom';
 
 export const ProjectsPage = () => {
     const [showAddModal, setShowAddModal] = useState(false);
@@ -31,6 +40,27 @@ export const ProjectsPage = () => {
     >(false);
     const [sortMode, setSortMode] = useState<SortMode>('time');
     const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+    const [projectTags, setProjectTags] = useState<Record<string, string[]>>(
+        {}
+    );
+    const [openedTagPickerProjectId, setOpenedTagPickerProjectId] = useState<
+        string | null
+    >(null);
+    const [tagDropdownPlacement, setTagDropdownPlacement] =
+        useState<TagDropdownPlacement>('bottom');
+    const [isTagDropdownReady, setIsTagDropdownReady] = useState(false);
+    const [newTagByProject, setNewTagByProject] = useState<
+        Record<string, string>
+    >({});
+    const [singleLineTagsByProject, setSingleLineTagsByProject] = useState<
+        Record<string, boolean>
+    >({});
+    const openedDropdownRef = useRef<HTMLDivElement | null>(null);
+    const projectsScrollContainerRef = useRef<HTMLDivElement | null>(null);
+    const projectTagsCellRefs = useRef<Record<string, HTMLDivElement | null>>(
+        {}
+    );
+    const tagButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
     const dictionary = useSelector(useDictionary);
     const lang = useSelector(useCurrentLanguage);
@@ -39,6 +69,152 @@ export const ProjectsPage = () => {
         (state: StorageState) => state.ide.getProjectsRequestState
     );
     const dispatch = useDispatch<AppDispatch>();
+    const projectTagsService = useMemo(() => new ProjectTagsStubService(), []);
+    const tagsCollator = useMemo(
+        () =>
+            new Intl.Collator(['en', 'ru'], {
+                sensitivity: 'base',
+                numeric: true,
+            }),
+        []
+    );
+
+    useEffect(() => {
+        const ids = projects
+            .map((project) => project.projectId)
+            .filter((id): id is string => !!id);
+        setProjectTags(projectTagsService.getProjectTags(ids));
+    }, [projects, projectTagsService]);
+
+    useEffect(() => {
+        Object.values(projectTagsCellRefs.current).forEach((cell) => {
+            if (cell) {
+                cell.scrollTop = 0;
+            }
+        });
+    }, [projectTags]);
+
+    const recalculateTagsRowsLayout = useCallback(() => {
+        const next: Record<string, boolean> = {};
+        for (const project of projects) {
+            const cell = projectTagsCellRefs.current[project.projectId];
+            if (!cell) {
+                continue;
+            }
+            const children = Array.from(cell.children) as HTMLElement[];
+            if (children.length <= 1) {
+                next[project.projectId] = true;
+                continue;
+            }
+            const firstTop = children[0].offsetTop;
+            next[project.projectId] = children.every(
+                (child) => child.offsetTop === firstTop
+            );
+        }
+        setSingleLineTagsByProject(next);
+    }, [projects]);
+
+    useLayoutEffect(() => {
+        recalculateTagsRowsLayout();
+    }, [projectTags, projects, recalculateTagsRowsLayout]);
+
+    useEffect(() => {
+        window.addEventListener('resize', recalculateTagsRowsLayout);
+        return () => {
+            window.removeEventListener('resize', recalculateTagsRowsLayout);
+        };
+    }, [recalculateTagsRowsLayout]);
+
+    const applyDropdownPlacement = useCallback(
+        (triggerRect: DOMRect, dropdownHeight: number) => {
+            const viewport = window.visualViewport;
+            const viewportTop = 0;
+            const viewportBottom = Math.max(
+                0,
+                Math.floor(viewport?.height ?? window.innerHeight)
+            );
+            const scrollContainerRect =
+                projectsScrollContainerRef.current?.getBoundingClientRect();
+            // Strict fit inside the actual projects list viewport.
+            const boundaryTop = scrollContainerRect
+                ? Math.max(viewportTop, scrollContainerRect.top)
+                : viewportTop;
+            const boundaryBottom = scrollContainerRect
+                ? Math.min(viewportBottom, scrollContainerRect.bottom)
+                : viewportBottom;
+            const availableBelow = Math.max(
+                0,
+                boundaryBottom - triggerRect.bottom
+            );
+            const availableAbove = Math.max(0, triggerRect.top - boundaryTop);
+            const requiredHeight = dropdownHeight / 0.95;
+            const fitsBelow = availableBelow >= requiredHeight;
+            const fitsAbove = availableAbove >= requiredHeight;
+            const nextPlacement: TagDropdownPlacement = fitsBelow
+                ? 'bottom'
+                : fitsAbove
+                  ? 'top'
+                  : 'top';
+            if (nextPlacement !== tagDropdownPlacement) {
+                setTagDropdownPlacement(nextPlacement);
+            }
+        },
+        [tagDropdownPlacement]
+    );
+
+    const recalculateDropdownPlacement = useCallback(() => {
+        if (!openedTagPickerProjectId) {
+            return;
+        }
+        const triggerElement = tagButtonRefs.current[openedTagPickerProjectId];
+        if (!triggerElement) {
+            return;
+        }
+        const triggerRect = triggerElement.getBoundingClientRect();
+        const dropdownHeight =
+            openedDropdownRef.current?.getBoundingClientRect().height ?? 250;
+        applyDropdownPlacement(triggerRect, dropdownHeight);
+        setIsTagDropdownReady(true);
+    }, [openedTagPickerProjectId, applyDropdownPlacement]);
+
+    useLayoutEffect(() => {
+        if (!openedTagPickerProjectId) {
+            return;
+        }
+        // Recalculate before paint to avoid intermediate wrong placement flash.
+        recalculateDropdownPlacement();
+    }, [
+        openedTagPickerProjectId,
+        projectTags,
+        newTagByProject,
+        recalculateDropdownPlacement,
+    ]);
+
+    useEffect(() => {
+        if (!openedTagPickerProjectId) {
+            return;
+        }
+        const updatePlacement = () => recalculateDropdownPlacement();
+        const viewport = window.visualViewport;
+        const resizeObserver =
+            typeof ResizeObserver !== 'undefined'
+                ? new ResizeObserver(updatePlacement)
+                : null;
+        if (resizeObserver) {
+            resizeObserver.observe(document.documentElement);
+        }
+        window.addEventListener('resize', updatePlacement);
+        window.addEventListener('scroll', updatePlacement, true);
+        viewport?.addEventListener('resize', updatePlacement);
+        viewport?.addEventListener('scroll', updatePlacement);
+        return () => {
+            resizeObserver?.disconnect();
+            window.removeEventListener('resize', updatePlacement);
+            window.removeEventListener('scroll', updatePlacement, true);
+            viewport?.removeEventListener('resize', updatePlacement);
+            viewport?.removeEventListener('scroll', updatePlacement);
+        };
+    }, [openedTagPickerProjectId, recalculateDropdownPlacement]);
 
     const localize = useMemo(() => {
         switch (lang) {
@@ -61,6 +237,82 @@ export const ProjectsPage = () => {
             setShowDeleteModal(project);
         },
         [setShowDeleteModal]
+    );
+
+    const onTagPickerButtonClick = useCallback(
+        (e: React.MouseEvent<HTMLElement, unknown>, projectId: string) => {
+            e.stopPropagation();
+            if (openedTagPickerProjectId === projectId) {
+                setIsTagDropdownReady(false);
+                setOpenedTagPickerProjectId(null);
+                return;
+            }
+            const triggerRect = (
+                e.currentTarget as HTMLElement
+            ).getBoundingClientRect();
+            applyDropdownPlacement(triggerRect, 250);
+            setIsTagDropdownReady(false);
+            setOpenedTagPickerProjectId(projectId);
+        },
+        [openedTagPickerProjectId, applyDropdownPlacement]
+    );
+
+    const onTagInputChange = useCallback((projectId: string, value: string) => {
+        setNewTagByProject((prev) => ({
+            ...prev,
+            [projectId]: value,
+        }));
+    }, []);
+
+    const setTagsForProject = useCallback(
+        (projectId: string, tags: string[]) => {
+            setProjectTags((prev) => ({
+                ...prev,
+                [projectId]: tags,
+            }));
+        },
+        []
+    );
+
+    const addTagToProject = useCallback(
+        (projectId: string, tag: string) => {
+            if (!projectId) {
+                return;
+            }
+            const updatedTags = projectTagsService.addTagToProject(
+                projectId,
+                tag
+            );
+            setTagsForProject(projectId, updatedTags);
+            setNewTagByProject((prev) => ({
+                ...prev,
+                [projectId]: '',
+            }));
+        },
+        [projectTagsService, setTagsForProject]
+    );
+
+    const toggleTagForProject = useCallback(
+        (projectId: string, tag: string) => {
+            const selectedTags = projectTags[projectId] ?? [];
+            const alreadySelected = selectedTags.some(
+                (selectedTag) =>
+                    selectedTag.toLocaleLowerCase() === tag.toLocaleLowerCase()
+            );
+            const updatedTags = alreadySelected
+                ? projectTagsService.removeTagFromProject(projectId, tag)
+                : projectTagsService.addTagToProject(projectId, tag);
+            setTagsForProject(projectId, updatedTags);
+        },
+        [projectTags, projectTagsService, setTagsForProject]
+    );
+
+    const getSortedTags = useCallback(
+        (): string[] =>
+            projectTagsService
+                .getAllTags()
+                .sort((a, b) => tagsCollator.compare(a, b)),
+        [projectTagsService, tagsCollator]
     );
 
     const sortedProjects = useMemo(() => {
@@ -161,6 +413,7 @@ export const ProjectsPage = () => {
                         </div>
                     ) : (
                         <div
+                            ref={projectsScrollContainerRef}
                             style={{
                                 display: 'flex',
                                 flexDirection: 'column',
@@ -307,11 +560,23 @@ export const ProjectsPage = () => {
                                                 </button>
                                             </div>
                                         </th>
+                                        <th>
+                                            <Typography
+                                                color={colors.gray30}
+                                                text={
+                                                    dictionary.projects.tags
+                                                        .column
+                                                }
+                                            />
+                                        </th>
                                         <th></th>
                                     </tr>
                                     {sortedProjects.map((p) => (
                                         <tr
                                             onClick={() => {
+                                                setOpenedTagPickerProjectId(
+                                                    null
+                                                );
                                                 if (p.projectId) {
                                                     dispatch(
                                                         controller.onRowClickedInProjectsListRequest(
@@ -325,50 +590,351 @@ export const ProjectsPage = () => {
                                             }}
                                             key={`${p.projectId}-${p.title}`}
                                         >
-                                            <td
-                                                style={{
-                                                    height: 63,
-                                                    width: '33%',
-                                                    minWidth: '40ch',
-                                                }}
-                                            >
-                                                <ProjectTitle project={p} />
-                                            </td>
-                                            <td>
-                                                <Typography
-                                                    color={colors.gray30}
-                                                    text={formatDistance(
-                                                        new Date(),
-                                                        new Date(
-                                                            p.lastModified!
-                                                        ),
-                                                        { locale: localize }
-                                                    )}
-                                                    type="body-large"
-                                                />
-                                            </td>
-                                            <td>
-                                                <div
-                                                    onClick={(e) =>
-                                                        onClickDeleteProject(
-                                                            e,
-                                                            p
-                                                        )
-                                                    }
-                                                    className="delete-project-container"
-                                                >
-                                                    <div className="delete-icon">
-                                                        <PlusIcon />
-                                                    </div>
-                                                    <Typography
-                                                        color={colors.black}
-                                                        text={dictionary.delete}
-                                                    />
-                                                    <div
-                                                        style={{ width: 10 }}
-                                                    />
-                                                </div>
-                                            </td>
+                                            {(() => {
+                                                const allTags = getSortedTags();
+                                                const selectedTagsSet = new Set(
+                                                    (
+                                                        projectTags[
+                                                            p.projectId
+                                                        ] ?? []
+                                                    ).map((tag) =>
+                                                        tag.toLocaleLowerCase()
+                                                    )
+                                                );
+                                                return (
+                                                    <>
+                                                        <td
+                                                            style={{
+                                                                height: 63,
+                                                            }}
+                                                        >
+                                                            <ProjectTitle
+                                                                project={p}
+                                                            />
+                                                        </td>
+                                                        <td>
+                                                            <Typography
+                                                                color={
+                                                                    colors.gray30
+                                                                }
+                                                                text={formatDistance(
+                                                                    new Date(),
+                                                                    new Date(
+                                                                        p.lastModified!
+                                                                    ),
+                                                                    {
+                                                                        locale: localize,
+                                                                    }
+                                                                )}
+                                                                type="body-large"
+                                                            />
+                                                        </td>
+                                                        <td>
+                                                            <div
+                                                                className={`project-tags-cell ${
+                                                                    singleLineTagsByProject[
+                                                                        p
+                                                                            .projectId
+                                                                    ]
+                                                                        ? 'single-line'
+                                                                        : ''
+                                                                }`}
+                                                                ref={(
+                                                                    element
+                                                                ) => {
+                                                                    projectTagsCellRefs.current[
+                                                                        p.projectId
+                                                                    ] = element;
+                                                                }}
+                                                            >
+                                                                {(
+                                                                    projectTags[
+                                                                        p
+                                                                            .projectId
+                                                                    ] ?? []
+                                                                ).length ? (
+                                                                    (
+                                                                        projectTags[
+                                                                            p
+                                                                                .projectId
+                                                                        ] ?? []
+                                                                    ).map(
+                                                                        (
+                                                                            tag
+                                                                        ) => (
+                                                                            <span
+                                                                                className="project-tag-chip"
+                                                                                key={`${p.projectId}-${tag}`}
+                                                                                title={
+                                                                                    tag
+                                                                                }
+                                                                            >
+                                                                                {
+                                                                                    tag
+                                                                                }
+                                                                            </span>
+                                                                        )
+                                                                    )
+                                                                ) : (
+                                                                    <Typography
+                                                                        color={
+                                                                            colors.gray30
+                                                                        }
+                                                                        text="—"
+                                                                        type="body-large"
+                                                                    />
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <div className="project-actions-container">
+                                                                <div className="project-tags-anchor">
+                                                                    <button
+                                                                        type="button"
+                                                                        ref={(
+                                                                            element
+                                                                        ) => {
+                                                                            tagButtonRefs.current[
+                                                                                p.projectId
+                                                                            ] =
+                                                                                element;
+                                                                        }}
+                                                                        onClick={(
+                                                                            e
+                                                                        ) =>
+                                                                            onTagPickerButtonClick(
+                                                                                e,
+                                                                                p.projectId
+                                                                            )
+                                                                        }
+                                                                        className="project-tags-button"
+                                                                    >
+                                                                        {
+                                                                            dictionary
+                                                                                .projects
+                                                                                .tags
+                                                                                .add
+                                                                        }
+                                                                    </button>
+                                                                    {openedTagPickerProjectId ===
+                                                                    p.projectId ? (
+                                                                        <div
+                                                                            ref={
+                                                                                openedDropdownRef
+                                                                            }
+                                                                            className={`project-tags-dropdown ${
+                                                                                tagDropdownPlacement ===
+                                                                                'top'
+                                                                                    ? 'open-up'
+                                                                                    : 'open-down'
+                                                                            }`}
+                                                                            style={{
+                                                                                visibility:
+                                                                                    isTagDropdownReady
+                                                                                        ? 'visible'
+                                                                                        : 'hidden',
+                                                                            }}
+                                                                            onClick={(
+                                                                                e
+                                                                            ) =>
+                                                                                e.stopPropagation()
+                                                                            }
+                                                                        >
+                                                                            <div className="project-tags-dropdown-header">
+                                                                                <Typography
+                                                                                    className="project-tags-hint"
+                                                                                    color={
+                                                                                        colors.gray30
+                                                                                    }
+                                                                                    type="body-large"
+                                                                                    text={
+                                                                                        dictionary
+                                                                                            .projects
+                                                                                            .tags
+                                                                                            .hint
+                                                                                    }
+                                                                                />
+                                                                                <button
+                                                                                    type="button"
+                                                                                    className="project-tags-close-button"
+                                                                                    onClick={(
+                                                                                        e
+                                                                                    ) => {
+                                                                                        e.stopPropagation();
+                                                                                        setOpenedTagPickerProjectId(
+                                                                                            null
+                                                                                        );
+                                                                                    }}
+                                                                                    aria-label="Close tags list"
+                                                                                >
+                                                                                    <CloseIcon />
+                                                                                </button>
+                                                                            </div>
+                                                                            <div className="project-tags-scroll">
+                                                                                {allTags.length ? (
+                                                                                    allTags.map(
+                                                                                        (
+                                                                                            tag
+                                                                                        ) => (
+                                                                                            <button
+                                                                                                key={`${p.projectId}-${tag}-available`}
+                                                                                                type="button"
+                                                                                                className="project-tag-option"
+                                                                                                data-selected={selectedTagsSet.has(
+                                                                                                    tag.toLocaleLowerCase()
+                                                                                                )}
+                                                                                                onClick={(
+                                                                                                    e
+                                                                                                ) => {
+                                                                                                    e.stopPropagation();
+                                                                                                    toggleTagForProject(
+                                                                                                        p.projectId,
+                                                                                                        tag
+                                                                                                    );
+                                                                                                }}
+                                                                                            >
+                                                                                                <span>
+                                                                                                    {
+                                                                                                        tag
+                                                                                                    }
+                                                                                                </span>
+                                                                                                {selectedTagsSet.has(
+                                                                                                    tag.toLocaleLowerCase()
+                                                                                                ) ? (
+                                                                                                    <span className="project-tag-option-check">
+                                                                                                        <CheckIcon />
+                                                                                                    </span>
+                                                                                                ) : null}
+                                                                                            </button>
+                                                                                        )
+                                                                                    )
+                                                                                ) : (
+                                                                                    <Typography
+                                                                                        color={
+                                                                                            colors.gray30
+                                                                                        }
+                                                                                        type="body-large"
+                                                                                        text={
+                                                                                            dictionary
+                                                                                                .projects
+                                                                                                .tags
+                                                                                                .empty
+                                                                                        }
+                                                                                    />
+                                                                                )}
+                                                                            </div>
+                                                                            <div className="project-tags-input-row">
+                                                                                <input
+                                                                                    value={
+                                                                                        newTagByProject[
+                                                                                            p
+                                                                                                .projectId
+                                                                                        ] ??
+                                                                                        ''
+                                                                                    }
+                                                                                    onChange={(
+                                                                                        e
+                                                                                    ) =>
+                                                                                        onTagInputChange(
+                                                                                            p.projectId,
+                                                                                            e
+                                                                                                .target
+                                                                                                .value
+                                                                                        )
+                                                                                    }
+                                                                                    onClick={(
+                                                                                        e
+                                                                                    ) =>
+                                                                                        e.stopPropagation()
+                                                                                    }
+                                                                                    onKeyDown={(
+                                                                                        e
+                                                                                    ) => {
+                                                                                        if (
+                                                                                            e.key ===
+                                                                                            'Enter'
+                                                                                        ) {
+                                                                                            e.stopPropagation();
+                                                                                            addTagToProject(
+                                                                                                p.projectId,
+                                                                                                newTagByProject[
+                                                                                                    p
+                                                                                                        .projectId
+                                                                                                ] ??
+                                                                                                    ''
+                                                                                            );
+                                                                                        }
+                                                                                    }}
+                                                                                    className="project-tags-input"
+                                                                                    placeholder={
+                                                                                        dictionary
+                                                                                            .projects
+                                                                                            .tags
+                                                                                            .new_placeholder
+                                                                                    }
+                                                                                />
+                                                                                <button
+                                                                                    type="button"
+                                                                                    className="project-tags-add-button"
+                                                                                    onClick={(
+                                                                                        e
+                                                                                    ) => {
+                                                                                        e.stopPropagation();
+                                                                                        addTagToProject(
+                                                                                            p.projectId,
+                                                                                            newTagByProject[
+                                                                                                p
+                                                                                                    .projectId
+                                                                                            ] ??
+                                                                                                ''
+                                                                                        );
+                                                                                    }}
+                                                                                    aria-label={
+                                                                                        dictionary
+                                                                                            .projects
+                                                                                            .tags
+                                                                                            .add_new
+                                                                                    }
+                                                                                >
+                                                                                    <PlusIcon />
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+                                                                    ) : null}
+                                                                </div>
+                                                                <div
+                                                                    onClick={(
+                                                                        e
+                                                                    ) =>
+                                                                        onClickDeleteProject(
+                                                                            e,
+                                                                            p
+                                                                        )
+                                                                    }
+                                                                    className="delete-project-container"
+                                                                >
+                                                                    <div className="delete-icon">
+                                                                        <PlusIcon />
+                                                                    </div>
+                                                                    <Typography
+                                                                        color={
+                                                                            colors.black
+                                                                        }
+                                                                        text={
+                                                                            dictionary.delete
+                                                                        }
+                                                                    />
+                                                                    <div
+                                                                        style={{
+                                                                            width: 10,
+                                                                        }}
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                    </>
+                                                );
+                                            })()}
                                         </tr>
                                     ))}
                                 </table>

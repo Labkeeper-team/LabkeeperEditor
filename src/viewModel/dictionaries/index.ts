@@ -85,6 +85,14 @@ export interface Translations {
         title: string;
         last_modified: string;
         add: string;
+        tags: {
+            column: string;
+            add: string;
+            add_new: string;
+            new_placeholder: string;
+            empty: string;
+            hint: string;
+        };
         errors: {
             empty_name: string;
             sessionExpiredReload: string;
