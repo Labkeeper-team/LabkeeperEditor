@@ -20,6 +20,7 @@ export const formatTokenPackagePrice = (
 export const TOKEN_LEGAL_LINKS = {
     publicOffer: 'https://example.com/labkeeper-public-offer',
     personalData: 'https://example.com/labkeeper-personal-data',
+    privacyPolicy: 'https://example.com/labkeeper-privacy-policy',
 } as const;
 
 export const TOKEN_PACKAGES: TokenPackage[] = [

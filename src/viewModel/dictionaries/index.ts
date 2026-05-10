@@ -172,6 +172,8 @@ export interface Translations {
             consent_offer_link: string;
             consent_privacy_prefix: string;
             consent_privacy_link: string;
+            consent_privacy_policy_prefix: string;
+            consent_privacy_policy_link: string;
             pay_button: string;
             mock_notice: string;
         };

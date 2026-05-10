@@ -207,6 +207,9 @@ export const ru: Translations = {
             consent_privacy_prefix:
                 'Нажимая «Перейти к оплате», Вы даёте согласие ',
             consent_privacy_link: 'на обработку персональных данных',
+            consent_privacy_policy_prefix:
+                'Нажимая «Перейти к оплате», Вы соглашаетесь с ',
+            consent_privacy_policy_link: 'Политикой конфиденциальности',
             pay_button: 'Перейти к оплате',
             mock_notice:
                 'Оплата пока недоступна: кнопка оставлена как моковая заглушка.',

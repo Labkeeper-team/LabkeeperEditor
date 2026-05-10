@@ -199,6 +199,9 @@ export const en: Translations = {
             consent_privacy_prefix:
                 'By clicking “Proceed to payment”, you consent to ',
             consent_privacy_link: 'the processing of personal data',
+            consent_privacy_policy_prefix:
+                'By clicking “Proceed to payment”, you agree to the ',
+            consent_privacy_policy_link: 'Privacy Policy',
             pay_button: 'Proceed to payment',
             mock_notice:
                 'Payment is not available yet: this button is a mock placeholder.',

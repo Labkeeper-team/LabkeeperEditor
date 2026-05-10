@@ -31,11 +31,12 @@ export const TokensPage = () => {
     );
     const [acceptedTerms, setAcceptedTerms] = useState(false);
     const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
+    const [acceptedPrivacyPolicy, setAcceptedPrivacyPolicy] = useState(false);
 
     const page = dictionary.tokens_page;
     const canProceedToPayment = useMemo(
-        () => acceptedTerms && acceptedPrivacy,
-        [acceptedPrivacy, acceptedTerms]
+        () => acceptedTerms && acceptedPrivacy && acceptedPrivacyPolicy,
+        [acceptedPrivacy, acceptedPrivacyPolicy, acceptedTerms]
     );
 
     const onPackageClick = (tokenPackage: TokenPackage) => {
@@ -47,6 +48,7 @@ export const TokensPage = () => {
         setSelectedPackage(tokenPackage);
         setAcceptedTerms(false);
         setAcceptedPrivacy(false);
+        setAcceptedPrivacyPolicy(false);
     };
 
     const closePurchaseModal = () => {
@@ -127,6 +129,29 @@ export const TokensPage = () => {
                                     onClick={(e) => e.stopPropagation()}
                                 >
                                     {page.modal.consent_privacy_link}
+                                </a>
+                            </span>
+                        </label>
+                        <label className="tokens-purchase-modal__consent-row">
+                            <input
+                                type="checkbox"
+                                checked={acceptedPrivacyPolicy}
+                                onChange={(event) =>
+                                    setAcceptedPrivacyPolicy(
+                                        event.target.checked
+                                    )
+                                }
+                            />
+                            <span className="tokens-purchase-modal__consent-text">
+                                {page.modal.consent_privacy_policy_prefix}
+                                <a
+                                    className="tokens-purchase-modal__consent-link"
+                                    href={TOKEN_LEGAL_LINKS.privacyPolicy}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    {page.modal.consent_privacy_policy_link}
                                 </a>
                             </span>
                         </label>

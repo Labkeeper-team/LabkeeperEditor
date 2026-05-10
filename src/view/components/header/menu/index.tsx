@@ -56,10 +56,12 @@ export const HeaderMenu = () => {
 
     const openLandingAnchor = useCallback(
         (anchor: string) => {
-            openExternal(`${LABKEEPER_URL}/#${anchor}`);
+            openExternal(`${SITE_ORIGIN}/#${anchor}`);
         },
         [openExternal]
     );
+
+    const isProjectPage = location.pathname.startsWith('/project/');
 
     const publicMenuItems: HeaderMenuItem[] = [
         {
@@ -77,19 +79,27 @@ export const HeaderMenu = () => {
     ];
 
     const authenticatedMenuItems: HeaderMenuItem[] = [
-        {
-            title: dictionary.header_menu.my_projects,
-            onClick: () => navigate(Routes.Projects),
-        },
+        ...(isProjectPage
+            ? [
+                  {
+                      title: dictionary.header_menu.my_projects,
+                      onClick: () => navigate(Routes.Projects),
+                  },
+              ]
+            : []),
         {
             title: dictionary.header_menu.top_up_balance,
             onClick: () => navigate(Routes.Tokens),
             separatorAfter: true,
         },
-        {
-            title: dictionary.interface_tour.label,
-            onClick: () => dispatch(setTourVisibility(true)),
-        },
+        ...(isProjectPage
+            ? [
+                  {
+                      title: dictionary.interface_tour.label,
+                      onClick: () => dispatch(setTourVisibility(true)),
+                  },
+              ]
+            : []),
         {
             title: dictionary.header_menu.contact_us,
             onClick: openContactModal,
@@ -161,7 +171,8 @@ export const HeaderMenu = () => {
               ]),
         {
             title: dictionary.tokens_page.navigation.editor,
-            onClick: () => navigate(Routes.ProjectDefault),
+            onClick: () =>
+                dispatch(controller.onOpenEditorAfterSpaNavigationRequest()),
         },
         ...(isAuthenticated
             ? [

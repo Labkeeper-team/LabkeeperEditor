@@ -136,6 +136,22 @@ export class StartupService {
         this.ideService.onProgramUpdated();
     };
 
+    /**
+     * After the first {@link onAppStartup}, in-app navigation (e.g. from /tokens) does not run
+     * startup again, so `/project/default` never resolves to `/project/:id` for signed-in users.
+     * Call this instead of `navigate(Routes.ProjectDefault)` from the SPA.
+     */
+    openEditorAfterSpaNavigation = async (): Promise<void> => {
+        const userInfo: UserInfo = {
+            email: this.repository.userViewModelRepository.email(),
+            id: this.repository.userViewModelRepository.id(),
+            isAuthenticated:
+                this.repository.userViewModelRepository.isAuthenticated(),
+            tokens: this.repository.userViewModelRepository.tokens(),
+        };
+        await this.openDefaultProject(userInfo);
+    };
+
     private cutOfLastSlash(location: string): string {
         if (location === '/' || location === '') {
             return '/';

@@ -199,7 +199,9 @@ export const MarketingHeader = () => {
                                 type="button"
                                 onClick={() =>
                                     closeMenuAndRun(() =>
-                                        navigate(Routes.ProjectDefault)
+                                        dispatch(
+                                            controller.onOpenEditorAfterSpaNavigationRequest()
+                                        )
                                     )
                                 }
                             >
@@ -274,7 +276,9 @@ export const MarketingHeader = () => {
                             type="button"
                             onClick={() =>
                                 closeMenuAndRun(() =>
-                                    navigate(Routes.ProjectDefault)
+                                    dispatch(
+                                        controller.onOpenEditorAfterSpaNavigationRequest()
+                                    )
                                 )
                             }
                         >
