@@ -6,20 +6,11 @@ import { controller } from '../../../../../../../main.tsx';
 import './style.scss';
 
 const LATEX_HEADER_TEXT = String.raw`\documentclass[a4paper,12pt]{article}
-\providecommand{\pandocbounded}[1]{#1}
-\providecommand{\tightlist}[1]{#1}
-\usepackage{comment}
-\usepackage{cmap}
+\usepackage{comment,cmap,amsmath,longtable,mathtools}
+\usepackage{booktabs,geometry,graphicx,listings,hyperref}
 \usepackage[T2A]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage[english,russian]{babel}
-\usepackage{amsmath}
-\usepackage{longtable}
-\usepackage{booktabs}
-\usepackage{geometry}
-\usepackage{graphicx}
-\usepackage{listings}
-\usepackage{hyperref}
 \geometry{
   a4paper,
   top=3mm,
@@ -28,7 +19,6 @@ const LATEX_HEADER_TEXT = String.raw`\documentclass[a4paper,12pt]{article}
   left=5mm
 }
 \setcounter{secnumdepth}{0}
-\usepackage{mathtools}
 \mathtoolsset{showonlyrefs}
 \newcounter{none}
 \begin{document}
