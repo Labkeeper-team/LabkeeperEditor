@@ -16,7 +16,7 @@ export type SegmentType =
     | 'empty';
 
 // Viewer/Project display mode for result rendering
-export type ProjectMode = 'markdown' | 'latex';
+export type ProjectType = 'markdown' | 'latex';
 export type StatementType =
     | 'assignment'
     | 'calculation'
@@ -26,6 +26,7 @@ export type StatementType =
     | 'latex'
     | 'no_result';
 export type PlotType = 'line' | 'scatter' | 'histogram' | 'dotted';
+export type OpenParams = 'login' | 'ai' | 'latex' | 'markdown';
 
 /*
 Domain
@@ -34,6 +35,7 @@ export interface UserInfo {
     email: string;
     id: number;
     isAuthenticated: boolean;
+    tokens: number;
 }
 
 export interface LabkeeperFile {
@@ -95,6 +97,7 @@ export interface Project {
     lastModified: string;
     program: Program;
     isPublic: boolean;
+    projectType: ProjectType;
 }
 
 export interface ProjectShort {

@@ -3,7 +3,7 @@ import { Rpi } from '../../model/rpi';
 import { LoaderService } from '../domain/LoaderService.ts';
 import { IdeService } from '../domain/IdeService.ts';
 import { StartupService } from './StartupService.ts';
-import { Program, Project } from '../../model/domain.ts';
+import { Program, Project, ProjectType } from '../../model/domain.ts';
 import { Routes } from '../routes.ts';
 
 export class ProjectsPageService {
@@ -57,6 +57,7 @@ export class ProjectsPageService {
 
     onProjectCreate = async (
         projectName: string,
+        projectType: ProjectType,
         okCallback: () => void,
         errorCallback: (message: string) => void
     ) => {
@@ -90,9 +91,34 @@ export class ProjectsPageService {
             this.repository.setLocation(
                 Routes.Project.replace(':id', result.body.projectId + '')
             );
+
             this.repository.projectViewModelRepository.setProject(result.body);
             await this.loaderService.loadProjects();
             this.repository.projectViewModelRepository.setReadOnly(false);
+            this.repository.projectViewModelRepository.setProjectType(
+                projectType
+            );
+            const setTypeResult = await this.rpi.setProjectTypeRequest(
+                result.body.projectId,
+                projectType
+            );
+
+            if (setTypeResult.isUnauth) {
+                this.repository.toast(
+                    this.repository.dictionary.filemanager.errors
+                        .sessionExpired,
+                    'error'
+                );
+                this.ideService.resetEditor();
+            }
+
+            if (setTypeResult.isOk) {
+                this.repository.projectViewModelRepository.setProject({
+                    ...result.body,
+                    projectType: projectType,
+                });
+                this.repository.projectViewModelRepository.setReadOnly(false);
+            }
             okCallback();
         } else {
             const message =
@@ -112,6 +138,7 @@ export class ProjectsPageService {
                     this.repository.userViewModelRepository.isAuthenticated(),
                 id: this.repository.userViewModelRepository.id(),
                 email: this.repository.userViewModelRepository.email(),
+                tokens: this.repository.userViewModelRepository.tokens(),
             },
             projectId
         );

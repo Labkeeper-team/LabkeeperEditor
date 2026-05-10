@@ -11,7 +11,7 @@ import { HeaderHelpItem } from '../../model/help';
 import { Routes } from '../routes.ts';
 import { CompilationService } from '../domain/CompilationService.ts';
 import { ResetService } from '../domain/ResetService.ts';
-import { ProjectMode } from '../../model/domain.ts';
+import { Program, ProjectType } from '../../model/domain.ts';
 
 export class ProjectPageService {
     repository: ViewModelRepository;
@@ -316,16 +316,35 @@ export class ProjectPageService {
         }
     };
 
-    setProjectMode = async (
-        mode: ProjectMode,
-        projectId: string
-    ): Promise<void> => {
-        this.repository.persistenceViewModelRepository.setModeToProject(
-            projectId,
-            mode
+    setProjectType = async (type: ProjectType): Promise<void> => {
+        console.log('setProjectType', type);
+        this.repository.projectViewModelRepository.setProjectType(type);
+
+        const project = this.repository.projectViewModelRepository.project();
+        if (!project) return;
+
+        if (!this.repository.userViewModelRepository.isAuthenticated()) return;
+
+        const result = await this.rpi.setProjectTypeRequest(
+            project.projectId,
+            type
         );
-        this.repository.projectViewModelRepository.setProjectMode(mode);
-        this.ideService.onProgramUpdated();
+
+        if (result.isUnauth) {
+            this.repository.toast(
+                this.repository.dictionary.filemanager.errors.sessionExpired,
+                'error'
+            );
+            this.ideService.resetEditor();
+        }
+
+        if (result.isOk) {
+            this.repository.projectViewModelRepository.setProject({
+                ...project,
+                projectType: type,
+            });
+            this.repository.projectViewModelRepository.setReadOnly(false);
+        }
     };
 
     sendPromptAndReload = async (
@@ -349,12 +368,22 @@ export class ProjectPageService {
                     prompt
                 );
             if (promptResult.isOk) {
+                const newProgram = promptResult.body;
+                const oldProgram =
+                    this.repository.projectViewModelRepository.currentProgram();
+                const activeIndex = this.selectNewSegmentIndexAfterPrompt(
+                    oldProgram,
+                    newProgram
+                );
                 this.ideService.replaceProgram(promptResult.body);
                 this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
                     'ok'
                 );
                 this.repository.settingsViewModelRepository.setShowProjectPromptModal(
                     false
+                );
+                this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(
+                    activeIndex
                 );
             } else if (promptResult.isUnauth) {
                 this.repository.toast(
@@ -399,6 +428,13 @@ export class ProjectPageService {
               )
             : await this.rpi.promptProjectRequest(project.projectId, prompt);
         if (promptResult.isOk) {
+            const newProgram = promptResult.body;
+            const oldProgram =
+                this.repository.projectViewModelRepository.currentProgram();
+            const newIndex = this.selectNewSegmentIndexAfterPrompt(
+                oldProgram,
+                newProgram
+            );
             this.ideService.replaceProgram(promptResult.body);
             this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
                 'ok'
@@ -414,6 +450,9 @@ export class ProjectPageService {
                 );
                 this.ideService.onProgramUpdated();
             }
+            this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(
+                newIndex
+            );
         } else if (promptResult.isUnauth) {
             this.repository.toast(
                 this.repository.dictionary.filemanager.errors.sessionExpired,
@@ -430,6 +469,37 @@ export class ProjectPageService {
             );
         }
     };
+
+    private selectNewSegmentIndexAfterPrompt(
+        oldProgram: Program,
+        newProgram: Program
+    ) {
+        if (newProgram.segments.length === oldProgram.segments.length + 1) {
+            for (let i = 0; i < oldProgram.segments.length; i++) {
+                if (
+                    newProgram.segments[i].text !== oldProgram.segments[i].text
+                ) {
+                    return i;
+                }
+            }
+            return newProgram.segments.length - 1;
+        }
+        if (newProgram.segments.length === oldProgram.segments.length + 2) {
+            let result: number | undefined = undefined;
+            for (let i = 0; i < oldProgram.segments.length; i++) {
+                if (
+                    newProgram.segments[i].text !== oldProgram.segments[i].text
+                ) {
+                    if (result !== undefined) {
+                        return i;
+                    }
+                    result = i;
+                }
+            }
+            return newProgram.segments.length - 2;
+        }
+        return newProgram.segments.length - 1;
+    }
 
     onLlmButtonClicked() {
         this.repository.ideViewModelRepository.setProjectPromptRequestStatus(

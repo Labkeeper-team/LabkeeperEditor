@@ -42,6 +42,7 @@ export function mockUserInfoWithDefaultUser(rpi: Rpi) {
             isAuthenticated: true,
             email: USER_EMAIL,
             id: USER_ID,
+            tokens: 0,
         },
         isOk: true,
         isUnauth: false,
@@ -56,6 +57,7 @@ export function mockUserInfoForUnauthorized(rpi: Rpi) {
             isAuthenticated: false,
             email: '',
             id: 0,
+            tokens: 0,
         },
         isOk: true,
         isUnauth: false,
@@ -96,6 +98,7 @@ export function mockDefaultProjectRequestWithDefaultProject(rpi: Rpi) {
                     roundStrategy: 'noRound',
                 },
             },
+            projectType: 'markdown',
         },
     } as RequestResult<RichProject>);
 }
@@ -119,6 +122,7 @@ export function mockGetProjectRequestWithDefaultProject(rpi: Rpi) {
                     roundStrategy: 'noRound',
                 },
             },
+            projectType: 'markdown',
         },
     } as RequestResult<RichProject>);
 }

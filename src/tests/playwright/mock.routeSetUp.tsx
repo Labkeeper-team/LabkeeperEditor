@@ -46,7 +46,8 @@ export class RouteSetup {
     async setupGetUserInfoRequest(
         isAuthenticated: boolean = defaultIsAuthenticated,
         email: string = defaultEmail,
-        id: number = defaultId
+        id: number = defaultId,
+        tokens: number = 0
     ) {
         await this.page.route(
             `/api/${version}/public/user-info`,
@@ -58,6 +59,7 @@ export class RouteSetup {
                         isAuthenticated: isAuthenticated,
                         email: email,
                         id: id,
+                        tokens: tokens,
                     }),
                 });
             }
@@ -120,6 +122,7 @@ export class RouteSetup {
                         roundStrategy: 'noRound',
                     },
                 },
+                projectType: 'markdown',
             };
         } else if (typeBody == 'default') {
             return {
@@ -133,6 +136,7 @@ export class RouteSetup {
                         roundStrategy: 'noRound',
                     },
                 },
+                projectType: 'markdown',
             };
         } else if (typeBody == 'empty') {
             return {};
@@ -155,6 +159,7 @@ export class RouteSetup {
                         roundStrategy: 'noRound',
                     },
                 },
+                projectType: 'markdown',
             };
         }
     }
@@ -428,6 +433,7 @@ export class RouteSetup {
                         roundStrategy: 'noRound',
                     },
                 },
+                projectType: 'markdown',
             };
         } else if (typeBody == 'empty') {
             return {};
@@ -488,6 +494,7 @@ export class RouteSetup {
                                 userId: defaultUserId,
                                 title: 'Тестовый проект',
                                 lastModified: '2024-03-20T12:00:00',
+                                projectType: 'markdown',
                             },
                         ],
                     }),
@@ -578,6 +585,7 @@ export class RouteSetup {
                                 roundStrategy: 'noRound',
                             },
                         },
+                        projectType: 'markdown',
                     }),
                 });
             }

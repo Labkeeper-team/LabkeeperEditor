@@ -47,7 +47,6 @@ import {
     setLanguage,
     setLastOpenedProjectUuid,
     setLastProgram,
-    setModeToProject,
 } from './slices/persistence';
 import {
     setCompileError,
@@ -68,7 +67,7 @@ import {
     LabkeeperFile,
     OutputSegment,
     Project,
-    ProjectMode,
+    ProjectType,
     ProjectShort,
 } from '../../model/domain.ts';
 import { setProjects } from './slices/projects';
@@ -208,8 +207,6 @@ export const createViewModelStateFromStore = (
         persistenceViewModelRepository: {
             instructionExpanded: () =>
                 store.getState().persistence.instructionExpanded,
-            projectCompileModes: () =>
-                store.getState().persistence.projectCompileModes,
             language: () => store.getState().persistence.language,
             lastProgram: () => store.getState().persistence.lastProgram,
             lastOpenedProjectUuid: () =>
@@ -223,8 +220,6 @@ export const createViewModelStateFromStore = (
             setLastProgram: (lastProgram) =>
                 store.dispatch(setLastProgram(lastProgram)),
             clearLastProgram: () => store.dispatch(clearLastProgram()),
-            setModeToProject: (id: string, mode: ProjectMode) =>
-                store.dispatch(setModeToProject({ id, mode })),
         },
         projectViewModelRepository: {
             compileErrorResult: () =>
@@ -264,7 +259,7 @@ export const createViewModelStateFromStore = (
                 store.dispatch(setFiles(files)),
             setCurrentProgram: (program) =>
                 store.dispatch(setCurrentProgram(program)),
-            setProjectMode: (mode: ProjectMode) =>
+            setProjectType: (mode: ProjectType) =>
                 store.dispatch(setProjectMode(mode)),
             setPdfUri: (uri?: string) => store.dispatch(setPdfUri(uri)),
         },
@@ -321,6 +316,7 @@ export const createViewModelStateFromStore = (
             email: () => store.getState().user.email,
             id: () => store.getState().user.id,
             isAuthenticated: () => store.getState().user.isAuthenticated,
+            tokens: () => store.getState().user.tokens,
 
             setUserInfo: (userInfo) => store.dispatch(setUser(userInfo)),
         },

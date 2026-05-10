@@ -1,0 +1,10 @@
+.header-menu-logout-modal {
+    padding: 30px 40px 40px 40px;
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+
+    &__button {
+        margin-top: 11px;
+    }
+}

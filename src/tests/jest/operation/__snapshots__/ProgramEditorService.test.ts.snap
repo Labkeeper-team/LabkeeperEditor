@@ -85,7 +85,6 @@ MockViewModelRepositoryState {
   "lastVerifiedCode": null,
   "location": "/project/default",
   "loginRequest": "unknown",
-  "mockProgramMode": {},
   "mode": "markdown",
   "passwordSetRequest": "unknown",
   "pdfUpdated": 0,
@@ -104,6 +103,7 @@ MockViewModelRepositoryState {
   "showShareModal": false,
   "showTour": false,
   "toasts": [],
+  "tokens": 0,
   "undoEnabled": true,
 }
 `;
@@ -211,7 +211,6 @@ MockViewModelRepositoryState {
   "lastVerifiedCode": null,
   "location": "/project/default",
   "loginRequest": "unknown",
-  "mockProgramMode": {},
   "mode": "markdown",
   "passwordSetRequest": "unknown",
   "pdfUpdated": 0,
@@ -230,6 +229,7 @@ MockViewModelRepositoryState {
   "showShareModal": false,
   "showTour": false,
   "toasts": [],
+  "tokens": 0,
   "undoEnabled": true,
 }
 `;

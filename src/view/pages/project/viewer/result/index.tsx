@@ -14,9 +14,8 @@ import {
 import { useReactToPrint } from 'react-to-print';
 import { useRef } from 'react';
 import { useDictionary } from '../../../../store/selectors/translations';
-import { AppDispatch } from '../../../../store';
+import { AppDispatch, StorageState } from '../../../../store';
 import { controller } from '../../../../../main.tsx';
-import { ProjectMode } from '../../../../../model/domain.ts';
 
 declare global {
     interface Window {
@@ -26,13 +25,14 @@ declare global {
     }
 }
 
-export const Result = ({ mode = 'markdown' }: { mode?: ProjectMode }) => {
+export const Result = () => {
     const dispatch = useDispatch<AppDispatch>();
     const compileResult = useSelector(useCompiledSuccesInfo);
     const { project: currentProject, pdfUri } = useSelector(
         useCurrentFullProject
     );
-
+    const mode = useSelector((state: StorageState) => state.project.mode);
+    console.log(mode);
     const dictionary = useSelector(useDictionary);
 
     const contentRef = useRef<HTMLDivElement>(null);

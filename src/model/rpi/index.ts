@@ -5,6 +5,7 @@ import {
     Program,
     Project,
     ProjectShort,
+    ProjectType,
     UserInfo,
 } from '../domain.ts';
 
@@ -43,6 +44,7 @@ export interface CodeValidationResponse {
 
 export interface RichProject extends Project {
     lastProgramResult?: CompileSuccessResult;
+    lastPdf?: string;
 }
 
 export interface Rpi {
@@ -110,6 +112,11 @@ export interface Rpi {
     setProjectVisibilityRequest(
         projectId: string,
         visibility: boolean
+    ): Promise<RequestResult>;
+
+    setProjectTypeRequest(
+        projectId: string,
+        type: ProjectType
     ): Promise<RequestResult>;
 
     sendEmailWithCodeRequest(

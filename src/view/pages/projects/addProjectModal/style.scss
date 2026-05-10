@@ -2,7 +2,26 @@
     padding: 30px 40px 40px 40px;
     display: flex;
     flex-direction: column;
+
+    form {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .add-project-modal-type {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .add-project-modal-type-options {
+        display: flex;
+        gap: 18px;
+        align-items: center;
+    }
+
     .add-project-modal-button {
-        margin-top: 18px;
+        margin-top: 24px;
     }
 }

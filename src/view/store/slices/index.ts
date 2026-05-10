@@ -6,7 +6,7 @@ import {
     Project,
     ProjectShort,
     UserInfo,
-    ProjectMode,
+    ProjectType,
 } from '../../../model/domain.ts';
 
 import { Language } from '../../../viewModel/dictionaries';
@@ -57,7 +57,7 @@ interface ProjectState {
     currentProgram: Program;
     projectIsReadonly: boolean;
     files: LabkeeperFile[];
-    mode: ProjectMode;
+    mode: ProjectType;
     pdfUri?: string;
 }
 
@@ -93,7 +93,6 @@ interface PersistenceState {
     lastProgram: Program;
     instructionExpanded: boolean;
     lastOpenedProjectUuid?: string;
-    projectCompileModes: Record<string, 'latex' | 'markdown'>;
 }
 
 export const authInitialState: AuthState = {
@@ -128,7 +127,6 @@ export const persistenceInitialState: PersistenceState = {
     lastProgram: createEmptyProgram(),
     instructionExpanded: true,
     lastOpenedProjectUuid: undefined,
-    projectCompileModes: {},
 };
 
 export const projectInitialState: ProjectState = {
@@ -165,6 +163,7 @@ export const userInitialState: UserInfo = {
     isAuthenticated: false,
     email: '',
     id: 0,
+    tokens: 0,
 };
 
 export const callbackInitialState: CallbackState = {
