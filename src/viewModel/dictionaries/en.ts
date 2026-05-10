@@ -147,6 +147,84 @@ export const en: Translations = {
         logout: 'Log out',
         logout_confirmation: 'Are you sure you want to log out?',
     },
+    tokens_page: {
+        title: 'Top up your token balance',
+        subtitle:
+            'Tokens power computations, AI generation, and other resource-heavy LabKeeper features.',
+        balance_title: 'Your balance',
+        balance_caption: 'Tokens available',
+        unauth_balance_caption:
+            'Log in to view your balance and purchase tokens.',
+        buy_title: 'Choose a package',
+        buy_subtitle:
+            'Purchasing is prepared as a mock flow for now; payment will be connected separately.',
+        buy_section_headline_lead: 'One balance',
+        buy_section_headline_rest: 'for all your tasks',
+        buy_section_intro:
+            'LabKeeper uses a transparent token system. Tokens are the platform’s universal currency: you can allocate resources flexibly for whatever your project needs right now — from AI-assisted content generation to heavy server-side computation. You pay only for what you actually use.',
+        buy_packages_heading: 'Top-up options:',
+        authenticated_buy_balance_prefix: 'Your balance',
+        package_quantity_label: 'Token amount',
+        package_card_subline_template: '{tokens} for {price}',
+        buy_button: 'Buy',
+        popular: 'Popular',
+        tokens_amount: 'tokens',
+        usage_title: 'What tokens are used for',
+        usage_items: [
+            {
+                heading: 'AI assistant (GPT) usage: 2 tokens = 1 text prompt.',
+                body: 'Ask the model to outline a document, convert text to Markdown, or spot bugs in your code.',
+            },
+            {
+                heading: 'Image generation: 10 tokens = 1 image.',
+                body: 'Create unique illustrations and graphics for papers and lab reports from a single prompt.',
+            },
+            {
+                heading:
+                    'Server-side LaTeX compile: 1 token = 1 second of compile time.',
+                body: 'Build heavy PDF documents without freezes. Tokens are charged only while the powerful remote compiler is running.',
+            },
+            {
+                heading: '',
+                body: 'Hybrid syntax: use lightweight Markdown snippets inside complex LaTeX to work faster.',
+            },
+        ],
+        modal: {
+            title: 'Token purchase',
+            gateway_notice:
+                'Payment is processed via the secure YuKassa payment gateway',
+            consent_offer_prefix:
+                'By clicking the “Proceed to payment” button, you accept the ',
+            consent_offer_link: 'Public Offer',
+            consent_privacy_prefix:
+                'By clicking “Proceed to payment”, you consent to ',
+            consent_privacy_link: 'the processing of personal data',
+            consent_privacy_policy_prefix:
+                'By clicking “Proceed to payment”, you agree to the ',
+            consent_privacy_policy_link: 'Privacy Policy',
+            pay_button: 'Proceed to payment',
+            mock_notice:
+                'Payment is not available yet: this button is a mock placeholder.',
+        },
+        navigation: {
+            advantages: 'Advantages',
+            features: 'Features',
+            for_whom: 'For whom',
+            examples: 'Project examples',
+            tokens: 'Tokens',
+            about: 'About us',
+            login: 'Login',
+            logout: 'Log out',
+            editor: 'Editor',
+            projects: 'My projects',
+        },
+        footer: {
+            copyright: `© 2024—${new Date().getFullYear()}`,
+            wiki_nav: 'Documentation',
+            nav_aria: 'Marketing site navigation',
+            contact_label: 'Contact',
+        },
+    },
     compile_error: {
         [CompileError.CODE_NO_END_QUOTES]: 'No closing quotes',
         [CompileError.UNKNOWN_SYMBOL]: 'Unknown symbol',

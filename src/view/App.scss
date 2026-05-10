@@ -47,3 +47,18 @@ body {
         overflow-x: hidden;
     }
 }
+
+/* Лендинг токенов — полноценная прокрутка документа (остальной UI крутится во внутренних панелях). */
+html.tokens-route {
+    max-height: none;
+    overflow-x: hidden;
+    overflow-y: auto;
+    /* Перекрываем :root { Inter !important }, чтобы шёл Roboto на всём маршруте (хедер, main, футер, модалка). */
+    font-family: Roboto, sans-serif !important;
+}
+
+body.tokens-route {
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: none;
+}

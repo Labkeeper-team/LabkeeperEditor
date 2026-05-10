@@ -3,7 +3,18 @@ import './style.scss';
 import { ModalProps } from './model';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { CloseModalIcon } from '../../icons';
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
+
+const SCROLL_KEYS = new Set([
+    ' ',
+    'Spacebar',
+    'PageUp',
+    'PageDown',
+    'End',
+    'Home',
+    'ArrowUp',
+    'ArrowDown',
+]);
 
 export const Modal = ({ showModal, children, onClose }: ModalProps) => {
     useHotkeys(
@@ -18,8 +29,36 @@ export const Modal = ({ showModal, children, onClose }: ModalProps) => {
 
     const isMouseDownOnOverlayRef = useRef(false);
 
+    useEffect(() => {
+        if (!showModal) {
+            return;
+        }
+
+        const onWheel = (event: WheelEvent) => {
+            event.preventDefault();
+        };
+        const onTouchMove = (event: TouchEvent) => {
+            event.preventDefault();
+        };
+        const onKeyDown = (event: KeyboardEvent) => {
+            if (SCROLL_KEYS.has(event.key)) {
+                event.preventDefault();
+            }
+        };
+
+        window.addEventListener('wheel', onWheel, { passive: false });
+        window.addEventListener('touchmove', onTouchMove, { passive: false });
+        window.addEventListener('keydown', onKeyDown, { passive: false });
+
+        return () => {
+            window.removeEventListener('wheel', onWheel);
+            window.removeEventListener('touchmove', onTouchMove);
+            window.removeEventListener('keydown', onKeyDown);
+        };
+    }, [showModal]);
+
     if (!showModal) {
-        return;
+        return null;
     }
 
     return (
