@@ -42,6 +42,11 @@ export interface Translations {
         latex: string;
         asciimath: string;
     };
+    latex_boundary: {
+        header: string;
+        footer: string;
+        insert_hint: string;
+    };
 
     interface_tour: {
         label: string;

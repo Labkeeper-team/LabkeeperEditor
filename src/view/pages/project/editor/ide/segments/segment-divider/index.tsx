@@ -67,7 +67,7 @@ export const SegmentDivider: React.FC<SegmentDividerProps> = ({
         [dictionary]
     );
     if (!showDivider) {
-        return <div style={{ flex: 1 }} />;
+        return null;
     }
     return (
         <div className="segment-divider">

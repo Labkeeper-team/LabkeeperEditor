@@ -38,6 +38,11 @@ export const en: Translations = {
         latex: 'latex',
         asciimath: 'simple-math',
     },
+    latex_boundary: {
+        header: 'LaTeX heading',
+        footer: 'LaTeX footer',
+        insert_hint: 'Click to insert an editable segment',
+    },
 
     interface_tour: {
         label: 'Interface tour',
