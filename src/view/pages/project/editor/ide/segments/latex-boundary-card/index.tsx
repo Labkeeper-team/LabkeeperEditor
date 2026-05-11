@@ -24,6 +24,11 @@ const LATEX_HEADER_TEXT = String.raw`\documentclass[a4paper,12pt]{article}
 \begin{document}
 \null`;
 
+const LATEX_HEADER_DISPLAY_TEXT = String.raw`\documentclass[a4paper,12pt]{article}
+...
+\geometry{a4paper,top=3mm,right=5mm,bottom=3mm,left=5mm}
+\begin{document}
+`;
 const LATEX_FOOTER_TEXT = String.raw`\end{document}`;
 
 interface LatexBoundaryCardBaseProps {
@@ -44,8 +49,8 @@ const LatexBoundaryCardBase = ({
     return (
         <div className={containerClassName} onClick={onClick}>
             <div className="latex-boundary-meta">
-                <span className="latex-boundary-badge">{title}</span>
                 <span className="latex-boundary-hint">{hint}</span>
+                <span className="latex-boundary-badge">{title}</span>
             </div>
             <pre className="latex-boundary-content">{content}</pre>
         </div>
@@ -74,7 +79,7 @@ export const LatexHeaderBoundaryCard = () => {
             containerClassName="latex-header-segment"
             title={dictionary.latex_boundary.header}
             hint={dictionary.latex_boundary.insert_hint}
-            content={LATEX_HEADER_TEXT}
+            content={LATEX_HEADER_DISPLAY_TEXT}
             onClick={() =>
                 dispatch(
                     controller.onAddLatexBoundarySegmentRequest({
