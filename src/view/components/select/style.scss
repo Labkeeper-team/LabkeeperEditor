@@ -7,7 +7,50 @@
         min-width: unset;
     }
 
+    &.open .select-options:not(.select-width-measurer) {
+        animation: select-options-show 220ms ease-out;
+    }
+
+    &.fit-options-width {
+        display: inline-block;
+        min-width: unset;
+
+        .select-header {
+            width: 100%;
+            box-sizing: border-box;
+            min-width: 0;
+        }
+
+        .selected-value {
+            min-width: 0;
+        }
+
+        .select-options.select-width-measurer {
+            display: block;
+            position: absolute;
+            visibility: hidden;
+            pointer-events: none;
+            white-space: nowrap;
+            width: max-content;
+            min-width: unset;
+        }
+
+        .select-title-width-measurer {
+            position: absolute;
+            visibility: hidden;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+    }
+
     &.default {
+        .select-width-measurer__option {
+            padding: 8px 6px;
+            color: $blue-20;
+            font-weight: 700;
+            text-align: center;
+        }
+
         .select-header {
             user-select: none;
             display: flex;
@@ -17,7 +60,7 @@
             color: $gray-30;
             font-size: 15px;
             padding: 6px 20px;
-            margin-right: 0.5px;
+            box-sizing: border-box;
             border-radius: 40px;
             border: 1px solid $gray-30;
             position: relative;
@@ -67,8 +110,9 @@
                 }
             }
             .select-options {
+                box-sizing: border-box;
                 display: block;
-                width: calc(100% - 2px);
+                width: 100%;
                 border-bottom-left-radius: 15px;
                 border-bottom-right-radius: 15px;
                 border: 1px solid $gray-40;
@@ -107,11 +151,28 @@
                     border-bottom-left-radius: 15px;
                     border-bottom-right-radius: 15px;
                 }
+                &.select-option-separator {
+                    box-sizing: border-box;
+                    height: 0;
+                    padding: 0;
+                    margin: 4px 12px;
+                    border-top: 1px solid $gray-50;
+                    background: transparent;
+                    pointer-events: none;
+                    transition: none;
+                }
             }
         }
     }
 
     &.computation {
+        .select-width-measurer__option {
+            padding: 4px 20px;
+            font-family: inherit;
+            font-size: 15px;
+            line-height: 18px;
+        }
+
         .select-header {
             user-select: none;
             display: flex;
@@ -245,7 +306,32 @@
                     border-bottom-left-radius: 3px;
                     border-bottom-right-radius: 3px;
                 }
+                &.select-option-separator {
+                    height: 1px;
+                    padding: 0;
+                    margin: 4px 12px;
+                    background-color: $gray-50;
+                    pointer-events: none;
+                }
             }
         }
+    }
+}
+
+@keyframes select-options-show {
+    from {
+        opacity: 0;
+        clip-path: inset(0 0 100% 0);
+    }
+
+    to {
+        opacity: 1;
+        clip-path: inset(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .labkeeper_select.open .select-options:not(.select-width-measurer) {
+        animation: none;
     }
 }

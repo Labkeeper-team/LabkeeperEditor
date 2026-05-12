@@ -6,30 +6,51 @@ import { Typography } from '../../../../../../../components/typography';
 import { colors } from '../../../../../../../styles/colors';
 import { Radio } from '../../../../../../../components/radiobutton';
 import { useDictionary } from '../../../../../../../store/selectors/translations';
-import { AppDispatch } from '../../../../../../../store';
+import { AppDispatch, StorageState } from '../../../../../../../store';
 import { controller } from '../../../../../../../../main.tsx';
+import { ProjectType } from '../../../../../../../../model/domain.ts';
 
 export const ProjectSettings = () => {
     const activeProgram = useSelector(useCurrentProgram);
     const dictionary = useSelector(useDictionary);
+    const mode = useSelector((state: StorageState) => state.project.mode);
 
     const dispatch = useDispatch<AppDispatch>();
+    const onTypeChange = (projectType: ProjectType) => {
+        dispatch(
+            controller.onProjectModeChangeRequest({
+                type: projectType,
+            })
+        );
+    };
 
     return (
         <div className="project-settings-dropdown">
             <Typography
                 type="body-large"
+                text={dictionary.viewer.mode.label}
+                color={colors.gray10}
+            />
+            <div className="project-settings-dropdown__section">
+                <Radio
+                    id="markdown"
+                    checked={mode === 'markdown'}
+                    onChange={() => onTypeChange('markdown')}
+                    title={dictionary.viewer.mode.markdown}
+                />
+                <Radio
+                    id="latex"
+                    checked={mode === 'latex'}
+                    onChange={() => onTypeChange('latex')}
+                    title={dictionary.viewer.mode.latex}
+                />
+            </div>
+            <Typography
+                type="body-large"
                 text={dictionary.rounding_mode.label}
                 color={colors.gray10}
             />
-            <div
-                style={{
-                    marginTop: 6,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 4,
-                }}
-            >
+            <div className="project-settings-dropdown__section">
                 <Radio
                     id="noRound"
                     checked={

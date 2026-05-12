@@ -79,6 +79,7 @@ export class ResetService {
             isAuthenticated: false,
             email: '',
             id: -1,
+            tokens: 0,
         });
     }
 
@@ -99,6 +100,6 @@ export class ResetService {
             errors: [],
         });
         this.repository.projectViewModelRepository.setPdfUri(undefined);
-        this.repository.projectViewModelRepository.setProjectMode('markdown');
+        this.repository.projectViewModelRepository.setProjectType('markdown');
     }
 }

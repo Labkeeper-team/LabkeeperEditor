@@ -42,6 +42,11 @@ export interface Translations {
         latex: string;
         asciimath: string;
     };
+    latex_boundary: {
+        header: string;
+        footer: string;
+        insert_hint: string;
+    };
 
     interface_tour: {
         label: string;
@@ -62,6 +67,9 @@ export interface Translations {
         label: string;
         create: string;
         name: string;
+        project_type: string;
+        type_markdown: string;
+        type_latex: string;
         error: {
             empty_name: string;
             too_many_projects: string;
@@ -133,9 +141,22 @@ export interface Translations {
         pdf_loading: string;
         gpt_prompt_button: string;
         mode: {
+            label: string;
             markdown: string;
             latex: string;
         };
+    };
+    header_menu: {
+        menu: string;
+        examples: string;
+        privacy_policy: string;
+        tokens: string;
+        top_up_balance: string;
+        about: string;
+        contact_us: string;
+        my_projects: string;
+        logout: string;
+        logout_confirmation: string;
     };
 
     compile_error: {

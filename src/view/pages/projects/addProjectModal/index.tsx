@@ -9,10 +9,13 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useDictionary } from '../../../store/selectors/translations';
 import { AppDispatch } from '../../../store';
 import { controller } from '../../../../main.tsx';
+import { ProjectType } from '../../../../model/domain.ts';
+import { Radio } from '../../../components/radiobutton';
 
 export const AddProjectModal = (props: { onClose: () => unknown }) => {
     const dispatch = useDispatch<AppDispatch>();
     const [projectName, setProjectName] = useState('');
+    const [projectType, setProjectType] = useState<ProjectType>('markdown');
     const [projectNameError, setProjectNameError] = useState<
         string | undefined
     >(undefined);
@@ -25,6 +28,7 @@ export const AddProjectModal = (props: { onClose: () => unknown }) => {
             dispatch(
                 controller.onProjectCreateRequest({
                     projectName: projectName,
+                    projectType: projectType,
                     errorCallback: (message) => {
                         setProjectNameError(message);
                     },
@@ -34,7 +38,7 @@ export const AddProjectModal = (props: { onClose: () => unknown }) => {
                 })
             );
         },
-        [dispatch, projectName, props]
+        [dispatch, projectName, projectType, props]
     );
 
     return (
@@ -52,6 +56,26 @@ export const AddProjectModal = (props: { onClose: () => unknown }) => {
                     value={projectName}
                     error={projectNameError}
                 />
+                <div className="add-project-modal-type">
+                    <Typography
+                        text={dictionary.create_modal.project_type}
+                        color={colors.gray20}
+                    />
+                    <div className="add-project-modal-type-options">
+                        <Radio
+                            id="create-project-type-markdown"
+                            checked={projectType === 'markdown'}
+                            onChange={() => setProjectType('markdown')}
+                            title={dictionary.create_modal.type_markdown}
+                        />
+                        <Radio
+                            id="create-project-type-latex"
+                            checked={projectType === 'latex'}
+                            onChange={() => setProjectType('latex')}
+                            title={dictionary.create_modal.type_latex}
+                        />
+                    </div>
+                </div>
             </form>
             <Button
                 classname="add-project-modal-button"

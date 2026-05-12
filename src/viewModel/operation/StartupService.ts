@@ -1,6 +1,6 @@
 import { ViewModelRepository } from '../repository';
 import { Routes } from '../routes.ts';
-import { Project, UserInfo } from '../../model/domain.ts';
+import { OpenParams, Project, UserInfo } from '../../model/domain.ts';
 import { RequestResult, RichProject, Rpi } from '../../model/rpi';
 import { ProgramService } from '../../model/service/ProgramService.ts';
 import { LoaderService } from '../domain/LoaderService.ts';
@@ -10,7 +10,6 @@ import {
     States,
 } from '../../model/service/ObserverService.ts';
 import { IdeService } from '../domain/IdeService.ts';
-import { ExampleService } from '../domain/ExampleService.ts';
 
 const qrPagePattern = /\/qr\/v\d+/i;
 const projectPagePattern = /\/project\/\S+/i;
@@ -22,7 +21,6 @@ export class StartupService {
     repository: ViewModelRepository;
     observerService: ObserverService;
     ideService: IdeService;
-    exampleService: ExampleService;
 
     constructor(
         rpi: Rpi,
@@ -30,16 +28,14 @@ export class StartupService {
         loader: LoaderService,
         repository: ViewModelRepository,
         observerService: ObserverService,
-        ideService: IdeService,
-        exampleService: ExampleService
+        ideService: IdeService
     ) {
-        this.observerService = observerService;
         this.rpi = rpi;
         this.programService = programService;
         this.loader = loader;
         this.repository = repository;
         this.ideService = ideService;
-        this.exampleService = exampleService;
+        this.observerService = observerService;
     }
 
     onAppEnterWithOauthCode = async (code: string, state: string) => {
@@ -61,7 +57,11 @@ export class StartupService {
         }
     };
 
-    onAppStartup = async (from?: string, captcha?: string): Promise<void> => {
+    onAppStartup = async (
+        captcha?: string,
+        open?: OpenParams
+    ): Promise<void> => {
+        void open;
         const result: RequestResult<UserInfo> =
             await this.rpi.getUserInfoRequest();
 
@@ -89,15 +89,12 @@ export class StartupService {
         const locationWithoutLastSlash = this.cutOfLastSlash(
             this.repository.location()
         );
-        const version = qrPagePattern.test(locationWithoutLastSlash)
-            ? locationWithoutLastSlash.split('/').pop()
-            : undefined;
         // HOME PAGE ENTER
         if (
             locationWithoutLastSlash === Routes.Home ||
             qrPagePattern.test(locationWithoutLastSlash)
         ) {
-            await this.openDefaultProject(userInfo, version, from);
+            await this.openDefaultProject(userInfo, open);
         }
 
         // OAUTH
@@ -108,7 +105,7 @@ export class StartupService {
                 undefined
             );
             if (!lastOpenedProjectUuid) {
-                await this.openDefaultProject(userInfo, version, from);
+                await this.openDefaultProject(userInfo, open);
             } else {
                 await this.openProjectById(userInfo, lastOpenedProjectUuid);
             }
@@ -116,13 +113,13 @@ export class StartupService {
 
         // PROJECT DEFAULT PAGE ENTER
         else if (locationWithoutLastSlash === Routes.ProjectDefault) {
-            await this.openDefaultProject(userInfo, version, from);
+            await this.openDefaultProject(userInfo, open);
         }
 
         // PROJECTS PAGE ENTER
         else if (locationWithoutLastSlash === Routes.Projects) {
             if (!userInfo.isAuthenticated) {
-                await this.openDefaultProject(userInfo, version, from);
+                await this.openDefaultProject(userInfo, open);
             }
         }
 
@@ -208,12 +205,18 @@ export class StartupService {
                 project.program,
                 project.lastProgramResult
             );
+            this.repository.projectViewModelRepository.setProjectType(
+                project.projectType
+            );
             this.repository.setLocation(
                 Routes.Project.replace(':id', project.projectId)
             );
             this.observerService.setUserState(
                 States.STATE_PROJECT,
                 project.projectId
+            );
+            this.repository.projectViewModelRepository.setPdfUri(
+                project.lastPdf
             );
             this.repository.ideViewModelRepository.setGetProjectRequestState(
                 'ok'
@@ -240,8 +243,7 @@ export class StartupService {
 
     private async openDefaultProject(
         userInfo: UserInfo,
-        version: string | undefined,
-        from: string | undefined
+        open?: OpenParams
     ): Promise<void> {
         this.repository.projectViewModelRepository.setReadOnly(false);
         if (userInfo.isAuthenticated) {
@@ -281,41 +283,29 @@ export class StartupService {
                 this.ideService.resetEditor();
             }
         } else {
-            this.repository.setLocation(Routes.ProjectDefault);
-            // on default uri but unauth
-            const language =
-                this.repository.persistenceViewModelRepository.language();
-            if (version) {
-                const result = await this.exampleService.exampleForQR(
-                    version,
-                    language
+            if (open === 'latex') {
+                this.repository.projectViewModelRepository.setProjectType(
+                    'latex'
                 );
-                if (result) {
-                    this.ideService.setNewProgram(
-                        result.program,
-                        result.result
-                    );
-                }
-            } else if (from) {
-                const result = await this.exampleService.exampleForFrom(
-                    from,
-                    language
-                );
-                if (result) {
-                    this.ideService.setNewProgram(
-                        result.program,
-                        result.result
-                    );
-                }
-            } else {
-                this.programService.setNewProgram(
-                    this.repository.persistenceViewModelRepository.lastProgram()
-                );
-                /* закоменчено, так как не выбрали какой пример показывать на странице labkeeper.io
-                const [program, result] =
-                    this.exampleService.exampleForUnauthorize();
-                this.ideService.setNewProgram(program, result);*/
             }
+            if (open === 'markdown') {
+                this.repository.projectViewModelRepository.setProjectType(
+                    'markdown'
+                );
+            }
+            this.repository.setLocation(Routes.ProjectDefault);
+            this.programService.setNewProgram(
+                this.repository.persistenceViewModelRepository.lastProgram()
+            );
+        }
+        console.log('open', open);
+        if (open === 'ai') {
+            this.repository.settingsViewModelRepository.setShowProjectPromptModal(
+                true
+            );
+        }
+        if (open === 'login' && !userInfo.isAuthenticated) {
+            this.repository.authViewModelRepository.setCurrentView('login');
         }
     }
 }

@@ -54,21 +54,7 @@ export class CompilationService {
 
         this.repository.settingsViewModelRepository.setIsCompiling(true);
 
-        const runtimeMode = this.repository.projectViewModelRepository.mode();
-        const storeMode =
-            this.repository.persistenceViewModelRepository.projectCompileModes()[
-                projectId || 'default'
-            ];
-
-        const mode = storeMode ?? runtimeMode;
-
-        if (
-            !this.repository.userViewModelRepository.isAuthenticated() &&
-            mode === 'latex'
-        ) {
-            this.repository.authViewModelRepository.setCurrentView('login');
-            return;
-        }
+        const mode = this.repository.projectViewModelRepository.mode();
 
         let result:
             | RequestResult<CompilationResponse>
@@ -80,7 +66,11 @@ export class CompilationService {
                 result = await this.rpi.compileProjectRequest(projectId);
             }
         } else {
-            result = await this.rpi.compilationRequest(program);
+            if (mode === 'latex') {
+                result = await this.rpi.pdfCompilationRequest(program);
+            } else {
+                result = await this.rpi.compilationRequest(program);
+            }
         }
 
         this.repository.settingsViewModelRepository.setIsCompiling(false);

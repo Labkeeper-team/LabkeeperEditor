@@ -1,17 +1,12 @@
-import { useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 
-import { Typography } from '../typography';
 import { Button } from '../button';
-
 import { HeaderLogo } from './logo';
-import { InterfaceTour } from './tour';
 import { ShareButton } from './share';
-import { WikiButton } from './wiki';
 import './style.scss';
 
 import { Back } from './back';
-import { useLocation } from 'react-router-dom';
 
 import { useIsProjectReadonly, useUser } from '../../store/selectors/program';
 import {
@@ -24,10 +19,10 @@ import { ProjectTitle } from './projectTitle';
 import { Language } from '../../../viewModel/dictionaries';
 import { AuthModal } from '../../pages/project/auth';
 import { ShareModal } from './share/modal';
-import { ContactModal } from './contact/modal';
-import { setShowContactModal } from '../../store/slices/settings';
 import { AppDispatch } from '../../store';
+import { HeaderMenu } from './menu';
 import { controller } from '../../../main.tsx';
+import { ContactModal } from './contact/modal';
 
 const languageOptions = [
     {
@@ -45,15 +40,15 @@ export const Header = () => {
     const location = useLocation();
     const dictionary = useSelector(useDictionary);
     const language = useSelector(useCurrentLanguage);
-    const { isAuthenticated, email } = useSelector(useUser);
+    const { isAuthenticated } = useSelector(useUser);
     const projectIsReadonly = useSelector(useIsProjectReadonly);
-
-    const onLoginClick = useCallback(async () => {
-        dispatch(controller.onAuthButtonClickedRequest());
-    }, [dispatch]);
 
     const onPress = (lang: unknown) => {
         dispatch(setLanguage(lang as Language));
+    };
+
+    const onLoginClick = () => {
+        dispatch(controller.onAuthButtonClickedRequest());
     };
 
     return (
@@ -72,24 +67,34 @@ export const Header = () => {
                             value={language}
                         />
                     </div>
-                    <Button
-                        title={dictionary.contact_modal.button}
-                        rounded
-                        classname="contact-us-button"
-                        onPress={() => dispatch(setShowContactModal(true))}
-                        minimize
-                        color="inherit"
-                    />
                 </div>
                 <div className="labkeeper_header__center">
                     <ProjectTitle />
                     {!projectIsReadonly && <ShareButton />}
                 </div>
                 <div className="labkeeper_header__right">
-                    {location.pathname.startsWith('/project/') ? (
-                        <InterfaceTour />
-                    ) : null}
-                    <WikiButton />
+                    {/* {isAuthenticated ? (
+                        <div className="header-tokens">
+                            <span className="header-tokens__label">
+                                {dictionary.header_menu.tokens}:{' '}
+                                <span className="header-tokens__count">
+                                    {tokens}
+                                </span>
+                            </span>
+                            <button
+                                className="header-tokens__add"
+                                type="button"
+                                onClick={() => navigate(Routes.Tokens)}
+                                aria-label={
+                                    dictionary.header_menu.top_up_balance
+                                }
+                            >
+                                <span className="header-tokens__add-icon">
+                                    +
+                                </span>
+                            </button>
+                        </div>
+                    ) : null} */}
                     {!isAuthenticated ? (
                         <Button
                             title={dictionary.login}
@@ -100,28 +105,7 @@ export const Header = () => {
                             color="inherit"
                         />
                     ) : null}
-                    {isAuthenticated ? (
-                        <Typography color="white" text={email} />
-                    ) : null}
-                    {isAuthenticated ? (
-                        <form
-                            onSubmit={(e) => {
-                                e.preventDefault();
-                                dispatch(
-                                    controller.onLogoutButtonClickedRequest()
-                                );
-                            }}
-                        >
-                            <Button
-                                title={dictionary.exit}
-                                rounded
-                                classname="exit-button"
-                                minimize
-                                buttonType="submit"
-                                color="inherit"
-                            />
-                        </form>
-                    ) : null}
+                    <HeaderMenu />
                 </div>
             </div>
             <AuthModal />

@@ -40,6 +40,11 @@ export const ru: Translations = {
         latex: 'Latex',
         asciimath: 'Простая формула',
     },
+    latex_boundary: {
+        header: 'LaTeX заголовок',
+        footer: 'LaTeX футер',
+        insert_hint: 'Нажмите, чтобы вставить редактируемый сегмент',
+    },
 
     interface_tour: {
         label: 'Тур по интерфейсу',
@@ -69,6 +74,9 @@ export const ru: Translations = {
         label: 'Создать новый проект',
         create: 'Создать',
         name: 'Имя проекта',
+        project_type: 'Тип проекта',
+        type_markdown: 'Markdown',
+        type_latex: 'LaTeX',
         error: {
             empty_name: 'Введите имя проекта',
             too_many_projects: 'Слишком много проектов',
@@ -146,9 +154,22 @@ export const ru: Translations = {
         pdf_loading: 'Загрузка PDF…',
         gpt_prompt_button: 'GPT',
         mode: {
+            label: 'Тип проекта',
             markdown: 'markdown',
             latex: 'latex',
         },
+    },
+    header_menu: {
+        menu: 'Меню',
+        examples: 'Примеры проектов',
+        privacy_policy: 'Политика конфиденциальности',
+        tokens: 'Токены',
+        top_up_balance: 'Пополнить баланс',
+        about: 'О нас',
+        contact_us: 'Связаться с нами',
+        my_projects: 'Мои проекты',
+        logout: 'Выход',
+        logout_confirmation: 'Вы уверены, что хотите выйти?',
     },
 
     compile_error: {

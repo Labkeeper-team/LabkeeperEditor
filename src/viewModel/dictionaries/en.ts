@@ -38,6 +38,11 @@ export const en: Translations = {
         latex: 'latex',
         asciimath: 'simple-math',
     },
+    latex_boundary: {
+        header: 'LaTeX heading',
+        footer: 'LaTeX footer',
+        insert_hint: 'Click to insert an editable segment',
+    },
 
     interface_tour: {
         label: 'Interface tour',
@@ -66,6 +71,9 @@ export const en: Translations = {
         label: 'Creating a new project',
         create: 'Create',
         name: 'Project name',
+        project_type: 'Project type',
+        type_markdown: 'Markdown',
+        type_latex: 'LaTeX',
         error: {
             empty_name: 'Please input the project name',
             too_many_projects: 'Too many projects',
@@ -139,9 +147,22 @@ export const en: Translations = {
         pdf_loading: 'Loading PDF…',
         gpt_prompt_button: 'GPT',
         mode: {
+            label: 'Project type',
             markdown: 'markdown',
             latex: 'latex',
         },
+    },
+    header_menu: {
+        menu: 'Menu',
+        examples: 'Project examples',
+        privacy_policy: 'Privacy policy',
+        tokens: 'Tokens',
+        top_up_balance: 'Top up balance',
+        about: 'About us',
+        contact_us: 'Contact us',
+        my_projects: 'My projects',
+        logout: 'Log out',
+        logout_confirmation: 'Are you sure you want to log out?',
     },
     compile_error: {
         [CompileError.CODE_NO_END_QUOTES]: 'No closing quotes',

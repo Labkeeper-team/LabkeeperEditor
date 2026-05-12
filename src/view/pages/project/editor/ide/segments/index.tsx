@@ -8,6 +8,10 @@ import { useEffect, useRef } from 'react';
 import { AppDispatch, StorageState } from '../../../../../store';
 import { setScrollEditorToBottom } from '../../../../../store/slices/callback';
 import { SegmentDivider } from './segment-divider';
+import {
+    LatexFooterBoundaryCard,
+    LatexHeaderBoundaryCard,
+} from './latex-boundary-card';
 import React from 'react';
 
 export const Segments = () => {
@@ -34,6 +38,7 @@ export const Segments = () => {
 
     return (
         <div ref={ref} id="segments-container" className="segments-container">
+            <LatexHeaderBoundaryCard />
             {Array.from(Array(segmentsSize).keys()).map((_, index) => {
                 return (
                     <SegmentEditorWrapper
@@ -43,6 +48,7 @@ export const Segments = () => {
                     />
                 );
             })}
+            <LatexFooterBoundaryCard />
         </div>
     );
 };
