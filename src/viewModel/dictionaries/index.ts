@@ -92,6 +92,10 @@ export interface Translations {
             new_placeholder: string;
             empty: string;
             hint: string;
+            filter_open: string;
+            filter_title: string;
+            filter_empty: string;
+            filter_clear: string;
         };
         errors: {
             empty_name: string;

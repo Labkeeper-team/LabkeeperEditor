@@ -99,6 +99,10 @@ export const ru: Translations = {
             new_placeholder: 'Новый тег',
             empty: 'Пока нет тегов',
             hint: 'Добавьте теги проекту или выберите из существующих',
+            filter_open: 'Фильтры по тегам',
+            filter_title: 'Выберите один или несколько тегов',
+            filter_empty: 'Пока нет тегов для фильтрации',
+            filter_clear: 'Сбросить фильтр',
         },
         errors: {
             empty_name:

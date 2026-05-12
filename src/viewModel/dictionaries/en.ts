@@ -96,6 +96,10 @@ export const en: Translations = {
             new_placeholder: 'New tag',
             empty: 'No tags yet',
             hint: 'Add tags to the project or choose from existing ones',
+            filter_open: 'Tag filters',
+            filter_title: 'Choose one or multiple tags',
+            filter_empty: 'No tags available for filtering',
+            filter_clear: 'Clear filter',
         },
         errors: {
             empty_name: 'The name must not be empty or consist only of spaces.',

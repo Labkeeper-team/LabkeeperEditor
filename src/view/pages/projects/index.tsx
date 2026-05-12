@@ -35,6 +35,7 @@ type TagDropdownPlacement = 'top' | 'bottom';
 
 export const ProjectsPage = () => {
     const [showAddModal, setShowAddModal] = useState(false);
+    const [showTagsFilterModal, setShowTagsFilterModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState<
         false | ProjectShort
     >(false);
@@ -52,10 +53,12 @@ export const ProjectsPage = () => {
     const [newTagByProject, setNewTagByProject] = useState<
         Record<string, string>
     >({});
+    const [selectedFilterTags, setSelectedFilterTags] = useState<string[]>([]);
     const [singleLineTagsByProject, setSingleLineTagsByProject] = useState<
         Record<string, boolean>
     >({});
     const openedDropdownRef = useRef<HTMLDivElement | null>(null);
+    const tagsFilterAnchorRef = useRef<HTMLDivElement | null>(null);
     const projectsScrollContainerRef = useRef<HTMLDivElement | null>(null);
     const projectTagsCellRefs = useRef<Record<string, HTMLDivElement | null>>(
         {}
@@ -124,6 +127,32 @@ export const ProjectsPage = () => {
             window.removeEventListener('resize', recalculateTagsRowsLayout);
         };
     }, [recalculateTagsRowsLayout]);
+
+    useEffect(() => {
+        if (!showTagsFilterModal) {
+            return;
+        }
+        setOpenedTagPickerProjectId(null);
+        setIsTagDropdownReady(false);
+    }, [showTagsFilterModal]);
+
+    useEffect(() => {
+        if (!showTagsFilterModal) {
+            return;
+        }
+        const onGlobalClick = (event: MouseEvent) => {
+            if (!tagsFilterAnchorRef.current) {
+                return;
+            }
+            if (!tagsFilterAnchorRef.current.contains(event.target as Node)) {
+                setShowTagsFilterModal(false);
+            }
+        };
+        document.addEventListener('mousedown', onGlobalClick);
+        return () => {
+            document.removeEventListener('mousedown', onGlobalClick);
+        };
+    }, [showTagsFilterModal]);
 
     const applyDropdownPlacement = useCallback(
         (triggerRect: DOMRect, dropdownHeight: number) => {
@@ -247,6 +276,7 @@ export const ProjectsPage = () => {
                 setOpenedTagPickerProjectId(null);
                 return;
             }
+            setShowTagsFilterModal(false);
             const triggerRect = (
                 e.currentTarget as HTMLElement
             ).getBoundingClientRect();
@@ -307,13 +337,29 @@ export const ProjectsPage = () => {
         [projectTags, projectTagsService, setTagsForProject]
     );
 
-    const getSortedTags = useCallback(
-        (): string[] =>
-            projectTagsService
-                .getAllTags()
-                .sort((a, b) => tagsCollator.compare(a, b)),
-        [projectTagsService, tagsCollator]
-    );
+    const allAvailableTags = useMemo(() => {
+        const unique = new Map<string, string>();
+        Object.values(projectTags)
+            .flat()
+            .forEach((tag) => {
+                const key = tag.toLocaleLowerCase();
+                if (!unique.has(key)) {
+                    unique.set(key, tag);
+                }
+            });
+        return Array.from(unique.values()).sort((a, b) =>
+            tagsCollator.compare(a, b)
+        );
+    }, [projectTags, tagsCollator]);
+
+    useEffect(() => {
+        const availableSet = new Set(
+            allAvailableTags.map((tag) => tag.toLocaleLowerCase())
+        );
+        setSelectedFilterTags((prev) =>
+            prev.filter((tag) => availableSet.has(tag.toLocaleLowerCase()))
+        );
+    }, [allAvailableTags]);
 
     const sortedProjects = useMemo(() => {
         const toTimestamp = (value?: string) => {
@@ -347,15 +393,145 @@ export const ProjectsPage = () => {
         );
     }, [projects, sortMode, sortDirection]);
 
+    const filteredProjects = useMemo(() => {
+        if (!selectedFilterTags.length) {
+            return sortedProjects;
+        }
+        const selectedSet = new Set(
+            selectedFilterTags.map((tag) => tag.toLocaleLowerCase())
+        );
+        return sortedProjects.filter((project) => {
+            const projectTagSet = new Set(
+                (projectTags[project.projectId] ?? []).map((tag) =>
+                    tag.toLocaleLowerCase()
+                )
+            );
+            return Array.from(selectedSet).every((tag) =>
+                projectTagSet.has(tag)
+            );
+        });
+    }, [selectedFilterTags, sortedProjects, projectTags]);
+
     return (
         <>
             <div className="projects-container">
                 <div className="project-content-container">
-                    <Typography
-                        type="h1"
-                        text={dictionary.projects.label}
-                        color={colors.black}
-                    />
+                    <div className="projects-page-header">
+                        <Typography
+                            type="h1"
+                            text={dictionary.projects.label}
+                            color={colors.black}
+                        />
+                        <div className="projects-filter-controls">
+                            <div className="projects-selected-filter-tags">
+                                {selectedFilterTags.map((tag) => (
+                                    <span
+                                        className="projects-selected-filter-chip"
+                                        key={`selected-filter-tag-${tag}`}
+                                        title={tag}
+                                    >
+                                        {tag}
+                                    </span>
+                                ))}
+                            </div>
+                            <div
+                                className="projects-filter-anchor"
+                                ref={tagsFilterAnchorRef}
+                            >
+                                <button
+                                    className="projects-filter-button"
+                                    type="button"
+                                    onClick={() =>
+                                        setShowTagsFilterModal((prev) => !prev)
+                                    }
+                                >
+                                    {dictionary.projects.tags.filter_open}
+                                    {selectedFilterTags.length
+                                        ? ` (${selectedFilterTags.length})`
+                                        : ''}
+                                </button>
+                                {showTagsFilterModal ? (
+                                    <div className="project-tags-filter-dropdown">
+                                        <Typography
+                                            color={colors.black}
+                                            text={
+                                                dictionary.projects.tags
+                                                    .filter_title
+                                            }
+                                            type="body-large"
+                                        />
+                                        <div className="project-tags-filter-list">
+                                            {allAvailableTags.length ? (
+                                                allAvailableTags.map((tag) => {
+                                                    const selected =
+                                                        selectedFilterTags.some(
+                                                            (selectedTag) =>
+                                                                selectedTag.toLocaleLowerCase() ===
+                                                                tag.toLocaleLowerCase()
+                                                        );
+                                                    return (
+                                                        <button
+                                                            key={`filter-tag-${tag}`}
+                                                            className="project-tags-filter-option"
+                                                            data-selected={
+                                                                selected
+                                                            }
+                                                            onClick={() =>
+                                                                setSelectedFilterTags(
+                                                                    (prev) =>
+                                                                        selected
+                                                                            ? prev.filter(
+                                                                                  (
+                                                                                      item
+                                                                                  ) =>
+                                                                                      item.toLocaleLowerCase() !==
+                                                                                      tag.toLocaleLowerCase()
+                                                                              )
+                                                                            : [
+                                                                                  ...prev,
+                                                                                  tag,
+                                                                              ]
+                                                                )
+                                                            }
+                                                            type="button"
+                                                        >
+                                                            <span>{tag}</span>
+                                                            {selected ? (
+                                                                <CheckIcon />
+                                                            ) : null}
+                                                        </button>
+                                                    );
+                                                })
+                                            ) : (
+                                                <Typography
+                                                    color={colors.gray30}
+                                                    text={
+                                                        dictionary.projects.tags
+                                                            .filter_empty
+                                                    }
+                                                    type="body-large"
+                                                />
+                                            )}
+                                        </div>
+                                        <div className="project-tags-filter-actions">
+                                            <button
+                                                className="projects-filter-clear-button"
+                                                type="button"
+                                                onClick={() =>
+                                                    setSelectedFilterTags([])
+                                                }
+                                            >
+                                                {
+                                                    dictionary.projects.tags
+                                                        .filter_clear
+                                                }
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : null}
+                            </div>
+                        </div>
+                    </div>
                     {getProjectsRequestState === 'loading' ? (
                         <div className="projects-loading-wrapper" aria-hidden>
                             <span className="projects-loading-spinner" />
@@ -571,9 +747,10 @@ export const ProjectsPage = () => {
                                         </th>
                                         <th></th>
                                     </tr>
-                                    {sortedProjects.map((p) => (
+                                    {filteredProjects.map((p) => (
                                         <tr
                                             onClick={() => {
+                                                setShowTagsFilterModal(false);
                                                 setOpenedTagPickerProjectId(
                                                     null
                                                 );
@@ -591,7 +768,8 @@ export const ProjectsPage = () => {
                                             key={`${p.projectId}-${p.title}`}
                                         >
                                             {(() => {
-                                                const allTags = getSortedTags();
+                                                const allTags =
+                                                    allAvailableTags;
                                                 const selectedTagsSet = new Set(
                                                     (
                                                         projectTags[
