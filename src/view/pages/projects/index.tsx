@@ -412,6 +412,19 @@ export const ProjectsPage = () => {
         });
     }, [selectedFilterTags, sortedProjects, projectTags]);
 
+    const sortedFilterTags = useMemo(() => {
+        const selectedSet = new Set(
+            selectedFilterTags.map((tag) => tag.toLocaleLowerCase())
+        );
+        const selected = allAvailableTags.filter((tag) =>
+            selectedSet.has(tag.toLocaleLowerCase())
+        );
+        const unselected = allAvailableTags.filter(
+            (tag) => !selectedSet.has(tag.toLocaleLowerCase())
+        );
+        return [...selected, ...unselected];
+    }, [allAvailableTags, selectedFilterTags]);
+
     return (
         <>
             <div className="projects-container">
@@ -461,8 +474,8 @@ export const ProjectsPage = () => {
                                             type="body-large"
                                         />
                                         <div className="project-tags-filter-list">
-                                            {allAvailableTags.length ? (
-                                                allAvailableTags.map((tag) => {
+                                            {sortedFilterTags.length ? (
+                                                sortedFilterTags.map((tag) => {
                                                     const selected =
                                                         selectedFilterTags.some(
                                                             (selectedTag) =>
@@ -779,6 +792,19 @@ export const ProjectsPage = () => {
                                                         tag.toLocaleLowerCase()
                                                     )
                                                 );
+                                                const orderedProjectTags = [
+                                                    ...allTags.filter((tag) =>
+                                                        selectedTagsSet.has(
+                                                            tag.toLocaleLowerCase()
+                                                        )
+                                                    ),
+                                                    ...allTags.filter(
+                                                        (tag) =>
+                                                            !selectedTagsSet.has(
+                                                                tag.toLocaleLowerCase()
+                                                            )
+                                                    ),
+                                                ];
                                                 return (
                                                     <>
                                                         <td
@@ -949,8 +975,8 @@ export const ProjectsPage = () => {
                                                                                 </button>
                                                                             </div>
                                                                             <div className="project-tags-scroll">
-                                                                                {allTags.length ? (
-                                                                                    allTags.map(
+                                                                                {orderedProjectTags.length ? (
+                                                                                    orderedProjectTags.map(
                                                                                         (
                                                                                             tag
                                                                                         ) => (
