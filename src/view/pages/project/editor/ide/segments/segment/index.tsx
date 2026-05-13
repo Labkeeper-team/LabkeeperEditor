@@ -9,7 +9,7 @@ import CodeMirror, {
 import { EditorSelection, type Extension } from '@codemirror/state';
 import { langs } from '@uiw/codemirror-extensions-langs';
 import { content, dom } from '@uiw/codemirror-extensions-events';
-import { lineNumbers, type ViewUpdate } from '@codemirror/view';
+import { DecorationSet, lineNumbers, type ViewUpdate } from '@codemirror/view';
 import {
     LegacyRef,
     memo,
@@ -70,20 +70,25 @@ const SEGMENT_CM_SPELLCHECK_OFF = EditorView.contentAttributes.of({
     spellcheck: 'false',
 });
 
-const setDecorationsEffect = StateEffect.define();
+const setDecorationsEffect = StateEffect.define<DecorationSet>();
 
-const decorationsField = StateField.define<unknown>({
+const decorationsField = StateField.define<DecorationSet>({
     create() {
         return Decoration.none;
     },
     update(decorations, transaction) {
+        // При изменении документа старые диапазоны декораций должны быть
+        // перемаплены в новые координаты, иначе CM может упасть на mapPos.
+        const mappedDecorations = transaction.docChanged
+            ? decorations.map(transaction.changes)
+            : decorations;
         // Обновляем декорации, если есть эффект setDecorationsEffect
         for (const effect of transaction.effects) {
             if (effect.is(setDecorationsEffect)) {
                 return effect.value;
             }
         }
-        return decorations;
+        return mappedDecorations;
     },
     provide: (field) => EditorView.decorations.from(field),
 });
@@ -598,7 +603,7 @@ export const SegmentEditor = memo(
         const onChange = useCallback(
             (value: string, update: ViewUpdate) => {
                 editor?.current?.view?.dispatch({
-                    effects: setDecorationsEffect.of(Decoration.none as never),
+                    effects: setDecorationsEffect.of(Decoration.none),
                 });
                 setTempSegmentErrors([]);
                 const cursorHead = update.state.selection.main.head;
@@ -790,7 +795,7 @@ function processDecorations(
     }
     try {
         view.dispatch({
-            effects: setDecorationsEffect.of(decSet as never),
+            effects: setDecorationsEffect.of(decSet),
         });
     } catch {
         /* view уже размонтирован между debounce и dispatch */
