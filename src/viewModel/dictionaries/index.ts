@@ -104,6 +104,7 @@ export interface Translations {
             filter_title: string;
             filter_empty: string;
             filter_clear: string;
+            color_placeholder: string;
         };
         errors: {
             empty_name: string;

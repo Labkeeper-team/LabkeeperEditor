@@ -111,6 +111,7 @@ export const ru: Translations = {
             filter_title: 'Выберите один или несколько тегов',
             filter_empty: 'Пока нет тегов для фильтрации',
             filter_clear: 'Сбросить фильтр',
+            color_placeholder: 'Введите цвет (#FF0000 или red)',
         },
         errors: {
             empty_name:

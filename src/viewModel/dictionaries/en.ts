@@ -108,6 +108,7 @@ export const en: Translations = {
             filter_title: 'Choose one or multiple tags',
             filter_empty: 'No tags available for filtering',
             filter_clear: 'Clear filter',
+            color_placeholder: 'Enter color (#FF0000 or red)',
         },
         errors: {
             empty_name: 'The name must not be empty or consist only of spaces.',

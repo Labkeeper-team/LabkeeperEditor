@@ -27,11 +27,33 @@ import {
 } from '../../store/selectors/translations';
 import { AppDispatch, StorageState } from '../../store';
 import { controller } from '../../../main.tsx';
-import { ProjectTagsStubService } from '../../../viewModel/operation/ProjectTagsStubService.ts';
+import {
+    ProjectTagsStubService,
+    TagInfo,
+} from '../../../viewModel/operation/ProjectTagsStubService.ts';
 
 type SortMode = 'time' | 'title';
 type SortDirection = 'asc' | 'desc';
 type TagDropdownPlacement = 'top' | 'bottom';
+const DEFAULT_NEW_TAG_COLOR = 'blue';
+const TAG_COLOR_SWATCHES = [
+    'blue',
+    'orange',
+    'red',
+    'purple',
+    'cyan',
+    'lime',
+    'deeppink',
+    'deepskyblue',
+    'darkorange',
+    'green',
+    'violet',
+    'teal',
+    'yellow',
+    'indigo',
+    'pink',
+    'olive',
+];
 
 export const ProjectsPage = () => {
     const [showAddModal, setShowAddModal] = useState(false);
@@ -41,9 +63,9 @@ export const ProjectsPage = () => {
     >(false);
     const [sortMode, setSortMode] = useState<SortMode>('time');
     const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
-    const [projectTags, setProjectTags] = useState<Record<string, string[]>>(
-        {}
-    );
+    const [projectTagKeysByProject, setProjectTagKeysByProject] = useState<
+        Record<string, string[]>
+    >({});
     const [openedTagPickerProjectId, setOpenedTagPickerProjectId] = useState<
         string | null
     >(null);
@@ -53,7 +75,18 @@ export const ProjectsPage = () => {
     const [newTagByProject, setNewTagByProject] = useState<
         Record<string, string>
     >({});
-    const [selectedFilterTags, setSelectedFilterTags] = useState<string[]>([]);
+    const [nextTagColor, setNextTagColor] = useState<string>(
+        DEFAULT_NEW_TAG_COLOR
+    );
+    const [nextTagColorInput, setNextTagColorInput] = useState<string>(
+        DEFAULT_NEW_TAG_COLOR
+    );
+    const [openedColorPaletteProjectId, setOpenedColorPaletteProjectId] =
+        useState<string | null>(null);
+    const [selectedFilterTagKeys, setSelectedFilterTagKeys] = useState<
+        string[]
+    >([]);
+    const [tagMap, setTagMap] = useState<Record<string, TagInfo>>({});
     const [singleLineTagsByProject, setSingleLineTagsByProject] = useState<
         Record<string, boolean>
     >({});
@@ -81,12 +114,56 @@ export const ProjectsPage = () => {
             }),
         []
     );
+    const normalizeColorInput = useCallback((value: string): string | null => {
+        const prepared = value.trim();
+        if (!prepared) {
+            return null;
+        }
+        if (typeof window !== 'undefined' && window.CSS?.supports) {
+            if (!window.CSS.supports('color', prepared)) {
+                return null;
+            }
+        }
+        return prepared;
+    }, []);
+    const getTagColor = useCallback(
+        (tag: string) =>
+            tagMap[tag.toLocaleLowerCase()]?.color ?? DEFAULT_NEW_TAG_COLOR,
+        [tagMap]
+    );
+    const getNextSuggestedTagColor = useCallback(
+        (knownColors: string[], currentColor?: string) => {
+            const normalizedKnown = new Set(
+                knownColors.map((color) => color.toLocaleLowerCase())
+            );
+            const paletteSize = TAG_COLOR_SWATCHES.length;
+            const currentIndex = currentColor
+                ? TAG_COLOR_SWATCHES.findIndex(
+                      (color) =>
+                          color.toLocaleLowerCase() ===
+                          currentColor.toLocaleLowerCase()
+                  )
+                : -1;
+
+            for (let step = 1; step <= paletteSize; step += 1) {
+                const index = (currentIndex + step) % paletteSize;
+                const candidate = TAG_COLOR_SWATCHES[index];
+                if (!normalizedKnown.has(candidate.toLocaleLowerCase())) {
+                    return candidate;
+                }
+            }
+
+            return TAG_COLOR_SWATCHES[(currentIndex + 1) % paletteSize];
+        },
+        []
+    );
 
     useEffect(() => {
         const ids = projects
             .map((project) => project.projectId)
             .filter((id): id is string => !!id);
-        setProjectTags(projectTagsService.getProjectTags(ids));
+        setProjectTagKeysByProject(projectTagsService.getProjectTagKeys(ids));
+        setTagMap(projectTagsService.getTagMap(ids));
     }, [projects, projectTagsService]);
 
     useEffect(() => {
@@ -95,7 +172,7 @@ export const ProjectsPage = () => {
                 cell.scrollTop = 0;
             }
         });
-    }, [projectTags]);
+    }, [projectTagKeysByProject]);
 
     const recalculateTagsRowsLayout = useCallback(() => {
         const next: Record<string, boolean> = {};
@@ -119,7 +196,7 @@ export const ProjectsPage = () => {
 
     useLayoutEffect(() => {
         recalculateTagsRowsLayout();
-    }, [projectTags, projects, recalculateTagsRowsLayout]);
+    }, [projectTagKeysByProject, projects, recalculateTagsRowsLayout]);
 
     useEffect(() => {
         window.addEventListener('resize', recalculateTagsRowsLayout);
@@ -133,6 +210,7 @@ export const ProjectsPage = () => {
             return;
         }
         setOpenedTagPickerProjectId(null);
+        setOpenedColorPaletteProjectId(null);
         setIsTagDropdownReady(false);
     }, [showTagsFilterModal]);
 
@@ -214,7 +292,7 @@ export const ProjectsPage = () => {
         recalculateDropdownPlacement();
     }, [
         openedTagPickerProjectId,
-        projectTags,
+        projectTagKeysByProject,
         newTagByProject,
         recalculateDropdownPlacement,
     ]);
@@ -273,6 +351,7 @@ export const ProjectsPage = () => {
             e.stopPropagation();
             if (openedTagPickerProjectId === projectId) {
                 setIsTagDropdownReady(false);
+                setOpenedColorPaletteProjectId(null);
                 setOpenedTagPickerProjectId(null);
                 return;
             }
@@ -295,71 +374,154 @@ export const ProjectsPage = () => {
     }, []);
 
     const setTagsForProject = useCallback(
-        (projectId: string, tags: string[]) => {
-            setProjectTags((prev) => ({
+        (projectId: string, tagKeys: string[]) => {
+            setProjectTagKeysByProject((prev) => ({
                 ...prev,
-                [projectId]: tags,
+                [projectId]: tagKeys,
             }));
         },
         []
     );
+
+    const onNewTagColorChange = useCallback(
+        (_projectId: string, value: string) => {
+            const normalized = normalizeColorInput(value);
+            if (!normalized) {
+                return;
+            }
+            setNextTagColor(normalized);
+            setNextTagColorInput(normalized);
+        },
+        [normalizeColorInput]
+    );
+
+    const onColorPaletteToggle = useCallback((projectId: string) => {
+        setOpenedColorPaletteProjectId((prev) =>
+            prev === projectId ? null : projectId
+        );
+    }, []);
+
+    const onNewTagColorInputChange = useCallback(
+        (_projectId: string, value: string) => {
+            setNextTagColorInput(value);
+        },
+        []
+    );
+
+    const commitNewTagColorInput = useCallback(
+        (_projectId: string) => {
+            const rawValue = nextTagColorInput ?? '';
+            const normalized = normalizeColorInput(rawValue);
+            if (!normalized) {
+                setNextTagColorInput(nextTagColor ?? DEFAULT_NEW_TAG_COLOR);
+                return;
+            }
+            setNextTagColor(normalized);
+            setNextTagColorInput(normalized);
+        },
+        [nextTagColor, nextTagColorInput, normalizeColorInput]
+    );
+
+    useEffect(() => {
+        if (!openedTagPickerProjectId) {
+            setOpenedColorPaletteProjectId(null);
+        }
+    }, [openedTagPickerProjectId]);
 
     const addTagToProject = useCallback(
         (projectId: string, tag: string) => {
             if (!projectId) {
                 return;
             }
+            const normalizedTag = tag.trim().replace(/\s+/g, ' ');
+            const tagKey = normalizedTag.toLocaleLowerCase();
+            const existingColor = normalizedTag
+                ? tagMap[tagKey]?.color
+                : undefined;
+            const fromInput = normalizeColorInput(nextTagColorInput ?? '');
+            const chosenColor =
+                existingColor ??
+                fromInput ??
+                nextTagColor ??
+                DEFAULT_NEW_TAG_COLOR;
             const updatedTags = projectTagsService.addTagToProject(
                 projectId,
-                tag
+                tag,
+                chosenColor
             );
             setTagsForProject(projectId, updatedTags);
             setNewTagByProject((prev) => ({
                 ...prev,
                 [projectId]: '',
             }));
+            const nextSuggestedColor = getNextSuggestedTagColor(
+                [
+                    ...Object.values(tagMap).map((tagInfo) => tagInfo.color),
+                    chosenColor,
+                ],
+                chosenColor
+            );
+            setNextTagColor(nextSuggestedColor);
+            setNextTagColorInput(nextSuggestedColor);
+            const ids = projects
+                .map((project) => project.projectId)
+                .filter((id): id is string => !!id);
+            setTagMap(projectTagsService.getTagMap(ids));
         },
-        [projectTagsService, setTagsForProject]
+        [
+            getNextSuggestedTagColor,
+            normalizeColorInput,
+            nextTagColor,
+            nextTagColorInput,
+            projects,
+            projectTagsService,
+            setTagsForProject,
+            tagMap,
+        ]
     );
 
     const toggleTagForProject = useCallback(
-        (projectId: string, tag: string) => {
-            const selectedTags = projectTags[projectId] ?? [];
-            const alreadySelected = selectedTags.some(
-                (selectedTag) =>
-                    selectedTag.toLocaleLowerCase() === tag.toLocaleLowerCase()
-            );
+        (projectId: string, tagKey: string) => {
+            const selectedTagKeys = projectTagKeysByProject[projectId] ?? [];
+            const alreadySelected = selectedTagKeys.includes(tagKey);
             const updatedTags = alreadySelected
-                ? projectTagsService.removeTagFromProject(projectId, tag)
-                : projectTagsService.addTagToProject(projectId, tag);
+                ? projectTagsService.removeTagFromProject(projectId, tagKey)
+                : projectTagsService.addTagToProject(
+                      projectId,
+                      tagMap[tagKey]?.label ?? tagKey
+                  );
             setTagsForProject(projectId, updatedTags);
+            const ids = projects
+                .map((project) => project.projectId)
+                .filter((id): id is string => !!id);
+            setTagMap(projectTagsService.getTagMap(ids));
         },
-        [projectTags, projectTagsService, setTagsForProject]
+        [
+            projectTagKeysByProject,
+            projects,
+            projectTagsService,
+            setTagsForProject,
+            tagMap,
+        ]
     );
 
-    const allAvailableTags = useMemo(() => {
-        const unique = new Map<string, string>();
-        Object.values(projectTags)
-            .flat()
-            .forEach((tag) => {
-                const key = tag.toLocaleLowerCase();
-                if (!unique.has(key)) {
-                    unique.set(key, tag);
-                }
-            });
-        return Array.from(unique.values()).sort((a, b) =>
-            tagsCollator.compare(a, b)
-        );
-    }, [projectTags, tagsCollator]);
+    const allAvailableTagKeys = useMemo(
+        () =>
+            Object.keys(tagMap).sort((a, b) =>
+                tagsCollator.compare(
+                    tagMap[a]?.label ?? a,
+                    tagMap[b]?.label ?? b
+                )
+            ),
+        [tagMap, tagsCollator]
+    );
 
     useEffect(() => {
-        const availableSet = new Set(
-            allAvailableTags.map((tag) => tag.toLocaleLowerCase())
+        const availableSet = new Set(allAvailableTagKeys);
+        setSelectedFilterTagKeys((prev) =>
+            prev.filter((tagKey) => availableSet.has(tagKey))
         );
-        setSelectedFilterTags((prev) =>
-            prev.filter((tag) => availableSet.has(tag.toLocaleLowerCase()))
-        );
-    }, [allAvailableTags]);
+    }, [allAvailableTagKeys]);
 
     const sortedProjects = useMemo(() => {
         const toTimestamp = (value?: string) => {
@@ -394,36 +556,30 @@ export const ProjectsPage = () => {
     }, [projects, sortMode, sortDirection]);
 
     const filteredProjects = useMemo(() => {
-        if (!selectedFilterTags.length) {
+        if (!selectedFilterTagKeys.length) {
             return sortedProjects;
         }
-        const selectedSet = new Set(
-            selectedFilterTags.map((tag) => tag.toLocaleLowerCase())
-        );
+        const selectedSet = new Set(selectedFilterTagKeys);
         return sortedProjects.filter((project) => {
             const projectTagSet = new Set(
-                (projectTags[project.projectId] ?? []).map((tag) =>
-                    tag.toLocaleLowerCase()
-                )
+                projectTagKeysByProject[project.projectId] ?? []
             );
-            return Array.from(selectedSet).every((tag) =>
-                projectTagSet.has(tag)
+            return Array.from(selectedSet).every((tagKey) =>
+                projectTagSet.has(tagKey)
             );
         });
-    }, [selectedFilterTags, sortedProjects, projectTags]);
+    }, [projectTagKeysByProject, selectedFilterTagKeys, sortedProjects]);
 
-    const sortedFilterTags = useMemo(() => {
-        const selectedSet = new Set(
-            selectedFilterTags.map((tag) => tag.toLocaleLowerCase())
+    const sortedFilterTagKeys = useMemo(() => {
+        const selectedSet = new Set(selectedFilterTagKeys);
+        const selected = allAvailableTagKeys.filter((tagKey) =>
+            selectedSet.has(tagKey)
         );
-        const selected = allAvailableTags.filter((tag) =>
-            selectedSet.has(tag.toLocaleLowerCase())
-        );
-        const unselected = allAvailableTags.filter(
-            (tag) => !selectedSet.has(tag.toLocaleLowerCase())
+        const unselected = allAvailableTagKeys.filter(
+            (tagKey) => !selectedSet.has(tagKey)
         );
         return [...selected, ...unselected];
-    }, [allAvailableTags, selectedFilterTags]);
+    }, [allAvailableTagKeys, selectedFilterTagKeys]);
 
     return (
         <>
@@ -437,13 +593,22 @@ export const ProjectsPage = () => {
                         />
                         <div className="projects-filter-controls">
                             <div className="projects-selected-filter-tags">
-                                {selectedFilterTags.map((tag) => (
+                                {selectedFilterTagKeys.map((tagKey) => (
                                     <span
                                         className="projects-selected-filter-chip"
-                                        key={`selected-filter-tag-${tag}`}
-                                        title={tag}
+                                        key={`selected-filter-tag-${tagKey}`}
+                                        title={tagMap[tagKey]?.label ?? tagKey}
                                     >
-                                        {tag}
+                                        <span
+                                            className="tag-color-dot"
+                                            style={{
+                                                backgroundColor:
+                                                    getTagColor(tagKey),
+                                            }}
+                                        />
+                                        <span className="tag-label">
+                                            {tagMap[tagKey]?.label ?? tagKey}
+                                        </span>
                                     </span>
                                 ))}
                             </div>
@@ -459,8 +624,8 @@ export const ProjectsPage = () => {
                                     }
                                 >
                                     {dictionary.projects.tags.filter_open}
-                                    {selectedFilterTags.length
-                                        ? ` (${selectedFilterTags.length})`
+                                    {selectedFilterTagKeys.length
+                                        ? ` (${selectedFilterTagKeys.length})`
                                         : ''}
                                 </button>
                                 {showTagsFilterModal ? (
@@ -474,47 +639,66 @@ export const ProjectsPage = () => {
                                             type="body-large"
                                         />
                                         <div className="project-tags-filter-list">
-                                            {sortedFilterTags.length ? (
-                                                sortedFilterTags.map((tag) => {
-                                                    const selected =
-                                                        selectedFilterTags.some(
-                                                            (selectedTag) =>
-                                                                selectedTag.toLocaleLowerCase() ===
-                                                                tag.toLocaleLowerCase()
+                                            {sortedFilterTagKeys.length ? (
+                                                sortedFilterTagKeys.map(
+                                                    (tagKey) => {
+                                                        const selected =
+                                                            selectedFilterTagKeys.includes(
+                                                                tagKey
+                                                            );
+                                                        return (
+                                                            <button
+                                                                key={`filter-tag-${tagKey}`}
+                                                                className="project-tags-filter-option"
+                                                                data-selected={
+                                                                    selected
+                                                                }
+                                                                onClick={() =>
+                                                                    setSelectedFilterTagKeys(
+                                                                        (
+                                                                            prev
+                                                                        ) =>
+                                                                            selected
+                                                                                ? prev.filter(
+                                                                                      (
+                                                                                          item
+                                                                                      ) =>
+                                                                                          item !==
+                                                                                          tagKey
+                                                                                  )
+                                                                                : [
+                                                                                      ...prev,
+                                                                                      tagKey,
+                                                                                  ]
+                                                                    )
+                                                                }
+                                                                type="button"
+                                                            >
+                                                                <span className="tag-option-main">
+                                                                    <span
+                                                                        className="tag-color-dot"
+                                                                        style={{
+                                                                            backgroundColor:
+                                                                                getTagColor(
+                                                                                    tagKey
+                                                                                ),
+                                                                        }}
+                                                                    />
+                                                                    <span className="tag-label">
+                                                                        {tagMap[
+                                                                            tagKey
+                                                                        ]
+                                                                            ?.label ??
+                                                                            tagKey}
+                                                                    </span>
+                                                                </span>
+                                                                {selected ? (
+                                                                    <CheckIcon />
+                                                                ) : null}
+                                                            </button>
                                                         );
-                                                    return (
-                                                        <button
-                                                            key={`filter-tag-${tag}`}
-                                                            className="project-tags-filter-option"
-                                                            data-selected={
-                                                                selected
-                                                            }
-                                                            onClick={() =>
-                                                                setSelectedFilterTags(
-                                                                    (prev) =>
-                                                                        selected
-                                                                            ? prev.filter(
-                                                                                  (
-                                                                                      item
-                                                                                  ) =>
-                                                                                      item.toLocaleLowerCase() !==
-                                                                                      tag.toLocaleLowerCase()
-                                                                              )
-                                                                            : [
-                                                                                  ...prev,
-                                                                                  tag,
-                                                                              ]
-                                                                )
-                                                            }
-                                                            type="button"
-                                                        >
-                                                            <span>{tag}</span>
-                                                            {selected ? (
-                                                                <CheckIcon />
-                                                            ) : null}
-                                                        </button>
-                                                    );
-                                                })
+                                                    }
+                                                )
                                             ) : (
                                                 <Typography
                                                     color={colors.gray30}
@@ -531,7 +715,7 @@ export const ProjectsPage = () => {
                                                 className="projects-filter-clear-button"
                                                 type="button"
                                                 onClick={() =>
-                                                    setSelectedFilterTags([])
+                                                    setSelectedFilterTagKeys([])
                                                 }
                                             >
                                                 {
@@ -781,27 +965,24 @@ export const ProjectsPage = () => {
                                             key={`${p.projectId}-${p.title}`}
                                         >
                                             {(() => {
-                                                const allTags =
-                                                    allAvailableTags;
+                                                const allTagKeys =
+                                                    allAvailableTagKeys;
                                                 const selectedTagsSet = new Set(
-                                                    (
-                                                        projectTags[
-                                                            p.projectId
-                                                        ] ?? []
-                                                    ).map((tag) =>
-                                                        tag.toLocaleLowerCase()
-                                                    )
+                                                    projectTagKeysByProject[
+                                                        p.projectId
+                                                    ] ?? []
                                                 );
                                                 const orderedProjectTags = [
-                                                    ...allTags.filter((tag) =>
-                                                        selectedTagsSet.has(
-                                                            tag.toLocaleLowerCase()
-                                                        )
+                                                    ...allTagKeys.filter(
+                                                        (tagKey) =>
+                                                            selectedTagsSet.has(
+                                                                tagKey
+                                                            )
                                                     ),
-                                                    ...allTags.filter(
-                                                        (tag) =>
+                                                    ...allTagKeys.filter(
+                                                        (tagKey) =>
                                                             !selectedTagsSet.has(
-                                                                tag.toLocaleLowerCase()
+                                                                tagKey
                                                             )
                                                     ),
                                                 ];
@@ -852,30 +1033,47 @@ export const ProjectsPage = () => {
                                                                 }}
                                                             >
                                                                 {(
-                                                                    projectTags[
+                                                                    projectTagKeysByProject[
                                                                         p
                                                                             .projectId
                                                                     ] ?? []
                                                                 ).length ? (
                                                                     (
-                                                                        projectTags[
+                                                                        projectTagKeysByProject[
                                                                             p
                                                                                 .projectId
                                                                         ] ?? []
                                                                     ).map(
                                                                         (
-                                                                            tag
+                                                                            tagKey
                                                                         ) => (
                                                                             <span
                                                                                 className="project-tag-chip"
-                                                                                key={`${p.projectId}-${tag}`}
+                                                                                key={`${p.projectId}-${tagKey}`}
                                                                                 title={
-                                                                                    tag
+                                                                                    tagMap[
+                                                                                        tagKey
+                                                                                    ]
+                                                                                        ?.label ??
+                                                                                    tagKey
                                                                                 }
                                                                             >
-                                                                                {
-                                                                                    tag
-                                                                                }
+                                                                                <span
+                                                                                    className="tag-color-dot"
+                                                                                    style={{
+                                                                                        backgroundColor:
+                                                                                            getTagColor(
+                                                                                                tagKey
+                                                                                            ),
+                                                                                    }}
+                                                                                />
+                                                                                <span className="tag-label">
+                                                                                    {tagMap[
+                                                                                        tagKey
+                                                                                    ]
+                                                                                        ?.label ??
+                                                                                        tagKey}
+                                                                                </span>
                                                                             </span>
                                                                         )
                                                                     )
@@ -978,14 +1176,14 @@ export const ProjectsPage = () => {
                                                                                 {orderedProjectTags.length ? (
                                                                                     orderedProjectTags.map(
                                                                                         (
-                                                                                            tag
+                                                                                            tagKey
                                                                                         ) => (
                                                                                             <button
-                                                                                                key={`${p.projectId}-${tag}-available`}
+                                                                                                key={`${p.projectId}-${tagKey}-available`}
                                                                                                 type="button"
                                                                                                 className="project-tag-option"
                                                                                                 data-selected={selectedTagsSet.has(
-                                                                                                    tag.toLocaleLowerCase()
+                                                                                                    tagKey
                                                                                                 )}
                                                                                                 onClick={(
                                                                                                     e
@@ -993,17 +1191,30 @@ export const ProjectsPage = () => {
                                                                                                     e.stopPropagation();
                                                                                                     toggleTagForProject(
                                                                                                         p.projectId,
-                                                                                                        tag
+                                                                                                        tagKey
                                                                                                     );
                                                                                                 }}
                                                                                             >
-                                                                                                <span>
-                                                                                                    {
-                                                                                                        tag
-                                                                                                    }
+                                                                                                <span className="tag-option-main">
+                                                                                                    <span
+                                                                                                        className="tag-color-dot"
+                                                                                                        style={{
+                                                                                                            backgroundColor:
+                                                                                                                getTagColor(
+                                                                                                                    tagKey
+                                                                                                                ),
+                                                                                                        }}
+                                                                                                    />
+                                                                                                    <span className="tag-label">
+                                                                                                        {tagMap[
+                                                                                                            tagKey
+                                                                                                        ]
+                                                                                                            ?.label ??
+                                                                                                            tagKey}
+                                                                                                    </span>
                                                                                                 </span>
                                                                                                 {selectedTagsSet.has(
-                                                                                                    tag.toLocaleLowerCase()
+                                                                                                    tagKey
                                                                                                 ) ? (
                                                                                                     <span className="project-tag-option-check">
                                                                                                         <CheckIcon />
@@ -1028,36 +1239,84 @@ export const ProjectsPage = () => {
                                                                                 )}
                                                                             </div>
                                                                             <div className="project-tags-input-row">
-                                                                                <input
-                                                                                    value={
-                                                                                        newTagByProject[
-                                                                                            p
-                                                                                                .projectId
-                                                                                        ] ??
-                                                                                        ''
-                                                                                    }
-                                                                                    onChange={(
-                                                                                        e
-                                                                                    ) =>
-                                                                                        onTagInputChange(
-                                                                                            p.projectId,
+                                                                                <div className="project-tags-new-input-actions">
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        className="project-tags-color-picker-button"
+                                                                                        onClick={(
                                                                                             e
-                                                                                                .target
-                                                                                                .value
-                                                                                        )
-                                                                                    }
-                                                                                    onClick={(
-                                                                                        e
-                                                                                    ) =>
-                                                                                        e.stopPropagation()
-                                                                                    }
-                                                                                    onKeyDown={(
-                                                                                        e
-                                                                                    ) => {
-                                                                                        if (
-                                                                                            e.key ===
-                                                                                            'Enter'
-                                                                                        ) {
+                                                                                        ) => {
+                                                                                            e.stopPropagation();
+                                                                                            onColorPaletteToggle(
+                                                                                                p.projectId
+                                                                                            );
+                                                                                        }}
+                                                                                        aria-label="Open color palette"
+                                                                                    >
+                                                                                        <span
+                                                                                            className="project-tags-color-preview"
+                                                                                            style={{
+                                                                                                backgroundColor:
+                                                                                                    nextTagColor ??
+                                                                                                    DEFAULT_NEW_TAG_COLOR,
+                                                                                            }}
+                                                                                        />
+                                                                                    </button>
+                                                                                    <input
+                                                                                        value={
+                                                                                            newTagByProject[
+                                                                                                p
+                                                                                                    .projectId
+                                                                                            ] ??
+                                                                                            ''
+                                                                                        }
+                                                                                        onChange={(
+                                                                                            e
+                                                                                        ) =>
+                                                                                            onTagInputChange(
+                                                                                                p.projectId,
+                                                                                                e
+                                                                                                    .target
+                                                                                                    .value
+                                                                                            )
+                                                                                        }
+                                                                                        onClick={(
+                                                                                            e
+                                                                                        ) =>
+                                                                                            e.stopPropagation()
+                                                                                        }
+                                                                                        onKeyDown={(
+                                                                                            e
+                                                                                        ) => {
+                                                                                            if (
+                                                                                                e.key ===
+                                                                                                'Enter'
+                                                                                            ) {
+                                                                                                e.stopPropagation();
+                                                                                                addTagToProject(
+                                                                                                    p.projectId,
+                                                                                                    newTagByProject[
+                                                                                                        p
+                                                                                                            .projectId
+                                                                                                    ] ??
+                                                                                                        ''
+                                                                                                );
+                                                                                            }
+                                                                                        }}
+                                                                                        className="project-tags-input"
+                                                                                        placeholder={
+                                                                                            dictionary
+                                                                                                .projects
+                                                                                                .tags
+                                                                                                .new_placeholder
+                                                                                        }
+                                                                                    />
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        className="project-tags-add-button"
+                                                                                        onClick={(
+                                                                                            e
+                                                                                        ) => {
                                                                                             e.stopPropagation();
                                                                                             addTagToProject(
                                                                                                 p.projectId,
@@ -1067,41 +1326,102 @@ export const ProjectsPage = () => {
                                                                                                 ] ??
                                                                                                     ''
                                                                                             );
+                                                                                        }}
+                                                                                        aria-label={
+                                                                                            dictionary
+                                                                                                .projects
+                                                                                                .tags
+                                                                                                .add_new
                                                                                         }
-                                                                                    }}
-                                                                                    className="project-tags-input"
-                                                                                    placeholder={
-                                                                                        dictionary
-                                                                                            .projects
-                                                                                            .tags
-                                                                                            .new_placeholder
-                                                                                    }
-                                                                                />
-                                                                                <button
-                                                                                    type="button"
-                                                                                    className="project-tags-add-button"
-                                                                                    onClick={(
-                                                                                        e
-                                                                                    ) => {
-                                                                                        e.stopPropagation();
-                                                                                        addTagToProject(
-                                                                                            p.projectId,
-                                                                                            newTagByProject[
-                                                                                                p
-                                                                                                    .projectId
-                                                                                            ] ??
-                                                                                                ''
-                                                                                        );
-                                                                                    }}
-                                                                                    aria-label={
-                                                                                        dictionary
-                                                                                            .projects
-                                                                                            .tags
-                                                                                            .add_new
-                                                                                    }
-                                                                                >
-                                                                                    <PlusIcon />
-                                                                                </button>
+                                                                                    >
+                                                                                        <PlusIcon />
+                                                                                    </button>
+                                                                                </div>
+                                                                                {openedColorPaletteProjectId ===
+                                                                                p.projectId ? (
+                                                                                    <div
+                                                                                        className="project-tags-color-panel"
+                                                                                        onClick={(
+                                                                                            e
+                                                                                        ) =>
+                                                                                            e.stopPropagation()
+                                                                                        }
+                                                                                    >
+                                                                                        <div className="project-tags-color-swatch-grid">
+                                                                                            {TAG_COLOR_SWATCHES.map(
+                                                                                                (
+                                                                                                    swatchColor
+                                                                                                ) => (
+                                                                                                    <button
+                                                                                                        key={`swatch-${swatchColor}`}
+                                                                                                        type="button"
+                                                                                                        className="project-tags-color-swatch"
+                                                                                                        style={{
+                                                                                                            backgroundColor:
+                                                                                                                swatchColor,
+                                                                                                        }}
+                                                                                                        onClick={() =>
+                                                                                                            onNewTagColorChange(
+                                                                                                                p.projectId,
+                                                                                                                swatchColor
+                                                                                                            )
+                                                                                                        }
+                                                                                                        data-selected={
+                                                                                                            (
+                                                                                                                nextTagColor ??
+                                                                                                                DEFAULT_NEW_TAG_COLOR
+                                                                                                            ).toLocaleLowerCase() ===
+                                                                                                            swatchColor.toLocaleLowerCase()
+                                                                                                        }
+                                                                                                        aria-label={`Set tag color ${swatchColor}`}
+                                                                                                    />
+                                                                                                )
+                                                                                            )}
+                                                                                        </div>
+                                                                                        <input
+                                                                                            className="project-tags-color-input-text"
+                                                                                            value={
+                                                                                                nextTagColorInput ??
+                                                                                                nextTagColor ??
+                                                                                                DEFAULT_NEW_TAG_COLOR
+                                                                                            }
+                                                                                            placeholder={
+                                                                                                dictionary
+                                                                                                    .projects
+                                                                                                    .tags
+                                                                                                    .color_placeholder
+                                                                                            }
+                                                                                            onChange={(
+                                                                                                e
+                                                                                            ) =>
+                                                                                                onNewTagColorInputChange(
+                                                                                                    p.projectId,
+                                                                                                    e
+                                                                                                        .target
+                                                                                                        .value
+                                                                                                )
+                                                                                            }
+                                                                                            onBlur={() =>
+                                                                                                commitNewTagColorInput(
+                                                                                                    p.projectId
+                                                                                                )
+                                                                                            }
+                                                                                            onKeyDown={(
+                                                                                                e
+                                                                                            ) => {
+                                                                                                if (
+                                                                                                    e.key ===
+                                                                                                    'Enter'
+                                                                                                ) {
+                                                                                                    e.stopPropagation();
+                                                                                                    commitNewTagColorInput(
+                                                                                                        p.projectId
+                                                                                                    );
+                                                                                                }
+                                                                                            }}
+                                                                                        />
+                                                                                    </div>
+                                                                                ) : null}
                                                                             </div>
                                                                         </div>
                                                                     ) : null}
