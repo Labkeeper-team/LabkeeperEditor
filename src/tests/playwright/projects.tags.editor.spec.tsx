@@ -6,6 +6,18 @@ const existingProjectId = 'project-1-id';
 const fixedLastModified = '2024-03-20T12:00:00.000Z';
 const contentType = 'application/json';
 const tagsStorageKey = 'labkeeper-project-tags-v1';
+const seededTagsStorage = JSON.stringify({
+    projects: {
+        'project-1-id': ['tag_1', 'tag_2'],
+        'project-2-id': ['tag_2'],
+        'project-3-id': ['tag_1', 'tag_3'],
+    },
+    tags: {
+        tag_1: { label: 'tag_1', color: 'blue' },
+        tag_2: { label: 'tag_2', color: 'orange' },
+        tag_3: { label: 'tag_3', color: 'purple' },
+    },
+});
 
 test('add-one-tag-for-one-project', async ({ page }) => {
     const routeSetup = new RouteSetup(page);
@@ -24,10 +36,6 @@ test('add-one-tag-for-one-project', async ({ page }) => {
             projectType: 'markdown',
         },
     ];
-
-    await page.addInitScript((storageKey) => {
-        window.localStorage.removeItem(storageKey);
-    }, tagsStorageKey);
 
     await routeSetup.setupGetUserInfoRequest(true, 'a@gmail.com', userId, 0);
 
@@ -200,6 +208,137 @@ test('edit-tags-across-three-projects', async ({ page }) => {
 
     await expect(page).toHaveScreenshot(
         'projects-tags-three-projects-step-3.png',
+        {
+            fullPage: true,
+        }
+    );
+});
+
+test('filter-three-projects-by-tags', async ({ page }) => {
+    const routeSetup = new RouteSetup(page);
+    const projects: Array<{
+        projectId: string;
+        userId: number;
+        title: string;
+        lastModified: string;
+        projectType: 'markdown' | 'latex';
+    }> = [
+        {
+            projectId: 'project-1-id',
+            userId,
+            title: 'Project_1',
+            lastModified: fixedLastModified,
+            projectType: 'markdown',
+        },
+        {
+            projectId: 'project-2-id',
+            userId,
+            title: 'Project_2',
+            lastModified: fixedLastModified,
+            projectType: 'markdown',
+        },
+        {
+            projectId: 'project-3-id',
+            userId,
+            title: 'Project_3',
+            lastModified: fixedLastModified,
+            projectType: 'markdown',
+        },
+    ];
+
+    await page.addInitScript(
+        ({ storageKey, seededValue }) => {
+            const originalGetItem = Storage.prototype.getItem;
+            const originalSetItem = Storage.prototype.setItem;
+            const originalRemoveItem = Storage.prototype.removeItem;
+
+            Storage.prototype.getItem = function (key: string) {
+                if (key === storageKey) {
+                    return seededValue;
+                }
+                return originalGetItem.call(this, key);
+            };
+
+            Storage.prototype.setItem = function (
+                key: string,
+                value: string
+            ) {
+                if (key === storageKey) {
+                    return;
+                }
+                return originalSetItem.call(this, key, value);
+            };
+
+            Storage.prototype.removeItem = function (key: string) {
+                if (key === storageKey) {
+                    return;
+                }
+                return originalRemoveItem.call(this, key);
+            };
+
+            window.localStorage.setItem(storageKey, seededValue);
+        },
+        { storageKey: tagsStorageKey, seededValue: seededTagsStorage }
+    );
+
+    await routeSetup.setupGetUserInfoRequest(true, 'a@gmail.com', userId, 0);
+
+    await page.route('/api/v2/public/project/all', async (route) => {
+        await route.fulfill({
+            status: 200,
+            contentType,
+            body: JSON.stringify({ projects }),
+        });
+    });
+
+    await page.goto('/projects');
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page).toHaveURL('/projects');
+    await page
+        .getByRole('button', { name: /Имя|Name/ })
+        .first()
+        .click();
+
+    await expect(
+        page.locator('tr').filter({ hasText: /Project_1.*tag_1.*tag_2/ }).first()
+    ).toBeVisible();
+    await expect(
+        page.locator('tr').filter({ hasText: /Project_2.*tag_2/ }).first()
+    ).toBeVisible();
+    await expect(
+        page.locator('tr').filter({ hasText: /Project_3.*tag_1.*tag_3/ }).first()
+    ).toBeVisible();
+
+    await page
+        .getByRole('button', { name: /Фильтры по тегам|Tag filters|Tags filters/ })
+        .click();
+
+    await expect(page).toHaveScreenshot(
+        'projects-tags-filter-three-projects-step-1-menu-open.png',
+        {
+            fullPage: true,
+        }
+    );
+
+    await page
+        .locator('.project-tags-filter-option')
+        .filter({ hasText: 'tag_1' })
+        .click();
+
+    await expect(page).toHaveScreenshot(
+        'projects-tags-filter-three-projects-step-2-tag-1.png',
+        {
+            fullPage: true,
+        }
+    );
+
+    await page
+        .locator('.project-tags-filter-option')
+        .filter({ hasText: 'tag_3' })
+        .click();
+
+    await expect(page).toHaveScreenshot(
+        'projects-tags-filter-three-projects-step-3-tag-3.png',
         {
             fullPage: true,
         }
