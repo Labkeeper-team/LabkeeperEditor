@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, Page, test } from '@playwright/test';
 import { RouteSetup } from './mock.routeSetUp.tsx';
 
 const userId = 1;
@@ -18,6 +18,47 @@ const seededTagsStorage = JSON.stringify({
         tag_3: { label: 'tag_3', color: 'purple' },
     },
 });
+
+async function seedReadonlyStorageKey(
+    page: Page,
+    storageKey: string,
+    seededValue: string
+) {
+    await page.addInitScript(
+        ({ storageKey: key, seededValue: value }) => {
+            const originalGetItem = Storage.prototype.getItem;
+            const originalSetItem = Storage.prototype.setItem;
+            const originalRemoveItem = Storage.prototype.removeItem;
+
+            Storage.prototype.getItem = function (currentKey: string) {
+                if (currentKey === key) {
+                    return value;
+                }
+                return originalGetItem.call(this, currentKey);
+            };
+
+            Storage.prototype.setItem = function (
+                currentKey: string,
+                currentValue: string
+            ) {
+                if (currentKey === key) {
+                    return;
+                }
+                return originalSetItem.call(this, currentKey, currentValue);
+            };
+
+            Storage.prototype.removeItem = function (currentKey: string) {
+                if (currentKey === key) {
+                    return;
+                }
+                return originalRemoveItem.call(this, currentKey);
+            };
+
+            window.localStorage.setItem(key, value);
+        },
+        { storageKey, seededValue }
+    );
+}
 
 test('add-one-tag-for-one-project', async ({ page }) => {
     const routeSetup = new RouteSetup(page);
@@ -246,40 +287,7 @@ test('filter-three-projects-by-tags', async ({ page }) => {
         },
     ];
 
-    await page.addInitScript(
-        ({ storageKey, seededValue }) => {
-            const originalGetItem = Storage.prototype.getItem;
-            const originalSetItem = Storage.prototype.setItem;
-            const originalRemoveItem = Storage.prototype.removeItem;
-
-            Storage.prototype.getItem = function (key: string) {
-                if (key === storageKey) {
-                    return seededValue;
-                }
-                return originalGetItem.call(this, key);
-            };
-
-            Storage.prototype.setItem = function (
-                key: string,
-                value: string
-            ) {
-                if (key === storageKey) {
-                    return;
-                }
-                return originalSetItem.call(this, key, value);
-            };
-
-            Storage.prototype.removeItem = function (key: string) {
-                if (key === storageKey) {
-                    return;
-                }
-                return originalRemoveItem.call(this, key);
-            };
-
-            window.localStorage.setItem(storageKey, seededValue);
-        },
-        { storageKey: tagsStorageKey, seededValue: seededTagsStorage }
-    );
+    await seedReadonlyStorageKey(page, tagsStorageKey, seededTagsStorage);
 
     await routeSetup.setupGetUserInfoRequest(true, 'a@gmail.com', userId, 0);
 
