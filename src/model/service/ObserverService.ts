@@ -9,6 +9,7 @@ export const Events = {
     EVENT_INSERT_SEGMENT_BETWEEN: 'segment_insert_between',
     EVENT_PRINT: 'print_doc',
     EVENT_QR_V1: 'qr_v1',
+    EVENT_PAYMENT_REQUIRED: 'payment_required',
     FRONTEND_ERROR: 'frontend_error',
 };
 

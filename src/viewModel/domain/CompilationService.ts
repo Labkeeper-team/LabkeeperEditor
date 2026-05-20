@@ -132,6 +132,7 @@ export class CompilationService {
                 this.repository.dictionary.prompt_modal.errors.payment_required,
                 'error'
             );
+            this.observerService.onEvent(Events.EVENT_PAYMENT_REQUIRED);
         } else if (result.code === 425) {
             this.repository.projectViewModelRepository.setCompileErrorResult({
                 errors: [

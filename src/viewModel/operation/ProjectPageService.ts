@@ -405,6 +405,7 @@ export class ProjectPageService {
                         .payment_required,
                     'error'
                 );
+                this.observerService.onEvent(Events.EVENT_PAYMENT_REQUIRED);
             } else if (promptResult.code === 425) {
                 this.repository.authViewModelRepository.setCurrentView('login');
                 this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
@@ -480,6 +481,7 @@ export class ProjectPageService {
                 this.repository.dictionary.prompt_modal.errors.payment_required,
                 'error'
             );
+            this.observerService.onEvent(Events.EVENT_PAYMENT_REQUIRED);
         } else {
             this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
                 'unknownError'
