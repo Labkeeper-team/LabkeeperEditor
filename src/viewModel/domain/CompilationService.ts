@@ -127,6 +127,11 @@ export class CompilationService {
                     this.repository.ideViewModelRepository.pdfUpdated() + 1
                 );
             }
+        } else if (result.code === 402) {
+            this.repository.toast(
+                this.repository.dictionary.prompt_modal.errors.payment_required,
+                'error'
+            );
         } else if (result.code === 425) {
             this.repository.projectViewModelRepository.setCompileErrorResult({
                 errors: [

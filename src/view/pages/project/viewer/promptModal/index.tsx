@@ -26,6 +26,9 @@ export const PromptModal = () => {
         if (promptRequestState === 'bad_request') {
             return dictionary.prompt_modal.errors.bad_request;
         }
+        if (promptRequestState === 'payment_required') {
+            return dictionary.prompt_modal.errors.payment_required;
+        }
         if (promptRequestState === 'unknownError') {
             return dictionary.prompt_modal.errors.unknownError;
         }

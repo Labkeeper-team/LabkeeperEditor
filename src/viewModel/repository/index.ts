@@ -82,6 +82,7 @@ export type ProjectPromptRequestState =
     | 'loading'
     | 'ok'
     | 'bad_request'
+    | 'payment_required'
     | 'unknownError';
 
 export type PendingSegmentEditorCursor = {

@@ -314,6 +314,8 @@ export const en: Translations = {
         sending: 'Sending...',
         errors: {
             bad_request: 'Invalid request. Please check your input.',
+            payment_required:
+                'Your service usage limit for today has been reached. Please contact support to extend it.',
             unknownError: 'An unexpected error occurred',
         },
     },

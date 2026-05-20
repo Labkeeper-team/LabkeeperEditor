@@ -396,6 +396,15 @@ export class ProjectPageService {
                 this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
                     'bad_request'
                 );
+            } else if (promptResult.code === 402) {
+                this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
+                    'payment_required'
+                );
+                this.repository.toast(
+                    this.repository.dictionary.prompt_modal.errors
+                        .payment_required,
+                    'error'
+                );
             } else if (promptResult.code === 425) {
                 this.repository.authViewModelRepository.setCurrentView('login');
                 this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
@@ -462,6 +471,14 @@ export class ProjectPageService {
         } else if (promptResult.code === 400) {
             this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
                 'bad_request'
+            );
+        } else if (promptResult.code === 402) {
+            this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
+                'payment_required'
+            );
+            this.repository.toast(
+                this.repository.dictionary.prompt_modal.errors.payment_required,
+                'error'
             );
         } else {
             this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
