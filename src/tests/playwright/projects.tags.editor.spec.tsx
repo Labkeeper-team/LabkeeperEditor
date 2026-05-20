@@ -161,6 +161,18 @@ test('edit-tags-across-three-projects', async ({ page }) => {
     }, tagsStorageKey);
 
     await routeSetup.setupGetUserInfoRequest(true, 'a@gmail.com', userId, 0);
+    await page.route(/\/api\/v\d+\/public\/user-info.*/, async (route) => {
+        await route.fulfill({
+            status: 200,
+            contentType,
+            body: JSON.stringify({
+                isAuthenticated: true,
+                email: 'a@gmail.com',
+                id: userId,
+                tokens: 0,
+            }),
+        });
+    });
 
     await page.route('/api/v2/public/project/all', async (route) => {
         await route.fulfill({
@@ -308,17 +320,28 @@ test('filter-three-projects-by-tags', async ({ page }) => {
         .click();
 
     await expect(
-        page.locator('tr').filter({ hasText: /Project_1.*tag_1.*tag_2/ }).first()
+        page
+            .locator('tr')
+            .filter({ hasText: /Project_1.*tag_1.*tag_2/ })
+            .first()
     ).toBeVisible();
     await expect(
-        page.locator('tr').filter({ hasText: /Project_2.*tag_2/ }).first()
+        page
+            .locator('tr')
+            .filter({ hasText: /Project_2.*tag_2/ })
+            .first()
     ).toBeVisible();
     await expect(
-        page.locator('tr').filter({ hasText: /Project_3.*tag_1.*tag_3/ }).first()
+        page
+            .locator('tr')
+            .filter({ hasText: /Project_3.*tag_1.*tag_3/ })
+            .first()
     ).toBeVisible();
 
     await page
-        .getByRole('button', { name: /Фильтры по тегам|Tag filters|Tags filters/ })
+        .getByRole('button', {
+            name: /Фильтры по тегам|Tag filters|Tags filters/,
+        })
         .click();
 
     await expect(page).toHaveScreenshot(
@@ -347,6 +370,107 @@ test('filter-three-projects-by-tags', async ({ page }) => {
 
     await expect(page).toHaveScreenshot(
         'projects-tags-filter-three-projects-step-3-tag-3.png',
+        {
+            fullPage: true,
+        }
+    );
+});
+
+test('add-many-tags', async ({ page }) => {
+    const routeSetup = new RouteSetup(page);
+    const projects: Array<{
+        projectId: string;
+        userId: number;
+        title: string;
+        lastModified: string;
+        projectType: 'markdown' | 'latex';
+    }> = [
+        {
+            projectId: existingProjectId,
+            userId,
+            title: 'Project_1',
+            lastModified: fixedLastModified,
+            projectType: 'markdown',
+        },
+    ];
+
+    const longTagNames: string[] = [];
+    let numericTag = '';
+    for (let i = 1; i <= 13; i += 1) {
+        numericTag += i.toString();
+        if (i >= 3) {
+            longTagNames.push(numericTag);
+        }
+    }
+
+    await page.addInitScript((storageKey) => {
+        window.localStorage.removeItem(storageKey);
+    }, tagsStorageKey);
+
+    await routeSetup.setupGetUserInfoRequest(true, 'a@gmail.com', userId, 0);
+
+    await page.route('/api/v2/public/project/all', async (route) => {
+        await route.fulfill({
+            status: 200,
+            contentType,
+            body: JSON.stringify({ projects }),
+        });
+    });
+
+    await page.goto('/projects');
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page).toHaveURL('/projects');
+
+    const projectRow = page
+        .locator('tr')
+        .filter({ hasText: 'Project_1' })
+        .first();
+    await expect(projectRow).toBeVisible();
+
+    await projectRow
+        .getByRole('button', { name: /Редактировать теги|Edit tags/ })
+        .click();
+
+    for (const tagName of longTagNames) {
+        await page.locator('.project-tags-input').fill(tagName);
+        await page
+            .getByRole('button', { name: /Создать тег|Create tag/ })
+            .click();
+    }
+
+    await expect(
+        projectRow.locator('.project-tag-chip').filter({ hasText: /^123$/ })
+    ).toHaveCount(1);
+    await expect(
+        projectRow
+            .locator('.project-tag-chip')
+            .filter({ hasText: /^12345678910111213$/ })
+    ).toHaveCount(1);
+
+    await expect(page).toHaveScreenshot('projects-tags-many-tags.png', {
+        fullPage: true,
+    });
+
+    await page
+        .locator('.project-tags-scroll')
+        .evaluate((element) => (element.scrollTop = element.scrollHeight));
+
+    await expect(page).toHaveScreenshot(
+        'projects-tags-many-tags-scrolled.png',
+        {
+            fullPage: true,
+        }
+    );
+
+    await page.getByRole('button', { name: 'Close tags list' }).click();
+
+    await projectRow.locator('.project-tags-cell').evaluate((element) => {
+        element.scrollTop = element.scrollHeight;
+        element.scrollLeft = element.scrollWidth;
+    });
+
+    await expect(page).toHaveScreenshot(
+        'projects-tags-many-tags-after-close-scrolled.png',
         {
             fullPage: true,
         }
