@@ -570,3 +570,135 @@ test('add-two-long-tag-names-and-filter-by-both', async ({ page }) => {
         }
     );
 });
+
+test('remove-tags-from-first-project', async ({ page }) => {
+    const routeSetup = new RouteSetup(page);
+    const projects: Array<{
+        projectId: string;
+        userId: number;
+        title: string;
+        lastModified: string;
+        projectType: 'markdown' | 'latex';
+    }> = [
+        {
+            projectId: 'project-1-id',
+            userId,
+            title: 'Project_1',
+            lastModified: fixedLastModified,
+            projectType: 'markdown',
+        },
+        {
+            projectId: 'project-2-id',
+            userId,
+            title: 'Project_2',
+            lastModified: fixedLastModified,
+            projectType: 'markdown',
+        },
+        {
+            projectId: 'project-3-id',
+            userId,
+            title: 'Project_3',
+            lastModified: fixedLastModified,
+            projectType: 'markdown',
+        },
+    ];
+
+    await page.addInitScript((storageKey) => {
+        window.localStorage.removeItem(storageKey);
+    }, tagsStorageKey);
+
+    await routeSetup.setupGetUserInfoRequest(true, 'a@gmail.com', userId, 0);
+
+    await page.route('/api/v2/public/project/all', async (route) => {
+        await route.fulfill({
+            status: 200,
+            contentType,
+            body: JSON.stringify({ projects }),
+        });
+    });
+
+    await page.goto('/projects');
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page).toHaveURL('/projects');
+    await page
+        .getByRole('button', { name: /Имя|Name/ })
+        .first()
+        .click();
+
+    const project1Row = page
+        .locator('tr')
+        .filter({ hasText: 'Project_1' })
+        .first();
+    const project2Row = page
+        .locator('tr')
+        .filter({ hasText: 'Project_2' })
+        .first();
+    const project3Row = page
+        .locator('tr')
+        .filter({ hasText: 'Project_3' })
+        .first();
+    await expect(project1Row).toBeVisible();
+    await expect(project2Row).toBeVisible();
+    await expect(project3Row).toBeVisible();
+
+    await project1Row
+        .getByRole('button', { name: /Редактировать теги|Edit tags/ })
+        .click();
+    for (const tagName of ['tag_1', 'tag_2', 'tag_3']) {
+        await page.locator('.project-tags-input').fill(tagName);
+        await page.getByRole('button', { name: /Создать тег|Create tag/ }).click();
+    }
+    await page.getByRole('button', { name: 'Close tags list' }).click();
+
+    await project2Row
+        .getByRole('button', { name: /Редактировать теги|Edit tags/ })
+        .click();
+    await project2Row
+        .locator('.project-tag-option')
+        .filter({ hasText: 'tag_2' })
+        .click();
+    await page.getByRole('button', { name: 'Close tags list' }).click();
+
+    await project3Row
+        .getByRole('button', { name: /Редактировать теги|Edit tags/ })
+        .click();
+    await project3Row
+        .locator('.project-tag-option')
+        .filter({ hasText: 'tag_3' })
+        .click();
+    await page.getByRole('button', { name: 'Close tags list' }).click();
+
+    await expect(project1Row.locator('.project-tag-chip')).toContainText([
+        'tag_1',
+        'tag_2',
+        'tag_3',
+    ]);
+    await expect(project2Row.locator('.project-tag-chip')).toContainText('tag_2');
+    await expect(project3Row.locator('.project-tag-chip')).toContainText('tag_3');
+
+    await expect(page).toHaveScreenshot('projects-tags-remove-step-1-before-delete.png', {
+        fullPage: true,
+    });
+
+    await project1Row
+        .getByRole('button', { name: /Редактировать теги|Edit tags/ })
+        .click();
+    await project1Row
+        .locator('.project-tag-option')
+        .filter({ hasText: 'tag_1' })
+        .click();
+    await project1Row
+        .locator('.project-tag-option')
+        .filter({ hasText: 'tag_2' })
+        .click();
+    await project1Row
+        .locator('.project-tag-option')
+        .filter({ hasText: 'tag_3' })
+        .click();
+
+    await expect(project1Row.locator('.project-tag-chip')).toHaveCount(0);
+
+    await expect(page).toHaveScreenshot('projects-tags-remove-step-2-after-delete.png', {
+        fullPage: true,
+    });
+});
