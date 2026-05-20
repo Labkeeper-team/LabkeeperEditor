@@ -476,3 +476,97 @@ test('add-many-tags', async ({ page }) => {
         }
     );
 });
+
+test('add-two-long-tag-names-and-filter-by-both', async ({ page }) => {
+    const routeSetup = new RouteSetup(page);
+    const projects: Array<{
+        projectId: string;
+        userId: number;
+        title: string;
+        lastModified: string;
+        projectType: 'markdown' | 'latex';
+    }> = [
+        {
+            projectId: existingProjectId,
+            userId,
+            title: 'Project_1',
+            lastModified: fixedLastModified,
+            projectType: 'markdown',
+        },
+    ];
+
+    const firstLongTag = 'aaaaaaaaaaaaaaaaaaaaaaaaaa';
+    const secondLongTag = '12345678901234567890';
+
+    await page.addInitScript((storageKey) => {
+        window.localStorage.removeItem(storageKey);
+    }, tagsStorageKey);
+
+    await routeSetup.setupGetUserInfoRequest(true, 'a@gmail.com', userId, 0);
+
+    await page.route('/api/v2/public/project/all', async (route) => {
+        await route.fulfill({
+            status: 200,
+            contentType,
+            body: JSON.stringify({ projects }),
+        });
+    });
+
+    await page.goto('/projects');
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page).toHaveURL('/projects');
+
+    const projectRow = page
+        .locator('tr')
+        .filter({ hasText: 'Project_1' })
+        .first();
+    await expect(projectRow).toBeVisible();
+
+    await projectRow
+        .getByRole('button', { name: /Редактировать теги|Edit tags/ })
+        .click();
+    await page.locator('.project-tags-input').fill(firstLongTag);
+    await page.getByRole('button', { name: /Создать тег|Create tag/ }).click();
+    await page.locator('.project-tags-input').fill(secondLongTag);
+    await page.getByRole('button', { name: /Создать тег|Create tag/ }).click();
+
+    await expect(
+        projectRow
+            .locator('.project-tag-chip')
+            .filter({ hasText: /^aaaaaaaaaaaaaaaaaaaaaaaaaa$/ })
+    ).toHaveCount(1);
+    await expect(
+        projectRow
+            .locator('.project-tag-chip')
+            .filter({ hasText: /^12345678901234567890$/ })
+    ).toHaveCount(1);
+
+    await expect(page).toHaveScreenshot(
+        'projects-tags-long-names-step-1-added.png',
+        {
+            fullPage: true,
+        }
+    );
+
+    await page.getByRole('button', { name: 'Close tags list' }).click();
+    await page
+        .getByRole('button', {
+            name: /Фильтры по тегам|Tag filters|Tags filters/,
+        })
+        .click();
+    await page
+        .locator('.project-tags-filter-option')
+        .filter({ hasText: firstLongTag })
+        .click();
+    await page
+        .locator('.project-tags-filter-option')
+        .filter({ hasText: secondLongTag })
+        .click();
+
+    await expect(page).toHaveScreenshot(
+        'projects-tags-long-names-step-2-filter-selected.png',
+        {
+            fullPage: true,
+        }
+    );
+});
