@@ -5,6 +5,10 @@ import { IdeService } from '../domain/IdeService.ts';
 import { StartupService } from './StartupService.ts';
 import { Program, Project, ProjectType } from '../../model/domain.ts';
 import { Routes } from '../routes.ts';
+import {
+    Events,
+    ObserverService,
+} from '../../model/service/ObserverService.ts';
 
 export class ProjectsPageService {
     repository: ViewModelRepository;
@@ -12,19 +16,22 @@ export class ProjectsPageService {
     loaderService: LoaderService;
     ideService: IdeService;
     startupService: StartupService;
+    observerService: ObserverService;
 
     constructor(
         repository: ViewModelRepository,
         rpi: Rpi,
         loaderService: LoaderService,
         ideService: IdeService,
-        startupService: StartupService
+        startupService: StartupService,
+        observerService: ObserverService
     ) {
         this.rpi = rpi;
         this.loaderService = loaderService;
         this.ideService = ideService;
         this.startupService = startupService;
         this.repository = repository;
+        this.observerService = observerService;
     }
 
     onDeleteProject = async (projectId: string, okCallback: () => void) => {
@@ -44,6 +51,10 @@ export class ProjectsPageService {
                     'error'
                 );
                 this.ideService.resetEditor();
+            } else if (!result2.isOk) {
+                this.observerService.onEvent(
+                    Events.EVENT_RPI_UNKNOWN_PROJECTS_GET_ALL_PROJECTS
+                );
             }
         }
         if (result1.isUnauth) {
@@ -52,6 +63,10 @@ export class ProjectsPageService {
                 'error'
             );
             this.ideService.resetEditor();
+        } else if (!result1.isOk) {
+            this.observerService.onEvent(
+                Events.EVENT_RPI_UNKNOWN_PROJECTS_DELETE_PROJECT
+            );
         }
     };
 
@@ -118,9 +133,18 @@ export class ProjectsPageService {
                     projectType: projectType,
                 });
                 this.repository.projectViewModelRepository.setReadOnly(false);
+            } else if (!setTypeResult.isUnauth) {
+                this.observerService.onEvent(
+                    Events.EVENT_RPI_UNKNOWN_PROJECTS_SET_PROJECT_TYPE
+                );
             }
             okCallback();
         } else {
+            if (result.code !== 417 && !result.isUnauth) {
+                this.observerService.onEvent(
+                    Events.EVENT_RPI_UNKNOWN_PROJECTS_CREATE_PROJECT
+                );
+            }
             const message =
                 result.code === 417
                     ? this.repository.dictionary.create_modal.error

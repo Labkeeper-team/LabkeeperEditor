@@ -151,6 +151,7 @@ export class CompilationService {
             );
             this.repository.authViewModelRepository.setCurrentView('login');
         } else {
+            this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN_COMPILATION);
             this.repository.toast(
                 this.repository.dictionary.filemanager.errors.internalError,
                 'error'

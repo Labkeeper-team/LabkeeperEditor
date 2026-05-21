@@ -52,6 +52,9 @@ export class ProjectPageService {
                 'success'
             );
         } else {
+            this.observerService.onEvent(
+                Events.EVENT_RPI_UNKNOWN_PROJECT_PAGE_CONTACT_FORM
+            );
             this.repository.toast(
                 this.repository.dictionary.contact_error,
                 'error'
@@ -193,16 +196,20 @@ export class ProjectPageService {
         }
 
         const result = await this.rpi.setTitleRequest(projectId, title);
-        if (!result.isOk) {
-            failCallback();
-            return;
-        }
         if (result.isUnauth) {
             this.repository.toast(
                 this.repository.dictionary.filemanager.errors.sessionExpired,
                 'error'
             );
             this.ideService.resetEditor();
+            failCallback();
+            return;
+        }
+        if (!result.isOk) {
+            this.observerService.onEvent(
+                Events.EVENT_RPI_UNKNOWN_PROJECT_PAGE_SET_TITLE
+            );
+            failCallback();
             return;
         }
         if (result.isOk) {
@@ -244,6 +251,10 @@ export class ProjectPageService {
                 isPublic: visible,
             });
             this.repository.projectViewModelRepository.setReadOnly(false);
+        } else if (!result.isUnauth) {
+            this.observerService.onEvent(
+                Events.EVENT_RPI_UNKNOWN_PROJECT_PAGE_SET_VISIBILITY
+            );
         }
     };
 
@@ -281,6 +292,9 @@ export class ProjectPageService {
                     'error'
                 );
             } else {
+                this.observerService.onEvent(
+                    Events.EVENT_RPI_UNKNOWN_PROJECT_PAGE_CLONE
+                );
                 this.repository.toast(
                     this.repository.dictionary.filemanager.errors.internalError,
                     'error'
@@ -344,6 +358,10 @@ export class ProjectPageService {
                 projectType: type,
             });
             this.repository.projectViewModelRepository.setReadOnly(false);
+        } else if (!result.isUnauth) {
+            this.observerService.onEvent(
+                Events.EVENT_RPI_UNKNOWN_PROJECT_PAGE_SET_TYPE
+            );
         }
     };
 
@@ -415,6 +433,9 @@ export class ProjectPageService {
                     false
                 );
             } else {
+                this.observerService.onEvent(
+                    Events.EVENT_RPI_UNKNOWN_PROJECT_PAGE_UNAUTHORIZED_PROMPT
+                );
                 this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
                     'unknownError'
                 );
@@ -483,6 +504,9 @@ export class ProjectPageService {
             );
             this.observerService.onEvent(Events.EVENT_PAYMENT_REQUIRED);
         } else {
+            this.observerService.onEvent(
+                Events.EVENT_RPI_UNKNOWN_PROJECT_PAGE_PROMPT
+            );
             this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
                 'unknownError'
             );
