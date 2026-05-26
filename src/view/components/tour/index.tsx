@@ -58,13 +58,6 @@ export const InterfaceTour = () => {
         return getPosition(InterfaceTourAnchorClassnames.CodeSettings);
     }, [showTour]);
 
-    const addMarkdownPosition = useMemo(() => {
-        if (!showTour) {
-            return {};
-        }
-        return getPosition(InterfaceTourAnchorClassnames.AddMarkdown);
-    }, [showTour]);
-
     const problemsPosition = useMemo(() => {
         if (!showTour) {
             return {};
@@ -128,12 +121,6 @@ export const InterfaceTour = () => {
                 anchor="problesms-anchor"
                 hintPosition="top"
                 position={problemsPosition}
-            />
-            <Hint
-                text={dictionary.interface_tour.info_add_markdown}
-                anchor="markdown-anchor"
-                hintPosition="top"
-                position={addMarkdownPosition}
             />
             <Hint
                 text={dictionary.interface_tour.info_canvas}

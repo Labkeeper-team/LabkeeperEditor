@@ -182,6 +182,9 @@ export class ProgramEditorService {
                         );
                         thisCopy.ideService.resetEditor();
                     } else {
+                        thisCopy.observerService.onEvent(
+                            Events.EVENT_RPI_UNKNOWN_PROGRAM_EDITOR_UPLOAD
+                        );
                         thisCopy.repository.ideViewModelRepository.setGetFilesRequestState(
                             'error'
                         );

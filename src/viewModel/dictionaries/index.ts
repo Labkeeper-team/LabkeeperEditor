@@ -311,6 +311,7 @@ export interface Translations {
         sending: string;
         errors: {
             bad_request: string;
+            payment_required: string;
             unknownError: string;
         };
     };

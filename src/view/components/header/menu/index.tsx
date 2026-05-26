@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { matchPath, useLocation, useNavigate } from 'react-router-dom';
 
 import { controller } from '../../../../main.tsx';
 import { Routes } from '../../../../viewModel/routes.ts';
@@ -37,10 +37,14 @@ const WIKI_URL = 'https://github.com/Labkeeper-team/Docs/wiki/';
 export const HeaderMenu = () => {
     const dispatch = useDispatch<AppDispatch>();
     const navigate = useNavigate();
+    const location = useLocation();
     const dictionary = useSelector(useDictionary);
     const language = useSelector(useCurrentLanguage);
     const { isAuthenticated, email } = useSelector(useUser);
     const [showLogoutModal, setShowLogoutModal] = useState(false);
+    const isEditorPage =
+        matchPath(Routes.Project, location.pathname) !== null ||
+        location.pathname === Routes.ProjectDefault;
 
     const openExternal = useCallback((url: string) => {
         window.open(url, '_blank');
@@ -72,6 +76,14 @@ export const HeaderMenu = () => {
             title: dictionary.header_menu.about,
             onClick: () => openExternal(ABOUT_URL),
         },
+        ...(isEditorPage
+            ? [
+                  {
+                      title: dictionary.interface_tour.label,
+                      onClick: () => dispatch(setTourVisibility(true)),
+                  },
+              ]
+            : []),
     ];
 
     const authenticatedMenuItems: HeaderMenuItem[] = [
@@ -86,10 +98,14 @@ export const HeaderMenu = () => {
         //     onClick: () => navigate(Routes.Tokens),
         //     separatorAfter: true,
         // },
-        {
-            title: dictionary.interface_tour.label,
-            onClick: () => dispatch(setTourVisibility(true)),
-        },
+        ...(isEditorPage
+            ? [
+                  {
+                      title: dictionary.interface_tour.label,
+                      onClick: () => dispatch(setTourVisibility(true)),
+                  },
+              ]
+            : []),
         {
             title: dictionary.header_menu.contact_us,
             onClick: openContactModal,

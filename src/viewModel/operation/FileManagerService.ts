@@ -4,6 +4,10 @@ import { ProgramService } from '../../model/service/ProgramService.ts';
 import { LoaderService } from '../domain/LoaderService.ts';
 import { IdeService } from '../domain/IdeService.ts';
 import { FileService } from '../domain/FileService.ts';
+import {
+    Events,
+    ObserverService,
+} from '../../model/service/ObserverService.ts';
 
 export class FileManagerService {
     repository: ViewModelRepository;
@@ -12,6 +16,7 @@ export class FileManagerService {
     loaderService: LoaderService;
     ideService: IdeService;
     fileService: FileService;
+    observerService: ObserverService;
 
     constructor(
         repository: ViewModelRepository,
@@ -19,7 +24,8 @@ export class FileManagerService {
         programService: ProgramService,
         loaderService: LoaderService,
         ideService: IdeService,
-        fileService: FileService
+        fileService: FileService,
+        observerService: ObserverService
     ) {
         this.rpi = rpi;
         this.programService = programService;
@@ -27,6 +33,7 @@ export class FileManagerService {
         this.ideService = ideService;
         this.repository = repository;
         this.fileService = fileService;
+        this.observerService = observerService;
     }
 
     onFolderButtonClicked = async () => {
@@ -95,6 +102,14 @@ export class FileManagerService {
             }
             if (result.isOk) {
                 isResultOk = true;
+            } else if (
+                result.code !== 413 &&
+                result.code !== 409 &&
+                !result.isUnauth
+            ) {
+                this.observerService.onEvent(
+                    Events.EVENT_RPI_UNKNOWN_FILE_MANAGER_UPLOAD
+                );
             }
         }
         if (isResultOk) {
@@ -120,6 +135,10 @@ export class FileManagerService {
         }
         if (result.isOk) {
             await this.loaderService.loadFiles(project.projectId);
+        } else if (!result.isUnauth) {
+            this.observerService.onEvent(
+                Events.EVENT_RPI_UNKNOWN_FILE_MANAGER_DELETE
+            );
         }
     };
 
@@ -159,6 +178,10 @@ export class FileManagerService {
                 );
                 this.repository.settingsViewModelRepository.setFilesToDelete(
                     []
+                );
+            } else if (!result.isOk) {
+                this.observerService.onEvent(
+                    Events.EVENT_RPI_UNKNOWN_FILE_MANAGER_DELETE
                 );
             }
         }
@@ -200,6 +223,10 @@ export class FileManagerService {
         }
         if (result.isOk) {
             await this.loaderService.loadFiles(project.projectId);
+        } else if (!result.isUnauth) {
+            this.observerService.onEvent(
+                Events.EVENT_RPI_UNKNOWN_FILE_MANAGER_RENAME
+            );
         }
     };
 

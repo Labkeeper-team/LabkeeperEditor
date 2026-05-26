@@ -127,6 +127,12 @@ export class CompilationService {
                     this.repository.ideViewModelRepository.pdfUpdated() + 1
                 );
             }
+        } else if (result.code === 402) {
+            this.repository.toast(
+                this.repository.dictionary.prompt_modal.errors.payment_required,
+                'error'
+            );
+            this.observerService.onEvent(Events.EVENT_PAYMENT_REQUIRED);
         } else if (result.code === 425) {
             this.repository.projectViewModelRepository.setCompileErrorResult({
                 errors: [
@@ -145,6 +151,7 @@ export class CompilationService {
             );
             this.repository.authViewModelRepository.setCurrentView('login');
         } else {
+            this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN_COMPILATION);
             this.repository.toast(
                 this.repository.dictionary.filemanager.errors.internalError,
                 'error'
