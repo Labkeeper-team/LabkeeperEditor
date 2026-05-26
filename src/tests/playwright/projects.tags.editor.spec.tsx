@@ -702,3 +702,96 @@ test('remove-tags-from-first-project', async ({ page }) => {
         fullPage: true,
     });
 });
+
+test('cycle-tag-colors', async ({ page }) => {
+    const routeSetup = new RouteSetup(page);
+    const projects: Array<{
+        projectId: string;
+        userId: number;
+        title: string;
+        lastModified: string;
+        projectType: 'markdown' | 'latex';
+    }> = [
+        {
+            projectId: existingProjectId,
+            userId,
+            title: 'Project_1',
+            lastModified: fixedLastModified,
+            projectType: 'markdown',
+        },
+    ];
+
+    await page.addInitScript((storageKey) => {
+        window.localStorage.removeItem(storageKey);
+    }, tagsStorageKey);
+
+    await routeSetup.setupGetUserInfoRequest(true, 'a@gmail.com', userId, 0);
+
+    await page.route('/api/v2/public/project/all', async (route) => {
+        await route.fulfill({
+            status: 200,
+            contentType,
+            body: JSON.stringify({ projects }),
+        });
+    });
+
+    await page.goto('/projects');
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page).toHaveURL('/projects');
+
+    const projectRow = page
+        .locator('tr')
+        .filter({ hasText: 'Project_1' })
+        .first();
+    await expect(projectRow).toBeVisible();
+
+    await projectRow
+        .getByRole('button', { name: /Редактировать теги|Edit tags/ })
+        .click();
+    await projectRow.locator('.project-tags-input').fill('blue');
+    await projectRow
+        .getByRole('button', { name: /Создать тег|Create tag/ })
+        .click();
+    await expect(projectRow.locator('.project-tag-chip')).toContainText('blue');
+
+    await projectRow
+        .getByRole('button', { name: 'Open color palette' })
+        .click();
+    await expect(page).toHaveScreenshot('projects-tags-colors-step-1-open-panel.png', {
+        fullPage: true,
+    });
+
+    await projectRow.locator('.project-tags-color-input-text').fill('yellow');
+    await projectRow.locator('.project-tags-color-input-text').press('Enter');
+    await expect(page).toHaveScreenshot('projects-tags-colors-step-2-typed-yellow.png', {
+        fullPage: true,
+    });
+
+    await projectRow.locator('.project-tags-input').fill('yellow');
+    await projectRow
+        .getByRole('button', { name: /Создать тег|Create tag/ })
+        .click();
+    await expect(
+        projectRow.locator('.project-tag-chip').filter({ hasText: /^yellow$/ })
+    ).toHaveCount(1);
+    await expect(page).toHaveScreenshot('projects-tags-colors-step-3-added-yellow.png', {
+        fullPage: true,
+    });
+
+    await projectRow.locator('.project-tags-color-input-text').fill('brown');
+    await projectRow.locator('.project-tags-color-input-text').press('Enter');
+    await expect(page).toHaveScreenshot('projects-tags-colors-step-4-typed-brown.png', {
+        fullPage: true,
+    });
+
+    await projectRow.locator('.project-tags-input').fill('brown');
+    await projectRow
+        .getByRole('button', { name: /Создать тег|Create tag/ })
+        .click();
+    await expect(
+        projectRow.locator('.project-tag-chip').filter({ hasText: /^brown$/ })
+    ).toHaveCount(1);
+    await expect(page).toHaveScreenshot('projects-tags-colors-step-5-added-brown.png', {
+        fullPage: true,
+    });
+});
