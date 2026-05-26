@@ -795,3 +795,89 @@ test('cycle-tag-colors', async ({ page }) => {
         fullPage: true,
     });
 });
+
+test('color-panel-swatch-and-input-values', async ({ page }) => {
+    const routeSetup = new RouteSetup(page);
+    const projects: Array<{
+        projectId: string;
+        userId: number;
+        title: string;
+        lastModified: string;
+        projectType: 'markdown' | 'latex';
+    }> = [
+        {
+            projectId: existingProjectId,
+            userId,
+            title: 'Project_1',
+            lastModified: fixedLastModified,
+            projectType: 'markdown',
+        },
+    ];
+
+    await page.addInitScript((storageKey) => {
+        window.localStorage.removeItem(storageKey);
+    }, tagsStorageKey);
+
+    await routeSetup.setupGetUserInfoRequest(true, 'a@gmail.com', userId, 0);
+
+    await page.route('/api/v2/public/project/all', async (route) => {
+        await route.fulfill({
+            status: 200,
+            contentType,
+            body: JSON.stringify({ projects }),
+        });
+    });
+
+    await page.goto('/projects');
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page).toHaveURL('/projects');
+
+    const projectRow = page
+        .locator('tr')
+        .filter({ hasText: 'Project_1' })
+        .first();
+    await expect(projectRow).toBeVisible();
+
+    await projectRow
+        .getByRole('button', { name: /Редактировать теги|Edit tags/ })
+        .click();
+    await projectRow
+        .getByRole('button', { name: 'Open color palette' })
+        .click();
+
+    await projectRow
+        .getByRole('button', { name: 'Set tag color deeppink' })
+        .click();
+    await expect(page).toHaveScreenshot(
+        'projects-tags-colors-input-step-1-deeppink.png',
+        {
+            fullPage: true,
+        }
+    );
+
+    const colorInput = projectRow.locator('.project-tags-color-input-text');
+    await colorInput.fill('#FF0000');
+    await colorInput.press('Enter');
+    await expect(page).toHaveScreenshot(
+        'projects-tags-colors-input-step-2-hex-red-entered.png',
+        {
+            fullPage: true,
+        }
+    );
+
+    await colorInput.fill('abracadabra');
+    await expect(page).toHaveScreenshot(
+        'projects-tags-colors-input-step-3-invalid-text-typed.png',
+        {
+            fullPage: true,
+        }
+    );
+
+    await colorInput.press('Enter');
+    await expect(page).toHaveScreenshot(
+        'projects-tags-colors-input-step-4-invalid-text-entered.png',
+        {
+            fullPage: true,
+        }
+    );
+});
