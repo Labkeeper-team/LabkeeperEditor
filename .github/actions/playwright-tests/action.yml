@@ -6,9 +6,6 @@ inputs:
     description: 'Node.js version'
     required: true
     default: '20'
-  github-token:
-    description: 'GitHub token for deployment'
-    required: true
 
 runs:
   using: "composite"
