@@ -646,7 +646,9 @@ test('remove-tags-from-first-project', async ({ page }) => {
         .click();
     for (const tagName of ['tag_1', 'tag_2', 'tag_3']) {
         await page.locator('.project-tags-input').fill(tagName);
-        await page.getByRole('button', { name: /Создать тег|Create tag/ }).click();
+        await page
+            .getByRole('button', { name: /Создать тег|Create tag/ })
+            .click();
     }
     await page.getByRole('button', { name: 'Close tags list' }).click();
 
@@ -673,12 +675,19 @@ test('remove-tags-from-first-project', async ({ page }) => {
         'tag_2',
         'tag_3',
     ]);
-    await expect(project2Row.locator('.project-tag-chip')).toContainText('tag_2');
-    await expect(project3Row.locator('.project-tag-chip')).toContainText('tag_3');
+    await expect(project2Row.locator('.project-tag-chip')).toContainText(
+        'tag_2'
+    );
+    await expect(project3Row.locator('.project-tag-chip')).toContainText(
+        'tag_3'
+    );
 
-    await expect(page).toHaveScreenshot('projects-tags-remove-step-1-before-delete.png', {
-        fullPage: true,
-    });
+    await expect(page).toHaveScreenshot(
+        'projects-tags-remove-step-1-before-delete.png',
+        {
+            fullPage: true,
+        }
+    );
 
     await project1Row
         .getByRole('button', { name: /Редактировать теги|Edit tags/ })
@@ -698,9 +707,12 @@ test('remove-tags-from-first-project', async ({ page }) => {
 
     await expect(project1Row.locator('.project-tag-chip')).toHaveCount(0);
 
-    await expect(page).toHaveScreenshot('projects-tags-remove-step-2-after-delete.png', {
-        fullPage: true,
-    });
+    await expect(page).toHaveScreenshot(
+        'projects-tags-remove-step-2-after-delete.png',
+        {
+            fullPage: true,
+        }
+    );
 });
 
 test('cycle-tag-colors', async ({ page }) => {
@@ -757,15 +769,21 @@ test('cycle-tag-colors', async ({ page }) => {
     await projectRow
         .getByRole('button', { name: 'Open color palette' })
         .click();
-    await expect(page).toHaveScreenshot('projects-tags-colors-step-1-open-panel.png', {
-        fullPage: true,
-    });
+    await expect(page).toHaveScreenshot(
+        'projects-tags-colors-step-1-open-panel.png',
+        {
+            fullPage: true,
+        }
+    );
 
     await projectRow.locator('.project-tags-color-input-text').fill('yellow');
     await projectRow.locator('.project-tags-color-input-text').press('Enter');
-    await expect(page).toHaveScreenshot('projects-tags-colors-step-2-typed-yellow.png', {
-        fullPage: true,
-    });
+    await expect(page).toHaveScreenshot(
+        'projects-tags-colors-step-2-typed-yellow.png',
+        {
+            fullPage: true,
+        }
+    );
 
     await projectRow.locator('.project-tags-input').fill('yellow');
     await projectRow
@@ -774,15 +792,21 @@ test('cycle-tag-colors', async ({ page }) => {
     await expect(
         projectRow.locator('.project-tag-chip').filter({ hasText: /^yellow$/ })
     ).toHaveCount(1);
-    await expect(page).toHaveScreenshot('projects-tags-colors-step-3-added-yellow.png', {
-        fullPage: true,
-    });
+    await expect(page).toHaveScreenshot(
+        'projects-tags-colors-step-3-added-yellow.png',
+        {
+            fullPage: true,
+        }
+    );
 
     await projectRow.locator('.project-tags-color-input-text').fill('brown');
     await projectRow.locator('.project-tags-color-input-text').press('Enter');
-    await expect(page).toHaveScreenshot('projects-tags-colors-step-4-typed-brown.png', {
-        fullPage: true,
-    });
+    await expect(page).toHaveScreenshot(
+        'projects-tags-colors-step-4-typed-brown.png',
+        {
+            fullPage: true,
+        }
+    );
 
     await projectRow.locator('.project-tags-input').fill('brown');
     await projectRow
@@ -791,9 +815,12 @@ test('cycle-tag-colors', async ({ page }) => {
     await expect(
         projectRow.locator('.project-tag-chip').filter({ hasText: /^brown$/ })
     ).toHaveCount(1);
-    await expect(page).toHaveScreenshot('projects-tags-colors-step-5-added-brown.png', {
-        fullPage: true,
-    });
+    await expect(page).toHaveScreenshot(
+        'projects-tags-colors-step-5-added-brown.png',
+        {
+            fullPage: true,
+        }
+    );
 });
 
 test('color-panel-swatch-and-input-values', async ({ page }) => {
