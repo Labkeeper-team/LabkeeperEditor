@@ -103,7 +103,7 @@ export const LatexFooterBoundaryCard = () => {
 
     const shouldShow =
         isLatexMode &&
-        !segments.some((segment) => segment.text.trim() === '\\end{document}');
+        !segments.some((segment) => segment.text.includes('\\end{document}'));
 
     if (!shouldShow) {
         return null;
