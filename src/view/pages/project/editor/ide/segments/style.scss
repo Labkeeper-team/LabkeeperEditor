@@ -3,10 +3,15 @@
 .segments-container {
     display: flex;
     flex-direction: column;
+    flex: 1 1 0;
+    min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
-    height: 100%;
     padding: 10px 10px 20px 10px;
+
+    > * {
+        flex-shrink: 0;
+    }
     .segment-editor-container [id^='ide-segment-'],
     .segment-editor-container .cm-editor {
         min-height: 80px;

@@ -8,6 +8,7 @@
         background: $gray-60;
         color: $gray-20;
         position: relative;
+        flex-shrink: 0;
         display: flex;
         flex-direction: column;
         align-items: stretch;
@@ -34,6 +35,7 @@
         background: $gray-60;
         color: $gray-20;
         position: relative;
+        flex-shrink: 0;
         display: flex;
         flex-direction: column;
         align-items: stretch;

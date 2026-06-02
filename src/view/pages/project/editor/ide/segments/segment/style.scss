@@ -49,6 +49,8 @@ $segment-editor-min-height: 80px;
     width: 100%;
     box-sizing: border-box;
     min-height: $segment-editor-min-height;
+    flex-shrink: 0;
+    align-self: stretch;
     &.is-active {
         border: 1px solid $blue-10;
     }
