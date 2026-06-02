@@ -134,6 +134,16 @@ export interface Translations {
             latex: string;
         };
     };
+    synctex: {
+        to_pdf: string;
+        to_editor: string;
+        errors: {
+            no_pdf: string;
+            no_cursor: string;
+            no_pdf_selection: string;
+            failed: string;
+        };
+    };
     header_menu: {
         menu: string;
         examples: string;

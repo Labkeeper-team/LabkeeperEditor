@@ -1,4 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { EditorNavigationTarget } from '../../../../viewModel/repository';
+import { PdfPosition } from '../../../../model/rpi';
 import { ideInitialState } from '../index.ts';
 import {
     CloneRequestState,
@@ -77,6 +79,36 @@ export const ideSlice = createSlice({
         ) => {
             state.projectPromptRequestState = payload;
         },
+        setActiveEditorLine: (
+            state,
+            { payload }: PayloadAction<number | null>
+        ) => {
+            state.activeEditorLine = payload;
+        },
+        setSynctexEditorPosition: (
+            state,
+            { payload }: PayloadAction<EditorNavigationTarget | null>
+        ) => {
+            state.synctexEditorPosition = payload;
+        },
+        setPdfClickPosition: (
+            state,
+            { payload }: PayloadAction<PdfPosition | null>
+        ) => {
+            state.pdfClickPosition = payload;
+        },
+        setPdfNavigationTarget: (
+            state,
+            { payload }: PayloadAction<PdfPosition | null>
+        ) => {
+            state.pdfNavigationTarget = payload;
+        },
+        setEditorNavigationTarget: (
+            state,
+            { payload }: PayloadAction<EditorNavigationTarget | null>
+        ) => {
+            state.editorNavigationTarget = payload;
+        },
     },
 });
 export const {
@@ -93,4 +125,9 @@ export const {
     setSaveProjectRequestState,
     setPdfUpdated,
     setProjectPromptRequestState,
+    setActiveEditorLine,
+    setSynctexEditorPosition,
+    setPdfClickPosition,
+    setPdfNavigationTarget,
+    setEditorNavigationTarget,
 } = ideSlice.actions;

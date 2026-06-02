@@ -25,6 +25,8 @@ import {
     SaveProjectRequestState,
 } from '../../../viewModel/repository';
 import { createEmptyProgram } from '../../../model/repository/ProgramRepository.ts';
+import { PdfPosition } from '../../../model/rpi';
+import { EditorNavigationTarget } from '../../../viewModel/repository';
 
 interface CallbackState {
     scrollEditorToBottom: boolean;
@@ -86,6 +88,12 @@ interface IdeState {
     saveProjectRequestState: SaveProjectRequestState;
     pdfUpdated: number;
     projectPromptRequestState: ProjectPromptRequestState;
+    activeEditorLine: number | null;
+    /** Последняя позиция курсора для SyncTeX (сохраняется при blur). */
+    synctexEditorPosition: EditorNavigationTarget | null;
+    pdfClickPosition: PdfPosition | null;
+    pdfNavigationTarget: PdfPosition | null;
+    editorNavigationTarget: EditorNavigationTarget | null;
 }
 
 interface PersistenceState {
@@ -120,6 +128,11 @@ export const ideInitialState: IdeState = {
     saveProjectRequestState: 'unknown',
     pdfUpdated: 0,
     projectPromptRequestState: 'unknown',
+    activeEditorLine: null,
+    synctexEditorPosition: null,
+    pdfClickPosition: null,
+    pdfNavigationTarget: null,
+    editorNavigationTarget: null,
 };
 
 export const persistenceInitialState: PersistenceState = {

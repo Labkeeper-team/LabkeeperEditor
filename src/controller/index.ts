@@ -334,6 +334,24 @@ export class Controller {
         }
     );
 
+    onSyncEditorToPdfRequest = createAsyncThunk(
+        'onSyncEditorToPdfRequest',
+        async () => {
+            this.wrapper('onSyncEditorToPdfRequest', () =>
+                this.programEditorService.onSyncEditorToPdf()
+            );
+        }
+    );
+
+    onSyncPdfToEditorRequest = createAsyncThunk(
+        'onSyncPdfToEditorRequest',
+        async () => {
+            this.wrapper('onSyncPdfToEditorRequest', () =>
+                this.programEditorService.onSyncPdfToEditor()
+            );
+        }
+    );
+
     onFocusSegmentRequest = createAsyncThunk(
         'onFocusSegmentRequest',
         async ({ segmentIndex }: { segmentIndex: number }) => {

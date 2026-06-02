@@ -8,7 +8,9 @@ import { ProgramService } from '../../model/service/ProgramService.ts';
 import { LoaderService } from '../domain/LoaderService.ts';
 import { IdeService } from '../domain/IdeService.ts';
 import { FileService } from '../domain/FileService.ts';
-import { ProgramRoundStrategy, SegmentType } from '../../model/domain.ts';
+import { ProgramRoundStrategy, Segment, SegmentType } from '../../model/domain.ts';
+import { getIdeSegmentEditorView } from '../../view/pages/project/editor/ide/segments/ideSegmentDeactivate';
+import { EditorNavigationTarget } from '../repository';
 
 export class ProgramEditorService {
     repository: ViewModelRepository;
@@ -336,9 +338,29 @@ export class ProgramEditorService {
         this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(
             segmentIndex
         );
+        const view = getIdeSegmentEditorView(segmentIndex);
+        if (view) {
+            const head = view.state.selection.main.head;
+            const line = view.state.doc.lineAt(head).number;
+            this.repository.ideViewModelRepository.setActiveEditorLine(line);
+            this.repository.ideViewModelRepository.setSynctexEditorPosition({
+                segmentIndex,
+                line,
+            });
+        }
     };
 
     onBlurSegment = async (segmentIndex: number) => {
+        const view = getIdeSegmentEditorView(segmentIndex);
+        if (view) {
+            const head = view.state.selection.main.head;
+            const line = view.state.doc.lineAt(head).number;
+            this.repository.ideViewModelRepository.setSynctexEditorPosition({
+                segmentIndex,
+                line,
+            });
+        }
+
         if (
             this.repository.ideViewModelRepository.activeSegmentIndex() ===
             segmentIndex
@@ -379,6 +401,158 @@ export class ProgramEditorService {
             segmentIndex,
             segmentText
         );
+    };
+
+    private canUseSynctexNavigation = (): boolean => {
+        if (!this.repository.userViewModelRepository.isAuthenticated()) {
+            return false;
+        }
+        if (this.repository.projectViewModelRepository.projectIsReadonly()) {
+            return false;
+        }
+        if (this.repository.projectViewModelRepository.mode() !== 'latex') {
+            return false;
+        }
+        const project =
+            this.repository.projectViewModelRepository.project();
+        return Boolean(project?.projectId);
+    };
+
+    private getSegmentIdForNavigation = (segmentIndex: number): number => {
+        const program =
+            this.repository.projectViewModelRepository.currentProgram();
+        const segment = program?.segments[segmentIndex] as
+            | (Segment & { id?: number })
+            | undefined;
+        if (segment?.id != null && segment.id > 0) {
+            return segment.id;
+        }
+        return segmentIndex + 1;
+    };
+
+    private resolveSynctexEditorPosition = (): EditorNavigationTarget | null => {
+        const activeIndex =
+            this.repository.ideViewModelRepository.activeSegmentIndex();
+        const activeLine =
+            this.repository.ideViewModelRepository.activeEditorLine();
+
+        if (activeIndex >= 0 && activeLine != null && activeLine >= 1) {
+            return { segmentIndex: activeIndex, line: activeLine };
+        }
+
+        const saved =
+            this.repository.ideViewModelRepository.synctexEditorPosition();
+        if (saved && saved.segmentIndex >= 0 && saved.line >= 1) {
+            return saved;
+        }
+
+        const previousIndex =
+            this.repository.ideViewModelRepository.previousActiveSegmentIndex();
+        if (previousIndex >= 0) {
+            const view = getIdeSegmentEditorView(previousIndex);
+            if (view) {
+                const head = view.state.selection.main.head;
+                const line = view.state.doc.lineAt(head).number;
+                return { segmentIndex: previousIndex, line };
+            }
+        }
+
+        return null;
+    };
+
+    onSyncEditorToPdf = async () => {
+        if (!this.canUseSynctexNavigation()) {
+            return;
+        }
+        const project =
+            this.repository.projectViewModelRepository.project();
+        if (!project?.projectId) {
+            return;
+        }
+        if (!this.repository.projectViewModelRepository.pdfUri()) {
+            this.repository.toast(
+                this.repository.dictionary.synctex.errors.no_pdf,
+                'error'
+            );
+            return;
+        }
+        const position = this.resolveSynctexEditorPosition();
+        if (!position) {
+            this.repository.toast(
+                this.repository.dictionary.synctex.errors.no_cursor,
+                'error'
+            );
+            return;
+        }
+        const result = await this.rpi.navigationDocToPdfRequest(
+            project.projectId,
+            {
+                segmentId: this.getSegmentIdForNavigation(
+                    position.segmentIndex
+                ),
+                line: position.line,
+            }
+        );
+        if (!result.isOk || !result.body) {
+            this.repository.toast(
+                this.repository.dictionary.synctex.errors.failed,
+                'error'
+            );
+            return;
+        }
+        this.repository.ideViewModelRepository.setPdfNavigationTarget(
+            result.body
+        );
+    };
+
+    onSyncPdfToEditor = async () => {
+        if (!this.canUseSynctexNavigation()) {
+            return;
+        }
+        const project =
+            this.repository.projectViewModelRepository.project();
+        if (!project?.projectId) {
+            return;
+        }
+        const pdfPosition =
+            this.repository.ideViewModelRepository.pdfClickPosition();
+        if (!pdfPosition) {
+            this.repository.toast(
+                this.repository.dictionary.synctex.errors.no_pdf_selection,
+                'error'
+            );
+            return;
+        }
+        const result = await this.rpi.navigationPdfToDocRequest(
+            project.projectId,
+            pdfPosition
+        );
+        if (!result.isOk || !result.body) {
+            this.repository.toast(
+                this.repository.dictionary.synctex.errors.failed,
+                'error'
+            );
+            return;
+        }
+        const program =
+            this.repository.projectViewModelRepository.currentProgram();
+        const segments = program?.segments ?? [];
+        let segmentIndex = segments.findIndex(
+            (s) => (s as Segment & { id?: number }).id === result.body.segmentId
+        );
+        if (segmentIndex < 0) {
+            segmentIndex = result.body.segmentId - 1;
+        }
+        if (segmentIndex < 0 || segmentIndex >= segments.length) {
+            return;
+        }
+        this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(
+            segmentIndex
+        );
+        this.repository.ideViewModelRepository.setEditorNavigationTarget({
+            segmentIndex,
+            line: result.body.line,
+        });
     };
 
     onAddSegmentClicked = (type: SegmentType) => {

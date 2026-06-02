@@ -140,6 +140,16 @@ export const en: Translations = {
             latex: 'latex',
         },
     },
+    synctex: {
+        to_pdf: 'Go to PDF',
+        to_editor: 'Go to source',
+        errors: {
+            no_pdf: 'Compile the project to sync with the PDF.',
+            no_cursor: 'Place the cursor in a segment first.',
+            no_pdf_selection: 'Click in the PDF to choose a position.',
+            failed: 'Could not sync position. Recompile and try again.',
+        },
+    },
     header_menu: {
         menu: 'Menu',
         examples: 'Project examples',

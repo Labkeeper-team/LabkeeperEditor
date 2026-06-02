@@ -36,7 +36,12 @@ import { Typography } from '../../../../../../components/typography';
 import { DropdownMenu } from '../../../../../../components/dropdownMenu';
 import { ArrowUp } from '../../../../../../icons';
 import { AppDispatch, StorageState } from '../../../../../../store';
-import { setPendingSegmentEditorCursor } from '../../../../../../store/slices/ide';
+import {
+    setActiveEditorLine,
+    setEditorNavigationTarget,
+    setPendingSegmentEditorCursor,
+    setSynctexEditorPosition,
+} from '../../../../../../store/slices/ide';
 import {
     useIsProjectReadonly,
     useSearch,
@@ -153,6 +158,9 @@ export const SegmentEditor = memo(
         );
         const pendingSegmentEditorCursor = useSelector(
             (state: StorageState) => state.ide.pendingSegmentEditorCursor
+        );
+        const editorNavigationTarget = useSelector(
+            (state: StorageState) => state.ide.editorNavigationTarget
         );
         const pendingIdeCursorRef = useRef(pendingSegmentEditorCursor);
         pendingIdeCursorRef.current = pendingSegmentEditorCursor;
@@ -514,10 +522,44 @@ export const SegmentEditor = memo(
                             currentDocKeyRef.current ??
                             computeDocKey(update.state.doc.toString());
                         cursorByDocKeyRef.current.set(key, head);
+                        const line = update.state.doc.lineAt(head).number;
+                        const segmentIndex = segmentIdxForPendingRef.current;
+                        dispatchForPendingRef.current(setActiveEditorLine(line));
+                        dispatchForPendingRef.current(
+                            setSynctexEditorPosition({
+                                segmentIndex,
+                                line,
+                            })
+                        );
                     }
                 }),
             []
         );
+
+        useEffect(() => {
+            const target = editorNavigationTarget;
+            if (!target || target.segmentIndex !== props.index) {
+                return;
+            }
+            const view = editor?.current?.view;
+            if (!view) {
+                return;
+            }
+            const doc = view.state.doc;
+            const lineNumber = Math.max(
+                1,
+                Math.min(target.line, doc.lines)
+            );
+            const line = doc.line(lineNumber);
+            const offset = line.from;
+            dispatch(
+                setPendingSegmentEditorCursor({
+                    segmentIndex: props.index,
+                    offset,
+                })
+            );
+            dispatch(setEditorNavigationTarget(null));
+        }, [editorNavigationTarget, props.index, dispatch]);
 
         /**
          * Защита от стейл-value из @uiw/react-codemirror.

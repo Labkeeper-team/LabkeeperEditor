@@ -12,6 +12,8 @@ export const URLS = {
     compilePdf: `${uri}/api/${version}/public/compile/pdf`,
     compileProject: `${uri}/api/${version}/public/project/{id}/compile`,
     compileProjectPdf: `${uri}/api/${version}/public/project/{id}/compile/pdf`,
+    navigationDocToPdf: `${uri}/api/${version}/public/project/{id}/navigation/pdf`,
+    navigationPdfToDoc: `${uri}/api/${version}/public/project/{id}/navigation/doc`,
     getAllProjects: `${uri}/api/${version}/public/project/all`,
     getDefaultProject: `${uri}/api/${version}/public/project/default`,
     createProject: `${uri}/api/${version}/public/project/create`,

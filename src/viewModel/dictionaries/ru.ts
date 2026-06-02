@@ -147,6 +147,16 @@ export const ru: Translations = {
             latex: 'latex',
         },
     },
+    synctex: {
+        to_pdf: 'К PDF',
+        to_editor: 'К коду',
+        errors: {
+            no_pdf: 'Сначала выполните проект, чтобы появился PDF.',
+            no_cursor: 'Сначала установите курсор в сегменте.',
+            no_pdf_selection: 'Кликните в PDF, чтобы выбрать позицию.',
+            failed: 'Не удалось синхронизировать позицию. Перекомпилируйте и попробуйте снова.',
+        },
+    },
     header_menu: {
         menu: 'Меню',
         examples: 'Примеры проектов',

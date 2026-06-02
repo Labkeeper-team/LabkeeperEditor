@@ -19,6 +19,8 @@ import {
     Rpi,
     UploadFileResponse,
     CompileSuccessPdfResponse,
+    PdfPosition,
+    ProgramDocumentPosition,
 } from '../../model/rpi';
 
 async function requestWrapper<T>(
@@ -113,6 +115,30 @@ export class WebRpi implements Rpi {
     ): Promise<RequestResult<CompileSuccessPdfResponse>> {
         return requestWrapper(async () =>
             axios.post(URLS.compileProjectPdf.replace('{id}', projectId))
+        );
+    }
+
+    async navigationDocToPdfRequest(
+        projectId: string,
+        position: ProgramDocumentPosition
+    ): Promise<RequestResult<PdfPosition>> {
+        return requestWrapper(async () =>
+            axios.post(
+                URLS.navigationDocToPdf.replace('{id}', projectId),
+                position
+            )
+        );
+    }
+
+    async navigationPdfToDocRequest(
+        projectId: string,
+        position: PdfPosition
+    ): Promise<RequestResult<ProgramDocumentPosition>> {
+        return requestWrapper(async () =>
+            axios.post(
+                URLS.navigationPdfToDoc.replace('{id}', projectId),
+                position
+            )
         );
     }
 

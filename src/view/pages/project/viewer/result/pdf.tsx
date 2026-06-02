@@ -1,13 +1,16 @@
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { StorageState } from '../../../../store';
 import * as pdfjs from 'pdfjs-dist';
 import { Util } from 'pdfjs-dist';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { PdfPosition } from '../../../../../model/rpi';
+import { setPdfClickPosition, setPdfNavigationTarget } from '../../../../store/slices/ide';
 
 import './style.scss';
 import 'pdfjs-dist/web/pdf_viewer.css';
 import { useDictionary } from '../../../../store/selectors/translations';
 import { Typography } from '../../../../components/typography';
+import { AppDispatch } from '../../../../store';
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
     'pdfjs-dist/build/pdf.worker.min.mjs',
@@ -15,105 +18,139 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 ).toString();
 
 export const PdfResultViewer = () => {
+    const dispatch = useDispatch<AppDispatch>();
     const pdfUri = useSelector((state: StorageState) => state.project.pdfUri);
     const dictionary = useSelector(useDictionary);
+    const pdfNavigationTarget = useSelector(
+        (state: StorageState) => state.ide.pdfNavigationTarget
+    );
 
     const containerRef = useRef<HTMLDivElement>(null);
     const pdfRef = useRef<pdfjs.PDFDocumentProxy | null>(null);
-
-    const activeIndex = useSelector(
-        (state: StorageState) => state.ide.activeSegmentIndex
-    );
+    const pdfDisplayScaleRef = useRef<number>(1);
 
     const scrollTopRef = useRef<number>(0);
     const lastScrollTopRef = useRef<number>(0);
-    const scaledRef = useRef<number>(1);
     const isRestoringRef = useRef<boolean>(true);
-    /** После перезагрузки PDF не дергать scrollToSegment (конфликтует с восстановлением позиции). */
-    const suppressNextSegmentScrollRef = useRef(false);
-    const hadPdfPagesRef = useRef(false);
-    /** Пользователь уже крутил документ после текущей загрузки — не перебивать отложенным programmatic scroll. */
-    const userScrolledSincePdfLoadRef = useRef(false);
-    const pdfLayoutGenRef = useRef(0);
-    const activeIndexRef = useRef(activeIndex);
-    const prevActiveIndexForScrollRef = useRef<number | undefined>(undefined);
 
     const [isPdfLoadingError, setIsPdfLoadingError] = useState<boolean>(false);
     const [isPdfRendering, setIsPdfRendering] = useState<boolean>(false);
     const [pageElements, setPageElements] = useState<HTMLDivElement[]>([]);
-    /** Увеличивается после каждой успешной вёрстки PDF; без этого в deps ловили бы только смену activeIndex, а не «документ готов». */
-    const [pdfLayoutGeneration, setPdfLayoutGeneration] = useState(0);
     const pageElementsRef = useRef<HTMLDivElement[]>([]);
 
     useEffect(() => {
         pageElementsRef.current = pageElements;
     }, [pageElements]);
 
-    useEffect(() => {
-        pdfLayoutGenRef.current = pdfLayoutGeneration;
-    }, [pdfLayoutGeneration]);
-
-    useEffect(() => {
-        activeIndexRef.current = activeIndex;
-    }, [activeIndex]);
-
-    const runScrollToSegment = useCallback(
-        async (
-            activeIndex_: number,
-            opts: { layoutGenAtStart?: number } = {}
-        ) => {
+    const scrollToPdfPosition = useCallback(
+        async (position: PdfPosition): Promise<boolean> => {
             const pdf = pdfRef.current;
             const container = containerRef.current;
             const pages = pageElementsRef.current;
-            if (!pdf || !container || pages.length === 0 || activeIndex_ < 0) {
-                return;
+            if (!pdf || !container || pages.length === 0 || isPdfRendering) {
+                return false;
             }
 
-            const destinationIndex = `segment${activeIndex_}`;
-            const dest = await pdf.getDestination(destinationIndex);
-            if (!dest || !containerRef.current) return;
-            const pageIndex = await pdf.getPageIndex(dest[0]);
-            const offsetYPdf = typeof dest[3] === 'number' ? dest[3] : 0;
+            const pageIndex = position.page - 1;
+            if (pageIndex < 0 || pageIndex >= pages.length) {
+                return false;
+            }
 
             const pageEl = pages[pageIndex];
-            if (!pageEl) return;
-
-            if (opts.layoutGenAtStart !== undefined) {
-                if (opts.layoutGenAtStart !== pdfLayoutGenRef.current) return;
-                if (userScrolledSincePdfLoadRef.current) return;
+            const currentPage = await pdf.getPage(position.page);
+            if (!containerRef.current || pdfRef.current !== pdf) {
+                return false;
             }
 
-            if (activeIndex_ !== activeIndexRef.current) return;
-
-            const currentPage = await pdf.getPage(pageIndex + 1);
-            if (!containerRef.current || pdfRef.current !== pdf) return;
-
             const unscaledViewport = currentPage.getViewport({
-                scale: scaledRef.current,
+                scale: pdfDisplayScaleRef.current,
             });
             const pageCSSHeight = pageEl.scrollHeight;
             const pagePdfHeight = unscaledViewport.viewBox[3];
             const scaleBetweenPdfAndCss = pageCSSHeight / pagePdfHeight;
-            const offSetCSS = offsetYPdf * scaleBetweenPdfAndCss;
+            const offSetCSS = position.y * scaleBetweenPdfAndCss;
+
             const scrollTop =
                 containerRef.current.scrollHeight -
                 (pdf.numPages - (pageIndex + 1)) * pageCSSHeight -
                 offSetCSS;
 
-            if (opts.layoutGenAtStart !== undefined) {
-                if (opts.layoutGenAtStart !== pdfLayoutGenRef.current) return;
-                if (userScrolledSincePdfLoadRef.current) return;
-            }
-            if (activeIndex_ !== activeIndexRef.current) return;
-
             containerRef.current.scrollTo({
-                top: scrollTop,
-                behavior:
-                    opts.layoutGenAtStart !== undefined ? 'auto' : 'smooth',
+                top: Math.max(0, scrollTop),
+                behavior: 'smooth',
             });
             scrollTopRef.current = scrollTop;
+            return true;
         },
-        []
+        [isPdfRendering]
+    );
+
+    /** Скролл после ответа API; повтор при появлении страниц PDF. */
+    useEffect(() => {
+        if (!pdfNavigationTarget || isPdfRendering) {
+            return;
+        }
+        void (async () => {
+            const ok = await scrollToPdfPosition(pdfNavigationTarget);
+            if (ok) {
+                dispatch(setPdfNavigationTarget(null));
+            }
+        })();
+    }, [
+        pdfNavigationTarget,
+        scrollToPdfPosition,
+        dispatch,
+        pageElements.length,
+        isPdfRendering,
+    ]);
+
+    const handlePdfClick = useCallback(
+        (event: React.MouseEvent<HTMLDivElement>) => {
+            const pages = pageElementsRef.current;
+            const pdf = pdfRef.current;
+            if (!pages.length || !pdf) {
+                return;
+            }
+
+            const target = event.target;
+            if (!(target instanceof Element)) {
+                return;
+            }
+
+            const pageWrapper = target.closest('[data-pdf-page]');
+            if (!(pageWrapper instanceof HTMLElement)) {
+                return;
+            }
+
+            const pageIndex = Number(pageWrapper.dataset.pdfPage);
+            if (!Number.isFinite(pageIndex) || pageIndex < 0) {
+                return;
+            }
+
+            const rect = pageWrapper.getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            const clickY = event.clientY - rect.top;
+
+            void (async () => {
+                const currentPage = await pdf.getPage(pageIndex + 1);
+                const viewport = currentPage.getViewport({
+                    scale: pdfDisplayScaleRef.current,
+                });
+                const scaleX = viewport.width / rect.width;
+                const scaleY = viewport.height / rect.height;
+                const x = Math.round(clickX * scaleX);
+                const y = Math.round((rect.height - clickY) * scaleY);
+
+                dispatch(
+                    setPdfClickPosition({
+                        page: pageIndex + 1,
+                        x,
+                        y,
+                    })
+                );
+            })();
+        },
+        [dispatch]
     );
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -121,7 +158,6 @@ export const PdfResultViewer = () => {
         const container = containerRef.current;
         if (!container) return;
         if (isRestoringRef.current) return;
-        userScrolledSincePdfLoadRef.current = true;
         lastScrollTopRef.current = scrollTopRef.current;
         scrollTopRef.current = container.scrollTop;
     };
@@ -141,13 +177,11 @@ export const PdfResultViewer = () => {
             if (!pdfUri) {
                 setIsPdfRendering(false);
                 setIsPdfLoadingError(false);
-                hadPdfPagesRef.current = false;
                 return;
             }
             setIsPdfRendering(true);
-            /** Иначе после ошибки остаётся ветка без containerRef — loadPdf после await падает на innerHTML. */
             setIsPdfLoadingError(false);
-            userScrolledSincePdfLoadRef.current = false;
+            dispatch(setPdfClickPosition(null));
             try {
                 const dpr = window.devicePixelRatio || 1;
                 const pdf = await pdfjs.getDocument(pdfUri).promise;
@@ -171,6 +205,7 @@ export const PdfResultViewer = () => {
                 const unscaledViewport = firstPage.getViewport({ scale: 1 });
 
                 const scale = containerWidth / unscaledViewport.width;
+                pdfDisplayScaleRef.current = scale;
                 pdfRef.current = pdf;
                 const restoreScrollTop = lastScrollTopRef.current;
                 const hideUntilScrolled = restoreScrollTop > 0;
@@ -181,9 +216,7 @@ export const PdfResultViewer = () => {
 
                 const pages: HTMLDivElement[] = [];
                 const scaledCss = scale * dpr;
-                scaledRef.current = scaledCss;
 
-                /** Сначала все обёртки с финальной высотой — иначе scrollHeight растёт по мере рендера и ползунок «плавает». */
                 type PageSlot = {
                     page: pdfjs.PDFPageProxy;
                     wrapper: HTMLDivElement;
@@ -206,6 +239,7 @@ export const PdfResultViewer = () => {
                     });
 
                     const wrapper = document.createElement('div');
+                    wrapper.dataset.pdfPage = String(i - 1);
                     wrapper.style.position = 'relative';
                     wrapper.style.width = `${viewport.width}px`;
                     wrapper.style.height = `${viewport.height}px`;
@@ -296,14 +330,8 @@ export const PdfResultViewer = () => {
                 container.scrollTop = clampedScroll;
                 scrollTopRef.current = clampedScroll;
 
-                if (hadPdfPagesRef.current) {
-                    suppressNextSegmentScrollRef.current = true;
-                }
-                hadPdfPagesRef.current = true;
-
                 setIsPdfLoadingError(false);
                 setPageElements(pages);
-                setPdfLayoutGeneration((g) => g + 1);
 
                 const finishRestore = () => {
                     if (cancelled) return;
@@ -349,47 +377,8 @@ export const PdfResultViewer = () => {
             cancelled = true;
             setIsPdfRendering(false);
         };
-    }, [pdfUri]);
+    }, [pdfUri, dispatch]);
 
-    /** Только новая вёрстка PDF: подскролл к активному сегменту, без повторов при тех же deps. */
-    useEffect(() => {
-        if (pdfLayoutGeneration === 0) return;
-
-        if (suppressNextSegmentScrollRef.current) {
-            suppressNextSegmentScrollRef.current = false;
-            return;
-        }
-
-        const idx = activeIndexRef.current;
-        if (
-            idx < 0 ||
-            !pdfRef.current ||
-            pageElementsRef.current.length === 0
-        ) {
-            return;
-        }
-
-        const genAtStart = pdfLayoutGeneration;
-        void runScrollToSegment(idx, { layoutGenAtStart: genAtStart });
-    }, [pdfLayoutGeneration, runScrollToSegment]);
-
-    /** Смена активного сегмента в IDE — скроллим PDF к нему (не то же самое, что перерисовка страниц). */
-    useEffect(() => {
-        const prev = prevActiveIndexForScrollRef.current;
-        prevActiveIndexForScrollRef.current = activeIndex;
-
-        if (prev === undefined) return;
-        if (prev === activeIndex) return;
-        if (
-            activeIndex < 0 ||
-            !pdfRef.current ||
-            pageElementsRef.current.length === 0
-        ) {
-            return;
-        }
-
-        void runScrollToSegment(activeIndex);
-    }, [activeIndex, runScrollToSegment]);
     const showHelpText = !pdfUri || isPdfLoadingError;
     const showPdfLoading = Boolean(
         pdfUri && !isPdfLoadingError && isPdfRendering
@@ -438,6 +427,7 @@ export const PdfResultViewer = () => {
                     ) : null}
                     <div
                         ref={containerRef}
+                        onClick={handlePdfClick}
                         style={{
                             overflow: 'auto',
                             height: '100%',

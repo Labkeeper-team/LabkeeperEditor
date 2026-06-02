@@ -30,6 +30,17 @@ export interface CompileSuccessPdfResponse {
     pdfUri: string;
 }
 
+export interface ProgramDocumentPosition {
+    segmentId: number;
+    line: number;
+}
+
+export interface PdfPosition {
+    page: number;
+    x: number;
+    y: number;
+}
+
 export interface ListFilesResponse {
     files: LabkeeperFile[];
 }
@@ -65,6 +76,16 @@ export interface Rpi {
     compileProjectPdfRequest(
         projectId: string
     ): Promise<RequestResult<PdfCompilationResponse>>;
+
+    navigationDocToPdfRequest(
+        projectId: string,
+        position: ProgramDocumentPosition
+    ): Promise<RequestResult<PdfPosition>>;
+
+    navigationPdfToDocRequest(
+        projectId: string,
+        position: PdfPosition
+    ): Promise<RequestResult<ProgramDocumentPosition>>;
 
     uploadFileRequest(
         formData: FormData,

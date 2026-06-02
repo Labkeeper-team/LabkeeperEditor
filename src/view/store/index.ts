@@ -40,6 +40,11 @@ import {
     setUndoEnabled,
     setPdfUpdated,
     setProjectPromptRequestState,
+    setActiveEditorLine,
+    setSynctexEditorPosition,
+    setPdfClickPosition,
+    setPdfNavigationTarget,
+    setEditorNavigationTarget,
 } from './slices/ide';
 import {
     clearLastProgram,
@@ -180,6 +185,13 @@ export const createViewModelStateFromStore = (
             pdfUpdated: () => store.getState().ide.pdfUpdated,
             projectPromptRequestState: () =>
                 store.getState().ide.projectPromptRequestState(),
+            activeEditorLine: () => store.getState().ide.activeEditorLine,
+            synctexEditorPosition: () =>
+                store.getState().ide.synctexEditorPosition,
+            pdfClickPosition: () => store.getState().ide.pdfClickPosition,
+            pdfNavigationTarget: () => store.getState().ide.pdfNavigationTarget,
+            editorNavigationTarget: () =>
+                store.getState().ide.editorNavigationTarget,
 
             setProjectPromptRequestStatus: (v) =>
                 store.dispatch(setProjectPromptRequestState(v)),
@@ -203,6 +215,16 @@ export const createViewModelStateFromStore = (
                 store.dispatch(setPreviousActiveSegmentIndex(index)),
             setPendingSegmentEditorCursor: (value) =>
                 store.dispatch(setPendingSegmentEditorCursor(value)),
+            setActiveEditorLine: (line) =>
+                store.dispatch(setActiveEditorLine(line)),
+            setSynctexEditorPosition: (position) =>
+                store.dispatch(setSynctexEditorPosition(position)),
+            setPdfClickPosition: (position) =>
+                store.dispatch(setPdfClickPosition(position)),
+            setPdfNavigationTarget: (target) =>
+                store.dispatch(setPdfNavigationTarget(target)),
+            setEditorNavigationTarget: (target) =>
+                store.dispatch(setEditorNavigationTarget(target)),
         },
         persistenceViewModelRepository: {
             instructionExpanded: () =>

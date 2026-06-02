@@ -90,6 +90,11 @@ export type PendingSegmentEditorCursor = {
     offset: number;
 };
 
+export type EditorNavigationTarget = {
+    segmentIndex: number;
+    line: number;
+};
+
 class MockViewModelRepositoryState {
     location = '/';
 
@@ -97,6 +102,11 @@ class MockViewModelRepositoryState {
     search: string | undefined = undefined;
     previousActiveSegmentIndex = -1;
     pendingSegmentEditorCursor: PendingSegmentEditorCursor | null = null;
+    activeEditorLine: number | null = null;
+    synctexEditorPosition: EditorNavigationTarget | null = null;
+    pdfClickPosition: import('../../model/rpi').PdfPosition | null = null;
+    pdfNavigationTarget: import('../../model/rpi').PdfPosition | null = null;
+    editorNavigationTarget: EditorNavigationTarget | null = null;
     redoEnabled: boolean = false;
     undoEnabled: boolean = false;
     cloneRequestState: CloneRequestState = 'unknown';
@@ -216,6 +226,12 @@ export const mockViewModelState = (): MockViewModelRepository => {
             pdfUpdated: () => mockViewModelState.pdfUpdated,
             projectPromptRequestState: () =>
                 mockViewModelState.projectPromptRequestState,
+            activeEditorLine: () => mockViewModelState.activeEditorLine,
+            synctexEditorPosition: () => mockViewModelState.synctexEditorPosition,
+            pdfClickPosition: () => mockViewModelState.pdfClickPosition,
+            pdfNavigationTarget: () => mockViewModelState.pdfNavigationTarget,
+            editorNavigationTarget: () =>
+                mockViewModelState.editorNavigationTarget,
 
             setProjectPromptRequestStatus: (v) =>
                 (mockViewModelState.projectPromptRequestState = v),
@@ -242,6 +258,16 @@ export const mockViewModelState = (): MockViewModelRepository => {
                 (mockViewModelState.previousActiveSegmentIndex = index),
             setPendingSegmentEditorCursor: (value) =>
                 (mockViewModelState.pendingSegmentEditorCursor = value),
+            setActiveEditorLine: (line) =>
+                (mockViewModelState.activeEditorLine = line),
+            setSynctexEditorPosition: (position) =>
+                (mockViewModelState.synctexEditorPosition = position),
+            setPdfClickPosition: (position) =>
+                (mockViewModelState.pdfClickPosition = position),
+            setPdfNavigationTarget: (target) =>
+                (mockViewModelState.pdfNavigationTarget = target),
+            setEditorNavigationTarget: (target) =>
+                (mockViewModelState.editorNavigationTarget = target),
         },
         persistenceViewModelRepository: {
             instructionExpanded: () => mockViewModelState.instructionExpanded,
@@ -412,6 +438,11 @@ export interface IdeViewModelRepository {
     saveProjectRequestState: () => SaveProjectRequestState;
     projectPromptRequestState: () => ProjectPromptRequestState;
     pdfUpdated: () => number;
+    activeEditorLine: () => number | null;
+    synctexEditorPosition: () => EditorNavigationTarget | null;
+    pdfClickPosition: () => import('../../model/rpi').PdfPosition | null;
+    pdfNavigationTarget: () => import('../../model/rpi').PdfPosition | null;
+    editorNavigationTarget: () => EditorNavigationTarget | null;
 
     setProjectPromptRequestStatus: (v: ProjectPromptRequestState) => void;
     setPdfUpdated: (v: number) => void;
@@ -422,6 +453,19 @@ export interface IdeViewModelRepository {
     setPreviousActiveSegmentIndex: (index: number) => void;
     setPendingSegmentEditorCursor: (
         value: PendingSegmentEditorCursor | null
+    ) => void;
+    setActiveEditorLine: (line: number | null) => void;
+    setSynctexEditorPosition: (
+        position: EditorNavigationTarget | null
+    ) => void;
+    setPdfClickPosition: (
+        position: import('../../model/rpi').PdfPosition | null
+    ) => void;
+    setPdfNavigationTarget: (
+        target: import('../../model/rpi').PdfPosition | null
+    ) => void;
+    setEditorNavigationTarget: (
+        target: EditorNavigationTarget | null
     ) => void;
     setCloneRequestState: (state: CloneRequestState) => void;
     setGetProjectRequestState: (state: GetProjectRequestState) => void;
