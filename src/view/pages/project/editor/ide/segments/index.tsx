@@ -70,7 +70,11 @@ export const Segments = () => {
 
         container.addEventListener('mousedown', onMouseDownCapture, true);
         return () => {
-            container.removeEventListener('mousedown', onMouseDownCapture, true);
+            container.removeEventListener(
+                'mousedown',
+                onMouseDownCapture,
+                true
+            );
         };
     }, [dispatch]);
 

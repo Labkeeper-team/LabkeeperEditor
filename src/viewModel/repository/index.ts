@@ -227,7 +227,8 @@ export const mockViewModelState = (): MockViewModelRepository => {
             projectPromptRequestState: () =>
                 mockViewModelState.projectPromptRequestState,
             activeEditorLine: () => mockViewModelState.activeEditorLine,
-            synctexEditorPosition: () => mockViewModelState.synctexEditorPosition,
+            synctexEditorPosition: () =>
+                mockViewModelState.synctexEditorPosition,
             pdfClickPosition: () => mockViewModelState.pdfClickPosition,
             pdfNavigationTarget: () => mockViewModelState.pdfNavigationTarget,
             editorNavigationTarget: () =>
@@ -455,18 +456,14 @@ export interface IdeViewModelRepository {
         value: PendingSegmentEditorCursor | null
     ) => void;
     setActiveEditorLine: (line: number | null) => void;
-    setSynctexEditorPosition: (
-        position: EditorNavigationTarget | null
-    ) => void;
+    setSynctexEditorPosition: (position: EditorNavigationTarget | null) => void;
     setPdfClickPosition: (
         position: import('../../model/rpi').PdfPosition | null
     ) => void;
     setPdfNavigationTarget: (
         target: import('../../model/rpi').PdfPosition | null
     ) => void;
-    setEditorNavigationTarget: (
-        target: EditorNavigationTarget | null
-    ) => void;
+    setEditorNavigationTarget: (target: EditorNavigationTarget | null) => void;
     setCloneRequestState: (state: CloneRequestState) => void;
     setGetProjectRequestState: (state: GetProjectRequestState) => void;
     setGetFilesRequestState: (state: GetFilesRequestState) => void;

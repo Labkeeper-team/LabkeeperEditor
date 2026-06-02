@@ -112,4 +112,3 @@ export function isClickOutsideAllIdeSegments(target: Element): boolean {
     }
     return target.closest('#segments-container') !== null;
 }
-

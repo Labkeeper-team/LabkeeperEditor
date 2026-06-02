@@ -8,7 +8,11 @@ import { ProgramService } from '../../model/service/ProgramService.ts';
 import { LoaderService } from '../domain/LoaderService.ts';
 import { IdeService } from '../domain/IdeService.ts';
 import { FileService } from '../domain/FileService.ts';
-import { ProgramRoundStrategy, Segment, SegmentType } from '../../model/domain.ts';
+import {
+    ProgramRoundStrategy,
+    Segment,
+    SegmentType,
+} from '../../model/domain.ts';
 import { getIdeSegmentEditorView } from '../../view/pages/project/editor/ide/segments/ideSegmentDeactivate';
 import { EditorNavigationTarget } from '../repository';
 
@@ -413,8 +417,7 @@ export class ProgramEditorService {
         if (this.repository.projectViewModelRepository.mode() !== 'latex') {
             return false;
         }
-        const project =
-            this.repository.projectViewModelRepository.project();
+        const project = this.repository.projectViewModelRepository.project();
         return Boolean(project?.projectId);
     };
 
@@ -430,42 +433,42 @@ export class ProgramEditorService {
         return segmentIndex + 1;
     };
 
-    private resolveSynctexEditorPosition = (): EditorNavigationTarget | null => {
-        const activeIndex =
-            this.repository.ideViewModelRepository.activeSegmentIndex();
-        const activeLine =
-            this.repository.ideViewModelRepository.activeEditorLine();
+    private resolveSynctexEditorPosition =
+        (): EditorNavigationTarget | null => {
+            const activeIndex =
+                this.repository.ideViewModelRepository.activeSegmentIndex();
+            const activeLine =
+                this.repository.ideViewModelRepository.activeEditorLine();
 
-        if (activeIndex >= 0 && activeLine != null && activeLine >= 1) {
-            return { segmentIndex: activeIndex, line: activeLine };
-        }
-
-        const saved =
-            this.repository.ideViewModelRepository.synctexEditorPosition();
-        if (saved && saved.segmentIndex >= 0 && saved.line >= 1) {
-            return saved;
-        }
-
-        const previousIndex =
-            this.repository.ideViewModelRepository.previousActiveSegmentIndex();
-        if (previousIndex >= 0) {
-            const view = getIdeSegmentEditorView(previousIndex);
-            if (view) {
-                const head = view.state.selection.main.head;
-                const line = view.state.doc.lineAt(head).number;
-                return { segmentIndex: previousIndex, line };
+            if (activeIndex >= 0 && activeLine != null && activeLine >= 1) {
+                return { segmentIndex: activeIndex, line: activeLine };
             }
-        }
 
-        return null;
-    };
+            const saved =
+                this.repository.ideViewModelRepository.synctexEditorPosition();
+            if (saved && saved.segmentIndex >= 0 && saved.line >= 1) {
+                return saved;
+            }
+
+            const previousIndex =
+                this.repository.ideViewModelRepository.previousActiveSegmentIndex();
+            if (previousIndex >= 0) {
+                const view = getIdeSegmentEditorView(previousIndex);
+                if (view) {
+                    const head = view.state.selection.main.head;
+                    const line = view.state.doc.lineAt(head).number;
+                    return { segmentIndex: previousIndex, line };
+                }
+            }
+
+            return null;
+        };
 
     onSyncEditorToPdf = async () => {
         if (!this.canUseSynctexNavigation()) {
             return;
         }
-        const project =
-            this.repository.projectViewModelRepository.project();
+        const project = this.repository.projectViewModelRepository.project();
         if (!project?.projectId) {
             return;
         }
@@ -509,8 +512,7 @@ export class ProgramEditorService {
         if (!this.canUseSynctexNavigation()) {
             return;
         }
-        const project =
-            this.repository.projectViewModelRepository.project();
+        const project = this.repository.projectViewModelRepository.project();
         if (!project?.projectId) {
             return;
         }

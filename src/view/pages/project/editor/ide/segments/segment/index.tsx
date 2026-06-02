@@ -524,7 +524,9 @@ export const SegmentEditor = memo(
                         cursorByDocKeyRef.current.set(key, head);
                         const line = update.state.doc.lineAt(head).number;
                         const segmentIndex = segmentIdxForPendingRef.current;
-                        dispatchForPendingRef.current(setActiveEditorLine(line));
+                        dispatchForPendingRef.current(
+                            setActiveEditorLine(line)
+                        );
                         dispatchForPendingRef.current(
                             setSynctexEditorPosition({
                                 segmentIndex,
@@ -546,10 +548,7 @@ export const SegmentEditor = memo(
                 return;
             }
             const doc = view.state.doc;
-            const lineNumber = Math.max(
-                1,
-                Math.min(target.line, doc.lines)
-            );
+            const lineNumber = Math.max(1, Math.min(target.line, doc.lines));
             const line = doc.line(lineNumber);
             const offset = line.from;
             dispatch(

@@ -23,15 +23,10 @@ export const SyncButtons = () => {
     const isAuth = useSelector(
         (state: StorageState) => state.user.isAuthenticated
     );
-    const pdfUri = useSelector(
-        (state: StorageState) => state.project.pdfUri
-    );
+    const pdfUri = useSelector((state: StorageState) => state.project.pdfUri);
 
     const visible =
-        isAuth &&
-        isLatexMode &&
-        !isReadonly &&
-        Boolean(project?.projectId);
+        isAuth && isLatexMode && !isReadonly && Boolean(project?.projectId);
 
     if (!visible) {
         return null;

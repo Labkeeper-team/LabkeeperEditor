@@ -4,7 +4,10 @@ import * as pdfjs from 'pdfjs-dist';
 import { Util } from 'pdfjs-dist';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { PdfPosition } from '../../../../../model/rpi';
-import { setPdfClickPosition, setPdfNavigationTarget } from '../../../../store/slices/ide';
+import {
+    setPdfClickPosition,
+    setPdfNavigationTarget,
+} from '../../../../store/slices/ide';
 
 import './style.scss';
 import 'pdfjs-dist/web/pdf_viewer.css';
