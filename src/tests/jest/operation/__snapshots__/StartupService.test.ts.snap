@@ -52,7 +52,6 @@ MockViewModelRepositoryState {
   "pdfClickPosition": null,
   "pdfNavigationTarget": null,
   "pdfUpdated": 0,
-  "pdfUri": undefined,
   "pendingSegmentEditorCursor": null,
   "previousActiveSegmentIndex": -1,
   "project": undefined,
