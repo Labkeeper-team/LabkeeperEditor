@@ -20,6 +20,12 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
     import.meta.url
 ).toString();
 
+/** API/SyncTeX y is the line baseline; shift up in PDF pt, then scale to CSS px. */
+const SYNCTEX_BASELINE_OFFSET_PT = 10;
+
+/** Gap between rendered PDF pages (matches wrapper marginBottom). */
+const PDF_PAGE_GAP_PX = 4;
+
 export const PdfResultViewer = () => {
     const dispatch = useDispatch<AppDispatch>();
     const pdfUri = useSelector((state: StorageState) => state.project.pdfUri);
@@ -50,7 +56,7 @@ export const PdfResultViewer = () => {
             const pdf = pdfRef.current;
             const container = containerRef.current;
             const pages = pageElementsRef.current;
-            if (!pdf || !container || pages.length === 0 || isPdfRendering) {
+            if (!pdf || !container || pages.length === 0) {
                 return false;
             }
 
@@ -60,32 +66,54 @@ export const PdfResultViewer = () => {
             }
 
             const pageEl = pages[pageIndex];
+            if (!pageEl.isConnected) {
+                return false;
+            }
+
             const currentPage = await pdf.getPage(position.page);
             if (!containerRef.current || pdfRef.current !== pdf) {
                 return false;
             }
 
-            const unscaledViewport = currentPage.getViewport({
+            await new Promise<void>((resolve) => {
+                requestAnimationFrame(() => resolve());
+            });
+
+            const viewport = currentPage.getViewport({
                 scale: pdfDisplayScaleRef.current,
             });
-            const pageCSSHeight = pageEl.scrollHeight;
-            const pagePdfHeight = unscaledViewport.viewBox[3];
-            const scaleBetweenPdfAndCss = pageCSSHeight / pagePdfHeight;
-            const offSetCSS = position.y * scaleBetweenPdfAndCss;
+            const pageCSSHeight = pageEl.offsetHeight;
+            if (pageCSSHeight <= 0) {
+                return false;
+            }
 
-            const scrollTop =
-                containerRef.current.scrollHeight -
-                (pdf.numPages - (pageIndex + 1)) * pageCSSHeight -
-                offSetCSS;
+            const pdfPageHeight =
+                viewport.viewBox[3] - viewport.viewBox[1];
+            if (pdfPageHeight <= 0) {
+                return false;
+            }
+
+            const scaleBetweenPdfAndCss = pageCSSHeight / pdfPageHeight;
+
+            let pageTop = 0;
+            for (let i = 0; i < pageIndex; i++) {
+                pageTop += pages[i].offsetHeight + PDF_PAGE_GAP_PX;
+            }
+
+            const offsetFromTopOnPage =
+                Math.max(0, position.y - SYNCTEX_BASELINE_OFFSET_PT) *
+                scaleBetweenPdfAndCss;
+
+            const scrollTop = Math.max(0, pageTop + offsetFromTopOnPage);
 
             containerRef.current.scrollTo({
-                top: Math.max(0, scrollTop),
+                top: scrollTop,
                 behavior: 'smooth',
             });
             scrollTopRef.current = scrollTop;
             return true;
         },
-        [isPdfRendering]
+        []
     );
 
     /** Скролл после ответа API; повтор при появлении страниц PDF. */
@@ -139,10 +167,12 @@ export const PdfResultViewer = () => {
                 const viewport = currentPage.getViewport({
                     scale: pdfDisplayScaleRef.current,
                 });
-                const scaleX = viewport.width / rect.width;
-                const scaleY = viewport.height / rect.height;
-                const x = Math.round(clickX * scaleX);
-                const y = Math.round((rect.height - clickY) * scaleY);
+                const pdfPageWidth =
+                    viewport.viewBox[2] - viewport.viewBox[0];
+                const pdfPageHeight =
+                    viewport.viewBox[3] - viewport.viewBox[1];
+                const x = Math.round(clickX * (pdfPageWidth / rect.width));
+                const y = Math.round(clickY * (pdfPageHeight / rect.height));
 
                 dispatch(
                     setPdfClickPosition({
@@ -246,7 +276,7 @@ export const PdfResultViewer = () => {
                     wrapper.style.position = 'relative';
                     wrapper.style.width = `${viewport.width}px`;
                     wrapper.style.height = `${viewport.height}px`;
-                    wrapper.style.marginBottom = '4px';
+                    wrapper.style.marginBottom = `${PDF_PAGE_GAP_PX}px`;
                     wrapper.style.background = '#fff';
                     wrapper.style.borderRadius = '4px';
                     wrapper.style.boxShadow = '0 1px 4px rgba(0,0,0,0.1)';

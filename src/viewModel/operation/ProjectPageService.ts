@@ -331,7 +331,6 @@ export class ProjectPageService {
     };
 
     setProjectType = async (type: ProjectType): Promise<void> => {
-        console.log('setProjectType', type);
         this.repository.projectViewModelRepository.setProjectType(type);
 
         const project = this.repository.projectViewModelRepository.project();

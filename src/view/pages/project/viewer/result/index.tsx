@@ -32,7 +32,6 @@ export const Result = () => {
         useCurrentFullProject
     );
     const mode = useSelector((state: StorageState) => state.project.mode);
-    console.log(mode);
     const dictionary = useSelector(useDictionary);
 
     const contentRef = useRef<HTMLDivElement>(null);
