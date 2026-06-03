@@ -87,8 +87,7 @@ export const PdfResultViewer = () => {
                 return false;
             }
 
-            const pdfPageHeight =
-                viewport.viewBox[3] - viewport.viewBox[1];
+            const pdfPageHeight = viewport.viewBox[3] - viewport.viewBox[1];
             if (pdfPageHeight <= 0) {
                 return false;
             }
@@ -167,10 +166,8 @@ export const PdfResultViewer = () => {
                 const viewport = currentPage.getViewport({
                     scale: pdfDisplayScaleRef.current,
                 });
-                const pdfPageWidth =
-                    viewport.viewBox[2] - viewport.viewBox[0];
-                const pdfPageHeight =
-                    viewport.viewBox[3] - viewport.viewBox[1];
+                const pdfPageWidth = viewport.viewBox[2] - viewport.viewBox[0];
+                const pdfPageHeight = viewport.viewBox[3] - viewport.viewBox[1];
                 const x = Math.round(clickX * (pdfPageWidth / rect.width));
                 const y = Math.round(clickY * (pdfPageHeight / rect.height));
 
