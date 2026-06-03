@@ -2,6 +2,7 @@
 
 exports[`double-md-test 1`] = `
 MockViewModelRepositoryState {
+  "activeEditorLine": null,
   "activeSegmentIndex": 1,
   "captchaBypassToken": undefined,
   "cloneRequestState": "unknown",
@@ -45,6 +46,7 @@ MockViewModelRepositoryState {
   "currentView": "closed",
   "editModeForFilename": false,
   "editModeForProjectTitle": false,
+  "editorNavigationTarget": null,
   "email": "",
   "emailRequest": "unknown",
   "expandProblemViewer": false,
@@ -87,7 +89,10 @@ MockViewModelRepositoryState {
   "loginRequest": "unknown",
   "mode": "markdown",
   "passwordSetRequest": "unknown",
+  "pdfClickPosition": null,
+  "pdfNavigationTarget": null,
   "pdfUpdated": 0,
+  "pdfUri": undefined,
   "pendingSegmentEditorCursor": null,
   "previousActiveSegmentIndex": 0,
   "project": undefined,
@@ -102,6 +107,7 @@ MockViewModelRepositoryState {
   "showSearch": false,
   "showShareModal": false,
   "showTour": false,
+  "synctexEditorPosition": null,
   "toasts": [],
   "tokens": 0,
   "undoEnabled": true,
@@ -110,6 +116,7 @@ MockViewModelRepositoryState {
 
 exports[`double-md-test 2`] = `
 MockViewModelRepositoryState {
+  "activeEditorLine": null,
   "activeSegmentIndex": 1,
   "captchaBypassToken": undefined,
   "cloneRequestState": "unknown",
@@ -164,6 +171,7 @@ MockViewModelRepositoryState {
   "currentView": "closed",
   "editModeForFilename": false,
   "editModeForProjectTitle": false,
+  "editorNavigationTarget": null,
   "email": "",
   "emailRequest": "unknown",
   "expandProblemViewer": false,
@@ -213,7 +221,10 @@ MockViewModelRepositoryState {
   "loginRequest": "unknown",
   "mode": "markdown",
   "passwordSetRequest": "unknown",
+  "pdfClickPosition": null,
+  "pdfNavigationTarget": null,
   "pdfUpdated": 0,
+  "pdfUri": undefined,
   "pendingSegmentEditorCursor": null,
   "previousActiveSegmentIndex": 1,
   "project": undefined,
@@ -228,6 +239,7 @@ MockViewModelRepositoryState {
   "showSearch": false,
   "showShareModal": false,
   "showTour": false,
+  "synctexEditorPosition": null,
   "toasts": [],
   "tokens": 0,
   "undoEnabled": true,

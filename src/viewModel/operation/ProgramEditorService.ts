@@ -13,7 +13,7 @@ import {
     Segment,
     SegmentType,
 } from '../../model/domain.ts';
-import { getIdeSegmentEditorView } from '../../view/pages/project/editor/ide/segments/ideSegmentDeactivate';
+import { getIdeSegmentEditorView } from '../../view/pages/project/editor/ide/segments/ideSegmentEditorView';
 import { EditorNavigationTarget } from '../repository';
 
 export class ProgramEditorService {

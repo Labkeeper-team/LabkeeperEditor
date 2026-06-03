@@ -2,6 +2,7 @@
 
 exports[`file-manager-test-onFolderButtonClicked-authorized 1`] = `
 MockViewModelRepositoryState {
+  "activeEditorLine": null,
   "activeSegmentIndex": -1,
   "captchaBypassToken": undefined,
   "cloneRequestState": "unknown",
@@ -22,6 +23,7 @@ MockViewModelRepositoryState {
   "currentView": "closed",
   "editModeForFilename": false,
   "editModeForProjectTitle": false,
+  "editorNavigationTarget": null,
   "email": "a@gmail.com",
   "emailRequest": "unknown",
   "expandProblemViewer": false,
@@ -55,7 +57,10 @@ MockViewModelRepositoryState {
   "loginRequest": "unknown",
   "mode": "markdown",
   "passwordSetRequest": "unknown",
+  "pdfClickPosition": null,
+  "pdfNavigationTarget": null,
   "pdfUpdated": 0,
+  "pdfUri": undefined,
   "pendingSegmentEditorCursor": null,
   "previousActiveSegmentIndex": -1,
   "project": {
@@ -91,6 +96,7 @@ MockViewModelRepositoryState {
   "showSearch": false,
   "showShareModal": false,
   "showTour": false,
+  "synctexEditorPosition": null,
   "toasts": [],
   "tokens": 0,
   "undoEnabled": false,
@@ -99,6 +105,7 @@ MockViewModelRepositoryState {
 
 exports[`file-manager-test-onFolderButtonClicked-unauthorized-on-default 1`] = `
 MockViewModelRepositoryState {
+  "activeEditorLine": null,
   "activeSegmentIndex": -1,
   "captchaBypassToken": undefined,
   "cloneRequestState": "unknown",
@@ -117,6 +124,7 @@ MockViewModelRepositoryState {
   "currentView": "login",
   "editModeForFilename": false,
   "editModeForProjectTitle": false,
+  "editorNavigationTarget": null,
   "email": "",
   "emailRequest": "unknown",
   "expandProblemViewer": false,
@@ -144,7 +152,10 @@ MockViewModelRepositoryState {
   "loginRequest": "unknown",
   "mode": "markdown",
   "passwordSetRequest": "unknown",
+  "pdfClickPosition": null,
+  "pdfNavigationTarget": null,
   "pdfUpdated": 0,
+  "pdfUri": undefined,
   "pendingSegmentEditorCursor": null,
   "previousActiveSegmentIndex": -1,
   "project": undefined,
@@ -159,6 +170,7 @@ MockViewModelRepositoryState {
   "showSearch": false,
   "showShareModal": false,
   "showTour": false,
+  "synctexEditorPosition": null,
   "toasts": [],
   "tokens": 0,
   "undoEnabled": false,
