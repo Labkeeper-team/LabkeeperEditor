@@ -3,8 +3,7 @@
     flex: 0 0 auto;
     align-items: center;
     width: 100%;
-    max-height: 20px;
-    margin: 4px 0;
+    height: 20px;
     position: relative;
 
     .divider-line {
@@ -20,7 +19,7 @@
 
     .divider-button {
         width: auto;
-        height: 32px;
+        height: 20px;
         border: none;
         background-color: transparent;
         cursor: pointer;
@@ -30,8 +29,9 @@
         font-size: 14px;
         color: #4285f4;
         transition: all 0.2s;
-        padding: 0 12px;
-        border-radius: 8px;
+        padding: 0 8px;
+        border-radius: 6px;
+        line-height: 1;
 
         &:hover {
             background-color: rgba(66, 133, 244, 0.04);
