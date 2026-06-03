@@ -58,6 +58,7 @@ import {
     focusIdeSegmentAtPoint,
     shouldPlaceCursorOnIdeSegmentClick,
 } from '../ideSegmentDeactivate';
+import { scrollIdeEditorLineToContainerTop } from '../ideSegmentEditorView';
 
 const CURSOR_MAP_CAPACITY = 100;
 
@@ -540,25 +541,37 @@ export const SegmentEditor = memo(
 
         useEffect(() => {
             const target = editorNavigationTarget;
-            if (!target || target.segmentIndex !== props.index) {
+            if (!target || target.segmentIndex !== props.index || !isLoaded) {
                 return;
             }
-            const view = editor?.current?.view;
-            if (!view) {
-                return;
-            }
-            const doc = view.state.doc;
-            const lineNumber = Math.max(1, Math.min(target.line, doc.lines));
-            const line = doc.line(lineNumber);
-            const offset = line.from;
-            dispatch(
-                setPendingSegmentEditorCursor({
-                    segmentIndex: props.index,
-                    offset,
-                })
-            );
-            dispatch(setEditorNavigationTarget(null));
-        }, [editorNavigationTarget, props.index, dispatch]);
+
+            let cancelled = false;
+            let attempts = 0;
+            const maxAttempts = 12;
+
+            const tryApply = () => {
+                if (cancelled) {
+                    return;
+                }
+                attempts += 1;
+                if (
+                    scrollIdeEditorLineToContainerTop(props.index, target.line)
+                ) {
+                    dispatch(setEditorNavigationTarget(null));
+                    return;
+                }
+                if (attempts < maxAttempts) {
+                    requestAnimationFrame(tryApply);
+                } else {
+                    dispatch(setEditorNavigationTarget(null));
+                }
+            };
+
+            requestAnimationFrame(tryApply);
+            return () => {
+                cancelled = true;
+            };
+        }, [editorNavigationTarget, props.index, dispatch, isLoaded]);
 
         /**
          * Защита от стейл-value из @uiw/react-codemirror.

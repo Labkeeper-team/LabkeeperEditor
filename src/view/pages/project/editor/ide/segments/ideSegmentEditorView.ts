@@ -1,6 +1,9 @@
 import { EditorSelection } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 
+const SEGMENTS_CONTAINER_ID = 'segments-container';
+const SEGMENTS_CONTAINER_TOP_PADDING_PX = 10;
+
 export function getIdeSegmentEditorView(
     segmentIndex: number
 ): EditorView | null {
@@ -9,6 +12,54 @@ export function getIdeSegmentEditorView(
         return null;
     }
     return EditorView.findFromDOM(dom) ?? null;
+}
+
+/** Ставит курсор на строку и прокручивает её к верху списка сегментов (SyncTeX PDF → editor). */
+export function scrollIdeEditorLineToContainerTop(
+    segmentIndex: number,
+    line: number
+): boolean {
+    const view = getIdeSegmentEditorView(segmentIndex);
+    const segmentsContainer = document.getElementById(SEGMENTS_CONTAINER_ID);
+    if (!view || !segmentsContainer) {
+        return false;
+    }
+
+    const doc = view.state.doc;
+    const lineNumber = Math.max(1, Math.min(line, doc.lines));
+    const offset = doc.line(lineNumber).from;
+
+    view.dispatch({
+        selection: EditorSelection.cursor(offset),
+        effects: EditorView.scrollIntoView(offset, {
+            y: 'start',
+            x: 'nearest',
+        }),
+    });
+
+    const lineCoords = view.coordsAtPos(offset);
+    if (lineCoords) {
+        const containerRect = segmentsContainer.getBoundingClientRect();
+        const scaleFactor =
+            +document.documentElement.style.getPropertyValue(
+                '--mobile-scale'
+            ) || 1;
+        const effectiveScale = scaleFactor > 0 ? scaleFactor : 1;
+        const lineTopRelativeToContainer =
+            (lineCoords.top - containerRect.top) / effectiveScale;
+        const newScrollTop =
+            segmentsContainer.scrollTop +
+            lineTopRelativeToContainer -
+            SEGMENTS_CONTAINER_TOP_PADDING_PX;
+
+        segmentsContainer.scrollTo({
+            top: Math.max(0, newScrollTop),
+            behavior: 'auto',
+        });
+    }
+
+    view.focus();
+    return true;
 }
 
 export function clearIdeSegmentEditorSelection(segmentIndex: number): void {
