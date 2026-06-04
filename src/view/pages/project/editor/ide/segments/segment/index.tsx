@@ -29,6 +29,7 @@ import {
     getMarkdownSpellcheckLint,
 } from './segmentSpellcheck';
 import { segmentEditorSelectionGutterFix } from './segmentEditorSelectionGutterFix';
+import { segmentEditorScaleLayoutSync } from './segmentEditorScaleLayoutSync';
 
 import './style.scss';
 
@@ -523,7 +524,8 @@ export const SegmentEditor = memo(
                             currentDocKeyRef.current ??
                             computeDocKey(update.state.doc.toString());
                         cursorByDocKeyRef.current.set(key, head);
-                        const line = update.state.doc.lineAt(head).number;
+                        const from = update.state.selection.main.from;
+                        const line = update.state.doc.lineAt(from).number;
                         const segmentIndex = segmentIdxForPendingRef.current;
                         dispatchForPendingRef.current(
                             setActiveEditorLine(line)
@@ -692,6 +694,7 @@ export const SegmentEditor = memo(
         const codeMirrorExtensions = useMemo((): Extension[] => {
             return [
                 SEGMENT_EDITOR_VIEW_THEME,
+                segmentEditorScaleLayoutSync,
                 decorationsField,
                 languageExtension,
                 eventsExt,

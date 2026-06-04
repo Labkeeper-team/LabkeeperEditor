@@ -344,8 +344,8 @@ export class ProgramEditorService {
         );
         const view = getIdeSegmentEditorView(segmentIndex);
         if (view) {
-            const head = view.state.selection.main.head;
-            const line = view.state.doc.lineAt(head).number;
+            const from = view.state.selection.main.from;
+            const line = view.state.doc.lineAt(from).number;
             this.repository.ideViewModelRepository.setActiveEditorLine(line);
             this.repository.ideViewModelRepository.setSynctexEditorPosition({
                 segmentIndex,
@@ -357,8 +357,8 @@ export class ProgramEditorService {
     onBlurSegment = async (segmentIndex: number) => {
         const view = getIdeSegmentEditorView(segmentIndex);
         if (view) {
-            const head = view.state.selection.main.head;
-            const line = view.state.doc.lineAt(head).number;
+            const from = view.state.selection.main.from;
+            const line = view.state.doc.lineAt(from).number;
             this.repository.ideViewModelRepository.setSynctexEditorPosition({
                 segmentIndex,
                 line,
@@ -455,8 +455,8 @@ export class ProgramEditorService {
             if (previousIndex >= 0) {
                 const view = getIdeSegmentEditorView(previousIndex);
                 if (view) {
-                    const head = view.state.selection.main.head;
-                    const line = view.state.doc.lineAt(head).number;
+                    const from = view.state.selection.main.from;
+                    const line = view.state.doc.lineAt(from).number;
                     return { segmentIndex: previousIndex, line };
                 }
             }
