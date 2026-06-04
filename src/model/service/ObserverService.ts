@@ -52,6 +52,10 @@ export const Events = {
         'rpi_unknown_project_page_unauthorized_prompt',
     EVENT_RPI_UNKNOWN_PROJECT_PAGE_PROMPT: 'rpi_unknown_project_page_prompt',
     EVENT_RPI_UNKNOWN_COMPILATION: 'rpi_unknown_compilation',
+    EVENT_RPI_UNKNOWN_PROGRAM_EDITOR_SYNC_EDITOR_TO_PDF:
+        'rpi_unknown_program_editor_sync_editor_to_pdf',
+    EVENT_RPI_UNKNOWN_PROGRAM_EDITOR_SYNC_PDF_TO_EDITOR:
+        'rpi_unknown_program_editor_sync_pdf_to_editor',
 };
 
 export type EventValues = (typeof Events)[keyof typeof Events];

@@ -497,6 +497,9 @@ export class ProgramEditorService {
             }
         );
         if (!result.isOk || !result.body) {
+            this.observerService.onEvent(
+                Events.EVENT_RPI_UNKNOWN_PROGRAM_EDITOR_SYNC_EDITOR_TO_PDF
+            );
             this.repository.toast(
                 this.repository.dictionary.synctex.errors.failed,
                 'error'
@@ -530,6 +533,9 @@ export class ProgramEditorService {
             pdfPosition
         );
         if (!result.isOk || !result.body) {
+            this.observerService.onEvent(
+                Events.EVENT_RPI_UNKNOWN_PROGRAM_EDITOR_SYNC_PDF_TO_EDITOR
+            );
             this.repository.toast(
                 this.repository.dictionary.synctex.errors.failed,
                 'error'
