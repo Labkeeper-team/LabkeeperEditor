@@ -1,9 +1,11 @@
-module.exports = {
+import type { Config } from 'jest';
+
+const config: Config = {
     transform: {
         '^.+\\.tsx?$': [
             'ts-jest',
             {
-                tsConfig: 'tsconfig.jest.json',
+                tsconfig: 'tsconfig.jest.json',
             },
         ],
     },
@@ -21,3 +23,5 @@ module.exports = {
         '^remark-gfm$': '<rootDir>/src/tests/jest/__mocks__/emptyMock.ts',
     },
 };
+
+export default config;

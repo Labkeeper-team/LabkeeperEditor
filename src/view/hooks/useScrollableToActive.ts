@@ -5,7 +5,7 @@ import { useIsSegmentIsActive } from '../store/selectors/program';
 const SUBPIXEL = 2;
 
 export const useScrollableToActive = (
-    ref: RefObject<HTMLDivElement>,
+    ref: RefObject<HTMLDivElement | null>,
     mainContainerid: string,
     index: number
 ) => {
