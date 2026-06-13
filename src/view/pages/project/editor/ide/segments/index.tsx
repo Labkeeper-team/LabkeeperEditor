@@ -30,7 +30,10 @@ export const Segments = () => {
         (state: StorageState) => state.ide.activeSegmentIndex
     );
     const activeSegmentIndexRef = useRef(activeSegmentIndex);
-    activeSegmentIndexRef.current = activeSegmentIndex;
+
+    useEffect(() => {
+        activeSegmentIndexRef.current = activeSegmentIndex;
+    }, [activeSegmentIndex]);
 
     useEffect(() => {
         const container = ref.current;

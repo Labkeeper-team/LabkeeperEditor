@@ -32,12 +32,12 @@ export const HistoryButtons = () => {
 
     useEffect(() => {
         if (saveProjectRequestState === 'loading') {
-            setShowLoading(true);
             loadingStartRef.current = performance.now();
             if (hideTimerRef.current) {
                 clearTimeout(hideTimerRef.current);
                 hideTimerRef.current = null;
             }
+            queueMicrotask(() => setShowLoading(true));
             return;
         }
 
@@ -52,10 +52,10 @@ export const HistoryButtons = () => {
                     hideTimerRef.current = null;
                 }, remain);
             } else {
-                setShowLoading(false);
+                queueMicrotask(() => setShowLoading(false));
             }
         } else {
-            setShowLoading(false);
+            queueMicrotask(() => setShowLoading(false));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [saveProjectRequestState]);

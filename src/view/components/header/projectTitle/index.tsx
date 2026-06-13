@@ -14,7 +14,7 @@ import { controller } from '../../../../main.tsx';
 
 export const ProjectTitle = () => {
     const project = useSelector(useCurrentProject);
-    const [currentTitle, setCurrentTitle] = useState(project?.title);
+    const [draftTitle, setDraftTitle] = useState(project?.title ?? '');
     const editMode = useSelector(
         (state: StorageState) => state.settings.editModeForProjectTitle
     );
@@ -28,45 +28,31 @@ export const ProjectTitle = () => {
         [dispatch]
     );
 
-    useEffect(() => {
-        if (!editMode) {
-            setCurrentTitle(project?.title);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [editMode]);
-
-    useEffect(() => {
-        if (!project?.title) {
-            return;
-        }
-
-        setCurrentTitle(project?.title);
-    }, [project?.title]);
-
     const onInputBlur = useCallback(async () => {
-        if (!project?.projectId || !currentTitle) {
+        if (!project?.projectId || !draftTitle) {
             return;
         }
         dispatch(
             controller.onProjectTitleChangedRequest({
                 projectId: project.projectId,
-                title: currentTitle,
+                title: draftTitle,
                 okCallback: () => {
-                    setCurrentTitle(currentTitle);
+                    setDraftTitle(draftTitle);
                     setEditMode(false);
                 },
                 failCallback: () => {
-                    setCurrentTitle(project.title);
+                    setDraftTitle(project.title);
                     setEditMode(false);
                 },
             })
         );
-    }, [project, currentTitle, dispatch, setEditMode]);
+    }, [project, draftTitle, dispatch, setEditMode]);
 
     const onPressPencil = () => {
         if (editMode) {
             return;
         }
+        setDraftTitle(project.title);
         setEditMode(true);
         setTimeout(() => {
             inputRef?.current?.select();
@@ -96,11 +82,9 @@ export const ProjectTitle = () => {
         <div className="change-title-container">
             <input
                 ref={inputRef as never}
-                value={currentTitle}
+                value={editMode ? draftTitle : project.title}
                 onChange={
-                    editMode
-                        ? (e) => setCurrentTitle(e.target.value)
-                        : undefined
+                    editMode ? (e) => setDraftTitle(e.target.value) : undefined
                 }
                 onBlur={editMode ? onInputBlur : undefined}
                 onKeyDown={editMode ? onKeyDown : undefined}
