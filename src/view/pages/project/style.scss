@@ -4,11 +4,95 @@
 .project-container {
     display: flex;
     flex-direction: row;
+    position: relative;
     height: calc(100vh - $header-height - $main-margin);
     width: 100%;
     gap: 8px;
     @media screen and (max-width: 1024px) {
         height: calc($screen-height - $header-height - $main-margin-mobile);
         gap: 4px;
+    }
+}
+
+.project-panel {
+    display: contents;
+}
+
+.project-mobile-switcher {
+    display: none;
+}
+
+@media screen and (max-width: 1024px) {
+    .project-container--mobile {
+        gap: 0;
+        align-items: stretch;
+    }
+
+    .project-container--mobile .project-panel {
+        display: none;
+        flex: 1;
+        width: 100%;
+        min-width: 0;
+        max-width: none;
+        height: 100%;
+    }
+
+    .project-container--mobile .project-panel--visible {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .project-container--mobile .project-panel--files .manager-container {
+        width: 100%;
+        min-width: 0;
+        max-width: none;
+    }
+
+    .project-container--mobile .project-panel--viewer .viewer-container {
+        width: 100%;
+        min-width: 0;
+        max-width: none;
+    }
+
+    .project-mobile-switcher {
+        position: absolute;
+        right: 4px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 20;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .project-mobile-switcher-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        border: none;
+        border-radius: 6px;
+        background: rgba($gray-10, 0.9);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.14);
+        cursor: pointer;
+
+        svg path {
+            fill: $gray-60;
+        }
+    }
+
+    .project-mobile-switcher-button--reverse {
+        transform: rotateY(180deg);
+    }
+
+    .project-mobile-switcher-indicator {
+        padding: 2px 6px;
+        border-radius: 999px;
+        font-size: 11px;
+        line-height: 14px;
+        background: rgba($gray-10, 0.82);
+        color: $gray-60;
     }
 }

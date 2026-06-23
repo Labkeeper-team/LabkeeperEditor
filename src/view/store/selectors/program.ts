@@ -75,6 +75,11 @@ export const useShowFileManager = createSelector(
     (settings) => settings.showFileManager
 );
 
+export const useActiveMobilePanel = createSelector(
+    (state: StorageState) => state.settings.activeMobilePanel,
+    (panel) => panel ?? 'editor'
+);
+
 export const useInstructionsExpanded = createSelector(
     (state: StorageState) => state.persistence.instructionExpanded,
     (s) => s
