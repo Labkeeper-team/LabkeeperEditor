@@ -22,6 +22,7 @@ export const AddBlock = (props: AddBlockProps) => {
     const dictionary = useSelector(useDictionary);
 
     const selectOptions = [
+        { value: 'md', label: dictionary.label_add_markdown },
         { value: 'computational', label: dictionary.label_add_code },
         { value: 'latex', label: dictionary.label_add_latex },
         { value: 'asciimath', label: dictionary.label_add_asciimath },
@@ -32,30 +33,38 @@ export const AddBlock = (props: AddBlockProps) => {
             ? dictionary.label_add_markdown_short
             : dictionary.label_add_markdown;
 
-    const addMoreTitle =
-        isMobile && !props.isFirst
-            ? dictionary.label_add_more_short
-            : dictionary.label_add_more;
+    const addMoreTitle = isMobile
+        ? dictionary.segment_divider.add
+        : dictionary.label_add_more;
+    const showMarkdownButton = !isMobile || props.isFirst;
 
     return (
-        <div className="empty-project-placeholder-container">
-            <Button
-                classname={classNames(InterfaceTourAnchorClassnames.AddCode)}
-                title={addMdTitle}
-                color="gray"
-                onPress={() =>
-                    dispatch(
-                        controller.onAddSegmentButtonClickedRequest({
-                            type: 'md',
-                        })
-                    )
-                }
-                minimize={!props.isFirst}
-                titleIcon={() => <PlusIcon />}
-                rounded
-            />
+        <div
+            className={classNames('empty-project-placeholder-container', {
+                'empty-project-placeholder-container--compact': !props.isFirst,
+            })}
+        >
+            {showMarkdownButton ? (
+                <Button
+                    classname={classNames(
+                        InterfaceTourAnchorClassnames.AddCode
+                    )}
+                    title={addMdTitle}
+                    color="gray"
+                    onPress={() =>
+                        dispatch(
+                            controller.onAddSegmentButtonClickedRequest({
+                                type: 'md',
+                            })
+                        )
+                    }
+                    minimize={!props.isFirst}
+                    titleIcon={() => <PlusIcon />}
+                    rounded
+                />
+            ) : null}
 
-            {props.isFirst && (
+            {props.isFirst && showMarkdownButton && (
                 <Typography text={dictionary.or} color={colors.black} />
             )}
             <Select

@@ -9,6 +9,8 @@ import { useDictionary } from '../../../../store/selectors/translations';
 import { controller } from '../../../../../main.tsx';
 import { colors } from '../../../../styles/colors.ts';
 import { Typography } from '../../../../components/typography';
+import { useIsMobile } from '../../../../hooks/useMobile';
+import './style.scss';
 
 export const PromptModal = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -21,6 +23,7 @@ export const PromptModal = () => {
     );
     const [prompt, setPrompt] = useState('');
     const [generateImage, setGenerateImage] = useState(false);
+    const isMobile = useIsMobile();
 
     const errorMessage = useMemo((): string => {
         if (promptRequestState === 'bad_request') {
@@ -42,18 +45,8 @@ export const PromptModal = () => {
                 dispatch(controller.onPromptModalCrossClickedRequest())
             }
         >
-            <div
-                style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 16,
-                    padding: '24px 28px',
-                    width: 420,
-                    maxWidth: '90vw',
-                    position: 'relative',
-                }}
-            >
-                <div style={{ textAlign: 'center' }}>
+            <div className="prompt-modal">
+                <div className="prompt-modal__title">
                     <Typography
                         type="h2"
                         color={colors.gray10}
@@ -65,11 +58,7 @@ export const PromptModal = () => {
                         type="label-small"
                         color={colors.gray20}
                         text={dictionary.prompt_modal.description}
-                        style={{
-                            backgroundColor: colors.gray60,
-                            borderRadius: 8,
-                            padding: '10px 12px',
-                        }}
+                        className="prompt-modal__description"
                     />
                 )}
                 <Input
@@ -78,7 +67,7 @@ export const PromptModal = () => {
                     placeholder={dictionary.prompt_modal.placeholder}
                     disabled={promptRequestState === 'loading'}
                     multiline
-                    rows={10}
+                    rows={isMobile ? 6 : 10}
                 />
                 <Checkbox
                     id="prompt-modal-generate-image"
@@ -93,16 +82,8 @@ export const PromptModal = () => {
                         text={errorMessage}
                     />
                 )}
-                <div
-                    style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'flex-end',
-                        gap: 12,
-                        width: '100%',
-                    }}
-                >
-                    <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="prompt-modal__footer">
+                    <div className="prompt-modal__footer-description">
                         <Typography
                             type="label-small"
                             color={colors.gray20}
@@ -159,41 +140,10 @@ export const PromptModal = () => {
                     />
                 </div>
                 {promptRequestState === 'loading' && (
-                    <div
-                        style={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            bottom: 0,
-                            backgroundColor: 'rgba(255, 255, 255, 0.7)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            zIndex: 1000,
-                            borderRadius: 8,
-                        }}
-                    >
-                        <div
-                            style={{
-                                width: '40px',
-                                height: '40px',
-                                border: '4px solid #f3f3f3',
-                                borderTop: '4px solid #007bff',
-                                borderRadius: '50%',
-                                animation: 'spin 1s linear infinite',
-                            }}
-                        />
+                    <div className="prompt-modal__overlay">
+                        <div className="prompt-modal__spinner" />
                     </div>
                 )}
-                <style>
-                    {`
-                        @keyframes spin {
-                            0% { transform: rotate(0deg); }
-                            100% { transform: rotate(360deg); }
-                        }
-                    `}
-                </style>
             </div>
         </Modal>
     );

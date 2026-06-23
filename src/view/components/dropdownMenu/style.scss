@@ -76,3 +76,27 @@
         width: 28px;
     }
 }
+
+@media screen and (max-width: 1024px) {
+    .dropdown-menu-content-container.mobile-settings-fullscreen-menu {
+        position: fixed;
+        top: max(56px, env(safe-area-inset-top));
+        left: 8px;
+        right: 8px;
+        bottom: max(8px, env(safe-area-inset-bottom));
+        width: auto;
+        max-height: none;
+        height: auto;
+        padding: 12px;
+        border-radius: 10px;
+        white-space: normal;
+        align-items: stretch;
+        gap: 10px;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+
+    .dropdown-menu-content-container.mobile-settings-fullscreen-menu::before {
+        display: none;
+    }
+}

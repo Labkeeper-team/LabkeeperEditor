@@ -11,6 +11,7 @@ import classNames from 'classnames';
 import { AppDispatch, StorageState } from '../../../store';
 import { setEditModeForProjectTitle } from '../../../store/slices/settings';
 import { controller } from '../../../../main.tsx';
+import { useIsMobile } from '../../../hooks/useMobile';
 
 export const ProjectTitle = () => {
     const project = useSelector(useCurrentProject);
@@ -21,6 +22,7 @@ export const ProjectTitle = () => {
     const dispatch = useDispatch<AppDispatch>();
     const inputRef = useRef<HTMLInputElement>();
     const projectIsReadonly = useSelector(useIsProjectReadonly);
+    const isMobile = useIsMobile();
     const setEditMode = useCallback(
         (value: boolean) => {
             dispatch(setEditModeForProjectTitle(value));
@@ -49,7 +51,7 @@ export const ProjectTitle = () => {
     }, [project, draftTitle, dispatch, setEditMode]);
 
     const onPressPencil = () => {
-        if (editMode) {
+        if (editMode || isMobile) {
             return;
         }
         setDraftTitle(project.title);
@@ -58,6 +60,13 @@ export const ProjectTitle = () => {
             inputRef?.current?.select();
         }, 200);
     };
+
+    useEffect(() => {
+        if (isMobile && editMode) {
+            setEditMode(false);
+            return;
+        }
+    }, [editMode, isMobile, setEditMode]);
 
     useEffect(() => {
         if (!editMode) {
@@ -91,7 +100,7 @@ export const ProjectTitle = () => {
                 disabled={!editMode}
                 className={`${classNames('change-title-input', { disabled: !editMode })}`}
             />
-            {!projectIsReadonly && (
+            {!projectIsReadonly && !isMobile && (
                 <div
                     onClick={onPressPencil}
                     className={classNames('change-titlepress-button', {

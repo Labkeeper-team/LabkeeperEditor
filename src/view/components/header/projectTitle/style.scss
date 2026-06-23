@@ -52,3 +52,18 @@
         }
     }
 }
+
+@media screen and (max-width: 1024px) {
+    .change-title-container {
+        width: 100%;
+        max-width: 56vw;
+        justify-content: center;
+    }
+
+    .change-title-container .change-title-input {
+        width: 100%;
+        font-size: 14px;
+        line-height: 17px;
+        text-align: center;
+    }
+}

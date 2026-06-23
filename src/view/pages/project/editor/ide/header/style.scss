@@ -35,6 +35,17 @@
                 gap: 7px;
             }
         }
+        .ide-header-center {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            justify-content: center;
+        }
+        .ide-header-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
         .file-manager-button {
             height: 24px;
             &:hover {
@@ -154,5 +165,32 @@
                 transform: rotate(-45deg);
             }
         }
+    }
+}
+
+@media screen and (max-width: 1024px) {
+    .ide-container .ide-header {
+        padding-left: 8px;
+        padding-right: 8px;
+        gap: 8px;
+    }
+
+    .ide-container .ide-header .ide-header-center,
+    .ide-container .ide-header .ide-header-right {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .ide-container .ide-header .ide-header-right {
+        justify-content: space-between;
+        gap: 6px;
+    }
+
+    .ide-container
+        .ide-header
+        .ide-header-right
+        .code-settings-header-container {
+        min-width: 0;
+        flex: 1;
     }
 }

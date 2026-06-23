@@ -209,6 +209,7 @@ const LoginView = () => {
                     />
                 </form>
                 <div
+                    className="auth-modal-secondary-actions"
                     style={{
                         display: 'flex',
                         gap: '12px',
@@ -272,6 +273,7 @@ const LoginView = () => {
                     </div>
                 </div>
                 <div
+                    className="auth-modal-oauth-actions"
                     style={{
                         display: 'flex',
                         flexDirection: 'column',

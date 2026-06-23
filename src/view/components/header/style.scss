@@ -12,6 +12,7 @@
         display: flex;
         align-items: center;
         gap: 4px;
+        min-width: 0;
     }
 
     &__right {
@@ -41,6 +42,28 @@
         font-size: 15px;
         line-height: 18px;
         width: 130px;
+    }
+}
+
+@media screen and (max-width: 1024px) {
+    .labkeeper_header {
+        padding: 8px;
+        gap: 8px;
+
+        &__left {
+            gap: 8px;
+            min-width: 0;
+        }
+
+        &__center {
+            flex: 1;
+            justify-content: center;
+            min-width: 0;
+        }
+
+        &__right {
+            gap: 6px;
+        }
     }
 }
 
@@ -110,6 +133,19 @@
         text-align: left;
     }
 }
+
+@media screen and (max-width: 1024px) {
+    .labkeeper_select.header-menu-select {
+        min-width: 86px;
+        max-width: 96px;
+    }
+
+    .labkeeper_select.header-menu-select .select-header {
+        font-size: 13px;
+        line-height: 16px;
+        padding: 4px 20px 4px 10px;
+    }
+}
 .auth-modal {
     .auth-header {
         text-align: center;
@@ -119,5 +155,27 @@
         &.full-width {
             width: 100%;
         }
+    }
+}
+
+@media screen and (max-width: 1024px) {
+    .auth-modal {
+        padding: 20px 16px !important;
+        width: min(100%, 420px);
+        box-sizing: border-box;
+    }
+
+    .auth-modal .auth-header {
+        font-size: 22px;
+        line-height: 28px;
+    }
+
+    .auth-modal .auth-modal-secondary-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .auth-modal .auth-modal-oauth-actions {
+        gap: 10px;
     }
 }

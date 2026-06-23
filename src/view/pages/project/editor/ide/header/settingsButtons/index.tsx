@@ -18,14 +18,109 @@ import { useDictionary } from '../../../../../../store/selectors/translations';
 import { AppDispatch, StorageState } from '../../../../../../store';
 import { setShowSearch } from '../../../../../../store/slices/settings';
 import { controller } from '../../../../../../../main.tsx';
+import { useIsMobile } from '../../../../../../hooks/useMobile';
 
 export const SettingsButton = () => {
     const dispatch = useDispatch<AppDispatch>();
     const dictionary = useSelector(useDictionary);
+    const isMobile = useIsMobile();
     const search = useSelector(useSearch);
     const showSearch = useSelector(
         (state: StorageState) => state.settings.showSearch
     );
+    const undoEnabled = useSelector(
+        (state: StorageState) => state.ide.undoEnabled
+    );
+    const redoEnabled = useSelector(
+        (state: StorageState) => state.ide.redoEnabled
+    );
+
+    if (isMobile) {
+        return (
+            <div
+                className={classNames(
+                    InterfaceTourAnchorClassnames.CodeSettings,
+                    'code-settings-header-container'
+                )}
+            >
+                <div className="action-button">
+                    <DropdownMenu
+                        icon={<CodeSettingsIcon />}
+                        containerClassname="mobile-settings-fullscreen-menu"
+                    >
+                        {showSearch ? null : (
+                            <>
+                                <ProjectSettings />
+                                <div className="mobile-dropdown-separator" />
+                                <HeaderHelperItems />
+                                <div className="mobile-dropdown-separator" />
+                                <div className="mobile-dropdown-actions">
+                                    <button
+                                        type="button"
+                                        className="mobile-dropdown-action-button"
+                                        disabled={!undoEnabled}
+                                        onClick={() =>
+                                            dispatch(
+                                                controller.onPrevVersionButtonClickedRequest()
+                                            )
+                                        }
+                                    >
+                                        Undo
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="mobile-dropdown-action-button"
+                                        disabled={!redoEnabled}
+                                        onClick={() =>
+                                            dispatch(
+                                                controller.onNextVersionButtonClickedRequest()
+                                            )
+                                        }
+                                    >
+                                        Redo
+                                    </button>
+                                    <div className="mobile-dropdown-separator mobile-dropdown-separator--inner" />
+                                    <button
+                                        type="button"
+                                        className="mobile-dropdown-action-button"
+                                        onClick={() =>
+                                            dispatch(setShowSearch(true))
+                                        }
+                                    >
+                                        Search
+                                    </button>
+                                </div>
+                            </>
+                        )}
+                    </DropdownMenu>
+                </div>
+                <Input
+                    ref={null}
+                    placeholder={`${dictionary.placeholder_search}...`}
+                    onClear={
+                        showSearch
+                            ? () =>
+                                  dispatch(
+                                      controller.onSearchIconPressRequest()
+                                  )
+                            : undefined
+                    }
+                    onChange={(e) => {
+                        dispatch(
+                            controller.onSearchInputChangedRequest({
+                                text: e.target.value,
+                            })
+                        );
+                    }}
+                    className={classNames({
+                        'input-hide': !showSearch,
+                        'input-show': showSearch,
+                    })}
+                    value={search}
+                />
+            </div>
+        );
+    }
 
     return (
         <div

@@ -52,3 +52,9 @@
         cursor: default;
     }
 }
+
+@media screen and (max-width: 1024px) {
+    .project-sync-bar {
+        display: none;
+    }
+}
