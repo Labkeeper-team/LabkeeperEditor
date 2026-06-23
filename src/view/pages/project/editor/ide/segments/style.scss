@@ -17,17 +17,13 @@
         min-height: 80px;
     }
     .segment-editor-container:nth-child(2n) {
-        .CodeMirror-scroll {
-            .CodeMirror-gutters {
-                background: $gray-60;
-            }
+        .cm-gutters {
+            background: $gray-60;
         }
     }
     .segment-editor-container:nth-child(2n + 1) {
-        .CodeMirror-scroll {
-            .CodeMirror-gutters {
-                background: $gray-50;
-            }
+        .cm-gutters {
+            background: $gray-50;
         }
     }
 }

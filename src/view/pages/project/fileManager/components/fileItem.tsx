@@ -29,20 +29,30 @@ export const FileItem = (props: {
     const inputRef = useRef<HTMLInputElement>(null);
     const dispatch = useDispatch<AppDispatch>();
 
+    const onBlurInput = async () => {
+        if (!fileName) {
+            setFileName(props.file.fileName);
+        }
+        dispatch(
+            controller.onFileNameChangedRequest({
+                oldName: props.file.fileName,
+                newName: fileName,
+            })
+        );
+        if (window.getSelection) {
+            window.getSelection()?.removeAllRanges();
+        }
+        setEditItem(false);
+    };
+
     /*
     Когда глобальный флаг редактирования файла поменялся
      */
     useEffect(() => {
         if (!globalEditFileMode && editMode) {
-            onBlurInput().finally(() => {
-                if (window.getSelection) {
-                    window.getSelection()?.removeAllRanges();
-                }
-                setEditItem(false);
-            });
+            inputRef.current?.blur();
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [globalEditFileMode]);
+    }, [globalEditFileMode, editMode]);
 
     /*
     При нажатии на кнопку переименовать
@@ -59,21 +69,6 @@ export const FileItem = (props: {
             }, 10);
         }, 200);
     }, [dispatch, inputRef]);
-
-    /*
-    Когда ввод прекратился
-     */
-    const onBlurInput = useCallback(async () => {
-        if (!fileName) {
-            setFileName(props.file.fileName);
-        }
-        dispatch(
-            controller.onFileNameChangedRequest({
-                oldName: props.file.fileName,
-                newName: fileName,
-            })
-        );
-    }, [fileName, dispatch, props.file.fileName]);
 
     return (
         <div className="file-item ">

@@ -52,14 +52,15 @@ const MD_COMPONENTS = {
 } as const;
 
 const MdContent = memo(({ text }: { text: string }) => (
-    <Markdown
-        remarkPlugins={[remarkBreaks, remarkMath, remarkGfm]}
-        rehypePlugins={[rehypeRaw]}
-        components={MD_COMPONENTS}
-        className={'result-markdown'}
-    >
-        {text}
-    </Markdown>
+    <div className="result-markdown">
+        <Markdown
+            remarkPlugins={[remarkBreaks, remarkMath, remarkGfm]}
+            rehypePlugins={[rehypeRaw]}
+            components={MD_COMPONENTS}
+        >
+            {text}
+        </Markdown>
+    </div>
 ));
 
 export const MdSegment = memo(

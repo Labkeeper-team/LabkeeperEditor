@@ -1,4 +1,4 @@
-import { useRef, useMemo, useState } from 'react';
+import { useRef, useMemo, useState, useEffect } from 'react';
 import ReactECharts from 'echarts-for-react';
 import './plot-segment.scss';
 import { PlotStatement } from '../../../../../../../../model/domain.ts';
@@ -25,6 +25,22 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
             {}
         )
     );
+    const [legendHeight, setLegendHeight] = useState(0);
+
+    useEffect(() => {
+        const el = legendRef.current;
+        if (!el || legendPosition === 'right') {
+            setLegendHeight(0);
+            return;
+        }
+
+        const update = () => setLegendHeight(el.clientHeight);
+        update();
+
+        const observer = new ResizeObserver(update);
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, [legendPosition, statement.legendVisible]);
 
     const option = useMemo(() => {
         const histogramPlots = statement.plots.filter(
@@ -321,15 +337,7 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
             name: plotName,
         });
     };
-    const chartHeight = useMemo(() => {
-        const baseHeight = 415;
-        return (
-            baseHeight +
-            (legendPosition === 'right'
-                ? 0
-                : (legendRef.current?.clientHeight ?? 0))
-        );
-    }, [legendPosition, legendRef]);
+    const chartHeight = 415 + (legendPosition === 'right' ? 0 : legendHeight);
     return (
         <div
             ref={containerRef}
@@ -361,9 +369,7 @@ export const PlotSegment = ({ statement }: { statement: PlotStatement }) => {
                     className="plot-xaxis-label"
                     style={{
                         bottom:
-                            legendPosition === 'right'
-                                ? -10
-                                : (legendRef?.current?.clientHeight ?? 0) - 6,
+                            legendPosition === 'right' ? -10 : legendHeight - 6,
                     }}
                 >
                     <MathJax>

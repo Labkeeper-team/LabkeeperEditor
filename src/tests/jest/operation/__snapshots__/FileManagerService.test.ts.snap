@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`file-manager-test-onFolderButtonClicked-authorized 1`] = `
 MockViewModelRepositoryState {
@@ -60,6 +60,7 @@ MockViewModelRepositoryState {
   "pdfClickPosition": null,
   "pdfNavigationTarget": null,
   "pdfUpdated": 0,
+  "pdfUri": undefined,
   "pendingSegmentEditorCursor": null,
   "previousActiveSegmentIndex": -1,
   "project": {
@@ -154,6 +155,7 @@ MockViewModelRepositoryState {
   "pdfClickPosition": null,
   "pdfNavigationTarget": null,
   "pdfUpdated": 0,
+  "pdfUri": undefined,
   "pendingSegmentEditorCursor": null,
   "previousActiveSegmentIndex": -1,
   "project": undefined,

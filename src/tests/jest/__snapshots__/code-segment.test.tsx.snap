@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`Beta particles 1`] = `
 {
@@ -10,7 +10,7 @@ exports[`Beta particles 1`] = `
       >
         <div
           id="compile-result"
-          style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+          style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
         >
           <div
             class="result-segment-container"
@@ -301,7 +301,7 @@ exports[`Beta particles 1`] = `
     >
       <div
         id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+        style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
       >
         <div
           class="result-segment-container"
@@ -649,7 +649,7 @@ exports[`Polynomial power 1`] = `
       >
         <div
           id="compile-result"
-          style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+          style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
         >
           <div
             class="result-segment-container"
@@ -990,7 +990,7 @@ exports[`Polynomial power 1`] = `
     >
       <div
         id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+        style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
       >
         <div
           class="result-segment-container"
@@ -1388,7 +1388,7 @@ exports[`Reagents mass 1`] = `
       >
         <div
           id="compile-result"
-          style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+          style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
         >
           <div
             class="result-segment-container"
@@ -1637,7 +1637,7 @@ exports[`Reagents mass 1`] = `
     >
       <div
         id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+        style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
       >
         <div
           class="result-segment-container"
@@ -1943,7 +1943,7 @@ exports[`Simple real segment 1`] = `
       >
         <div
           id="compile-result"
-          style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+          style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
         >
           <div
             class="result-segment-container"
@@ -2090,7 +2090,7 @@ exports[`Simple real segment 1`] = `
     >
       <div
         id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+        style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
       >
         <div
           class="result-segment-container"
@@ -2294,7 +2294,7 @@ exports[`Young module 1`] = `
       >
         <div
           id="compile-result"
-          style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+          style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
         >
           <div
             class="result-segment-container"
@@ -2557,7 +2557,7 @@ exports[`Young module 1`] = `
     >
       <div
         id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+        style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
       >
         <div
           class="result-segment-container"
@@ -2877,7 +2877,7 @@ exports[`alias self 1`] = `
       >
         <div
           id="compile-result"
-          style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+          style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
         >
           <div
             class="result-segment-container"
@@ -3050,7 +3050,7 @@ exports[`alias self 1`] = `
     >
       <div
         id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+        style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
       >
         <div
           class="result-segment-container"
@@ -3280,7 +3280,7 @@ exports[`down power 1`] = `
       >
         <div
           id="compile-result"
-          style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+          style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
         >
           <div
             class="result-segment-container"
@@ -3427,7 +3427,7 @@ exports[`down power 1`] = `
     >
       <div
         id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+        style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
       >
         <div
           class="result-segment-container"
@@ -3631,7 +3631,7 @@ exports[`down sigma 1`] = `
       >
         <div
           id="compile-result"
-          style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+          style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
         >
           <div
             class="result-segment-container"
@@ -3800,7 +3800,7 @@ exports[`down sigma 1`] = `
     >
       <div
         id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+        style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
       >
         <div
           class="result-segment-container"
@@ -4026,7 +4026,7 @@ exports[`down sigma 2 1`] = `
       >
         <div
           id="compile-result"
-          style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+          style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
         >
           <div
             class="result-segment-container"
@@ -4281,7 +4281,7 @@ exports[`down sigma 2 1`] = `
     >
       <div
         id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+        style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
       >
         <div
           class="result-segment-container"
@@ -4593,7 +4593,7 @@ exports[`hidden 1 1`] = `
       >
         <div
           id="compile-result"
-          style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+          style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
         >
           <div
             class="result-segment-container"
@@ -4647,7 +4647,7 @@ exports[`hidden 1 1`] = `
     >
       <div
         id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+        style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
       >
         <div
           class="result-segment-container"
@@ -4758,7 +4758,7 @@ exports[`hidden 2 1`] = `
       >
         <div
           id="compile-result"
-          style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+          style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
         >
           <div
             class="result-segment-container"
@@ -4828,7 +4828,7 @@ exports[`hidden 2 1`] = `
     >
       <div
         id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+        style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
       >
         <div
           class="result-segment-container"
@@ -4955,7 +4955,7 @@ exports[`hidden 3 1`] = `
       >
         <div
           id="compile-result"
-          style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+          style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
         >
           <div
             class="result-segment-container"
@@ -5051,7 +5051,7 @@ exports[`hidden 3 1`] = `
     >
       <div
         id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+        style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
       >
         <div
           class="result-segment-container"
@@ -5204,7 +5204,7 @@ exports[`hidden 4 1`] = `
       >
         <div
           id="compile-result"
-          style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+          style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
         >
           <div
             class="result-segment-container"
@@ -5313,7 +5313,7 @@ exports[`hidden 4 1`] = `
     >
       <div
         id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+        style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
       >
         <div
           class="result-segment-container"
@@ -5479,7 +5479,7 @@ exports[`hidden 5 1`] = `
       >
         <div
           id="compile-result"
-          style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+          style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
         >
           <div
             class="result-segment-container"
@@ -5608,7 +5608,7 @@ exports[`hidden 5 1`] = `
     >
       <div
         id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+        style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
       >
         <div
           class="result-segment-container"
@@ -5794,7 +5794,7 @@ exports[`hidden 6 1`] = `
       >
         <div
           id="compile-result"
-          style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+          style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
         >
           <div
             class="result-segment-container"
@@ -5910,7 +5910,7 @@ exports[`hidden 6 1`] = `
     >
       <div
         id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+        style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
       >
         <div
           class="result-segment-container"
@@ -6083,7 +6083,7 @@ exports[`hidden 7 1`] = `
       >
         <div
           id="compile-result"
-          style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+          style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
         >
           <div
             class="result-segment-container"
@@ -6196,7 +6196,7 @@ exports[`hidden 7 1`] = `
     >
       <div
         id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+        style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
       >
         <div
           class="result-segment-container"
@@ -6366,7 +6366,7 @@ exports[`hidden 8 1`] = `
       >
         <div
           id="compile-result"
-          style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+          style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
         >
           <div
             class="result-segment-container"
@@ -6466,7 +6466,7 @@ exports[`hidden 8 1`] = `
     >
       <div
         id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+        style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
       >
         <div
           class="result-segment-container"
@@ -6623,7 +6623,7 @@ exports[`hidden 9 1`] = `
       >
         <div
           id="compile-result"
-          style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+          style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
         >
           <div
             class="result-segment-container"
@@ -6739,7 +6739,7 @@ exports[`hidden 9 1`] = `
     >
       <div
         id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+        style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
       >
         <div
           class="result-segment-container"
@@ -6912,7 +6912,7 @@ exports[`hidden 10 1`] = `
       >
         <div
           id="compile-result"
-          style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+          style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
         >
           <div
             class="result-segment-container"
@@ -7028,7 +7028,7 @@ exports[`hidden 10 1`] = `
     >
       <div
         id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+        style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
       >
         <div
           class="result-segment-container"
@@ -7201,7 +7201,7 @@ exports[`hidden 11 1`] = `
       >
         <div
           id="compile-result"
-          style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+          style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
         >
           <div
             class="result-segment-container"
@@ -7310,7 +7310,7 @@ exports[`hidden 11 1`] = `
     >
       <div
         id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+        style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
       >
         <div
           class="result-segment-container"
@@ -7476,7 +7476,7 @@ exports[`hidden 12 1`] = `
       >
         <div
           id="compile-result"
-          style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+          style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
         >
           <div
             class="result-segment-container"
@@ -7514,7 +7514,7 @@ exports[`hidden 12 1`] = `
     >
       <div
         id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+        style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
       >
         <div
           class="result-segment-container"
@@ -7609,7 +7609,7 @@ exports[`hidden 13 1`] = `
       >
         <div
           id="compile-result"
-          style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+          style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
         >
           <div
             class="result-segment-container"
@@ -7660,7 +7660,7 @@ exports[`hidden 13 1`] = `
     >
       <div
         id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+        style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
       >
         <div
           class="result-segment-container"
@@ -7768,7 +7768,7 @@ exports[`hidden 14 1`] = `
       >
         <div
           id="compile-result"
-          style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+          style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
         >
           <div
             class="result-segment-container"
@@ -7832,7 +7832,7 @@ exports[`hidden 14 1`] = `
     >
       <div
         id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+        style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
       >
         <div
           class="result-segment-container"
@@ -7953,7 +7953,7 @@ exports[`hidden 15 1`] = `
       >
         <div
           id="compile-result"
-          style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+          style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
         >
           <div
             class="result-segment-container"
@@ -8033,7 +8033,7 @@ exports[`hidden 15 1`] = `
     >
       <div
         id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+        style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
       >
         <div
           class="result-segment-container"
@@ -8170,7 +8170,7 @@ exports[`hidden 16 1`] = `
       >
         <div
           id="compile-result"
-          style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+          style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
         >
           <div
             class="result-segment-container"
@@ -8263,7 +8263,7 @@ exports[`hidden 16 1`] = `
     >
       <div
         id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+        style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
       >
         <div
           class="result-segment-container"
@@ -8413,7 +8413,7 @@ exports[`hidden-17 1`] = `
       >
         <div
           id="compile-result"
-          style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+          style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
         >
           <div
             class="result-segment-container"
@@ -8552,7 +8552,7 @@ exports[`hidden-17 1`] = `
     >
       <div
         id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+        style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
       >
         <div
           class="result-segment-container"
@@ -8748,7 +8748,7 @@ exports[`hidden-18 1`] = `
       >
         <div
           id="compile-result"
-          style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+          style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
         >
           <div
             class="result-segment-container"
@@ -8854,7 +8854,7 @@ exports[`hidden-18 1`] = `
     >
       <div
         id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+        style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
       >
         <div
           class="result-segment-container"
@@ -9017,7 +9017,7 @@ exports[`least_squares 1`] = `
       >
         <div
           id="compile-result"
-          style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+          style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
         >
           <div
             class="result-segment-container"
@@ -9156,7 +9156,7 @@ exports[`least_squares 1`] = `
     >
       <div
         id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+        style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
       >
         <div
           class="result-segment-container"
@@ -9352,7 +9352,7 @@ exports[`max function render 1`] = `
       >
         <div
           id="compile-result"
-          style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+          style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
         >
           <div
             class="result-segment-container"
@@ -9424,7 +9424,7 @@ exports[`max function render 1`] = `
     >
       <div
         id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+        style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
       >
         <div
           class="result-segment-container"
@@ -9553,7 +9553,7 @@ exports[`negative power 1`] = `
       >
         <div
           id="compile-result"
-          style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+          style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
         >
           <div
             class="result-segment-container"
@@ -9610,7 +9610,7 @@ exports[`negative power 1`] = `
     >
       <div
         id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+        style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
       >
         <div
           class="result-segment-container"
@@ -9724,7 +9724,7 @@ exports[`range 1`] = `
       >
         <div
           id="compile-result"
-          style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+          style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
         >
           <div
             class="result-segment-container"
@@ -9778,7 +9778,7 @@ exports[`range 1`] = `
     >
       <div
         id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+        style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
       >
         <div
           class="result-segment-container"
@@ -9889,7 +9889,7 @@ exports[`seg7 1`] = `
       >
         <div
           id="compile-result"
-          style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+          style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
         >
           <div
             class="result-segment-container"
@@ -10070,7 +10070,7 @@ exports[`seg7 1`] = `
     >
       <div
         id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+        style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
       >
         <div
           class="result-segment-container"
@@ -10308,7 +10308,7 @@ exports[`shrink formula 1`] = `
       >
         <div
           id="compile-result"
-          style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+          style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
         >
           <div
             class="result-segment-container"
@@ -10571,7 +10571,7 @@ exports[`shrink formula 1`] = `
     >
       <div
         id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+        style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
       >
         <div
           class="result-segment-container"
@@ -10891,7 +10891,7 @@ exports[`slice 1`] = `
       >
         <div
           id="compile-result"
-          style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+          style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
         >
           <div
             class="result-segment-container"
@@ -10945,7 +10945,7 @@ exports[`slice 1`] = `
     >
       <div
         id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+        style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
       >
         <div
           class="result-segment-container"
@@ -11056,7 +11056,7 @@ exports[`sum with skipped valued assignment 1`] = `
       >
         <div
           id="compile-result"
-          style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+          style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
         >
           <div
             class="result-segment-container"
@@ -11128,7 +11128,7 @@ exports[`sum with skipped valued assignment 1`] = `
     >
       <div
         id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+        style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
       >
         <div
           class="result-segment-container"
@@ -11257,7 +11257,7 @@ exports[`sum2 1`] = `
       >
         <div
           id="compile-result"
-          style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+          style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
         >
           <div
             class="result-segment-container"
@@ -11388,7 +11388,7 @@ exports[`sum2 1`] = `
     >
       <div
         id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+        style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
       >
         <div
           class="result-segment-container"
@@ -11576,7 +11576,7 @@ exports[`two symbols after 1`] = `
       >
         <div
           id="compile-result"
-          style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+          style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
         >
           <div
             class="result-segment-container"
@@ -11761,7 +11761,7 @@ exports[`two symbols after 1`] = `
     >
       <div
         id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+        style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
       >
         <div
           class="result-segment-container"
@@ -12003,7 +12003,7 @@ exports[`underlining fix 1`] = `
       >
         <div
           id="compile-result"
-          style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+          style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
         >
           <div
             class="result-segment-container"
@@ -12262,7 +12262,7 @@ exports[`underlining fix 1`] = `
     >
       <div
         id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+        style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
       >
         <div
           class="result-segment-container"

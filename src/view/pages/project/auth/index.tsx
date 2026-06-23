@@ -93,8 +93,11 @@ const LoginView = () => {
             showCaptcha &&
             !!Secrets.yandexCaptchaSiteKey
         ) {
-            setToken('');
-            setCaptchaInstanceKey((prev) => prev + 1);
+            // Сброс капчи после неудачного входа; отложенный setState избегает sync flush в effect.
+            queueMicrotask(() => {
+                setToken('');
+                setCaptchaInstanceKey((prev) => prev + 1);
+            });
         }
     }, [loginRequest, showCaptcha]);
 
@@ -328,8 +331,10 @@ const EmailView = () => {
                 status === 'unknownError') &&
             !!Secrets.yandexCaptchaSiteKey
         ) {
-            setToken('');
-            setCaptchaInstanceKey((prev) => prev + 1);
+            queueMicrotask(() => {
+                setToken('');
+                setCaptchaInstanceKey((prev) => prev + 1);
+            });
         }
     }, [status]);
 
