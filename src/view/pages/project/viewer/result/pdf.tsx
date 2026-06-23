@@ -214,7 +214,9 @@ export const PdfResultViewer = () => {
             dispatch(setPdfClickPosition(null));
             try {
                 const dpr = window.devicePixelRatio || 1;
-                const pdf = await pdfjs.getDocument(pdfUri).promise;
+                const pdf = await pdfjs.getDocument({
+                    url: pdfUri,
+                }).promise;
                 if (cancelled) {
                     setIsPdfRendering(false);
                     return;
