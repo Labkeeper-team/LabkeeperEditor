@@ -69,7 +69,7 @@ export const HistoryButtons = () => {
     }, []);
 
     useHotkeys(
-        'ctrl+z, cmd+z, shift+ctrl+z, shift+cmd+z',
+        'mod+z',
         (e) => {
             e?.preventDefault();
             e?.stopPropagation();
