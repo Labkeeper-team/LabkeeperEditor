@@ -36,6 +36,26 @@ export const IdeHeader = () => {
         : isCloneError
           ? () => <span className="ide-clone-error" />
           : undefined;
+    const readonlyPublicPanel =
+        isReadonly && project?.isPublic ? (
+            <div className="readonly-public-panel">
+                <div className="readonly-badge">
+                    <Typography
+                        type="label-small"
+                        text={dictionary.readonly_public_project}
+                    />
+                </div>
+                <Button
+                    title={dictionary.clone}
+                    rounded
+                    minimize
+                    color="green"
+                    disabled={isCloneLoading}
+                    titleIcon={cloneTitleIcon}
+                    onPress={() => dispatch(controller.onCloneProjectRequest())}
+                />
+            </div>
+        ) : null;
 
     return (
         <div className="ide-header">
@@ -59,32 +79,15 @@ export const IdeHeader = () => {
             <div className="ide-header-center">
                 {program?.segments.length && !isReadonly ? (
                     <AddBlock isFirst={false} />
-                ) : isReadonly && project?.isPublic ? (
-                    <div className="readonly-public-panel">
-                        <div className="readonly-badge">
-                            <Typography
-                                type="label-small"
-                                text={dictionary.readonly_public_project}
-                            />
-                        </div>
-                        <Button
-                            title={dictionary.clone}
-                            rounded
-                            minimize
-                            color="green"
-                            disabled={isCloneLoading}
-                            titleIcon={cloneTitleIcon}
-                            onPress={() =>
-                                dispatch(controller.onCloneProjectRequest())
-                            }
-                        />
-                    </div>
+                ) : isMobile ? (
+                    readonlyPublicPanel
                 ) : (
                     <div />
                 )}
             </div>
             <div className="ide-header-right">
                 {!isReadonly && <SettingsButton />}
+                {!isMobile && readonlyPublicPanel}
                 <ProjectPanelSwitcher />
             </div>
         </div>
