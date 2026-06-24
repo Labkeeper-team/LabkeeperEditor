@@ -25,10 +25,10 @@
     transform-origin: 0 0;
 }
 
-.textLayer ::selection {
+.textLayer span::selection {
     background: rgba(0, 120, 215, 0.35) !important;
 }
 
-.textLayer ::-moz-selection {
+.textLayer span::-moz-selection {
     background: rgba(0, 120, 215, 0.35) !important;
 }
