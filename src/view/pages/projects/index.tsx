@@ -141,14 +141,7 @@ export const ProjectsPage = () => {
                             </div>
                         </div>
                     ) : !projects.length ? (
-                        <div
-                            style={{
-                                display: 'flex',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                flex: 1,
-                            }}
-                        >
+                        <div className="projects-empty-state">
                             <Button
                                 classname="add-project-button"
                                 rounded
@@ -160,22 +153,9 @@ export const ProjectsPage = () => {
                             />
                         </div>
                     ) : (
-                        <div
-                            style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                flex: 1,
-                                overflow: 'auto',
-                            }}
-                        >
-                            <div
-                                style={{
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    flex: 1,
-                                }}
-                            >
-                                <table style={{ marginTop: 30 }}>
+                        <div className="projects-list-scroll">
+                            <div className="projects-list-content">
+                                <table className="projects-table">
                                     <tr>
                                         <th>
                                             <div className="projects-header-cell">
@@ -325,13 +305,7 @@ export const ProjectsPage = () => {
                                             }}
                                             key={`${p.projectId}-${p.title}`}
                                         >
-                                            <td
-                                                style={{
-                                                    height: 63,
-                                                    width: '33%',
-                                                    minWidth: '40ch',
-                                                }}
-                                            >
+                                            <td className="projects-cell-title">
                                                 <ProjectTitle project={p} />
                                             </td>
                                             <td>
@@ -364,9 +338,7 @@ export const ProjectsPage = () => {
                                                         color={colors.black}
                                                         text={dictionary.delete}
                                                     />
-                                                    <div
-                                                        style={{ width: 10 }}
-                                                    />
+                                                    <div className="projects-delete-spacer" />
                                                 </div>
                                             </td>
                                         </tr>

@@ -7,3 +7,9 @@
         margin-top: 11px;
     }
 }
+
+@media screen and (max-width: 1024px) {
+    .delete-project-modal {
+        padding: 18px 14px 14px;
+    }
+}
