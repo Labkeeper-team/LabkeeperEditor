@@ -21,8 +21,11 @@ export const AddBlock = (props: AddBlockProps) => {
     const isMobile = useIsMobile();
     const dictionary = useSelector(useDictionary);
 
+    const showMarkdownButton = !isMobile || props.isFirst;
     const selectOptions = [
-        { value: 'md', label: dictionary.label_add_markdown },
+        ...(!showMarkdownButton
+            ? [{ value: 'md', label: dictionary.label_add_markdown }]
+            : []),
         { value: 'computational', label: dictionary.label_add_code },
         { value: 'latex', label: dictionary.label_add_latex },
         { value: 'asciimath', label: dictionary.label_add_asciimath },
@@ -36,7 +39,6 @@ export const AddBlock = (props: AddBlockProps) => {
     const addMoreTitle = isMobile
         ? dictionary.segment_divider.add
         : dictionary.label_add_more;
-    const showMarkdownButton = !isMobile || props.isFirst;
 
     return (
         <div

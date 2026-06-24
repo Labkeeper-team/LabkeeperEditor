@@ -7,7 +7,7 @@
     //position: relative;
     position: relative;
     gap: 4px;
-    justify-content: flex-start;
+    justify-content: center;
     width: 100%;
     .text {
         text-overflow: ellipsis;
@@ -103,5 +103,11 @@
             white-space: nowrap;
             overflow: hidden;
         }
+    }
+}
+
+@media screen and (max-width: 1024px) {
+    .file-item {
+        justify-content: flex-start;
     }
 }

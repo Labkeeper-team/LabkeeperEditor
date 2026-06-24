@@ -29,6 +29,13 @@ export const IdeHeader = () => {
     const cloneRequestState = useSelector(
         (state: StorageState) => state.ide.cloneRequestState
     );
+    const isCloneLoading = cloneRequestState === 'loading';
+    const isCloneError = cloneRequestState === 'error';
+    const cloneTitleIcon = isCloneLoading
+        ? () => <span className="ide-clone-spinner" />
+        : isCloneError
+          ? () => <span className="ide-clone-error" />
+          : undefined;
 
     return (
         <div className="ide-header">
@@ -60,36 +67,17 @@ export const IdeHeader = () => {
                                 text={dictionary.readonly_public_project}
                             />
                         </div>
-                        {(() => {
-                            const isCloneLoading =
-                                cloneRequestState === 'loading';
-                            const isCloneError = cloneRequestState === 'error';
-                            return (
-                                <Button
-                                    title={dictionary.clone}
-                                    rounded
-                                    minimize
-                                    color="green"
-                                    disabled={isCloneLoading}
-                                    titleIcon={
-                                        isCloneLoading
-                                            ? () => (
-                                                  <span className="ide-clone-spinner" />
-                                              )
-                                            : isCloneError
-                                              ? () => (
-                                                    <span className="ide-clone-error" />
-                                                )
-                                              : undefined
-                                    }
-                                    onPress={() =>
-                                        dispatch(
-                                            controller.onCloneProjectRequest()
-                                        )
-                                    }
-                                />
-                            );
-                        })()}
+                        <Button
+                            title={dictionary.clone}
+                            rounded
+                            minimize
+                            color="green"
+                            disabled={isCloneLoading}
+                            titleIcon={cloneTitleIcon}
+                            onPress={() =>
+                                dispatch(controller.onCloneProjectRequest())
+                            }
+                        />
                     </div>
                 ) : (
                     <div />

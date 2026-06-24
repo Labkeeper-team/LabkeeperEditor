@@ -115,11 +115,11 @@
     .projects-table {
         margin-top: 30px;
         width: 100%;
-        table-layout: fixed;
     }
     .projects-cell-title {
         height: 63px;
         width: 33%;
+        min-width: 40ch;
     }
     .projects-header-cell {
         display: inline-flex;
@@ -246,6 +246,7 @@
 
     .projects-container .projects-table {
         margin-top: 12px;
+        table-layout: fixed;
     }
 
     .projects-container .projects-table th,
@@ -265,6 +266,7 @@
 
     .projects-container .projects-cell-title {
         width: auto;
+        min-width: 0;
     }
 
     .projects-container .delete-project-container {

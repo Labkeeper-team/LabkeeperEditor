@@ -51,6 +51,12 @@ export const SettingsButton = () => {
                         )}
                     </DropdownMenu>
                 </div>
+                <div
+                    onClick={() => dispatch(setShowSearch(true))}
+                    className="action-button"
+                >
+                    <SearchIcon />
+                </div>
                 <Input
                     ref={null}
                     placeholder={`${dictionary.placeholder_search}...`}

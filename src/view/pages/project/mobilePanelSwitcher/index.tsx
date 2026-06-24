@@ -23,6 +23,19 @@ type ProjectPanelSwitcherProps = {
     className?: string;
 };
 
+const getCircularPanel = (
+    panels: MobileProjectPanel[],
+    activeIndex: number,
+    offset: number
+) => {
+    if (!panels.length) {
+        return undefined;
+    }
+    const nextIndex =
+        (activeIndex + offset + panels.length * 2) % panels.length;
+    return panels[nextIndex];
+};
+
 export const ProjectPanelSwitcher = ({
     className,
 }: ProjectPanelSwitcherProps) => {
@@ -42,7 +55,7 @@ export const ProjectPanelSwitcher = ({
         [isAuthenticated]
     );
 
-    const activePanelIndex = useMemo(() => {
+    const activePanelIndex = useMemo<number>(() => {
         const index = availableMobilePanels.indexOf(activeMobilePanel);
         return index >= 0 ? index : 0;
     }, [activeMobilePanel, availableMobilePanels]);
@@ -84,9 +97,10 @@ export const ProjectPanelSwitcher = ({
     );
 
     const onMobilePrevPanelClicked = useCallback(() => {
-        const prevPanel = availableMobilePanels.at(
-            (activePanelIndex - 1 + availableMobilePanels.length) %
-                availableMobilePanels.length
+        const prevPanel = getCircularPanel(
+            availableMobilePanels,
+            activePanelIndex,
+            -1
         );
         if (!prevPanel) {
             return;
@@ -95,8 +109,10 @@ export const ProjectPanelSwitcher = ({
     }, [activateMobilePanel, activePanelIndex, availableMobilePanels]);
 
     const onMobileNextPanelClicked = useCallback(() => {
-        const nextPanel = availableMobilePanels.at(
-            (activePanelIndex + 1) % availableMobilePanels.length
+        const nextPanel = getCircularPanel(
+            availableMobilePanels,
+            activePanelIndex,
+            1
         );
         if (!nextPanel) {
             return;
@@ -104,12 +120,15 @@ export const ProjectPanelSwitcher = ({
         activateMobilePanel(nextPanel);
     }, [activateMobilePanel, activePanelIndex, availableMobilePanels]);
 
-    const prevPanel = availableMobilePanels.at(
-        (activePanelIndex - 1 + availableMobilePanels.length) %
-            availableMobilePanels.length
+    const prevPanel = getCircularPanel(
+        availableMobilePanels,
+        activePanelIndex,
+        -1
     );
-    const nextPanel = availableMobilePanels.at(
-        (activePanelIndex + 1) % availableMobilePanels.length
+    const nextPanel = getCircularPanel(
+        availableMobilePanels,
+        activePanelIndex,
+        1
     );
 
     const getPanelLabel = useCallback(
