@@ -59,6 +59,7 @@
 @media screen and (max-width: 1024px) {
     .code-settings-header-container .mobile-settings-fullscreen-menu {
         box-sizing: border-box;
+        overflow-x: hidden;
     }
 
     .code-settings-header-container
@@ -71,5 +72,8 @@
         .mobile-settings-fullscreen-menu
         .mobile-dropdown-actions {
         width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
     }
 }

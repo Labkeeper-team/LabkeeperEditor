@@ -93,7 +93,9 @@
         align-items: stretch;
         gap: 10px;
         overflow-y: auto;
+        overflow-x: hidden;
         overscroll-behavior: contain;
+        box-sizing: border-box;
     }
 
     .dropdown-menu-content-container.mobile-settings-fullscreen-menu::before {

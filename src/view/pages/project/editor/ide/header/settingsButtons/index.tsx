@@ -28,12 +28,6 @@ export const SettingsButton = () => {
     const showSearch = useSelector(
         (state: StorageState) => state.settings.showSearch
     );
-    const undoEnabled = useSelector(
-        (state: StorageState) => state.ide.undoEnabled
-    );
-    const redoEnabled = useSelector(
-        (state: StorageState) => state.ide.redoEnabled
-    );
 
     if (isMobile) {
         return (
@@ -53,43 +47,6 @@ export const SettingsButton = () => {
                                 <ProjectSettings />
                                 <div className="mobile-dropdown-separator" />
                                 <HeaderHelperItems />
-                                <div className="mobile-dropdown-separator" />
-                                <div className="mobile-dropdown-actions">
-                                    <button
-                                        type="button"
-                                        className="mobile-dropdown-action-button"
-                                        disabled={!undoEnabled}
-                                        onClick={() =>
-                                            dispatch(
-                                                controller.onPrevVersionButtonClickedRequest()
-                                            )
-                                        }
-                                    >
-                                        Undo
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className="mobile-dropdown-action-button"
-                                        disabled={!redoEnabled}
-                                        onClick={() =>
-                                            dispatch(
-                                                controller.onNextVersionButtonClickedRequest()
-                                            )
-                                        }
-                                    >
-                                        Redo
-                                    </button>
-                                    <div className="mobile-dropdown-separator mobile-dropdown-separator--inner" />
-                                    <button
-                                        type="button"
-                                        className="mobile-dropdown-action-button"
-                                        onClick={() =>
-                                            dispatch(setShowSearch(true))
-                                        }
-                                    >
-                                        Search
-                                    </button>
-                                </div>
                             </>
                         )}
                     </DropdownMenu>

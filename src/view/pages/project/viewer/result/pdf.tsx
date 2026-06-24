@@ -29,6 +29,9 @@ const PDF_PAGE_GAP_PX = 4;
 export const PdfResultViewer = () => {
     const dispatch = useDispatch<AppDispatch>();
     const pdfUri = useSelector((state: StorageState) => state.project.pdfUri);
+    const activeMobilePanel = useSelector(
+        (state: StorageState) => state.settings.activeMobilePanel
+    );
     const dictionary = useSelector(useDictionary);
     const pdfNavigationTarget = useSelector(
         (state: StorageState) => state.ide.pdfNavigationTarget
@@ -225,13 +228,16 @@ export const PdfResultViewer = () => {
                 const container = containerRef.current;
                 if (!container) {
                     setIsPdfRendering(false);
-                    setIsPdfLoadingError(true);
                     return;
                 }
 
-                const scrollbarWidth = 8;
-                const containerWidth =
-                    (container.clientWidth ?? 0) - scrollbarWidth;
+                const containerWidth = container.clientWidth ?? 0;
+                if (containerWidth <= 0) {
+                    // In mobile single-panel mode viewer can be hidden (display:none)
+                    // while PDF uri updates; wait until panel becomes visible.
+                    setIsPdfRendering(false);
+                    return;
+                }
 
                 const firstPage = await pdf.getPage(1);
                 const unscaledViewport = firstPage.getViewport({ scale: 1 });
@@ -390,7 +396,7 @@ export const PdfResultViewer = () => {
             cancelled = true;
             setIsPdfRendering(false);
         };
-    }, [pdfUri, dispatch]);
+    }, [pdfUri, dispatch, activeMobilePanel]);
 
     const showHelpText = !pdfUri || isPdfLoadingError;
     const showPdfLoading = Boolean(
@@ -442,7 +448,8 @@ export const PdfResultViewer = () => {
                         ref={containerRef}
                         onClick={handlePdfClick}
                         style={{
-                            overflow: 'auto',
+                            overflowY: 'auto',
+                            overflowX: 'hidden',
                             height: '100%',
                             width: '100%',
                             flex: 1,

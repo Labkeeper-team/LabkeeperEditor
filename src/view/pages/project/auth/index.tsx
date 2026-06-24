@@ -103,7 +103,7 @@ const LoginView = () => {
 
     return (
         <div
-            className="auth-modal"
+            className="auth-modal auth-modal--login"
             style={{
                 display: 'flex',
                 flexDirection: 'column',

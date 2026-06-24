@@ -178,4 +178,13 @@
     .auth-modal .auth-modal-oauth-actions {
         gap: 10px;
     }
+
+    .auth-modal--login {
+        align-items: center;
+    }
+
+    .auth-modal--login > div {
+        width: 100%;
+        max-width: 360px;
+    }
 }
