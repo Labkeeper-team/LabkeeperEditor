@@ -1,14 +1,20 @@
 import { toast } from 'react-toastify';
 import { Translations } from '../dictionaries';
 import { ViewModelRepository } from '../repository';
+import { nanoid } from 'nanoid'
 
 export const checkFileErrorMessage = 'CheckFileErrorMessage';
 
 export class FileService {
+    static RANDOM_SUFFIX_LENGTH = 8;
     repository: ViewModelRepository;
 
     constructor(repository: ViewModelRepository) {
         this.repository = repository;
+    }
+
+    static generateSuffix() {
+        return nanoid(this.RANDOM_SUFFIX_LENGTH)
     }
 
     checkFile = (file: File, dictionary: Translations) => {
@@ -39,7 +45,9 @@ export class FileService {
     Если добавление происходит через Ctr+V, то segmentId is number(передается для названия),
     а в случае переименования или добавление через Add Files segmentId undefined(не передается)
      */
-    calculateNumberFile = (segmentId: number | null, filename: string) => {
+    calculateNumberFile = (segmentId: number | null, filename: string) => {        
+        const suffix = FileService.generateSuffix();
+
         let ext;
         let name = `file_seg${segmentId}`;
         const indexLastDot = filename.lastIndexOf('.');
@@ -54,6 +62,7 @@ export class FileService {
                 name = filename.slice(0, indexLastDot);
             }
         }
+        name = `${name}_${suffix}`;
         let resName = name + ext;
         let count = 1;
         while (

@@ -5,6 +5,10 @@ import {
     mockUserInfoForUnauthorized,
 } from '../common.ts';
 
+jest.mock('nanoid', () => ({
+  nanoid: () => '12345678'
+}));
+
 /*
 Сценарий:
 1. Заходим на сайт с авторизацией

@@ -21,6 +21,7 @@ const config: Config = {
         '^remark-breaks$': '<rootDir>/src/tests/jest/__mocks__/emptyMock.ts',
         '^remark-math$': '<rootDir>/src/tests/jest/__mocks__/emptyMock.ts',
         '^remark-gfm$': '<rootDir>/src/tests/jest/__mocks__/emptyMock.ts',
+        '^nanoid$': '<rootDir>/src/tests/jest/__mocks__/nanoid.ts',
     },
 };
 
