@@ -6,7 +6,7 @@ import {
 } from '../common.ts';
 
 jest.mock('nanoid', () => ({
-  nanoid: () => '12345678'
+    nanoid: () => '12345678',
 }));
 
 /*
