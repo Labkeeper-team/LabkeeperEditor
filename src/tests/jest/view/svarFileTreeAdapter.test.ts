@@ -1,8 +1,6 @@
 import {
     buildFileTree,
     buildSvarTree,
-    isTextFilePath,
-    joinFolderPath,
     pathToSvarId,
     svarIdToPath,
 } from '../../../view/pages/project/fileManager/svarFileTreeAdapter.ts';

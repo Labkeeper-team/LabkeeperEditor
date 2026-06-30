@@ -69,7 +69,10 @@ export const TextFileEditorPanel = () => {
         y: MARGIN,
     });
     const panelStateRef = useRef({ size, position });
-    panelStateRef.current = { size, position };
+
+    useEffect(() => {
+        panelStateRef.current = { size, position };
+    }, [size, position]);
 
     const getBounds = useCallback(() => {
         const container = panelRef.current?.closest(

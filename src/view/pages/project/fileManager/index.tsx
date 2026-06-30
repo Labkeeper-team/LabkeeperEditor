@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { PlusIcon } from '../../../icons';
 import './style.scss';
 import { useDispatch, useSelector } from 'react-redux';
@@ -42,6 +42,16 @@ export const FileManager = () => {
         return [user, system];
     }, [files]);
 
+    const [filesLoadedOnce, setFilesLoadedOnce] = useState(false);
+    if (getFilesRequestState === 'ok' && !filesLoadedOnce) {
+        setFilesLoadedOnce(true);
+    } else if (getFilesRequestState === 'unknown' && filesLoadedOnce) {
+        setFilesLoadedOnce(false);
+    }
+
+    const showInitialLoader =
+        getFilesRequestState === 'loading' && !filesLoadedOnce;
+
     if (!showFileManager) {
         return null;
     }
@@ -64,7 +74,7 @@ export const FileManager = () => {
                 </div>
             </div>
             <div className="manager-body">
-                {getFilesRequestState === 'loading' ? (
+                {showInitialLoader ? (
                     <div className="ide-loading-wrapper" aria-hidden>
                         <span className="ide-loading-spinner" />
                     </div>

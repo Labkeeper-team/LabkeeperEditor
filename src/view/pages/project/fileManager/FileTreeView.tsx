@@ -435,23 +435,10 @@ export const FileTreeView = (props: {
         [props.files, props.ephemeralFolders]
     );
 
-    useEffect(() => {
-        const paths = new Set<string>(['']);
-        const collect = (nodes: FileTreeNode[]) => {
-            nodes.forEach((node) => {
-                if (node.type === 'folder') {
-                    paths.add(node.path);
-                    collect(node.children);
-                }
-            });
-        };
-        collect(tree);
-        setExpandedPaths(paths);
-    }, [tree]);
+    const activeDropTargetPath = props.isDragged ? dropTargetPath : null;
 
     useEffect(() => {
         if (!props.isDragged) {
-            setDropTargetPath(null);
             clearDragExpandTimers();
         }
     }, [clearDragExpandTimers, props.isDragged]);
@@ -664,10 +651,13 @@ export const FileTreeView = (props: {
             event.preventDefault();
             event.stopPropagation();
             if (event.dataTransfer.files.length) {
-                onUploadDrop(dropTargetPath ?? '', event.dataTransfer.files);
+                onUploadDrop(
+                    activeDropTargetPath ?? '',
+                    event.dataTransfer.files
+                );
             }
         },
-        [dropTargetPath, onUploadDrop, props.isDragged, props.readonly]
+        [activeDropTargetPath, onUploadDrop, props.isDragged, props.readonly]
     );
 
     return (
@@ -705,7 +695,7 @@ export const FileTreeView = (props: {
                     <div
                         className={classNames('file-tree-root-drop-zone', {
                             'file-tree-root-drop-zone-active':
-                                props.isDragged && dropTargetPath === '',
+                                activeDropTargetPath === '',
                         })}
                     >
                         <div
@@ -744,7 +734,9 @@ export const FileTreeView = (props: {
                                             node={node}
                                             expandedPaths={expandedPaths}
                                             selectedPath={currentFolderPath}
-                                            dropTargetPath={dropTargetPath}
+                                            dropTargetPath={
+                                                activeDropTargetPath
+                                            }
                                             isDragged={props.isDragged}
                                             readonly={props.readonly}
                                             creatingFolderIn={creatingFolderIn}
