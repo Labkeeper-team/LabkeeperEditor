@@ -4,6 +4,7 @@ exports[`double-md-test 1`] = `
 MockViewModelRepositoryState {
   "activeEditorLine": null,
   "activeSegmentIndex": 1,
+  "activeTextFile": null,
   "captchaBypassToken": undefined,
   "cloneRequestState": "unknown",
   "codeCheckRequest": "unknown",
@@ -22,6 +23,7 @@ MockViewModelRepositoryState {
     ],
   },
   "currentEmail": null,
+  "currentFolderPath": "",
   "currentProgram": {
     "parameters": {
       "roundStrategy": "firstMeaningDigit",
@@ -49,6 +51,7 @@ MockViewModelRepositoryState {
   "editorNavigationTarget": null,
   "email": "",
   "emailRequest": "unknown",
+  "ephemeralFolders": [],
   "expandProblemViewer": false,
   "files": [],
   "filesToDelete": [],
@@ -101,6 +104,7 @@ MockViewModelRepositoryState {
   "projects": [],
   "redoEnabled": false,
   "saveProjectRequestState": "unknown",
+  "saveTextFileRequestState": "unknown",
   "search": undefined,
   "showFileManager": false,
   "showProjectPromptModal": false,
@@ -108,6 +112,7 @@ MockViewModelRepositoryState {
   "showShareModal": false,
   "showTour": false,
   "synctexEditorPosition": null,
+  "textFileContent": "",
   "toasts": [],
   "tokens": 0,
   "undoEnabled": true,
@@ -118,6 +123,7 @@ exports[`double-md-test 2`] = `
 MockViewModelRepositoryState {
   "activeEditorLine": null,
   "activeSegmentIndex": 1,
+  "activeTextFile": null,
   "captchaBypassToken": undefined,
   "cloneRequestState": "unknown",
   "codeCheckRequest": "unknown",
@@ -140,6 +146,7 @@ MockViewModelRepositoryState {
     ],
   },
   "currentEmail": null,
+  "currentFolderPath": "",
   "currentProgram": {
     "parameters": {
       "roundStrategy": "firstMeaningDigit",
@@ -174,6 +181,7 @@ MockViewModelRepositoryState {
   "editorNavigationTarget": null,
   "email": "",
   "emailRequest": "unknown",
+  "ephemeralFolders": [],
   "expandProblemViewer": false,
   "files": [],
   "filesToDelete": [],
@@ -233,6 +241,7 @@ MockViewModelRepositoryState {
   "projects": [],
   "redoEnabled": false,
   "saveProjectRequestState": "unknown",
+  "saveTextFileRequestState": "unknown",
   "search": undefined,
   "showFileManager": false,
   "showProjectPromptModal": false,
@@ -240,6 +249,7 @@ MockViewModelRepositoryState {
   "showShareModal": false,
   "showTour": false,
   "synctexEditorPosition": null,
+  "textFileContent": "",
   "toasts": [],
   "tokens": 0,
   "undoEnabled": true,

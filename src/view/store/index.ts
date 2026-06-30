@@ -33,6 +33,9 @@ import {
     setGetProjectRequestState,
     setGetProjectsRequestState,
     setSaveProjectRequestState,
+    setSaveTextFileRequestState,
+    setActiveTextFile,
+    setTextFileContent,
     setPendingSegmentEditorCursor,
     setPreviousActiveSegmentIndex,
     setRedoEnabled,
@@ -88,6 +91,9 @@ import {
     setShowProjectPromptModal,
     setShowSearch,
     setTourVisibility,
+    setCurrentFolderPath,
+    setEphemeralFolders,
+    addEphemeralFolder,
 } from './slices/settings';
 import { setUser } from './slices/user';
 import { setScrollEditorToBottom } from './slices/callback';
@@ -182,9 +188,13 @@ export const createViewModelStateFromStore = (
                 store.getState().ide.getProjectsRequestState,
             saveProjectRequestState: () =>
                 store.getState().ide.saveProjectRequestState,
+            saveTextFileRequestState: () =>
+                store.getState().ide.saveTextFileRequestState,
+            activeTextFile: () => store.getState().ide.activeTextFile,
+            textFileContent: () => store.getState().ide.textFileContent,
             pdfUpdated: () => store.getState().ide.pdfUpdated,
             projectPromptRequestState: () =>
-                store.getState().ide.projectPromptRequestState(),
+                store.getState().ide.projectPromptRequestState,
             activeEditorLine: () => store.getState().ide.activeEditorLine,
             synctexEditorPosition: () =>
                 store.getState().ide.synctexEditorPosition,
@@ -206,6 +216,12 @@ export const createViewModelStateFromStore = (
                 store.dispatch(setGetProjectsRequestState(v)),
             setSaveProjectRequestState: (v: SaveProjectRequestState) =>
                 store.dispatch(setSaveProjectRequestState(v)),
+            setSaveTextFileRequestState: (v: SaveProjectRequestState) =>
+                store.dispatch(setSaveTextFileRequestState(v)),
+            setActiveTextFile: (fileName: string | null) =>
+                store.dispatch(setActiveTextFile(fileName)),
+            setTextFileContent: (content: string) =>
+                store.dispatch(setTextFileContent(content)),
             setUndoEnabled: (v: boolean) => store.dispatch(setUndoEnabled(v)),
             setRedoEnabled: (v: boolean) => store.dispatch(setRedoEnabled(v)),
             setSearch: (search?: string) => store.dispatch(setSearch(search)),
@@ -310,6 +326,9 @@ export const createViewModelStateFromStore = (
                 store.getState().settings.captchaBypassToken,
             showProjectPromptModal: () =>
                 store.getState().settings.showProjectPromptModal,
+            currentFolderPath: () =>
+                store.getState().settings.currentFolderPath,
+            ephemeralFolders: () => store.getState().settings.ephemeralFolders,
 
             setShowProjectPromptModal: (v) =>
                 store.dispatch(setShowProjectPromptModal(v)),
@@ -333,6 +352,12 @@ export const createViewModelStateFromStore = (
                 store.dispatch(setIsFileDraggedToFileManager(edit)),
             setFilesToDelete: (files: LabkeeperFile[]) =>
                 store.dispatch(setFilesToDelete(files)),
+            setCurrentFolderPath: (path: string) =>
+                store.dispatch(setCurrentFolderPath(path)),
+            setEphemeralFolders: (folders: string[]) =>
+                store.dispatch(setEphemeralFolders(folders)),
+            addEphemeralFolder: (folder: string) =>
+                store.dispatch(addEphemeralFolder(folder)),
         },
         userViewModelRepository: {
             email: () => store.getState().user.email,

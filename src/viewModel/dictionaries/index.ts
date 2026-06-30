@@ -253,10 +253,16 @@ export interface Translations {
         title: string;
         add: string;
         dropzoneTitle: string;
+        root_folder: string;
+        drop_to_root: string;
+        drop_to_folder: string;
+        upload_target: string;
         delete: string;
         edit: string;
         your_files: string;
         system_files: string;
+        create_folder: string;
+        empty: string;
         errors: {
             tooMuchFiles: string;
             tooBigFile: string;

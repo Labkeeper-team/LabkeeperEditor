@@ -10,6 +10,7 @@ import { FileService } from './domain/FileService.ts';
 
 import { AuthService } from './operation/AuthService.ts';
 import { FileManagerService } from './operation/FileManagerService.ts';
+import { TextFileEditorService } from './operation/TextFileEditorService.ts';
 import { ProgramEditorService } from './operation/ProgramEditorService.ts';
 import { ProjectPageService } from './operation/ProjectPageService.ts';
 import { ProjectsPageService } from './operation/ProjectsPageService.ts';
@@ -86,6 +87,14 @@ export function setupContext(
         fileService,
         observerService
     );
+    const textFileEditorService: TextFileEditorService =
+        new TextFileEditorService(
+            repository,
+            rpi,
+            loaderService,
+            ideService,
+            observerService
+        );
     const programEditorService: ProgramEditorService = new ProgramEditorService(
         repository,
         rpi,
@@ -103,7 +112,8 @@ export function setupContext(
         ideService,
         observerService,
         compilationService,
-        resetService
+        resetService,
+        textFileEditorService
     );
     const projectsPageService: ProjectsPageService = new ProjectsPageService(
         repository,
@@ -120,6 +130,7 @@ export function setupContext(
     const controller = new Controller(
         authService,
         fileManagerService,
+        textFileEditorService,
         programEditorService,
         projectPageService,
         projectsPageService,
@@ -140,6 +151,7 @@ export function setupContext(
         startupService,
         authService,
         fileManagerService,
+        textFileEditorService,
         programEditorService,
         projectPageService,
         projectsPageService,

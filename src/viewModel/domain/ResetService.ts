@@ -66,6 +66,8 @@ export class ResetService {
             false
         );
         this.repository.settingsViewModelRepository.setShowFileManager(false);
+        this.repository.settingsViewModelRepository.setCurrentFolderPath('');
+        this.repository.settingsViewModelRepository.setEphemeralFolders([]);
         this.repository.settingsViewModelRepository.setTourVisibility(false);
         this.repository.settingsViewModelRepository.setIsCompiling(false);
         this.repository.settingsViewModelRepository.setShowSearch(false);
@@ -95,6 +97,11 @@ export class ResetService {
         this.repository.ideViewModelRepository.setSaveProjectRequestState(
             'unknown'
         );
+        this.repository.ideViewModelRepository.setSaveTextFileRequestState(
+            'unknown'
+        );
+        this.repository.ideViewModelRepository.setActiveTextFile(null);
+        this.repository.ideViewModelRepository.setTextFileContent('');
 
         // Project
         this.repository.projectViewModelRepository.setProject(undefined);

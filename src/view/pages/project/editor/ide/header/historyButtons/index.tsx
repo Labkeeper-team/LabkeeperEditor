@@ -24,6 +24,15 @@ export const HistoryButtons = () => {
     const saveProjectRequestState = useSelector(
         (state: StorageState) => state.ide.saveProjectRequestState
     );
+    const saveTextFileRequestState = useSelector(
+        (state: StorageState) => state.ide.saveTextFileRequestState
+    );
+    const activeTextFile = useSelector(
+        (state: StorageState) => state.ide.activeTextFile
+    );
+    const saveRequestState = activeTextFile
+        ? saveTextFileRequestState
+        : saveProjectRequestState;
 
     // Показываем спиннер минимум 500 мс
     const [showLoading, setShowLoading] = useState(false);
@@ -31,7 +40,7 @@ export const HistoryButtons = () => {
     const hideTimerRef = useRef<number | null>(null);
 
     useEffect(() => {
-        if (saveProjectRequestState === 'loading') {
+        if (saveRequestState === 'loading') {
             loadingStartRef.current = performance.now();
             if (hideTimerRef.current) {
                 clearTimeout(hideTimerRef.current);
@@ -58,7 +67,7 @@ export const HistoryButtons = () => {
             queueMicrotask(() => setShowLoading(false));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [saveProjectRequestState]);
+    }, [saveRequestState]);
 
     useEffect(() => {
         return () => {
@@ -130,7 +139,7 @@ export const HistoryButtons = () => {
                                 <span className="ide-clone-spinner center-icon" />
                             );
                         }
-                        if (saveProjectRequestState === 'error') {
+                        if (saveRequestState === 'error') {
                             return (
                                 <div className="center-icon">
                                     <WarningIcon />

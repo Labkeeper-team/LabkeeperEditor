@@ -8,6 +8,10 @@ import {
     Events,
     ObserverService,
 } from '../../model/service/ObserverService.ts';
+import {
+    joinFolderPath,
+    svarIdToPath,
+} from '../../view/pages/project/fileManager/svarFileTreeAdapter.ts';
 
 export class FileManagerService {
     repository: ViewModelRepository;
@@ -55,7 +59,36 @@ export class FileManagerService {
         this.repository.settingsViewModelRepository.setShowFileManager(false);
     };
 
-    onUploadFiles = async (files: File[]) => {
+    onCurrentFolderPathChanged = (path: string) => {
+        this.repository.settingsViewModelRepository.setCurrentFolderPath(path);
+    };
+
+    onEphemeralFolderCreated = (folderPath: string) => {
+        this.repository.settingsViewModelRepository.addEphemeralFolder(
+            folderPath
+        );
+    };
+
+    onCreateFolder = (name: string, parentPath: string) => {
+        const normalized = name.trim();
+        if (
+            !normalized ||
+            normalized.includes('/') ||
+            normalized.includes('..')
+        ) {
+            this.repository.toast(
+                this.repository.dictionary.filemanager.errors.bad_name,
+                'error'
+            );
+            return;
+        }
+        const folderPath = parentPath
+            ? `${parentPath}/${normalized}`
+            : normalized;
+        this.onEphemeralFolderCreated(folderPath);
+    };
+
+    onUploadFiles = async (files: File[], folderPrefix?: string | null) => {
         this.repository.settingsViewModelRepository.setIsFileDraggedToFileManager(
             false
         );
@@ -63,10 +96,17 @@ export class FileManagerService {
         if (!project) {
             return;
         }
+        const prefix =
+            folderPrefix ??
+            this.repository.settingsViewModelRepository.currentFolderPath();
         let isResultOk = false;
         for (const file of files) {
             this.fileService.checkFile(file, this.repository.dictionary);
-            const name = this.fileService.calculateNumberFile(null, file.name);
+            const name = this.fileService.calculateNumberFile(
+                null,
+                file.name,
+                prefix || null
+            );
             const formData = new FormData();
             formData.append('file', file);
 
@@ -121,6 +161,53 @@ export class FileManagerService {
         }
         if (isResultOk) {
             await this.loaderService.loadFiles(project.projectId);
+        }
+    };
+
+    onSvarCreateFile = async (ev: {
+        file: { name: string; type?: string; file?: File };
+        parent: string;
+        newId?: string;
+    }) => {
+        if (ev.file.type === 'folder') {
+            const folderPath = ev.newId
+                ? svarIdToPath(ev.newId)
+                : joinFolderPath(svarIdToPath(ev.parent), ev.file.name);
+            this.onEphemeralFolderCreated(folderPath);
+            return;
+        }
+        if (ev.file.file) {
+            const folderPrefix = svarIdToPath(ev.parent);
+            await this.onUploadFiles([ev.file.file], folderPrefix || null);
+        }
+    };
+
+    onSvarDeleteFiles = async (ids: string[]) => {
+        for (const id of ids) {
+            await this.onDeleteFile(svarIdToPath(id));
+        }
+    };
+
+    onSvarRenameFile = async (id: string, name: string) => {
+        const oldPath = svarIdToPath(id);
+        const parentPath = oldPath.includes('/')
+            ? oldPath.slice(0, oldPath.lastIndexOf('/'))
+            : '';
+        const newPath = parentPath ? `${parentPath}/${name}` : name;
+        await this.onFileNameChanged(oldPath, newPath);
+    };
+
+    onSvarMoveFiles = async (ids: string[], targetId: string) => {
+        const targetPrefix = svarIdToPath(targetId);
+        for (const id of ids) {
+            const oldPath = svarIdToPath(id);
+            const fileName = oldPath.slice(oldPath.lastIndexOf('/') + 1);
+            const newPath = targetPrefix
+                ? `${targetPrefix}/${fileName}`
+                : fileName;
+            if (oldPath !== newPath) {
+                await this.onFileNameChanged(oldPath, newPath);
+            }
         }
     };
 
@@ -208,7 +295,7 @@ export class FileManagerService {
         if (!project || oldName === newName) {
             return;
         }
-        if (newName.includes('/')) {
+        if (!newName || newName.includes('..')) {
             this.repository.toast(
                 this.repository.dictionary.filemanager.errors.bad_name,
                 'error'
@@ -216,9 +303,10 @@ export class FileManagerService {
             return;
         }
 
+        const uniqueNewName = newName;
         const result = await this.rpi.renameFileRequest(
             oldName,
-            this.fileService.calculateNumberFile(null, newName),
+            uniqueNewName,
             project.projectId
         );
         if (result.isUnauth) {
@@ -229,6 +317,7 @@ export class FileManagerService {
             this.ideService.resetEditor();
         }
         if (result.isOk) {
+            this.programService.replaceAllInProgram(oldName, uniqueNewName);
             await this.loaderService.loadFiles(project.projectId);
         } else if (!result.isUnauth) {
             this.observerService.onEvent(

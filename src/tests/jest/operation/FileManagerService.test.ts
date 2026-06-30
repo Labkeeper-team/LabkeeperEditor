@@ -73,3 +73,32 @@ test('file-manager-test-onUploadFiles-csv-with-empty-mime', async () => {
 
     expect(rpi.uploadFileRequest).toHaveBeenCalledTimes(1);
 });
+
+test('file-manager-test-onUploadFiles-with-folder-prefix', async () => {
+    const { startupService, fileManagerService, rpi } = mockContext();
+    mockAuthenticatedStartup(rpi);
+
+    await startupService.onAppStartup();
+
+    rpi.uploadFileRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        body: '',
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+    });
+
+    const file = {
+        name: 'note.txt',
+        size: 128,
+        type: 'text/plain',
+    } as File;
+
+    await fileManagerService.onUploadFiles([file], 'my_folder');
+
+    expect(rpi.uploadFileRequest).toHaveBeenCalledWith(
+        expect.any(FormData),
+        expect.any(String),
+        'my_folder/note_12345678.txt'
+    );
+});

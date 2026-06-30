@@ -114,6 +114,9 @@ class MockViewModelRepositoryState {
     getFilesRequestState: GetFilesRequestState = 'unknown';
     getProjectsRequestState: GetProjectsRequestState = 'unknown';
     saveProjectRequestState: SaveProjectRequestState = 'unknown';
+    saveTextFileRequestState: SaveProjectRequestState = 'unknown';
+    activeTextFile: string | null = null;
+    textFileContent = '';
 
     pdfUri: string | undefined;
     mode: ProjectType = 'markdown';
@@ -152,6 +155,8 @@ class MockViewModelRepositoryState {
     filesToDelete: LabkeeperFile[] = [];
     captchaBypassToken: string | undefined = undefined;
     showProjectPromptModal = false;
+    currentFolderPath = '';
+    ephemeralFolders: string[] = [];
 
     email: string = '';
     id: number = -1;
@@ -223,6 +228,10 @@ export const mockViewModelState = (): MockViewModelRepository => {
                 mockViewModelState.getProjectsRequestState,
             saveProjectRequestState: () =>
                 mockViewModelState.saveProjectRequestState,
+            saveTextFileRequestState: () =>
+                mockViewModelState.saveTextFileRequestState,
+            activeTextFile: () => mockViewModelState.activeTextFile,
+            textFileContent: () => mockViewModelState.textFileContent,
             pdfUpdated: () => mockViewModelState.pdfUpdated,
             projectPromptRequestState: () =>
                 mockViewModelState.projectPromptRequestState,
@@ -247,6 +256,12 @@ export const mockViewModelState = (): MockViewModelRepository => {
                 (mockViewModelState.getProjectRequestState = v),
             setSaveProjectRequestState: (v: SaveProjectRequestState) =>
                 (mockViewModelState.saveProjectRequestState = v),
+            setSaveTextFileRequestState: (v: SaveProjectRequestState) =>
+                (mockViewModelState.saveTextFileRequestState = v),
+            setActiveTextFile: (fileName: string | null) =>
+                (mockViewModelState.activeTextFile = fileName),
+            setTextFileContent: (content: string) =>
+                (mockViewModelState.textFileContent = content),
             setUndoEnabled: (v: boolean) =>
                 (mockViewModelState.undoEnabled = v),
             setRedoEnabled: (v: boolean) =>
@@ -356,6 +371,8 @@ export const mockViewModelState = (): MockViewModelRepository => {
             captchaBypassToken: () => mockViewModelState.captchaBypassToken,
             showProjectPromptModal: () =>
                 mockViewModelState.showProjectPromptModal,
+            currentFolderPath: () => mockViewModelState.currentFolderPath,
+            ephemeralFolders: () => mockViewModelState.ephemeralFolders,
 
             setShowProjectPromptModal: (v) =>
                 (mockViewModelState.showProjectPromptModal = v),
@@ -378,6 +395,15 @@ export const mockViewModelState = (): MockViewModelRepository => {
                 (mockViewModelState.isFileDraggedToManager = v),
             setFilesToDelete: (v: LabkeeperFile[]) =>
                 (mockViewModelState.filesToDelete = structuredClone(v)),
+            setCurrentFolderPath: (path: string) =>
+                (mockViewModelState.currentFolderPath = path),
+            setEphemeralFolders: (folders: string[]) =>
+                (mockViewModelState.ephemeralFolders = [...folders]),
+            addEphemeralFolder: (folder: string) => {
+                if (!mockViewModelState.ephemeralFolders.includes(folder)) {
+                    mockViewModelState.ephemeralFolders.push(folder);
+                }
+            },
         },
         userViewModelRepository: {
             email: () => mockViewModelState.email,
@@ -437,6 +463,9 @@ export interface IdeViewModelRepository {
     getFilesRequestState: () => GetFilesRequestState;
     getProjectsRequestState: () => GetProjectsRequestState;
     saveProjectRequestState: () => SaveProjectRequestState;
+    saveTextFileRequestState: () => SaveProjectRequestState;
+    activeTextFile: () => string | null;
+    textFileContent: () => string;
     projectPromptRequestState: () => ProjectPromptRequestState;
     pdfUpdated: () => number;
     activeEditorLine: () => number | null;
@@ -469,6 +498,9 @@ export interface IdeViewModelRepository {
     setGetFilesRequestState: (state: GetFilesRequestState) => void;
     setGetProjectsRequestState: (state: GetProjectsRequestState) => void;
     setSaveProjectRequestState: (state: SaveProjectRequestState) => void;
+    setSaveTextFileRequestState: (state: SaveProjectRequestState) => void;
+    setActiveTextFile: (fileName: string | null) => void;
+    setTextFileContent: (content: string) => void;
 }
 
 export interface SettingsViewModelRepository {
@@ -484,6 +516,8 @@ export interface SettingsViewModelRepository {
     captchaBypassToken: () => string | undefined;
     filesToDelete: () => LabkeeperFile[];
     showProjectPromptModal: () => boolean;
+    currentFolderPath: () => string;
+    ephemeralFolders: () => string[];
 
     setShowProjectPromptModal: (v: boolean) => void;
     setCaptchaBypassToken: (token?: string) => void;
@@ -496,6 +530,9 @@ export interface SettingsViewModelRepository {
     setIsCompiling: (value: boolean) => void;
     setIsFileDraggedToFileManager: (value: boolean) => void;
     setFilesToDelete: (files: LabkeeperFile[]) => void;
+    setCurrentFolderPath: (path: string) => void;
+    setEphemeralFolders: (folders: string[]) => void;
+    addEphemeralFolder: (folder: string) => void;
 }
 
 export interface ProjectsViewModelRepository {

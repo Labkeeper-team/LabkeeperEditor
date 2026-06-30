@@ -27,6 +27,7 @@ export class FileService {
             '.svg',
             '.txt',
             '.csv',
+            '.tex',
         ];
         if (file.size > mbInBytes * maxSizeInMb) {
             toast(
@@ -46,6 +47,7 @@ export class FileService {
             !file.type.startsWith('image/') &&
             !file.type.startsWith('text/csv') &&
             !file.type.startsWith('text/plain') &&
+            !file.type.startsWith('application/x-tex') &&
             !hasSupportedExtension
         ) {
             toast(dictionary.filemanager.errors.notSupported, {
@@ -59,21 +61,33 @@ export class FileService {
     Если добавление происходит через Ctr+V, то segmentId is number(передается для названия),
     а в случае переименования или добавление через Add Files segmentId undefined(не передается)
      */
-    calculateNumberFile = (segmentId: number | null, filename: string) => {
+    calculateNumberFile = (
+        segmentId: number | null,
+        filename: string,
+        folderPrefix?: string | null
+    ) => {
         const suffix = FileService.generateSuffix();
+        const pathPrefix =
+            folderPrefix ??
+            (filename.includes('/')
+                ? filename.slice(0, filename.lastIndexOf('/'))
+                : '');
+        const basename = filename.includes('/')
+            ? filename.slice(filename.lastIndexOf('/') + 1)
+            : filename;
 
         let ext;
         let name = `file_seg${segmentId}`;
-        const indexLastDot = filename.lastIndexOf('.');
+        const indexLastDot = basename.lastIndexOf('.');
         if (indexLastDot == -1) {
             if (segmentId == null) {
-                name = filename;
+                name = basename;
             }
             ext = '';
         } else {
-            ext = filename.slice(indexLastDot);
+            ext = basename.slice(indexLastDot);
             if (segmentId == null) {
-                name = filename.slice(0, indexLastDot);
+                name = basename.slice(0, indexLastDot);
             }
         }
         name = `${name}_${suffix}`;
@@ -87,6 +101,22 @@ export class FileService {
             resName = name + `(${count})` + ext;
             count += 1;
         }
+        if (folderPrefix) {
+            return `${folderPrefix}/${resName}`;
+        }
+        if (pathPrefix) {
+            return `${pathPrefix}/${resName}`;
+        }
         return resName;
+    };
+
+    joinWithFolderPrefix = (
+        folderPrefix: string | null | undefined,
+        name: string
+    ) => {
+        if (!folderPrefix) {
+            return name;
+        }
+        return `${folderPrefix}/${name}`;
     };
 }

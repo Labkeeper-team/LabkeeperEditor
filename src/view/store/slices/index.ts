@@ -46,6 +46,8 @@ interface SettingsState {
     filesToDelete: LabkeeperFile[];
     captchaBypassToken: string | undefined;
     showProjectPromptModal: boolean;
+    currentFolderPath: string;
+    ephemeralFolders: string[];
 }
 
 interface ProjectsState {
@@ -86,6 +88,9 @@ interface IdeState {
     getFilesRequestState: GetFilesRequestState;
     getProjectsRequestState: GetProjectsRequestState;
     saveProjectRequestState: SaveProjectRequestState;
+    saveTextFileRequestState: SaveProjectRequestState;
+    activeTextFile: string | null;
+    textFileContent: string;
     pdfUpdated: number;
     projectPromptRequestState: ProjectPromptRequestState;
     activeEditorLine: number | null;
@@ -126,6 +131,9 @@ export const ideInitialState: IdeState = {
     getFilesRequestState: 'unknown',
     getProjectsRequestState: 'unknown',
     saveProjectRequestState: 'unknown',
+    saveTextFileRequestState: 'unknown',
+    activeTextFile: null,
+    textFileContent: '',
     pdfUpdated: 0,
     projectPromptRequestState: 'unknown',
     activeEditorLine: null,
@@ -170,6 +178,8 @@ export const settingsInitialState: SettingsState = {
     filesToDelete: [],
     captchaBypassToken: undefined,
     showProjectPromptModal: false,
+    currentFolderPath: '',
+    ephemeralFolders: [],
 };
 
 export const userInitialState: UserInfo = {

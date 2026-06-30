@@ -10,6 +10,7 @@ import * as Sentry from '@sentry/react';
 import { Events, ObserverService } from '../model/service/ObserverService.ts';
 import { AuthService } from '../viewModel/operation/AuthService.ts';
 import { FileManagerService } from '../viewModel/operation/FileManagerService.ts';
+import { TextFileEditorService } from '../viewModel/operation/TextFileEditorService.ts';
 import { ProgramEditorService } from '../viewModel/operation/ProgramEditorService.ts';
 import { ProjectPageService } from '../viewModel/operation/ProjectPageService.ts';
 import { ProjectsPageService } from '../viewModel/operation/ProjectsPageService.ts';
@@ -18,6 +19,7 @@ import { StartupService } from '../viewModel/operation/StartupService.ts';
 export class Controller {
     authService: AuthService;
     fileManagerService: FileManagerService;
+    textFileEditorService: TextFileEditorService;
     programEditorService: ProgramEditorService;
     projectPageService: ProjectPageService;
     projectsPageService: ProjectsPageService;
@@ -27,6 +29,7 @@ export class Controller {
     constructor(
         authService: AuthService,
         fileManagerService: FileManagerService,
+        textFileEditorService: TextFileEditorService,
         programEditorService: ProgramEditorService,
         projectPageService: ProjectPageService,
         projectsPageService: ProjectsPageService,
@@ -36,6 +39,7 @@ export class Controller {
         this.observerService = observerService;
         this.authService = authService;
         this.fileManagerService = fileManagerService;
+        this.textFileEditorService = textFileEditorService;
         this.programEditorService = programEditorService;
         this.projectPageService = projectPageService;
         this.projectsPageService = projectsPageService;
@@ -508,9 +512,100 @@ export class Controller {
 
     onUploadFilesRequest = createAsyncThunk(
         'onUploadFilesRequest',
-        async ({ files }: { files: File[] }) => {
+        async ({
+            files,
+            folderPrefix,
+        }: {
+            files: File[];
+            folderPrefix?: string;
+        }) => {
             this.wrapper('onUploadFilesRequest', () =>
-                this.fileManagerService.onUploadFiles(files)
+                this.fileManagerService.onUploadFiles(files, folderPrefix)
+            );
+        }
+    );
+
+    onCurrentFolderPathChangedRequest = createAsyncThunk(
+        'onCurrentFolderPathChangedRequest',
+        async ({ path }: { path: string }) => {
+            this.wrapper('onCurrentFolderPathChangedRequest', () =>
+                this.fileManagerService.onCurrentFolderPathChanged(path)
+            );
+        }
+    );
+
+    onCreateFolderRequest = createAsyncThunk(
+        'onCreateFolderRequest',
+        async ({ name, parentPath }: { name: string; parentPath: string }) => {
+            this.wrapper('onCreateFolderRequest', () =>
+                this.fileManagerService.onCreateFolder(name, parentPath)
+            );
+        }
+    );
+
+    onSvarCreateFileRequest = createAsyncThunk(
+        'onSvarCreateFileRequest',
+        async (ev: {
+            file: { name: string; type?: string; file?: File };
+            parent: string;
+            newId?: string;
+        }) => {
+            this.wrapper('onSvarCreateFileRequest', () =>
+                this.fileManagerService.onSvarCreateFile(ev)
+            );
+        }
+    );
+
+    onSvarDeleteFilesRequest = createAsyncThunk(
+        'onSvarDeleteFilesRequest',
+        async ({ ids }: { ids: string[] }) => {
+            this.wrapper('onSvarDeleteFilesRequest', () =>
+                this.fileManagerService.onSvarDeleteFiles(ids)
+            );
+        }
+    );
+
+    onSvarRenameFileRequest = createAsyncThunk(
+        'onSvarRenameFileRequest',
+        async ({ id, name }: { id: string; name: string }) => {
+            this.wrapper('onSvarRenameFileRequest', () =>
+                this.fileManagerService.onSvarRenameFile(id, name)
+            );
+        }
+    );
+
+    onSvarMoveFilesRequest = createAsyncThunk(
+        'onSvarMoveFilesRequest',
+        async ({ ids, target }: { ids: string[]; target: string }) => {
+            this.wrapper('onSvarMoveFilesRequest', () =>
+                this.fileManagerService.onSvarMoveFiles(ids, target)
+            );
+        }
+    );
+
+    onTextFileOpenedRequest = createAsyncThunk(
+        'onTextFileOpenedRequest',
+        async ({ fileName }: { fileName: string }) => {
+            this.wrapper('onTextFileOpenedRequest', () =>
+                this.textFileEditorService.onTextFileOpened(fileName)
+            );
+        }
+    );
+
+    onTextFileContentChangedRequest = createAsyncThunk(
+        'onTextFileContentChangedRequest',
+        async ({ content }: { content: string }) => {
+            this.wrapper('onTextFileContentChangedRequest', () =>
+                this.textFileEditorService.onTextFileContentChanged(content)
+            );
+        }
+    );
+
+    onTextFileEditorClosedRequest = createAsyncThunk(
+        'onTextFileEditorClosedRequest',
+        async () => {
+            this.wrapper('onTextFileEditorClosedRequest', () =>
+                this.textFileEditorService.onTextFileEditorClosed()
             );
         }
     );
