@@ -3,6 +3,7 @@
 exports[`onAppStartup-qr-test 1`] = `
 MockViewModelRepositoryState {
   "activeEditorLine": null,
+  "activeImageFile": null,
   "activeSegmentIndex": -1,
   "activeTextFile": null,
   "captchaBypassToken": undefined,
@@ -48,6 +49,7 @@ MockViewModelRepositoryState {
     "segments": [],
   },
   "lastVerifiedCode": null,
+  "loadTextFileRequestState": "unknown",
   "location": "/project/default",
   "loginRequest": "unknown",
   "mode": "markdown",

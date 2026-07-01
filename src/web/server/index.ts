@@ -229,6 +229,9 @@ export class WebRpi implements Rpi {
         );
     }
 
+    // TODO(folder API): реализовать moveFileRequest / renameFolderRequest / deleteFolderRequest
+    // по URLS.moveFile / URLS.renameFolder / URLS.deleteFolder (см. constants.ts).
+
     async getAllProjectsRequest(): Promise<
         RequestResult<ListProjectsResponse>
     > {

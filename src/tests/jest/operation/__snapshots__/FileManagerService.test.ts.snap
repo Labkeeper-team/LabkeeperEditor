@@ -3,6 +3,7 @@
 exports[`file-manager-test-onFolderButtonClicked-authorized 1`] = `
 MockViewModelRepositoryState {
   "activeEditorLine": null,
+  "activeImageFile": null,
   "activeSegmentIndex": -1,
   "activeTextFile": null,
   "captchaBypassToken": undefined,
@@ -56,6 +57,7 @@ MockViewModelRepositoryState {
     "segments": [],
   },
   "lastVerifiedCode": null,
+  "loadTextFileRequestState": "unknown",
   "location": "/project/2cd18704-6c3f-48cb-96f1-9a923930f8cb",
   "loginRequest": "unknown",
   "mode": "markdown",
@@ -111,6 +113,7 @@ MockViewModelRepositoryState {
 exports[`file-manager-test-onFolderButtonClicked-unauthorized-on-default 1`] = `
 MockViewModelRepositoryState {
   "activeEditorLine": null,
+  "activeImageFile": null,
   "activeSegmentIndex": -1,
   "activeTextFile": null,
   "captchaBypassToken": undefined,
@@ -156,6 +159,7 @@ MockViewModelRepositoryState {
     "segments": [],
   },
   "lastVerifiedCode": null,
+  "loadTextFileRequestState": "unknown",
   "location": "/project/default",
   "loginRequest": "unknown",
   "mode": "markdown",

@@ -20,6 +20,7 @@ import { controller } from '../../../../main.tsx';
 import {
     buildFileTree,
     FileTreeNode,
+    isImageFilePath,
     isTextFilePath,
     normalizeFolderName,
 } from './svarFileTreeAdapter.ts';
@@ -129,6 +130,11 @@ const TreeNodeRow = (props: {
             }
             event.preventDefault();
             event.stopPropagation();
+            // TODO(3) move file → folder (internal tree drag):
+            // UI: dataTransfer с 'application/x-labkeeper-file-path', флаг isInternalTreeDrag.
+            // A) без folder API: onMoveFileRequest → onSvarMoveFiles → renameFileRequest на каждый файл.
+            // B) с folder API: onMoveFileRequest → rpi.moveFileRequest(oldPath, targetFolder, projectId).
+            // Сейчас drop принимает только файлы с диска (dataTransfer.files).
             if (event.dataTransfer.files.length) {
                 props.onUploadDrop(props.node.path, event.dataTransfer.files);
             }
@@ -217,9 +223,19 @@ const TreeNodeRow = (props: {
                                 : '•'}
                         </button>
                         <FolderIcon className="tree-folder-icon" />
+                        {/* TODO(4) rename folder — inline input (как у файла), normalizeFolderName.
+                            A) без folder API: onRenameFolderRequest → batch renameFileRequest
+                               для каждого fileName с префиксом folderPath + remap ephemeralFolders.
+                            B) с folder API: onRenameFolderRequest → renameFolderRequest(old, new)
+                               → loadFiles → sync ephemeralFolders/currentFolderPath. */}
                         <div className="tree-row-label" onClick={onClickRow}>
                             {props.node.name}
                         </div>
+                        {/* TODO(6) delete folder — DropdownMenu (delete/rename).
+                            A) без folder API: onDeleteFolderRequest → batch deleteFileRequest
+                               для каждого fileName с префиксом folderPath + prune ephemeralFolders.
+                            B) с folder API: onDeleteFolderRequest → deleteFolderRequest(path)
+                               → loadFiles → prune ephemeralFolders. */}
                         <span className="tree-menu-spacer" />
                     </div>
                     {isExpanded ? (
@@ -288,6 +304,9 @@ const TreeNodeRow = (props: {
                     onClick={editMode ? undefined : onClickRow}
                     onDragOver={handleDragOver}
                     onDrop={handleDrop}
+                    // TODO(3) draggable + onDragStart — path в dataTransfer;
+                    // isInternalTreeDrag отдельно от isDragged (upload с диска).
+                    // Drop → onMoveFileRequest; см. handleDrop для вариантов A/B.
                 >
                     <span className="tree-toggle-placeholder" />
                     <FileIcon className="tree-file-icon" />
@@ -518,10 +537,22 @@ export const FileTreeView = (props: {
                 );
                 return;
             }
+            if (isImageFilePath(file.fileName)) {
+                dispatch(
+                    controller.onImageFileOpenedRequest({
+                        fileName: file.fileName,
+                    })
+                );
+                return;
+            }
             window.open(file.url, '_blank');
         },
         [dispatch]
     );
+
+    const onCreateFile = useCallback(() => {
+        dispatch(controller.onCreateFileRequest());
+    }, [dispatch]);
 
     const expandFolderAncestors = useCallback(
         (path: string, prev: Set<string>) => {
@@ -660,6 +691,7 @@ export const FileTreeView = (props: {
             }
             event.preventDefault();
             event.stopPropagation();
+            // TODO(3): internal tree drag — см. handleDrop в TreeNodeRow (варианты A/B).
             if (event.dataTransfer.files.length) {
                 onUploadDrop(
                     activeDropTargetPath ?? '',
@@ -689,6 +721,14 @@ export const FileTreeView = (props: {
                         disabled={toolbarDisabled}
                     >
                         + {dictionary.filemanager.add}
+                    </button>
+                    <button
+                        type="button"
+                        className="file-tree-toolbar-button"
+                        onClick={onCreateFile}
+                        disabled={toolbarDisabled}
+                    >
+                        + {dictionary.filemanager.create_file}
                     </button>
                     <button
                         type="button"

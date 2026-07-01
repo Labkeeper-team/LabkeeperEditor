@@ -262,6 +262,7 @@ export interface Translations {
         your_files: string;
         system_files: string;
         create_folder: string;
+        create_file: string;
         empty: string;
         errors: {
             tooMuchFiles: string;

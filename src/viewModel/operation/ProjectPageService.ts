@@ -179,6 +179,10 @@ export class ProjectPageService {
             void this.textFileEditorService.onTextFileEditorClosed();
             return;
         }
+        if (this.repository.ideViewModelRepository.activeImageFile()) {
+            this.textFileEditorService.onImageFilePreviewClosed();
+            return;
+        }
         if (this.repository.settingsViewModelRepository.showFileManager()) {
             this.repository.settingsViewModelRepository.setShowFileManager(
                 false

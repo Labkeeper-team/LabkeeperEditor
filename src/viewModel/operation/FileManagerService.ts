@@ -88,6 +88,90 @@ export class FileManagerService {
         this.onEphemeralFolderCreated(folderPath);
     };
 
+    onCreateFile = async () => {
+        if (this.repository.projectViewModelRepository.projectIsReadonly()) {
+            return;
+        }
+        const project = this.repository.projectViewModelRepository.project();
+        if (!project) {
+            return;
+        }
+
+        const folderPrefix = this.resolveCurrentFolderPath();
+        const fileName = this.fileService.calculateNumberFile(
+            null,
+            'new.txt',
+            folderPrefix || null
+        );
+        const blob = new Blob([''], { type: 'text/plain' });
+        const formData = new FormData();
+        formData.append(
+            'file',
+            blob,
+            fileName.slice(fileName.lastIndexOf('/') + 1)
+        );
+
+        const result = await this.rpi.uploadFileRequest(
+            formData,
+            project.projectId,
+            fileName
+        );
+
+        if (result.code === 413) {
+            this.repository.toast(
+                this.repository.dictionary.filemanager.errors.tooBigFile.replace(
+                    '${replace1}',
+                    '10Mb'
+                ),
+                'error'
+            );
+            return;
+        }
+        if (result.code === 400) {
+            this.repository.toast(
+                this.repository.dictionary.filemanager.errors.bad_name,
+                'error'
+            );
+            return;
+        }
+        if (result.code === 409) {
+            this.repository.toast(
+                this.repository.dictionary.filemanager.errors.tooMuchFiles,
+                'error'
+            );
+            return;
+        }
+        if (result.isUnauth) {
+            this.repository.toast(
+                this.repository.dictionary.filemanager.errors.sessionExpired,
+                'error'
+            );
+            this.ideService.resetEditor();
+            return;
+        }
+        if (result.isOk) {
+            await this.loaderService.loadFiles(project.projectId);
+            this.repository.ideViewModelRepository.setActiveImageFile(null);
+            this.repository.ideViewModelRepository.setActiveTextFile(fileName);
+            this.repository.ideViewModelRepository.setTextFileContent('');
+            this.repository.ideViewModelRepository.setLoadTextFileRequestState(
+                'ok'
+            );
+            this.repository.ideViewModelRepository.setSaveTextFileRequestState(
+                'ok'
+            );
+        } else if (
+            result.code !== 413 &&
+            result.code !== 400 &&
+            result.code !== 409 &&
+            !result.isUnauth
+        ) {
+            this.observerService.onEvent(
+                Events.EVENT_RPI_UNKNOWN_FILE_MANAGER_UPLOAD
+            );
+        }
+    };
+
     onUploadFiles = async (files: File[], folderPrefix?: string | null) => {
         this.repository.settingsViewModelRepository.setIsFileDraggedToFileManager(
             false
@@ -198,6 +282,7 @@ export class FileManagerService {
         await this.onFileNameChanged(oldPath, newPath);
     };
 
+    /** TODO(3) move file → folder. Вариант A (без folder API, текущий): цикл renameFileRequest. */
     onSvarMoveFiles = async (ids: string[], targetId: string) => {
         const targetPrefix = svarIdToPath(targetId);
         for (const id of ids) {
@@ -211,6 +296,22 @@ export class FileManagerService {
             }
         }
     };
+
+    // TODO(3) onMoveFile(oldPath, targetFolder):
+    // A) делегировать в onSvarMoveFiles (renameFileRequest на каждый файл).
+    // B) rpi.moveFileRequest(oldPath, targetFolder, projectId) — один запрос, затем loadFiles.
+
+    // TODO(4) onRenameFolder(folderPath, newName):
+    // A) files с префиксом folderPath → renameFileRequest(old, newPrefix+suffix) для каждого;
+    //    programService.replaceAllInProgram для каждого; remap ephemeralFolders/currentFolderPath.
+    // B) rpi.renameFolderRequest(folderPath, newFullPath, projectId) — один запрос;
+    //    loadFiles; sync ephemeralFolders/currentFolderPath локально.
+
+    // TODO(6) onDeleteFolder(folderPath):
+    // A) files с префиксом folderPath/ → deleteFileRequest для каждого;
+    //    убрать folderPath и вложенные из ephemeralFolders; сбросить currentFolderPath если нужно.
+    // B) rpi.deleteFolderRequest(folderPath, projectId) — один запрос;
+    //    loadFiles; prune ephemeralFolders/currentFolderPath локально.
 
     onDeleteFile = async (fileName: string) => {
         const project = this.repository.projectViewModelRepository.project();

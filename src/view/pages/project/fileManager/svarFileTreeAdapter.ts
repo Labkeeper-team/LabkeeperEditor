@@ -186,6 +186,16 @@ export const isTextFilePath = (path: string): boolean => {
     );
 };
 
+export const isImageFilePath = (path: string): boolean => {
+    const lower = path.toLowerCase();
+    return (
+        lower.endsWith('.png') ||
+        lower.endsWith('.jpg') ||
+        lower.endsWith('.jpeg') ||
+        lower.endsWith('.svg')
+    );
+};
+
 export const normalizeFolderName = (name: string): string | null => {
     const trimmed = name.trim();
     if (!trimmed || trimmed.includes('/') || trimmed.includes('..')) {

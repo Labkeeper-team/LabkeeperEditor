@@ -34,7 +34,9 @@ import {
     setGetProjectsRequestState,
     setSaveProjectRequestState,
     setSaveTextFileRequestState,
+    setLoadTextFileRequestState,
     setActiveTextFile,
+    setActiveImageFile,
     setTextFileContent,
     setPendingSegmentEditorCursor,
     setPreviousActiveSegmentIndex,
@@ -190,7 +192,10 @@ export const createViewModelStateFromStore = (
                 store.getState().ide.saveProjectRequestState,
             saveTextFileRequestState: () =>
                 store.getState().ide.saveTextFileRequestState,
+            loadTextFileRequestState: () =>
+                store.getState().ide.loadTextFileRequestState,
             activeTextFile: () => store.getState().ide.activeTextFile,
+            activeImageFile: () => store.getState().ide.activeImageFile,
             textFileContent: () => store.getState().ide.textFileContent,
             pdfUpdated: () => store.getState().ide.pdfUpdated,
             projectPromptRequestState: () =>
@@ -218,8 +223,12 @@ export const createViewModelStateFromStore = (
                 store.dispatch(setSaveProjectRequestState(v)),
             setSaveTextFileRequestState: (v: SaveProjectRequestState) =>
                 store.dispatch(setSaveTextFileRequestState(v)),
+            setLoadTextFileRequestState: (v: SaveProjectRequestState) =>
+                store.dispatch(setLoadTextFileRequestState(v)),
             setActiveTextFile: (fileName: string | null) =>
                 store.dispatch(setActiveTextFile(fileName)),
+            setActiveImageFile: (fileName: string | null) =>
+                store.dispatch(setActiveImageFile(fileName)),
             setTextFileContent: (content: string) =>
                 store.dispatch(setTextFileContent(content)),
             setUndoEnabled: (v: boolean) => store.dispatch(setUndoEnabled(v)),

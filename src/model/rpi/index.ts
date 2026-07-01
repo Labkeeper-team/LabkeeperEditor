@@ -114,6 +114,11 @@ export interface Rpi {
         projectId: string
     ): Promise<RequestResult>;
 
+    // TODO(folder API): добавить когда появятся на сервере (вариант B для TODO 3/4/6):
+    // moveFileRequest(oldPath: string, targetFolder: string, projectId: string): Promise<RequestResult>;
+    // renameFolderRequest(oldPath: string, newPath: string, projectId: string): Promise<RequestResult>;
+    // deleteFolderRequest(folderPath: string, projectId: string): Promise<RequestResult>;
+
     getAllProjectsRequest(): Promise<RequestResult<ListProjectsResponse>>;
 
     createProjectRequest(

@@ -287,6 +287,7 @@ export const ru: Translations = {
         your_files: 'Ваши файлы',
         system_files: 'Системные файлы',
         create_folder: 'Новая папка',
+        create_file: 'Создать файл',
         empty: 'Файлов пока нет',
         errors: {
             tooMuchFiles: 'Слишком много файлов для одного проекта.',

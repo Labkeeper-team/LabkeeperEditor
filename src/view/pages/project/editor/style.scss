@@ -9,4 +9,8 @@
     > * {
         border-radius: 8px;
     }
+
+    &.editor-container--text-file {
+        min-width: 0;
+    }
 }

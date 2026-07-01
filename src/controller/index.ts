@@ -543,6 +543,15 @@ export class Controller {
         }
     );
 
+    onCreateFileRequest = createAsyncThunk(
+        'onCreateFileRequest',
+        async () => {
+            this.wrapper('onCreateFileRequest', () =>
+                this.fileManagerService.onCreateFile()
+            );
+        }
+    );
+
     onSvarCreateFileRequest = createAsyncThunk(
         'onSvarCreateFileRequest',
         async (ev: {
@@ -583,6 +592,16 @@ export class Controller {
         }
     );
 
+    // TODO(3) onMoveFileRequest — thunk для internal tree drag.
+    //   A) → onSvarMoveFiles (renameFileRequest × N).
+    //   B) → onMoveFile → rpi.moveFileRequest (один запрос).
+    // TODO(4) onRenameFolderRequest — inline-rename папки в FileTreeView.
+    //   A) → onRenameFolder → batch renameFileRequest × N.
+    //   B) → onRenameFolder → rpi.renameFolderRequest (один запрос).
+    // TODO(6) onDeleteFolderRequest — DropdownMenu удаления папки.
+    //   A) → onDeleteFolder → batch deleteFileRequest × N.
+    //   B) → onDeleteFolder → rpi.deleteFolderRequest (один запрос).
+
     onTextFileOpenedRequest = createAsyncThunk(
         'onTextFileOpenedRequest',
         async ({ fileName }: { fileName: string }) => {
@@ -606,6 +625,24 @@ export class Controller {
         async () => {
             this.wrapper('onTextFileEditorClosedRequest', () =>
                 this.textFileEditorService.onTextFileEditorClosed()
+            );
+        }
+    );
+
+    onImageFileOpenedRequest = createAsyncThunk(
+        'onImageFileOpenedRequest',
+        async ({ fileName }: { fileName: string }) => {
+            this.wrapper('onImageFileOpenedRequest', () =>
+                this.textFileEditorService.onImageFileOpened(fileName)
+            );
+        }
+    );
+
+    onImageFilePreviewClosedRequest = createAsyncThunk(
+        'onImageFilePreviewClosedRequest',
+        async () => {
+            this.wrapper('onImageFilePreviewClosedRequest', () =>
+                this.textFileEditorService.onImageFilePreviewClosed()
             );
         }
     );

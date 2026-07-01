@@ -115,7 +115,9 @@ class MockViewModelRepositoryState {
     getProjectsRequestState: GetProjectsRequestState = 'unknown';
     saveProjectRequestState: SaveProjectRequestState = 'unknown';
     saveTextFileRequestState: SaveProjectRequestState = 'unknown';
+    loadTextFileRequestState: SaveProjectRequestState = 'unknown';
     activeTextFile: string | null = null;
+    activeImageFile: string | null = null;
     textFileContent = '';
 
     pdfUri: string | undefined;
@@ -230,7 +232,10 @@ export const mockViewModelState = (): MockViewModelRepository => {
                 mockViewModelState.saveProjectRequestState,
             saveTextFileRequestState: () =>
                 mockViewModelState.saveTextFileRequestState,
+            loadTextFileRequestState: () =>
+                mockViewModelState.loadTextFileRequestState,
             activeTextFile: () => mockViewModelState.activeTextFile,
+            activeImageFile: () => mockViewModelState.activeImageFile,
             textFileContent: () => mockViewModelState.textFileContent,
             pdfUpdated: () => mockViewModelState.pdfUpdated,
             projectPromptRequestState: () =>
@@ -258,8 +263,12 @@ export const mockViewModelState = (): MockViewModelRepository => {
                 (mockViewModelState.saveProjectRequestState = v),
             setSaveTextFileRequestState: (v: SaveProjectRequestState) =>
                 (mockViewModelState.saveTextFileRequestState = v),
+            setLoadTextFileRequestState: (v: SaveProjectRequestState) =>
+                (mockViewModelState.loadTextFileRequestState = v),
             setActiveTextFile: (fileName: string | null) =>
                 (mockViewModelState.activeTextFile = fileName),
+            setActiveImageFile: (fileName: string | null) =>
+                (mockViewModelState.activeImageFile = fileName),
             setTextFileContent: (content: string) =>
                 (mockViewModelState.textFileContent = content),
             setUndoEnabled: (v: boolean) =>
@@ -464,7 +473,9 @@ export interface IdeViewModelRepository {
     getProjectsRequestState: () => GetProjectsRequestState;
     saveProjectRequestState: () => SaveProjectRequestState;
     saveTextFileRequestState: () => SaveProjectRequestState;
+    loadTextFileRequestState: () => SaveProjectRequestState;
     activeTextFile: () => string | null;
+    activeImageFile: () => string | null;
     textFileContent: () => string;
     projectPromptRequestState: () => ProjectPromptRequestState;
     pdfUpdated: () => number;
@@ -499,7 +510,9 @@ export interface IdeViewModelRepository {
     setGetProjectsRequestState: (state: GetProjectsRequestState) => void;
     setSaveProjectRequestState: (state: SaveProjectRequestState) => void;
     setSaveTextFileRequestState: (state: SaveProjectRequestState) => void;
+    setLoadTextFileRequestState: (state: SaveProjectRequestState) => void;
     setActiveTextFile: (fileName: string | null) => void;
+    setActiveImageFile: (fileName: string | null) => void;
     setTextFileContent: (content: string) => void;
 }
 

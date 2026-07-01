@@ -3,6 +3,7 @@
 exports[`double-md-test 1`] = `
 MockViewModelRepositoryState {
   "activeEditorLine": null,
+  "activeImageFile": null,
   "activeSegmentIndex": 1,
   "activeTextFile": null,
   "captchaBypassToken": undefined,
@@ -88,6 +89,7 @@ MockViewModelRepositoryState {
     ],
   },
   "lastVerifiedCode": null,
+  "loadTextFileRequestState": "unknown",
   "location": "/project/default",
   "loginRequest": "unknown",
   "mode": "markdown",
@@ -122,6 +124,7 @@ MockViewModelRepositoryState {
 exports[`double-md-test 2`] = `
 MockViewModelRepositoryState {
   "activeEditorLine": null,
+  "activeImageFile": null,
   "activeSegmentIndex": 1,
   "activeTextFile": null,
   "captchaBypassToken": undefined,
@@ -225,6 +228,7 @@ MockViewModelRepositoryState {
     ],
   },
   "lastVerifiedCode": null,
+  "loadTextFileRequestState": "unknown",
   "location": "/project/default",
   "loginRequest": "unknown",
   "mode": "markdown",

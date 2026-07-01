@@ -276,6 +276,7 @@ export const en: Translations = {
         your_files: 'Your files',
         system_files: 'System files',
         create_folder: 'New folder',
+        create_file: 'Create file',
         empty: 'No files yet',
         errors: {
             tooMuchFiles: 'Too much files for one project',

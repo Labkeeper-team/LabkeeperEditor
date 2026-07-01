@@ -89,7 +89,9 @@ interface IdeState {
     getProjectsRequestState: GetProjectsRequestState;
     saveProjectRequestState: SaveProjectRequestState;
     saveTextFileRequestState: SaveProjectRequestState;
+    loadTextFileRequestState: SaveProjectRequestState;
     activeTextFile: string | null;
+    activeImageFile: string | null;
     textFileContent: string;
     pdfUpdated: number;
     projectPromptRequestState: ProjectPromptRequestState;
@@ -132,7 +134,9 @@ export const ideInitialState: IdeState = {
     getProjectsRequestState: 'unknown',
     saveProjectRequestState: 'unknown',
     saveTextFileRequestState: 'unknown',
+    loadTextFileRequestState: 'unknown',
     activeTextFile: null,
+    activeImageFile: null,
     textFileContent: '',
     pdfUpdated: 0,
     projectPromptRequestState: 'unknown',

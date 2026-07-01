@@ -6,7 +6,10 @@ import {
     Events,
     ObserverService,
 } from '../../model/service/ObserverService.ts';
-import { isTextFilePath } from '../../view/pages/project/fileManager/svarFileTreeAdapter.ts';
+import {
+    isImageFilePath,
+    isTextFilePath,
+} from '../../view/pages/project/fileManager/svarFileTreeAdapter.ts';
 
 export class TextFileEditorService {
     repository: ViewModelRepository;
@@ -41,20 +44,55 @@ export class TextFileEditorService {
         if (!file) {
             return;
         }
+
+        this.repository.ideViewModelRepository.setActiveImageFile(null);
+        this.repository.ideViewModelRepository.setActiveTextFile(fileName);
+        this.repository.ideViewModelRepository.setTextFileContent('');
+        this.repository.ideViewModelRepository.setLoadTextFileRequestState(
+            'loading'
+        );
+        this.repository.ideViewModelRepository.setSaveTextFileRequestState(
+            'ok'
+        );
+
         try {
             const response = await fetch(file.url);
             const content = await response.text();
-            this.repository.ideViewModelRepository.setActiveTextFile(fileName);
             this.repository.ideViewModelRepository.setTextFileContent(content);
-            this.repository.ideViewModelRepository.setSaveTextFileRequestState(
+            this.repository.ideViewModelRepository.setLoadTextFileRequestState(
                 'ok'
             );
         } catch {
+            this.repository.ideViewModelRepository.setLoadTextFileRequestState(
+                'error'
+            );
             this.repository.toast(
                 this.repository.dictionary.filemanager.errors.internalError,
                 'error'
             );
         }
+    };
+
+    onImageFileOpened = async (fileName: string) => {
+        if (!isImageFilePath(fileName)) {
+            return;
+        }
+        const file = this.repository.projectViewModelRepository
+            .files()
+            .find((item) => item.fileName === fileName);
+        if (!file) {
+            return;
+        }
+
+        if (this.repository.ideViewModelRepository.activeTextFile()) {
+            await this.onTextFileEditorClosed();
+        }
+
+        this.repository.ideViewModelRepository.setActiveImageFile(fileName);
+    };
+
+    onImageFilePreviewClosed = () => {
+        this.repository.ideViewModelRepository.setActiveImageFile(null);
     };
 
     onTextFileContentChanged = (content: string) => {
@@ -81,6 +119,9 @@ export class TextFileEditorService {
         await this.flushSave();
         this.repository.ideViewModelRepository.setActiveTextFile(null);
         this.repository.ideViewModelRepository.setTextFileContent('');
+        this.repository.ideViewModelRepository.setLoadTextFileRequestState(
+            'unknown'
+        );
         this.repository.ideViewModelRepository.setSaveTextFileRequestState(
             'unknown'
         );

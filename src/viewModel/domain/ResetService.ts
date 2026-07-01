@@ -100,7 +100,11 @@ export class ResetService {
         this.repository.ideViewModelRepository.setSaveTextFileRequestState(
             'unknown'
         );
+        this.repository.ideViewModelRepository.setLoadTextFileRequestState(
+            'unknown'
+        );
         this.repository.ideViewModelRepository.setActiveTextFile(null);
+        this.repository.ideViewModelRepository.setActiveImageFile(null);
         this.repository.ideViewModelRepository.setTextFileContent('');
 
         // Project
