@@ -1,10 +1,20 @@
 // components/ScaleWrapper.jsx
-import { useEffect, useRef } from 'react';
+import { ReactNode, useEffect, useRef } from 'react';
 import { useScaleToMinWidth } from '../../hooks/useScaleToMinWidth';
 
-export default function ScaleWrapper({ minWidth = 1024, children }) {
+type ScaleWrapperProps = {
+    minWidth?: number;
+    disabled?: boolean;
+    children: ReactNode;
+};
+
+export default function ScaleWrapper({
+    minWidth = 1024,
+    disabled = false,
+    children,
+}: ScaleWrapperProps) {
     const ref = useRef(null);
-    useScaleToMinWidth(ref, minWidth);
+    useScaleToMinWidth(ref, minWidth, disabled);
 
     useEffect(() => {
         // Здесь долждны быть логика с калькулируемой высотой.но пока оставим так

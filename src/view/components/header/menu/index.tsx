@@ -16,10 +16,13 @@ import {
     setShowContactModal,
     setTourVisibility,
 } from '../../../store/slices/settings';
+import { setLanguage } from '../../../store/slices/persistence';
 import { Modal } from '../../modal';
 import { Typography } from '../../typography';
 import { colors } from '../../../styles/colors';
 import { Button } from '../../button';
+import { useIsMobile } from '../../../hooks/useMobile';
+import { Language } from '../../../../viewModel/dictionaries';
 
 import './style.scss';
 
@@ -41,6 +44,7 @@ export const HeaderMenu = () => {
     const dictionary = useSelector(useDictionary);
     const language = useSelector(useCurrentLanguage);
     const { isAuthenticated, email } = useSelector(useUser);
+    const isMobile = useIsMobile();
     const [showLogoutModal, setShowLogoutModal] = useState(false);
     const isEditorPage =
         matchPath(Routes.Project, location.pathname) !== null ||
@@ -57,6 +61,20 @@ export const HeaderMenu = () => {
     const openContactModal = useCallback(() => {
         dispatch(setShowContactModal(true));
     }, [dispatch]);
+
+    const languageMenuItems: HeaderMenuItem[] = isMobile
+        ? [
+              {
+                  title: language === 'en' ? 'English ✓' : 'English',
+                  onClick: () => dispatch(setLanguage('en' as Language)),
+              },
+              {
+                  title: language === 'ru' ? 'Русский ✓' : 'Русский',
+                  onClick: () => dispatch(setLanguage('ru' as Language)),
+                  separatorAfter: true,
+              },
+          ]
+        : [];
 
     const publicMenuItems: HeaderMenuItem[] = [
         {
@@ -80,6 +98,7 @@ export const HeaderMenu = () => {
             title: dictionary.header_menu.about,
             onClick: () => openExternal(ABOUT_URL),
         },
+        ...languageMenuItems,
         ...(isEditorPage
             ? [
                   {
@@ -127,6 +146,7 @@ export const HeaderMenu = () => {
             onClick: () => openExternal(EXAMPLES_URL),
             separatorAfter: true,
         },
+        ...languageMenuItems,
         /*
         TODO tokens
         {
@@ -142,7 +162,9 @@ export const HeaderMenu = () => {
 
     const items = isAuthenticated ? authenticatedMenuItems : publicMenuItems;
     const triggerTitle =
-        isAuthenticated && email ? email : dictionary.header_menu.menu;
+        isAuthenticated && email && !isMobile
+            ? email
+            : dictionary.header_menu.menu;
     const options = items.flatMap((item, index): SelectItem[] => {
         const option = {
             label: item.title,

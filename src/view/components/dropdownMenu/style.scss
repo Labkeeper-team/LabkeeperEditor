@@ -76,3 +76,29 @@
         width: 28px;
     }
 }
+
+@media screen and (max-width: 1024px) {
+    .dropdown-menu-content-container.mobile-settings-fullscreen-menu {
+        position: fixed;
+        top: max(56px, env(safe-area-inset-top));
+        left: 4px;
+        right: 4px;
+        bottom: max(4px, env(safe-area-inset-bottom));
+        width: auto;
+        max-height: none;
+        height: auto;
+        padding: 12px;
+        border-radius: 10px;
+        white-space: normal;
+        align-items: stretch;
+        gap: 10px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        overscroll-behavior: contain;
+        box-sizing: border-box;
+    }
+
+    .dropdown-menu-content-container.mobile-settings-fullscreen-menu::before {
+        display: none;
+    }
+}

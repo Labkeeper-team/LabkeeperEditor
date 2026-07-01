@@ -12,6 +12,7 @@ import { useIsProjectReadonly } from '../../../store/selectors/program.ts';
 import { Button } from '../../../components/button';
 import { PromptModal } from './promptModal';
 import { SparkleIcon } from '../../../icons';
+import { ProjectPanelSwitcher } from '../mobilePanelSwitcher';
 
 export const Viewer = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -21,10 +22,7 @@ export const Viewer = () => {
     return (
         <div className="viewer-container">
             <div className="viewer-header">
-                <div
-                    className="ide-wrapper"
-                    style={{ display: 'flex', alignItems: 'center', gap: 8 }}
-                >
+                <div className="viewer-header-actions">
                     {!isReadonly && (
                         <Button
                             title={dictionary.viewer.gpt_prompt_button}
@@ -38,7 +36,7 @@ export const Viewer = () => {
                         />
                     )}
                 </div>
-                <div />
+                <ProjectPanelSwitcher />
             </div>
             <Result />
             <Instruction />

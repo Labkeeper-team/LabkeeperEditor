@@ -4,11 +4,49 @@
 .project-container {
     display: flex;
     flex-direction: row;
+    position: relative;
     height: calc(100vh - $header-height - $main-margin);
     width: 100%;
     gap: 8px;
     @media screen and (max-width: 1024px) {
         height: calc($screen-height - $header-height - $main-margin-mobile);
         gap: 4px;
+    }
+}
+
+.project-panel {
+    display: contents;
+}
+
+@media screen and (max-width: 1024px) {
+    .project-container--mobile {
+        gap: 0;
+        align-items: stretch;
+    }
+
+    .project-container--mobile .project-panel {
+        display: none;
+        flex: 1;
+        width: 100%;
+        min-width: 0;
+        max-width: none;
+        height: 100%;
+    }
+
+    .project-container--mobile .project-panel--visible {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .project-container--mobile .project-panel--files .manager-container {
+        width: 100%;
+        min-width: 0;
+        max-width: none;
+    }
+
+    .project-container--mobile .project-panel--viewer .viewer-container {
+        width: 100%;
+        min-width: 0;
+        max-width: none;
     }
 }

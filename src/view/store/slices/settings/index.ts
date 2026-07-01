@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { settingsInitialState } from '../index.ts';
 import { LabkeeperFile } from '../../../../model/domain.ts';
+import { MobileProjectPanel } from '../index.ts';
 
 export const settingsSlice = createSlice({
     name: 'settingsSlice',
@@ -42,6 +43,12 @@ export const settingsSlice = createSlice({
         setShoFileManager: (state, { payload }: PayloadAction<boolean>) => {
             state.showFileManager = payload;
         },
+        setActiveMobilePanel: (
+            state,
+            { payload }: PayloadAction<MobileProjectPanel>
+        ) => {
+            state.activeMobilePanel = payload;
+        },
         setIsFileDraggedToFileManager: (
             state,
             { payload }: PayloadAction<boolean>
@@ -76,6 +83,7 @@ export const {
     setExpandProblemViewer,
     setTourVisibility,
     setShoFileManager,
+    setActiveMobilePanel,
     setIsFileDraggedToFileManager,
     setShowShareModal,
     setShowContactModal,

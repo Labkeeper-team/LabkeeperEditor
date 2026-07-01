@@ -89,7 +89,8 @@ export const InstructionItemComponent = ({
                         display: 'flex',
                         flexDirection: 'column',
                         gap: '8px',
-                        overflow: 'auto',
+                        overflowY: 'auto',
+                        overflowX: 'hidden',
                         maxHeight: '160px',
                         scrollbarWidth: 'thin',
                         scrollbarColor: `${colors.gray40} transparent`,
@@ -129,7 +130,7 @@ export const InstructionItemComponent = ({
                                 display: 'flex',
                                 gap: '8px',
                                 alignItems: 'flex-start',
-                                flexWrap: 'nowrap',
+                                flexWrap: 'wrap',
                             }}
                         >
                             <div
@@ -147,15 +148,19 @@ export const InstructionItemComponent = ({
                                     display: 'flex',
                                     gap: '4px',
                                     alignItems: 'center',
-                                    flexWrap: 'nowrap',
-                                    whiteSpace: 'nowrap',
+                                    flexWrap: 'wrap',
+                                    whiteSpace: 'normal',
+                                    minWidth: 0,
                                 }}
                             >
                                 <Typography
                                     text={item.ending}
                                     color={colors.gray10}
                                     type="body"
-                                    style={{ whiteSpace: 'nowrap' }}
+                                    style={{
+                                        whiteSpace: 'normal',
+                                        wordBreak: 'break-word',
+                                    }}
                                 />
                                 <a
                                     href={item.wikiLink}
@@ -164,10 +169,9 @@ export const InstructionItemComponent = ({
                                     style={{
                                         color: colors.buttonActionBlue,
                                         textDecoration: 'none',
-                                        whiteSpace: 'nowrap',
+                                        whiteSpace: 'normal',
                                         fontWeight: 'bold',
                                         fontSize: '14px',
-                                        flexShrink: 0,
                                     }}
                                 >
                                     {dictionary.wiki}
@@ -181,6 +185,7 @@ export const InstructionItemComponent = ({
                 <div
                     style={{
                         flex: 1,
+                        minWidth: 0,
                         display: 'flex',
                         justifyContent: 'center',
                         alignItems: 'center',

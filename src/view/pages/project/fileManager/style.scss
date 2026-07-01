@@ -22,6 +22,11 @@
         border-top-right-radius: 8px;
         padding-left: 14px;
         padding-right: 14px;
+        .manager-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
         .close-icon-container {
             display: flex;
             align-items: center;
@@ -66,6 +71,23 @@
                 // background: white;
             }
         }
+    }
+    .manager-files-list {
+        display: flex;
+        margin: 14px;
+        flex-direction: column;
+        align-items: stretch;
+        overflow-y: auto;
+        overflow-x: hidden;
+        gap: 14px;
+        height: 100%;
+    }
+    .file-group {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 7px;
+        width: 100%;
     }
     /* Reuse IDE loading styles inside file manager list area */
     .ide-loading-wrapper {
@@ -142,6 +164,15 @@
             width: 100%;
             color: $blue-10;
             border-color: $blue-10;
+        }
+    }
+}
+
+@media screen and (max-width: 1024px) {
+    .manager-container {
+        .manager-files-list {
+            margin: 12px;
+            gap: 10px;
         }
     }
 }

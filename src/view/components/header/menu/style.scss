@@ -8,3 +8,13 @@
         margin-top: 11px;
     }
 }
+
+@media screen and (max-width: 1024px) {
+    .header-menu-logout-modal {
+        padding: 18px 16px 16px;
+    }
+
+    .header-menu-logout-modal__button {
+        width: 100%;
+    }
+}

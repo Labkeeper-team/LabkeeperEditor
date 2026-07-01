@@ -1,0 +1,46 @@
+@use '../../../styles/colors' as *;
+
+.project-header-switcher {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+}
+
+.project-header-switcher-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    min-height: 24px;
+    min-width: 0;
+    max-width: 110px;
+    padding: 2px 5px;
+    border: none;
+    border-radius: 6px;
+    background: rgba($gray-10, 0.9);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.14);
+    cursor: pointer;
+}
+
+.project-header-switcher-icon {
+    display: inline-flex;
+    align-items: center;
+
+    svg path {
+        fill: $gray-60;
+    }
+}
+
+.project-header-switcher-icon--reverse {
+    transform: rotateY(180deg);
+}
+
+.project-header-switcher-label {
+    font-size: 10px;
+    line-height: 12px;
+    color: $gray-60;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

@@ -23,6 +23,7 @@ import { AppDispatch } from '../../store';
 import { HeaderMenu } from './menu';
 import { controller } from '../../../main.tsx';
 import { ContactModal } from './contact/modal';
+import { useIsMobile } from '../../hooks/useMobile';
 
 const languageOptions = [
     {
@@ -42,6 +43,7 @@ export const Header = () => {
     const language = useSelector(useCurrentLanguage);
     const { isAuthenticated } = useSelector(useUser);
     const projectIsReadonly = useSelector(useIsProjectReadonly);
+    const isMobile = useIsMobile();
 
     const onPress = (lang: unknown) => {
         dispatch(setLanguage(lang as Language));
@@ -60,13 +62,15 @@ export const Header = () => {
                         <Back />
                     ) : null}
                     <HeaderLogo />
-                    <div style={{ marginLeft: 20 }}>
-                        <Select
-                            options={languageOptions}
-                            onChange={onPress}
-                            value={language}
-                        />
-                    </div>
+                    {!isMobile ? (
+                        <div style={{ marginLeft: 20 }}>
+                            <Select
+                                options={languageOptions}
+                                onChange={onPress}
+                                value={language}
+                            />
+                        </div>
+                    ) : null}
                 </div>
                 <div className="labkeeper_header__center">
                     <ProjectTitle />

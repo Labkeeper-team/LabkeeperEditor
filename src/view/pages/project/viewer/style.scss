@@ -28,6 +28,11 @@
         align-items: center;
         gap: 24px;
     }
+    .viewer-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
 }
 
 /* Убираем только зазор между хедером и результатом */

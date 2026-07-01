@@ -18,14 +18,40 @@ import { useDictionary } from '../../../../../../store/selectors/translations';
 import { AppDispatch, StorageState } from '../../../../../../store';
 import { setShowSearch } from '../../../../../../store/slices/settings';
 import { controller } from '../../../../../../../main.tsx';
+import { useIsMobile } from '../../../../../../hooks/useMobile';
 
 export const SettingsButton = () => {
     const dispatch = useDispatch<AppDispatch>();
     const dictionary = useSelector(useDictionary);
+    const isMobile = useIsMobile();
     const search = useSelector(useSearch);
     const showSearch = useSelector(
         (state: StorageState) => state.settings.showSearch
     );
+
+    if (isMobile) {
+        return (
+            <div
+                className={classNames(
+                    InterfaceTourAnchorClassnames.CodeSettings,
+                    'code-settings-header-container'
+                )}
+            >
+                <div className="action-button">
+                    <DropdownMenu
+                        icon={<CodeSettingsIcon />}
+                        containerClassname="mobile-settings-fullscreen-menu"
+                    >
+                        <>
+                            <ProjectSettings />
+                            <div className="mobile-dropdown-separator" />
+                            <HeaderHelperItems />
+                        </>
+                    </DropdownMenu>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div

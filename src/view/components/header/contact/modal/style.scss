@@ -44,3 +44,25 @@
     justify-content: flex-end;
     margin-top: 4px;
 }
+
+@media screen and (max-width: 1024px) {
+    .contact-modal {
+        min-width: 0;
+        width: 100%;
+        padding: 16px;
+        box-sizing: border-box;
+    }
+
+    .contact-modal__actions {
+        flex-direction: column-reverse;
+    }
+
+    .contact-modal__actions .labkeeper-button {
+        width: 100%;
+    }
+
+    .textarea-container > textarea {
+        min-height: 120px;
+        font-size: 16px;
+    }
+}

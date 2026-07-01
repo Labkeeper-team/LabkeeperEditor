@@ -16,10 +16,13 @@ import {
 } from '../../../store/selectors/program.ts';
 import { StorageState } from '../../../store';
 import { controller } from '../../../../main.tsx';
+import { useIsMobile } from '../../../hooks/useMobile';
+import { ProjectPanelSwitcher } from '../mobilePanelSwitcher';
 
 export const FileManager = () => {
     const dispatch = useDispatch<AppDispatch>();
     const inputRef = useRef<HTMLInputElement>();
+    const isMobile = useIsMobile();
 
     /*
     GLOBAL STATE
@@ -86,30 +89,24 @@ export const FileManager = () => {
         <div className="manager-container">
             <div className="manager-header">
                 <div>{dictionary.filemanager.title}</div>
-                <div
-                    onClick={() =>
-                        dispatch(
-                            controller.onCrossButtonInFileManagerClickedRequest()
-                        )
-                    }
-                    className="close-icon-container"
-                >
-                    <PlusIcon style={{ rotate: '45deg' }} />
+                <div className="manager-header-actions">
+                    {!isMobile ? (
+                        <div
+                            onClick={() =>
+                                dispatch(
+                                    controller.onCrossButtonInFileManagerClickedRequest()
+                                )
+                            }
+                            className="close-icon-container"
+                        >
+                            <PlusIcon style={{ rotate: '45deg' }} />
+                        </div>
+                    ) : null}
+                    <ProjectPanelSwitcher />
                 </div>
             </div>
             {
-                <div
-                    style={{
-                        display: 'flex',
-                        margin: 14,
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        overflowY: 'auto',
-                        overflowX: 'hidden',
-                        gap: 14,
-                        height: '100%',
-                    }}
-                >
+                <div className="manager-files-list">
                     {getFilesRequestState === 'loading' ? (
                         <div className="ide-loading-wrapper" aria-hidden>
                             <span className="ide-loading-spinner" />

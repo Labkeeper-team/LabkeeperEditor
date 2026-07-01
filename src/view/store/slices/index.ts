@@ -32,9 +32,12 @@ interface CallbackState {
     scrollEditorToBottom: boolean;
 }
 
+export type MobileProjectPanel = 'editor' | 'viewer' | 'files';
+
 interface SettingsState {
     showTour: boolean;
     showFileManager: boolean;
+    activeMobilePanel: MobileProjectPanel;
     expandProblemViewer: boolean;
     showSearch: boolean;
     editModeForProjectTitle: boolean;
@@ -159,6 +162,7 @@ export const projectsInitialState: ProjectsState = {
 export const settingsInitialState: SettingsState = {
     showTour: false,
     showFileManager: false,
+    activeMobilePanel: 'editor',
     showSearch: false,
     editModeForProjectTitle: false,
     editModeForFilename: false,

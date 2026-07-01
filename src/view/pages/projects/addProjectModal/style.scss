@@ -25,3 +25,19 @@
         margin-top: 24px;
     }
 }
+
+@media screen and (max-width: 1024px) {
+    .add-project-modal {
+        padding: 18px 14px 14px;
+    }
+
+    .add-project-modal .add-project-modal-type-options {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .add-project-modal .add-project-modal-button {
+        margin-top: 16px;
+    }
+}

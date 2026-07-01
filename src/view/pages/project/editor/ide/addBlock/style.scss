@@ -13,3 +13,22 @@
         }
     }
 }
+
+@media screen and (max-width: 1024px) {
+    .empty-project-placeholder-container--compact {
+        width: 100%;
+        justify-content: stretch;
+        gap: 6px;
+    }
+
+    .empty-project-placeholder-container--compact .labkeeper_select {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .empty-project-placeholder-container--compact
+        .labkeeper_select
+        .select-header {
+        justify-content: center;
+    }
+}

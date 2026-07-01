@@ -56,3 +56,27 @@
         }
     }
 }
+
+@media screen and (max-width: 1024px) {
+    .modal-container-overlay {
+        align-items: center;
+        padding: 16px;
+        padding-top: max(16px, env(safe-area-inset-top));
+        padding-bottom: max(16px, env(safe-area-inset-bottom));
+        box-sizing: border-box;
+    }
+
+    .modal-container-overlay .modal-contaier {
+        min-width: 0;
+        width: min(100%, 460px);
+        max-height: calc(100dvh - 32px);
+        overflow-y: auto;
+    }
+
+    .modal-container-overlay .close-button-container {
+        top: max(10px, env(safe-area-inset-top));
+        right: max(10px, env(safe-area-inset-right));
+        width: 42px;
+        height: 42px;
+    }
+}

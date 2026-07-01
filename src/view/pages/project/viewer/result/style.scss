@@ -5,7 +5,8 @@
     display: flex;
     flex-direction: column;
     background-color: $white;
-    overflow: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
     border-bottom-left-radius: 8px;
     border-bottom-right-radius: 8px;
     .save-to-pdf-button {

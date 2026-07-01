@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Provider as StoreProvider } from 'react-redux';
 import * as Sentry from '@sentry/react';
 import { ToastContainer } from 'react-toastify';
@@ -10,6 +11,16 @@ import ScaleWrapper from './components/scaleWrapper';
 import { controller } from '../main.tsx';
 
 function App() {
+    const [pathname, setPathname] = useState(appRouter.state.location.pathname);
+
+    useEffect(() => {
+        return appRouter.subscribe((state) => {
+            setPathname(state.location.pathname);
+        });
+    }, []);
+
+    const disableScale = pathname.startsWith('/project');
+
     return (
         <Sentry.ErrorBoundary
             showDialog
@@ -40,7 +51,7 @@ function App() {
                 </div>
             )}
         >
-            <ScaleWrapper minWidth={1024}>
+            <ScaleWrapper minWidth={1024} disabled={disableScale}>
                 <StoreProvider store={store}>
                     <PersistGate loading={undefined} persistor={persist}>
                         <RouterProvider router={appRouter} />

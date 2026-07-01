@@ -50,3 +50,29 @@
     gap: 12px;
     padding: 16px 32px 24px 32px;
 }
+
+@media screen and (max-width: 1024px) {
+    .delete-files-modal {
+        min-width: 0;
+        width: 100%;
+    }
+
+    .delete-files-modal > .typography {
+        font-size: 16px;
+        padding: 14px 16px;
+    }
+
+    .delete-files-list {
+        max-height: 42vh;
+        padding: 12px 16px 0;
+    }
+
+    .delete-files-actions {
+        flex-direction: column;
+        padding: 12px 16px 16px;
+    }
+
+    .delete-files-actions .labkeeper-button {
+        width: 100%;
+    }
+}

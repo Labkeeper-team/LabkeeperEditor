@@ -15,6 +15,8 @@
         overflow: hidden;
     }
     .hoverable-item {
+        flex: 1;
+        min-width: 0;
         transition-duration: 0.3s;
         &:hover {
             cursor: pointer;
@@ -101,5 +103,11 @@
             white-space: nowrap;
             overflow: hidden;
         }
+    }
+}
+
+@media screen and (max-width: 1024px) {
+    .file-item {
+        justify-content: flex-start;
     }
 }

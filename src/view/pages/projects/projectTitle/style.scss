@@ -43,3 +43,14 @@
         }
     }
 }
+
+@media screen and (max-width: 1024px) {
+    .project-title-container {
+        gap: 6px;
+    }
+
+    .project-title-container .text-base {
+        padding-left: 6px;
+        max-width: 100%;
+    }
+}

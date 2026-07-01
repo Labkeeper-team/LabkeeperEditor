@@ -26,3 +26,26 @@
         }
     }
 }
+
+@media screen and (max-width: 1024px) {
+    .project-settings-dropdown {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+    }
+
+    .project-settings-dropdown .labkeeper-radio {
+        width: 100%;
+        min-width: 0;
+        align-items: flex-start;
+    }
+
+    .project-settings-dropdown .labkeeper-radio .typography {
+        flex: 1;
+        min-width: 0;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+}

@@ -84,3 +84,20 @@
         }
     }
 }
+
+@media screen and (max-width: 1024px) {
+    .segment-divider .divider-dropdown {
+        min-width: 0;
+        width: max-content;
+        max-width: calc(100vw - 24px);
+        padding: 4px;
+    }
+
+    .segment-divider .divider-dropdown button {
+        width: auto;
+        min-width: 100%;
+        padding: 8px 12px;
+        white-space: nowrap;
+        justify-content: flex-start;
+    }
+}
