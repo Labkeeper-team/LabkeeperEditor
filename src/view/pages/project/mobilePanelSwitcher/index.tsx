@@ -166,9 +166,6 @@ export const ProjectPanelSwitcher = ({
                     {getPanelLabel(prevPanel)}
                 </span>
             </button>
-            <span className="project-header-switcher-indicator">
-                {activePanelIndex + 1}/{availableMobilePanels.length}
-            </span>
             <button
                 type="button"
                 className="project-header-switcher-button"

@@ -42,45 +42,13 @@ export const SettingsButton = () => {
                         icon={<CodeSettingsIcon />}
                         containerClassname="mobile-settings-fullscreen-menu"
                     >
-                        {showSearch ? null : (
-                            <>
-                                <ProjectSettings />
-                                <div className="mobile-dropdown-separator" />
-                                <HeaderHelperItems />
-                            </>
-                        )}
+                        <>
+                            <ProjectSettings />
+                            <div className="mobile-dropdown-separator" />
+                            <HeaderHelperItems />
+                        </>
                     </DropdownMenu>
                 </div>
-                <div
-                    onClick={() => dispatch(setShowSearch(true))}
-                    className="action-button"
-                >
-                    <SearchIcon />
-                </div>
-                <Input
-                    ref={null}
-                    placeholder={`${dictionary.placeholder_search}...`}
-                    onClear={
-                        showSearch
-                            ? () =>
-                                  dispatch(
-                                      controller.onSearchIconPressRequest()
-                                  )
-                            : undefined
-                    }
-                    onChange={(e) => {
-                        dispatch(
-                            controller.onSearchInputChangedRequest({
-                                text: e.target.value,
-                            })
-                        );
-                    }}
-                    className={classNames({
-                        'input-hide': !showSearch,
-                        'input-show': showSearch,
-                    })}
-                    value={search}
-                />
             </div>
         );
     }
