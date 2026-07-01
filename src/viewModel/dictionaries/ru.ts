@@ -183,7 +183,7 @@ export const ru: Translations = {
         [CompileError.ARRAY_ARGUMENT_EXPECTED]:
             'Ожидался аргумент в виде массива',
         [CompileError.NO_SUCH_FUNCTION]: 'Не существует функция',
-        [CompileError.ARITHMETIC_ERROR]: 'Арифметическая ошибка',
+        [CompileError.ARITHMETIC_ERROR]: 'Ошибка деления на ноль',
         [CompileError.CANCELED]: 'Вычисления отменены',
         [CompileError.NOT_ENOUGH_WORKERS]:
             'На серверах не хватает вычислительной мощности для компиляции',

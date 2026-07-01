@@ -10,6 +10,54 @@ export const InstructionItemComponent = ({
     item: InstructionItem;
 }) => {
     const dictionary = useSelector(useDictionary);
+    const hasImage = Boolean(item.image);
+    const hasWikiLink = Boolean(item.ending && item.wikiLink);
+    const renderPointContent = (point: string) => {
+        if (!point.includes('```')) {
+            return (
+                <Typography text={point} color={colors.gray10} type="body" />
+            );
+        }
+
+        const parts = point.split(/(```[^`]+```)/g).filter(Boolean);
+
+        return (
+            <div
+                style={{
+                    color: colors.gray10,
+                    fontSize: '13px',
+                    lineHeight: '16px',
+                    userSelect: 'none',
+                }}
+            >
+                {parts.map((part, idx) => {
+                    const codeMatch = part.match(/^```([^`]+)```$/);
+                    if (!codeMatch) {
+                        return <span key={idx}>{part}</span>;
+                    }
+
+                    return (
+                        <code
+                            key={idx}
+                            style={{
+                                backgroundColor: colors.gray40,
+                                border: `1px solid ${colors.gray30}`,
+                                borderRadius: '4px',
+                                padding: '1px 6px',
+                                fontFamily:
+                                    'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+                                fontSize: '12px',
+                                lineHeight: '16px',
+                            }}
+                        >
+                            {codeMatch[1]}
+                        </code>
+                    );
+                })}
+            </div>
+        );
+    };
+
     return (
         <div
             style={{
@@ -18,6 +66,7 @@ export const InstructionItemComponent = ({
                 gap: 5,
                 marginTop: '-28px',
                 paddingLeft: '24px',
+                paddingRight: hasImage ? undefined : '24px',
                 height: '100%',
                 alignItems: 'center',
                 backgroundColor: colors.gray60,
@@ -30,8 +79,8 @@ export const InstructionItemComponent = ({
                     display: 'flex',
                     flexDirection: 'column',
                     gap: 3,
-                    flex: 1,
-                    minWidth: 0,
+                    flex: hasImage ? 1 : undefined,
+                    width: hasImage ? undefined : '100%',
                     overflow: 'hidden',
                 }}
             >
@@ -72,88 +121,87 @@ export const InstructionItemComponent = ({
                                     flexShrink: 0,
                                 }}
                             />
-                            <Typography
-                                text={point}
-                                color={colors.gray10}
-                                type="body"
-                            />
+                            {renderPointContent(point)}
                         </div>
                     ))}
-                    <div
-                        style={{
-                            display: 'flex',
-                            gap: '8px',
-                            alignItems: 'flex-start',
-                            flexWrap: 'wrap',
-                        }}
-                    >
-                        <div
-                            style={{
-                                width: '6px',
-                                height: '6px',
-                                borderRadius: '50%',
-                                backgroundColor: colors.buttonActionBlue,
-                                marginTop: '8px',
-                                flexShrink: 0,
-                            }}
-                        />
+                    {hasWikiLink ? (
                         <div
                             style={{
                                 display: 'flex',
-                                gap: '4px',
-                                alignItems: 'center',
+                                gap: '8px',
+                                alignItems: 'flex-start',
                                 flexWrap: 'wrap',
-                                whiteSpace: 'normal',
-                                minWidth: 0,
                             }}
                         >
-                            <Typography
-                                text={item.ending}
-                                color={colors.gray10}
-                                type="body"
+                            <div
                                 style={{
-                                    whiteSpace: 'normal',
-                                    wordBreak: 'break-word',
-                                }}
-                            />
-                            <a
-                                href={item.wikiLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{
-                                    color: colors.buttonActionBlue,
-                                    textDecoration: 'none',
-                                    whiteSpace: 'normal',
-                                    fontWeight: 'bold',
-                                    fontSize: '14px',
+                                    width: '6px',
+                                    height: '6px',
+                                    borderRadius: '50%',
+                                    backgroundColor: colors.buttonActionBlue,
+                                    marginTop: '8px',
                                     flexShrink: 0,
                                 }}
+                            />
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    gap: '4px',
+                                    alignItems: 'center',
+                                    flexWrap: 'wrap',
+                                    whiteSpace: 'normal',
+                                    minWidth: 0,
+                                }}
                             >
-                                {dictionary.wiki}
-                            </a>
+                                <Typography
+                                    text={item.ending}
+                                    color={colors.gray10}
+                                    type="body"
+                                    style={{
+                                        whiteSpace: 'normal',
+                                        wordBreak: 'break-word',
+                                    }}
+                                />
+                                <a
+                                    href={item.wikiLink}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{
+                                        color: colors.buttonActionBlue,
+                                        textDecoration: 'none',
+                                        whiteSpace: 'normal',
+                                        fontWeight: 'bold',
+                                        fontSize: '14px',
+                                    }}
+                                >
+                                    {dictionary.wiki}
+                                </a>
+                            </div>
                         </div>
-                    </div>
+                    ) : null}
                 </div>
             </div>
-            <div
-                style={{
-                    flex: 1,
-                    minWidth: 0,
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    overflow: 'hidden',
-                }}
-            >
-                <img
-                    src={item.image}
+            {hasImage ? (
+                <div
                     style={{
-                        maxWidth: '100%',
-                        maxHeight: '160px',
-                        objectFit: 'contain',
+                        flex: 1,
+                        minWidth: 0,
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        overflow: 'hidden',
                     }}
-                />
-            </div>
+                >
+                    <img
+                        src={item.image}
+                        style={{
+                            maxWidth: '100%',
+                            maxHeight: '160px',
+                            objectFit: 'contain',
+                        }}
+                    />
+                </div>
+            ) : null}
         </div>
     );
 };

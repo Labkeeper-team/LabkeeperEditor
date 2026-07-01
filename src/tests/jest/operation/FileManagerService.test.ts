@@ -5,6 +5,10 @@ import {
     mockUserInfoForUnauthorized,
 } from '../common.ts';
 
+jest.mock('nanoid', () => ({
+    nanoid: () => '12345678',
+}));
+
 /*
 Сценарий:
 1. Заходим на сайт с авторизацией
@@ -43,4 +47,29 @@ test('file-manager-test-onFolderButtonClicked-unauthorized-on-default', async ()
     expect(repository.authViewModelRepository.currentView()).toBe('login');
 
     matchRepositorySnapshot(repository);
+});
+
+test('file-manager-test-onUploadFiles-csv-with-empty-mime', async () => {
+    const { startupService, fileManagerService, rpi } = mockContext();
+    mockAuthenticatedStartup(rpi);
+
+    await startupService.onAppStartup();
+
+    rpi.uploadFileRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        body: '',
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+    });
+
+    const file = {
+        name: 'Frequency.csv',
+        size: 1024,
+        type: '',
+    } as File;
+
+    await fileManagerService.onUploadFiles([file]);
+
+    expect(rpi.uploadFileRequest).toHaveBeenCalledTimes(1);
 });

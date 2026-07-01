@@ -173,7 +173,7 @@ export const en: Translations = {
         [CompileError.STRING_ARGUMENT_EXPECTED]: 'String argument expected',
         [CompileError.ARRAY_ARGUMENT_EXPECTED]: 'Array argument expected',
         [CompileError.NO_SUCH_FUNCTION]: 'No such function',
-        [CompileError.ARITHMETIC_ERROR]: 'Arithmetic error',
+        [CompileError.ARITHMETIC_ERROR]: 'Division by zero error',
         [CompileError.CANCELED]: 'Computation canceled',
         [CompileError.NOT_ENOUGH_WORKERS]:
             'Not enough computational power on servers to compile',
