@@ -1,20 +1,15 @@
 import './style.scss';
 import { Editor } from './editor';
 import { Viewer } from './viewer';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { FileManager } from './fileManager';
-import { AppDispatch, StorageState } from '../../store';
+import { AppDispatch } from '../../store';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { controller } from '../../../main.tsx';
 import { DeleteFilesModal } from './modals/delete-files';
-import { TextFileEditorPanel } from './editor/textFileEditor/TextFileEditorPanel';
-import './editor/textFileEditor/style.scss';
 
 export const ProjectPage = () => {
     const dispatch = useDispatch<AppDispatch>();
-    const activeTextFile = useSelector(
-        (state: StorageState) => state.ide.activeTextFile
-    );
 
     /*
      * ACTIONS
@@ -36,7 +31,6 @@ export const ProjectPage = () => {
             <FileManager />
             <Editor />
             <Viewer />
-            {activeTextFile ? <TextFileEditorPanel /> : null}
             <DeleteFilesModal />
         </div>
     );

@@ -5,10 +5,6 @@ import {
     mockUserInfoForUnauthorized,
 } from '../common.ts';
 
-jest.mock('nanoid', () => ({
-    nanoid: () => '12345678',
-}));
-
 /*
 Сценарий:
 1. Заходим на сайт с авторизацией
@@ -99,6 +95,71 @@ test('file-manager-test-onUploadFiles-with-folder-prefix', async () => {
     expect(rpi.uploadFileRequest).toHaveBeenCalledWith(
         expect.any(FormData),
         expect.any(String),
-        'my_folder/note_12345678.txt'
+        'my_folder/note.txt'
+    );
+});
+
+test('file-manager-test-onUploadFiles-with-empty-folder-prefix', async () => {
+    const { startupService, fileManagerService, rpi, repository } =
+        mockContext();
+    mockAuthenticatedStartup(rpi);
+
+    await startupService.onAppStartup();
+    repository.settingsViewModelRepository.setCurrentFolderPath('old_folder');
+
+    rpi.uploadFileRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        body: '',
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+    });
+
+    const file = {
+        name: 'note.txt',
+        size: 128,
+        type: 'text/plain',
+    } as File;
+
+    await fileManagerService.onUploadFiles([file], '');
+
+    expect(rpi.uploadFileRequest).toHaveBeenCalledWith(
+        expect.any(FormData),
+        expect.any(String),
+        'note.txt'
+    );
+});
+
+test('file-manager-test-onUploadFiles-resets-stale-current-folder', async () => {
+    const { startupService, fileManagerService, rpi, repository } =
+        mockContext();
+    mockAuthenticatedStartup(rpi);
+
+    await startupService.onAppStartup();
+    repository.settingsViewModelRepository.setCurrentFolderPath(
+        'removed_folder'
+    );
+
+    rpi.uploadFileRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        body: '',
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+    });
+
+    const file = {
+        name: 'note.txt',
+        size: 128,
+        type: 'text/plain',
+    } as File;
+
+    await fileManagerService.onUploadFiles([file]);
+
+    expect(repository.settingsViewModelRepository.currentFolderPath()).toBe('');
+    expect(rpi.uploadFileRequest).toHaveBeenCalledWith(
+        expect.any(FormData),
+        expect.any(String),
+        'note.txt'
     );
 });

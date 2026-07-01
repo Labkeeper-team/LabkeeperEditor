@@ -179,7 +179,11 @@ export const joinFolderPath = (
 
 export const isTextFilePath = (path: string): boolean => {
     const lower = path.toLowerCase();
-    return lower.endsWith('.txt') || lower.endsWith('.tex');
+    return (
+        lower.endsWith('.txt') ||
+        lower.endsWith('.tex') ||
+        lower.endsWith('.csv')
+    );
 };
 
 export const normalizeFolderName = (name: string): string | null => {

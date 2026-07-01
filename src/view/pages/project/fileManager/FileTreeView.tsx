@@ -285,6 +285,7 @@ const TreeNodeRow = (props: {
             ) : (
                 <div
                     className="tree-row tree-row-file"
+                    onClick={editMode ? undefined : onClickRow}
                     onDragOver={handleDragOver}
                     onDrop={handleDrop}
                 >
@@ -294,7 +295,6 @@ const TreeNodeRow = (props: {
                         className={classNames('tree-row-label', {
                             'tree-row-label-editing': editMode,
                         })}
-                        onClick={editMode ? undefined : onClickRow}
                     >
                         {editMode ? (
                             <input
@@ -320,33 +320,38 @@ const TreeNodeRow = (props: {
                         )}
                     </div>
                     {!props.readonly && !editMode ? (
-                        <DropdownMenu>
-                            <div
-                                className="tree-menu-item tree-menu-item-delete"
-                                onClick={() =>
-                                    dispatch(
-                                        controller.onDeleteFileRequest({
-                                            fileName: props.node.path,
-                                        })
-                                    )
-                                }
-                            >
-                                <div className="tree-delete-icon">
-                                    <PlusIcon />
+                        <div onClick={(event) => event.stopPropagation()}>
+                            <DropdownMenu>
+                                <div
+                                    className="tree-menu-item tree-menu-item-delete"
+                                    onClick={() =>
+                                        dispatch(
+                                            controller.onDeleteFileRequest({
+                                                fileName: props.node.path,
+                                            })
+                                        )
+                                    }
+                                >
+                                    <div className="tree-delete-icon">
+                                        <PlusIcon />
+                                    </div>
+                                    <Typography
+                                        color={colors.gray10}
+                                        text={dictionary.delete}
+                                    />
                                 </div>
-                                <Typography
-                                    color={colors.gray10}
-                                    text={dictionary.delete}
-                                />
-                            </div>
-                            <div className="tree-menu-item" onClick={onRename}>
-                                <PencilIcon />
-                                <Typography
-                                    color={colors.gray10}
-                                    text={dictionary.filemanager.edit}
-                                />
-                            </div>
-                        </DropdownMenu>
+                                <div
+                                    className="tree-menu-item"
+                                    onClick={onRename}
+                                >
+                                    <PencilIcon />
+                                    <Typography
+                                        color={colors.gray10}
+                                        text={dictionary.filemanager.edit}
+                                    />
+                                </div>
+                            </DropdownMenu>
+                        </div>
                     ) : (
                         <span className="tree-menu-spacer" />
                     )}
@@ -487,10 +492,15 @@ export const FileTreeView = (props: {
 
     const onUploadDrop = useCallback(
         (path: string, fileList: FileList) => {
+            if (path === '') {
+                dispatch(
+                    controller.onCurrentFolderPathChangedRequest({ path: '' })
+                );
+            }
             dispatch(
                 controller.onUploadFilesRequest({
                     files: Array.from(fileList),
-                    folderPrefix: path || undefined,
+                    folderPrefix: path,
                 })
             );
             setDropTargetPath(null);

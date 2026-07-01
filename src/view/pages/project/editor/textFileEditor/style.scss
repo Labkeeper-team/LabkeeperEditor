@@ -1,75 +1,13 @@
 @use '../../../../styles/colors' as *;
 
-.text-file-editor-panel {
-    position: absolute;
-    z-index: 30;
-    display: flex;
-    flex-direction: column;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.16);
-    border: 1px solid rgba(0, 0, 0, 0.12);
-    overflow: hidden;
-    min-width: 360px;
-    min-height: 200px;
-
-    > .text-file-editor {
-        flex: 1;
-        min-height: 0;
-        width: 100%;
-    }
-}
-
-.text-file-editor {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    min-height: 0;
-    overflow: hidden;
-
-    .text-file-editor-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 8px;
-        padding: 8px 10px 8px 14px;
+.ide-container {
+    .text-file-editor-title {
         font-size: 12px;
         color: rgba(0, 0, 0, 0.7);
-        border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-        background: white;
-        flex-shrink: 0;
-        position: sticky;
-        top: 0;
-        z-index: 2;
-    }
-
-    .text-file-editor-body {
-        flex: 1;
-        min-height: 0;
-        overflow: hidden;
-        position: relative;
-
-        > div {
-            height: 100%;
-        }
-
-        .cm-scroller {
-            overflow: auto !important;
-            overscroll-behavior: contain;
-        }
-    }
-
-    .text-file-editor-title {
-        flex: 1;
-        min-width: 0;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-    }
-
-    .text-file-editor-header-draggable {
-        cursor: move;
-        user-select: none;
+        max-width: 100%;
     }
 
     .text-file-editor-close {
@@ -101,26 +39,15 @@
             }
         }
     }
-}
 
-.text-file-editor-resize-handle {
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    width: 18px;
-    height: 18px;
-    cursor: nwse-resize;
-    touch-action: none;
+    .text-file-editor-body {
+        > div {
+            height: 100%;
+        }
 
-    &::before {
-        content: '';
-        position: absolute;
-        right: 4px;
-        bottom: 4px;
-        width: 10px;
-        height: 10px;
-        border-right: 2px solid rgba(0, 0, 0, 0.28);
-        border-bottom: 2px solid rgba(0, 0, 0, 0.28);
-        border-bottom-right-radius: 2px;
+        .cm-scroller {
+            overflow: auto !important;
+            overscroll-behavior: contain;
+        }
     }
 }

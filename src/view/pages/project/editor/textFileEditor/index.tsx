@@ -1,12 +1,4 @@
-import {
-    useCallback,
-    useEffect,
-    useMemo,
-    useRef,
-    useState,
-    PointerEvent as ReactPointerEvent,
-} from 'react';
-import classNames from 'classnames';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import { EditorView } from '@codemirror/view';
 import { langs } from '@uiw/codemirror-extensions-langs';
@@ -20,16 +12,11 @@ import {
     syncCodeMirrorLayout,
 } from '../../../../utils/refreshCodeMirrorLayout';
 import { textFileEditorWheelScroll } from './textFileEditorWheelScroll';
+import '../ide/style.scss';
+import '../ide/header/style.scss';
 import './style.scss';
 
-type TextFileEditorProps = {
-    draggableHeader?: boolean;
-    onHeaderPointerDown?: (event: ReactPointerEvent<HTMLDivElement>) => void;
-    onHeaderPointerMove?: (event: ReactPointerEvent<HTMLDivElement>) => void;
-    onHeaderPointerUp?: (event: ReactPointerEvent<HTMLDivElement>) => void;
-};
-
-export const TextFileEditor = (props: TextFileEditorProps = {}) => {
+export const TextFileEditor = () => {
     const dispatch = useDispatch<AppDispatch>();
     const activeTextFile = useSelector(
         (state: StorageState) => state.ide.activeTextFile
@@ -105,18 +92,17 @@ export const TextFileEditor = (props: TextFileEditorProps = {}) => {
         : activeTextFile;
 
     return (
-        <div className="text-file-editor">
-            <div
-                className={classNames('text-file-editor-header', {
-                    'text-file-editor-header-draggable': props.draggableHeader,
-                })}
-                onPointerDown={props.onHeaderPointerDown}
-                onPointerMove={props.onHeaderPointerMove}
-                onPointerUp={props.onHeaderPointerUp}
-            >
-                <span className="text-file-editor-title" title={activeTextFile}>
-                    {fileLabel}
-                </span>
+        <div className="ide-container">
+            <div className="ide-header">
+                <div className="ide-wrapper">
+                    <span
+                        className="text-file-editor-title"
+                        title={activeTextFile}
+                    >
+                        {fileLabel}
+                    </span>
+                </div>
+                <div />
                 <button
                     type="button"
                     className="text-file-editor-close"
@@ -126,7 +112,10 @@ export const TextFileEditor = (props: TextFileEditorProps = {}) => {
                     <PlusIcon style={{ rotate: '45deg' }} />
                 </button>
             </div>
-            <div ref={bodyRef} className="text-file-editor-body">
+            <div
+                ref={bodyRef}
+                className="ide-flexibility-container text-file-editor-body"
+            >
                 {editorHeight > 0 ? (
                     <CodeMirror
                         value={textFileContent}

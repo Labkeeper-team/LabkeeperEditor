@@ -97,8 +97,9 @@ export class FileManagerService {
             return;
         }
         const prefix =
-            folderPrefix ??
-            this.repository.settingsViewModelRepository.currentFolderPath();
+            folderPrefix !== undefined && folderPrefix !== null
+                ? folderPrefix
+                : this.resolveCurrentFolderPath();
         let isResultOk = false;
         for (const file of files) {
             this.fileService.checkFile(file, this.repository.dictionary);
@@ -178,7 +179,7 @@ export class FileManagerService {
         }
         if (ev.file.file) {
             const folderPrefix = svarIdToPath(ev.parent);
-            await this.onUploadFiles([ev.file.file], folderPrefix || null);
+            await this.onUploadFiles([ev.file.file], folderPrefix);
         }
     };
 
@@ -330,5 +331,31 @@ export class FileManagerService {
         this.repository.settingsViewModelRepository.setEditModeForFilename(
             true
         );
+    };
+
+    private resolveCurrentFolderPath = (): string => {
+        const current =
+            this.repository.settingsViewModelRepository.currentFolderPath();
+        if (!current) {
+            return '';
+        }
+        const ephemeralFolders =
+            this.repository.settingsViewModelRepository.ephemeralFolders();
+        const folderExists =
+            ephemeralFolders.includes(current) ||
+            this.repository.projectViewModelRepository
+                .files()
+                .some(
+                    (file) =>
+                        file.fileName === current ||
+                        file.fileName.startsWith(`${current}/`)
+                );
+        if (!folderExists) {
+            this.repository.settingsViewModelRepository.setCurrentFolderPath(
+                ''
+            );
+            return '';
+        }
+        return current;
     };
 }

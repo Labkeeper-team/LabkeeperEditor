@@ -1,6 +1,7 @@
 import {
     buildFileTree,
     buildSvarTree,
+    isTextFilePath,
     pathToSvarId,
     svarIdToPath,
 } from '../../../view/pages/project/fileManager/svarFileTreeAdapter.ts';
@@ -82,5 +83,11 @@ describe('svarFileTreeAdapter', () => {
                 ?.children.find((node) => node.path === 'folder1/note.txt')
         ).toBeTruthy();
         expect(tree.find((node) => node.path === 'empty')?.type).toBe('folder');
+    });
+
+    test('isTextFilePath supports csv', () => {
+        expect(isTextFilePath('data.csv')).toBe(true);
+        expect(isTextFilePath('folder/data.CSV')).toBe(true);
+        expect(isTextFilePath('image.png')).toBe(false);
     });
 });

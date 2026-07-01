@@ -1,20 +1,14 @@
 import { toast } from 'react-toastify';
 import { Translations } from '../dictionaries';
 import { ViewModelRepository } from '../repository';
-import { nanoid } from 'nanoid';
 
 export const checkFileErrorMessage = 'CheckFileErrorMessage';
 
 export class FileService {
-    static RANDOM_SUFFIX_LENGTH = 8;
     repository: ViewModelRepository;
 
     constructor(repository: ViewModelRepository) {
         this.repository = repository;
-    }
-
-    static generateSuffix() {
-        return nanoid(this.RANDOM_SUFFIX_LENGTH);
     }
 
     checkFile = (file: File, dictionary: Translations) => {
@@ -66,7 +60,6 @@ export class FileService {
         filename: string,
         folderPrefix?: string | null
     ) => {
-        const suffix = FileService.generateSuffix();
         const pathPrefix =
             folderPrefix ??
             (filename.includes('/')
@@ -76,21 +69,19 @@ export class FileService {
             ? filename.slice(filename.lastIndexOf('/') + 1)
             : filename;
 
-        let ext;
-        let name = `file_seg${segmentId}`;
+        let ext = '';
+        let name: string;
         const indexLastDot = basename.lastIndexOf('.');
-        if (indexLastDot == -1) {
-            if (segmentId == null) {
-                name = basename;
-            }
-            ext = '';
+        if (indexLastDot === -1) {
+            name = segmentId == null ? basename : `file_seg${segmentId}`;
         } else {
             ext = basename.slice(indexLastDot);
-            if (segmentId == null) {
-                name = basename.slice(0, indexLastDot);
-            }
+            name =
+                segmentId == null
+                    ? basename.slice(0, indexLastDot)
+                    : `file_seg${segmentId}`;
         }
-        name = `${name}_${suffix}`;
+
         let resName = name + ext;
         let count = 1;
         while (
