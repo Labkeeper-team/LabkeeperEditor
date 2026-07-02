@@ -19,7 +19,10 @@ import { AddProjectModal } from './addProjectModal';
 import { DeleteProjectModal } from './deleteProjectModal';
 import { ProjectShort } from '../../../model/domain';
 import { ProjectTitle } from './projectTitle';
-import { useProjects } from '../../store/selectors/program';
+import {
+    useProjectTagsByProject,
+    useProjects,
+} from '../../store/selectors/program';
 import { colors } from '../../styles/colors';
 import {
     useCurrentLanguage,
@@ -27,14 +30,11 @@ import {
 } from '../../store/selectors/translations';
 import { AppDispatch, StorageState } from '../../store';
 import { controller } from '../../../main.tsx';
-import {
-    ProjectTagsStubService,
-    TagInfo,
-} from '../../../viewModel/operation/ProjectTagsStubService.ts';
 
 type SortMode = 'time' | 'title';
 type SortDirection = 'asc' | 'desc';
 type TagDropdownPlacement = 'top' | 'bottom';
+type TagInfo = { label: string; color: string };
 const DEFAULT_NEW_TAG_COLOR = 'blue';
 const TAG_COLOR_SWATCHES = [
     'blue',
@@ -63,9 +63,6 @@ export const ProjectsPage = () => {
     >(false);
     const [sortMode, setSortMode] = useState<SortMode>('time');
     const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
-    const [projectTagKeysByProject, setProjectTagKeysByProject] = useState<
-        Record<string, string[]>
-    >({});
     const [openedTagPickerProjectId, setOpenedTagPickerProjectId] = useState<
         string | null
     >(null);
@@ -86,7 +83,6 @@ export const ProjectsPage = () => {
     const [selectedFilterTagKeys, setSelectedFilterTagKeys] = useState<
         string[]
     >([]);
-    const [tagMap, setTagMap] = useState<Record<string, TagInfo>>({});
     const [singleLineTagsByProject, setSingleLineTagsByProject] = useState<
         Record<string, boolean>
     >({});
@@ -101,11 +97,11 @@ export const ProjectsPage = () => {
     const dictionary = useSelector(useDictionary);
     const lang = useSelector(useCurrentLanguage);
     const projects = useSelector(useProjects);
+    const projectTagsByProject = useSelector(useProjectTagsByProject);
     const getProjectsRequestState = useSelector(
         (state: StorageState) => state.ide.getProjectsRequestState
     );
     const dispatch = useDispatch<AppDispatch>();
-    const projectTagsService = useMemo(() => new ProjectTagsStubService(), []);
     const tagsCollator = useMemo(
         () =>
             new Intl.Collator(['en', 'ru'], {
@@ -126,6 +122,43 @@ export const ProjectsPage = () => {
         }
         return prepared;
     }, []);
+    const normalizeTagLabel = useCallback(
+        (value: string) => value.trim().replace(/\s+/g, ' '),
+        []
+    );
+    const {
+        tagMap,
+        projectTagKeysByProject,
+    }: {
+        tagMap: Record<string, TagInfo>;
+        projectTagKeysByProject: Record<string, string[]>;
+    } = useMemo(() => {
+        const nextTagMap: Record<string, TagInfo> = {};
+        const nextProjectTagKeysByProject: Record<string, string[]> = {};
+
+        for (const [projectId, tags] of Object.entries(projectTagsByProject)) {
+            const projectTagKeys = new Set<string>();
+            for (const [rawLabel, rawColor] of Object.entries(tags ?? {})) {
+                const label = normalizeTagLabel(rawLabel);
+                const color =
+                    normalizeColorInput(rawColor) ?? DEFAULT_NEW_TAG_COLOR;
+                if (!label) {
+                    continue;
+                }
+                const key = label.toLocaleLowerCase();
+                projectTagKeys.add(key);
+                if (!nextTagMap[key]) {
+                    nextTagMap[key] = { label, color };
+                }
+            }
+            nextProjectTagKeysByProject[projectId] = Array.from(projectTagKeys);
+        }
+
+        return {
+            tagMap: nextTagMap,
+            projectTagKeysByProject: nextProjectTagKeysByProject,
+        };
+    }, [normalizeColorInput, normalizeTagLabel, projectTagsByProject]);
     const getTagColor = useCallback(
         (tag: string) =>
             tagMap[tag.toLocaleLowerCase()]?.color ?? DEFAULT_NEW_TAG_COLOR,
@@ -157,14 +190,6 @@ export const ProjectsPage = () => {
         },
         []
     );
-
-    useEffect(() => {
-        const ids = projects
-            .map((project) => project.projectId)
-            .filter((id): id is string => !!id);
-        setProjectTagKeysByProject(projectTagsService.getProjectTagKeys(ids));
-        setTagMap(projectTagsService.getTagMap(ids));
-    }, [projects, projectTagsService]);
 
     useEffect(() => {
         Object.values(projectTagsCellRefs.current).forEach((cell) => {
@@ -373,16 +398,6 @@ export const ProjectsPage = () => {
         }));
     }, []);
 
-    const setTagsForProject = useCallback(
-        (projectId: string, tagKeys: string[]) => {
-            setProjectTagKeysByProject((prev) => ({
-                ...prev,
-                [projectId]: tagKeys,
-            }));
-        },
-        []
-    );
-
     const onNewTagColorChange = useCallback(
         (_projectId: string, value: string) => {
             const normalized = normalizeColorInput(value);
@@ -408,19 +423,16 @@ export const ProjectsPage = () => {
         []
     );
 
-    const commitNewTagColorInput = useCallback(
-        (_projectId: string) => {
-            const rawValue = nextTagColorInput ?? '';
-            const normalized = normalizeColorInput(rawValue);
-            if (!normalized) {
-                setNextTagColorInput(nextTagColor ?? DEFAULT_NEW_TAG_COLOR);
-                return;
-            }
-            setNextTagColor(normalized);
-            setNextTagColorInput(normalized);
-        },
-        [nextTagColor, nextTagColorInput, normalizeColorInput]
-    );
+    const commitNewTagColorInput = useCallback(() => {
+        const rawValue = nextTagColorInput ?? '';
+        const normalized = normalizeColorInput(rawValue);
+        if (!normalized) {
+            setNextTagColorInput(nextTagColor ?? DEFAULT_NEW_TAG_COLOR);
+            return;
+        }
+        setNextTagColor(normalized);
+        setNextTagColorInput(normalized);
+    }, [nextTagColor, nextTagColorInput, normalizeColorInput]);
 
     useEffect(() => {
         if (!openedTagPickerProjectId) {
@@ -433,7 +445,10 @@ export const ProjectsPage = () => {
             if (!projectId) {
                 return;
             }
-            const normalizedTag = tag.trim().replace(/\s+/g, ' ');
+            const normalizedTag = normalizeTagLabel(tag);
+            if (!normalizedTag) {
+                return;
+            }
             const tagKey = normalizedTag.toLocaleLowerCase();
             const existingColor = normalizedTag
                 ? tagMap[tagKey]?.color
@@ -444,12 +459,13 @@ export const ProjectsPage = () => {
                 fromInput ??
                 nextTagColor ??
                 DEFAULT_NEW_TAG_COLOR;
-            const updatedTags = projectTagsService.addTagToProject(
-                projectId,
-                tag,
-                chosenColor
+            dispatch(
+                controller.onAddTagToProjectRequest({
+                    projectId,
+                    tagLabel: normalizedTag,
+                    color: chosenColor,
+                })
             );
-            setTagsForProject(projectId, updatedTags);
             setNewTagByProject((prev) => ({
                 ...prev,
                 [projectId]: '',
@@ -463,19 +479,14 @@ export const ProjectsPage = () => {
             );
             setNextTagColor(nextSuggestedColor);
             setNextTagColorInput(nextSuggestedColor);
-            const ids = projects
-                .map((project) => project.projectId)
-                .filter((id): id is string => !!id);
-            setTagMap(projectTagsService.getTagMap(ids));
         },
         [
+            dispatch,
             getNextSuggestedTagColor,
             normalizeColorInput,
+            normalizeTagLabel,
             nextTagColor,
             nextTagColorInput,
-            projects,
-            projectTagsService,
-            setTagsForProject,
             tagMap,
         ]
     );
@@ -484,25 +495,24 @@ export const ProjectsPage = () => {
         (projectId: string, tagKey: string) => {
             const selectedTagKeys = projectTagKeysByProject[projectId] ?? [];
             const alreadySelected = selectedTagKeys.includes(tagKey);
-            const updatedTags = alreadySelected
-                ? projectTagsService.removeTagFromProject(projectId, tagKey)
-                : projectTagsService.addTagToProject(
-                      projectId,
-                      tagMap[tagKey]?.label ?? tagKey
-                  );
-            setTagsForProject(projectId, updatedTags);
-            const ids = projects
-                .map((project) => project.projectId)
-                .filter((id): id is string => !!id);
-            setTagMap(projectTagsService.getTagMap(ids));
+            if (alreadySelected) {
+                dispatch(
+                    controller.onRemoveTagFromProjectRequest({
+                        projectId,
+                        tagLabel: tagMap[tagKey]?.label ?? tagKey,
+                    })
+                );
+                return;
+            }
+            dispatch(
+                controller.onAddTagToProjectRequest({
+                    projectId,
+                    tagLabel: tagMap[tagKey]?.label ?? tagKey,
+                    color: tagMap[tagKey]?.color ?? DEFAULT_NEW_TAG_COLOR,
+                })
+            );
         },
-        [
-            projectTagKeysByProject,
-            projects,
-            projectTagsService,
-            setTagsForProject,
-            tagMap,
-        ]
+        [dispatch, projectTagKeysByProject, tagMap]
     );
 
     const allAvailableTagKeys = useMemo(
@@ -1402,9 +1412,7 @@ export const ProjectsPage = () => {
                                                                                                 )
                                                                                             }
                                                                                             onBlur={() =>
-                                                                                                commitNewTagColorInput(
-                                                                                                    p.projectId
-                                                                                                )
+                                                                                                commitNewTagColorInput()
                                                                                             }
                                                                                             onKeyDown={(
                                                                                                 e
@@ -1414,9 +1422,7 @@ export const ProjectsPage = () => {
                                                                                                     'Enter'
                                                                                                 ) {
                                                                                                     e.stopPropagation();
-                                                                                                    commitNewTagColorInput(
-                                                                                                        p.projectId
-                                                                                                    );
+                                                                                                    commitNewTagColorInput();
                                                                                                 }
                                                                                             }}
                                                                                         />

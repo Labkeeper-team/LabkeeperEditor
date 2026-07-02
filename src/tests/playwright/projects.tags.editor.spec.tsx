@@ -5,58 +5,78 @@ const userId = 1;
 const existingProjectId = 'project-1-id';
 const fixedLastModified = '2024-03-20T12:00:00.000Z';
 const contentType = 'application/json';
-const tagsStorageKey = 'labkeeper-project-tags-v1';
-const seededTagsStorage = JSON.stringify({
-    projects: {
-        'project-1-id': ['tag_1', 'tag_2'],
-        'project-2-id': ['tag_2'],
-        'project-3-id': ['tag_1', 'tag_3'],
-    },
-    tags: {
-        tag_1: { label: 'tag_1', color: 'blue' },
-        tag_2: { label: 'tag_2', color: 'orange' },
-        tag_3: { label: 'tag_3', color: 'purple' },
-    },
-});
+type ProjectTagsByProject = Record<string, Record<string, string>>;
 
-async function seedReadonlyStorageKey(
+const seededProjectTagsByProject: ProjectTagsByProject = {
+    'project-1-id': { tag_1: 'blue', tag_2: 'orange' },
+    'project-2-id': { tag_2: 'orange' },
+    'project-3-id': { tag_1: 'blue', tag_3: 'purple' },
+};
+
+const normalizeTagMap = (
+    value: Record<string, string> | undefined
+): Record<string, string> => {
+    const result: Record<string, string> = {};
+    for (const [rawLabel, rawColor] of Object.entries(value ?? {})) {
+        const label = rawLabel.trim().replace(/\s+/g, ' ');
+        if (!label) {
+            continue;
+        }
+        result[label] = rawColor;
+    }
+    return result;
+};
+
+async function setupProjectTagsApi(
     page: Page,
-    storageKey: string,
-    seededValue: string
+    initialByProject: ProjectTagsByProject = {}
 ) {
-    await page.addInitScript(
-        ({ storageKey: key, seededValue: value }) => {
-            const originalGetItem = Storage.prototype.getItem;
-            const originalSetItem = Storage.prototype.setItem;
-            const originalRemoveItem = Storage.prototype.removeItem;
+    const state: ProjectTagsByProject = {};
+    for (const [projectId, tags] of Object.entries(initialByProject)) {
+        state[projectId] = normalizeTagMap(tags);
+    }
 
-            Storage.prototype.getItem = function (currentKey: string) {
-                if (currentKey === key) {
-                    return value;
-                }
-                return originalGetItem.call(this, currentKey);
-            };
+    await page.route('/api/v2/public/project/tags/list', async (route) => {
+        const rawBody = route.request().postData();
+        const parsedBody = rawBody
+            ? (JSON.parse(rawBody) as { projectIds?: string[] })
+            : {};
+        const projectIds = parsedBody.projectIds ?? [];
+        const projectTagsByProject = Object.fromEntries(
+            projectIds.map((projectId) => [
+                projectId,
+                { ...(state[projectId] ?? {}) },
+            ])
+        );
 
-            Storage.prototype.setItem = function (
-                currentKey: string,
-                currentValue: string
-            ) {
-                if (currentKey === key) {
-                    return;
-                }
-                return originalSetItem.call(this, currentKey, currentValue);
-            };
+        await route.fulfill({
+            status: 200,
+            contentType,
+            body: JSON.stringify({ projectTagsByProject }),
+        });
+    });
 
-            Storage.prototype.removeItem = function (currentKey: string) {
-                if (currentKey === key) {
-                    return;
-                }
-                return originalRemoveItem.call(this, currentKey);
-            };
-
-            window.localStorage.setItem(key, value);
-        },
-        { storageKey, seededValue }
+    await page.route(
+        /\/api\/v2\/public\/project\/[^/]+\/tags$/,
+        async (route) => {
+            const requestUrl = route.request().url();
+            const match = /\/project\/([^/]+)\/tags$/.exec(requestUrl);
+            const projectId = match?.[1];
+            if (!projectId) {
+                await route.fulfill({ status: 400, contentType, body: '{}' });
+                return;
+            }
+            const rawBody = route.request().postData();
+            const parsedBody = rawBody
+                ? (JSON.parse(rawBody) as { tags?: Record<string, string> })
+                : {};
+            state[projectId] = normalizeTagMap(parsedBody.tags);
+            await route.fulfill({
+                status: 200,
+                contentType,
+                body: '{}',
+            });
+        }
     );
 }
 
@@ -79,6 +99,7 @@ test('add-one-tag-for-one-project', async ({ page }) => {
     ];
 
     await routeSetup.setupGetUserInfoRequest(true, 'a@gmail.com', userId, 0);
+    await setupProjectTagsApi(page);
 
     await page.route('/api/v2/public/project/all', async (route) => {
         await route.fulfill({
@@ -156,9 +177,7 @@ test('edit-tags-across-three-projects', async ({ page }) => {
         },
     ];
 
-    await page.addInitScript((storageKey) => {
-        window.localStorage.removeItem(storageKey);
-    }, tagsStorageKey);
+    await setupProjectTagsApi(page);
 
     await routeSetup.setupGetUserInfoRequest(true, 'a@gmail.com', userId, 0);
     await page.route(/\/api\/v\d+\/public\/user-info.*/, async (route) => {
@@ -299,7 +318,7 @@ test('filter-three-projects-by-tags', async ({ page }) => {
         },
     ];
 
-    await seedReadonlyStorageKey(page, tagsStorageKey, seededTagsStorage);
+    await setupProjectTagsApi(page, seededProjectTagsByProject);
 
     await routeSetup.setupGetUserInfoRequest(true, 'a@gmail.com', userId, 0);
 
@@ -403,9 +422,7 @@ test('add-many-tags', async ({ page }) => {
         }
     }
 
-    await page.addInitScript((storageKey) => {
-        window.localStorage.removeItem(storageKey);
-    }, tagsStorageKey);
+    await setupProjectTagsApi(page);
 
     await routeSetup.setupGetUserInfoRequest(true, 'a@gmail.com', userId, 0);
 
@@ -498,9 +515,7 @@ test('add-two-long-tag-names-and-filter-by-both', async ({ page }) => {
     const firstLongTag = 'aaaaaaaaaaaaaaaaaaaaaaaaaa';
     const secondLongTag = '12345678901234567890';
 
-    await page.addInitScript((storageKey) => {
-        window.localStorage.removeItem(storageKey);
-    }, tagsStorageKey);
+    await setupProjectTagsApi(page);
 
     await routeSetup.setupGetUserInfoRequest(true, 'a@gmail.com', userId, 0);
 
@@ -603,9 +618,7 @@ test('remove-tags-from-first-project', async ({ page }) => {
         },
     ];
 
-    await page.addInitScript((storageKey) => {
-        window.localStorage.removeItem(storageKey);
-    }, tagsStorageKey);
+    await setupProjectTagsApi(page);
 
     await routeSetup.setupGetUserInfoRequest(true, 'a@gmail.com', userId, 0);
 
@@ -733,9 +746,7 @@ test('cycle-tag-colors', async ({ page }) => {
         },
     ];
 
-    await page.addInitScript((storageKey) => {
-        window.localStorage.removeItem(storageKey);
-    }, tagsStorageKey);
+    await setupProjectTagsApi(page);
 
     await routeSetup.setupGetUserInfoRequest(true, 'a@gmail.com', userId, 0);
 
@@ -841,9 +852,7 @@ test('color-panel-swatch-and-input-values', async ({ page }) => {
         },
     ];
 
-    await page.addInitScript((storageKey) => {
-        window.localStorage.removeItem(storageKey);
-    }, tagsStorageKey);
+    await setupProjectTagsApi(page);
 
     await routeSetup.setupGetUserInfoRequest(true, 'a@gmail.com', userId, 0);
 

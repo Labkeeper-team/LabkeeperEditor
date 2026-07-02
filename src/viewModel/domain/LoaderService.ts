@@ -106,9 +106,35 @@ export class LoaderService {
         );
         const result = await this.rpi.getAllProjectsRequest();
         if (result.isOk) {
-            this.repository.projectsViewModelRepository.setProjects(
-                (result.body as { projects: ProjectShort[] }).projects.reverse()
-            );
+            const projects = (
+                result.body as { projects: ProjectShort[] }
+            ).projects.reverse();
+            this.repository.projectsViewModelRepository.setProjects(projects);
+            const projectIds = projects
+                .map((project) => project.projectId)
+                .filter((id): id is string => !!id);
+            const tagsResult = await this.rpi.getProjectTagsRequest(projectIds);
+            if (tagsResult.isOk) {
+                const fromServer = tagsResult.body.projectTagsByProject ?? {};
+                const normalizedByProject = Object.fromEntries(
+                    projectIds.map((projectId) => [
+                        projectId,
+                        fromServer[projectId] ?? {},
+                    ])
+                );
+                this.repository.projectsViewModelRepository.setByProject(
+                    normalizedByProject
+                );
+            } else if (tagsResult.isUnauth) {
+                this.repository.ideViewModelRepository.setGetProjectsRequestState(
+                    'unauth'
+                );
+                return;
+            } else {
+                this.observerService.onEvent(
+                    Events.EVENT_RPI_UNKNOWN_PROJECTS_GET_TAGS
+                );
+            }
             this.repository.ideViewModelRepository.setGetProjectsRequestState(
                 'ok'
             );

@@ -5,6 +5,10 @@ export const useProjects = createSelector(
     (state: StorageState) => state.projects,
     (p) => p.projects
 );
+export const useProjectTagsByProject = createSelector(
+    (state: StorageState) => state.projects,
+    (p) => p.byProject
+);
 export const useCurrentProject = createSelector(
     (state: StorageState) => state.project,
     (p) => p.project

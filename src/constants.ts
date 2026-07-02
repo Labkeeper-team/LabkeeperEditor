@@ -22,6 +22,8 @@ export const URLS = {
     setTitle: `${uri}/api/${version}/public/project/{id}/title`,
     setVisibility: `${uri}/api/${version}/public/project/{id}/visibility`,
     setType: `${uri}/api/${version}/public/project/{id}/type`,
+    getProjectTags: `${uri}/api/${version}/public/project/tags/list`,
+    updateProjectTags: `${uri}/api/${version}/public/project/{id}/tags`,
     projectPrompt: `${uri}/api/${version}/public/project/{id}/prompt`,
     generateImageInProjectPrompt: `${uri}/api/${version}/public/project/{id}/prompt/image`,
     unauthorizedPrompt: `${uri}/api/${version}/public/prompt`,

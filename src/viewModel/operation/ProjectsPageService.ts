@@ -10,6 +10,40 @@ import {
     ObserverService,
 } from '../../model/service/ObserverService.ts';
 
+const normalizeTagLabel = (value: string): string =>
+    value.trim().replace(/\s+/g, ' ');
+
+const findTagLabelByCaseInsensitive = (
+    tags: Record<string, string>,
+    label: string
+): string | null => {
+    const target = label.toLocaleLowerCase();
+    for (const existingLabel of Object.keys(tags)) {
+        if (existingLabel.toLocaleLowerCase() === target) {
+            return existingLabel;
+        }
+    }
+    return null;
+};
+
+const findGlobalTagByCaseInsensitive = (
+    byProject: Record<string, Record<string, string>>,
+    label: string
+): { label: string; color: string } | null => {
+    const target = label.toLocaleLowerCase();
+    for (const tags of Object.values(byProject)) {
+        for (const [existingLabel, existingColor] of Object.entries(tags)) {
+            if (existingLabel.toLocaleLowerCase() === target) {
+                return {
+                    label: existingLabel,
+                    color: existingColor,
+                };
+            }
+        }
+    }
+    return null;
+};
+
 export class ProjectsPageService {
     repository: ViewModelRepository;
     rpi: Rpi;
@@ -165,6 +199,124 @@ export class ProjectsPageService {
                 tokens: this.repository.userViewModelRepository.tokens(),
             },
             projectId
+        );
+    };
+
+    addTagToProject = async (
+        projectId: string,
+        tagLabel: string,
+        color: string
+    ): Promise<void> => {
+        const normalizedLabel = normalizeTagLabel(tagLabel);
+        if (!projectId || !normalizedLabel) {
+            return;
+        }
+
+        const previousByProject =
+            this.repository.projectsViewModelRepository.byProject();
+        const previousProjectTags = previousByProject[projectId] ?? {};
+        const existingLabel = findTagLabelByCaseInsensitive(
+            previousProjectTags,
+            normalizedLabel
+        );
+        if (existingLabel) {
+            return;
+        }
+        const existingGlobalTag = findGlobalTagByCaseInsensitive(
+            previousByProject,
+            normalizedLabel
+        );
+
+        const nextProjectTags: Record<string, string> = {
+            ...previousProjectTags,
+            [normalizedLabel]: existingGlobalTag?.color ?? color,
+        };
+
+        this.repository.projectsViewModelRepository.setForProject({
+            projectId,
+            tags: nextProjectTags,
+        });
+
+        const result = await this.rpi.updateProjectTagsRequest(
+            projectId,
+            nextProjectTags
+        );
+        if (result.isOk) {
+            return;
+        }
+
+        this.repository.projectsViewModelRepository.setForProject({
+            projectId,
+            tags: previousProjectTags,
+        });
+
+        if (result.isUnauth) {
+            this.repository.toast(
+                this.repository.dictionary.filemanager.errors.sessionExpired,
+                'error'
+            );
+            return;
+        }
+
+        this.observerService.onEvent(
+            Events.EVENT_RPI_UNKNOWN_PROJECTS_UPDATE_TAGS
+        );
+    };
+
+    removeTagFromProject = async (
+        projectId: string,
+        tagLabel: string
+    ): Promise<void> => {
+        const normalizedLabel = normalizeTagLabel(tagLabel);
+        if (!projectId || !normalizedLabel) {
+            return;
+        }
+
+        const previousByProject =
+            this.repository.projectsViewModelRepository.byProject();
+        const previousProjectTags = previousByProject[projectId] ?? {};
+        const existingLabel = findTagLabelByCaseInsensitive(
+            previousProjectTags,
+            normalizedLabel
+        );
+        if (!existingLabel) {
+            return;
+        }
+
+        const nextProjectTags = Object.fromEntries(
+            Object.entries(previousProjectTags).filter(
+                ([label]) => label !== existingLabel
+            )
+        );
+
+        this.repository.projectsViewModelRepository.setForProject({
+            projectId,
+            tags: nextProjectTags,
+        });
+
+        const result = await this.rpi.updateProjectTagsRequest(
+            projectId,
+            nextProjectTags
+        );
+        if (result.isOk) {
+            return;
+        }
+
+        this.repository.projectsViewModelRepository.setForProject({
+            projectId,
+            tags: previousProjectTags,
+        });
+
+        if (result.isUnauth) {
+            this.repository.toast(
+                this.repository.dictionary.filemanager.errors.sessionExpired,
+                'error'
+            );
+            return;
+        }
+
+        this.observerService.onEvent(
+            Events.EVENT_RPI_UNKNOWN_PROJECTS_UPDATE_TAGS
         );
     };
 }

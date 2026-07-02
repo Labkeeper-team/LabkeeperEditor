@@ -47,6 +47,10 @@ export interface RichProject extends Project {
     lastPdf?: string;
 }
 
+export interface ProjectTagsByProjectResponse {
+    projectTagsByProject: Record<string, Record<string, string>>;
+}
+
 export interface Rpi {
     compilationRequest(
         program: Program
@@ -117,6 +121,15 @@ export interface Rpi {
     setProjectTypeRequest(
         projectId: string,
         type: ProjectType
+    ): Promise<RequestResult>;
+
+    getProjectTagsRequest(
+        projectIds: string[]
+    ): Promise<RequestResult<ProjectTagsByProjectResponse>>;
+
+    updateProjectTagsRequest(
+        projectId: string,
+        tags: Record<string, string>
     ): Promise<RequestResult>;
 
     sendEmailWithCodeRequest(
@@ -210,6 +223,12 @@ export const mockRpi = (): Rpi => {
             throw new Error('Not implemented');
         },
         setProjectVisibilityRequest: () => {
+            throw new Error('Not implemented');
+        },
+        getProjectTagsRequest: () => {
+            throw new Error('Not implemented');
+        },
+        updateProjectTagsRequest: () => {
             throw new Error('Not implemented');
         },
         sendEmailWithCodeRequest: () => {

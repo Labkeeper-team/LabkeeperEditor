@@ -623,6 +623,45 @@ export class Controller {
         }
     );
 
+    onAddTagToProjectRequest = createAsyncThunk(
+        'onAddTagToProjectRequest',
+        async ({
+            projectId,
+            tagLabel,
+            color,
+        }: {
+            projectId: string;
+            tagLabel: string;
+            color: string;
+        }) => {
+            this.wrapper('onAddTagToProjectRequest', () =>
+                this.projectsPageService.addTagToProject(
+                    projectId,
+                    tagLabel,
+                    color
+                )
+            );
+        }
+    );
+
+    onRemoveTagFromProjectRequest = createAsyncThunk(
+        'onRemoveTagFromProjectRequest',
+        async ({
+            projectId,
+            tagLabel,
+        }: {
+            projectId: string;
+            tagLabel: string;
+        }) => {
+            this.wrapper('onRemoveTagFromProjectRequest', () =>
+                this.projectsPageService.removeTagFromProject(
+                    projectId,
+                    tagLabel
+                )
+            );
+        }
+    );
+
     onCloneProjectRequest = createAsyncThunk(
         'onCloneProjectRequest',
         async () => {

@@ -9,6 +9,27 @@ export const projectsSlice = createSlice({
         setProjects: (state, { payload }: PayloadAction<ProjectShort[]>) => {
             state.projects = payload;
         },
+        setProjectTagsByProject: (
+            state,
+            { payload }: PayloadAction<Record<string, Record<string, string>>>
+        ) => {
+            state.byProject = payload;
+        },
+        setProjectTagsForProject: (
+            state,
+            {
+                payload,
+            }: PayloadAction<{
+                projectId: string;
+                tags: Record<string, string>;
+            }>
+        ) => {
+            state.byProject[payload.projectId] = payload.tags;
+        },
     },
 });
-export const { setProjects } = projectsSlice.actions;
+export const {
+    setProjects,
+    setProjectTagsByProject,
+    setProjectTagsForProject,
+} = projectsSlice.actions;

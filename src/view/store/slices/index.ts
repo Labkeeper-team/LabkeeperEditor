@@ -48,6 +48,7 @@ interface SettingsState {
 
 interface ProjectsState {
     projects: ProjectShort[];
+    byProject: Record<string, Record<string, string>>;
 }
 
 interface ProjectState {
@@ -141,6 +142,7 @@ export const projectInitialState: ProjectState = {
 
 export const projectsInitialState: ProjectsState = {
     projects: [],
+    byProject: {},
 };
 
 export const settingsInitialState: SettingsState = {
