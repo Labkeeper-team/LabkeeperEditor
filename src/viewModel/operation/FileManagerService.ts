@@ -111,64 +111,80 @@ export class FileManagerService {
             fileName.slice(fileName.lastIndexOf('/') + 1)
         );
 
-        const result = await this.rpi.uploadFileRequest(
-            formData,
-            project.projectId,
-            fileName
+        this.repository.ideViewModelRepository.setGetFilesRequestState(
+            'loading'
         );
+        try {
+            const result = await this.rpi.uploadFileRequest(
+                formData,
+                project.projectId,
+                fileName
+            );
 
-        if (result.code === 413) {
-            this.repository.toast(
-                this.repository.dictionary.filemanager.errors.tooBigFile.replace(
-                    '${replace1}',
-                    '10Mb'
-                ),
-                'error'
-            );
-            return;
-        }
-        if (result.code === 400) {
-            this.repository.toast(
-                this.repository.dictionary.filemanager.errors.bad_name,
-                'error'
-            );
-            return;
-        }
-        if (result.code === 409) {
-            this.repository.toast(
-                this.repository.dictionary.filemanager.errors.tooMuchFiles,
-                'error'
-            );
-            return;
-        }
-        if (result.isUnauth) {
-            this.repository.toast(
-                this.repository.dictionary.filemanager.errors.sessionExpired,
-                'error'
-            );
-            this.ideService.resetEditor();
-            return;
-        }
-        if (result.isOk) {
-            await this.loaderService.loadFiles(project.projectId);
-            this.repository.ideViewModelRepository.setActiveImageFile(null);
-            this.repository.ideViewModelRepository.setActiveTextFile(fileName);
-            this.repository.ideViewModelRepository.setTextFileContent('');
-            this.repository.ideViewModelRepository.setLoadTextFileRequestState(
-                'ok'
-            );
-            this.repository.ideViewModelRepository.setSaveTextFileRequestState(
-                'ok'
-            );
-        } else if (
-            result.code !== 413 &&
-            result.code !== 400 &&
-            result.code !== 409 &&
-            !result.isUnauth
-        ) {
-            this.observerService.onEvent(
-                Events.EVENT_RPI_UNKNOWN_FILE_MANAGER_UPLOAD
-            );
+            if (result.code === 413) {
+                this.repository.toast(
+                    this.repository.dictionary.filemanager.errors.tooBigFile.replace(
+                        '${replace1}',
+                        '10Mb'
+                    ),
+                    'error'
+                );
+                this.restoreFilesReadyState();
+                return;
+            }
+            if (result.code === 400) {
+                this.repository.toast(
+                    this.repository.dictionary.filemanager.errors.bad_name,
+                    'error'
+                );
+                this.restoreFilesReadyState();
+                return;
+            }
+            if (result.code === 409) {
+                this.repository.toast(
+                    this.repository.dictionary.filemanager.errors.tooMuchFiles,
+                    'error'
+                );
+                this.restoreFilesReadyState();
+                return;
+            }
+            if (result.isUnauth) {
+                this.repository.toast(
+                    this.repository.dictionary.filemanager.errors
+                        .sessionExpired,
+                    'error'
+                );
+                this.ideService.resetEditor();
+                this.restoreFilesReadyState();
+                return;
+            }
+            if (result.isOk) {
+                await this.loaderService.loadFiles(project.projectId);
+                this.repository.ideViewModelRepository.setActiveImageFile(null);
+                this.repository.ideViewModelRepository.setActiveTextFile(
+                    fileName
+                );
+                this.repository.ideViewModelRepository.setTextFileContent('');
+                this.repository.ideViewModelRepository.setLoadTextFileRequestState(
+                    'ok'
+                );
+                this.repository.ideViewModelRepository.setSaveTextFileRequestState(
+                    'ok'
+                );
+            } else if (
+                result.code !== 413 &&
+                result.code !== 400 &&
+                result.code !== 409 &&
+                !result.isUnauth
+            ) {
+                this.restoreFilesReadyState();
+                this.observerService.onEvent(
+                    Events.EVENT_RPI_UNKNOWN_FILE_MANAGER_UPLOAD
+                );
+            }
+        } catch (error) {
+            this.restoreFilesReadyState();
+            throw error;
         }
     };
 
@@ -184,68 +200,79 @@ export class FileManagerService {
             folderPrefix !== undefined && folderPrefix !== null
                 ? folderPrefix
                 : this.resolveCurrentFolderPath();
+        this.repository.ideViewModelRepository.setGetFilesRequestState(
+            'loading'
+        );
         let isResultOk = false;
-        for (const file of files) {
-            this.fileService.checkFile(file, this.repository.dictionary);
-            const name = this.fileService.calculateNumberFile(
-                null,
-                file.name,
-                prefix || null
-            );
-            const formData = new FormData();
-            formData.append('file', file);
+        try {
+            for (const file of files) {
+                this.fileService.checkFile(file, this.repository.dictionary);
+                const name = this.fileService.calculateNumberFile(
+                    null,
+                    file.name,
+                    prefix || null
+                );
+                const formData = new FormData();
+                formData.append('file', file);
 
-            const result = await this.rpi.uploadFileRequest(
-                formData,
-                project.projectId,
-                name
-            );
-            if (result.code === 413) {
-                this.repository.toast(
-                    this.repository.dictionary.filemanager.errors.tooBigFile.replace(
-                        '${replace1}',
-                        '10Mb'
-                    ),
-                    'error'
+                const result = await this.rpi.uploadFileRequest(
+                    formData,
+                    project.projectId,
+                    name
                 );
+                if (result.code === 413) {
+                    this.repository.toast(
+                        this.repository.dictionary.filemanager.errors.tooBigFile.replace(
+                            '${replace1}',
+                            '10Mb'
+                        ),
+                        'error'
+                    );
+                }
+                if (result.code === 400) {
+                    this.repository.toast(
+                        this.repository.dictionary.filemanager.errors.bad_name,
+                        'error'
+                    );
+                }
+                if (result.code === 409) {
+                    this.repository.toast(
+                        this.repository.dictionary.filemanager.errors
+                            .tooMuchFiles,
+                        'error'
+                    );
+                    break;
+                }
+                if (result.isUnauth) {
+                    this.repository.toast(
+                        this.repository.dictionary.filemanager.errors
+                            .sessionExpired,
+                        'error'
+                    );
+                    this.ideService.resetEditor();
+                    break;
+                }
+                if (result.isOk) {
+                    isResultOk = true;
+                } else if (
+                    result.code !== 413 &&
+                    result.code !== 400 &&
+                    result.code !== 409 &&
+                    !result.isUnauth
+                ) {
+                    this.observerService.onEvent(
+                        Events.EVENT_RPI_UNKNOWN_FILE_MANAGER_UPLOAD
+                    );
+                }
             }
-            if (result.code === 400) {
-                this.repository.toast(
-                    this.repository.dictionary.filemanager.errors.bad_name,
-                    'error'
-                );
+            if (isResultOk) {
+                await this.loaderService.loadFiles(project.projectId);
+            } else {
+                this.restoreFilesReadyState();
             }
-            if (result.code === 409) {
-                this.repository.toast(
-                    this.repository.dictionary.filemanager.errors.tooMuchFiles,
-                    'error'
-                );
-                break;
-            }
-            if (result.isUnauth) {
-                this.repository.toast(
-                    this.repository.dictionary.filemanager.errors
-                        .sessionExpired,
-                    'error'
-                );
-                this.ideService.resetEditor();
-                break;
-            }
-            if (result.isOk) {
-                isResultOk = true;
-            } else if (
-                result.code !== 413 &&
-                result.code !== 400 &&
-                result.code !== 409 &&
-                !result.isUnauth
-            ) {
-                this.observerService.onEvent(
-                    Events.EVENT_RPI_UNKNOWN_FILE_MANAGER_UPLOAD
-                );
-            }
-        }
-        if (isResultOk) {
-            await this.loaderService.loadFiles(project.projectId);
+        } catch (error) {
+            this.restoreFilesReadyState();
+            throw error;
         }
     };
 
