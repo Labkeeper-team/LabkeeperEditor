@@ -1,20 +1,14 @@
 import { toast } from 'react-toastify';
 import { Translations } from '../dictionaries';
 import { ViewModelRepository } from '../repository';
-import { nanoid } from 'nanoid';
 
 export const checkFileErrorMessage = 'CheckFileErrorMessage';
 
 export class FileService {
-    static RANDOM_SUFFIX_LENGTH = 8;
     repository: ViewModelRepository;
 
     constructor(repository: ViewModelRepository) {
         this.repository = repository;
-    }
-
-    static generateSuffix() {
-        return nanoid(this.RANDOM_SUFFIX_LENGTH);
     }
 
     checkFile = (file: File, dictionary: Translations) => {
@@ -27,6 +21,9 @@ export class FileService {
             '.svg',
             '.txt',
             '.csv',
+            '.tex',
+            '.bib',
+            '.bst',
         ];
         if (file.size > mbInBytes * maxSizeInMb) {
             toast(
@@ -46,6 +43,9 @@ export class FileService {
             !file.type.startsWith('image/') &&
             !file.type.startsWith('text/csv') &&
             !file.type.startsWith('text/plain') &&
+            !file.type.startsWith('application/x-tex') &&
+            !file.type.startsWith('application/x-bibtex') &&
+            !file.type.startsWith('application/bibtex') &&
             !hasSupportedExtension
         ) {
             toast(dictionary.filemanager.errors.notSupported, {
@@ -59,24 +59,33 @@ export class FileService {
     Если добавление происходит через Ctr+V, то segmentId is number(передается для названия),
     а в случае переименования или добавление через Add Files segmentId undefined(не передается)
      */
-    calculateNumberFile = (segmentId: number | null, filename: string) => {
-        const suffix = FileService.generateSuffix();
+    calculateNumberFile = (
+        segmentId: number | null,
+        filename: string,
+        folderPrefix?: string | null
+    ) => {
+        const pathPrefix =
+            folderPrefix ??
+            (filename.includes('/')
+                ? filename.slice(0, filename.lastIndexOf('/'))
+                : '');
+        const basename = filename.includes('/')
+            ? filename.slice(filename.lastIndexOf('/') + 1)
+            : filename;
 
-        let ext;
-        let name = `file_seg${segmentId}`;
-        const indexLastDot = filename.lastIndexOf('.');
-        if (indexLastDot == -1) {
-            if (segmentId == null) {
-                name = filename;
-            }
-            ext = '';
+        let ext = '';
+        let name: string;
+        const indexLastDot = basename.lastIndexOf('.');
+        if (indexLastDot === -1) {
+            name = segmentId == null ? basename : `file_seg${segmentId}`;
         } else {
-            ext = filename.slice(indexLastDot);
-            if (segmentId == null) {
-                name = filename.slice(0, indexLastDot);
-            }
+            ext = basename.slice(indexLastDot);
+            name =
+                segmentId == null
+                    ? basename.slice(0, indexLastDot)
+                    : `file_seg${segmentId}`;
         }
-        name = `${name}_${suffix}`;
+
         let resName = name + ext;
         let count = 1;
         while (
@@ -87,6 +96,22 @@ export class FileService {
             resName = name + `(${count})` + ext;
             count += 1;
         }
+        if (folderPrefix) {
+            return `${folderPrefix}/${resName}`;
+        }
+        if (pathPrefix) {
+            return `${pathPrefix}/${resName}`;
+        }
         return resName;
+    };
+
+    joinWithFolderPrefix = (
+        folderPrefix: string | null | undefined,
+        name: string
+    ) => {
+        if (!folderPrefix) {
+            return name;
+        }
+        return `${folderPrefix}/${name}`;
     };
 }

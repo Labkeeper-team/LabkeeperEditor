@@ -12,6 +12,7 @@ import { Routes } from '../routes.ts';
 import { CompilationService } from '../domain/CompilationService.ts';
 import { ResetService } from '../domain/ResetService.ts';
 import { Program, ProjectType } from '../../model/domain.ts';
+import { TextFileEditorService } from './TextFileEditorService.ts';
 
 export class ProjectPageService {
     repository: ViewModelRepository;
@@ -22,6 +23,7 @@ export class ProjectPageService {
     observerService: ObserverService;
     compilationService: CompilationService;
     resetService: ResetService;
+    textFileEditorService: TextFileEditorService;
 
     constructor(
         repository: ViewModelRepository,
@@ -31,7 +33,8 @@ export class ProjectPageService {
         ideService: IdeService,
         observerService: ObserverService,
         compilationService: CompilationService,
-        resetService: ResetService
+        resetService: ResetService,
+        textFileEditorService: TextFileEditorService
     ) {
         this.rpi = rpi;
         this.programService = programService;
@@ -41,6 +44,7 @@ export class ProjectPageService {
         this.observerService = observerService;
         this.compilationService = compilationService;
         this.resetService = resetService;
+        this.textFileEditorService = textFileEditorService;
     }
 
     onContactUsFormSubmitted = async (subject: string, body: string) => {
@@ -169,6 +173,14 @@ export class ProjectPageService {
             this.repository.settingsViewModelRepository.setExpandProblemViewer(
                 false
             );
+            return;
+        }
+        if (this.repository.ideViewModelRepository.activeTextFile()) {
+            void this.textFileEditorService.onTextFileEditorClosed();
+            return;
+        }
+        if (this.repository.ideViewModelRepository.activeImageFile()) {
+            this.textFileEditorService.onImageFilePreviewClosed();
             return;
         }
         if (this.repository.settingsViewModelRepository.showFileManager()) {

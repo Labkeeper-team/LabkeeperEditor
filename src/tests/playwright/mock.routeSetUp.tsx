@@ -40,6 +40,10 @@ const defaultEmail = 'a@gmail.com';
 const defaultIsAuthenticated = true;
 
 const isExpectedUploadFileName = (fileName: string | null) => {
+    if (fileName === 'test.csv') {
+        return true;
+    }
+
     const prefix = 'test_';
     const extension = '.csv';
 

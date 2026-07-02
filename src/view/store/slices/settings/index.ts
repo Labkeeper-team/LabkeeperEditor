@@ -66,6 +66,17 @@ export const settingsSlice = createSlice({
         ) => {
             state.showProjectPromptModal = payload;
         },
+        setCurrentFolderPath: (state, { payload }: PayloadAction<string>) => {
+            state.currentFolderPath = payload;
+        },
+        setEphemeralFolders: (state, { payload }: PayloadAction<string[]>) => {
+            state.ephemeralFolders = payload;
+        },
+        addEphemeralFolder: (state, { payload }: PayloadAction<string>) => {
+            if (!state.ephemeralFolders.includes(payload)) {
+                state.ephemeralFolders.push(payload);
+            }
+        },
     },
 });
 export const {
@@ -82,4 +93,7 @@ export const {
     setFilesToDelete,
     setCaptchaBypassToken,
     setShowProjectPromptModal,
+    setCurrentFolderPath,
+    setEphemeralFolders,
+    addEphemeralFolder,
 } = settingsSlice.actions;

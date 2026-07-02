@@ -147,6 +147,8 @@ export class WebRpi implements Rpi {
         projectId: string,
         name: string
     ): Promise<RequestResult<UploadFileResponse>> {
+        const uploadName =
+            name.includes('/') && !name.startsWith('/') ? `/${name}` : name;
         return requestWrapper(async () =>
             axios.put(
                 `${URLS.uploadFile.replace('{id}', projectId)}`,
@@ -157,7 +159,7 @@ export class WebRpi implements Rpi {
                         Accept: '*/*',
                     },
                     params: {
-                        name: name,
+                        name: uploadName,
                     },
                 }
             )
@@ -226,6 +228,9 @@ export class WebRpi implements Rpi {
             )
         );
     }
+
+    // TODO(folder API): реализовать moveFileRequest / renameFolderRequest / deleteFolderRequest
+    // по URLS.moveFile / URLS.renameFolder / URLS.deleteFolder (см. constants.ts).
 
     async getAllProjectsRequest(): Promise<
         RequestResult<ListProjectsResponse>

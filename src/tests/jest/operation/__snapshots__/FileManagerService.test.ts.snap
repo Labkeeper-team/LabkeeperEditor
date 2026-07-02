@@ -3,7 +3,9 @@
 exports[`file-manager-test-onFolderButtonClicked-authorized 1`] = `
 MockViewModelRepositoryState {
   "activeEditorLine": null,
+  "activeImageFile": null,
   "activeSegmentIndex": -1,
+  "activeTextFile": null,
   "captchaBypassToken": undefined,
   "cloneRequestState": "unknown",
   "codeCheckRequest": "unknown",
@@ -14,6 +16,7 @@ MockViewModelRepositoryState {
     "segments": [],
   },
   "currentEmail": null,
+  "currentFolderPath": "",
   "currentProgram": {
     "parameters": {
       "roundStrategy": "noRound",
@@ -26,6 +29,7 @@ MockViewModelRepositoryState {
   "editorNavigationTarget": null,
   "email": "a@gmail.com",
   "emailRequest": "unknown",
+  "ephemeralFolders": [],
   "expandProblemViewer": false,
   "files": [
     {
@@ -53,6 +57,7 @@ MockViewModelRepositoryState {
     "segments": [],
   },
   "lastVerifiedCode": null,
+  "loadTextFileRequestState": "unknown",
   "location": "/project/2cd18704-6c3f-48cb-96f1-9a923930f8cb",
   "loginRequest": "unknown",
   "mode": "markdown",
@@ -90,6 +95,7 @@ MockViewModelRepositoryState {
   ],
   "redoEnabled": false,
   "saveProjectRequestState": "unknown",
+  "saveTextFileRequestState": "unknown",
   "search": undefined,
   "showFileManager": true,
   "showProjectPromptModal": false,
@@ -97,6 +103,7 @@ MockViewModelRepositoryState {
   "showShareModal": false,
   "showTour": false,
   "synctexEditorPosition": null,
+  "textFileContent": "",
   "toasts": [],
   "tokens": 0,
   "undoEnabled": false,
@@ -106,7 +113,9 @@ MockViewModelRepositoryState {
 exports[`file-manager-test-onFolderButtonClicked-unauthorized-on-default 1`] = `
 MockViewModelRepositoryState {
   "activeEditorLine": null,
+  "activeImageFile": null,
   "activeSegmentIndex": -1,
+  "activeTextFile": null,
   "captchaBypassToken": undefined,
   "cloneRequestState": "unknown",
   "codeCheckRequest": "unknown",
@@ -115,6 +124,7 @@ MockViewModelRepositoryState {
     "segments": [],
   },
   "currentEmail": null,
+  "currentFolderPath": "",
   "currentProgram": {
     "parameters": {
       "roundStrategy": "firstMeaningDigit",
@@ -127,6 +137,7 @@ MockViewModelRepositoryState {
   "editorNavigationTarget": null,
   "email": "",
   "emailRequest": "unknown",
+  "ephemeralFolders": [],
   "expandProblemViewer": false,
   "files": [],
   "filesToDelete": [],
@@ -148,6 +159,7 @@ MockViewModelRepositoryState {
     "segments": [],
   },
   "lastVerifiedCode": null,
+  "loadTextFileRequestState": "unknown",
   "location": "/project/default",
   "loginRequest": "unknown",
   "mode": "markdown",
@@ -164,6 +176,7 @@ MockViewModelRepositoryState {
   "projects": [],
   "redoEnabled": false,
   "saveProjectRequestState": "unknown",
+  "saveTextFileRequestState": "unknown",
   "search": undefined,
   "showFileManager": false,
   "showProjectPromptModal": false,
@@ -171,6 +184,7 @@ MockViewModelRepositoryState {
   "showShareModal": false,
   "showTour": false,
   "synctexEditorPosition": null,
+  "textFileContent": "",
   "toasts": [],
   "tokens": 0,
   "undoEnabled": false,

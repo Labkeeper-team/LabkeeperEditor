@@ -7,6 +7,7 @@ import { AppDispatch } from '../../store';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { controller } from '../../../main.tsx';
 import { DeleteFilesModal } from './modals/delete-files';
+
 export const ProjectPage = () => {
     const dispatch = useDispatch<AppDispatch>();
 

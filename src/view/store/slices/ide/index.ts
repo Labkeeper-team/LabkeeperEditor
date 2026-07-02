@@ -70,6 +70,33 @@ export const ideSlice = createSlice({
         ) => {
             state.saveProjectRequestState = payload;
         },
+        setSaveTextFileRequestState: (
+            state,
+            { payload }: PayloadAction<SaveProjectRequestState>
+        ) => {
+            state.saveTextFileRequestState = payload;
+        },
+        setLoadTextFileRequestState: (
+            state,
+            { payload }: PayloadAction<SaveProjectRequestState>
+        ) => {
+            state.loadTextFileRequestState = payload;
+        },
+        setActiveTextFile: (
+            state,
+            { payload }: PayloadAction<string | null>
+        ) => {
+            state.activeTextFile = payload;
+        },
+        setActiveImageFile: (
+            state,
+            { payload }: PayloadAction<string | null>
+        ) => {
+            state.activeImageFile = payload;
+        },
+        setTextFileContent: (state, { payload }: PayloadAction<string>) => {
+            state.textFileContent = payload;
+        },
         setPdfUpdated: (state, { payload }: PayloadAction<number>) => {
             state.pdfUpdated = payload;
         },
@@ -123,6 +150,11 @@ export const {
     setGetFilesRequestState,
     setGetProjectsRequestState,
     setSaveProjectRequestState,
+    setSaveTextFileRequestState,
+    setLoadTextFileRequestState,
+    setActiveTextFile,
+    setActiveImageFile,
+    setTextFileContent,
     setPdfUpdated,
     setProjectPromptRequestState,
     setActiveEditorLine,
