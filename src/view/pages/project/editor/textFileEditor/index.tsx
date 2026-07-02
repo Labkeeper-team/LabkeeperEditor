@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import classNames from 'classnames';
 import CodeMirror from '@uiw/react-codemirror';
 import { EditorView } from '@codemirror/view';
 import {
@@ -145,7 +144,6 @@ export const TextFileEditor = () => {
     const fileLabel = activeTextFile.includes('/')
         ? activeTextFile.slice(activeTextFile.lastIndexOf('/') + 1)
         : activeTextFile;
-    const isTexFile = activeTextFile.toLowerCase().endsWith('.tex');
     const isLoading = loadTextFileRequestState === 'loading';
 
     return (
@@ -186,10 +184,7 @@ export const TextFileEditor = () => {
             </div>
             <div
                 ref={bodyRef}
-                className={classNames(
-                    'ide-flexibility-container text-file-editor-body',
-                    { 'text-file-editor-body--tex': isTexFile }
-                )}
+                className="ide-flexibility-container text-file-editor-body"
             >
                 {isLoading ? (
                     <div className="ide-loading-wrapper" aria-hidden>

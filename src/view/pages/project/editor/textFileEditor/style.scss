@@ -93,10 +93,8 @@
             overscroll-behavior: contain;
         }
 
-        &.text-file-editor-body--tex {
-            .cm-content .cm-line {
-                color: #000;
-            }
+        .cm-content .cm-line {
+            color: #000;
         }
     }
 }

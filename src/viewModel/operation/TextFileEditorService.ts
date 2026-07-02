@@ -1,6 +1,5 @@
 import { ViewModelRepository } from '../repository';
 import { Rpi } from '../../model/rpi';
-import { LoaderService } from '../domain/LoaderService.ts';
 import { IdeService } from '../domain/IdeService.ts';
 import {
     Events,
@@ -14,7 +13,6 @@ import {
 export class TextFileEditorService {
     repository: ViewModelRepository;
     rpi: Rpi;
-    loaderService: LoaderService;
     ideService: IdeService;
     observerService: ObserverService;
     private saveTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -23,13 +21,11 @@ export class TextFileEditorService {
     constructor(
         repository: ViewModelRepository,
         rpi: Rpi,
-        loaderService: LoaderService,
         ideService: IdeService,
         observerService: ObserverService
     ) {
         this.repository = repository;
         this.rpi = rpi;
-        this.loaderService = loaderService;
         this.ideService = ideService;
         this.observerService = observerService;
     }
@@ -177,7 +173,6 @@ export class TextFileEditorService {
         }
 
         if (result.isOk) {
-            await this.loaderService.loadFiles(project.projectId);
             this.repository.ideViewModelRepository.setSaveTextFileRequestState(
                 'ok'
             );

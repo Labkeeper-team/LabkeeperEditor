@@ -88,13 +88,7 @@ export function setupContext(
         observerService
     );
     const textFileEditorService: TextFileEditorService =
-        new TextFileEditorService(
-            repository,
-            rpi,
-            loaderService,
-            ideService,
-            observerService
-        );
+        new TextFileEditorService(repository, rpi, ideService, observerService);
     const programEditorService: ProgramEditorService = new ProgramEditorService(
         repository,
         rpi,
