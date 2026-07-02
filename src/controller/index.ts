@@ -543,14 +543,11 @@ export class Controller {
         }
     );
 
-    onCreateFileRequest = createAsyncThunk(
-        'onCreateFileRequest',
-        async () => {
-            this.wrapper('onCreateFileRequest', () =>
-                this.fileManagerService.onCreateFile()
-            );
-        }
-    );
+    onCreateFileRequest = createAsyncThunk('onCreateFileRequest', async () => {
+        this.wrapper('onCreateFileRequest', () =>
+            this.fileManagerService.onCreateFile()
+        );
+    });
 
     onSvarCreateFileRequest = createAsyncThunk(
         'onSvarCreateFileRequest',

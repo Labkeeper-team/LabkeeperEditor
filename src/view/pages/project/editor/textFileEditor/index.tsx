@@ -75,8 +75,7 @@ export const TextFileEditor = () => {
         }
 
         if (showSaveLoading) {
-            const startedAt =
-                saveLoadingStartRef.current ?? performance.now();
+            const startedAt = saveLoadingStartRef.current ?? performance.now();
             const elapsed = performance.now() - startedAt;
             const remain = 500 - elapsed;
             if (remain > 0) {
