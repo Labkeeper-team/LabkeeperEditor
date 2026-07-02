@@ -85,9 +85,11 @@ describe('svarFileTreeAdapter', () => {
         expect(tree.find((node) => node.path === 'empty')?.type).toBe('folder');
     });
 
-    test('isTextFilePath supports csv', () => {
+    test('isTextFilePath supports csv, bib and bst', () => {
         expect(isTextFilePath('data.csv')).toBe(true);
         expect(isTextFilePath('folder/data.CSV')).toBe(true);
+        expect(isTextFilePath('refs.bib')).toBe(true);
+        expect(isTextFilePath('plain.bst')).toBe(true);
         expect(isTextFilePath('image.png')).toBe(false);
     });
 });

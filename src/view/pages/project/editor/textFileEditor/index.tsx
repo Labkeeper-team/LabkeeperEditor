@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import classNames from 'classnames';
 import CodeMirror from '@uiw/react-codemirror';
 import { EditorView } from '@codemirror/view';
+import {
+    defaultHighlightStyle,
+    syntaxHighlighting,
+} from '@codemirror/language';
 import { langs } from '@uiw/codemirror-extensions-langs';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, StorageState } from '../../../../store';
@@ -106,13 +111,13 @@ export const TextFileEditor = () => {
             return [];
         }
         if (activeTextFile.toLowerCase().endsWith('.tex')) {
-            return langs.tex();
+            return [langs.tex(), syntaxHighlighting(defaultHighlightStyle)];
         }
-        return langs.text();
+        return [];
     }, [activeTextFile]);
 
     const codeMirrorExtensions = useMemo(
-        () => [languageExtension, textFileEditorWheelScroll],
+        () => [...languageExtension, textFileEditorWheelScroll],
         [languageExtension]
     );
 
@@ -140,6 +145,7 @@ export const TextFileEditor = () => {
     const fileLabel = activeTextFile.includes('/')
         ? activeTextFile.slice(activeTextFile.lastIndexOf('/') + 1)
         : activeTextFile;
+    const isTexFile = activeTextFile.toLowerCase().endsWith('.tex');
     const isLoading = loadTextFileRequestState === 'loading';
 
     return (
@@ -180,7 +186,10 @@ export const TextFileEditor = () => {
             </div>
             <div
                 ref={bodyRef}
-                className="ide-flexibility-container text-file-editor-body"
+                className={classNames(
+                    'ide-flexibility-container text-file-editor-body',
+                    { 'text-file-editor-body--tex': isTexFile }
+                )}
             >
                 {isLoading ? (
                     <div className="ide-loading-wrapper" aria-hidden>

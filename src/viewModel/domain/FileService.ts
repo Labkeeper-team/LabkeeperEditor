@@ -22,6 +22,8 @@ export class FileService {
             '.txt',
             '.csv',
             '.tex',
+            '.bib',
+            '.bst',
         ];
         if (file.size > mbInBytes * maxSizeInMb) {
             toast(
@@ -42,6 +44,8 @@ export class FileService {
             !file.type.startsWith('text/csv') &&
             !file.type.startsWith('text/plain') &&
             !file.type.startsWith('application/x-tex') &&
+            !file.type.startsWith('application/x-bibtex') &&
+            !file.type.startsWith('application/bibtex') &&
             !hasSupportedExtension
         ) {
             toast(dictionary.filemanager.errors.notSupported, {

@@ -182,7 +182,9 @@ export const isTextFilePath = (path: string): boolean => {
     return (
         lower.endsWith('.txt') ||
         lower.endsWith('.tex') ||
-        lower.endsWith('.csv')
+        lower.endsWith('.csv') ||
+        lower.endsWith('.bib') ||
+        lower.endsWith('.bst')
     );
 };
 

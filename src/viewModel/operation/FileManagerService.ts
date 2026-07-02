@@ -313,11 +313,18 @@ export class FileManagerService {
     // B) rpi.deleteFolderRequest(folderPath, projectId) — один запрос;
     //    loadFiles; prune ephemeralFolders/currentFolderPath локально.
 
+    private restoreFilesReadyState = () => {
+        this.repository.ideViewModelRepository.setGetFilesRequestState('ok');
+    };
+
     onDeleteFile = async (fileName: string) => {
         const project = this.repository.projectViewModelRepository.project();
         if (!project) {
             return;
         }
+        this.repository.ideViewModelRepository.setGetFilesRequestState(
+            'loading'
+        );
         const result = await this.rpi.deleteFileRequest(
             fileName,
             project.projectId
@@ -328,10 +335,12 @@ export class FileManagerService {
                 'error'
             );
             this.ideService.resetEditor();
+            this.restoreFilesReadyState();
         }
         if (result.isOk) {
             await this.loaderService.loadFiles(project.projectId);
         } else if (!result.isUnauth) {
+            this.restoreFilesReadyState();
             this.observerService.onEvent(
                 Events.EVENT_RPI_UNKNOWN_FILE_MANAGER_DELETE
             );
@@ -350,6 +359,9 @@ export class FileManagerService {
             this.repository.settingsViewModelRepository.setFilesToDelete([]);
             return;
         }
+        this.repository.ideViewModelRepository.setGetFilesRequestState(
+            'loading'
+        );
         for (const file of files) {
             const result = await this.rpi.deleteFileRequest(
                 file.fileName,
@@ -365,6 +377,7 @@ export class FileManagerService {
                 this.repository.settingsViewModelRepository.setFilesToDelete(
                     []
                 );
+                this.restoreFilesReadyState();
                 return;
             }
             if (result.code === 404) {
@@ -375,6 +388,8 @@ export class FileManagerService {
                 this.repository.settingsViewModelRepository.setFilesToDelete(
                     []
                 );
+                this.restoreFilesReadyState();
+                return;
             } else if (!result.isOk) {
                 this.observerService.onEvent(
                     Events.EVENT_RPI_UNKNOWN_FILE_MANAGER_DELETE
@@ -406,6 +421,9 @@ export class FileManagerService {
         }
 
         const uniqueNewName = newName;
+        this.repository.ideViewModelRepository.setGetFilesRequestState(
+            'loading'
+        );
         const result = await this.rpi.renameFileRequest(
             oldName,
             uniqueNewName,
@@ -417,11 +435,13 @@ export class FileManagerService {
                 'error'
             );
             this.ideService.resetEditor();
+            this.restoreFilesReadyState();
         }
         if (result.isOk) {
             this.programService.replaceAllInProgram(oldName, uniqueNewName);
             await this.loaderService.loadFiles(project.projectId);
         } else if (!result.isUnauth) {
+            this.restoreFilesReadyState();
             this.observerService.onEvent(
                 Events.EVENT_RPI_UNKNOWN_FILE_MANAGER_RENAME
             );

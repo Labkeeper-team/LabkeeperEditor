@@ -92,6 +92,12 @@
             overflow: auto !important;
             overscroll-behavior: contain;
         }
+
+        &.text-file-editor-body--tex {
+            .cm-content .cm-line {
+                color: #000;
+            }
+        }
     }
 }
 

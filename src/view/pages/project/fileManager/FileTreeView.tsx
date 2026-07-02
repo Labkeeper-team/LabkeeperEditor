@@ -711,7 +711,7 @@ export const FileTreeView = (props: {
                         ref={inputRef as LegacyRef<HTMLInputElement>}
                         style={{ display: 'none' }}
                         type="file"
-                        accept=".png, .jpg, .jpeg, .svg, .txt, .csv, .tex"
+                        accept=".png, .jpg, .jpeg, .svg, .txt, .csv, .tex, .bib, .bst"
                         multiple
                     />
                     <button
