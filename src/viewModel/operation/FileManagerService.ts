@@ -13,6 +13,7 @@ import {
     normalizeFolderName,
     svarIdToPath,
 } from '../../view/pages/project/fileManager/svarFileTreeAdapter.ts';
+import { TextFileEditorService } from './TextFileEditorService.ts';
 
 export class FileManagerService {
     repository: ViewModelRepository;
@@ -22,6 +23,7 @@ export class FileManagerService {
     ideService: IdeService;
     fileService: FileService;
     observerService: ObserverService;
+    textFileEditorService: TextFileEditorService;
 
     constructor(
         repository: ViewModelRepository,
@@ -30,7 +32,8 @@ export class FileManagerService {
         loaderService: LoaderService,
         ideService: IdeService,
         fileService: FileService,
-        observerService: ObserverService
+        observerService: ObserverService,
+        textFileEditorService: TextFileEditorService
     ) {
         this.rpi = rpi;
         this.programService = programService;
@@ -39,6 +42,7 @@ export class FileManagerService {
         this.repository = repository;
         this.fileService = fileService;
         this.observerService = observerService;
+        this.textFileEditorService = textFileEditorService;
     }
 
     onFolderButtonClicked = async () => {
@@ -441,6 +445,10 @@ export class FileManagerService {
                 `${newPath}/`
             );
             this.remapCurrentFolderAfterRename(oldPath, newPath);
+            await this.textFileEditorService.onOpenFilePathChanged(
+                oldPath,
+                newPath
+            );
             await this.loaderService.loadFiles(project.projectId);
         } else {
             this.restoreFilesReadyState();
@@ -620,6 +628,10 @@ export class FileManagerService {
         }
         if (result.isOk) {
             this.programService.replaceAllInProgram(oldName, uniqueNewName);
+            await this.textFileEditorService.onOpenFilePathChanged(
+                oldName,
+                uniqueNewName
+            );
             await this.loaderService.loadFiles(project.projectId);
         } else if (!result.isUnauth) {
             this.restoreFilesReadyState();

@@ -123,6 +123,38 @@ export class TextFileEditorService {
         );
     };
 
+    onOpenFilePathChanged = async (oldPath: string, newPath: string) => {
+        const activeText =
+            this.repository.ideViewModelRepository.activeTextFile();
+        if (activeText === oldPath || activeText?.startsWith(`${oldPath}/`)) {
+            if (this.saveTimeout) {
+                clearTimeout(this.saveTimeout);
+                this.saveTimeout = null;
+            }
+            const updatedPath =
+                activeText === oldPath
+                    ? newPath
+                    : `${newPath}${activeText.slice(oldPath.length)}`;
+            this.repository.ideViewModelRepository.setActiveTextFile(
+                updatedPath
+            );
+            await this.flushSave();
+            return;
+        }
+
+        const activeImage =
+            this.repository.ideViewModelRepository.activeImageFile();
+        if (activeImage === oldPath || activeImage?.startsWith(`${oldPath}/`)) {
+            const updatedPath =
+                activeImage === oldPath
+                    ? newPath
+                    : `${newPath}${activeImage.slice(oldPath.length)}`;
+            this.repository.ideViewModelRepository.setActiveImageFile(
+                updatedPath
+            );
+        }
+    };
+
     private flushSave = async () => {
         const fileName =
             this.repository.ideViewModelRepository.activeTextFile();
