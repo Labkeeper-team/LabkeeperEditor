@@ -23,7 +23,7 @@ export const ru: Translations = {
     label_problems: 'Проблемы',
     label_add_code: 'Вычисление',
     label_add_latex: 'Latex',
-    label_add_more: 'Добавить еще',
+    label_add_more: 'Добавить',
     label_add_more_short: 'Еще',
 
     short_segment: {
