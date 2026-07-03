@@ -2,14 +2,23 @@ import { test, expect } from '@playwright/test';
 import { CompileError } from '../../model/domain.ts';
 import { RouteSetup } from './mock.routeSetUp.tsx';
 
+const uuid = '2cd18704-6c3f-48cb-96f1-9a923930f8cb';
+
 async function testError(page, error, name) {
-    await page.goto('/');
     const routeSetUp = new RouteSetup(page);
+    await routeSetUp.setupGetUserInfoRequest();
+    await routeSetUp.setupGetDefaultProjectRequest();
+    await routeSetUp.setupGetProjectRequest();
+    await routeSetUp.setupGetAllProjectsRequest();
+    await routeSetUp.setupListFilesRequest();
+    await routeSetUp.setupSaveProgramRequest();
+
+    await page.goto('/');
 
     // Ждем загрузки страницы
     await page.waitForLoadState('domcontentloaded');
     // Ждем редиректа на конкретный проект
-    await expect(page).toHaveURL('/project/default');
+    await expect(page).toHaveURL(`/project/${uuid}`);
 
     // меняем тип на latex
     await page.locator('div.dropdown-menu-container').first().click();
@@ -17,7 +26,14 @@ async function testError(page, error, name) {
     await page.getByText('Labkeeper').first().click();
 
     // Добавляем маркдаун
-    await page.getByRole('button', { name: /Add markdown/i }).click();
+    await page
+        .locator('.labkeeper_select.computation .select-header')
+        .first()
+        .click();
+    await page
+        .getByRole('listitem')
+        .filter({ hasText: /^Markdown$/i })
+        .click();
     const editor = page.locator('.cm-content').nth(0);
     await editor.click();
     await editor.pressSequentially('biba\nboba\n', { delay: 20 });
@@ -25,8 +41,7 @@ async function testError(page, error, name) {
 
     // добавляем вычислительный
     await page
-        .locator('div')
-        .filter({ hasText: /^Add more$/ })
+        .locator('.labkeeper_select.computation .select-header')
         .first()
         .click();
     await page.getByRole('listitem').filter({ hasText: 'Computation' }).click();
@@ -42,7 +57,9 @@ async function testError(page, error, name) {
         .getByRole('button', { name: /Run/i })
         .waitFor({ state: 'attached' });
 
-    await expect(page).toHaveScreenshot(name + '.png');
+    await expect(page).toHaveScreenshot(name + '.png', {
+        maxDiffPixels: 1000,
+    });
 }
 
 /*

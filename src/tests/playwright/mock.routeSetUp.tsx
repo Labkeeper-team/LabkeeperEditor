@@ -564,22 +564,28 @@ export class RouteSetup {
         statements?: Statement[],
         text?: string
     ) {
+        const fulfillCompilation = async (route: Route) => {
+            await route.fulfill({
+                status: status,
+                contentType: contentType,
+                body: JSON.stringify(
+                    this.getProjectBodyForCompile(
+                        bodyType,
+                        errors,
+                        statements,
+                        text
+                    )
+                ),
+            });
+        };
+
         await this.page.route(
             `/api/${version}/public/compile`,
-            async (route) => {
-                await route.fulfill({
-                    status: status,
-                    contentType: contentType,
-                    body: JSON.stringify(
-                        this.getProjectBodyForCompile(
-                            bodyType,
-                            errors,
-                            statements,
-                            text
-                        )
-                    ),
-                });
-            }
+            fulfillCompilation
+        );
+        await this.page.route(
+            `/api/${version}/public/project/*/compile`,
+            fulfillCompilation
         );
     }
 

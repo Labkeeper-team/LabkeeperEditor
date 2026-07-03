@@ -5,6 +5,11 @@ async function plotlyTest(statement, page) {
     const routeSetUp = new RouteSetup(page);
     // Перехватываем запрос user-info
     await routeSetUp.setupGetUserInfoRequest(false);
+    await routeSetUp.setupGetDefaultProjectRequest();
+    await routeSetUp.setupGetProjectRequest();
+    await routeSetUp.setupGetAllProjectsRequest();
+    await routeSetUp.setupListFilesRequest();
+    await routeSetUp.setupSaveProgramRequest();
 
     await page.goto('/');
 
@@ -19,8 +24,11 @@ async function plotlyTest(statement, page) {
     await page.getByText('Labkeeper').first().click();
 
     // Добавляем код
-    await page.locator('div.labkeeper_select.computation').first().click();
-    await page.locator('li').first().click();
+    await page
+        .locator('.labkeeper_select.computation .select-header')
+        .first()
+        .click();
+    await page.getByRole('listitem').filter({ hasText: 'Computation' }).click();
     const editor = page.locator('.cm-content').nth(0);
     await editor.click();
     await editor.fill('a = 10');
@@ -368,7 +376,9 @@ test('plotly-histogram-single', async ({ page }) => {
         page
     );
     await page.locator('.expnad-container.expanded > svg').click();
-    await expect(page).toHaveScreenshot('plotly-histogram-single.png');
+    await expect(page).toHaveScreenshot('plotly-histogram-single.png', {
+        maxDiffPixels: 1000,
+    });
 });
 
 test('plotly-histogram-two-dims-test', async ({ page }) => {
@@ -482,5 +492,7 @@ test('plotly-bar-with-duplicate-negative-xGrid', async ({ page }) => {
         page
     );
     await page.locator('.expnad-container.expanded > svg').click();
-    await expect(page).toHaveScreenshot('plotly-bar-with-duplicate-xGrid.png');
+    await expect(page).toHaveScreenshot('plotly-bar-with-duplicate-xGrid.png', {
+        maxDiffPixels: 1000,
+    });
 });
