@@ -10,8 +10,10 @@ import {
 } from '../../model/service/ObserverService.ts';
 import {
     joinFolderPath,
+    normalizeFolderName,
     svarIdToPath,
 } from '../../view/pages/project/fileManager/svarFileTreeAdapter.ts';
+import { TextFileEditorService } from './TextFileEditorService.ts';
 
 export class FileManagerService {
     repository: ViewModelRepository;
@@ -21,6 +23,7 @@ export class FileManagerService {
     ideService: IdeService;
     fileService: FileService;
     observerService: ObserverService;
+    textFileEditorService: TextFileEditorService;
 
     constructor(
         repository: ViewModelRepository,
@@ -29,7 +32,8 @@ export class FileManagerService {
         loaderService: LoaderService,
         ideService: IdeService,
         fileService: FileService,
-        observerService: ObserverService
+        observerService: ObserverService,
+        textFileEditorService: TextFileEditorService
     ) {
         this.rpi = rpi;
         this.programService = programService;
@@ -38,6 +42,7 @@ export class FileManagerService {
         this.repository = repository;
         this.fileService = fileService;
         this.observerService = observerService;
+        this.textFileEditorService = textFileEditorService;
     }
 
     onFolderButtonClicked = async () => {
@@ -328,17 +333,174 @@ export class FileManagerService {
     // A) делегировать в onSvarMoveFiles (renameFileRequest на каждый файл).
     // B) rpi.moveFileRequest(oldPath, targetFolder, projectId) — один запрос, затем loadFiles.
 
-    // TODO(4) onRenameFolder(folderPath, newName):
-    // A) files с префиксом folderPath → renameFileRequest(old, newPrefix+suffix) для каждого;
-    //    programService.replaceAllInProgram для каждого; remap ephemeralFolders/currentFolderPath.
-    // B) rpi.renameFolderRequest(folderPath, newFullPath, projectId) — один запрос;
-    //    loadFiles; sync ephemeralFolders/currentFolderPath локально.
+    private folderHasFiles = (folderPath: string): boolean => {
+        return this.repository.projectViewModelRepository
+            .files()
+            .some(
+                (file) =>
+                    file.fileName === folderPath ||
+                    file.fileName.startsWith(`${folderPath}/`)
+            );
+    };
 
-    // TODO(6) onDeleteFolder(folderPath):
-    // A) files с префиксом folderPath/ → deleteFileRequest для каждого;
-    //    убрать folderPath и вложенные из ephemeralFolders; сбросить currentFolderPath если нужно.
-    // B) rpi.deleteFolderRequest(folderPath, projectId) — один запрос;
-    //    loadFiles; prune ephemeralFolders/currentFolderPath локально.
+    private pruneEphemeralFolders = (folderPath: string) => {
+        const folders =
+            this.repository.settingsViewModelRepository.ephemeralFolders();
+        const filtered = folders.filter(
+            (folder) =>
+                folder !== folderPath && !folder.startsWith(`${folderPath}/`)
+        );
+        this.repository.settingsViewModelRepository.setEphemeralFolders(
+            filtered
+        );
+    };
+
+    private remapCurrentFolderAfterDelete = (folderPath: string) => {
+        const current =
+            this.repository.settingsViewModelRepository.currentFolderPath();
+        if (current === folderPath || current.startsWith(`${folderPath}/`)) {
+            this.repository.settingsViewModelRepository.setCurrentFolderPath(
+                ''
+            );
+        }
+    };
+
+    private remapCurrentFolderAfterRename = (
+        oldPath: string,
+        newPath: string
+    ) => {
+        const current =
+            this.repository.settingsViewModelRepository.currentFolderPath();
+        if (current === oldPath) {
+            this.repository.settingsViewModelRepository.setCurrentFolderPath(
+                newPath
+            );
+        } else if (current.startsWith(`${oldPath}/`)) {
+            this.repository.settingsViewModelRepository.setCurrentFolderPath(
+                `${newPath}${current.slice(oldPath.length)}`
+            );
+        }
+
+        const folders =
+            this.repository.settingsViewModelRepository.ephemeralFolders();
+        const remapped = folders.map((folder) => {
+            if (folder === oldPath) {
+                return newPath;
+            }
+            if (folder.startsWith(`${oldPath}/`)) {
+                return `${newPath}${folder.slice(oldPath.length)}`;
+            }
+            return folder;
+        });
+        this.repository.settingsViewModelRepository.setEphemeralFolders(
+            remapped
+        );
+    };
+
+    onRenameFolder = async (oldPath: string, newPath: string) => {
+        if (!oldPath || oldPath === newPath) {
+            return;
+        }
+        const newName = newPath.includes('/')
+            ? newPath.slice(newPath.lastIndexOf('/') + 1)
+            : newPath;
+        if (!normalizeFolderName(newName)) {
+            this.repository.toast(
+                this.repository.dictionary.filemanager.errors.bad_name,
+                'error'
+            );
+            return;
+        }
+
+        if (!this.folderHasFiles(oldPath)) {
+            this.remapCurrentFolderAfterRename(oldPath, newPath);
+            return;
+        }
+
+        const project = this.repository.projectViewModelRepository.project();
+        if (!project) {
+            return;
+        }
+
+        this.repository.ideViewModelRepository.setGetFilesRequestState(
+            'loading'
+        );
+        const result = await this.rpi.renameFolderRequest(
+            oldPath,
+            newPath,
+            project.projectId
+        );
+        if (result.isUnauth) {
+            this.repository.toast(
+                this.repository.dictionary.filemanager.errors.sessionExpired,
+                'error'
+            );
+            this.ideService.resetEditor();
+            this.restoreFilesReadyState();
+            return;
+        }
+        if (result.isOk) {
+            this.programService.replaceAllInProgram(
+                `${oldPath}/`,
+                `${newPath}/`
+            );
+            this.remapCurrentFolderAfterRename(oldPath, newPath);
+            await this.textFileEditorService.onOpenFilePathChanged(
+                oldPath,
+                newPath
+            );
+            await this.loaderService.loadFiles(project.projectId);
+        } else {
+            this.restoreFilesReadyState();
+            this.observerService.onEvent(
+                Events.EVENT_RPI_UNKNOWN_FILE_MANAGER_RENAME
+            );
+        }
+    };
+
+    onDeleteFolder = async (folderPath: string) => {
+        if (!folderPath) {
+            return;
+        }
+
+        if (!this.folderHasFiles(folderPath)) {
+            this.pruneEphemeralFolders(folderPath);
+            this.remapCurrentFolderAfterDelete(folderPath);
+            return;
+        }
+
+        const project = this.repository.projectViewModelRepository.project();
+        if (!project) {
+            return;
+        }
+
+        this.repository.ideViewModelRepository.setGetFilesRequestState(
+            'loading'
+        );
+        const result = await this.rpi.deleteFolderRequest(
+            folderPath,
+            project.projectId
+        );
+        if (result.isUnauth) {
+            this.repository.toast(
+                this.repository.dictionary.filemanager.errors.sessionExpired,
+                'error'
+            );
+            this.ideService.resetEditor();
+            this.restoreFilesReadyState();
+            return;
+        }
+        if (result.isOk) {
+            this.pruneEphemeralFolders(folderPath);
+            this.remapCurrentFolderAfterDelete(folderPath);
+            await this.loaderService.loadFiles(project.projectId);
+        } else {
+            this.restoreFilesReadyState();
+            this.observerService.onEvent(
+                Events.EVENT_RPI_UNKNOWN_FILE_MANAGER_DELETE
+            );
+        }
+    };
 
     private restoreFilesReadyState = () => {
         this.repository.ideViewModelRepository.setGetFilesRequestState('ok');
@@ -466,6 +628,10 @@ export class FileManagerService {
         }
         if (result.isOk) {
             this.programService.replaceAllInProgram(oldName, uniqueNewName);
+            await this.textFileEditorService.onOpenFilePathChanged(
+                oldName,
+                uniqueNewName
+            );
             await this.loaderService.loadFiles(project.projectId);
         } else if (!result.isUnauth) {
             this.restoreFilesReadyState();

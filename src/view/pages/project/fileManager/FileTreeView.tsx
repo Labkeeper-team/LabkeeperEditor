@@ -157,13 +157,13 @@ const TreeNodeRow = (props: {
     }, [editMode, isFolder, props]);
 
     const onRename = useCallback(() => {
-        if (!props.node.file) {
+        if (!isFolder && !props.node.file) {
             return;
         }
         setEditMode(true);
         setEditName(props.node.name);
         props.onRenamingChange(props.node.path);
-    }, [props]);
+    }, [isFolder, props]);
 
     const cancelRename = useCallback(() => {
         setEditMode(false);
@@ -172,6 +172,34 @@ const TreeNodeRow = (props: {
     }, [props]);
 
     const submitRename = useCallback(() => {
+        if (isFolder) {
+            const normalized = normalizeFolderName(editName);
+            if (!normalized) {
+                if (!editName.trim()) {
+                    cancelRename();
+                }
+                return;
+            }
+            const parentPath = props.node.path.includes('/')
+                ? props.node.path.slice(0, props.node.path.lastIndexOf('/'))
+                : '';
+            const newPath = parentPath
+                ? `${parentPath}/${normalized}`
+                : normalized;
+            if (newPath === props.node.path) {
+                cancelRename();
+                return;
+            }
+            dispatch(
+                controller.onRenameFolderRequest({
+                    oldPath: props.node.path,
+                    newPath,
+                })
+            );
+            setEditMode(false);
+            props.onRenamingChange(null);
+            return;
+        }
         if (!props.node.file || !editName.trim()) {
             cancelRename();
             return;
@@ -190,7 +218,7 @@ const TreeNodeRow = (props: {
         );
         setEditMode(false);
         props.onRenamingChange(null);
-    }, [cancelRename, dispatch, editName, props]);
+    }, [cancelRename, dispatch, editName, isFolder, props]);
 
     return (
         <>
@@ -223,20 +251,72 @@ const TreeNodeRow = (props: {
                                 : '•'}
                         </button>
                         <FolderIcon className="tree-folder-icon" />
-                        {/* TODO(4) rename folder — inline input (как у файла), normalizeFolderName.
-                            A) без folder API: onRenameFolderRequest → batch renameFileRequest
-                               для каждого fileName с префиксом folderPath + remap ephemeralFolders.
-                            B) с folder API: onRenameFolderRequest → renameFolderRequest(old, new)
-                               → loadFiles → sync ephemeralFolders/currentFolderPath. */}
-                        <div className="tree-row-label" onClick={onClickRow}>
-                            {props.node.name}
+                        <div
+                            className={classNames('tree-row-label', {
+                                'tree-row-label-editing': editMode,
+                            })}
+                            onClick={editMode ? undefined : onClickRow}
+                        >
+                            {editMode ? (
+                                <input
+                                    autoFocus
+                                    value={editName}
+                                    onChange={(event) =>
+                                        setEditName(event.target.value)
+                                    }
+                                    onBlur={submitRename}
+                                    onClick={(event) => event.stopPropagation()}
+                                    onMouseDown={(event) =>
+                                        event.stopPropagation()
+                                    }
+                                    onKeyDown={(event) => {
+                                        if (event.key === 'Enter') {
+                                            submitRename();
+                                        }
+                                        if (event.key === 'Escape') {
+                                            cancelRename();
+                                        }
+                                    }}
+                                />
+                            ) : (
+                                props.node.name
+                            )}
                         </div>
-                        {/* TODO(6) delete folder — DropdownMenu (delete/rename).
-                            A) без folder API: onDeleteFolderRequest → batch deleteFileRequest
-                               для каждого fileName с префиксом folderPath + prune ephemeralFolders.
-                            B) с folder API: onDeleteFolderRequest → deleteFolderRequest(path)
-                               → loadFiles → prune ephemeralFolders. */}
-                        <span className="tree-menu-spacer" />
+                        {!props.readonly && !editMode ? (
+                            <div
+                                className="tree-row-actions"
+                                onClick={(event) => event.stopPropagation()}
+                            >
+                                <button
+                                    type="button"
+                                    className="tree-row-action-button"
+                                    title={dictionary.filemanager.edit}
+                                    aria-label={dictionary.filemanager.edit}
+                                    onClick={onRename}
+                                >
+                                    <PencilIcon />
+                                </button>
+                                <button
+                                    type="button"
+                                    className="tree-row-action-button tree-row-action-delete"
+                                    title={dictionary.delete}
+                                    aria-label={dictionary.delete}
+                                    onClick={() =>
+                                        dispatch(
+                                            controller.onDeleteFolderRequest({
+                                                path: props.node.path,
+                                            })
+                                        )
+                                    }
+                                >
+                                    <div className="tree-delete-icon">
+                                        <PlusIcon />
+                                    </div>
+                                </button>
+                            </div>
+                        ) : (
+                            <span className="tree-menu-spacer" />
+                        )}
                     </div>
                     {isExpanded ? (
                         <div

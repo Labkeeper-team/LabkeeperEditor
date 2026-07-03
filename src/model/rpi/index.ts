@@ -114,10 +114,19 @@ export interface Rpi {
         projectId: string
     ): Promise<RequestResult>;
 
-    // TODO(folder API): добавить когда появятся на сервере (вариант B для TODO 3/4/6):
+    renameFolderRequest(
+        oldPath: string,
+        newPath: string,
+        projectId: string
+    ): Promise<RequestResult>;
+
+    deleteFolderRequest(
+        folderPath: string,
+        projectId: string
+    ): Promise<RequestResult>;
+
+    // TODO(folder API): moveFileRequest когда появится на сервере (вариант B для TODO 3):
     // moveFileRequest(oldPath: string, targetFolder: string, projectId: string): Promise<RequestResult>;
-    // renameFolderRequest(oldPath: string, newPath: string, projectId: string): Promise<RequestResult>;
-    // deleteFolderRequest(folderPath: string, projectId: string): Promise<RequestResult>;
 
     getAllProjectsRequest(): Promise<RequestResult<ListProjectsResponse>>;
 
@@ -221,6 +230,12 @@ export const mockRpi = (): Rpi => {
             throw new Error('Not implemented');
         },
         renameFileRequest: () => {
+            throw new Error('Not implemented');
+        },
+        renameFolderRequest: () => {
+            throw new Error('Not implemented');
+        },
+        deleteFolderRequest: () => {
             throw new Error('Not implemented');
         },
         getAllProjectsRequest: () => {

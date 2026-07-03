@@ -163,3 +163,40 @@ test('file-manager-test-onUploadFiles-resets-stale-current-folder', async () => 
         'note.txt'
     );
 });
+
+test('file-manager-test-onFileNameChanged-updates-open-text-file', async () => {
+    const { startupService, fileManagerService, rpi, repository } =
+        mockContext();
+    mockAuthenticatedStartup(rpi);
+
+    await startupService.onAppStartup();
+
+    rpi.renameFileRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        body: '',
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+    });
+    rpi.uploadFileRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        body: '',
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+    });
+
+    repository.ideViewModelRepository.setActiveTextFile('note.txt');
+    repository.ideViewModelRepository.setTextFileContent('edited content');
+
+    await fileManagerService.onFileNameChanged('note.txt', 'renamed.txt');
+
+    expect(repository.ideViewModelRepository.activeTextFile()).toBe(
+        'renamed.txt'
+    );
+    expect(rpi.uploadFileRequest).toHaveBeenCalledWith(
+        expect.any(FormData),
+        expect.any(String),
+        'renamed.txt'
+    );
+});

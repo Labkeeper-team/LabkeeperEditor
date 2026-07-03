@@ -78,6 +78,8 @@ export function setupContext(
         startupService,
         observerService
     );
+    const textFileEditorService: TextFileEditorService =
+        new TextFileEditorService(repository, rpi, ideService, observerService);
     const fileManagerService: FileManagerService = new FileManagerService(
         repository,
         rpi,
@@ -85,10 +87,9 @@ export function setupContext(
         loaderService,
         ideService,
         fileService,
-        observerService
+        observerService,
+        textFileEditorService
     );
-    const textFileEditorService: TextFileEditorService =
-        new TextFileEditorService(repository, rpi, ideService, observerService);
     const programEditorService: ProgramEditorService = new ProgramEditorService(
         repository,
         rpi,

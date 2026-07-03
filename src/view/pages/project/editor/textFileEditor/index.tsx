@@ -3,6 +3,7 @@ import CodeMirror from '@uiw/react-codemirror';
 import { EditorView } from '@codemirror/view';
 import {
     defaultHighlightStyle,
+    HighlightStyle,
     syntaxHighlighting,
 } from '@codemirror/language';
 import { langs } from '@uiw/codemirror-extensions-langs';
@@ -19,6 +20,21 @@ import { textFileEditorWheelScroll } from './textFileEditorWheelScroll';
 import '../ide/style.scss';
 import '../ide/header/style.scss';
 import './style.scss';
+
+/** Базовый цвет для текста без синтаксических тегов (fallback в CM6). */
+const TEXT_FILE_PLAIN_TEXT_HIGHLIGHT = syntaxHighlighting(
+    HighlightStyle.define([], { all: { color: '#000' } }),
+    { fallback: true }
+);
+
+const TEXT_FILE_EDITOR_THEME = EditorView.theme({
+    '.cm-content': {
+        color: '#000',
+    },
+    '.cm-scroller': {
+        overflowX: 'hidden',
+    },
+});
 
 export const TextFileEditor = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -116,7 +132,13 @@ export const TextFileEditor = () => {
     }, [activeTextFile]);
 
     const codeMirrorExtensions = useMemo(
-        () => [...languageExtension, textFileEditorWheelScroll],
+        () => [
+            ...languageExtension,
+            EditorView.lineWrapping,
+            TEXT_FILE_PLAIN_TEXT_HIGHLIGHT,
+            TEXT_FILE_EDITOR_THEME,
+            textFileEditorWheelScroll,
+        ],
         [languageExtension]
     );
 
@@ -201,6 +223,7 @@ export const TextFileEditor = () => {
                         basicSetup={{
                             lineNumbers: true,
                             foldGutter: false,
+                            syntaxHighlighting: false,
                         }}
                     />
                 ) : null}

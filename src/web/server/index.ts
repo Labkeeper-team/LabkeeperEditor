@@ -229,8 +229,33 @@ export class WebRpi implements Rpi {
         );
     }
 
-    // TODO(folder API): реализовать moveFileRequest / renameFolderRequest / deleteFolderRequest
-    // по URLS.moveFile / URLS.renameFolder / URLS.deleteFolder (см. constants.ts).
+    async renameFolderRequest(
+        oldPath: string,
+        newPath: string,
+        projectId: string
+    ): Promise<RequestResult> {
+        const oldParam = oldPath.startsWith('/') ? oldPath : `/${oldPath}`;
+        const newParam = newPath.startsWith('/') ? newPath : `/${newPath}`;
+        return requestWrapper(async () =>
+            axios.post(
+                `${URLS.renameFolder.replace('{id}', projectId)}?old=${encodeURIComponent(oldParam)}&new=${encodeURIComponent(newParam)}`
+            )
+        );
+    }
+
+    async deleteFolderRequest(
+        folderPath: string,
+        projectId: string
+    ): Promise<RequestResult> {
+        const pathParam = folderPath.startsWith('/')
+            ? folderPath
+            : `/${folderPath}`;
+        return requestWrapper(async () =>
+            axios.delete(
+                `${URLS.deleteFolder.replace('{id}', projectId)}?path=${encodeURIComponent(pathParam)}`
+            )
+        );
+    }
 
     async getAllProjectsRequest(): Promise<
         RequestResult<ListProjectsResponse>

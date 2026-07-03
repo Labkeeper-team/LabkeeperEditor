@@ -81,6 +81,9 @@ test('public-project-unauth-user-compilation-ok', async ({ page }) => {
         'withTwoSegmentsBibaAndAEqualTen'
     );
 
+    // Перехватываем запрос на список файлов (после компиляции)
+    await routeSetup.setupListFilesRequest();
+
     await page.goto(`/project/${uuid}`);
 
     // Ждем загрузки страницы
@@ -127,6 +130,9 @@ test('public-project-unauth-user-compilation-308', async ({ page }) => {
         200,
         'withTwoSegmentsBibaAndAEqualTen'
     );
+
+    // Перехватываем запрос на список файлов (после компиляции)
+    await routeSetup.setupListFilesRequest();
 
     await page.goto(`/project/${uuid}`);
 
