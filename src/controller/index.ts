@@ -592,12 +592,6 @@ export class Controller {
     // TODO(3) onMoveFileRequest — thunk для internal tree drag.
     //   A) → onSvarMoveFiles (renameFileRequest × N).
     //   B) → onMoveFile → rpi.moveFileRequest (один запрос).
-    // TODO(4) onRenameFolderRequest — inline-rename папки в FileTreeView.
-    //   A) → onRenameFolder → batch renameFileRequest × N.
-    //   B) → onRenameFolder → rpi.renameFolderRequest (один запрос).
-    // TODO(6) onDeleteFolderRequest — DropdownMenu удаления папки.
-    //   A) → onDeleteFolder → batch deleteFileRequest × N.
-    //   B) → onDeleteFolder → rpi.deleteFolderRequest (один запрос).
 
     onTextFileOpenedRequest = createAsyncThunk(
         'onTextFileOpenedRequest',
@@ -658,6 +652,24 @@ export class Controller {
         async ({ oldName, newName }: { oldName: string; newName: string }) => {
             this.wrapper('onFileNameChangedRequest', () =>
                 this.fileManagerService.onFileNameChanged(oldName, newName)
+            );
+        }
+    );
+
+    onRenameFolderRequest = createAsyncThunk(
+        'onRenameFolderRequest',
+        async ({ oldPath, newPath }: { oldPath: string; newPath: string }) => {
+            this.wrapper('onRenameFolderRequest', () =>
+                this.fileManagerService.onRenameFolder(oldPath, newPath)
+            );
+        }
+    );
+
+    onDeleteFolderRequest = createAsyncThunk(
+        'onDeleteFolderRequest',
+        async ({ path }: { path: string }) => {
+            this.wrapper('onDeleteFolderRequest', () =>
+                this.fileManagerService.onDeleteFolder(path)
             );
         }
     );

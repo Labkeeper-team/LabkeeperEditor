@@ -444,8 +444,76 @@
     }
 
     .tree-menu-spacer {
-        width: 28px;
+        width: 48px;
         flex-shrink: 0;
+    }
+
+    .tree-row-actions {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        flex-shrink: 0;
+        width: 48px;
+        justify-content: flex-end;
+    }
+
+    .tree-row-action-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        border: none;
+        background: transparent;
+        border-radius: 4px;
+        cursor: pointer;
+        padding: 0;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.15s ease;
+
+        svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        &:hover {
+            background: rgba(0, 0, 0, 0.06);
+        }
+    }
+
+    .tree-row:hover .tree-row-action-button,
+    .tree-row-action-button:focus-visible {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .tree-row-action-delete {
+        .tree-delete-icon {
+            background-color: $red-20;
+            border: 1px solid $red-20;
+            border-radius: 45px;
+            height: 15px;
+            width: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            rotate: 45deg;
+            flex-shrink: 0;
+
+            svg {
+                width: 10px;
+                height: 10px;
+
+                path {
+                    fill: $red-10;
+                }
+            }
+        }
+
+        &:hover .tree-delete-icon {
+            border-color: $red-10;
+        }
     }
 
     .tree-menu-item {
