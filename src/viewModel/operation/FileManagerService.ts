@@ -344,8 +344,7 @@ export class FileManagerService {
             this.repository.settingsViewModelRepository.ephemeralFolders();
         const filtered = folders.filter(
             (folder) =>
-                folder !== folderPath &&
-                !folder.startsWith(`${folderPath}/`)
+                folder !== folderPath && !folder.startsWith(`${folderPath}/`)
         );
         this.repository.settingsViewModelRepository.setEphemeralFolders(
             filtered
@@ -355,10 +354,7 @@ export class FileManagerService {
     private remapCurrentFolderAfterDelete = (folderPath: string) => {
         const current =
             this.repository.settingsViewModelRepository.currentFolderPath();
-        if (
-            current === folderPath ||
-            current.startsWith(`${folderPath}/`)
-        ) {
+        if (current === folderPath || current.startsWith(`${folderPath}/`)) {
             this.repository.settingsViewModelRepository.setCurrentFolderPath(
                 ''
             );
