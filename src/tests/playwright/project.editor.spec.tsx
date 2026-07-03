@@ -22,6 +22,11 @@ test('425-display', async ({ page }) => {
     // Ждем редиректа на конкретный проект
     await expect(page).toHaveURL('/project/default');
 
+    // меняем тип на latex
+    await page.locator('div.dropdown-menu-container').first().click();
+    await page.getByText('markdown', { exact: true }).click();
+    await page.getByText('Labkeeper').first().click();
+
     // Добавляем маркдаун
     await page.getByRole('button', { name: /Add markdown/i }).click();
     const editor = page.locator('.cm-content').nth(0);
@@ -85,6 +90,11 @@ test('phystech-icon-test', async ({ page }) => {
     // Ждем редиректа на конкретный проект
     await expect(page).toHaveURL(`/project/${uuid}`);
 
+    // меняем тип на latex
+    await page.locator('div.dropdown-menu-container').first().click();
+    await page.getByText('markdown', { exact: true }).click();
+    await page.getByText('Labkeeper').first().click();
+
     // Добавляем маркдаун
     await page.getByRole('button', { name: /Add markdown/i }).click();
     let editor = page.locator('.cm-content').nth(0);
@@ -129,6 +139,11 @@ test('insert-segment-between', async ({ page }) => {
     await page.waitForLoadState('domcontentloaded');
     // Ждем редиректа на конкретный проект
     await expect(page).toHaveURL('/project/default');
+
+    // меняем тип на latex
+    await page.locator('div.dropdown-menu-container').first().click();
+    await page.getByText('markdown', { exact: true }).click();
+    await page.getByText('Labkeeper').first().click();
 
     // добавляем вычислительный
     await page
@@ -290,6 +305,11 @@ test('save-test', async ({ page }) => {
     // Ждем редиректа на конкретный проект
     await expect(page).toHaveURL(`/project/${uuid}`);
 
+    // меняем тип на latex
+    await page.locator('div.dropdown-menu-container').first().click();
+    await page.getByText('markdown', { exact: true }).click();
+    await page.getByText('Labkeeper').first().click();
+
     // Добавляем маркдаун
     await page.getByRole('button', { name: /Add markdown/i }).click();
     const editor = page.locator('.cm-content').nth(0);
@@ -346,6 +366,11 @@ test('ESC-test', async ({ page }) => {
     await page.waitForLoadState('domcontentloaded');
     // Ждем редиректа на конкретный проект
     await expect(page).toHaveURL(`/project/${uuid}`);
+
+    // меняем тип на latex
+    await page.locator('div.dropdown-menu-container').first().click();
+    await page.getByText('markdown', { exact: true }).click();
+    await page.getByText('Labkeeper').first().click();
 
     // Добавляем маркдаун
     await page.getByRole('button', { name: /Add markdown/i }).click();
@@ -408,6 +433,11 @@ test('Search-test', async ({ page }) => {
     await page.waitForLoadState('domcontentloaded');
     // Ждем редиректа на конкретный проект
     await expect(page).toHaveURL('/project/default');
+
+    // меняем тип на latex
+    await page.locator('div.dropdown-menu-container').first().click();
+    await page.getByText('markdown', { exact: true }).click();
+    await page.getByText('Labkeeper').first().click();
 
     // Добавляем маркдаун
     await page.getByRole('button', { name: /Add markdown/i }).click();
@@ -669,6 +699,11 @@ test('llm-prompt-ok-request-test', async ({ page }) => {
     // Ждем редиректа на конкретный проект
     await expect(page).toHaveURL(`/project/${uuid}`);
 
+    // меняем тип на latex
+    await page.locator('div.dropdown-menu-container').first().click();
+    await page.getByText('markdown', { exact: true }).click();
+    await page.getByText('Labkeeper').first().click();
+
     await page.getByText('GPT').click();
 
     await page.getByRole('textbox').nth(1).type('biba');
@@ -768,6 +803,11 @@ test('many-segments-move', async ({ page }) => {
     // Ждем загрузки страницы и проверяем URL
     await page.waitForLoadState('domcontentloaded');
     await expect(page).toHaveURL(/.*\/project/);
+
+    // меняем тип на latex
+    await page.locator('div.dropdown-menu-container').first().click();
+    await page.getByText('markdown', { exact: true }).click();
+    await page.getByText('Labkeeper').first().click();
 
     // первый сегмент
     await page.getByRole('button', { name: /Add markdown/i }).click();
@@ -877,6 +917,11 @@ test('remove-lines-with-errors-test', async ({ page }) => {
     await page.waitForLoadState('domcontentloaded');
     // Ждем редиректа на конкретный проект
     await expect(page).toHaveURL('/project/default');
+
+    // меняем тип на latex
+    await page.locator('div.dropdown-menu-container').first().click();
+    await page.getByText('markdown', { exact: true }).click();
+    await page.getByText('Labkeeper').first().click();
 
     // Добавляем маркдаун
     await page.getByRole('button', { name: /Add markdown/i }).click();
@@ -1272,6 +1317,11 @@ test('file-list-changes-after-compilation', async ({ page }) => {
     // Ждем редиректа на конкретный проект
     await expect(page).toHaveURL(`/project/${uuid}`);
 
+    // меняем тип на latex
+    await page.locator('div.dropdown-menu-container').first().click();
+    await page.getByText('markdown', { exact: true }).click();
+    await page.getByText('Labkeeper').first().click();
+
     // Открываем файловый менеджер
     await page.locator('div.file-manager-button').click();
 
@@ -1333,6 +1383,11 @@ test('double-plots-and-tables-test', async ({ page }) => {
     await page.waitForLoadState('domcontentloaded');
     // Ждем редиректа на конкретный проект
     await expect(page).toHaveURL(`/project/${uuid}`);
+
+    // меняем тип на latex
+    await page.locator('div.dropdown-menu-container').first().click();
+    await page.getByText('markdown', { exact: true }).click();
+    await page.getByText('Labkeeper').first().click();
 
     // добавляем вычислительный
     await page

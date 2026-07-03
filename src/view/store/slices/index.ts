@@ -160,7 +160,7 @@ export const projectInitialState: ProjectState = {
     compileSuccessResult: { segments: [] },
     files: [],
     currentProgram: createEmptyProgram(),
-    mode: 'markdown',
+    mode: 'latex',
     pdfUri: undefined,
 };
 

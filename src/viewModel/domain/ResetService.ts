@@ -121,6 +121,6 @@ export class ResetService {
             errors: [],
         });
         this.repository.projectViewModelRepository.setPdfUri(undefined);
-        this.repository.projectViewModelRepository.setProjectType('markdown');
+        this.repository.projectViewModelRepository.setProjectType('latex');
     }
 }

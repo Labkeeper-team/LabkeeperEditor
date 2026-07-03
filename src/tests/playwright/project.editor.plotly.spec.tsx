@@ -13,6 +13,11 @@ async function plotlyTest(statement, page) {
     // Ждем редиректа на конкретный проект
     await expect(page).toHaveURL('/project/default');
 
+    // меняем тип на latex
+    await page.locator('div.dropdown-menu-container').first().click();
+    await page.getByText('markdown', { exact: true }).click();
+    await page.getByText('Labkeeper').first().click();
+
     // Добавляем код
     await page.locator('div.labkeeper_select.computation').first().click();
     await page.locator('li').first().click();

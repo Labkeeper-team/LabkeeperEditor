@@ -11,6 +11,11 @@ async function testError(page, error, name) {
     // Ждем редиректа на конкретный проект
     await expect(page).toHaveURL('/project/default');
 
+    // меняем тип на latex
+    await page.locator('div.dropdown-menu-container').first().click();
+    await page.getByText('markdown', { exact: true }).click();
+    await page.getByText('Labkeeper').first().click();
+
     // Добавляем маркдаун
     await page.getByRole('button', { name: /Add markdown/i }).click();
     const editor = page.locator('.cm-content').nth(0);

@@ -121,7 +121,7 @@ class MockViewModelRepositoryState {
     textFileContent = '';
 
     pdfUri: string | undefined;
-    mode: ProjectType = 'markdown';
+    mode: ProjectType = 'latex';
     instructionExpanded = false;
     language: 'ru' | 'en' = 'ru';
     lastProgram: Program = {

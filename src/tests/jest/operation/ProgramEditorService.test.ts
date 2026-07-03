@@ -51,6 +51,7 @@ test('double-md-test', async () => {
 
     await startupService.onAppStartup();
 
+    await projectPageService.setProjectType('markdown');
     programEditorService.onAddSegmentClicked('computational');
     programEditorService.onAddSegmentClicked('md');
 

@@ -770,6 +770,8 @@ test('segments-move-with-result-test', async () => {
 
     await startupService.onAppStartup();
 
+    await projectPageService.setProjectType('markdown');
+
     programEditorService.onAddSegmentClicked('computational');
     await programEditorService.onSegmentTextEdited(0, 'a1 = 10');
 
