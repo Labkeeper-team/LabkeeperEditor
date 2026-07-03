@@ -17,7 +17,7 @@ export const ru: Translations = {
     warning_dontuselongvarioables: 'Не используйте длинные имена переменных',
 
     label_add_asciimath: 'Простая формула',
-    label_add_markdown: 'Добавить маркдаун',
+    label_add_markdown: 'Маркдаун',
     label_add_markdown_short: 'MD',
     label_save_to_pdf: 'Сохранить в PDF',
     label_problems: 'Проблемы',

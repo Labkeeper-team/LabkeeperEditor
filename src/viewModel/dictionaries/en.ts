@@ -15,7 +15,7 @@ export const en: Translations = {
     warning_dontuselongvarioables: 'Do not use long name variables',
 
     label_add_asciimath: 'Simple-math',
-    label_add_markdown: 'Add markdown',
+    label_add_markdown: 'Markdown',
     label_add_markdown_short: 'MD',
     label_add_code: 'Computation',
     label_add_latex: 'Latex',

@@ -2,7 +2,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Button } from '../../../../../components/button';
 import { Typography } from '../../../../../components/typography';
 import { PlusIcon } from '../../../../../icons';
-import './style.scss';
 import { SegmentType } from '../../../../../../model/domain';
 
 import { AddBlockProps } from './model';
@@ -12,65 +11,74 @@ import { useDictionary } from '../../../../../store/selectors/translations';
 import { Select } from '../../../../../components/select';
 import { SelectClassNames } from '../../../../../components/select/model';
 import { AppDispatch } from '../../../../../store';
-import classNames from 'classnames';
 import { useIsMobile } from '../../../../../hooks/useMobile';
 import { controller } from '../../../../../../main.tsx';
+import './style.scss';
 
 export const AddBlock = (props: AddBlockProps) => {
     const dispatch = useDispatch<AppDispatch>();
     const isMobile = useIsMobile();
     const dictionary = useSelector(useDictionary);
 
-    const selectOptions = [
+    const headerSelectOptions = [
+        { value: 'md', label: dictionary.label_add_markdown },
         { value: 'computational', label: dictionary.label_add_code },
         { value: 'latex', label: dictionary.label_add_latex },
         { value: 'asciimath', label: dictionary.label_add_asciimath },
     ];
 
-    const addMdTitle =
-        isMobile && !props.isFirst
-            ? dictionary.label_add_markdown_short
-            : dictionary.label_add_markdown;
+    const emptyProjectSelectOptions = [
+        { value: 'md', label: dictionary.label_add_markdown },
+        { value: 'computational', label: dictionary.label_add_code },
+        { value: 'asciimath', label: dictionary.label_add_asciimath },
+    ];
 
-    const addMoreTitle =
-        isMobile && !props.isFirst
-            ? dictionary.label_add_more_short
-            : dictionary.label_add_more;
+    const addMoreTitle = isMobile
+        ? dictionary.label_add_more_short
+        : dictionary.label_add_more;
+
+    const onAddSegment = (type: SegmentType) =>
+        dispatch(
+            controller.onAddSegmentButtonClickedRequest({
+                type,
+            })
+        );
+
+    if (props.isFirst) {
+        return (
+            <div className="empty-project-placeholder-container">
+                <Button
+                    classname={InterfaceTourAnchorClassnames.AddCode}
+                    title={dictionary.label_add_latex}
+                    color="gray"
+                    onPress={() => onAddSegment('latex')}
+                    minimize={false}
+                    titleIcon={() => <PlusIcon />}
+                    rounded
+                />
+                <Typography text={dictionary.or} color={colors.black} />
+                <Select
+                    options={emptyProjectSelectOptions}
+                    title={addMoreTitle}
+                    value="computational"
+                    onChange={(value) => onAddSegment(value as SegmentType)}
+                    className={SelectClassNames.Computation}
+                    minimize={false}
+                />
+            </div>
+        );
+    }
 
     return (
         <div className="empty-project-placeholder-container">
-            <Button
-                classname={classNames(InterfaceTourAnchorClassnames.AddCode)}
-                title={addMdTitle}
-                color="gray"
-                onPress={() =>
-                    dispatch(
-                        controller.onAddSegmentButtonClickedRequest({
-                            type: 'md',
-                        })
-                    )
-                }
-                minimize={!props.isFirst}
-                titleIcon={() => <PlusIcon />}
-                rounded
-            />
-
-            {props.isFirst && (
-                <Typography text={dictionary.or} color={colors.black} />
-            )}
             <Select
-                options={selectOptions}
+                options={headerSelectOptions}
                 title={addMoreTitle}
-                value="computational"
-                onChange={(value) =>
-                    dispatch(
-                        controller.onAddSegmentButtonClickedRequest({
-                            type: value as SegmentType,
-                        })
-                    )
-                }
+                value="md"
+                onChange={(value) => onAddSegment(value as SegmentType)}
                 className={SelectClassNames.Computation}
-                minimize={!props.isFirst}
+                containerClassName={InterfaceTourAnchorClassnames.AddCode}
+                minimize
             />
         </div>
     );
