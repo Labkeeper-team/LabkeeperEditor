@@ -3,7 +3,19 @@ import { RouteSetup } from './mock.routeSetUp.tsx';
 
 const userId = 1;
 const existingProjectId = 'project-1-id';
-const fixedLastModified = '2024-03-20T12:00:00.000Z';
+const fixedLastModified = (() => {
+    const now = new Date();
+    const relative = new Date(
+        now.getFullYear() - 2,
+        now.getMonth(),
+        now.getDate() - 1,
+        12,
+        0,
+        0,
+        0
+    );
+    return relative.toISOString();
+})();
 const contentType = 'application/json';
 type ProjectTagsByProject = Record<string, Record<string, string>>;
 
