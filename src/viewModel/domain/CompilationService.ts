@@ -43,6 +43,10 @@ export class CompilationService {
         this.ideService = ideService;
     }
 
+    private refreshProjectFiles = async (projectId: string) => {
+        await this.loaderService.loadFiles(projectId);
+    };
+
     runCompilation = async () => {
         const projectId =
             this.repository.projectViewModelRepository.project()?.projectId;
@@ -98,11 +102,8 @@ export class CompilationService {
             this.repository.projectViewModelRepository.setCompileErrorResult({
                 errors: [],
             });
-            if (
-                projectId &&
-                !this.repository.projectViewModelRepository.projectIsReadonly()
-            ) {
-                await this.loaderService.loadFiles(projectId);
+            if (projectId) {
+                await this.refreshProjectFiles(projectId);
             }
         } else if (result.code === 203) {
             const compileResult = result.body as CompileErrorResultList;
@@ -126,6 +127,9 @@ export class CompilationService {
                 this.repository.ideViewModelRepository.setPdfUpdated(
                     this.repository.ideViewModelRepository.pdfUpdated() + 1
                 );
+            }
+            if (projectId) {
+                await this.refreshProjectFiles(projectId);
             }
         } else if (result.code === 402) {
             this.repository.toast(

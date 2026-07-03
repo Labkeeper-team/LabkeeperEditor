@@ -89,7 +89,8 @@
         }
 
         .cm-scroller {
-            overflow: auto !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
             overscroll-behavior: contain;
         }
 
