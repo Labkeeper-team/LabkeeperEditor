@@ -191,8 +191,11 @@ test('insert-segment-between', async ({ page }) => {
     await editor.click();
 
     // Добавляем маркдаун между
-    await page.getByText('Add', { exact: true }).click();
-    await page.getByText('markdown', { exact: true }).first().click();
+    await page.locator('.segment-divider .divider-button').first().click();
+    await page
+        .locator('.segment-divider .divider-dropdown button')
+        .filter({ hasText: /^markdown$/i })
+        .click();
 
     // пишем в него
     editor = page.locator('.cm-content').nth(1);
@@ -201,8 +204,11 @@ test('insert-segment-between', async ({ page }) => {
     await editor.click();
 
     // Добавляем latex
-    await page.getByText('Add', { exact: true }).nth(1).click();
-    await page.getByText('latex', { exact: true }).click();
+    await page.locator('.segment-divider .divider-button').nth(1).click();
+    await page
+        .locator('.segment-divider .divider-dropdown button')
+        .filter({ hasText: /^latex$/i })
+        .click();
 
     // пишем в него
     editor = page.locator('.cm-content').nth(2);
