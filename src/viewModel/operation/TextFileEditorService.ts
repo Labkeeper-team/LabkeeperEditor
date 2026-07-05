@@ -17,6 +17,7 @@ export class TextFileEditorService {
     observerService: ObserverService;
     private saveTimeout: ReturnType<typeof setTimeout> | null = null;
     private pendingSaveContent: string | null = null;
+    private pendingSaveFileName: string | null = null;
 
     constructor(
         repository: ViewModelRepository,
@@ -39,6 +40,16 @@ export class TextFileEditorService {
             .find((item) => item.fileName === fileName);
         if (!file) {
             return;
+        }
+
+        const currentFile =
+            this.repository.ideViewModelRepository.activeTextFile();
+        if (currentFile && currentFile !== fileName) {
+            if (this.saveTimeout) {
+                clearTimeout(this.saveTimeout);
+                this.saveTimeout = null;
+            }
+            await this.flushSave();
         }
 
         this.repository.ideViewModelRepository.setActiveImageFile(null);
@@ -97,6 +108,8 @@ export class TextFileEditorService {
             clearTimeout(this.saveTimeout);
         }
         this.pendingSaveContent = content;
+        this.pendingSaveFileName =
+            this.repository.ideViewModelRepository.activeTextFile();
         this.saveTimeout = setTimeout(() => {
             this.saveTimeout = null;
             void this.flushSave();
@@ -135,6 +148,15 @@ export class TextFileEditorService {
                 activeText === oldPath
                     ? newPath
                     : `${newPath}${activeText.slice(oldPath.length)}`;
+            if (
+                this.pendingSaveFileName === oldPath ||
+                this.pendingSaveFileName?.startsWith(`${oldPath}/`)
+            ) {
+                this.pendingSaveFileName =
+                    this.pendingSaveFileName === oldPath
+                        ? newPath
+                        : `${newPath}${this.pendingSaveFileName.slice(oldPath.length)}`;
+            }
             this.repository.ideViewModelRepository.setActiveTextFile(
                 updatedPath
             );
@@ -157,11 +179,13 @@ export class TextFileEditorService {
 
     private flushSave = async () => {
         const fileName =
+            this.pendingSaveFileName ??
             this.repository.ideViewModelRepository.activeTextFile();
         const content =
             this.pendingSaveContent ??
             this.repository.ideViewModelRepository.textFileContent();
         this.pendingSaveContent = null;
+        this.pendingSaveFileName = null;
 
         if (
             !fileName ||
