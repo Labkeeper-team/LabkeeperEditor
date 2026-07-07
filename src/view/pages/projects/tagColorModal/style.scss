@@ -1,0 +1,49 @@
+@use '../../../styles/colors' as *;
+
+.project-tags-color-panel {
+    position: absolute;
+    right: calc(100% + 8px);
+    bottom: 0;
+    width: 210px;
+    border: 1px solid $gray-50;
+    border-radius: 10px;
+    background: $white;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 1001;
+}
+
+.project-tags-color-swatch-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 6px;
+}
+
+.project-tags-color-swatch {
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    cursor: pointer;
+    &[data-selected='true'] {
+        outline: 2px solid $blue-10;
+        outline-offset: 1px;
+    }
+}
+
+.project-tags-color-input-text {
+    width: 90%;
+    max-width: 90%;
+    align-self: stretch;
+    min-width: 0;
+    border: 1px solid $gray-50;
+    border-radius: 8px;
+    padding: 6px 8px;
+    font-size: 12px;
+    line-height: 16px;
+    outline: none;
+}
