@@ -26,10 +26,18 @@ export const projectsSlice = createSlice({
         ) => {
             state.byProject[payload.projectId] = payload.tags;
         },
+        setNextTagColor: (state, { payload }: PayloadAction<string>) => {
+            state.nextTagColor = payload;
+        },
+        setNextTagColorInput: (state, { payload }: PayloadAction<string>) => {
+            state.nextTagColorInput = payload;
+        },
     },
 });
 export const {
     setProjects,
     setProjectTagsByProject,
     setProjectTagsForProject,
+    setNextTagColor,
+    setNextTagColorInput,
 } = projectsSlice.actions;
