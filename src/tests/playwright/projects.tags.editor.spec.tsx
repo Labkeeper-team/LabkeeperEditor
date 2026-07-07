@@ -22,7 +22,7 @@ type ProjectTagsByProject = Record<string, Record<string, string>>;
 const seededProjectTagsByProject: ProjectTagsByProject = {
     'project-1-id': { tag_1: 'blue', tag_2: 'orange' },
     'project-2-id': { tag_2: 'orange' },
-    'project-3-id': { tag_1: 'blue', tag_3: 'purple' },
+    'project-3-id': { tag_1: 'blue', tag_3: 'red' },
 };
 
 const normalizeTagMap = (
