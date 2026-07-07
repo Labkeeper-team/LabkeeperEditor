@@ -39,6 +39,20 @@ const defaultParams = {
 const mockContext = () => {
     const mvs = mockViewModelState();
     const rpi: Rpi = mockRpi();
+    rpi.getProjectTagsRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        body: { projectTagsByProject: {} },
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+    });
+    rpi.updateProjectTagsRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        body: {},
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+    });
     const observerService: ObserverService = mockObserver();
 
     return setupContext(rpi, mvs, observerService);
