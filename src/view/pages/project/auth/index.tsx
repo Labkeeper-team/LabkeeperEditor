@@ -310,9 +310,13 @@ const LoginView = () => {
 
 const EmailView = () => {
     const [email, setEmail] = useState('');
+    const [agreementAccepted, setAgreementAccepted] = useState(false);
     const dispatch = useDispatch<AppDispatch>();
     const status = useSelector(
         (state: StorageState) => state.auth.emailRequest
+    );
+    const isRegistration = useSelector(
+        (state: StorageState) => state.auth.isRegistration
     );
     const dictionary = useSelector(useDictionary);
     const [token, setToken] = useState('');
@@ -322,6 +326,10 @@ const EmailView = () => {
     );
 
     const isLoading = status === 'loading';
+
+    useEffect(() => {
+        setAgreementAccepted(false);
+    }, [isRegistration]);
 
     useEffect(() => {
         if (
@@ -339,7 +347,7 @@ const EmailView = () => {
     }, [status]);
 
     const handleSubmit = async () => {
-        if (!email) {
+        if (!email || (isRegistration && !agreementAccepted)) {
             return;
         }
         dispatch(
@@ -403,6 +411,45 @@ const EmailView = () => {
                     type="text"
                     disabled={status === 'loading'}
                 />
+                {isRegistration && (
+                    <label
+                        style={{
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            gap: 8,
+                            color: colors.gray20,
+                            fontSize: 12,
+                            lineHeight: '16px',
+                        }}
+                    >
+                        <input
+                            type="checkbox"
+                            checked={agreementAccepted}
+                            onChange={(e) =>
+                                setAgreementAccepted(e.target.checked)
+                            }
+                            disabled={status === 'loading'}
+                            style={{ marginTop: 1 }}
+                        />
+                        <span>
+                            {dictionary.authorization.personalDataAgreement}
+                            <br />
+                            <a href="/privacy">
+                                {
+                                    dictionary.authorization
+                                        .personalDataPolicyLink
+                                }
+                            </a>{' '}
+                            {dictionary.authorization.personalDataAgreementAnd}{' '}
+                            <a href="/soglas">
+                                {
+                                    dictionary.authorization
+                                        .personalDataConsentLink
+                                }
+                            </a>
+                        </span>
+                    </label>
+                )}
                 {Secrets.yandexCaptchaSiteKey && (
                     <SmartCaptcha
                         key={captchaInstanceKey}
@@ -426,7 +473,11 @@ const EmailView = () => {
                     type="rounded"
                     minimize={false}
                     onPress={handleSubmit}
-                    disabled={status === 'loading' || !token}
+                    disabled={
+                        status === 'loading' ||
+                        !token ||
+                        (isRegistration && !agreementAccepted)
+                    }
                 />
             </div>
             {isLoading && <LoadingSpinner />}

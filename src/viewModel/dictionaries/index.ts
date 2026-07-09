@@ -212,6 +212,10 @@ export interface Translations {
         alreadyHaveAccount: string;
         createAccount: string;
         continue: string;
+        personalDataAgreement: string;
+        personalDataPolicyLink: string;
+        personalDataAgreementAnd: string;
+        personalDataConsentLink: string;
         views: {
             email: string;
             code: string;

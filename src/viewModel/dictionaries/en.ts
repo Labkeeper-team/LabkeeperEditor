@@ -227,6 +227,11 @@ export const en: Translations = {
         alreadyHaveAccount: 'Already have an account?',
         createAccount: 'Create account',
         continue: 'Continue',
+        personalDataAgreement:
+            'I consent to the processing of my personal data in accordance with',
+        personalDataPolicyLink: 'the Personal Data Processing Policy',
+        personalDataAgreementAnd: 'and',
+        personalDataConsentLink: 'the Personal Data Processing Consent',
         views: {
             email: 'Enter your email',
             code: 'Enter the code',

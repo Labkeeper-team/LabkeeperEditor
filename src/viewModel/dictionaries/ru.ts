@@ -237,6 +237,11 @@ export const ru: Translations = {
         alreadyHaveAccount: 'Уже есть аккаунт?',
         createAccount: 'Создать аккаунт',
         continue: 'Продолжить',
+        personalDataAgreement:
+            'Я даю согласие на обработку моих персональных данных в соответствии с',
+        personalDataPolicyLink: 'Политикой обработки персональных данных',
+        personalDataAgreementAnd: 'и',
+        personalDataConsentLink: 'согласием на обработку персональных данных',
         views: {
             email: 'Введите email',
             code: 'Введите код',
