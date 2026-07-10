@@ -18,6 +18,7 @@ export const TAG_COLOR_SWATCHES = [
     'pink',
     'olive',
 ];
+const paletteSize = TAG_COLOR_SWATCHES.length;
 
 export const normalizeColorInput = (value: string): string | null => {
     const prepared = value.trim();
@@ -30,4 +31,30 @@ export const normalizeColorInput = (value: string): string | null => {
         }
     }
     return prepared;
+};
+
+export const normalizeTagLabel = (value: string): string =>
+    value.trim().replace(/\s+/g, ' ');
+
+export const getNextSuggestedTagColor = (
+    knownColors: string[],
+    currentColor?: string
+): string => {
+    const normalizedKnown = new Set(
+        knownColors.map((color) => color.toLocaleLowerCase())
+    );
+    const normalizedCurrent = currentColor?.toLocaleLowerCase();
+    const currentIndex = currentColor
+        ? TAG_COLOR_SWATCHES.findIndex((color) => color === normalizedCurrent)
+        : -1;
+
+    for (let step = 1; step <= paletteSize; step += 1) {
+        const index = (currentIndex + step) % paletteSize;
+        const candidate = TAG_COLOR_SWATCHES[index];
+        if (!normalizedKnown.has(candidate)) {
+            return candidate;
+        }
+    }
+
+    return TAG_COLOR_SWATCHES[(currentIndex + 1) % paletteSize];
 };

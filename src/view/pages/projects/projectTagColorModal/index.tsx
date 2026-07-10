@@ -1,9 +1,13 @@
 import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, StorageState } from '../../../store';
+import { AppDispatch } from '../../../store';
 import {
     setNextTagColor,
     setNextTagColorInput,
 } from '../../../store/slices/projects';
+import {
+    useNextTagColor,
+    useNextTagColorInput,
+} from '../../../store/selectors/program';
 import { useDictionary } from '../../../store/selectors/translations';
 import {
     DEFAULT_TAG_COLOR,
@@ -15,12 +19,8 @@ import './style.scss';
 export const ProjectTagColorModal = () => {
     const dispatch = useDispatch<AppDispatch>();
     const dictionary = useSelector(useDictionary);
-    const nextTagColor = useSelector(
-        (state: StorageState) => state.projects.nextTagColor
-    );
-    const nextTagColorInput = useSelector(
-        (state: StorageState) => state.projects.nextTagColorInput
-    );
+    const nextTagColor = useSelector(useNextTagColor);
+    const nextTagColorInput = useSelector(useNextTagColorInput);
     const onSwatchClick = (swatchColor: string) => {
         dispatch(setNextTagColor(swatchColor));
         dispatch(setNextTagColorInput(swatchColor));

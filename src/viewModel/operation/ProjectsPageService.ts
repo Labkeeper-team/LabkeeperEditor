@@ -9,9 +9,7 @@ import {
     Events,
     ObserverService,
 } from '../../model/service/ObserverService.ts';
-
-const normalizeTagLabel = (value: string): string =>
-    value.trim().replace(/\s+/g, ' ');
+import { normalizeTagLabel } from '../../view/pages/projects/tagColorUtils.ts';
 
 const findTagLabelByCaseInsensitive = (
     tags: Record<string, string>,
