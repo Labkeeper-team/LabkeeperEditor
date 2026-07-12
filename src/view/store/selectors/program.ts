@@ -5,18 +5,6 @@ export const useProjects = createSelector(
     (state: StorageState) => state.projects,
     (p) => p.projects
 );
-export const useProjectTagsByProject = createSelector(
-    (state: StorageState) => state.projects,
-    (p) => p.byProject
-);
-export const useNextTagColorInput = createSelector(
-    (state: StorageState) => state.projects,
-    (p) => p.nextTagColorInput
-);
-export const useNextTagColor = createSelector(
-    (state: StorageState) => state.projects,
-    (p) => p.nextTagColor
-);
 export const useCurrentProject = createSelector(
     (state: StorageState) => state.project,
     (p) => p.project

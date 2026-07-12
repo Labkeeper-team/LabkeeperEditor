@@ -7,7 +7,7 @@ import {
 import {
     useNextTagColor,
     useNextTagColorInput,
-} from '../../../store/selectors/program';
+} from '../../../store/selectors/projectTags';
 import { useDictionary } from '../../../store/selectors/translations';
 import {
     DEFAULT_TAG_COLOR,
