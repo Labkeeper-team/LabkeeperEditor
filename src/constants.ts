@@ -12,6 +12,8 @@ export const URLS = {
     compilePdf: `${uri}/api/${version}/public/compile/pdf`,
     compileProject: `${uri}/api/${version}/public/project/{id}/compile`,
     compileProjectPdf: `${uri}/api/${version}/public/project/{id}/compile/pdf`,
+    navigationDocToPdf: `${uri}/api/${version}/public/project/{id}/navigation/pdf`,
+    navigationPdfToDoc: `${uri}/api/${version}/public/project/{id}/navigation/doc`,
     getAllProjects: `${uri}/api/${version}/public/project/all`,
     getDefaultProject: `${uri}/api/${version}/public/project/default`,
     createProject: `${uri}/api/${version}/public/project/create`,
@@ -32,6 +34,8 @@ export const URLS = {
     uploadFile: `${uri}/api/${version}/public/project/{id}/file/upload`,
     renameFile: `${uri}/api/${version}/public/project/{id}/file/rename`,
     deleteFile: `${uri}/api/${version}/public/project/{id}/file/delete`,
+    renameFolder: `${uri}/api/${version}/public/project/{id}/file/folder/rename`,
+    deleteFolder: `${uri}/api/${version}/public/project/{id}/file/folder/delete`,
 
     UserInfo: `${uri}/api/${version}/public/user-info`,
     S3File: `https://files.labkeeper.io/`,

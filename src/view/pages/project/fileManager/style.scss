@@ -1,10 +1,36 @@
 @use '../../../styles/colors' as *;
 
+@mixin tree-drop-zone-base {
+    outline: 1px dashed transparent;
+    outline-offset: -1px;
+    background: transparent;
+}
+
+@mixin tree-drop-zone-active {
+    outline-color: $blue-10;
+    background: rgba($blue-10, 0.12);
+
+    > .tree-row,
+    > .tree-row:hover,
+    > .tree-children,
+    .tree-row-creating,
+    .file-tree-drop-fill {
+        background: transparent;
+        outline: none;
+        box-shadow: none;
+        border-radius: 0;
+    }
+
+    .tree-children {
+        border-left-color: transparent;
+    }
+}
+
 .manager-container {
     height: 100%;
-    min-width: 160px;
-    max-width: 160px;
-    width: 160px;
+    min-width: 260px;
+    max-width: 260px;
+    width: 260px;
     background: $gray-60;
     display: flex;
     flex-direction: column;
@@ -14,6 +40,7 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
+        gap: 8px;
         position: relative;
         height: 50px;
         min-height: 50px;
@@ -22,6 +49,15 @@
         border-top-right-radius: 8px;
         padding-left: 14px;
         padding-right: 14px;
+
+        .manager-header-title {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
         .close-icon-container {
             display: flex;
             align-items: center;
@@ -133,15 +169,391 @@
         bottom: 4px;
         height: 3px;
     }
-    .button-container {
+    .manager-body {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+        margin: 8px;
+        overflow: hidden;
+    }
+
+    .svar-wrapper {
+        position: relative;
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+        border-radius: 6px;
+        background: white;
+
+        &.is-dragged {
+            outline: 2px dashed $blue-10;
+            outline-offset: -2px;
+        }
+    }
+
+    .file-tree-wrapper {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+        gap: 8px;
+        padding: 8px;
+        border-radius: 6px;
+        background: white;
+        overflow: hidden;
+
+        &.is-refreshing {
+            pointer-events: none;
+        }
+    }
+
+    .file-tree-loading-overlay {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 10px;
-        .button-add-file {
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.65);
+    }
+
+    .file-tree-view {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+        gap: 6px;
+    }
+
+    .file-tree-toolbar {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .file-tree-toolbar-button {
+        width: 100%;
+        border: 1px solid rgba($blue-10, 0.35);
+        background: transparent;
+        color: $blue-10;
+        border-radius: 6px;
+        padding: 6px 8px;
+        font-size: 12px;
+        cursor: pointer;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+
+        &:hover:not(:disabled) {
+            background: rgba($blue-10, 0.06);
+        }
+
+        &:disabled {
+            opacity: 0.45;
+            cursor: default;
+        }
+    }
+
+    .file-tree-scroll {
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .file-tree-user-branch {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .file-tree-root-drop-zone {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        border-radius: 4px;
+        @include tree-drop-zone-base;
+
+        &.file-tree-root-drop-zone-active {
+            @include tree-drop-zone-active;
+        }
+    }
+
+    .tree-folder-drop-zone {
+        border-radius: 4px;
+        @include tree-drop-zone-base;
+
+        &.tree-folder-drop-zone-active {
+            @include tree-drop-zone-active;
+        }
+    }
+
+    .file-tree-user-scroll {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .file-tree-drop-fill {
+        flex: 1 0 auto;
+        min-height: 48px;
+    }
+
+    .file-tree-system-section {
+        flex-shrink: 0;
+    }
+
+    .tree-section-divider {
+        height: 1px;
+        margin: 8px 0;
+        background: rgba(0, 0, 0, 0.08);
+    }
+
+    .tree-system-root {
+        font-weight: 500;
+        cursor: default;
+
+        &:hover {
+            background: transparent;
+        }
+    }
+
+    .tree-system-children {
+        margin-left: 4px;
+        margin-bottom: 4px;
+    }
+
+    .tree-row-readonly {
+        cursor: pointer;
+    }
+
+    .file-tree-empty {
+        font-size: 12px;
+        color: rgba(0, 0, 0, 0.55);
+        padding: 8px 4px;
+    }
+
+    .tree-row {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        min-height: 28px;
+        border-radius: 4px;
+        cursor: pointer;
+
+        &:hover {
+            background: rgba(0, 0, 0, 0.04);
+        }
+
+        &.tree-row-selected {
+            background: rgba($blue-10, 0.1);
+        }
+
+        &.tree-row-creating {
+            background: rgba($blue-10, 0.1);
+        }
+    }
+
+    .tree-root-zone {
+        margin-bottom: 0;
+        font-weight: 500;
+    }
+
+    .tree-root-children {
+        flex: 0 0 auto;
+        margin-left: 4px;
+        margin-bottom: 0;
+    }
+
+    .tree-row-file {
+        color: rgba(0, 0, 0, 0.82);
+    }
+
+    .tree-row-folder {
+        color: rgba(0, 0, 0, 0.92);
+    }
+
+    .tree-children {
+        border-left: 1px solid rgba(0, 0, 0, 0.12);
+        padding-left: 8px;
+        margin-left: 4px;
+        margin-bottom: 2px;
+
+        &.tree-children-fill {
+            flex: 1;
+            min-height: 48px;
+        }
+    }
+
+    .tree-folder-icon,
+    .tree-file-icon {
+        width: 14px;
+        height: 14px;
+        flex-shrink: 0;
+    }
+
+    .tree-folder-icon {
+        opacity: 0.85;
+    }
+
+    .tree-file-icon {
+        opacity: 0.7;
+    }
+
+    .tree-toggle,
+    .tree-toggle-placeholder {
+        width: 14px;
+        flex-shrink: 0;
+        text-align: center;
+        font-size: 11px;
+        color: rgba(0, 0, 0, 0.55);
+    }
+
+    .tree-toggle {
+        border: none;
+        background: transparent;
+        padding: 0;
+        cursor: pointer;
+    }
+
+    .tree-row-label {
+        flex: 1;
+        min-width: 0;
+        font-size: 12px;
+        line-height: 16px;
+        word-break: break-all;
+
+        input {
             width: 100%;
-            color: $blue-10;
-            border-color: $blue-10;
+            font-size: 12px;
+            border: 1px solid rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+            padding: 2px 4px;
+        }
+    }
+
+    .tree-menu-spacer {
+        width: 48px;
+        flex-shrink: 0;
+    }
+
+    .tree-row-actions {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        flex-shrink: 0;
+        width: 48px;
+        justify-content: flex-end;
+    }
+
+    .tree-row-action-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        border: none;
+        background: transparent;
+        border-radius: 4px;
+        cursor: pointer;
+        padding: 0;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.15s ease;
+
+        svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        &:hover {
+            background: rgba(0, 0, 0, 0.06);
+        }
+    }
+
+    .tree-row:hover .tree-row-action-button,
+    .tree-row-action-button:focus-visible {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .tree-row-action-delete {
+        .tree-delete-icon {
+            background-color: $red-20;
+            border: 1px solid $red-20;
+            border-radius: 45px;
+            height: 15px;
+            width: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            rotate: 45deg;
+            flex-shrink: 0;
+
+            svg {
+                width: 10px;
+                height: 10px;
+
+                path {
+                    fill: $red-10;
+                }
+            }
+        }
+
+        &:hover .tree-delete-icon {
+            border-color: $red-10;
+        }
+    }
+
+    .tree-menu-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        cursor: pointer;
+
+        svg {
+            width: 14px;
+            height: 14px;
+        }
+    }
+
+    .tree-menu-item-delete {
+        .tree-delete-icon {
+            background-color: $red-20;
+            border: 1px solid $red-20;
+            border-radius: 45px;
+            height: 15px;
+            width: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            rotate: 45deg;
+            flex-shrink: 0;
+
+            svg {
+                width: 10px;
+                height: 10px;
+
+                path {
+                    fill: $red-10;
+                }
+            }
+        }
+
+        &:hover .tree-delete-icon {
+            border-color: $red-10;
         }
     }
 }

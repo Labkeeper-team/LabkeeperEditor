@@ -7,7 +7,7 @@ import './style.scss';
 
 const LATEX_HEADER_TEXT = String.raw`\documentclass[a4paper,12pt]{article}
 \usepackage{comment,cmap,amsmath,longtable,mathtools}
-\usepackage{booktabs,geometry,graphicx,listings,hyperref}
+\usepackage{booktabs,geometry,graphicx,listings}
 \usepackage[T2A]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage[english,russian]{babel}
@@ -103,7 +103,7 @@ export const LatexFooterBoundaryCard = () => {
 
     const shouldShow =
         isLatexMode &&
-        !segments.some((segment) => segment.text.trim() === '\\end{document}');
+        !segments.some((segment) => segment.text.includes('\\end{document}'));
 
     if (!shouldShow) {
         return null;

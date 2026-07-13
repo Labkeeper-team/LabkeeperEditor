@@ -15,11 +15,11 @@ export const en: Translations = {
     warning_dontuselongvarioables: 'Do not use long name variables',
 
     label_add_asciimath: 'Simple-math',
-    label_add_markdown: 'Add markdown',
+    label_add_markdown: 'Markdown',
     label_add_markdown_short: 'MD',
     label_add_code: 'Computation',
     label_add_latex: 'Latex',
-    label_add_more: 'Add more',
+    label_add_more: 'Add',
     label_add_more_short: 'More',
     label_save_to_pdf: 'Save to PDF',
     label_problems: 'Problems',
@@ -153,6 +153,16 @@ export const en: Translations = {
             latex: 'latex',
         },
     },
+    synctex: {
+        to_pdf: 'Go to PDF',
+        to_editor: 'Go to source',
+        errors: {
+            no_pdf: 'Compile the project to sync with the PDF.',
+            no_cursor: 'Place the cursor in a segment first.',
+            no_pdf_selection: 'Click in the PDF to choose a position.',
+            failed: 'Could not sync position. Recompile and try again.',
+        },
+    },
     header_menu: {
         menu: 'Menu',
         examples: 'Project examples',
@@ -176,7 +186,7 @@ export const en: Translations = {
         [CompileError.STRING_ARGUMENT_EXPECTED]: 'String argument expected',
         [CompileError.ARRAY_ARGUMENT_EXPECTED]: 'Array argument expected',
         [CompileError.NO_SUCH_FUNCTION]: 'No such function',
-        [CompileError.ARITHMETIC_ERROR]: 'Arithmetic error',
+        [CompileError.ARITHMETIC_ERROR]: 'Division by zero error',
         [CompileError.CANCELED]: 'Computation canceled',
         [CompileError.NOT_ENOUGH_WORKERS]:
             'Not enough computational power on servers to compile',
@@ -230,6 +240,11 @@ export const en: Translations = {
         alreadyHaveAccount: 'Already have an account?',
         createAccount: 'Create account',
         continue: 'Continue',
+        personalDataAgreement:
+            'I consent to the processing of my personal data in accordance with',
+        personalDataPolicyLink: 'the Personal Data Processing Policy',
+        personalDataAgreementAnd: 'and',
+        personalDataConsentLink: 'the Personal Data Processing Consent',
         views: {
             email: 'Enter your email',
             code: 'Enter the code',
@@ -270,10 +285,17 @@ export const en: Translations = {
         title: 'Files',
         add: 'Add files',
         dropzoneTitle: 'Drop files here',
+        root_folder: 'Your files',
+        drop_to_root: 'Drop files to your files',
+        drop_to_folder: 'Drop files to ${path}',
+        upload_target: 'Upload to: ${path}',
         delete: 'Delete',
         edit: 'Edit',
         your_files: 'Your files',
         system_files: 'System files',
+        create_folder: 'New folder',
+        create_file: 'Create file',
+        empty: 'No files yet',
         errors: {
             tooMuchFiles: 'Too much files for one project',
             tooBigFile: 'Too big file.Maximum is ${replace1} mb`',
@@ -313,6 +335,10 @@ export const en: Translations = {
         err: 'Failed to open mail client',
         contact_email: 'Contact email',
         contact_form: 'Contact form',
+        agreement_prefix: 'By contacting us, you acknowledge',
+        privacy_policy: 'the Privacy Policy',
+        agreement_and: 'and',
+        personal_data_consent: 'the Personal Data Processing Consent',
     },
 
     prompt_modal: {

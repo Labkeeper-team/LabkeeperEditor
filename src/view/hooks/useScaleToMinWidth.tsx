@@ -1,4 +1,5 @@
 import { useLayoutEffect } from 'react';
+import { refreshCodeMirrorLayout } from '../utils/refreshCodeMirrorLayout';
 
 /**
  * Масштабирует node так, чтобы вся вёрстка влезала
@@ -25,6 +26,7 @@ export function useScaleToMinWidth(ref, minWidth = 1024) {
                 '--mobile-scale',
                 k.toString()
             );
+            refreshCodeMirrorLayout();
         };
 
         //вызываем сразу — важно для «первой загрузки» на мобильном

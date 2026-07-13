@@ -25,9 +25,9 @@ export interface LocalizedInstructionItem {
 export interface InstructionItem {
     title: string;
     points: string[];
-    image: string;
-    ending: string;
-    wikiLink: string;
+    image?: string;
+    ending?: string;
+    wikiLink?: string;
     containsAd?: boolean;
 }
 
@@ -253,7 +253,27 @@ export const instructions: LocalizedInstructionItem[] = [
     },
     {
         ru: {
-            title: 'Быстрый старт',
+            title: 'LaTeX',
+            points: [
+                'Полная поддержка LaTeX с помощью texlive',
+                'Если в вашем тексте нет оператора ```\\begin{document}```, он будет добавлен автоматически вместе со стандартной конфигурацией в начале документа',
+                'Если в вашем тексте нет оператора ```\\end{document}```, он будет добавлен автоматически в конце документа',
+            ],
+            image: '/instructions/latex_hint.png',
+        },
+        en: {
+            title: 'LaTeX',
+            points: [
+                'Full LaTeX support',
+                'If your text does not contain the ```\\begin{document}``` operator, it will be added automatically with standard configuration at the beginning of the document',
+                'If your text does not contain the ```\\end{document}``` operator, it will be added automatically at the end of the document',
+            ],
+            image: '/instructions/latex_hint.png',
+        },
+    },
+    {
+        ru: {
+            title: 'Markdown',
             points: [
                 `
                 Создайте сегмент нужного типа.
@@ -267,7 +287,7 @@ export const instructions: LocalizedInstructionItem[] = [
             wikiLink: wikiRuUrl + '#примеры',
         },
         en: {
-            title: 'Quick start',
+            title: 'Markdown',
             points: [
                 `
                 Create a segment with required type.
@@ -308,7 +328,7 @@ export const instructions: LocalizedInstructionItem[] = [
     },
     {
         ru: {
-            title: 'Вставка картинок в markdown',
+            title: 'Вставка картинок',
             points: [
                 'Загрузите картинку в буфер обмена (можно нажать CTRL+C на файле, либо копировать картинку в браузере)',
                 'Создайте markdown сегмент и нажмите CTRL+V',
@@ -319,7 +339,7 @@ export const instructions: LocalizedInstructionItem[] = [
             wikiLink: wikiRuUrl + '#сегменты',
         },
         en: {
-            title: 'Add an image into markdown',
+            title: 'Add an image',
             points: [
                 'Load image into clipboard (use CTRL+C on image file, or click copy image in browser)',
                 'Create markdown segment and click CTRL+V',
@@ -403,7 +423,7 @@ export const instructions: LocalizedInstructionItem[] = [
                 'You can specify curves count, color, type and other in plot function: plot(x1=, y1=, x2=, y2=, type1="line")',
             ],
             image: '/instructions/draw_plot.png',
-            ending: basicEndingRu,
+            ending: basicEndingEn,
             wikiLink: wikiEnUrl,
         },
     },
@@ -429,7 +449,7 @@ export const instructions: LocalizedInstructionItem[] = [
                 'Warning! You may use "Save as PDF" option, otherwise symbols will not be selected',
             ],
             image: '/instructions/print_pdf.png',
-            ending: basicEndingRu,
+            ending: basicEndingEn,
             wikiLink: wikiEnUrl,
         },
     },

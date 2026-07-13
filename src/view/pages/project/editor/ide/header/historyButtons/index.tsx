@@ -24,6 +24,15 @@ export const HistoryButtons = () => {
     const saveProjectRequestState = useSelector(
         (state: StorageState) => state.ide.saveProjectRequestState
     );
+    const saveTextFileRequestState = useSelector(
+        (state: StorageState) => state.ide.saveTextFileRequestState
+    );
+    const activeTextFile = useSelector(
+        (state: StorageState) => state.ide.activeTextFile
+    );
+    const saveRequestState = activeTextFile
+        ? saveTextFileRequestState
+        : saveProjectRequestState;
 
     // Показываем спиннер минимум 500 мс
     const [showLoading, setShowLoading] = useState(false);
@@ -31,13 +40,13 @@ export const HistoryButtons = () => {
     const hideTimerRef = useRef<number | null>(null);
 
     useEffect(() => {
-        if (saveProjectRequestState === 'loading') {
-            setShowLoading(true);
+        if (saveRequestState === 'loading') {
             loadingStartRef.current = performance.now();
             if (hideTimerRef.current) {
                 clearTimeout(hideTimerRef.current);
                 hideTimerRef.current = null;
             }
+            queueMicrotask(() => setShowLoading(true));
             return;
         }
 
@@ -52,13 +61,13 @@ export const HistoryButtons = () => {
                     hideTimerRef.current = null;
                 }, remain);
             } else {
-                setShowLoading(false);
+                queueMicrotask(() => setShowLoading(false));
             }
         } else {
-            setShowLoading(false);
+            queueMicrotask(() => setShowLoading(false));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [saveProjectRequestState]);
+    }, [saveRequestState]);
 
     useEffect(() => {
         return () => {
@@ -69,7 +78,7 @@ export const HistoryButtons = () => {
     }, []);
 
     useHotkeys(
-        'ctrl+z, cmd+z, shift+ctrl+z, shift+cmd+z',
+        'mod+z',
         (e) => {
             e?.preventDefault();
             e?.stopPropagation();
@@ -82,7 +91,7 @@ export const HistoryButtons = () => {
         }
     );
     useHotkeys(
-        'ctrl+y, cmd+shift+z',
+        'ctrl+y, mod+shift+z',
         (e) => {
             e?.preventDefault();
             e?.stopPropagation();
@@ -130,7 +139,7 @@ export const HistoryButtons = () => {
                                 <span className="ide-clone-spinner center-icon" />
                             );
                         }
-                        if (saveProjectRequestState === 'error') {
+                        if (saveRequestState === 'error') {
                             return (
                                 <div className="center-icon">
                                     <WarningIcon />

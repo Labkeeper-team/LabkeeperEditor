@@ -1,9 +1,6 @@
 @use './styles/colors' as *;
 @import './assets/fonts/fonts.css';
 
-@import 'codemirror/lib/codemirror.css';
-@import 'codemirror/theme/material.css';
-
 :root {
     font-family: Inter !important;
     --mobile-scale: 1;

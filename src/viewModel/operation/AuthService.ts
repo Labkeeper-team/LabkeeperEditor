@@ -189,12 +189,12 @@ export class AuthService {
             code
         );
 
-        if (result.isOk) {
+        if (result.isOk && result.body.valid) {
             this.repository.authViewModelRepository.setCodeCheckRequest('ok');
             this.repository.authViewModelRepository.setLastVerifiedCode(code);
             this.repository.authViewModelRepository.setCurrentView('password');
         } else {
-            if (result.code !== 400) {
+            if (result.code !== 400 && result.code !== 200) {
                 this.observerService.onEvent(
                     Events.EVENT_RPI_UNKNOWN_AUTH_CHECK_CODE
                 );

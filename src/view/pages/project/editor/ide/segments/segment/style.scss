@@ -6,6 +6,8 @@
  * (обход бага CM6: drawSelection берёт padding только у первой `.cm-line` для всего выделения).
  */
 $segment-editor-rules-right-gutter: 170px;
+/** Минимальная высота блока редактора (контент + номера строк). */
+$segment-editor-min-height: 80px;
 
 /* Не скрывать cm-tooltip-autocomplete / cm-completionInfo — у них тот же cm-tooltip-below. */
 .cm-tooltip.cm-tooltip-below:not(.cm-tooltip-autocomplete):not(
@@ -46,8 +48,14 @@ $segment-editor-rules-right-gutter: 170px;
     background-color: $gray-60;
     width: 100%;
     box-sizing: border-box;
+    min-height: $segment-editor-min-height;
+    flex-shrink: 0;
+    align-self: stretch;
     &.is-active {
         border: 1px solid $blue-10;
+    }
+    &:not(.is-editor-focused) .cm-selectionLayer {
+        display: none;
     }
     &.not-visible {
         .cm-content {
@@ -61,12 +69,29 @@ $segment-editor-rules-right-gutter: 170px;
     .cm-panels:not(:has(.cm-panel-lint)) {
         display: none;
     }
+    /* id ide-segment-* может быть на корне @uiw — дублируем min-height для CM6. */
+    [id^='ide-segment-'],
     .cm-editor {
         background: none !important;
-        min-height: 80px;
+        min-height: $segment-editor-min-height;
+        width: 100%;
+        box-sizing: border-box;
+        &.cm-focused {
+            outline: none;
+        }
+        .cm-activeLine,
+        .cm-activeLineGutter {
+            background: transparent !important;
+        }
         .cm-foldGutter {
             width: 0px;
         }
+    }
+    .cm-scroller {
+        min-height: $segment-editor-min-height;
+    }
+    .cm-gutters {
+        min-height: 100%;
     }
     /* Отступ у 1–2-й `.cm-line`; с 3-й — на полную ширину под плашкой. */
     .cm-content {

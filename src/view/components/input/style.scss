@@ -15,6 +15,12 @@
         padding-left: 20px;
         transition-duration: 0.3s;
         font-family: inherit;
+        background-color: $white;
+        color: $gray-10;
+
+        &::placeholder {
+            color: $gray-30;
+        }
 
         &--textarea {
             height: auto;
@@ -22,11 +28,21 @@
             padding: 12px 20px;
             resize: vertical;
         }
+
+        &:-webkit-autofill,
+        &:-webkit-autofill:hover,
+        &:-webkit-autofill:focus {
+            -webkit-text-fill-color: $gray-10;
+            -webkit-box-shadow: 0 0 0px 1000px $white inset;
+            transition: background-color 9999s ease-in-out 0s;
+        }
         &:hover {
             border: 2px solid $gray-30;
         }
         &:disabled {
             border: 2px solid $gray-50;
+            background-color: $gray-60;
+            color: $gray-30;
         }
         &:active {
             border: 2px solid $gray-20;

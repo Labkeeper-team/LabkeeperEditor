@@ -18,10 +18,11 @@
         width: 100%;
         text-align: end;
         padding: 2px;
+        color: $gray-10;
         &:hover {
-            color: $white;
+            color: $gray-10;
             cursor: pointer;
-            background: $gray-30;
+            background: $gray-50;
         }
     }
 }

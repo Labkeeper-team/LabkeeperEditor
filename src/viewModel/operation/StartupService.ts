@@ -311,7 +311,6 @@ export class StartupService {
                 this.repository.persistenceViewModelRepository.lastProgram()
             );
         }
-        console.log('open', open);
         if (open === 'ai') {
             this.repository.settingsViewModelRepository.setShowProjectPromptModal(
                 true

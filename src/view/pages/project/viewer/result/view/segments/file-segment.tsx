@@ -1,8 +1,12 @@
-export const FileSegment = ({ url }) => {
+import { useState } from 'react';
+
+export const FileSegment = ({ url }: { url: string }) => {
+    const [cacheBuster] = useState(() => String(Date.now()));
+
     return (
         <div>
             <img
-                src={`${url}?t=${Date.now()}`}
+                src={`${url}?t=${cacheBuster}`}
                 alt="generated-image"
                 width="500px"
                 style={{

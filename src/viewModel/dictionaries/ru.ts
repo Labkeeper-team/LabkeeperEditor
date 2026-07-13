@@ -17,13 +17,13 @@ export const ru: Translations = {
     warning_dontuselongvarioables: 'Не используйте длинные имена переменных',
 
     label_add_asciimath: 'Простая формула',
-    label_add_markdown: 'Добавить маркдаун',
+    label_add_markdown: 'Маркдаун',
     label_add_markdown_short: 'MD',
     label_save_to_pdf: 'Сохранить в PDF',
     label_problems: 'Проблемы',
     label_add_code: 'Вычисление',
     label_add_latex: 'Latex',
-    label_add_more: 'Добавить еще',
+    label_add_more: 'Добавить',
     label_add_more_short: 'Еще',
 
     short_segment: {
@@ -160,6 +160,16 @@ export const ru: Translations = {
             latex: 'latex',
         },
     },
+    synctex: {
+        to_pdf: 'К PDF',
+        to_editor: 'К коду',
+        errors: {
+            no_pdf: 'Сначала выполните проект, чтобы появился PDF.',
+            no_cursor: 'Сначала установите курсор в сегменте.',
+            no_pdf_selection: 'Кликните в PDF, чтобы выбрать позицию.',
+            failed: 'Не удалось синхронизировать позицию. Перекомпилируйте и попробуйте снова.',
+        },
+    },
     header_menu: {
         menu: 'Меню',
         examples: 'Примеры проектов',
@@ -186,7 +196,7 @@ export const ru: Translations = {
         [CompileError.ARRAY_ARGUMENT_EXPECTED]:
             'Ожидался аргумент в виде массива',
         [CompileError.NO_SUCH_FUNCTION]: 'Не существует функция',
-        [CompileError.ARITHMETIC_ERROR]: 'Арифметическая ошибка',
+        [CompileError.ARITHMETIC_ERROR]: 'Ошибка деления на ноль',
         [CompileError.CANCELED]: 'Вычисления отменены',
         [CompileError.NOT_ENOUGH_WORKERS]:
             'На серверах не хватает вычислительной мощности для компиляции',
@@ -240,6 +250,11 @@ export const ru: Translations = {
         alreadyHaveAccount: 'Уже есть аккаунт?',
         createAccount: 'Создать аккаунт',
         continue: 'Продолжить',
+        personalDataAgreement:
+            'Я даю согласие на обработку моих персональных данных в соответствии с',
+        personalDataPolicyLink: 'Политикой обработки персональных данных',
+        personalDataAgreementAnd: 'и',
+        personalDataConsentLink: 'согласием на обработку персональных данных',
         views: {
             email: 'Введите email',
             code: 'Введите код',
@@ -281,10 +296,17 @@ export const ru: Translations = {
         title: 'Файлы',
         add: 'Добавить файл',
         dropzoneTitle: 'Переместите файл сюда',
+        root_folder: 'Ваши файлы',
+        drop_to_root: 'Переместить в ваши файлы',
+        drop_to_folder: 'Переместить в папку ${path}',
+        upload_target: 'Загрузка в: ${path}',
         delete: 'Удалить',
         edit: 'Редактировать',
         your_files: 'Ваши файлы',
         system_files: 'Системные файлы',
+        create_folder: 'Новая папка',
+        create_file: 'Создать файл',
+        empty: 'Файлов пока нет',
         errors: {
             tooMuchFiles: 'Слишком много файлов для одного проекта.',
             sessionExpired: 'Сессия истекла',
@@ -325,6 +347,10 @@ export const ru: Translations = {
         err: 'Не удалось открыть почтовый клиент',
         contact_form: 'Связаться с нами через форму',
         contact_email: 'Напишите нам на почту',
+        agreement_prefix: 'Связываясь с нами, вы подтверждаете',
+        privacy_policy: 'политику конфиденциальности',
+        agreement_and: 'и',
+        personal_data_consent: 'согласие на обработку персональных данных',
     },
 
     prompt_modal: {

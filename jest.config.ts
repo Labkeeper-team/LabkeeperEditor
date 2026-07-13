@@ -1,9 +1,11 @@
-module.exports = {
+import type { Config } from 'jest';
+
+const config: Config = {
     transform: {
         '^.+\\.tsx?$': [
             'ts-jest',
             {
-                tsConfig: 'tsconfig.jest.json',
+                tsconfig: 'tsconfig.jest.json',
             },
         ],
     },
@@ -19,5 +21,8 @@ module.exports = {
         '^remark-breaks$': '<rootDir>/src/tests/jest/__mocks__/emptyMock.ts',
         '^remark-math$': '<rootDir>/src/tests/jest/__mocks__/emptyMock.ts',
         '^remark-gfm$': '<rootDir>/src/tests/jest/__mocks__/emptyMock.ts',
+        '^nanoid$': '<rootDir>/src/tests/jest/__mocks__/nanoid.ts',
     },
 };
+
+export default config;

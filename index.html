@@ -32,7 +32,7 @@
         <!-- Social / Open Graph -->
         <meta
             name="description"
-            content="Labkeeper — online pdf editor with a built-in scientific calculator."
+            content="Labkeeper — online pdf editor with a built-in scientific calculator"
         />
         <meta property="og:type" content="website" />
         <meta property="og:locale" content="en_US" />
@@ -43,7 +43,7 @@
         />
         <meta
             property="og:description"
-            content="Compose documents, formulas, and plots, convert to pdf. Editor and calculations in one place."
+            content="Compose documents, formulas, and plots, convert to pdf. Editor and calculations in one place"
         />
         <!-- Twitter -->
         <meta name="twitter:card" content="summary_large_image" />
@@ -53,7 +53,7 @@
         />
         <meta
             name="twitter:description"
-            content="Compose documents, formulas, and plots, convert to pdf. Editor and calculations in one place."
+            content="Compose documents, formulas, and plots, convert to pdf. Editor and calculations in one place"
         />
         <!-- Yandex.RTB -->
         <script>
@@ -71,51 +71,54 @@
         -->
         <!-- Yandex.Metrika counter -->
         <script type="text/javascript">
-            (function (m, e, t, r, i, k, a) {
-                m[i] =
-                    m[i] ||
-                    function () {
-                        (m[i].a = m[i].a || []).push(arguments);
-                    };
-                m[i].l = 1 * new Date();
-                for (var j = 0; j < document.scripts.length; j++) {
-                    if (document.scripts[j].src === r) {
-                        return;
-                    }
-                }
-                ((k = e.createElement(t)),
-                    (a = e.getElementsByTagName(t)[0]),
-                    (k.async = 1),
-                    (k.src = r),
-                    a.parentNode.insertBefore(k, a));
-            })(
-                window,
-                document,
-                'script',
-                'https://mc.yandex.ru/metrika/tag.js',
-                'ym'
-            );
+            let lkCookieConsent = '';
+            try {
+                lkCookieConsent =
+                    localStorage.getItem('labkeeper_cookie_consent') || '';
+            } catch (error) {
+                lkCookieConsent = '';
+            }
 
-            var lkMetrikaKey =
-                (window.__SECRETS__ && window.__SECRETS__.yandexMetrikaKey) ||
-                '';
-            if (lkMetrikaKey) {
-                ym(Number(lkMetrikaKey), 'init', {
-                    clickmap: true,
-                    trackLinks: true,
-                    accurateTrackBounce: true,
-                    webvisor: true,
-                });
+            if (lkCookieConsent === 'accepted') {
+                (function (m, e, t, r, i, k, a) {
+                    m[i] =
+                        m[i] ||
+                        function () {
+                            (m[i].a = m[i].a || []).push(arguments);
+                        };
+                    m[i].l = 1 * new Date();
+                    for (var j = 0; j < document.scripts.length; j++) {
+                        if (document.scripts[j].src === r) {
+                            return;
+                        }
+                    }
+                    ((k = e.createElement(t)),
+                        (a = e.getElementsByTagName(t)[0]),
+                        (k.async = 1),
+                        (k.src = r),
+                        a.parentNode.insertBefore(k, a));
+                })(
+                    window,
+                    document,
+                    'script',
+                    'https://mc.yandex.ru/metrika/tag.js',
+                    'ym'
+                );
+
+                var lkMetrikaKey =
+                    (window.__SECRETS__ &&
+                        window.__SECRETS__.yandexMetrikaKey) ||
+                    '';
+                if (lkMetrikaKey) {
+                    ym(Number(lkMetrikaKey), 'init', {
+                        clickmap: true,
+                        trackLinks: true,
+                        accurateTrackBounce: true,
+                        webvisor: true,
+                    });
+                }
             }
         </script>
-        <noscript
-            ><div>
-                <img
-                    src="https://mc.yandex.ru/watch/101239047"
-                    style="position: absolute; left: -9999px"
-                    alt=""
-                /></div
-        ></noscript>
         <!-- /Yandex.Metrika counter -->
         <script type="module" src="/src/main.tsx"></script>
     </body>

@@ -20,6 +20,8 @@ import {
     Rpi,
     UploadFileResponse,
     CompileSuccessPdfResponse,
+    PdfPosition,
+    ProgramDocumentPosition,
 } from '../../model/rpi';
 
 async function requestWrapper<T>(
@@ -136,11 +138,37 @@ export class WebRpi implements Rpi {
         );
     }
 
+    async navigationDocToPdfRequest(
+        projectId: string,
+        position: ProgramDocumentPosition
+    ): Promise<RequestResult<PdfPosition>> {
+        return requestWrapper(async () =>
+            axios.post(
+                URLS.navigationDocToPdf.replace('{id}', projectId),
+                position
+            )
+        );
+    }
+
+    async navigationPdfToDocRequest(
+        projectId: string,
+        position: PdfPosition
+    ): Promise<RequestResult<ProgramDocumentPosition>> {
+        return requestWrapper(async () =>
+            axios.post(
+                URLS.navigationPdfToDoc.replace('{id}', projectId),
+                position
+            )
+        );
+    }
+
     async uploadFileRequest(
         formData: FormData,
         projectId: string,
         name: string
     ): Promise<RequestResult<UploadFileResponse>> {
+        const uploadName =
+            name.includes('/') && !name.startsWith('/') ? `/${name}` : name;
         return requestWrapper(async () =>
             axios.put(
                 `${URLS.uploadFile.replace('{id}', projectId)}`,
@@ -151,7 +179,7 @@ export class WebRpi implements Rpi {
                         Accept: '*/*',
                     },
                     params: {
-                        name: name,
+                        name: uploadName,
                     },
                 }
             )
@@ -217,6 +245,34 @@ export class WebRpi implements Rpi {
         return requestWrapper(async () =>
             axios.post(
                 `${URLS.renameFile.replace('{id}', projectId)}?old=${oldName}&new=${newName}`
+            )
+        );
+    }
+
+    async renameFolderRequest(
+        oldPath: string,
+        newPath: string,
+        projectId: string
+    ): Promise<RequestResult> {
+        const oldParam = oldPath.startsWith('/') ? oldPath : `/${oldPath}`;
+        const newParam = newPath.startsWith('/') ? newPath : `/${newPath}`;
+        return requestWrapper(async () =>
+            axios.post(
+                `${URLS.renameFolder.replace('{id}', projectId)}?old=${encodeURIComponent(oldParam)}&new=${encodeURIComponent(newParam)}`
+            )
+        );
+    }
+
+    async deleteFolderRequest(
+        folderPath: string,
+        projectId: string
+    ): Promise<RequestResult> {
+        const pathParam = folderPath.startsWith('/')
+            ? folderPath
+            : `/${folderPath}`;
+        return requestWrapper(async () =>
+            axios.delete(
+                `${URLS.deleteFolder.replace('{id}', projectId)}?path=${encodeURIComponent(pathParam)}`
             )
         );
     }

@@ -12,8 +12,13 @@ export class MetrikaService implements ObserverService {
     }
 
     private metrika(first: string, second: string) {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-expect-error
+        if (
+            localStorage.getItem('labkeeper_cookie_consent') !== 'accepted' ||
+            typeof window.ym !== 'function'
+        ) {
+            return;
+        }
+
         window.ym(Secrets.yandexMetrikaKey, first, second);
     }
 }

@@ -12,7 +12,7 @@ import { colors } from '../../../../styles/colors.ts';
 import { useUser } from '../../../../store/selectors/program.ts';
 import { controller } from '../../../../../main.tsx';
 
-const contactEmail = 'contact@labkeeper.io';
+const contactEmail = 'labkeeper.io@gmail.com';
 
 export const ContactModal = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -24,6 +24,7 @@ export const ContactModal = () => {
 
     const [subject, setSubject] = useState('');
     const [message, setMessage] = useState('');
+    const [agreementAccepted, setAgreementAccepted] = useState(false);
 
     const t = dictionary.contact_modal;
 
@@ -37,7 +38,19 @@ export const ContactModal = () => {
         );
         setMessage('');
         setSubject('');
+        setAgreementAccepted(false);
     };
+
+    const agreementText = (
+        <>
+            {t.agreement_prefix} <a href="/privacy">{t.privacy_policy}</a>{' '}
+            {t.agreement_and} <a href="/soglas">{t.personal_data_consent}</a>
+        </>
+    );
+
+    const agreement = (
+        <p className="contact-modal__agreement">{agreementText}</p>
+    );
 
     return (
         <Modal
@@ -52,6 +65,7 @@ export const ContactModal = () => {
                     type={'h2'}
                 />
                 <a>{contactEmail}</a>
+                {!isAuthenticated && agreement}
                 {isAuthenticated && (
                     <>
                         <br />
@@ -81,6 +95,16 @@ export const ContactModal = () => {
                                     onChange={(e) => setMessage(e.target.value)}
                                 />
                             </div>
+                            <label className="contact-modal__agreement-checkbox">
+                                <input
+                                    type="checkbox"
+                                    checked={agreementAccepted}
+                                    onChange={(e) =>
+                                        setAgreementAccepted(e.target.checked)
+                                    }
+                                />
+                                <span>{agreementText}</span>
+                            </label>
                             <div className="contact-modal__actions">
                                 <Button
                                     title={t.send}
@@ -88,7 +112,11 @@ export const ContactModal = () => {
                                     minimize={false}
                                     rounded={true}
                                     buttonType="submit"
-                                    disabled={!subject || !message}
+                                    disabled={
+                                        !subject ||
+                                        !message ||
+                                        !agreementAccepted
+                                    }
                                 />
                                 <Button
                                     title={t.cancel}

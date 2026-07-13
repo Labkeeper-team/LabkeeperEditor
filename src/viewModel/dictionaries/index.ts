@@ -147,6 +147,16 @@ export interface Translations {
             latex: string;
         };
     };
+    synctex: {
+        to_pdf: string;
+        to_editor: string;
+        errors: {
+            no_pdf: string;
+            no_cursor: string;
+            no_pdf_selection: string;
+            failed: string;
+        };
+    };
     header_menu: {
         menu: string;
         examples: string;
@@ -215,6 +225,10 @@ export interface Translations {
         alreadyHaveAccount: string;
         createAccount: string;
         continue: string;
+        personalDataAgreement: string;
+        personalDataPolicyLink: string;
+        personalDataAgreementAnd: string;
+        personalDataConsentLink: string;
         views: {
             email: string;
             code: string;
@@ -256,10 +270,17 @@ export interface Translations {
         title: string;
         add: string;
         dropzoneTitle: string;
+        root_folder: string;
+        drop_to_root: string;
+        drop_to_folder: string;
+        upload_target: string;
         delete: string;
         edit: string;
         your_files: string;
         system_files: string;
+        create_folder: string;
+        create_file: string;
+        empty: string;
         errors: {
             tooMuchFiles: string;
             tooBigFile: string;
@@ -300,6 +321,10 @@ export interface Translations {
         cancel: string;
         warn: string;
         err: string;
+        agreement_prefix: string;
+        privacy_policy: string;
+        agreement_and: string;
+        personal_data_consent: string;
     };
     prompt_modal: {
         title: string;

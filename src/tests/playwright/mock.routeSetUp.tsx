@@ -39,6 +39,22 @@ const defaultId = 1;
 const defaultEmail = 'a@gmail.com';
 const defaultIsAuthenticated = true;
 
+const isExpectedUploadFileName = (fileName: string | null) => {
+    if (fileName === 'test.csv') {
+        return true;
+    }
+
+    const prefix = 'test_';
+    const extension = '.csv';
+
+    if (!fileName?.startsWith(prefix) || !fileName.endsWith(extension)) {
+        return false;
+    }
+
+    const suffix = fileName.slice(prefix.length, -extension.length);
+    return suffix.length === 8 && /^[A-Za-z0-9_-]+$/.test(suffix);
+};
+
 export class RouteSetup {
     constructor(private page: Page) {}
 
@@ -548,22 +564,28 @@ export class RouteSetup {
         statements?: Statement[],
         text?: string
     ) {
+        const fulfillCompilation = async (route: Route) => {
+            await route.fulfill({
+                status: status,
+                contentType: contentType,
+                body: JSON.stringify(
+                    this.getProjectBodyForCompile(
+                        bodyType,
+                        errors,
+                        statements,
+                        text
+                    )
+                ),
+            });
+        };
+
         await this.page.route(
             `/api/${version}/public/compile`,
-            async (route) => {
-                await route.fulfill({
-                    status: status,
-                    contentType: contentType,
-                    body: JSON.stringify(
-                        this.getProjectBodyForCompile(
-                            bodyType,
-                            errors,
-                            statements,
-                            text
-                        )
-                    ),
-                });
-            }
+            fulfillCompilation
+        );
+        await this.page.route(
+            `/api/${version}/public/project/*/compile`,
+            fulfillCompilation
         );
     }
 
@@ -604,7 +626,10 @@ export class RouteSetup {
 
     async setupUploadFileRequest(status: number = 200) {
         await this.page.route(
-            `/api/${version}/public/project/${uuid}/file/upload?name=test.csv`,
+            (url) =>
+                url.pathname ===
+                    `/api/${version}/public/project/${uuid}/file/upload` &&
+                isExpectedUploadFileName(url.searchParams.get('name')),
             async (route) => {
                 await route.fulfill({
                     status: status,

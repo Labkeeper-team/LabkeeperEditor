@@ -63,6 +63,10 @@ export const HeaderMenu = () => {
             title: dictionary.header_menu.examples,
             onClick: () => openExternal(EXAMPLES_URL),
         },
+        {
+            title: dictionary.wiki,
+            onClick: openWiki,
+        },
         // TODO tokens
         // {
         //     title: dictionary.header_menu.privacy_policy,
@@ -75,6 +79,10 @@ export const HeaderMenu = () => {
         {
             title: dictionary.header_menu.about,
             onClick: () => openExternal(ABOUT_URL),
+        },
+        {
+            title: dictionary.header_menu.contact_us,
+            onClick: openContactModal,
         },
         ...(isEditorPage
             ? [

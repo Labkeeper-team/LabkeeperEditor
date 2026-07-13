@@ -38,6 +38,35 @@
     resize: vertical;
 }
 
+.contact-modal__agreement {
+    margin: 4px 0 0;
+    color: #4b5668;
+    font-size: 12px;
+    line-height: 16px;
+}
+
+.contact-modal__agreement > a {
+    color: #1565c0;
+}
+
+.contact-modal__agreement-checkbox {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 4px 0 0;
+    color: #4b5668;
+    font-size: 12px;
+    line-height: 16px;
+}
+
+.contact-modal__agreement-checkbox > input {
+    margin-top: 1px;
+}
+
+.contact-modal__agreement-checkbox a {
+    color: #1565c0;
+}
+
 .contact-modal__actions {
     display: flex;
     gap: 10px;

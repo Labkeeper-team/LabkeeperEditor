@@ -12,7 +12,7 @@ jobs:
   playwright-tests:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/playwright-tests
         with:
           node-version: '20'
