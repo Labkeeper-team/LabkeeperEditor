@@ -19,6 +19,7 @@ import {
     getNextSuggestedTagColor,
     normalizeColorInput,
     normalizeTagLabel,
+    orderTagKeysSelectedFirst,
 } from '../tagColorUtils';
 import {
     setNextTagColor,
@@ -57,14 +58,7 @@ export const ProjectTagsModal = ({
         [projectTagKeysByProject, projectId]
     );
     const orderedProjectTags = useMemo(
-        () => [
-            ...allAvailableTagKeys.filter((tagKey) =>
-                selectedTagsSet.has(tagKey)
-            ),
-            ...allAvailableTagKeys.filter(
-                (tagKey) => !selectedTagsSet.has(tagKey)
-            ),
-        ],
+        () => orderTagKeysSelectedFirst(allAvailableTagKeys, selectedTagsSet),
         [allAvailableTagKeys, selectedTagsSet]
     );
 

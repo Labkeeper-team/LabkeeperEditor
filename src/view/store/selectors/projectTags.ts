@@ -70,3 +70,8 @@ export const useNextTagColor = createSelector(
     (state: StorageState) => state.projects,
     (p) => p.nextTagColor
 );
+
+export const useSelectedFilterTagKeys = createSelector(
+    (state: StorageState) => state.projects,
+    (p) => p.selectedFilterTagKeys
+);

@@ -32,6 +32,12 @@ export const projectsSlice = createSlice({
         setNextTagColorInput: (state, { payload }: PayloadAction<string>) => {
             state.nextTagColorInput = payload;
         },
+        setSelectedFilterTagKeys: (
+            state,
+            { payload }: PayloadAction<string[]>
+        ) => {
+            state.selectedFilterTagKeys = payload;
+        },
     },
 });
 export const {
@@ -40,4 +46,5 @@ export const {
     setProjectTagsForProject,
     setNextTagColor,
     setNextTagColorInput,
+    setSelectedFilterTagKeys,
 } = projectsSlice.actions;
