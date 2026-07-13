@@ -25,10 +25,12 @@ import { DEFAULT_TAG_COLOR } from './tagColorUtils';
 import {
     useAllAvailableTagKeys,
     useProjectTagKeysByProject,
+    useSelectedFilterTagKeys,
     useTagMap,
 } from '../../store/selectors/projectTags';
 import { useProjects } from '../../store/selectors/program';
 import { colors } from '../../styles/colors';
+import { setSelectedFilterTagKeys } from '../../store/slices/projects';
 import {
     useCurrentLanguage,
     useDictionary,
@@ -54,9 +56,6 @@ export const ProjectsPage = () => {
     const [tagDropdownPlacement, setTagDropdownPlacement] =
         useState<TagDropdownPlacement>('bottom');
     const [isTagDropdownReady, setIsTagDropdownReady] = useState(false);
-    const [selectedFilterTagKeys, setSelectedFilterTagKeys] = useState<
-        string[]
-    >([]);
     const [singleLineTagsByProject, setSingleLineTagsByProject] = useState<
         Record<string, boolean>
     >({});
@@ -72,17 +71,13 @@ export const ProjectsPage = () => {
     const lang = useSelector(useCurrentLanguage);
     const projects = useSelector(useProjects);
     const allAvailableTagKeys = useSelector(useAllAvailableTagKeys);
+    const selectedFilterTagKeys = useSelector(useSelectedFilterTagKeys);
     const tagMap = useSelector(useTagMap);
     const projectTagKeysByProject = useSelector(useProjectTagKeysByProject);
     const getProjectsRequestState = useSelector(
         (state: StorageState) => state.ide.getProjectsRequestState
     );
     const dispatch = useDispatch<AppDispatch>();
-    const getTagColor = useCallback(
-        (tag: string) =>
-            tagMap[tag.toLocaleLowerCase()]?.color ?? DEFAULT_TAG_COLOR,
-        [tagMap]
-    );
     useEffect(() => {
         Object.values(projectTagsCellRefs.current).forEach((cell) => {
             if (cell) {
@@ -282,10 +277,18 @@ export const ProjectsPage = () => {
 
     useEffect(() => {
         const availableSet = new Set(allAvailableTagKeys);
-        setSelectedFilterTagKeys((prev) =>
-            prev.filter((tagKey) => availableSet.has(tagKey))
+        const nextSelectedFilterTagKeys = selectedFilterTagKeys.filter(
+            (tagKey) => availableSet.has(tagKey)
         );
-    }, [allAvailableTagKeys]);
+        const isChanged =
+            nextSelectedFilterTagKeys.length !== selectedFilterTagKeys.length ||
+            nextSelectedFilterTagKeys.some(
+                (tagKey, index) => tagKey !== selectedFilterTagKeys[index]
+            );
+        if (isChanged) {
+            dispatch(setSelectedFilterTagKeys(nextSelectedFilterTagKeys));
+        }
+    }, [allAvailableTagKeys, dispatch, selectedFilterTagKeys]);
 
     const sortedProjects = useMemo(() => {
         const toTimestamp = (value?: string) => {
@@ -333,18 +336,6 @@ export const ProjectsPage = () => {
             );
         });
     }, [projectTagKeysByProject, selectedFilterTagKeys, sortedProjects]);
-
-    const sortedFilterTagKeys = useMemo(() => {
-        const selectedSet = new Set(selectedFilterTagKeys);
-        const selected = allAvailableTagKeys.filter((tagKey) =>
-            selectedSet.has(tagKey)
-        );
-        const unselected = allAvailableTagKeys.filter(
-            (tagKey) => !selectedSet.has(tagKey)
-        );
-        return [...selected, ...unselected];
-    }, [allAvailableTagKeys, selectedFilterTagKeys]);
-
     return (
         <>
             <div className="projects-container">
@@ -367,7 +358,8 @@ export const ProjectsPage = () => {
                                             className="tag-color-dot"
                                             style={{
                                                 backgroundColor:
-                                                    getTagColor(tagKey),
+                                                    tagMap[tagKey]?.color ??
+                                                    DEFAULT_TAG_COLOR,
                                             }}
                                         />
                                         <span className="tag-label">
@@ -394,14 +386,8 @@ export const ProjectsPage = () => {
                                 </button>
                                 {showTagsFilterModal ? (
                                     <ProjectTagsFilterModal
-                                        model={{
-                                            sortedTagKeys: sortedFilterTagKeys,
-                                            selectedTagKeys:
-                                                selectedFilterTagKeys,
-                                        }}
-                                        getTagColor={getTagColor}
-                                        onSelectedChange={
-                                            setSelectedFilterTagKeys
+                                        onClose={() =>
+                                            setShowTagsFilterModal(false)
                                         }
                                     />
                                 ) : null}
@@ -720,9 +706,11 @@ export const ProjectsPage = () => {
                                                                                     className="tag-color-dot"
                                                                                     style={{
                                                                                         backgroundColor:
-                                                                                            getTagColor(
+                                                                                            tagMap[
                                                                                                 tagKey
-                                                                                            ),
+                                                                                            ]
+                                                                                                ?.color ??
+                                                                                            DEFAULT_TAG_COLOR,
                                                                                     }}
                                                                                 />
                                                                                 <span className="tag-label">

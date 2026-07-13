@@ -58,3 +58,13 @@ export const getNextSuggestedTagColor = (
 
     return TAG_COLOR_SWATCHES[(currentIndex + 1) % paletteSize];
 };
+
+export const orderTagKeysSelectedFirst = (
+    allTagKeys: string[],
+    selectedTagKeys: Iterable<string>
+): string[] => {
+    const selectedSet = new Set(selectedTagKeys);
+    const selected = allTagKeys.filter((tagKey) => selectedSet.has(tagKey));
+    const unselected = allTagKeys.filter((tagKey) => !selectedSet.has(tagKey));
+    return [...selected, ...unselected];
+};
