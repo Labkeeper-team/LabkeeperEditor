@@ -46,6 +46,16 @@ export const useTagMap = createSelector(
     (vm) => vm.tagMap
 );
 
+export const useAllAvailableTagKeys = createSelector(useTagMap, (tagMap) => {
+    const collator = new Intl.Collator(['en', 'ru'], {
+        sensitivity: 'base',
+        numeric: true,
+    });
+    return Object.keys(tagMap).sort((a, b) =>
+        collator.compare(tagMap[a]?.label ?? a, tagMap[b]?.label ?? b)
+    );
+});
+
 export const useProjectTagKeysByProject = createSelector(
     useProjectTagsViewModel,
     (vm) => vm.projectTagKeysByProject
