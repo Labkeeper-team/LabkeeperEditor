@@ -164,6 +164,37 @@ test('file-manager-test-onUploadFiles-resets-stale-current-folder', async () => 
     );
 });
 
+test('file-manager-test-onUploadFiles-rejects-invalid-file-name', async () => {
+    const { startupService, fileManagerService, rpi, repository } =
+        mockContext();
+    mockAuthenticatedStartup(rpi);
+    await startupService.onAppStartup();
+
+    rpi.uploadFileRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        body: '',
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+    });
+    const file = {
+        name: 'a/.txt',
+        size: 128,
+        type: 'text/plain',
+    } as File;
+    const toastSpy = jest.spyOn(repository, 'toast');
+
+    await fileManagerService.onUploadFiles([file]);
+
+    expect(rpi.uploadFileRequest).not.toHaveBeenCalled();
+    expect(toastSpy).toHaveBeenCalledTimes(1);
+    expect(toastSpy).toHaveBeenCalledWith(
+        repository.dictionary.filemanager.errors.bad_name,
+        'error'
+    );
+    expect(repository.ideViewModelRepository.getFilesRequestState()).toBe('ok');
+});
+
 test('file-manager-test-onFileNameChanged-updates-open-text-file', async () => {
     const { startupService, fileManagerService, rpi, repository } =
         mockContext();
@@ -199,4 +230,79 @@ test('file-manager-test-onFileNameChanged-updates-open-text-file', async () => {
         expect.any(String),
         'renamed.txt'
     );
+});
+
+test('file-manager-test-onFileNameChanged-rejects-path-in-file-name', async () => {
+    const { startupService, fileManagerService, rpi, repository } =
+        mockContext();
+    mockAuthenticatedStartup(rpi);
+    await startupService.onAppStartup();
+
+    rpi.renameFileRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        body: '',
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+    });
+    const toastSpy = jest.spyOn(repository, 'toast');
+
+    await fileManagerService.onFileNameChanged('note.txt', 'a/.txt');
+
+    expect(rpi.renameFileRequest).not.toHaveBeenCalled();
+    expect(toastSpy).toHaveBeenCalledTimes(1);
+    expect(toastSpy).toHaveBeenCalledWith(
+        repository.dictionary.filemanager.errors.bad_name,
+        'error'
+    );
+});
+
+test('file-manager-test-onFileNameChanged-shows-bad-name-for-400', async () => {
+    const { startupService, fileManagerService, rpi, repository } =
+        mockContext();
+    mockAuthenticatedStartup(rpi);
+    await startupService.onAppStartup();
+
+    rpi.renameFileRequest = jest.fn().mockResolvedValue({
+        code: 400,
+        body: '',
+        isOk: false,
+        isUnauth: false,
+        isForbidden: false,
+    });
+    const toastSpy = jest.spyOn(repository, 'toast');
+
+    await fileManagerService.onFileNameChanged('note.txt', 'renamed.txt');
+
+    expect(toastSpy).toHaveBeenCalledTimes(1);
+    expect(toastSpy).toHaveBeenCalledWith(
+        repository.dictionary.filemanager.errors.bad_name,
+        'error'
+    );
+    expect(repository.ideViewModelRepository.getFilesRequestState()).toBe('ok');
+});
+
+test('file-manager-test-onFileNameChanged-shows-rename-error-for-500', async () => {
+    const { startupService, fileManagerService, rpi, repository } =
+        mockContext();
+    mockAuthenticatedStartup(rpi);
+    await startupService.onAppStartup();
+
+    rpi.renameFileRequest = jest.fn().mockResolvedValue({
+        code: 500,
+        body: '',
+        isOk: false,
+        isUnauth: false,
+        isForbidden: false,
+    });
+    const toastSpy = jest.spyOn(repository, 'toast');
+
+    await fileManagerService.onFileNameChanged('note.txt', 'renamed.txt');
+
+    expect(toastSpy).toHaveBeenCalledTimes(1);
+    expect(toastSpy).toHaveBeenCalledWith(
+        repository.dictionary.filemanager.errors.rename_file_failed,
+        'error'
+    );
+    expect(repository.ideViewModelRepository.getFilesRequestState()).toBe('ok');
 });

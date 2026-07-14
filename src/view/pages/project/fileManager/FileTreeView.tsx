@@ -22,7 +22,7 @@ import {
     FileTreeNode,
     isImageFilePath,
     isTextFilePath,
-    normalizeFolderName,
+    normalizeFileTreeNodeName,
 } from './svarFileTreeAdapter.ts';
 import { LabkeeperFile } from '../../../../model/domain.ts';
 
@@ -65,9 +65,11 @@ const CreatingFolderRow = (props: {
                 onBlur={props.onSubmit}
                 onKeyDown={(event) => {
                     if (event.key === 'Enter') {
-                        props.onSubmit();
+                        event.preventDefault();
+                        event.currentTarget.blur();
                     }
                     if (event.key === 'Escape') {
+                        event.preventDefault();
                         props.onCancel();
                     }
                 }}
@@ -173,23 +175,19 @@ const TreeNodeRow = (props: {
 
     const submitRename = useCallback(() => {
         if (isFolder) {
-            const normalized = normalizeFolderName(editName);
-            if (!normalized) {
-                if (!editName.trim()) {
-                    cancelRename();
-                }
+            if (!editName.trim()) {
+                cancelRename();
+                return;
+            }
+            const normalized = normalizeFileTreeNodeName(editName);
+            if (normalized === props.node.name) {
+                cancelRename();
                 return;
             }
             const parentPath = props.node.path.includes('/')
                 ? props.node.path.slice(0, props.node.path.lastIndexOf('/'))
                 : '';
-            const newPath = parentPath
-                ? `${parentPath}/${normalized}`
-                : normalized;
-            if (newPath === props.node.path) {
-                cancelRename();
-                return;
-            }
+            const newPath = parentPath ? `${parentPath}/${editName}` : editName;
             dispatch(
                 controller.onRenameFolderRequest({
                     oldPath: props.node.path,
@@ -207,9 +205,7 @@ const TreeNodeRow = (props: {
         const parentPath = props.node.path.includes('/')
             ? props.node.path.slice(0, props.node.path.lastIndexOf('/'))
             : '';
-        const newPath = parentPath
-            ? `${parentPath}/${editName.trim()}`
-            : editName.trim();
+        const newPath = parentPath ? `${parentPath}/${editName}` : editName;
         dispatch(
             controller.onFileNameChangedRequest({
                 oldName: props.node.path,
@@ -271,9 +267,11 @@ const TreeNodeRow = (props: {
                                     }
                                     onKeyDown={(event) => {
                                         if (event.key === 'Enter') {
-                                            submitRename();
+                                            event.preventDefault();
+                                            event.currentTarget.blur();
                                         }
                                         if (event.key === 'Escape') {
+                                            event.preventDefault();
                                             cancelRename();
                                         }
                                     }}
@@ -407,9 +405,11 @@ const TreeNodeRow = (props: {
                                 onMouseDown={(event) => event.stopPropagation()}
                                 onKeyDown={(event) => {
                                     if (event.key === 'Enter') {
-                                        submitRename();
+                                        event.preventDefault();
+                                        event.currentTarget.blur();
                                     }
                                     if (event.key === 'Escape') {
+                                        event.preventDefault();
                                         cancelRename();
                                     }
                                 }}
@@ -672,11 +672,20 @@ export const FileTreeView = (props: {
         if (creatingFolderIn === null) {
             return;
         }
-        const normalized = normalizeFolderName(creatingFolderName);
+        const normalized = normalizeFileTreeNodeName(creatingFolderName);
         if (!normalized) {
             if (!creatingFolderName.trim()) {
                 onCancelCreateFolder();
+                return;
             }
+            dispatch(
+                controller.onCreateFolderRequest({
+                    name: creatingFolderName,
+                    parentPath: creatingFolderIn,
+                })
+            );
+            setCreatingFolderIn(null);
+            setCreatingFolderName('');
             return;
         }
         dispatch(

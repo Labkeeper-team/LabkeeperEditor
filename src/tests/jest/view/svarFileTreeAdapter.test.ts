@@ -2,6 +2,7 @@ import {
     buildFileTree,
     buildSvarTree,
     isTextFilePath,
+    normalizeFileTreeNodeName,
     pathToSvarId,
     svarIdToPath,
 } from '../../../view/pages/project/fileManager/svarFileTreeAdapter.ts';
@@ -91,5 +92,24 @@ describe('svarFileTreeAdapter', () => {
         expect(isTextFilePath('refs.bib')).toBe(true);
         expect(isTextFilePath('plain.bst')).toBe(true);
         expect(isTextFilePath('image.png')).toBe(false);
+    });
+
+    test.each([
+        '',
+        'a..b.txt',
+        'a/b.txt',
+        'a\\b.txt',
+        'a<b.txt',
+        'a>b.txt',
+        'a[b.txt',
+        'a]b.txt',
+    ])('normalizeFileTreeNodeName rejects invalid name %p', (name) => {
+        expect(normalizeFileTreeNodeName(name)).toBeNull();
+    });
+
+    test('normalizeFileTreeNodeName trims valid names and allows parentheses', () => {
+        expect(normalizeFileTreeNodeName('  report(1).txt  ')).toBe(
+            'report(1).txt'
+        );
     });
 });
