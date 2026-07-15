@@ -1,15 +1,18 @@
 import './style.scss';
 import { Editor } from './editor';
 import { Viewer } from './viewer';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { FileManager } from './fileManager';
-import { AppDispatch } from '../../store';
+import { AppDispatch, StorageState } from '../../store';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { controller } from '../../../main.tsx';
 import { DeleteFilesModal } from './modals/delete-files';
 
 export const ProjectPage = () => {
     const dispatch = useDispatch<AppDispatch>();
+    const activeTextFile = useSelector(
+        (state: StorageState) => state.ide.activeTextFile
+    );
 
     /*
      * ACTIONS
@@ -23,6 +26,21 @@ export const ProjectPage = () => {
             enableOnFormTags: true,
             enabled: true,
             enableOnContentEditable: true,
+        }
+    );
+
+    useHotkeys(
+        'mod+s',
+        (e) => {
+            e?.preventDefault();
+            e?.stopPropagation();
+            dispatch(controller.onTextFileSaveTimeoutRequest());
+        },
+        {
+            enableOnFormTags: true,
+            enabled: Boolean(activeTextFile),
+            enableOnContentEditable: true,
+            preventDefault: true,
         }
     );
 
