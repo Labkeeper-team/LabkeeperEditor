@@ -1,8 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Typography } from '../../../components/typography';
 import { CheckIcon, CloseIcon, PlusIcon } from '../../../icons';
 import { colors } from '../../../styles/colors';
+import { useDropdownPlacement } from '../../../hooks/useDropdownPlacement';
 import { ProjectTagColorModal } from '../projectTagColorModal';
 import { useDictionary } from '../../../store/selectors/translations';
 import { AppDispatch } from '../../../store';
@@ -27,23 +28,20 @@ import {
 } from '../../../store/slices/projects';
 import './style.scss';
 
-type TagDropdownPlacement = 'top' | 'bottom';
-
 type ProjectTagsModalProps = {
-    dropdownRef: React.RefObject<HTMLDivElement>;
     onClose: () => void;
     projectId: string;
-    placement: TagDropdownPlacement;
-    isReady: boolean;
+    triggerRef: React.RefObject<HTMLElement | null>;
+    boundaryRef: React.RefObject<HTMLElement | null>;
 };
 
 export const ProjectTagsModal = ({
-    dropdownRef,
     onClose,
     projectId,
-    placement,
-    isReady,
+    triggerRef,
+    boundaryRef,
 }: ProjectTagsModalProps) => {
+    const dropdownRef = useRef<HTMLDivElement | null>(null);
     const dispatch = useDispatch<AppDispatch>();
     const dictionary = useSelector(useDictionary);
     const nextTagColor = useSelector(useNextTagColor);
@@ -61,6 +59,13 @@ export const ProjectTagsModal = ({
         () => orderTagKeysSelectedFirst(allAvailableTagKeys, selectedTagsSet),
         [allAvailableTagKeys, selectedTagsSet]
     );
+    const contentKey = `${orderedProjectTags.length}:${showColorModal ? 1 : 0}`;
+    const { placement, isReady } = useDropdownPlacement({
+        triggerRef,
+        dropdownRef,
+        boundaryRef,
+        contentKey,
+    });
 
     const addNewTag = () => {
         const normalizedTag = normalizeTagLabel(newTagValue);
