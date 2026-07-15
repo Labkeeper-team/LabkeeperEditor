@@ -258,6 +258,58 @@ test('file-manager-test-onFileNameChanged-rejects-path-in-file-name', async () =
     );
 });
 
+test('file-manager-test-onDeleteFile-closes-active-text-file-editor', async () => {
+    const { startupService, fileManagerService, rpi, repository } =
+        mockContext();
+    mockAuthenticatedStartup(rpi);
+    await startupService.onAppStartup();
+
+    rpi.deleteFileRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        body: '',
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+    });
+
+    repository.ideViewModelRepository.setActiveTextFile('folder/note.txt');
+    repository.ideViewModelRepository.setTextFileContent('edited content');
+    repository.ideViewModelRepository.setLoadTextFileRequestState('ok');
+    repository.ideViewModelRepository.setSaveTextFileRequestState('ok');
+
+    await fileManagerService.onDeleteFile('folder/note.txt');
+
+    expect(repository.ideViewModelRepository.activeTextFile()).toBe(null);
+    expect(repository.ideViewModelRepository.textFileContent()).toBe('');
+    expect(repository.ideViewModelRepository.loadTextFileRequestState()).toBe(
+        'unknown'
+    );
+    expect(repository.ideViewModelRepository.saveTextFileRequestState()).toBe(
+        'unknown'
+    );
+});
+
+test('file-manager-test-onDeleteFile-closes-active-image-preview', async () => {
+    const { startupService, fileManagerService, rpi, repository } =
+        mockContext();
+    mockAuthenticatedStartup(rpi);
+    await startupService.onAppStartup();
+
+    rpi.deleteFileRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        body: '',
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+    });
+
+    repository.ideViewModelRepository.setActiveImageFile('folder/chart.png');
+
+    await fileManagerService.onDeleteFile('folder/chart.png');
+
+    expect(repository.ideViewModelRepository.activeImageFile()).toBe(null);
+});
+
 test('file-manager-test-onFileNameChanged-shows-bad-name-for-400', async () => {
     const { startupService, fileManagerService, rpi, repository } =
         mockContext();

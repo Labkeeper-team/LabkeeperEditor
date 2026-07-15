@@ -564,6 +564,7 @@ export class FileManagerService {
             this.restoreFilesReadyState();
         }
         if (result.isOk) {
+            this.textFileEditorService.onOpenFileDeleted(fileName);
             await this.loaderService.loadFiles(project.projectId);
         } else if (!result.isUnauth) {
             this.restoreFilesReadyState();
@@ -620,6 +621,8 @@ export class FileManagerService {
                 this.observerService.onEvent(
                     Events.EVENT_RPI_UNKNOWN_FILE_MANAGER_DELETE
                 );
+            } else {
+                this.textFileEditorService.onOpenFileDeleted(file.fileName);
             }
         }
         await this.loaderService.loadFiles(project.projectId);

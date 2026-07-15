@@ -136,6 +136,37 @@ export class TextFileEditorService {
         );
     };
 
+    onOpenFileDeleted = (fileName: string) => {
+        if (this.pendingSaveFileName === fileName) {
+            this.pendingSaveContent = null;
+            this.pendingSaveFileName = null;
+        }
+
+        if (
+            this.repository.ideViewModelRepository.activeTextFile() === fileName
+        ) {
+            if (this.saveTimeout) {
+                clearTimeout(this.saveTimeout);
+                this.saveTimeout = null;
+            }
+            this.repository.ideViewModelRepository.setActiveTextFile(null);
+            this.repository.ideViewModelRepository.setTextFileContent('');
+            this.repository.ideViewModelRepository.setLoadTextFileRequestState(
+                'unknown'
+            );
+            this.repository.ideViewModelRepository.setSaveTextFileRequestState(
+                'unknown'
+            );
+        }
+
+        if (
+            this.repository.ideViewModelRepository.activeImageFile() ===
+            fileName
+        ) {
+            this.repository.ideViewModelRepository.setActiveImageFile(null);
+        }
+    };
+
     onOpenFilePathChanged = async (oldPath: string, newPath: string) => {
         const activeText =
             this.repository.ideViewModelRepository.activeTextFile();
