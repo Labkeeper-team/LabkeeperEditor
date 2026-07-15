@@ -267,6 +267,7 @@ export const normalizeFileTreeNodeName = (name: string): string | null => {
     const invalidCharacters = ['/', '\\', '<', '>', '[', ']'];
     if (
         !trimmed ||
+        trimmed.length > 255 ||
         trimmed.includes('..') ||
         invalidCharacters.some((character) => trimmed.includes(character))
     ) {

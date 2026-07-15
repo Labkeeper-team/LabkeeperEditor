@@ -4,6 +4,7 @@ import {
     mockContext,
     mockUserInfoForUnauthorized,
 } from '../common.ts';
+import { en } from '../../../viewModel/dictionaries/en.ts';
 
 /*
 Сценарий:
@@ -280,6 +281,57 @@ test('file-manager-test-onFileNameChanged-shows-bad-name-for-400', async () => {
         'error'
     );
     expect(repository.ideViewModelRepository.getFilesRequestState()).toBe('ok');
+});
+
+test('file-manager-test-onFileNameChanged-rejects-too-long-file-name', async () => {
+    const { startupService, fileManagerService, rpi, repository } =
+        mockContext();
+    mockAuthenticatedStartup(rpi);
+    await startupService.onAppStartup();
+
+    rpi.renameFileRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        body: '',
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+    });
+    const toastSpy = jest.spyOn(repository, 'toast');
+    const tooLongName = `${'a'.repeat(256)}.txt`;
+
+    await fileManagerService.onFileNameChanged('note.txt', tooLongName);
+
+    expect(rpi.renameFileRequest).not.toHaveBeenCalled();
+    expect(toastSpy).toHaveBeenCalledTimes(1);
+    expect(toastSpy).toHaveBeenCalledWith(
+        repository.dictionary.filemanager.errors.bad_name,
+        'error'
+    );
+});
+
+test('file-manager-test-onFileNameChanged-shows-english-bad-name-for-400', async () => {
+    const { startupService, fileManagerService, rpi, repository } =
+        mockContext();
+    mockAuthenticatedStartup(rpi);
+    await startupService.onAppStartup();
+    repository.dictionary = en;
+
+    rpi.renameFileRequest = jest.fn().mockResolvedValue({
+        code: 400,
+        body: 'Название содержит недопустимые символы',
+        isOk: false,
+        isUnauth: false,
+        isForbidden: false,
+    });
+    const toastSpy = jest.spyOn(repository, 'toast');
+
+    await fileManagerService.onFileNameChanged('note.txt', 'renamed.txt');
+
+    expect(toastSpy).toHaveBeenCalledTimes(1);
+    expect(toastSpy).toHaveBeenCalledWith(
+        repository.dictionary.filemanager.errors.bad_name,
+        'error'
+    );
 });
 
 test('file-manager-test-onFileNameChanged-shows-rename-error-for-500', async () => {
