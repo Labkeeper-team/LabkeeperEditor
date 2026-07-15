@@ -112,4 +112,8 @@ describe('svarFileTreeAdapter', () => {
             'report(1).txt'
         );
     });
+
+    test('normalizeFileTreeNodeName rejects names longer than 255 characters', () => {
+        expect(normalizeFileTreeNodeName(`${'a'.repeat(256)}.txt`)).toBeNull();
+    });
 });

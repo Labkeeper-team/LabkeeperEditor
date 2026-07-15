@@ -4,6 +4,7 @@ import {
     mockContext,
     mockUserInfoForUnauthorized,
 } from '../common.ts';
+import { en } from '../../../viewModel/dictionaries/en.ts';
 
 /*
 Сценарий:
@@ -257,6 +258,58 @@ test('file-manager-test-onFileNameChanged-rejects-path-in-file-name', async () =
     );
 });
 
+test('file-manager-test-onDeleteFile-closes-active-text-file-editor', async () => {
+    const { startupService, fileManagerService, rpi, repository } =
+        mockContext();
+    mockAuthenticatedStartup(rpi);
+    await startupService.onAppStartup();
+
+    rpi.deleteFileRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        body: '',
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+    });
+
+    repository.ideViewModelRepository.setActiveTextFile('folder/note.txt');
+    repository.ideViewModelRepository.setTextFileContent('edited content');
+    repository.ideViewModelRepository.setLoadTextFileRequestState('ok');
+    repository.ideViewModelRepository.setSaveTextFileRequestState('ok');
+
+    await fileManagerService.onDeleteFile('folder/note.txt');
+
+    expect(repository.ideViewModelRepository.activeTextFile()).toBe(null);
+    expect(repository.ideViewModelRepository.textFileContent()).toBe('');
+    expect(repository.ideViewModelRepository.loadTextFileRequestState()).toBe(
+        'unknown'
+    );
+    expect(repository.ideViewModelRepository.saveTextFileRequestState()).toBe(
+        'unknown'
+    );
+});
+
+test('file-manager-test-onDeleteFile-closes-active-image-preview', async () => {
+    const { startupService, fileManagerService, rpi, repository } =
+        mockContext();
+    mockAuthenticatedStartup(rpi);
+    await startupService.onAppStartup();
+
+    rpi.deleteFileRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        body: '',
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+    });
+
+    repository.ideViewModelRepository.setActiveImageFile('folder/chart.png');
+
+    await fileManagerService.onDeleteFile('folder/chart.png');
+
+    expect(repository.ideViewModelRepository.activeImageFile()).toBe(null);
+});
+
 test('file-manager-test-onFileNameChanged-shows-bad-name-for-400', async () => {
     const { startupService, fileManagerService, rpi, repository } =
         mockContext();
@@ -280,6 +333,57 @@ test('file-manager-test-onFileNameChanged-shows-bad-name-for-400', async () => {
         'error'
     );
     expect(repository.ideViewModelRepository.getFilesRequestState()).toBe('ok');
+});
+
+test('file-manager-test-onFileNameChanged-rejects-too-long-file-name', async () => {
+    const { startupService, fileManagerService, rpi, repository } =
+        mockContext();
+    mockAuthenticatedStartup(rpi);
+    await startupService.onAppStartup();
+
+    rpi.renameFileRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        body: '',
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+    });
+    const toastSpy = jest.spyOn(repository, 'toast');
+    const tooLongName = `${'a'.repeat(256)}.txt`;
+
+    await fileManagerService.onFileNameChanged('note.txt', tooLongName);
+
+    expect(rpi.renameFileRequest).not.toHaveBeenCalled();
+    expect(toastSpy).toHaveBeenCalledTimes(1);
+    expect(toastSpy).toHaveBeenCalledWith(
+        repository.dictionary.filemanager.errors.bad_name,
+        'error'
+    );
+});
+
+test('file-manager-test-onFileNameChanged-shows-english-bad-name-for-400', async () => {
+    const { startupService, fileManagerService, rpi, repository } =
+        mockContext();
+    mockAuthenticatedStartup(rpi);
+    await startupService.onAppStartup();
+    repository.dictionary = en;
+
+    rpi.renameFileRequest = jest.fn().mockResolvedValue({
+        code: 400,
+        body: 'Название содержит недопустимые символы',
+        isOk: false,
+        isUnauth: false,
+        isForbidden: false,
+    });
+    const toastSpy = jest.spyOn(repository, 'toast');
+
+    await fileManagerService.onFileNameChanged('note.txt', 'renamed.txt');
+
+    expect(toastSpy).toHaveBeenCalledTimes(1);
+    expect(toastSpy).toHaveBeenCalledWith(
+        repository.dictionary.filemanager.errors.bad_name,
+        'error'
+    );
 });
 
 test('file-manager-test-onFileNameChanged-shows-rename-error-for-500', async () => {
