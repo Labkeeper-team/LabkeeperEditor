@@ -11,6 +11,7 @@ import { DeleteProjectModal } from './deleteProjectModal';
 import { ProjectShort } from '../../../model/domain';
 import { ProjectRow } from './projectRow';
 import { ProjectTagsFilterModal } from './projectTagsFilterModal';
+import { SortableHeaderCell } from './sortableHeaderCell';
 import { TagChip } from './tagChip';
 import { DEFAULT_TAG_COLOR } from './tagColorUtils';
 import {
@@ -135,6 +136,14 @@ export const ProjectsPage = () => {
         projectTagKeysByProject,
     });
 
+    const onSortChange = useCallback(
+        (mode: SortMode, direction: SortDirection) => {
+            setSortMode(mode);
+            setSortDirection(direction);
+        },
+        []
+    );
+
     return (
         <>
             <div className="projects-container">
@@ -239,134 +248,27 @@ export const ProjectsPage = () => {
                                 <table>
                                     <tr>
                                         <th>
-                                            <div className="projects-header-cell">
-                                                <Typography
-                                                    color={colors.gray30}
-                                                    text={
-                                                        dictionary.projects
-                                                            .title
-                                                    }
-                                                />
-                                                <button
-                                                    className="projects-sort-icon-button"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setSortMode('title');
-                                                        setSortDirection('asc');
-                                                    }}
-                                                    type="button"
-                                                    aria-label={
-                                                        dictionary.projects
-                                                            .title
-                                                    }
-                                                >
-                                                    <span
-                                                        className={`sort-arrow ${
-                                                            sortMode ===
-                                                                'title' &&
-                                                            sortDirection ===
-                                                                'asc'
-                                                                ? 'is-active'
-                                                                : ''
-                                                        }`}
-                                                    >
-                                                        ▲
-                                                    </span>
-                                                </button>
-                                                <button
-                                                    className="projects-sort-icon-button"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setSortMode('title');
-                                                        setSortDirection(
-                                                            'desc'
-                                                        );
-                                                    }}
-                                                    type="button"
-                                                    aria-label={
-                                                        dictionary.projects
-                                                            .title
-                                                    }
-                                                >
-                                                    <span
-                                                        className={`sort-arrow ${
-                                                            sortMode ===
-                                                                'title' &&
-                                                            sortDirection ===
-                                                                'desc'
-                                                                ? 'is-active'
-                                                                : ''
-                                                        }`}
-                                                    >
-                                                        ▼
-                                                    </span>
-                                                </button>
-                                            </div>
+                                            <SortableHeaderCell
+                                                label={
+                                                    dictionary.projects.title
+                                                }
+                                                mode="title"
+                                                sortMode={sortMode}
+                                                sortDirection={sortDirection}
+                                                onSortChange={onSortChange}
+                                            />
                                         </th>
                                         <th>
-                                            <div className="projects-header-cell">
-                                                <Typography
-                                                    color={colors.gray30}
-                                                    text={
-                                                        dictionary.projects
-                                                            .last_modified
-                                                    }
-                                                />
-                                                <button
-                                                    className="projects-sort-icon-button"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setSortMode('time');
-                                                        setSortDirection('asc');
-                                                    }}
-                                                    type="button"
-                                                    aria-label={
-                                                        dictionary.projects
-                                                            .last_modified
-                                                    }
-                                                >
-                                                    <span
-                                                        className={`sort-arrow ${
-                                                            sortMode ===
-                                                                'time' &&
-                                                            sortDirection ===
-                                                                'asc'
-                                                                ? 'is-active'
-                                                                : ''
-                                                        }`}
-                                                    >
-                                                        ▲
-                                                    </span>
-                                                </button>
-                                                <button
-                                                    className="projects-sort-icon-button"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setSortMode('time');
-                                                        setSortDirection(
-                                                            'desc'
-                                                        );
-                                                    }}
-                                                    type="button"
-                                                    aria-label={
-                                                        dictionary.projects
-                                                            .last_modified
-                                                    }
-                                                >
-                                                    <span
-                                                        className={`sort-arrow ${
-                                                            sortMode ===
-                                                                'time' &&
-                                                            sortDirection ===
-                                                                'desc'
-                                                                ? 'is-active'
-                                                                : ''
-                                                        }`}
-                                                    >
-                                                        ▼
-                                                    </span>
-                                                </button>
-                                            </div>
+                                            <SortableHeaderCell
+                                                label={
+                                                    dictionary.projects
+                                                        .last_modified
+                                                }
+                                                mode="time"
+                                                sortMode={sortMode}
+                                                sortDirection={sortDirection}
+                                                onSortChange={onSortChange}
+                                            />
                                         </th>
                                         <th>
                                             <Typography
