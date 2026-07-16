@@ -33,7 +33,9 @@ export const SortableHeaderCell = ({
                 type="button"
                 aria-label={label}
             >
-                <span className={`sort-arrow ${isAscActive ? 'is-active' : ''}`}>
+                <span
+                    className={`sort-arrow ${isAscActive ? 'is-active' : ''}`}
+                >
                     ▲
                 </span>
             </button>

@@ -1,5 +1,13 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+
 import { ProjectShort } from '../../../model/domain';
+import {
+    useAllAvailableTagKeys,
+    useSelectedFilterTagKeys,
+} from '../../store/selectors/projectTags';
+import { setSelectedFilterTagKeys } from '../../store/slices/projects';
+import { AppDispatch } from '../../store';
 
 export type SortMode = 'time' | 'title';
 export type SortDirection = 'asc' | 'desc';
@@ -88,4 +96,26 @@ export const useSortedFilteredProjects = ({
         selectedFilterTagKeys,
         projectTagKeysByProject,
     ]);
+};
+
+// Убирает из фильтра теги, которых больше нет в списке доступных.
+export const usePruneSelectedFilterTags = () => {
+    const dispatch = useDispatch<AppDispatch>();
+    const allAvailableTagKeys = useSelector(useAllAvailableTagKeys);
+    const selectedFilterTagKeys = useSelector(useSelectedFilterTagKeys);
+
+    useEffect(() => {
+        const availableSet = new Set(allAvailableTagKeys);
+        const nextSelectedFilterTagKeys = selectedFilterTagKeys.filter(
+            (tagKey) => availableSet.has(tagKey)
+        );
+        const isChanged =
+            nextSelectedFilterTagKeys.length !== selectedFilterTagKeys.length ||
+            nextSelectedFilterTagKeys.some(
+                (tagKey, index) => tagKey !== selectedFilterTagKeys[index]
+            );
+        if (isChanged) {
+            dispatch(setSelectedFilterTagKeys(nextSelectedFilterTagKeys));
+        }
+    }, [allAvailableTagKeys, dispatch, selectedFilterTagKeys]);
 };

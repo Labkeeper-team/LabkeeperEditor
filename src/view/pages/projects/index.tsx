@@ -1,5 +1,5 @@
-import { useDispatch, useSelector } from 'react-redux';
-import React, { useCallback, useState, useEffect, useRef } from 'react';
+import { useSelector } from 'react-redux';
+import React, { useCallback, useState, useRef } from 'react';
 
 import './style.scss';
 import { Typography } from '../../components/typography';
@@ -17,19 +17,21 @@ import { DEFAULT_TAG_COLOR } from './tagColorUtils';
 import {
     SortDirection,
     SortMode,
+    usePruneSelectedFilterTags,
     useSortedFilteredProjects,
 } from './useSortedFilteredProjects';
 import {
-    useAllAvailableTagKeys,
     useProjectTagKeysByProject,
     useSelectedFilterTagKeys,
     useTagMap,
 } from '../../store/selectors/projectTags';
 import { useProjects } from '../../store/selectors/program';
 import { colors } from '../../styles/colors';
-import { setSelectedFilterTagKeys } from '../../store/slices/projects';
 import { useDictionary } from '../../store/selectors/translations';
-import { AppDispatch, StorageState } from '../../store';
+import { StorageState } from '../../store';
+import useClickOutside from '../../hooks/useClickOutside';
+
+const NO_IGNORE_SELECTORS: string[] = [];
 
 export const ProjectsPage = () => {
     const [showAddModal, setShowAddModal] = useState(false);
@@ -42,42 +44,33 @@ export const ProjectsPage = () => {
     const [openedTagPickerProjectId, setOpenedTagPickerProjectId] = useState<
         string | null
     >(null);
-    const tagsFilterAnchorRef = useRef<HTMLDivElement | null>(null);
     const projectsScrollContainerRef = useRef<HTMLDivElement | null>(null);
 
     const dictionary = useSelector(useDictionary);
     const projects = useSelector(useProjects);
-    const allAvailableTagKeys = useSelector(useAllAvailableTagKeys);
     const selectedFilterTagKeys = useSelector(useSelectedFilterTagKeys);
     const tagMap = useSelector(useTagMap);
     const projectTagKeysByProject = useSelector(useProjectTagKeysByProject);
     const getProjectsRequestState = useSelector(
         (state: StorageState) => state.ide.getProjectsRequestState
     );
-    const dispatch = useDispatch<AppDispatch>();
+
+    usePruneSelectedFilterTags();
+
+    const closeTagsFilterModal = useCallback(() => {
+        setShowTagsFilterModal(false);
+    }, []);
+
+    const tagsFilterAnchorRef = useClickOutside(
+        closeTagsFilterModal,
+        NO_IGNORE_SELECTORS,
+        showTagsFilterModal
+    );
 
     const closeTagsUi = useCallback(() => {
         setShowTagsFilterModal(false);
         setOpenedTagPickerProjectId(null);
     }, []);
-
-    useEffect(() => {
-        if (!showTagsFilterModal) {
-            return;
-        }
-        const onGlobalClick = (event: MouseEvent) => {
-            if (!tagsFilterAnchorRef.current) {
-                return;
-            }
-            if (!tagsFilterAnchorRef.current.contains(event.target as Node)) {
-                setShowTagsFilterModal(false);
-            }
-        };
-        document.addEventListener('mousedown', onGlobalClick);
-        return () => {
-            document.removeEventListener('mousedown', onGlobalClick);
-        };
-    }, [showTagsFilterModal]);
 
     const onAddProjectClick = useCallback(() => {
         setShowAddModal(true);
@@ -112,21 +105,6 @@ export const ProjectsPage = () => {
         },
         [openedTagPickerProjectId]
     );
-
-    useEffect(() => {
-        const availableSet = new Set(allAvailableTagKeys);
-        const nextSelectedFilterTagKeys = selectedFilterTagKeys.filter(
-            (tagKey) => availableSet.has(tagKey)
-        );
-        const isChanged =
-            nextSelectedFilterTagKeys.length !== selectedFilterTagKeys.length ||
-            nextSelectedFilterTagKeys.some(
-                (tagKey, index) => tagKey !== selectedFilterTagKeys[index]
-            );
-        if (isChanged) {
-            dispatch(setSelectedFilterTagKeys(nextSelectedFilterTagKeys));
-        }
-    }, [allAvailableTagKeys, dispatch, selectedFilterTagKeys]);
 
     const filteredProjects = useSortedFilteredProjects({
         projects,
