@@ -305,7 +305,10 @@ export const en: Translations = {
             notSupported: 'Media type is not supported',
             notFound: 'Project not found',
             noNetwork: 'No connection with backend',
-            bad_name: 'Do not use slashes in filename',
+            bad_name: 'Name contains invalid characters or is too long',
+            rename_file_failed: 'Could not rename file. Please try again',
+            rename_folder_failed: 'Could not rename folder. Please try again',
+            upload_failed: 'Could not upload file. Please try again',
         },
     },
     share_modal: {

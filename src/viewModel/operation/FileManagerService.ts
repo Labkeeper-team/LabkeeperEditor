@@ -10,7 +10,7 @@ import {
 } from '../../model/service/ObserverService.ts';
 import {
     joinFolderPath,
-    normalizeFolderName,
+    normalizeFileTreeNodeName,
     svarIdToPath,
 } from '../../view/pages/project/fileManager/svarFileTreeAdapter.ts';
 import { TextFileEditorService } from './TextFileEditorService.ts';
@@ -75,12 +75,8 @@ export class FileManagerService {
     };
 
     onCreateFolder = (name: string, parentPath: string) => {
-        const normalized = name.trim();
-        if (
-            !normalized ||
-            normalized.includes('/') ||
-            normalized.includes('..')
-        ) {
+        const normalized = normalizeFileTreeNodeName(name);
+        if (!normalized) {
             this.repository.toast(
                 this.repository.dictionary.filemanager.errors.bad_name,
                 'error'
@@ -130,7 +126,7 @@ export class FileManagerService {
                 this.repository.toast(
                     this.repository.dictionary.filemanager.errors.tooBigFile.replace(
                         '${replace1}',
-                        '10Mb'
+                        '10'
                     ),
                     'error'
                 );
@@ -183,6 +179,10 @@ export class FileManagerService {
                 !result.isUnauth
             ) {
                 this.restoreFilesReadyState();
+                this.repository.toast(
+                    this.repository.dictionary.filemanager.errors.upload_failed,
+                    'error'
+                );
                 this.observerService.onEvent(
                     Events.EVENT_RPI_UNKNOWN_FILE_MANAGER_UPLOAD
                 );
@@ -211,10 +211,18 @@ export class FileManagerService {
         let isResultOk = false;
         try {
             for (const file of files) {
+                const normalizedName = normalizeFileTreeNodeName(file.name);
+                if (!normalizedName) {
+                    this.repository.toast(
+                        this.repository.dictionary.filemanager.errors.bad_name,
+                        'error'
+                    );
+                    continue;
+                }
                 this.fileService.checkFile(file, this.repository.dictionary);
                 const name = this.fileService.calculateNumberFile(
                     null,
-                    file.name,
+                    normalizedName,
                     prefix || null
                 );
                 const formData = new FormData();
@@ -229,7 +237,7 @@ export class FileManagerService {
                     this.repository.toast(
                         this.repository.dictionary.filemanager.errors.tooBigFile.replace(
                             '${replace1}',
-                            '10Mb'
+                            '10'
                         ),
                         'error'
                     );
@@ -265,6 +273,11 @@ export class FileManagerService {
                     result.code !== 409 &&
                     !result.isUnauth
                 ) {
+                    this.repository.toast(
+                        this.repository.dictionary.filemanager.errors
+                            .upload_failed,
+                        'error'
+                    );
                     this.observerService.onEvent(
                         Events.EVENT_RPI_UNKNOWN_FILE_MANAGER_UPLOAD
                     );
@@ -324,7 +337,7 @@ export class FileManagerService {
                 ? `${targetPrefix}/${fileName}`
                 : fileName;
             if (oldPath !== newPath) {
-                await this.onFileNameChanged(oldPath, newPath);
+                await this.renameFilePath(oldPath, newPath);
             }
         }
     };
@@ -401,19 +414,32 @@ export class FileManagerService {
         if (!oldPath || oldPath === newPath) {
             return;
         }
+        const oldParentPath = oldPath.includes('/')
+            ? oldPath.slice(0, oldPath.lastIndexOf('/'))
+            : '';
+        const newParentPath = newPath.includes('/')
+            ? newPath.slice(0, newPath.lastIndexOf('/'))
+            : '';
         const newName = newPath.includes('/')
             ? newPath.slice(newPath.lastIndexOf('/') + 1)
             : newPath;
-        if (!normalizeFolderName(newName)) {
+        const normalizedName = normalizeFileTreeNodeName(newName);
+        if (!normalizedName || oldParentPath !== newParentPath) {
             this.repository.toast(
                 this.repository.dictionary.filemanager.errors.bad_name,
                 'error'
             );
             return;
         }
+        const normalizedNewPath = oldParentPath
+            ? `${oldParentPath}/${normalizedName}`
+            : normalizedName;
+        if (oldPath === normalizedNewPath) {
+            return;
+        }
 
         if (!this.folderHasFiles(oldPath)) {
-            this.remapCurrentFolderAfterRename(oldPath, newPath);
+            this.remapCurrentFolderAfterRename(oldPath, normalizedNewPath);
             return;
         }
 
@@ -427,7 +453,7 @@ export class FileManagerService {
         );
         const result = await this.rpi.renameFolderRequest(
             oldPath,
-            newPath,
+            normalizedNewPath,
             project.projectId
         );
         if (result.isUnauth) {
@@ -442,16 +468,27 @@ export class FileManagerService {
         if (result.isOk) {
             this.programService.replaceAllInProgram(
                 `${oldPath}/`,
-                `${newPath}/`
+                `${normalizedNewPath}/`
             );
-            this.remapCurrentFolderAfterRename(oldPath, newPath);
+            this.remapCurrentFolderAfterRename(oldPath, normalizedNewPath);
             await this.textFileEditorService.onOpenFilePathChanged(
                 oldPath,
-                newPath
+                normalizedNewPath
             );
             await this.loaderService.loadFiles(project.projectId);
+        } else if (result.code === 400) {
+            this.repository.toast(
+                this.repository.dictionary.filemanager.errors.bad_name,
+                'error'
+            );
+            this.restoreFilesReadyState();
         } else {
             this.restoreFilesReadyState();
+            this.repository.toast(
+                this.repository.dictionary.filemanager.errors
+                    .rename_folder_failed,
+                'error'
+            );
             this.observerService.onEvent(
                 Events.EVENT_RPI_UNKNOWN_FILE_MANAGER_RENAME
             );
@@ -527,6 +564,7 @@ export class FileManagerService {
             this.restoreFilesReadyState();
         }
         if (result.isOk) {
+            this.textFileEditorService.onOpenFileDeleted(fileName);
             await this.loaderService.loadFiles(project.projectId);
         } else if (!result.isUnauth) {
             this.restoreFilesReadyState();
@@ -583,6 +621,8 @@ export class FileManagerService {
                 this.observerService.onEvent(
                     Events.EVENT_RPI_UNKNOWN_FILE_MANAGER_DELETE
                 );
+            } else {
+                this.textFileEditorService.onOpenFileDeleted(file.fileName);
             }
         }
         await this.loaderService.loadFiles(project.projectId);
@@ -593,29 +633,17 @@ export class FileManagerService {
         this.repository.settingsViewModelRepository.setFilesToDelete([]);
     };
 
-    onFileNameChanged = async (oldName: string, newName: string) => {
-        this.repository.settingsViewModelRepository.setEditModeForFilename(
-            false
-        );
+    private renameFilePath = async (oldName: string, newName: string) => {
         const project = this.repository.projectViewModelRepository.project();
         if (!project || oldName === newName) {
             return;
         }
-        if (!newName || newName.includes('..')) {
-            this.repository.toast(
-                this.repository.dictionary.filemanager.errors.bad_name,
-                'error'
-            );
-            return;
-        }
-
-        const uniqueNewName = newName;
         this.repository.ideViewModelRepository.setGetFilesRequestState(
             'loading'
         );
         const result = await this.rpi.renameFileRequest(
             oldName,
-            uniqueNewName,
+            newName,
             project.projectId
         );
         if (result.isUnauth) {
@@ -627,18 +655,57 @@ export class FileManagerService {
             this.restoreFilesReadyState();
         }
         if (result.isOk) {
-            this.programService.replaceAllInProgram(oldName, uniqueNewName);
+            this.programService.replaceAllInProgram(oldName, newName);
             await this.textFileEditorService.onOpenFilePathChanged(
                 oldName,
-                uniqueNewName
+                newName
             );
             await this.loaderService.loadFiles(project.projectId);
+        } else if (result.code === 400) {
+            this.repository.toast(
+                this.repository.dictionary.filemanager.errors.bad_name,
+                'error'
+            );
+            this.restoreFilesReadyState();
         } else if (!result.isUnauth) {
             this.restoreFilesReadyState();
+            this.repository.toast(
+                this.repository.dictionary.filemanager.errors
+                    .rename_file_failed,
+                'error'
+            );
             this.observerService.onEvent(
                 Events.EVENT_RPI_UNKNOWN_FILE_MANAGER_RENAME
             );
         }
+    };
+
+    onFileNameChanged = async (oldName: string, newName: string) => {
+        this.repository.settingsViewModelRepository.setEditModeForFilename(
+            false
+        );
+        const oldParentPath = oldName.includes('/')
+            ? oldName.slice(0, oldName.lastIndexOf('/'))
+            : '';
+        const newParentPath = newName.includes('/')
+            ? newName.slice(0, newName.lastIndexOf('/'))
+            : '';
+        const newFileName = newName.includes('/')
+            ? newName.slice(newName.lastIndexOf('/') + 1)
+            : newName;
+        const normalizedName = normalizeFileTreeNodeName(newFileName);
+        if (!normalizedName || oldParentPath !== newParentPath) {
+            this.repository.toast(
+                this.repository.dictionary.filemanager.errors.bad_name,
+                'error'
+            );
+            return;
+        }
+
+        const normalizedNewPath = oldParentPath
+            ? `${oldParentPath}/${normalizedName}`
+            : normalizedName;
+        await this.renameFilePath(oldName, normalizedNewPath);
     };
 
     onFileRenameButtonClicked = () => {

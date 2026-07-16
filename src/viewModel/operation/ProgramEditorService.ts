@@ -157,7 +157,7 @@ export class ProgramEditorService {
                         thisCopy.repository.toast(
                             thisCopy.repository.dictionary.filemanager.errors.tooBigFile.replace(
                                 '${replace1}',
-                                '10Mb'
+                                '10'
                             ),
                             'error'
                         );

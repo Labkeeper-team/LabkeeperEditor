@@ -262,9 +262,15 @@ export const isImageFilePath = (path: string): boolean => {
     );
 };
 
-export const normalizeFolderName = (name: string): string | null => {
+export const normalizeFileTreeNodeName = (name: string): string | null => {
     const trimmed = name.trim();
-    if (!trimmed || trimmed.includes('/') || trimmed.includes('..')) {
+    const invalidCharacters = ['/', '\\', '<', '>', '[', ']'];
+    if (
+        !trimmed ||
+        trimmed.length > 255 ||
+        trimmed.includes('..') ||
+        invalidCharacters.some((character) => trimmed.includes(character))
+    ) {
         return null;
     }
     return trimmed;

@@ -620,6 +620,15 @@ export class Controller {
         }
     );
 
+    onTextFileSaveTimeoutRequest = createAsyncThunk(
+        'onTextFileSaveTimeoutRequest',
+        async () => {
+            this.wrapper('onTextFileSaveTimeoutRequest', () =>
+                this.textFileEditorService.onTextFileSaveTimeout()
+            );
+        }
+    );
+
     onImageFileOpenedRequest = createAsyncThunk(
         'onImageFileOpenedRequest',
         async ({ fileName }: { fileName: string }) => {
