@@ -148,9 +148,7 @@ test('add-one-tag-for-one-project', async ({ page }) => {
     );
 
     await page.getByRole('button', { name: /Создать тег|Create tag/ }).click();
-    await expect(projectRow.locator('.project-tag-chip')).toContainText(
-        'tag_1'
-    );
+    await expect(projectRow.locator('.tag-chip')).toContainText('tag_1');
 
     await expect(page).toHaveScreenshot('projects-tag-step-3-tag-added.png', {
         fullPage: true,
@@ -244,7 +242,7 @@ test('edit-tags-across-three-projects', async ({ page }) => {
     await page.getByRole('button', { name: /Создать тег|Create tag/ }).click();
     await page.locator('.project-tags-input').fill('tag_2');
     await page.getByRole('button', { name: /Создать тег|Create tag/ }).click();
-    await expect(project1Row.locator('.project-tag-chip')).toContainText([
+    await expect(project1Row.locator('.tag-chip')).toContainText([
         'tag_1',
         'tag_2',
     ]);
@@ -264,9 +262,7 @@ test('edit-tags-across-three-projects', async ({ page }) => {
         .locator('.project-tag-option')
         .filter({ hasText: 'tag_2' })
         .click();
-    await expect(project2Row.locator('.project-tag-chip')).toContainText(
-        'tag_2'
-    );
+    await expect(project2Row.locator('.tag-chip')).toContainText('tag_2');
 
     await expect(page).toHaveScreenshot(
         'projects-tags-three-projects-step-2.png',
@@ -285,7 +281,7 @@ test('edit-tags-across-three-projects', async ({ page }) => {
         .click();
     await page.locator('.project-tags-input').fill('tag_3');
     await page.getByRole('button', { name: /Создать тег|Create tag/ }).click();
-    await expect(project3Row.locator('.project-tag-chip')).toContainText([
+    await expect(project3Row.locator('.tag-chip')).toContainText([
         'tag_1',
         'tag_3',
     ]);
@@ -468,11 +464,11 @@ test('add-many-tags', async ({ page }) => {
     }
 
     await expect(
-        projectRow.locator('.project-tag-chip').filter({ hasText: /^123$/ })
+        projectRow.locator('.tag-chip').filter({ hasText: /^123$/ })
     ).toHaveCount(1);
     await expect(
         projectRow
-            .locator('.project-tag-chip')
+            .locator('.tag-chip')
             .filter({ hasText: /^12345678910111213$/ })
     ).toHaveCount(1);
 
@@ -559,12 +555,12 @@ test('add-two-long-tag-names-and-filter-by-both', async ({ page }) => {
 
     await expect(
         projectRow
-            .locator('.project-tag-chip')
+            .locator('.tag-chip')
             .filter({ hasText: /^aaaaaaaaaaaaaaaaaaaaaaaaaa$/ })
     ).toHaveCount(1);
     await expect(
         projectRow
-            .locator('.project-tag-chip')
+            .locator('.tag-chip')
             .filter({ hasText: /^12345678901234567890$/ })
     ).toHaveCount(1);
 
@@ -695,17 +691,13 @@ test('remove-tags-from-first-project', async ({ page }) => {
         .click();
     await page.getByRole('button', { name: 'Close tags list' }).click();
 
-    await expect(project1Row.locator('.project-tag-chip')).toContainText([
+    await expect(project1Row.locator('.tag-chip')).toContainText([
         'tag_1',
         'tag_2',
         'tag_3',
     ]);
-    await expect(project2Row.locator('.project-tag-chip')).toContainText(
-        'tag_2'
-    );
-    await expect(project3Row.locator('.project-tag-chip')).toContainText(
-        'tag_3'
-    );
+    await expect(project2Row.locator('.tag-chip')).toContainText('tag_2');
+    await expect(project3Row.locator('.tag-chip')).toContainText('tag_3');
 
     await expect(page).toHaveScreenshot(
         'projects-tags-remove-step-1-before-delete.png',
@@ -730,7 +722,7 @@ test('remove-tags-from-first-project', async ({ page }) => {
         .filter({ hasText: 'tag_3' })
         .click();
 
-    await expect(project1Row.locator('.project-tag-chip')).toHaveCount(0);
+    await expect(project1Row.locator('.tag-chip')).toHaveCount(0);
 
     await expect(page).toHaveScreenshot(
         'projects-tags-remove-step-2-after-delete.png',
@@ -787,7 +779,7 @@ test('cycle-tag-colors', async ({ page }) => {
     await projectRow
         .getByRole('button', { name: /Создать тег|Create tag/ })
         .click();
-    await expect(projectRow.locator('.project-tag-chip')).toContainText('blue');
+    await expect(projectRow.locator('.tag-chip')).toContainText('blue');
 
     await projectRow
         .getByRole('button', { name: 'Open color palette' })
@@ -813,7 +805,7 @@ test('cycle-tag-colors', async ({ page }) => {
         .getByRole('button', { name: /Создать тег|Create tag/ })
         .click();
     await expect(
-        projectRow.locator('.project-tag-chip').filter({ hasText: /^yellow$/ })
+        projectRow.locator('.tag-chip').filter({ hasText: /^yellow$/ })
     ).toHaveCount(1);
     await expect(page).toHaveScreenshot(
         'projects-tags-colors-step-3-added-yellow.png',
@@ -836,7 +828,7 @@ test('cycle-tag-colors', async ({ page }) => {
         .getByRole('button', { name: /Создать тег|Create tag/ })
         .click();
     await expect(
-        projectRow.locator('.project-tag-chip').filter({ hasText: /^brown$/ })
+        projectRow.locator('.tag-chip').filter({ hasText: /^brown$/ })
     ).toHaveCount(1);
     await expect(page).toHaveScreenshot(
         'projects-tags-colors-step-5-added-brown.png',

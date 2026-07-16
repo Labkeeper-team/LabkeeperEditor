@@ -9,6 +9,7 @@ import {
     useTagMap,
 } from '../../../store/selectors/projectTags';
 import { useDictionary } from '../../../store/selectors/translations';
+import { TagChip } from '../tagChip';
 import { DEFAULT_TAG_COLOR, orderTagKeysSelectedFirst } from '../tagColorUtils';
 import { setSelectedFilterTagKeys } from '../../../store/slices/projects';
 import { AppDispatch } from '../../../store';
@@ -77,19 +78,14 @@ export const ProjectTagsFilterModal = ({
                                 onClick={() => toggleTag(tagKey)}
                                 type="button"
                             >
-                                <span className="tag-option-main">
-                                    <span
-                                        className="tag-color-dot"
-                                        style={{
-                                            backgroundColor:
-                                                tagMap[tagKey]?.color ??
-                                                DEFAULT_TAG_COLOR,
-                                        }}
-                                    />
-                                    <span className="tag-label">
-                                        {tagMap[tagKey]?.label ?? tagKey}
-                                    </span>
-                                </span>
+                                <TagChip
+                                    className="tag-option-main"
+                                    label={tagMap[tagKey]?.label ?? tagKey}
+                                    color={
+                                        tagMap[tagKey]?.color ??
+                                        DEFAULT_TAG_COLOR
+                                    }
+                                />
                                 {selected ? <CheckIcon /> : null}
                             </button>
                         );

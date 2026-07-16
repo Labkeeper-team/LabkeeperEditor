@@ -5,6 +5,7 @@ import { CheckIcon, CloseIcon, PlusIcon } from '../../../icons';
 import { colors } from '../../../styles/colors';
 import { useDropdownPlacement } from '../../../hooks/useDropdownPlacement';
 import { ProjectTagColorModal } from '../projectTagColorModal';
+import { TagChip } from '../tagChip';
 import { useDictionary } from '../../../store/selectors/translations';
 import { AppDispatch } from '../../../store';
 import {
@@ -170,19 +171,13 @@ export const ProjectTagsModal = ({
                                 toggleTag(tagKey);
                             }}
                         >
-                            <span className="tag-option-main">
-                                <span
-                                    className="tag-color-dot"
-                                    style={{
-                                        backgroundColor:
-                                            tagMap[tagKey]?.color ??
-                                            DEFAULT_TAG_COLOR,
-                                    }}
-                                />
-                                <span className="tag-label">
-                                    {tagMap[tagKey]?.label ?? tagKey}
-                                </span>
-                            </span>
+                            <TagChip
+                                className="tag-option-main"
+                                label={tagMap[tagKey]?.label ?? tagKey}
+                                color={
+                                    tagMap[tagKey]?.color ?? DEFAULT_TAG_COLOR
+                                }
+                            />
                             {selectedTagsSet.has(tagKey) ? (
                                 <span className="project-tag-option-check">
                                     <CheckIcon />

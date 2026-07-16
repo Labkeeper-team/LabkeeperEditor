@@ -55,7 +55,6 @@ export const useDropdownPlacement = ({
     }, [triggerRef, dropdownRef, boundaryRef]);
 
     useLayoutEffect(() => {
-        setIsReady(false);
         recalculate();
     }, [recalculate, contentKey]);
 
