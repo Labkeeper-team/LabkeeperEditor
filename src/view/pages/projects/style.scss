@@ -19,11 +19,23 @@
         display: flex;
         flex-direction: column;
         flex: 1;
-        .projects-loading-wrapper {
+        .projects-loading-wrapper,
+        .projects-empty-state {
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 24px 0;
+            flex: 1;
+        }
+        .projects-list-scroll {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            overflow: auto;
+        }
+        .projects-list {
+            display: flex;
+            flex-direction: column;
             flex: 1;
         }
         .projects-loading-icon-with-text {
@@ -123,33 +135,6 @@
         overflow-y: hidden;
         scrollbar-width: thin;
     }
-    .projects-selected-filter-chip {
-        border: 1px solid $gray-50;
-        border-radius: 999px;
-        padding: 2px 8px;
-        font-size: 12px;
-        line-height: 16px;
-        background: $gray-60;
-        color: $gray-20;
-        max-width: 160px;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        flex: 0 0 auto;
-    }
-    .tag-color-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        flex: 0 0 auto;
-    }
-    .tag-label {
-        display: block;
-        min-width: 0;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
     .tag-option-main {
         display: inline-flex;
         align-items: center;
@@ -212,91 +197,8 @@
     .add-project-button-footer {
         margin-bottom: 20px;
     }
-    td:has(.delete-project-container) {
-        padding-top: 0px;
-        padding-bottom: 0px;
-    }
-    .delete-project-container {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        gap: 5px;
-        justify-content: end;
-        padding-left: 5px;
-        // ХАК
-        height: 62px;
-        &:hover {
-            cursor: pointer;
-        }
-        .delete-icon {
-            background-color: $red-20;
-            border-radius: 45px;
-            height: 16px;
-            width: 16px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            rotate: 45deg;
-            svg {
-                path {
-                    fill: $red-10;
-                }
-            }
-        }
-    }
-    .project-tags-cell {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
-        align-items: flex-start;
-        align-content: flex-start;
-        height: 44px;
-        overflow-y: auto;
-        overflow-x: hidden;
-        max-width: 100%;
-        scrollbar-width: thin;
-    }
-    .project-tags-cell.single-line {
-        align-items: center;
-        align-content: center;
-    }
-    .project-tag-chip {
-        border: 1px solid $gray-50;
-        border-radius: 999px;
-        padding: 2px 8px;
-        font-size: 12px;
-        color: $gray-20;
-        background: $gray-60;
-        line-height: 16px;
-        max-width: 160px;
-        flex: 0 0 auto;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-    }
-    .project-actions-container {
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        gap: 8px;
-    }
-    .project-tags-anchor {
-        position: relative;
-        display: inline-flex;
-        align-items: center;
-    }
-    .project-tags-button {
-        border: 1px solid $gray-50;
-        background: $white;
-        color: $gray-20;
-        border-radius: 999px;
-        font-size: 12px;
-        line-height: 16px;
-        height: 28px;
-        padding: 0 10px;
-        cursor: pointer;
-    }
     table {
+        margin-top: 30px;
         border-collapse: collapse;
         tr {
             text-align: left;

@@ -1,14 +1,5 @@
 import { useDispatch, useSelector } from 'react-redux';
-import { formatDistance } from 'date-fns';
-import { enGB, ru } from 'date-fns/locale';
-import React, {
-    useCallback,
-    useMemo,
-    useState,
-    useEffect,
-    useLayoutEffect,
-    useRef,
-} from 'react';
+import React, { useCallback, useState, useEffect, useRef } from 'react';
 
 import './style.scss';
 import { Typography } from '../../components/typography';
@@ -18,10 +9,15 @@ import { Modal } from '../../components/modal';
 import { AddProjectModal } from './addProjectModal';
 import { DeleteProjectModal } from './deleteProjectModal';
 import { ProjectShort } from '../../../model/domain';
-import { ProjectTitle } from './projectTitle';
-import { ProjectTagsModal } from './projectTagsModal';
+import { ProjectRow } from './projectRow';
 import { ProjectTagsFilterModal } from './projectTagsFilterModal';
+import { TagChip } from './tagChip';
 import { DEFAULT_TAG_COLOR } from './tagColorUtils';
+import {
+    SortDirection,
+    SortMode,
+    useSortedFilteredProjects,
+} from './useSortedFilteredProjects';
 import {
     useAllAvailableTagKeys,
     useProjectTagKeysByProject,
@@ -31,16 +27,8 @@ import {
 import { useProjects } from '../../store/selectors/program';
 import { colors } from '../../styles/colors';
 import { setSelectedFilterTagKeys } from '../../store/slices/projects';
-import {
-    useCurrentLanguage,
-    useDictionary,
-} from '../../store/selectors/translations';
+import { useDictionary } from '../../store/selectors/translations';
 import { AppDispatch, StorageState } from '../../store';
-import { controller } from '../../../main.tsx';
-
-type SortMode = 'time' | 'title';
-type SortDirection = 'asc' | 'desc';
-type TagDropdownPlacement = 'top' | 'bottom';
 
 export const ProjectsPage = () => {
     const [showAddModal, setShowAddModal] = useState(false);
@@ -53,22 +41,10 @@ export const ProjectsPage = () => {
     const [openedTagPickerProjectId, setOpenedTagPickerProjectId] = useState<
         string | null
     >(null);
-    const [tagDropdownPlacement, setTagDropdownPlacement] =
-        useState<TagDropdownPlacement>('bottom');
-    const [isTagDropdownReady, setIsTagDropdownReady] = useState(false);
-    const [singleLineTagsByProject, setSingleLineTagsByProject] = useState<
-        Record<string, boolean>
-    >({});
-    const openedDropdownRef = useRef<HTMLDivElement | null>(null);
     const tagsFilterAnchorRef = useRef<HTMLDivElement | null>(null);
     const projectsScrollContainerRef = useRef<HTMLDivElement | null>(null);
-    const projectTagsCellRefs = useRef<Record<string, HTMLDivElement | null>>(
-        {}
-    );
-    const tagButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
     const dictionary = useSelector(useDictionary);
-    const lang = useSelector(useCurrentLanguage);
     const projects = useSelector(useProjects);
     const allAvailableTagKeys = useSelector(useAllAvailableTagKeys);
     const selectedFilterTagKeys = useSelector(useSelectedFilterTagKeys);
@@ -78,52 +54,11 @@ export const ProjectsPage = () => {
         (state: StorageState) => state.ide.getProjectsRequestState
     );
     const dispatch = useDispatch<AppDispatch>();
-    useEffect(() => {
-        Object.values(projectTagsCellRefs.current).forEach((cell) => {
-            if (cell) {
-                cell.scrollTop = 0;
-            }
-        });
-    }, [projectTagKeysByProject]);
 
-    const recalculateTagsRowsLayout = useCallback(() => {
-        const next: Record<string, boolean> = {};
-        for (const project of projects) {
-            const cell = projectTagsCellRefs.current[project.projectId];
-            if (!cell) {
-                continue;
-            }
-            const children = Array.from(cell.children) as HTMLElement[];
-            if (children.length <= 1) {
-                next[project.projectId] = true;
-                continue;
-            }
-            const firstTop = children[0].offsetTop;
-            next[project.projectId] = children.every(
-                (child) => child.offsetTop === firstTop
-            );
-        }
-        setSingleLineTagsByProject(next);
-    }, [projects]);
-
-    useLayoutEffect(() => {
-        recalculateTagsRowsLayout();
-    }, [projectTagKeysByProject, projects, recalculateTagsRowsLayout]);
-
-    useEffect(() => {
-        window.addEventListener('resize', recalculateTagsRowsLayout);
-        return () => {
-            window.removeEventListener('resize', recalculateTagsRowsLayout);
-        };
-    }, [recalculateTagsRowsLayout]);
-
-    useEffect(() => {
-        if (!showTagsFilterModal) {
-            return;
-        }
+    const closeTagsUi = useCallback(() => {
+        setShowTagsFilterModal(false);
         setOpenedTagPickerProjectId(null);
-        setIsTagDropdownReady(false);
-    }, [showTagsFilterModal]);
+    }, []);
 
     useEffect(() => {
         if (!showTagsFilterModal) {
@@ -143,107 +78,6 @@ export const ProjectsPage = () => {
         };
     }, [showTagsFilterModal]);
 
-    const applyDropdownPlacement = useCallback(
-        (triggerRect: DOMRect, dropdownHeight: number) => {
-            const viewport = window.visualViewport;
-            const viewportTop = 0;
-            const viewportBottom = Math.max(
-                0,
-                Math.floor(viewport?.height ?? window.innerHeight)
-            );
-            const scrollContainerRect =
-                projectsScrollContainerRef.current?.getBoundingClientRect();
-            // Strict fit inside the actual projects list viewport.
-            const boundaryTop = scrollContainerRect
-                ? Math.max(viewportTop, scrollContainerRect.top)
-                : viewportTop;
-            const boundaryBottom = scrollContainerRect
-                ? Math.min(viewportBottom, scrollContainerRect.bottom)
-                : viewportBottom;
-            const availableBelow = Math.max(
-                0,
-                boundaryBottom - triggerRect.bottom
-            );
-            const availableAbove = Math.max(0, triggerRect.top - boundaryTop);
-            const requiredHeight = dropdownHeight / 0.95;
-            const fitsBelow = availableBelow >= requiredHeight;
-            const fitsAbove = availableAbove >= requiredHeight;
-            const nextPlacement: TagDropdownPlacement = fitsBelow
-                ? 'bottom'
-                : fitsAbove
-                  ? 'top'
-                  : 'top';
-            if (nextPlacement !== tagDropdownPlacement) {
-                setTagDropdownPlacement(nextPlacement);
-            }
-        },
-        [tagDropdownPlacement]
-    );
-
-    const recalculateDropdownPlacement = useCallback(() => {
-        if (!openedTagPickerProjectId) {
-            return;
-        }
-        const triggerElement = tagButtonRefs.current[openedTagPickerProjectId];
-        if (!triggerElement) {
-            return;
-        }
-        const triggerRect = triggerElement.getBoundingClientRect();
-        const dropdownHeight =
-            openedDropdownRef.current?.getBoundingClientRect().height ?? 250;
-        applyDropdownPlacement(triggerRect, dropdownHeight);
-        setIsTagDropdownReady(true);
-    }, [openedTagPickerProjectId, applyDropdownPlacement]);
-
-    useLayoutEffect(() => {
-        if (!openedTagPickerProjectId) {
-            return;
-        }
-        // Recalculate before paint to avoid intermediate wrong placement flash.
-        recalculateDropdownPlacement();
-    }, [
-        openedTagPickerProjectId,
-        projectTagKeysByProject,
-        recalculateDropdownPlacement,
-    ]);
-
-    useEffect(() => {
-        if (!openedTagPickerProjectId) {
-            return;
-        }
-        const updatePlacement = () => recalculateDropdownPlacement();
-        const viewport = window.visualViewport;
-        const resizeObserver =
-            typeof ResizeObserver !== 'undefined'
-                ? new ResizeObserver(updatePlacement)
-                : null;
-        if (resizeObserver) {
-            resizeObserver.observe(document.documentElement);
-        }
-        window.addEventListener('resize', updatePlacement);
-        window.addEventListener('scroll', updatePlacement, true);
-        viewport?.addEventListener('resize', updatePlacement);
-        viewport?.addEventListener('scroll', updatePlacement);
-        return () => {
-            resizeObserver?.disconnect();
-            window.removeEventListener('resize', updatePlacement);
-            window.removeEventListener('scroll', updatePlacement, true);
-            viewport?.removeEventListener('resize', updatePlacement);
-            viewport?.removeEventListener('scroll', updatePlacement);
-        };
-    }, [openedTagPickerProjectId, recalculateDropdownPlacement]);
-
-    const localize = useMemo(() => {
-        switch (lang) {
-            case 'ru': {
-                return ru;
-            }
-            default: {
-                return enGB;
-            }
-        }
-    }, [lang]);
-
     const onAddProjectClick = useCallback(() => {
         setShowAddModal(true);
     }, [setShowAddModal]);
@@ -256,23 +90,26 @@ export const ProjectsPage = () => {
         [setShowDeleteModal]
     );
 
+    const onTagsFilterButtonClick = useCallback(() => {
+        if (showTagsFilterModal) {
+            setShowTagsFilterModal(false);
+            return;
+        }
+        setOpenedTagPickerProjectId(null);
+        setShowTagsFilterModal(true);
+    }, [showTagsFilterModal]);
+
     const onTagPickerButtonClick = useCallback(
         (e: React.MouseEvent<HTMLElement, unknown>, projectId: string) => {
             e.stopPropagation();
             if (openedTagPickerProjectId === projectId) {
-                setIsTagDropdownReady(false);
                 setOpenedTagPickerProjectId(null);
                 return;
             }
             setShowTagsFilterModal(false);
-            const triggerRect = (
-                e.currentTarget as HTMLElement
-            ).getBoundingClientRect();
-            applyDropdownPlacement(triggerRect, 250);
-            setIsTagDropdownReady(false);
             setOpenedTagPickerProjectId(projectId);
         },
-        [openedTagPickerProjectId, applyDropdownPlacement]
+        [openedTagPickerProjectId]
     );
 
     useEffect(() => {
@@ -290,52 +127,14 @@ export const ProjectsPage = () => {
         }
     }, [allAvailableTagKeys, dispatch, selectedFilterTagKeys]);
 
-    const sortedProjects = useMemo(() => {
-        const toTimestamp = (value?: string) => {
-            if (!value) {
-                return 0;
-            }
-            const timestamp = new Date(value).getTime();
-            return Number.isNaN(timestamp) ? 0 : timestamp;
-        };
-        const titleCollator = new Intl.Collator(['en', 'ru'], {
-            sensitivity: 'base',
-            numeric: true,
-        });
-        const byTimeDesc = (a: ProjectShort, b: ProjectShort) =>
-            toTimestamp(b.lastModified) - toTimestamp(a.lastModified);
-        const byTimeAsc = (a: ProjectShort, b: ProjectShort) =>
-            toTimestamp(a.lastModified) - toTimestamp(b.lastModified);
-        const byTitleAsc = (a: ProjectShort, b: ProjectShort) =>
-            titleCollator.compare(a.title ?? '', b.title ?? '');
-        const byTitleDesc = (a: ProjectShort, b: ProjectShort) =>
-            titleCollator.compare(b.title ?? '', a.title ?? '');
+    const filteredProjects = useSortedFilteredProjects({
+        projects,
+        sortMode,
+        sortDirection,
+        selectedFilterTagKeys,
+        projectTagKeysByProject,
+    });
 
-        const projectsCopy = [...projects];
-        if (sortMode === 'title') {
-            return projectsCopy.sort(
-                sortDirection === 'asc' ? byTitleAsc : byTitleDesc
-            );
-        }
-        return projectsCopy.sort(
-            sortDirection === 'asc' ? byTimeAsc : byTimeDesc
-        );
-    }, [projects, sortMode, sortDirection]);
-
-    const filteredProjects = useMemo(() => {
-        if (!selectedFilterTagKeys.length) {
-            return sortedProjects;
-        }
-        const selectedSet = new Set(selectedFilterTagKeys);
-        return sortedProjects.filter((project) => {
-            const projectTagSet = new Set(
-                projectTagKeysByProject[project.projectId] ?? []
-            );
-            return Array.from(selectedSet).every((tagKey) =>
-                projectTagSet.has(tagKey)
-            );
-        });
-    }, [projectTagKeysByProject, selectedFilterTagKeys, sortedProjects]);
     return (
         <>
             <div className="projects-container">
@@ -349,23 +148,14 @@ export const ProjectsPage = () => {
                         <div className="projects-filter-controls">
                             <div className="projects-selected-filter-tags">
                                 {selectedFilterTagKeys.map((tagKey) => (
-                                    <span
-                                        className="projects-selected-filter-chip"
+                                    <TagChip
                                         key={`selected-filter-tag-${tagKey}`}
-                                        title={tagMap[tagKey]?.label ?? tagKey}
-                                    >
-                                        <span
-                                            className="tag-color-dot"
-                                            style={{
-                                                backgroundColor:
-                                                    tagMap[tagKey]?.color ??
-                                                    DEFAULT_TAG_COLOR,
-                                            }}
-                                        />
-                                        <span className="tag-label">
-                                            {tagMap[tagKey]?.label ?? tagKey}
-                                        </span>
-                                    </span>
+                                        label={tagMap[tagKey]?.label ?? tagKey}
+                                        color={
+                                            tagMap[tagKey]?.color ??
+                                            DEFAULT_TAG_COLOR
+                                        }
+                                    />
                                 ))}
                             </div>
                             <div
@@ -375,9 +165,7 @@ export const ProjectsPage = () => {
                                 <button
                                     className="projects-filter-button"
                                     type="button"
-                                    onClick={() =>
-                                        setShowTagsFilterModal((prev) => !prev)
-                                    }
+                                    onClick={onTagsFilterButtonClick}
                                 >
                                     {dictionary.projects.tags.filter_open}
                                     {selectedFilterTagKeys.length
@@ -431,14 +219,7 @@ export const ProjectsPage = () => {
                             </div>
                         </div>
                     ) : !projects.length ? (
-                        <div
-                            style={{
-                                display: 'flex',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                flex: 1,
-                            }}
-                        >
+                        <div className="projects-empty-state">
                             <Button
                                 classname="add-project-button"
                                 rounded
@@ -452,21 +233,10 @@ export const ProjectsPage = () => {
                     ) : (
                         <div
                             ref={projectsScrollContainerRef}
-                            style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                flex: 1,
-                                overflow: 'auto',
-                            }}
+                            className="projects-list-scroll"
                         >
-                            <div
-                                style={{
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    flex: 1,
-                                }}
-                            >
-                                <table style={{ marginTop: 30 }}>
+                            <div className="projects-list">
+                                <table>
                                     <tr>
                                         <th>
                                             <div className="projects-header-cell">
@@ -610,217 +380,25 @@ export const ProjectsPage = () => {
                                         <th></th>
                                     </tr>
                                     {filteredProjects.map((p) => (
-                                        <tr
-                                            onClick={() => {
-                                                setShowTagsFilterModal(false);
-                                                setOpenedTagPickerProjectId(
-                                                    null
-                                                );
-                                                if (p.projectId) {
-                                                    dispatch(
-                                                        controller.onRowClickedInProjectsListRequest(
-                                                            {
-                                                                projectId:
-                                                                    p.projectId,
-                                                            }
-                                                        )
-                                                    );
-                                                }
-                                            }}
+                                        <ProjectRow
                                             key={`${p.projectId}-${p.title}`}
-                                        >
-                                            {(() => {
-                                                return (
-                                                    <>
-                                                        <td
-                                                            style={{
-                                                                height: 63,
-                                                            }}
-                                                        >
-                                                            <ProjectTitle
-                                                                project={p}
-                                                            />
-                                                        </td>
-                                                        <td>
-                                                            <Typography
-                                                                color={
-                                                                    colors.gray30
-                                                                }
-                                                                text={formatDistance(
-                                                                    new Date(),
-                                                                    new Date(
-                                                                        p.lastModified!
-                                                                    ),
-                                                                    {
-                                                                        locale: localize,
-                                                                    }
-                                                                )}
-                                                                type="body-large"
-                                                            />
-                                                        </td>
-                                                        <td>
-                                                            <div
-                                                                className={`project-tags-cell ${
-                                                                    singleLineTagsByProject[
-                                                                        p
-                                                                            .projectId
-                                                                    ]
-                                                                        ? 'single-line'
-                                                                        : ''
-                                                                }`}
-                                                                ref={(
-                                                                    element
-                                                                ) => {
-                                                                    projectTagsCellRefs.current[
-                                                                        p.projectId
-                                                                    ] = element;
-                                                                }}
-                                                            >
-                                                                {(
-                                                                    projectTagKeysByProject[
-                                                                        p
-                                                                            .projectId
-                                                                    ] ?? []
-                                                                ).length ? (
-                                                                    (
-                                                                        projectTagKeysByProject[
-                                                                            p
-                                                                                .projectId
-                                                                        ] ?? []
-                                                                    ).map(
-                                                                        (
-                                                                            tagKey
-                                                                        ) => (
-                                                                            <span
-                                                                                className="project-tag-chip"
-                                                                                key={`${p.projectId}-${tagKey}`}
-                                                                                title={
-                                                                                    tagMap[
-                                                                                        tagKey
-                                                                                    ]
-                                                                                        ?.label ??
-                                                                                    tagKey
-                                                                                }
-                                                                            >
-                                                                                <span
-                                                                                    className="tag-color-dot"
-                                                                                    style={{
-                                                                                        backgroundColor:
-                                                                                            tagMap[
-                                                                                                tagKey
-                                                                                            ]
-                                                                                                ?.color ??
-                                                                                            DEFAULT_TAG_COLOR,
-                                                                                    }}
-                                                                                />
-                                                                                <span className="tag-label">
-                                                                                    {tagMap[
-                                                                                        tagKey
-                                                                                    ]
-                                                                                        ?.label ??
-                                                                                        tagKey}
-                                                                                </span>
-                                                                            </span>
-                                                                        )
-                                                                    )
-                                                                ) : (
-                                                                    <Typography
-                                                                        color={
-                                                                            colors.gray30
-                                                                        }
-                                                                        text="—"
-                                                                        type="body-large"
-                                                                    />
-                                                                )}
-                                                            </div>
-                                                        </td>
-                                                        <td>
-                                                            <div className="project-actions-container">
-                                                                <div className="project-tags-anchor">
-                                                                    <button
-                                                                        type="button"
-                                                                        ref={(
-                                                                            element
-                                                                        ) => {
-                                                                            tagButtonRefs.current[
-                                                                                p.projectId
-                                                                            ] =
-                                                                                element;
-                                                                        }}
-                                                                        onClick={(
-                                                                            e
-                                                                        ) =>
-                                                                            onTagPickerButtonClick(
-                                                                                e,
-                                                                                p.projectId
-                                                                            )
-                                                                        }
-                                                                        className="project-tags-button"
-                                                                    >
-                                                                        {
-                                                                            dictionary
-                                                                                .projects
-                                                                                .tags
-                                                                                .add
-                                                                        }
-                                                                    </button>
-                                                                    {openedTagPickerProjectId ===
-                                                                    p.projectId ? (
-                                                                        <ProjectTagsModal
-                                                                            dropdownRef={
-                                                                                openedDropdownRef
-                                                                            }
-                                                                            onClose={() =>
-                                                                                setOpenedTagPickerProjectId(
-                                                                                    null
-                                                                                )
-                                                                            }
-                                                                            projectId={
-                                                                                p.projectId
-                                                                            }
-                                                                            placement={
-                                                                                tagDropdownPlacement
-                                                                            }
-                                                                            isReady={
-                                                                                isTagDropdownReady
-                                                                            }
-                                                                        />
-                                                                    ) : null}
-                                                                </div>
-                                                                <div
-                                                                    onClick={(
-                                                                        e
-                                                                    ) =>
-                                                                        onClickDeleteProject(
-                                                                            e,
-                                                                            p
-                                                                        )
-                                                                    }
-                                                                    className="delete-project-container"
-                                                                >
-                                                                    <div className="delete-icon">
-                                                                        <PlusIcon />
-                                                                    </div>
-                                                                    <Typography
-                                                                        color={
-                                                                            colors.black
-                                                                        }
-                                                                        text={
-                                                                            dictionary.delete
-                                                                        }
-                                                                    />
-                                                                    <div
-                                                                        style={{
-                                                                            width: 10,
-                                                                        }}
-                                                                    />
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                    </>
-                                                );
-                                            })()}
-                                        </tr>
+                                            project={p}
+                                            isTagPickerOpen={
+                                                openedTagPickerProjectId ===
+                                                p.projectId
+                                            }
+                                            tagsListBoundaryRef={
+                                                projectsScrollContainerRef
+                                            }
+                                            onTagPickerButtonClick={(e) =>
+                                                onTagPickerButtonClick(
+                                                    e,
+                                                    p.projectId
+                                                )
+                                            }
+                                            onCloseTagsUi={closeTagsUi}
+                                            onDeleteClick={onClickDeleteProject}
+                                        />
                                     ))}
                                 </table>
                             </div>
