@@ -60,7 +60,7 @@ export const mapTokenPricesToPackages = (
 
 /** Placeholder targets until real legal pages are published. */
 export const TOKEN_LEGAL_LINKS = {
-    publicOffer: 'https://example.com/labkeeper-public-offer',
-    personalData: 'https://example.com/labkeeper-personal-data',
-    privacyPolicy: 'https://example.com/labkeeper-privacy-policy',
+    publicOffer: '/oferta',
+    personalData: '/soglas',
+    privacyPolicy: '/privacy',
 } as const;
