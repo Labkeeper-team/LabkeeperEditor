@@ -82,11 +82,17 @@ export type ProjectPromptRequestState =
     | 'loading'
     | 'ok'
     | 'bad_request'
+    | 'payment_required'
     | 'unknownError';
 
 export type PendingSegmentEditorCursor = {
     segmentIndex: number;
     offset: number;
+};
+
+export type EditorNavigationTarget = {
+    segmentIndex: number;
+    line: number;
 };
 
 class MockViewModelRepositoryState {
@@ -96,6 +102,11 @@ class MockViewModelRepositoryState {
     search: string | undefined = undefined;
     previousActiveSegmentIndex = -1;
     pendingSegmentEditorCursor: PendingSegmentEditorCursor | null = null;
+    activeEditorLine: number | null = null;
+    synctexEditorPosition: EditorNavigationTarget | null = null;
+    pdfClickPosition: import('../../model/rpi').PdfPosition | null = null;
+    pdfNavigationTarget: import('../../model/rpi').PdfPosition | null = null;
+    editorNavigationTarget: EditorNavigationTarget | null = null;
     redoEnabled: boolean = false;
     undoEnabled: boolean = false;
     cloneRequestState: CloneRequestState = 'unknown';
@@ -103,9 +114,14 @@ class MockViewModelRepositoryState {
     getFilesRequestState: GetFilesRequestState = 'unknown';
     getProjectsRequestState: GetProjectsRequestState = 'unknown';
     saveProjectRequestState: SaveProjectRequestState = 'unknown';
+    saveTextFileRequestState: SaveProjectRequestState = 'unknown';
+    loadTextFileRequestState: SaveProjectRequestState = 'unknown';
+    activeTextFile: string | null = null;
+    activeImageFile: string | null = null;
+    textFileContent = '';
 
     pdfUri: string | undefined;
-    mode: ProjectType = 'markdown';
+    mode: ProjectType = 'latex';
     instructionExpanded = false;
     language: 'ru' | 'en' = 'ru';
     lastProgram: Program = {
@@ -141,6 +157,8 @@ class MockViewModelRepositoryState {
     filesToDelete: LabkeeperFile[] = [];
     captchaBypassToken: string | undefined = undefined;
     showProjectPromptModal = false;
+    currentFolderPath = '';
+    ephemeralFolders: string[] = [];
 
     email: string = '';
     id: number = -1;
@@ -212,9 +230,23 @@ export const mockViewModelState = (): MockViewModelRepository => {
                 mockViewModelState.getProjectsRequestState,
             saveProjectRequestState: () =>
                 mockViewModelState.saveProjectRequestState,
+            saveTextFileRequestState: () =>
+                mockViewModelState.saveTextFileRequestState,
+            loadTextFileRequestState: () =>
+                mockViewModelState.loadTextFileRequestState,
+            activeTextFile: () => mockViewModelState.activeTextFile,
+            activeImageFile: () => mockViewModelState.activeImageFile,
+            textFileContent: () => mockViewModelState.textFileContent,
             pdfUpdated: () => mockViewModelState.pdfUpdated,
             projectPromptRequestState: () =>
                 mockViewModelState.projectPromptRequestState,
+            activeEditorLine: () => mockViewModelState.activeEditorLine,
+            synctexEditorPosition: () =>
+                mockViewModelState.synctexEditorPosition,
+            pdfClickPosition: () => mockViewModelState.pdfClickPosition,
+            pdfNavigationTarget: () => mockViewModelState.pdfNavigationTarget,
+            editorNavigationTarget: () =>
+                mockViewModelState.editorNavigationTarget,
 
             setProjectPromptRequestStatus: (v) =>
                 (mockViewModelState.projectPromptRequestState = v),
@@ -229,6 +261,16 @@ export const mockViewModelState = (): MockViewModelRepository => {
                 (mockViewModelState.getProjectRequestState = v),
             setSaveProjectRequestState: (v: SaveProjectRequestState) =>
                 (mockViewModelState.saveProjectRequestState = v),
+            setSaveTextFileRequestState: (v: SaveProjectRequestState) =>
+                (mockViewModelState.saveTextFileRequestState = v),
+            setLoadTextFileRequestState: (v: SaveProjectRequestState) =>
+                (mockViewModelState.loadTextFileRequestState = v),
+            setActiveTextFile: (fileName: string | null) =>
+                (mockViewModelState.activeTextFile = fileName),
+            setActiveImageFile: (fileName: string | null) =>
+                (mockViewModelState.activeImageFile = fileName),
+            setTextFileContent: (content: string) =>
+                (mockViewModelState.textFileContent = content),
             setUndoEnabled: (v: boolean) =>
                 (mockViewModelState.undoEnabled = v),
             setRedoEnabled: (v: boolean) =>
@@ -241,6 +283,16 @@ export const mockViewModelState = (): MockViewModelRepository => {
                 (mockViewModelState.previousActiveSegmentIndex = index),
             setPendingSegmentEditorCursor: (value) =>
                 (mockViewModelState.pendingSegmentEditorCursor = value),
+            setActiveEditorLine: (line) =>
+                (mockViewModelState.activeEditorLine = line),
+            setSynctexEditorPosition: (position) =>
+                (mockViewModelState.synctexEditorPosition = position),
+            setPdfClickPosition: (position) =>
+                (mockViewModelState.pdfClickPosition = position),
+            setPdfNavigationTarget: (target) =>
+                (mockViewModelState.pdfNavigationTarget = target),
+            setEditorNavigationTarget: (target) =>
+                (mockViewModelState.editorNavigationTarget = target),
         },
         persistenceViewModelRepository: {
             instructionExpanded: () => mockViewModelState.instructionExpanded,
@@ -328,6 +380,8 @@ export const mockViewModelState = (): MockViewModelRepository => {
             captchaBypassToken: () => mockViewModelState.captchaBypassToken,
             showProjectPromptModal: () =>
                 mockViewModelState.showProjectPromptModal,
+            currentFolderPath: () => mockViewModelState.currentFolderPath,
+            ephemeralFolders: () => mockViewModelState.ephemeralFolders,
 
             setShowProjectPromptModal: (v) =>
                 (mockViewModelState.showProjectPromptModal = v),
@@ -350,6 +404,15 @@ export const mockViewModelState = (): MockViewModelRepository => {
                 (mockViewModelState.isFileDraggedToManager = v),
             setFilesToDelete: (v: LabkeeperFile[]) =>
                 (mockViewModelState.filesToDelete = structuredClone(v)),
+            setCurrentFolderPath: (path: string) =>
+                (mockViewModelState.currentFolderPath = path),
+            setEphemeralFolders: (folders: string[]) =>
+                (mockViewModelState.ephemeralFolders = [...folders]),
+            addEphemeralFolder: (folder: string) => {
+                if (!mockViewModelState.ephemeralFolders.includes(folder)) {
+                    mockViewModelState.ephemeralFolders.push(folder);
+                }
+            },
         },
         userViewModelRepository: {
             email: () => mockViewModelState.email,
@@ -409,8 +472,18 @@ export interface IdeViewModelRepository {
     getFilesRequestState: () => GetFilesRequestState;
     getProjectsRequestState: () => GetProjectsRequestState;
     saveProjectRequestState: () => SaveProjectRequestState;
+    saveTextFileRequestState: () => SaveProjectRequestState;
+    loadTextFileRequestState: () => SaveProjectRequestState;
+    activeTextFile: () => string | null;
+    activeImageFile: () => string | null;
+    textFileContent: () => string;
     projectPromptRequestState: () => ProjectPromptRequestState;
     pdfUpdated: () => number;
+    activeEditorLine: () => number | null;
+    synctexEditorPosition: () => EditorNavigationTarget | null;
+    pdfClickPosition: () => import('../../model/rpi').PdfPosition | null;
+    pdfNavigationTarget: () => import('../../model/rpi').PdfPosition | null;
+    editorNavigationTarget: () => EditorNavigationTarget | null;
 
     setProjectPromptRequestStatus: (v: ProjectPromptRequestState) => void;
     setPdfUpdated: (v: number) => void;
@@ -422,11 +495,25 @@ export interface IdeViewModelRepository {
     setPendingSegmentEditorCursor: (
         value: PendingSegmentEditorCursor | null
     ) => void;
+    setActiveEditorLine: (line: number | null) => void;
+    setSynctexEditorPosition: (position: EditorNavigationTarget | null) => void;
+    setPdfClickPosition: (
+        position: import('../../model/rpi').PdfPosition | null
+    ) => void;
+    setPdfNavigationTarget: (
+        target: import('../../model/rpi').PdfPosition | null
+    ) => void;
+    setEditorNavigationTarget: (target: EditorNavigationTarget | null) => void;
     setCloneRequestState: (state: CloneRequestState) => void;
     setGetProjectRequestState: (state: GetProjectRequestState) => void;
     setGetFilesRequestState: (state: GetFilesRequestState) => void;
     setGetProjectsRequestState: (state: GetProjectsRequestState) => void;
     setSaveProjectRequestState: (state: SaveProjectRequestState) => void;
+    setSaveTextFileRequestState: (state: SaveProjectRequestState) => void;
+    setLoadTextFileRequestState: (state: SaveProjectRequestState) => void;
+    setActiveTextFile: (fileName: string | null) => void;
+    setActiveImageFile: (fileName: string | null) => void;
+    setTextFileContent: (content: string) => void;
 }
 
 export interface SettingsViewModelRepository {
@@ -442,6 +529,8 @@ export interface SettingsViewModelRepository {
     captchaBypassToken: () => string | undefined;
     filesToDelete: () => LabkeeperFile[];
     showProjectPromptModal: () => boolean;
+    currentFolderPath: () => string;
+    ephemeralFolders: () => string[];
 
     setShowProjectPromptModal: (v: boolean) => void;
     setCaptchaBypassToken: (token?: string) => void;
@@ -454,6 +543,9 @@ export interface SettingsViewModelRepository {
     setIsCompiling: (value: boolean) => void;
     setIsFileDraggedToFileManager: (value: boolean) => void;
     setFilesToDelete: (files: LabkeeperFile[]) => void;
+    setCurrentFolderPath: (path: string) => void;
+    setEphemeralFolders: (folders: string[]) => void;
+    addEphemeralFolder: (folder: string) => void;
 }
 
 export interface ProjectsViewModelRepository {

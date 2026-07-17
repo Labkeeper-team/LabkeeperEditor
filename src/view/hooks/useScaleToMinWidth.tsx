@@ -1,5 +1,6 @@
 import { useLayoutEffect } from 'react';
 import { Routes } from '../../viewModel/routes.ts';
+import { refreshCodeMirrorLayout } from '../utils/refreshCodeMirrorLayout';
 
 const RESCALE_EVENT = 'labkeeper:viewport-rescale';
 
@@ -42,6 +43,7 @@ export function useScaleToMinWidth(ref, minWidth = 1024) {
                 '--mobile-scale',
                 k.toString()
             );
+            refreshCodeMirrorLayout();
         };
 
         //вызываем сразу — важно для «первой загрузки» на мобильном

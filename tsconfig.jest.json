@@ -1,11 +1,16 @@
 {
-    "extends": "./tsconfig.json",
-    "files": [],
+    "extends": "./tsconfig.app.json",
     "compilerOptions": {
-        "jsx": "react-jsx",
-        "allowImportingTsExtensions": true,
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "noEmit": true,
+        "types": ["jest", "node"],
         "esModuleInterop": true,
         "resolveJsonModule": true,
-        "lib": ["es2021"]
-    }
+        "allowImportingTsExtensions": true,
+        "isolatedModules": false,
+        "noUnusedLocals": false,
+        "noUnusedParameters": false
+    },
+    "include": ["src/tests/jest/**/*", "src/**/*"]
 }

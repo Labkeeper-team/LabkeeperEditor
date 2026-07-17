@@ -14,6 +14,10 @@ export const DeleteFilesModal = () => {
     const filesToDelete = useSelector(
         (state: StorageState) => state.settings.filesToDelete
     );
+    const getFilesRequestState = useSelector(
+        (state: StorageState) => state.ide.getFilesRequestState
+    );
+    const isDeleting = getFilesRequestState === 'loading';
 
     const onClose = () => {
         dispatch(controller.onDeleteFilesCancelRequest());
@@ -51,6 +55,14 @@ export const DeleteFilesModal = () => {
                         color="blue"
                         minimize={false}
                         title={dictionary.yes}
+                        disabled={isDeleting}
+                        titleIcon={
+                            isDeleting
+                                ? () => (
+                                      <span className="delete-files-spinner" />
+                                  )
+                                : undefined
+                        }
                         onPress={onConfirm}
                     />
                     <Button
@@ -58,6 +70,7 @@ export const DeleteFilesModal = () => {
                         color="gray"
                         minimize={false}
                         title={dictionary.no}
+                        disabled={isDeleting}
                         onPress={onClose}
                     />
                 </div>

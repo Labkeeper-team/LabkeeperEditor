@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`Simple array 1`] = `
 {
@@ -10,7 +10,7 @@ exports[`Simple array 1`] = `
       >
         <div
           id="compile-result"
-          style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+          style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
         >
           <div
             class="result-segment-container"
@@ -161,7 +161,7 @@ exports[`Simple array 1`] = `
     >
       <div
         id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+        style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
       >
         <div
           class="result-segment-container"
@@ -369,7 +369,7 @@ exports[`Simple detailed segment 1`] = `
       >
         <div
           id="compile-result"
-          style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+          style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
         >
           <div
             class="result-segment-container"
@@ -614,7 +614,7 @@ exports[`Simple detailed segment 1`] = `
     >
       <div
         id="compile-result"
-        style="margin: 6px; flex: 1; overflow-x: hidden; overflow-y: auto;"
+        style="margin: 6px; flex: 1 1 0%; overflow-x: hidden; overflow-y: auto;"
       >
         <div
           class="result-segment-container"

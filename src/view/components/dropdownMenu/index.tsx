@@ -24,19 +24,16 @@ export const DropdownMenu = (
     const ref = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        if (ref.current?.clientWidth && !widthOfStopDefaulKistener) {
-            setWidth(ref.current?.clientWidth);
+        if (showMenu && ref.current && !widthOfStopDefaulKistener) {
+            setWidth(ref.current.clientWidth);
         }
-    }, [ref.current?.clientWidth, widthOfStopDefaulKistener, showMenu]);
+    }, [showMenu, widthOfStopDefaulKistener]);
 
     const onHide = () => {
         setShowMenu(false);
     };
-    useEffect(() => {
-        if (!props.children) {
-            onHide();
-        }
-    }, [props.children]);
+
+    const isMenuVisible = showMenu && props.children;
 
     useHotkeys(
         'esc',
@@ -56,15 +53,15 @@ export const DropdownMenu = (
                     right: 0,
                     height: 40,
                     width:
-                        showMenu && props.children
+                        isMenuVisible && props.children
                             ? widthOfStopDefaulKistener
                             : undefined,
                 }}
             ></div>
             <div
                 className={classNames('dropdown-menu-container', {
-                    active: showMenu && !props.inherit,
-                    'active-inherit': showMenu && props.inherit,
+                    active: isMenuVisible && !props.inherit,
+                    'active-inherit': isMenuVisible && props.inherit,
                 })}
                 onClick={() => {
                     if (props.clickable === undefined || props.clickable) {
@@ -74,7 +71,7 @@ export const DropdownMenu = (
             >
                 {props.icon ? props.icon : <DotssIcon />}
             </div>
-            {showMenu && props.children ? (
+            {isMenuVisible ? (
                 <div
                     ref={ref}
                     className={classNames(

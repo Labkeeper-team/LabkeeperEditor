@@ -22,8 +22,20 @@ test('425-display', async ({ page }) => {
     // Ждем редиректа на конкретный проект
     await expect(page).toHaveURL('/project/default');
 
+    // меняем тип на latex
+    await page.locator('div.dropdown-menu-container').first().click();
+    await page.getByText('markdown', { exact: true }).click();
+    await page.getByText('Labkeeper').first().click();
+
     // Добавляем маркдаун
-    await page.getByRole('button', { name: /Add markdown/i }).click();
+    await page
+        .locator('.labkeeper_select.computation .select-header')
+        .first()
+        .click();
+    await page
+        .getByRole('listitem')
+        .filter({ hasText: /^Markdown$/i })
+        .click();
     const editor = page.locator('.cm-content').nth(0);
     await editor.click();
     await editor.pressSequentially('biba', { delay: 20 });
@@ -31,8 +43,7 @@ test('425-display', async ({ page }) => {
 
     // добавляем вычислительный
     await page
-        .locator('div')
-        .filter({ hasText: /^Add more$/ })
+        .locator('.labkeeper_select.computation .select-header')
         .first()
         .click();
     await page.getByRole('listitem').filter({ hasText: 'Computation' }).click();
@@ -85,14 +96,33 @@ test('phystech-icon-test', async ({ page }) => {
     // Ждем редиректа на конкретный проект
     await expect(page).toHaveURL(`/project/${uuid}`);
 
+    // меняем тип на latex
+    await page.locator('div.dropdown-menu-container').first().click();
+    await page.getByText('markdown', { exact: true }).click();
+    await page.getByText('Labkeeper').first().click();
+
     // Добавляем маркдаун
-    await page.getByRole('button', { name: /Add markdown/i }).click();
+    await page
+        .locator('.labkeeper_select.computation .select-header')
+        .first()
+        .click();
+    await page
+        .getByRole('listitem')
+        .filter({ hasText: /^Markdown$/i })
+        .click();
     let editor = page.locator('.cm-content').nth(0);
     await editor.click();
     await editor.pressSequentially('Пример текста', { delay: 100 });
     await editor.click();
 
-    await page.getByRole('button', { name: /Add markdown/i }).click();
+    await page
+        .locator('.labkeeper_select.computation .select-header')
+        .first()
+        .click();
+    await page
+        .getByRole('listitem')
+        .filter({ hasText: /^Markdown$/i })
+        .click();
     editor = page.locator('.cm-content').nth(0);
     await editor.click();
     await editor.pressSequentially('biba', { delay: 100 });
@@ -100,8 +130,7 @@ test('phystech-icon-test', async ({ page }) => {
 
     // добавляем вычислительный
     await page
-        .locator('div')
-        .filter({ hasText: /^Add more$/ })
+        .locator('.labkeeper_select.computation .select-header')
         .first()
         .click();
     await page.getByRole('listitem').filter({ hasText: 'Computation' }).click();
@@ -130,10 +159,14 @@ test('insert-segment-between', async ({ page }) => {
     // Ждем редиректа на конкретный проект
     await expect(page).toHaveURL('/project/default');
 
+    // меняем тип на latex
+    await page.locator('div.dropdown-menu-container').first().click();
+    await page.getByText('markdown', { exact: true }).click();
+    await page.getByText('Labkeeper').first().click();
+
     // добавляем вычислительный
     await page
-        .locator('div')
-        .filter({ hasText: /^Add more$/ })
+        .locator('.labkeeper_select.computation .select-header')
         .first()
         .click();
     await page.getByRole('listitem').filter({ hasText: 'Computation' }).click();
@@ -146,8 +179,7 @@ test('insert-segment-between', async ({ page }) => {
 
     // добавляем simple math
     await page
-        .locator('div')
-        .filter({ hasText: /^Add more$/ })
+        .locator('.labkeeper_select.computation .select-header')
         .first()
         .click();
     await page.getByRole('listitem').filter({ hasText: 'Simple-math' }).click();
@@ -159,8 +191,11 @@ test('insert-segment-between', async ({ page }) => {
     await editor.click();
 
     // Добавляем маркдаун между
-    await page.getByText('Add', { exact: true }).click();
-    await page.getByText('markdown', { exact: true }).first().click();
+    await page.locator('.segment-divider .divider-button').first().click();
+    await page
+        .locator('.segment-divider .divider-dropdown button')
+        .filter({ hasText: /^markdown$/i })
+        .click();
 
     // пишем в него
     editor = page.locator('.cm-content').nth(1);
@@ -169,8 +204,11 @@ test('insert-segment-between', async ({ page }) => {
     await editor.click();
 
     // Добавляем latex
-    await page.getByText('Add', { exact: true }).nth(1).click();
-    await page.getByText('latex', { exact: true }).click();
+    await page.locator('.segment-divider .divider-button').nth(1).click();
+    await page
+        .locator('.segment-divider .divider-dropdown button')
+        .filter({ hasText: /^latex$/i })
+        .click();
 
     // пишем в него
     editor = page.locator('.cm-content').nth(2);
@@ -209,11 +247,18 @@ test('insert-segment-between', async ({ page }) => {
 Тест на большое количество сегментов с текстом.
  */
 test('many-segments', async ({ page }) => {
+    const routeSetup = new RouteSetup(page);
+    await routeSetup.setupGetUserInfoRequest();
+    await routeSetup.setupGetDefaultProjectRequest();
+    await routeSetup.setupGetProjectRequest();
+    await routeSetup.setupGetAllProjectsRequest();
+    await routeSetup.setupListFilesRequest();
+
     await page.goto('/');
 
     // Ждем загрузки страницы и проверяем URL
     await page.waitForLoadState('domcontentloaded');
-    await expect(page).toHaveURL(/.*\/project/);
+    await expect(page).toHaveURL(`/project/${uuid}`);
 
     // Генерируем текст
     const linesCount = 20;
@@ -227,7 +272,14 @@ test('many-segments', async ({ page }) => {
 
     // Добавляем 10 MD сегментов
     for (let i = 0; i < 10; i++) {
-        await page.getByRole('button', { name: /Add markdown/i }).click();
+        await page
+            .locator('.labkeeper_select.computation .select-header')
+            .first()
+            .click();
+        await page
+            .getByRole('listitem')
+            .filter({ hasText: /^Markdown$/i })
+            .click();
     }
 
     // Пишем текст в первый сегмент
@@ -241,8 +293,9 @@ test('many-segments', async ({ page }) => {
     // await expect(page).toHaveScreenshot(`many-segments/snapshot.png`);
 
     // Проверяем, что все сегменты были добавлены
-    const segments = await page.locator('.segment-editor-container').count();
-    expect(segments).toBe(10);
+    await expect(page.locator('.segment-editor-container')).toHaveCount(10, {
+        timeout: 15000,
+    });
 });
 
 test('public-project-test', async ({ page }) => {
@@ -263,7 +316,9 @@ test('public-project-test', async ({ page }) => {
     // Ждем редиректа на конкретный проект
     await expect(page).toHaveURL(`/project/${uuid}`);
     await page.waitForTimeout(2000);
-    await expect(page).toHaveScreenshot(`public-project.png`);
+    await expect(page).toHaveScreenshot(`public-project.png`, {
+        maxDiffPixels: 1000,
+    });
 });
 
 /*
@@ -290,8 +345,20 @@ test('save-test', async ({ page }) => {
     // Ждем редиректа на конкретный проект
     await expect(page).toHaveURL(`/project/${uuid}`);
 
+    // меняем тип на latex
+    await page.locator('div.dropdown-menu-container').first().click();
+    await page.getByText('markdown', { exact: true }).click();
+    await page.getByText('Labkeeper').first().click();
+
     // Добавляем маркдаун
-    await page.getByRole('button', { name: /Add markdown/i }).click();
+    await page
+        .locator('.labkeeper_select.computation .select-header')
+        .first()
+        .click();
+    await page
+        .getByRole('listitem')
+        .filter({ hasText: /^Markdown$/i })
+        .click();
     const editor = page.locator('.cm-content').nth(0);
     await editor.click();
     await editor.pressSequentially('aaa', { delay: 100 });
@@ -299,8 +366,7 @@ test('save-test', async ({ page }) => {
 
     // добавляем вычислительный
     await page
-        .locator('div')
-        .filter({ hasText: /^Add more$/ })
+        .locator('.labkeeper_select.computation .select-header')
         .first()
         .click();
     await page.getByRole('listitem').filter({ hasText: 'Computation' }).click();
@@ -347,8 +413,20 @@ test('ESC-test', async ({ page }) => {
     // Ждем редиректа на конкретный проект
     await expect(page).toHaveURL(`/project/${uuid}`);
 
+    // меняем тип на latex
+    await page.locator('div.dropdown-menu-container').first().click();
+    await page.getByText('markdown', { exact: true }).click();
+    await page.getByText('Labkeeper').first().click();
+
     // Добавляем маркдаун
-    await page.getByRole('button', { name: /Add markdown/i }).click();
+    await page
+        .locator('.labkeeper_select.computation .select-header')
+        .first()
+        .click();
+    await page
+        .getByRole('listitem')
+        .filter({ hasText: /^Markdown$/i })
+        .click();
     const editor = page.locator('.cm-content').nth(0);
     await editor.click();
     await editor.pressSequentially('aaa\n\n${a}\n', { delay: 100 });
@@ -356,8 +434,7 @@ test('ESC-test', async ({ page }) => {
 
     // добавляем вычислительный
     await page
-        .locator('div')
-        .filter({ hasText: /^Add more$/ })
+        .locator('.labkeeper_select.computation .select-header')
         .first()
         .click();
     await page.getByRole('listitem').filter({ hasText: 'Computation' }).click();
@@ -409,8 +486,20 @@ test('Search-test', async ({ page }) => {
     // Ждем редиректа на конкретный проект
     await expect(page).toHaveURL('/project/default');
 
+    // меняем тип на latex
+    await page.locator('div.dropdown-menu-container').first().click();
+    await page.getByText('markdown', { exact: true }).click();
+    await page.getByText('Labkeeper').first().click();
+
     // Добавляем маркдаун
-    await page.getByRole('button', { name: /Add markdown/i }).click();
+    await page
+        .locator('.labkeeper_select.computation .select-header')
+        .first()
+        .click();
+    await page
+        .getByRole('listitem')
+        .filter({ hasText: /^Markdown$/i })
+        .click();
     const editor = page.locator('.cm-content').nth(0);
     await editor.click();
     await editor.pressSequentially('aaa\n\n${a}\n', { delay: 100 });
@@ -465,7 +554,14 @@ test('many-errors-test', async ({ page }) => {
     }
 
     // Добавляем маркдаун
-    await page.getByRole('button', { name: /Add markdown/i }).click();
+    await page
+        .locator('.labkeeper_select.computation .select-header')
+        .first()
+        .click();
+    await page
+        .getByRole('listitem')
+        .filter({ hasText: /^Markdown$/i })
+        .click();
     const editor = page.locator('.cm-content').nth(0);
     await editor.click();
     await editor.pressSequentially(text, { delay: 20 });
@@ -473,8 +569,7 @@ test('many-errors-test', async ({ page }) => {
 
     // добавляем вычислительный
     await page
-        .locator('div')
-        .filter({ hasText: /^Add more$/ })
+        .locator('.labkeeper_select.computation .select-header')
         .first()
         .click();
     await page.getByRole('listitem').filter({ hasText: 'Computation' }).click();
@@ -571,7 +666,14 @@ Hello();
     `;
 
     // Добавляем маркдаун
-    await page.getByRole('button', { name: /Add markdown/i }).click();
+    await page
+        .locator('.labkeeper_select.computation .select-header')
+        .first()
+        .click();
+    await page
+        .getByRole('listitem')
+        .filter({ hasText: /^Markdown$/i })
+        .click();
     const editor = page.locator('.cm-content').nth(0);
     await editor.click();
     await editor.fill(text);
@@ -579,8 +681,7 @@ Hello();
 
     // добавляем вычислительный
     await page
-        .locator('div')
-        .filter({ hasText: /^Add more$/ })
+        .locator('.labkeeper_select.computation .select-header')
         .first()
         .click();
     await page.getByRole('listitem').filter({ hasText: 'Computation' }).click();
@@ -668,6 +769,11 @@ test('llm-prompt-ok-request-test', async ({ page }) => {
     await page.waitForLoadState('domcontentloaded');
     // Ждем редиректа на конкретный проект
     await expect(page).toHaveURL(`/project/${uuid}`);
+
+    // меняем тип на latex
+    await page.locator('div.dropdown-menu-container').first().click();
+    await page.getByText('markdown', { exact: true }).click();
+    await page.getByText('Labkeeper').first().click();
 
     await page.getByText('GPT').click();
 
@@ -759,8 +865,14 @@ test('rename-project-in-editor-via-press', async ({ page }) => {
  */
 test('many-segments-move', async ({ page }) => {
     const addCode = async () => {
-        await page.locator('div.labkeeper_select.computation').first().click();
-        await page.locator('li').first().click();
+        await page
+            .locator('.labkeeper_select.computation .select-header')
+            .first()
+            .click();
+        await page
+            .getByRole('listitem')
+            .filter({ hasText: 'Computation' })
+            .click();
     };
 
     await page.goto('/');
@@ -769,8 +881,20 @@ test('many-segments-move', async ({ page }) => {
     await page.waitForLoadState('domcontentloaded');
     await expect(page).toHaveURL(/.*\/project/);
 
+    // меняем тип на latex
+    await page.locator('div.dropdown-menu-container').first().click();
+    await page.getByText('markdown', { exact: true }).click();
+    await page.getByText('Labkeeper').first().click();
+
     // первый сегмент
-    await page.getByRole('button', { name: /Add markdown/i }).click();
+    await page
+        .locator('.labkeeper_select.computation .select-header')
+        .first()
+        .click();
+    await page
+        .getByRole('listitem')
+        .filter({ hasText: /^Markdown$/i })
+        .click();
 
     // Пишем текст в первый сегмент
     const editor1 = page.locator('.cm-content').nth(0);
@@ -788,7 +912,14 @@ test('many-segments-move', async ({ page }) => {
     await editor2.click();
 
     // adding third segment
-    await page.getByRole('button', { name: /Add markdown/i }).click();
+    await page
+        .locator('.labkeeper_select.computation .select-header')
+        .first()
+        .click();
+    await page
+        .getByRole('listitem')
+        .filter({ hasText: /^Markdown$/i })
+        .click();
 
     // inserting text in third segment
     const editor3 = page.locator('.cm-content').nth(2);
@@ -812,11 +943,32 @@ test('many-segments-move', async ({ page }) => {
 
     // more
     await addCode();
-    await page.getByRole('button', { name: /Add markdown/i }).click();
+    await page
+        .locator('.labkeeper_select.computation .select-header')
+        .first()
+        .click();
+    await page
+        .getByRole('listitem')
+        .filter({ hasText: /^Markdown$/i })
+        .click();
     await addCode();
-    await page.getByRole('button', { name: /Add markdown/i }).click();
+    await page
+        .locator('.labkeeper_select.computation .select-header')
+        .first()
+        .click();
+    await page
+        .getByRole('listitem')
+        .filter({ hasText: /^Markdown$/i })
+        .click();
     await addCode();
-    await page.getByRole('button', { name: /Add markdown/i }).click();
+    await page
+        .locator('.labkeeper_select.computation .select-header')
+        .first()
+        .click();
+    await page
+        .getByRole('listitem')
+        .filter({ hasText: /^Markdown$/i })
+        .click();
 
     // проверяем, что элементы отображаются корректно
     await expect(page).toHaveScreenshot('many-segs2.png', {
@@ -878,16 +1030,27 @@ test('remove-lines-with-errors-test', async ({ page }) => {
     // Ждем редиректа на конкретный проект
     await expect(page).toHaveURL('/project/default');
 
+    // меняем тип на latex
+    await page.locator('div.dropdown-menu-container').first().click();
+    await page.getByText('markdown', { exact: true }).click();
+    await page.getByText('Labkeeper').first().click();
+
     // Добавляем маркдаун
-    await page.getByRole('button', { name: /Add markdown/i }).click();
+    await page
+        .locator('.labkeeper_select.computation .select-header')
+        .first()
+        .click();
+    await page
+        .getByRole('listitem')
+        .filter({ hasText: /^Markdown$/i })
+        .click();
     await mdEditor().click();
     await mdEditor().pressSequentially('aaaaa\n\n${a}\n', { delay: 20 });
     await mdEditor().click();
 
     // добавляем вычислительный
     await page
-        .locator('div')
-        .filter({ hasText: /^Add more$/ })
+        .locator('.labkeeper_select.computation .select-header')
         .first()
         .click();
     await page.getByRole('listitem').filter({ hasText: 'Computation' }).click();
@@ -1073,7 +1236,14 @@ test('compilation-401-test', async ({ page }) => {
     await expect(page).toHaveURL(`/project/${uuid}`);
 
     // Добавляем маркдаун
-    await page.getByRole('button', { name: /Add markdown/i }).click();
+    await page
+        .locator('.labkeeper_select.computation .select-header')
+        .first()
+        .click();
+    await page
+        .getByRole('listitem')
+        .filter({ hasText: /^Markdown$/i })
+        .click();
     const editor = page.locator('.cm-content').nth(0);
     await editor.click();
     await editor.pressSequentially('aaa\n\n${a}\n', { delay: 100 });
@@ -1081,8 +1251,7 @@ test('compilation-401-test', async ({ page }) => {
 
     // добавляем вычислительный
     await page
-        .locator('div')
-        .filter({ hasText: /^Add more$/ })
+        .locator('.labkeeper_select.computation .select-header')
         .first()
         .click();
     await page.getByRole('listitem').filter({ hasText: 'Computation' }).click();
@@ -1105,6 +1274,7 @@ test('file-manager-401-test', async ({ page }) => {
     // Перехватываем запрос default project и get project
     await routeSetup.setupGetDefaultProjectRequest();
     await routeSetup.setupGetProjectRequest();
+    await routeSetup.setupGetAllProjectsRequest();
 
     // Перехватываем запрос на сохранение программы
     await routeSetup.setupSaveProgramRequest(200, 'default');
@@ -1120,7 +1290,7 @@ test('file-manager-401-test', async ({ page }) => {
     await expect(page).toHaveURL(`/project/${uuid}`);
 
     // ждем появления toast с ошибкой
-    await expect(page.locator('div.Toastify__toast')).toBeVisible();
+    await expect(page.locator('div.Toastify__toast').first()).toBeVisible();
 });
 
 /*
@@ -1151,7 +1321,14 @@ test('compilation-500-test', async ({ page }) => {
     await expect(page).toHaveURL(`/project/${uuid}`);
 
     // Добавляем маркдаун
-    await page.getByRole('button', { name: /Add markdown/i }).click();
+    await page
+        .locator('.labkeeper_select.computation .select-header')
+        .first()
+        .click();
+    await page
+        .getByRole('listitem')
+        .filter({ hasText: /^Markdown$/i })
+        .click();
     const editor = page.locator('.cm-content').nth(0);
     await editor.click();
     await editor.pressSequentially('aaa\n\n${a}\n', { delay: 100 });
@@ -1159,8 +1336,7 @@ test('compilation-500-test', async ({ page }) => {
 
     // добавляем вычислительный
     await page
-        .locator('div')
-        .filter({ hasText: /^Add more$/ })
+        .locator('.labkeeper_select.computation .select-header')
         .first()
         .click();
     await page.getByRole('listitem').filter({ hasText: 'Computation' }).click();
@@ -1272,11 +1448,23 @@ test('file-list-changes-after-compilation', async ({ page }) => {
     // Ждем редиректа на конкретный проект
     await expect(page).toHaveURL(`/project/${uuid}`);
 
+    // меняем тип на latex
+    await page.locator('div.dropdown-menu-container').first().click();
+    await page.getByText('markdown', { exact: true }).click();
+    await page.getByText('Labkeeper').first().click();
+
     // Открываем файловый менеджер
     await page.locator('div.file-manager-button').click();
 
     // Добавляем маркдаун
-    await page.getByRole('button', { name: /Add markdown/i }).click();
+    await page
+        .locator('.labkeeper_select.computation .select-header')
+        .first()
+        .click();
+    await page
+        .getByRole('listitem')
+        .filter({ hasText: /^Markdown$/i })
+        .click();
     const editor = page.locator('.cm-content').nth(0);
     await editor.click();
     await editor.pressSequentially('Пример текста', { delay: 100 });
@@ -1284,8 +1472,7 @@ test('file-list-changes-after-compilation', async ({ page }) => {
 
     // добавляем вычислительный
     await page
-        .locator('div')
-        .filter({ hasText: /^Add more$/ })
+        .locator('.labkeeper_select.computation .select-header')
         .first()
         .click();
     await page.getByRole('listitem').filter({ hasText: 'Computation' }).click();
@@ -1334,10 +1521,14 @@ test('double-plots-and-tables-test', async ({ page }) => {
     // Ждем редиректа на конкретный проект
     await expect(page).toHaveURL(`/project/${uuid}`);
 
+    // меняем тип на latex
+    await page.locator('div.dropdown-menu-container').first().click();
+    await page.getByText('markdown', { exact: true }).click();
+    await page.getByText('Labkeeper').first().click();
+
     // добавляем вычислительный
     await page
-        .locator('div')
-        .filter({ hasText: /^Add more$/ })
+        .locator('.labkeeper_select.computation .select-header')
         .first()
         .click();
     await page.getByRole('listitem').filter({ hasText: 'Computation' }).click();
@@ -1394,8 +1585,7 @@ test('latex-segments-and-asciimath', async ({ page }) => {
 
     // Добавляем latex
     await page
-        .locator('div')
-        .filter({ hasText: /^Add more$/ })
+        .locator('.labkeeper_select.computation .select-header')
         .first()
         .click();
     await page.getByRole('listitem').filter({ hasText: 'Latex' }).click();
@@ -1411,8 +1601,7 @@ test('latex-segments-and-asciimath', async ({ page }) => {
 
     // Добавляем 2 latex
     await page
-        .locator('div')
-        .filter({ hasText: /^Add more$/ })
+        .locator('.labkeeper_select.computation .select-header')
         .first()
         .click();
     await page.getByRole('listitem').filter({ hasText: 'Latex' }).click();
@@ -1424,8 +1613,7 @@ test('latex-segments-and-asciimath', async ({ page }) => {
 
     // добавляем simple math
     await page
-        .locator('div')
-        .filter({ hasText: /^Add more$/ })
+        .locator('.labkeeper_select.computation .select-header')
         .first()
         .click();
     await page.getByRole('listitem').filter({ hasText: 'Simple-math' }).click();

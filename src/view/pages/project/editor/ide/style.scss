@@ -5,6 +5,8 @@
     display: flex;
     position: relative;
     flex-direction: column;
+    flex: 1;
+    min-height: 0;
     height: inherit;
     background-color: $white;
     .ide-flexibility-container {
@@ -13,6 +15,11 @@
         overflow-x: auto;
         position: relative;
         flex: 1;
+        min-height: 0;
+
+        .run-button {
+            flex-shrink: 0;
+        }
         .ide-loading-wrapper {
             display: flex;
             align-items: center;

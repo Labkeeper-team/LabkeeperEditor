@@ -4,6 +4,17 @@
     padding-left: 5px;
     padding-right: 5px;
     padding-top: 5px;
+    color: $gray-10;
+
+    // MathJax formulas use currentColor, so enforce readable color
+    // for computation blocks in both UI and PDF print output.
+    mjx-container {
+        color: inherit !important;
+    }
+
+    @media print {
+        color: $gray-10;
+    }
 }
 .result-segment-container {
     border: 1px solid transparent !important;

@@ -9,7 +9,7 @@ import CodeMirror, {
 import { EditorSelection, type Extension } from '@codemirror/state';
 import { langs } from '@uiw/codemirror-extensions-langs';
 import { content, dom } from '@uiw/codemirror-extensions-events';
-import { lineNumbers, type ViewUpdate } from '@codemirror/view';
+import { DecorationSet, lineNumbers, type ViewUpdate } from '@codemirror/view';
 import {
     LegacyRef,
     memo,
@@ -29,6 +29,7 @@ import {
     getMarkdownSpellcheckLint,
 } from './segmentSpellcheck';
 import { segmentEditorSelectionGutterFix } from './segmentEditorSelectionGutterFix';
+import { segmentEditorScaleLayoutSync } from './segmentEditorScaleLayoutSync';
 
 import './style.scss';
 
@@ -36,7 +37,12 @@ import { Typography } from '../../../../../../components/typography';
 import { DropdownMenu } from '../../../../../../components/dropdownMenu';
 import { ArrowUp } from '../../../../../../icons';
 import { AppDispatch, StorageState } from '../../../../../../store';
-import { setPendingSegmentEditorCursor } from '../../../../../../store/slices/ide';
+import {
+    setActiveEditorLine,
+    setEditorNavigationTarget,
+    setPendingSegmentEditorCursor,
+    setSynctexEditorPosition,
+} from '../../../../../../store/slices/ide';
 import {
     useIsProjectReadonly,
     useSearch,
@@ -49,6 +55,11 @@ import { controller } from '../../../../../../../main.tsx';
 import { LRUMap } from 'lru_map';
 import { useScrollableToActive } from '../../../../../../hooks/useScrollableToActive.ts';
 import { useIsDelayedSegmentIsActive } from '../../../../../../hooks/useIsDelayedSegmentIsActive.ts';
+import {
+    focusIdeSegmentAtPoint,
+    shouldPlaceCursorOnIdeSegmentClick,
+} from '../ideSegmentDeactivate';
+import { scrollIdeEditorLineToContainerTop } from '../ideSegmentEditorView';
 
 const CURSOR_MAP_CAPACITY = 100;
 
@@ -56,10 +67,22 @@ const CURSOR_MAP_CAPACITY = 100;
 const SEGMENT_CODE_MIRROR_BASIC_SETUP = {
     lineNumbers: true,
     highlightSelectionMatches: false,
+    highlightActiveLine: false,
+    highlightActiveLineGutter: false,
     /** Текст и undo ведёт ProgramService (кнопка и Ctrl+Z в шапке). Встроенная history CM + historyKeymap дают второй Ctrl+Z и откатывают лишние правки. */
     history: false,
     historyKeymap: false,
 } as const;
+
+/** Пунктирный outline при фокусе — стандарт CM6; без min-height на .cm-editor заметен по краям. */
+const SEGMENT_EDITOR_VIEW_THEME = EditorView.theme({
+    '&.cm-editor.cm-focused': {
+        outline: 'none',
+    },
+    '& .cm-activeLine, & .cm-activeLineGutter': {
+        backgroundColor: 'transparent',
+    },
+});
 
 const SEGMENT_CM_SPELLCHECK = EditorView.contentAttributes.of({
     spellcheck: 'true',
@@ -70,20 +93,25 @@ const SEGMENT_CM_SPELLCHECK_OFF = EditorView.contentAttributes.of({
     spellcheck: 'false',
 });
 
-const setDecorationsEffect = StateEffect.define();
+const setDecorationsEffect = StateEffect.define<DecorationSet>();
 
-const decorationsField = StateField.define<unknown>({
+const decorationsField = StateField.define<DecorationSet>({
     create() {
         return Decoration.none;
     },
     update(decorations, transaction) {
+        // При изменении документа старые диапазоны декораций должны быть
+        // перемаплены в новые координаты, иначе CM может упасть на mapPos.
+        const mappedDecorations = transaction.docChanged
+            ? decorations.map(transaction.changes)
+            : decorations;
         // Обновляем декорации, если есть эффект setDecorationsEffect
         for (const effect of transaction.effects) {
             if (effect.is(setDecorationsEffect)) {
                 return effect.value;
             }
         }
-        return decorations;
+        return mappedDecorations;
     },
     provide: (field) => EditorView.decorations.from(field),
 });
@@ -132,6 +160,9 @@ export const SegmentEditor = memo(
         );
         const pendingSegmentEditorCursor = useSelector(
             (state: StorageState) => state.ide.pendingSegmentEditorCursor
+        );
+        const editorNavigationTarget = useSelector(
+            (state: StorageState) => state.ide.editorNavigationTarget
         );
         const pendingIdeCursorRef = useRef(pendingSegmentEditorCursor);
         pendingIdeCursorRef.current = pendingSegmentEditorCursor;
@@ -252,9 +283,9 @@ export const SegmentEditor = memo(
                 window.removeEventListener('mouseup', onMouseUp);
             };
         }, [editor?.current?.view]);
-        // Если сегмент перестал быть активным — снимаем выделение в редакторе
+        // Если сегмент перестал быть активным — снимаем выделение в редакторе (без задержки 10 ms)
         useEffect(() => {
-            if (isActiveSegment || isImmediatelyActiveSegment) {
+            if (isImmediatelyActiveSegment) {
                 return;
             }
             const view = editor?.current?.view;
@@ -265,7 +296,7 @@ export const SegmentEditor = memo(
             view.dispatch({
                 selection: EditorSelection.cursor(head),
             });
-        }, [isActiveSegment, isImmediatelyActiveSegment]);
+        }, [isImmediatelyActiveSegment]);
         // При изменении текста сегмента создаем таймер
         useEffect(() => {
             if (timeout) {
@@ -319,11 +350,68 @@ export const SegmentEditor = memo(
             );
         }, [props.index, dispatch]);
 
+        const onSegmentMouseDownCapture = useCallback(
+            (event: React.MouseEvent) => {
+                if (projectIsReadonly) {
+                    return;
+                }
+                const target = event.target;
+                if (!(target instanceof Element)) {
+                    return;
+                }
+                if (
+                    target.closest(
+                        '.editor-rules, .dropdown-content-contanier-additional'
+                    )
+                ) {
+                    return;
+                }
+
+                const view = editor?.current?.view;
+                if (!view) {
+                    return;
+                }
+
+                const inEditor =
+                    view.dom.contains(target) ||
+                    target.closest(`#ide-segment-${props.index}`) !== null;
+
+                if (!inEditor) {
+                    focusIdeSegmentAtPoint(
+                        props.index,
+                        dispatch,
+                        event.clientX,
+                        event.clientY
+                    );
+                    return;
+                }
+
+                if (
+                    !shouldPlaceCursorOnIdeSegmentClick(
+                        event.nativeEvent,
+                        target,
+                        view
+                    )
+                ) {
+                    return;
+                }
+
+                event.preventDefault();
+                focusIdeSegmentAtPoint(
+                    props.index,
+                    dispatch,
+                    event.clientX,
+                    event.clientY
+                );
+            },
+            [dispatch, props.index, projectIsReadonly]
+        );
+
         // События редактора
         const eventsExt = useMemo(() => {
             return content({
                 focus: () => {
-                    if (isActiveSegment) {
+                    if (isImmediatelyActiveSegment) {
                         return;
                     }
                     dispatch(
@@ -334,7 +422,7 @@ export const SegmentEditor = memo(
                 },
                 blur: onBlur,
             });
-        }, [dispatch, onBlur, props.index, isActiveSegment]);
+        }, [dispatch, onBlur, props.index, isImmediatelyActiveSegment]);
 
         // Вставка файлов — extension должна быть стабильной ссылкой, иначе extensions[] пересобирается на каждый символ → reconfigure → мигание syntax highlight
         const eventsDom = useMemo(
@@ -436,10 +524,56 @@ export const SegmentEditor = memo(
                             currentDocKeyRef.current ??
                             computeDocKey(update.state.doc.toString());
                         cursorByDocKeyRef.current.set(key, head);
+                        const from = update.state.selection.main.from;
+                        const line = update.state.doc.lineAt(from).number;
+                        const segmentIndex = segmentIdxForPendingRef.current;
+                        dispatchForPendingRef.current(
+                            setActiveEditorLine(line)
+                        );
+                        dispatchForPendingRef.current(
+                            setSynctexEditorPosition({
+                                segmentIndex,
+                                line,
+                            })
+                        );
                     }
                 }),
             []
         );
+
+        useEffect(() => {
+            const target = editorNavigationTarget;
+            if (!target || target.segmentIndex !== props.index || !isLoaded) {
+                return;
+            }
+
+            let cancelled = false;
+            let attempts = 0;
+            const maxAttempts = 12;
+
+            const tryApply = () => {
+                if (cancelled) {
+                    return;
+                }
+                attempts += 1;
+                if (
+                    scrollIdeEditorLineToContainerTop(props.index, target.line)
+                ) {
+                    dispatch(setEditorNavigationTarget(null));
+                    return;
+                }
+                if (attempts < maxAttempts) {
+                    requestAnimationFrame(tryApply);
+                } else {
+                    dispatch(setEditorNavigationTarget(null));
+                }
+            };
+
+            requestAnimationFrame(tryApply);
+            return () => {
+                cancelled = true;
+            };
+        }, [editorNavigationTarget, props.index, dispatch, isLoaded]);
 
         /**
          * Защита от стейл-value из @uiw/react-codemirror.
@@ -559,6 +693,8 @@ export const SegmentEditor = memo(
         /** Новый массив на каждом рендере → useCodeMirror делает reconfigure → мигает gutter. */
         const codeMirrorExtensions = useMemo((): Extension[] => {
             return [
+                SEGMENT_EDITOR_VIEW_THEME,
+                segmentEditorScaleLayoutSync,
                 decorationsField,
                 languageExtension,
                 eventsExt,
@@ -598,7 +734,7 @@ export const SegmentEditor = memo(
         const onChange = useCallback(
             (value: string, update: ViewUpdate) => {
                 editor?.current?.view?.dispatch({
-                    effects: setDecorationsEffect.of(Decoration.none as never),
+                    effects: setDecorationsEffect.of(Decoration.none),
                 });
                 setTempSegmentErrors([]);
                 const cursorHead = update.state.selection.main.head;
@@ -624,8 +760,10 @@ export const SegmentEditor = memo(
                 ref={ref}
                 className={classNames('segment-editor-container', {
                     'is-active': isActiveSegment,
+                    'is-editor-focused': isImmediatelyActiveSegment,
                     'not-visible': !segment.parameters.visible,
                 })}
+                onMouseDownCapture={onSegmentMouseDownCapture}
             >
                 <CodeMirror
                     ref={editor as LegacyRef<ReactCodeMirrorRef>}
@@ -790,7 +928,7 @@ function processDecorations(
     }
     try {
         view.dispatch({
-            effects: setDecorationsEffect.of(decSet as never),
+            effects: setDecorationsEffect.of(decSet),
         });
     } catch {
         /* view уже размонтирован между debounce и dispatch */

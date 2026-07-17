@@ -15,7 +15,7 @@ import { Radio } from '../../../components/radiobutton';
 export const AddProjectModal = (props: { onClose: () => unknown }) => {
     const dispatch = useDispatch<AppDispatch>();
     const [projectName, setProjectName] = useState('');
-    const [projectType, setProjectType] = useState<ProjectType>('markdown');
+    const [projectType, setProjectType] = useState<ProjectType>('latex');
     const [projectNameError, setProjectNameError] = useState<
         string | undefined
     >(undefined);

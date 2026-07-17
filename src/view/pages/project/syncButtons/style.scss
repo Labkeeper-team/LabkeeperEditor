@@ -1,0 +1,54 @@
+@use '../../../styles/colors' as *;
+
+.project-sync-bar {
+    position: absolute;
+    top: 50%;
+    right: -20px;
+    transform: translateY(-50%);
+    z-index: 10;
+    pointer-events: none;
+}
+
+.synctex-buttons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    pointer-events: auto;
+}
+
+.synctex-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: $gray-10;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    cursor: pointer;
+
+    svg path {
+        fill: $gray-50;
+    }
+
+    &:hover:not(:disabled) {
+        background: $gray-20;
+
+        svg path {
+            fill: $gray-60;
+        }
+    }
+
+    &--reverse {
+        transform: rotateY(180deg);
+    }
+
+    &:disabled,
+    &--disabled {
+        opacity: 0.35;
+        cursor: default;
+    }
+}

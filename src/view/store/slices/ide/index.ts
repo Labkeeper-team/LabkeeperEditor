@@ -1,4 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { EditorNavigationTarget } from '../../../../viewModel/repository';
+import { PdfPosition } from '../../../../model/rpi';
 import { ideInitialState } from '../index.ts';
 import {
     CloneRequestState,
@@ -68,6 +70,33 @@ export const ideSlice = createSlice({
         ) => {
             state.saveProjectRequestState = payload;
         },
+        setSaveTextFileRequestState: (
+            state,
+            { payload }: PayloadAction<SaveProjectRequestState>
+        ) => {
+            state.saveTextFileRequestState = payload;
+        },
+        setLoadTextFileRequestState: (
+            state,
+            { payload }: PayloadAction<SaveProjectRequestState>
+        ) => {
+            state.loadTextFileRequestState = payload;
+        },
+        setActiveTextFile: (
+            state,
+            { payload }: PayloadAction<string | null>
+        ) => {
+            state.activeTextFile = payload;
+        },
+        setActiveImageFile: (
+            state,
+            { payload }: PayloadAction<string | null>
+        ) => {
+            state.activeImageFile = payload;
+        },
+        setTextFileContent: (state, { payload }: PayloadAction<string>) => {
+            state.textFileContent = payload;
+        },
         setPdfUpdated: (state, { payload }: PayloadAction<number>) => {
             state.pdfUpdated = payload;
         },
@@ -76,6 +105,36 @@ export const ideSlice = createSlice({
             { payload }: PayloadAction<ProjectPromptRequestState>
         ) => {
             state.projectPromptRequestState = payload;
+        },
+        setActiveEditorLine: (
+            state,
+            { payload }: PayloadAction<number | null>
+        ) => {
+            state.activeEditorLine = payload;
+        },
+        setSynctexEditorPosition: (
+            state,
+            { payload }: PayloadAction<EditorNavigationTarget | null>
+        ) => {
+            state.synctexEditorPosition = payload;
+        },
+        setPdfClickPosition: (
+            state,
+            { payload }: PayloadAction<PdfPosition | null>
+        ) => {
+            state.pdfClickPosition = payload;
+        },
+        setPdfNavigationTarget: (
+            state,
+            { payload }: PayloadAction<PdfPosition | null>
+        ) => {
+            state.pdfNavigationTarget = payload;
+        },
+        setEditorNavigationTarget: (
+            state,
+            { payload }: PayloadAction<EditorNavigationTarget | null>
+        ) => {
+            state.editorNavigationTarget = payload;
         },
     },
 });
@@ -91,6 +150,16 @@ export const {
     setGetFilesRequestState,
     setGetProjectsRequestState,
     setSaveProjectRequestState,
+    setSaveTextFileRequestState,
+    setLoadTextFileRequestState,
+    setActiveTextFile,
+    setActiveImageFile,
+    setTextFileContent,
     setPdfUpdated,
     setProjectPromptRequestState,
+    setActiveEditorLine,
+    setSynctexEditorPosition,
+    setPdfClickPosition,
+    setPdfNavigationTarget,
+    setEditorNavigationTarget,
 } = ideSlice.actions;

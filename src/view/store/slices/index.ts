@@ -25,6 +25,8 @@ import {
     SaveProjectRequestState,
 } from '../../../viewModel/repository';
 import { createEmptyProgram } from '../../../model/repository/ProgramRepository.ts';
+import { PdfPosition } from '../../../model/rpi';
+import { EditorNavigationTarget } from '../../../viewModel/repository';
 
 interface CallbackState {
     scrollEditorToBottom: boolean;
@@ -44,6 +46,8 @@ interface SettingsState {
     filesToDelete: LabkeeperFile[];
     captchaBypassToken: string | undefined;
     showProjectPromptModal: boolean;
+    currentFolderPath: string;
+    ephemeralFolders: string[];
 }
 
 interface ProjectsState {
@@ -84,8 +88,19 @@ interface IdeState {
     getFilesRequestState: GetFilesRequestState;
     getProjectsRequestState: GetProjectsRequestState;
     saveProjectRequestState: SaveProjectRequestState;
+    saveTextFileRequestState: SaveProjectRequestState;
+    loadTextFileRequestState: SaveProjectRequestState;
+    activeTextFile: string | null;
+    activeImageFile: string | null;
+    textFileContent: string;
     pdfUpdated: number;
     projectPromptRequestState: ProjectPromptRequestState;
+    activeEditorLine: number | null;
+    /** Последняя позиция курсора для SyncTeX (сохраняется при blur). */
+    synctexEditorPosition: EditorNavigationTarget | null;
+    pdfClickPosition: PdfPosition | null;
+    pdfNavigationTarget: PdfPosition | null;
+    editorNavigationTarget: EditorNavigationTarget | null;
 }
 
 interface PersistenceState {
@@ -118,8 +133,18 @@ export const ideInitialState: IdeState = {
     getFilesRequestState: 'unknown',
     getProjectsRequestState: 'unknown',
     saveProjectRequestState: 'unknown',
+    saveTextFileRequestState: 'unknown',
+    loadTextFileRequestState: 'unknown',
+    activeTextFile: null,
+    activeImageFile: null,
+    textFileContent: '',
     pdfUpdated: 0,
     projectPromptRequestState: 'unknown',
+    activeEditorLine: null,
+    synctexEditorPosition: null,
+    pdfClickPosition: null,
+    pdfNavigationTarget: null,
+    editorNavigationTarget: null,
 };
 
 export const persistenceInitialState: PersistenceState = {
@@ -135,7 +160,7 @@ export const projectInitialState: ProjectState = {
     compileSuccessResult: { segments: [] },
     files: [],
     currentProgram: createEmptyProgram(),
-    mode: 'markdown',
+    mode: 'latex',
     pdfUri: undefined,
 };
 
@@ -157,6 +182,8 @@ export const settingsInitialState: SettingsState = {
     filesToDelete: [],
     captchaBypassToken: undefined,
     showProjectPromptModal: false,
+    currentFolderPath: '',
+    ephemeralFolders: [],
 };
 
 export const userInitialState: UserInfo = {

@@ -8,7 +8,16 @@ import { useEffect, useRef } from 'react';
 import { AppDispatch, StorageState } from '../../../../../store';
 import { setScrollEditorToBottom } from '../../../../../store/slices/callback';
 import { SegmentDivider } from './segment-divider';
+import {
+    LatexFooterBoundaryCard,
+    LatexHeaderBoundaryCard,
+} from './latex-boundary-card';
 import React from 'react';
+import {
+    deactivateIdeSegment,
+    getIdeSegmentIndexFromTarget,
+    isClickOutsideAllIdeSegments,
+} from './ideSegmentDeactivate';
 
 export const Segments = () => {
     const scrollEditorToBottom = useSelector(
@@ -17,6 +26,60 @@ export const Segments = () => {
     const ref = useRef<HTMLDivElement>(null);
     const dispatch = useDispatch<AppDispatch>();
     const segmentsSize = useSelector(useInputSegmentsSize);
+    const activeSegmentIndex = useSelector(
+        (state: StorageState) => state.ide.activeSegmentIndex
+    );
+    const activeSegmentIndexRef = useRef(activeSegmentIndex);
+
+    useEffect(() => {
+        activeSegmentIndexRef.current = activeSegmentIndex;
+    }, [activeSegmentIndex]);
+
+    useEffect(() => {
+        const container = ref.current;
+        if (!container) {
+            return;
+        }
+        const onMouseDownCapture = (event: MouseEvent) => {
+            const target = event.target;
+            if (!(target instanceof Element)) {
+                return;
+            }
+
+            const active = activeSegmentIndexRef.current;
+            const clickedIndex = getIdeSegmentIndexFromTarget(target);
+
+            // Переключение на другой сегмент — только снять старый активный, фокус не блокировать
+            if (
+                active >= 0 &&
+                clickedIndex !== null &&
+                clickedIndex !== active
+            ) {
+                deactivateIdeSegment(active, dispatch);
+                return;
+            }
+
+            if (active < 0) {
+                return;
+            }
+
+            // Снять выделение только при клике вне блока сегмента (LaTeX footer, padding списка)
+            if (isClickOutsideAllIdeSegments(target)) {
+                event.preventDefault();
+                event.stopPropagation();
+                deactivateIdeSegment(active, dispatch);
+            }
+        };
+
+        container.addEventListener('mousedown', onMouseDownCapture, true);
+        return () => {
+            container.removeEventListener(
+                'mousedown',
+                onMouseDownCapture,
+                true
+            );
+        };
+    }, [dispatch]);
 
     useEffect(() => {
         if (ref?.current && scrollEditorToBottom) {
@@ -34,6 +97,7 @@ export const Segments = () => {
 
     return (
         <div ref={ref} id="segments-container" className="segments-container">
+            <LatexHeaderBoundaryCard />
             {Array.from(Array(segmentsSize).keys()).map((_, index) => {
                 return (
                     <SegmentEditorWrapper
@@ -43,6 +107,7 @@ export const Segments = () => {
                     />
                 );
             })}
+            <LatexFooterBoundaryCard />
         </div>
     );
 };

@@ -13,6 +13,7 @@ import { AppDispatch } from '../../../store';
 import { SmartCaptcha } from '@yandex/smart-captcha';
 import { Providers, Secrets, URLS } from '../../../../constants.ts';
 import { controller } from '../../../../main.tsx';
+import { isValidEmail, isValidPassword, normalizeEmail } from './validation.ts';
 
 // Компонент спиннера загрузки
 const LoadingSpinner = () => (
@@ -58,6 +59,7 @@ const LoginView = () => {
     const [login, setLogin] = useState('');
     const [password, setPassword] = useState('');
     const [token, setToken] = useState('');
+    const [isLoginTouched, setIsLoginTouched] = useState(false);
     const [captchaInstanceKey, setCaptchaInstanceKey] = useState(0);
 
     // Selectors
@@ -86,6 +88,11 @@ const LoginView = () => {
     }, [loginRequest, dictionary]);
 
     const isLoading = loginRequest === 'loading';
+    const normalizedLogin = normalizeEmail(login);
+    const loginEmailError =
+        login && !isValidEmail(login)
+            ? dictionary.authorization.errors.invalidEmail
+            : '';
 
     useEffect(() => {
         if (
@@ -93,8 +100,11 @@ const LoginView = () => {
             showCaptcha &&
             !!Secrets.yandexCaptchaSiteKey
         ) {
-            setToken('');
-            setCaptchaInstanceKey((prev) => prev + 1);
+            // Сброс капчи после неудачного входа; отложенный setState избегает sync flush в effect.
+            queueMicrotask(() => {
+                setToken('');
+                setCaptchaInstanceKey((prev) => prev + 1);
+            });
         }
     }, [loginRequest, showCaptcha]);
 
@@ -133,9 +143,14 @@ const LoginView = () => {
                         const captcha: string | undefined =
                             e.currentTarget.elements['captcha']?.value;
 
+                        if (!isValidEmail(userName)) {
+                            setIsLoginTouched(true);
+                            return;
+                        }
+
                         dispatch(
                             controller.onFormLoginClickedRequest({
-                                userName: userName,
+                                userName: normalizeEmail(userName),
                                 password: password,
                                 captcha: captcha,
                             })
@@ -154,8 +169,14 @@ const LoginView = () => {
                         onChange={(e: ChangeEvent<HTMLInputElement>) =>
                             setLogin(e.target.value)
                         }
-                        placeholder={dictionary.authorization.login}
-                        type="text"
+                        onBlur={() => setIsLoginTouched(true)}
+                        placeholder={dictionary.authorization.loginInput}
+                        type="email"
+                        error={
+                            isLoginTouched && loginEmailError
+                                ? loginEmailError
+                                : undefined
+                        }
                     />
                     <Input
                         required={true}
@@ -197,7 +218,9 @@ const LoginView = () => {
                             (!token &&
                                 !!Secrets.yandexCaptchaSiteKey &&
                                 showCaptcha) ||
-                            isLoading
+                            isLoading ||
+                            !isValidEmail(normalizedLogin) ||
+                            !password
                         }
                         rounded
                         type="rounded"
@@ -307,18 +330,34 @@ const LoginView = () => {
 
 const EmailView = () => {
     const [email, setEmail] = useState('');
+    const [agreementAccepted, setAgreementAccepted] = useState(false);
     const dispatch = useDispatch<AppDispatch>();
     const status = useSelector(
         (state: StorageState) => state.auth.emailRequest
     );
+    const isRegistration = useSelector(
+        (state: StorageState) => state.auth.isRegistration
+    );
     const dictionary = useSelector(useDictionary);
     const [token, setToken] = useState('');
     const [captchaInstanceKey, setCaptchaInstanceKey] = useState(0);
+    const [isEmailTouched, setIsEmailTouched] = useState(false);
     const language = useSelector(
         (state: StorageState) => state.persistence.language
     );
 
     const isLoading = status === 'loading';
+    const normalizedEmail = normalizeEmail(email);
+    const emailFormatError =
+        email && !isValidEmail(email)
+            ? dictionary.authorization.errors.invalidEmail
+            : '';
+
+    useEffect(() => {
+        queueMicrotask(() => {
+            setAgreementAccepted(false);
+        });
+    }, [isRegistration]);
 
     useEffect(() => {
         if (
@@ -328,18 +367,24 @@ const EmailView = () => {
                 status === 'unknownError') &&
             !!Secrets.yandexCaptchaSiteKey
         ) {
-            setToken('');
-            setCaptchaInstanceKey((prev) => prev + 1);
+            queueMicrotask(() => {
+                setToken('');
+                setCaptchaInstanceKey((prev) => prev + 1);
+            });
         }
     }, [status]);
 
     const handleSubmit = async () => {
-        if (!email) {
+        if (!email || (isRegistration && !agreementAccepted)) {
+            return;
+        }
+        if (!isValidEmail(email)) {
+            setIsEmailTouched(true);
             return;
         }
         dispatch(
             controller.onEmailSendButtonClickedRequest({
-                email: email,
+                email: normalizedEmail,
                 captcha: token,
             })
         );
@@ -394,10 +439,55 @@ const EmailView = () => {
                 <Input
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    onBlur={() => setIsEmailTouched(true)}
                     placeholder="Email"
-                    type="text"
+                    type="email"
                     disabled={status === 'loading'}
+                    error={
+                        isEmailTouched && emailFormatError
+                            ? emailFormatError
+                            : undefined
+                    }
                 />
+                {isRegistration && (
+                    <label
+                        style={{
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            gap: 8,
+                            color: colors.gray20,
+                            fontSize: 12,
+                            lineHeight: '16px',
+                        }}
+                    >
+                        <input
+                            type="checkbox"
+                            checked={agreementAccepted}
+                            onChange={(e) =>
+                                setAgreementAccepted(e.target.checked)
+                            }
+                            disabled={status === 'loading'}
+                            style={{ marginTop: 1 }}
+                        />
+                        <span>
+                            {dictionary.authorization.personalDataAgreement}
+                            <br />
+                            <a href="/privacy">
+                                {
+                                    dictionary.authorization
+                                        .personalDataPolicyLink
+                                }
+                            </a>{' '}
+                            {dictionary.authorization.personalDataAgreementAnd}{' '}
+                            <a href="/soglas">
+                                {
+                                    dictionary.authorization
+                                        .personalDataConsentLink
+                                }
+                            </a>
+                        </span>
+                    </label>
+                )}
                 {Secrets.yandexCaptchaSiteKey && (
                     <SmartCaptcha
                         key={captchaInstanceKey}
@@ -421,7 +511,12 @@ const EmailView = () => {
                     type="rounded"
                     minimize={false}
                     onPress={handleSubmit}
-                    disabled={status === 'loading' || !token}
+                    disabled={
+                        status === 'loading' ||
+                        !token ||
+                        !isValidEmail(normalizedEmail) ||
+                        (isRegistration && !agreementAccepted)
+                    }
                 />
             </div>
             {isLoading && <LoadingSpinner />}
@@ -505,7 +600,7 @@ const CodeView = () => {
                     type="rounded"
                     minimize={false}
                     onPress={handleSubmit}
-                    disabled={status === 'loading'}
+                    disabled={status === 'loading' || code.length === 0}
                 />
             </div>
             {isLoading && <LoadingSpinner />}
@@ -538,6 +633,10 @@ const PasswordView = () => {
         }
         if (password !== confirmPassword) {
             setLocalError(dictionary.authorization.errors.passwordsDontMatch);
+            return;
+        }
+        if (!isValidPassword(password)) {
+            setLocalError(dictionary.authorization.errors.invalidPassword);
             return;
         }
         setLocalError('');

@@ -66,6 +66,8 @@ export class ResetService {
             false
         );
         this.repository.settingsViewModelRepository.setShowFileManager(false);
+        this.repository.settingsViewModelRepository.setCurrentFolderPath('');
+        this.repository.settingsViewModelRepository.setEphemeralFolders([]);
         this.repository.settingsViewModelRepository.setTourVisibility(false);
         this.repository.settingsViewModelRepository.setIsCompiling(false);
         this.repository.settingsViewModelRepository.setShowSearch(false);
@@ -86,6 +88,25 @@ export class ResetService {
     resetProject(): void {
         this.programService.clearHistory();
 
+        this.repository.ideViewModelRepository.setGetProjectRequestState(
+            'unknown'
+        );
+        this.repository.ideViewModelRepository.setGetFilesRequestState(
+            'unknown'
+        );
+        this.repository.ideViewModelRepository.setSaveProjectRequestState(
+            'unknown'
+        );
+        this.repository.ideViewModelRepository.setSaveTextFileRequestState(
+            'unknown'
+        );
+        this.repository.ideViewModelRepository.setLoadTextFileRequestState(
+            'unknown'
+        );
+        this.repository.ideViewModelRepository.setActiveTextFile(null);
+        this.repository.ideViewModelRepository.setActiveImageFile(null);
+        this.repository.ideViewModelRepository.setTextFileContent('');
+
         // Project
         this.repository.projectViewModelRepository.setProject(undefined);
         this.repository.projectViewModelRepository.setCurrentProgram(
@@ -100,6 +121,6 @@ export class ResetService {
             errors: [],
         });
         this.repository.projectViewModelRepository.setPdfUri(undefined);
-        this.repository.projectViewModelRepository.setProjectType('markdown');
+        this.repository.projectViewModelRepository.setProjectType('latex');
     }
 }

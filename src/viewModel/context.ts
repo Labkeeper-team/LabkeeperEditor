@@ -10,6 +10,7 @@ import { FileService } from './domain/FileService.ts';
 
 import { AuthService } from './operation/AuthService.ts';
 import { FileManagerService } from './operation/FileManagerService.ts';
+import { TextFileEditorService } from './operation/TextFileEditorService.ts';
 import { ProgramEditorService } from './operation/ProgramEditorService.ts';
 import { ProjectPageService } from './operation/ProjectPageService.ts';
 import { ProjectsPageService } from './operation/ProjectsPageService.ts';
@@ -46,7 +47,8 @@ export function setupContext(
         rpi,
         repository,
         ideService,
-        programService
+        programService,
+        observerService
     );
     const fileService: FileService = new FileService(repository);
     const compilationService: CompilationService = new CompilationService(
@@ -73,15 +75,20 @@ export function setupContext(
         repository,
         rpi,
         ideService,
-        startupService
+        startupService,
+        observerService
     );
+    const textFileEditorService: TextFileEditorService =
+        new TextFileEditorService(repository, rpi, ideService, observerService);
     const fileManagerService: FileManagerService = new FileManagerService(
         repository,
         rpi,
         programService,
         loaderService,
         ideService,
-        fileService
+        fileService,
+        observerService,
+        textFileEditorService
     );
     const programEditorService: ProgramEditorService = new ProgramEditorService(
         repository,
@@ -100,14 +107,16 @@ export function setupContext(
         ideService,
         observerService,
         compilationService,
-        resetService
+        resetService,
+        textFileEditorService
     );
     const projectsPageService: ProjectsPageService = new ProjectsPageService(
         repository,
         rpi,
         loaderService,
         ideService,
-        startupService
+        startupService,
+        observerService
     );
 
     /*
@@ -116,6 +125,7 @@ export function setupContext(
     const controller = new Controller(
         authService,
         fileManagerService,
+        textFileEditorService,
         programEditorService,
         projectPageService,
         projectsPageService,
@@ -136,6 +146,7 @@ export function setupContext(
         startupService,
         authService,
         fileManagerService,
+        textFileEditorService,
         programEditorService,
         projectPageService,
         projectsPageService,

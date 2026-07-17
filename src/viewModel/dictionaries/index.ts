@@ -42,6 +42,11 @@ export interface Translations {
         latex: string;
         asciimath: string;
     };
+    latex_boundary: {
+        header: string;
+        footer: string;
+        insert_hint: string;
+    };
 
     interface_tour: {
         label: string;
@@ -127,6 +132,16 @@ export interface Translations {
             label: string;
             markdown: string;
             latex: string;
+        };
+    };
+    synctex: {
+        to_pdf: string;
+        to_editor: string;
+        errors: {
+            no_pdf: string;
+            no_cursor: string;
+            no_pdf_selection: string;
+            failed: string;
         };
     };
     header_menu: {
@@ -241,6 +256,7 @@ export interface Translations {
         loginVia: string;
         loginAndPasswoord: string;
         login: string;
+        loginInput: string;
         password: string;
         registration: string;
         forgotPassword: string;
@@ -252,6 +268,10 @@ export interface Translations {
         alreadyHaveAccount: string;
         createAccount: string;
         continue: string;
+        personalDataAgreement: string;
+        personalDataPolicyLink: string;
+        personalDataAgreementAnd: string;
+        personalDataConsentLink: string;
         views: {
             email: string;
             code: string;
@@ -267,6 +287,7 @@ export interface Translations {
             userNotFound: string;
             invalidEmail: string;
             invalidCode: string;
+            invalidPassword: string;
             passwordsDontMatch: string;
             fillAllFields: string;
             passwordSetError: string;
@@ -293,10 +314,17 @@ export interface Translations {
         title: string;
         add: string;
         dropzoneTitle: string;
+        root_folder: string;
+        drop_to_root: string;
+        drop_to_folder: string;
+        upload_target: string;
         delete: string;
         edit: string;
         your_files: string;
         system_files: string;
+        create_folder: string;
+        create_file: string;
+        empty: string;
         errors: {
             tooMuchFiles: string;
             tooBigFile: string;
@@ -307,6 +335,9 @@ export interface Translations {
             notEnoughRights: string;
             notFound: string;
             bad_name: string;
+            rename_file_failed: string;
+            rename_folder_failed: string;
+            upload_failed: string;
         };
     };
 
@@ -337,6 +368,10 @@ export interface Translations {
         cancel: string;
         warn: string;
         err: string;
+        agreement_prefix: string;
+        privacy_policy: string;
+        agreement_and: string;
+        personal_data_consent: string;
     };
     prompt_modal: {
         title: string;
@@ -348,6 +383,7 @@ export interface Translations {
         sending: string;
         errors: {
             bad_request: string;
+            payment_required: string;
             unknownError: string;
         };
     };

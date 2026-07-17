@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { matchPath, useLocation, useNavigate } from 'react-router-dom';
 
 import { controller } from '../../../../main.tsx';
 import { Routes } from '../../../../viewModel/routes.ts';
@@ -37,6 +37,9 @@ export const HeaderMenu = () => {
     const language = useSelector(useCurrentLanguage);
     const { isAuthenticated, email } = useSelector(useUser);
     const [showLogoutModal, setShowLogoutModal] = useState(false);
+    const isEditorPage =
+        matchPath(Routes.Project, location.pathname) !== null ||
+        location.pathname === Routes.ProjectDefault;
 
     const openExternal = useCallback((url: string) => {
         window.open(url, '_blank');
@@ -73,9 +76,25 @@ export const HeaderMenu = () => {
             onClick: () => navigate(Routes.Tokens),
         },
         {
+            title: dictionary.wiki,
+            onClick: openWiki,
+        },
+        {
             title: dictionary.header_menu.about,
             onClick: () => openExternal(ABOUT_URL),
         },
+        {
+            title: dictionary.header_menu.contact_us,
+            onClick: openContactModal,
+        },
+        ...(isEditorPage
+            ? [
+                  {
+                      title: dictionary.interface_tour.label,
+                      onClick: () => dispatch(setTourVisibility(true)),
+                  },
+              ]
+            : []),
     ];
 
     const authenticatedMenuItems: HeaderMenuItem[] = [
@@ -92,7 +111,7 @@ export const HeaderMenu = () => {
             onClick: () => navigate(Routes.Tokens),
             separatorAfter: true,
         },
-        ...(isProjectPage
+        ...(isEditorPage
             ? [
                   {
                       title: dictionary.interface_tour.label,

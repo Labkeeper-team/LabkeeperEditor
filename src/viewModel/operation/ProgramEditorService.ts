@@ -8,7 +8,18 @@ import { ProgramService } from '../../model/service/ProgramService.ts';
 import { LoaderService } from '../domain/LoaderService.ts';
 import { IdeService } from '../domain/IdeService.ts';
 import { FileService } from '../domain/FileService.ts';
-import { ProgramRoundStrategy, SegmentType } from '../../model/domain.ts';
+import { EditorSelection } from '@codemirror/state';
+import type { Annotation } from '@codemirror/state';
+import { EditorView } from '@codemirror/view';
+import { ExternalChange } from '@uiw/react-codemirror';
+import {
+    ProgramRoundStrategy,
+    Segment,
+    SegmentType,
+} from '../../model/domain.ts';
+import { UndoRedoCursorHint } from '../../model/service/ProgramService.ts';
+import { getIdeSegmentEditorView } from '../../view/pages/project/editor/ide/segments/ideSegmentEditorView';
+import { EditorNavigationTarget } from '../repository';
 
 export class ProgramEditorService {
     repository: ViewModelRepository;
@@ -151,7 +162,7 @@ export class ProgramEditorService {
                         thisCopy.repository.toast(
                             thisCopy.repository.dictionary.filemanager.errors.tooBigFile.replace(
                                 '${replace1}',
-                                '10Mb'
+                                '10'
                             ),
                             'error'
                         );
@@ -162,6 +173,15 @@ export class ProgramEditorService {
                         thisCopy.repository.toast(
                             thisCopy.repository.dictionary.filemanager.errors
                                 .tooMuchFiles,
+                            'error'
+                        );
+                    } else if (res.code === 400) {
+                        thisCopy.repository.ideViewModelRepository.setGetFilesRequestState(
+                            'ok'
+                        );
+                        thisCopy.repository.toast(
+                            thisCopy.repository.dictionary.filemanager.errors
+                                .bad_name,
                             'error'
                         );
                     } else if (res.isUnauth) {
@@ -182,6 +202,9 @@ export class ProgramEditorService {
                         );
                         thisCopy.ideService.resetEditor();
                     } else {
+                        thisCopy.observerService.onEvent(
+                            Events.EVENT_RPI_UNKNOWN_PROGRAM_EDITOR_UPLOAD
+                        );
                         thisCopy.repository.ideViewModelRepository.setGetFilesRequestState(
                             'error'
                         );
@@ -200,8 +223,10 @@ export class ProgramEditorService {
                 cursorHint.segmentIndex
             );
         }
+        const editorSynced =
+            this.syncMountedSegmentEditorAfterHistoryChange(cursorHint);
         this.ideService.onProgramUpdated();
-        if (cursorHint) {
+        if (cursorHint && !editorSynced) {
             this.repository.ideViewModelRepository.setPendingSegmentEditorCursor(
                 {
                     segmentIndex: cursorHint.segmentIndex,
@@ -221,8 +246,10 @@ export class ProgramEditorService {
                 cursorHint.segmentIndex
             );
         }
+        const editorSynced =
+            this.syncMountedSegmentEditorAfterHistoryChange(cursorHint);
         this.ideService.onProgramUpdated();
-        if (cursorHint) {
+        if (cursorHint && !editorSynced) {
             this.repository.ideViewModelRepository.setPendingSegmentEditorCursor(
                 {
                     segmentIndex: cursorHint.segmentIndex,
@@ -231,6 +258,60 @@ export class ProgramEditorService {
             );
             this.scheduleStaleHintClear();
         }
+    };
+
+    private syncMountedSegmentEditorAfterHistoryChange = (
+        cursorHint: UndoRedoCursorHint | undefined
+    ): boolean => {
+        if (!cursorHint) {
+            return false;
+        }
+        const view = getIdeSegmentEditorView(cursorHint.segmentIndex);
+        if (!view) {
+            return false;
+        }
+        const segment =
+            this.programService.getCurrentProgram().segments[
+                cursorHint.segmentIndex
+            ];
+        if (!segment) {
+            return false;
+        }
+
+        const nextText = segment.text;
+        const currentText = view.state.doc.toString();
+        const cursorOffset = Math.max(
+            0,
+            Math.min(cursorHint.cursorOffset, nextText.length)
+        );
+        const externalChangeAnnotations = [
+            ExternalChange.of(true),
+        ] as unknown as Annotation<unknown>[];
+
+        view.dispatch({
+            changes:
+                currentText === nextText
+                    ? undefined
+                    : {
+                          from: 0,
+                          to: view.state.doc.length,
+                          insert: nextText,
+                      },
+            selection: EditorSelection.cursor(cursorOffset),
+            effects: EditorView.scrollIntoView(cursorOffset, {
+                y: 'nearest',
+                x: 'nearest',
+            }),
+            annotations: externalChangeAnnotations,
+        });
+
+        if (
+            this.repository.ideViewModelRepository.activeSegmentIndex() ===
+            cursorHint.segmentIndex
+        ) {
+            view.focus();
+        }
+        return true;
     };
 
     /** Сбрасывает pendingSegmentEditorCursor через 2 rAF-кадра, если CM-слушатель не успел его применить. */
@@ -310,13 +391,52 @@ export class ProgramEditorService {
         this.ideService.onProgramUpdated();
     };
 
+    addLatexBoundarySegment = async (
+        text: string,
+        placement: 'start' | 'end'
+    ) => {
+        if (placement === 'start') {
+            await this.onSegmentAddedViaDivider('latex', -1);
+            await this.onSegmentTextEdited(0, text);
+            return;
+        }
+
+        this.onAddSegmentClicked('latex');
+        const targetSegmentIndex =
+            this.programService.getCurrentProgram().segments.length - 1;
+        if (targetSegmentIndex < 0) {
+            return;
+        }
+        await this.onSegmentTextEdited(targetSegmentIndex, text);
+    };
+
     onFocusSegment = async (segmentIndex: number) => {
         this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(
             segmentIndex
         );
+        const view = getIdeSegmentEditorView(segmentIndex);
+        if (view) {
+            const from = view.state.selection.main.from;
+            const line = view.state.doc.lineAt(from).number;
+            this.repository.ideViewModelRepository.setActiveEditorLine(line);
+            this.repository.ideViewModelRepository.setSynctexEditorPosition({
+                segmentIndex,
+                line,
+            });
+        }
     };
 
     onBlurSegment = async (segmentIndex: number) => {
+        const view = getIdeSegmentEditorView(segmentIndex);
+        if (view) {
+            const from = view.state.selection.main.from;
+            const line = view.state.doc.lineAt(from).number;
+            this.repository.ideViewModelRepository.setSynctexEditorPosition({
+                segmentIndex,
+                line,
+            });
+        }
+
         if (
             this.repository.ideViewModelRepository.activeSegmentIndex() ===
             segmentIndex
@@ -357,6 +477,162 @@ export class ProgramEditorService {
             segmentIndex,
             segmentText
         );
+    };
+
+    private canUseSynctexNavigation = (): boolean => {
+        if (!this.repository.userViewModelRepository.isAuthenticated()) {
+            return false;
+        }
+        if (this.repository.projectViewModelRepository.projectIsReadonly()) {
+            return false;
+        }
+        if (this.repository.projectViewModelRepository.mode() !== 'latex') {
+            return false;
+        }
+        const project = this.repository.projectViewModelRepository.project();
+        return Boolean(project?.projectId);
+    };
+
+    private getSegmentIdForNavigation = (segmentIndex: number): number => {
+        const program =
+            this.repository.projectViewModelRepository.currentProgram();
+        const segment = program?.segments[segmentIndex] as
+            | (Segment & { id?: number })
+            | undefined;
+        if (segment?.id != null && segment.id > 0) {
+            return segment.id;
+        }
+        return segmentIndex + 1;
+    };
+
+    private resolveSynctexEditorPosition =
+        (): EditorNavigationTarget | null => {
+            const activeIndex =
+                this.repository.ideViewModelRepository.activeSegmentIndex();
+            const activeLine =
+                this.repository.ideViewModelRepository.activeEditorLine();
+
+            if (activeIndex >= 0 && activeLine != null && activeLine >= 1) {
+                return { segmentIndex: activeIndex, line: activeLine };
+            }
+
+            const saved =
+                this.repository.ideViewModelRepository.synctexEditorPosition();
+            if (saved && saved.segmentIndex >= 0 && saved.line >= 1) {
+                return saved;
+            }
+
+            const previousIndex =
+                this.repository.ideViewModelRepository.previousActiveSegmentIndex();
+            if (previousIndex >= 0) {
+                const view = getIdeSegmentEditorView(previousIndex);
+                if (view) {
+                    const from = view.state.selection.main.from;
+                    const line = view.state.doc.lineAt(from).number;
+                    return { segmentIndex: previousIndex, line };
+                }
+            }
+
+            return null;
+        };
+
+    onSyncEditorToPdf = async () => {
+        if (!this.canUseSynctexNavigation()) {
+            return;
+        }
+        const project = this.repository.projectViewModelRepository.project();
+        if (!project?.projectId) {
+            return;
+        }
+        if (!this.repository.projectViewModelRepository.pdfUri()) {
+            this.repository.toast(
+                this.repository.dictionary.synctex.errors.no_pdf,
+                'error'
+            );
+            return;
+        }
+        const position = this.resolveSynctexEditorPosition();
+        if (!position) {
+            this.repository.toast(
+                this.repository.dictionary.synctex.errors.no_cursor,
+                'error'
+            );
+            return;
+        }
+        const result = await this.rpi.navigationDocToPdfRequest(
+            project.projectId,
+            {
+                segmentId: this.getSegmentIdForNavigation(
+                    position.segmentIndex
+                ),
+                line: position.line,
+            }
+        );
+        if (!result.isOk || !result.body) {
+            this.observerService.onEvent(
+                Events.EVENT_RPI_UNKNOWN_PROGRAM_EDITOR_SYNC_EDITOR_TO_PDF
+            );
+            this.repository.toast(
+                this.repository.dictionary.synctex.errors.failed,
+                'error'
+            );
+            return;
+        }
+        this.repository.ideViewModelRepository.setPdfNavigationTarget(
+            result.body
+        );
+    };
+
+    onSyncPdfToEditor = async () => {
+        if (!this.canUseSynctexNavigation()) {
+            return;
+        }
+        const project = this.repository.projectViewModelRepository.project();
+        if (!project?.projectId) {
+            return;
+        }
+        const pdfPosition =
+            this.repository.ideViewModelRepository.pdfClickPosition();
+        if (!pdfPosition) {
+            this.repository.toast(
+                this.repository.dictionary.synctex.errors.no_pdf_selection,
+                'error'
+            );
+            return;
+        }
+        const result = await this.rpi.navigationPdfToDocRequest(
+            project.projectId,
+            pdfPosition
+        );
+        if (!result.isOk || !result.body) {
+            this.observerService.onEvent(
+                Events.EVENT_RPI_UNKNOWN_PROGRAM_EDITOR_SYNC_PDF_TO_EDITOR
+            );
+            this.repository.toast(
+                this.repository.dictionary.synctex.errors.failed,
+                'error'
+            );
+            return;
+        }
+        const program =
+            this.repository.projectViewModelRepository.currentProgram();
+        const segments = program?.segments ?? [];
+        let segmentIndex = segments.findIndex(
+            (s) => (s as Segment & { id?: number }).id === result.body.segmentId
+        );
+        if (segmentIndex < 0) {
+            segmentIndex = result.body.segmentId - 1;
+        }
+        if (segmentIndex < 0 || segmentIndex >= segments.length) {
+            return;
+        }
+        this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(
+            segmentIndex
+        );
+        this.repository.ideViewModelRepository.setEditorNavigationTarget({
+            segmentIndex,
+            line: result.body.line,
+        });
     };
 
     onAddSegmentClicked = (type: SegmentType) => {
