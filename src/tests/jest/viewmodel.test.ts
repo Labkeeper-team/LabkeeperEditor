@@ -66,7 +66,8 @@ function createDefaultProject(projectId: string, title: string): RichProject {
 
 // Создает дефолтную информацию о юзере
 function createDefaultUserInfo(
-    isAuthenticated: boolean
+    isAuthenticated: boolean,
+    tokenBalance = 0
 ): RequestResult<UserInfo> {
     return {
         code: 200,
@@ -74,7 +75,7 @@ function createDefaultUserInfo(
             isAuthenticated: isAuthenticated,
             email: 'a@gmail.com',
             id: 1,
-            tokenBalance: 0,
+            tokenBalance,
         },
         isOk: true,
         isUnauth: false,
@@ -116,6 +117,59 @@ test('startup-loads-billing-pricing-test', async () => {
     expect(repository.billingViewModelRepository.pricingRequestState()).toBe(
         'ok'
     );
+});
+
+test('compilation-refreshes-user-token-balance-test', async () => {
+    const { repository, rpi, projectPageService } = mockContext();
+    repository.userViewModelRepository.setUserInfo(
+        createDefaultUserInfo(true, 10).body
+    );
+    repository.projectViewModelRepository.setProjectType('markdown');
+    rpi.compilationRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        body: { segments: [] },
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+    } as RequestResult<CompileSuccessResult>);
+    rpi.getUserInfoRequest = jest
+        .fn()
+        .mockResolvedValue(createDefaultUserInfo(true, 7));
+
+    await projectPageService.onRunButtonClicked();
+
+    expect(rpi.getUserInfoRequest).toHaveBeenCalledTimes(1);
+    expect(repository.userViewModelRepository.tokenBalance()).toBe(7);
+});
+
+test('prompt-refreshes-user-token-balance-test', async () => {
+    const { repository, rpi, projectPageService } = mockContext();
+    repository.userViewModelRepository.setUserInfo(
+        createDefaultUserInfo(true, 10).body
+    );
+    repository.projectViewModelRepository.setProject(
+        createDefaultProject('project-id', 'title')
+    );
+    rpi.promptProjectRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        body: {
+            segments: [],
+            parameters: {
+                roundStrategy: 'firstMeaningDigit',
+            },
+        },
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+    } as RequestResult<Program>);
+    rpi.getUserInfoRequest = jest
+        .fn()
+        .mockResolvedValue(createDefaultUserInfo(true, 8));
+
+    await projectPageService.sendPromptAndReload('prompt', false);
+
+    expect(rpi.getUserInfoRequest).toHaveBeenCalledTimes(1);
+    expect(repository.userViewModelRepository.tokenBalance()).toBe(8);
 });
 
 test('help-items-add-test', async () => {
