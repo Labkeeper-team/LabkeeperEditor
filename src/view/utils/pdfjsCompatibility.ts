@@ -1,3 +1,7 @@
+/**
+ * Необходимо для корректной работы в сафари, без полифиллов pdf не будет отображаться
+ */
+
 type PromiseWithResolvers<T> = {
     promise: Promise<T>;
     resolve: (value: T | PromiseLike<T>) => void;
