@@ -177,7 +177,8 @@ export class StartupService {
             id: this.repository.userViewModelRepository.id(),
             isAuthenticated:
                 this.repository.userViewModelRepository.isAuthenticated(),
-            tokens: this.repository.userViewModelRepository.tokens(),
+            tokenBalance:
+                this.repository.userViewModelRepository.tokenBalance(),
         };
         await this.openDefaultProject(userInfo);
     };

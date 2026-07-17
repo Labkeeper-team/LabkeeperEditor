@@ -131,7 +131,7 @@ MockViewModelRepositoryState {
   "synctexEditorPosition": null,
   "textFileContent": "",
   "toasts": [],
-  "tokens": 0,
+  "tokenBalance": 0,
   "undoEnabled": true,
 }
 `;
@@ -285,7 +285,7 @@ MockViewModelRepositoryState {
   "synctexEditorPosition": null,
   "textFileContent": "",
   "toasts": [],
-  "tokens": 0,
+  "tokenBalance": 0,
   "undoEnabled": true,
 }
 `;

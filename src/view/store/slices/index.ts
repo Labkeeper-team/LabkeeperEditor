@@ -203,7 +203,7 @@ export const userInitialState: UserInfo = {
     isAuthenticated: false,
     email: '',
     id: 0,
-    tokens: 0,
+    tokenBalance: 0,
 };
 
 export const callbackInitialState: CallbackState = {

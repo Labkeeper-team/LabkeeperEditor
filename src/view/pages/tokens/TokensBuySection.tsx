@@ -20,7 +20,7 @@ export const TokensBuySection = ({
     pricingRequestState,
     onPackageSelect,
 }: TokensBuySectionProps) => {
-    const { isAuthenticated, tokens } = useSelector(useUser);
+    const { isAuthenticated, tokenBalance } = useSelector(useUser);
     const language = useSelector(useCurrentLanguage);
     const showPackages = pricingRequestState === 'ok' && packages.length > 0;
     const statusText =
@@ -59,7 +59,7 @@ export const TokensBuySection = ({
                                 {page.authenticated_buy_balance_prefix}
                             </span>
                             <span className="tokens-page__buy-auth-token-pill">
-                                {tokens}
+                                {tokenBalance}
                                 {'\u00A0'}
                                 {page.tokens_amount}
                             </span>

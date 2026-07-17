@@ -63,7 +63,7 @@ export class RouteSetup {
         isAuthenticated: boolean = defaultIsAuthenticated,
         email: string = defaultEmail,
         id: number = defaultId,
-        tokens: number = 0
+        tokenBalance: number = 0
     ) {
         await this.page.route(
             `/api/${version}/public/user-info`,
@@ -75,7 +75,7 @@ export class RouteSetup {
                         isAuthenticated: isAuthenticated,
                         email: email,
                         id: id,
-                        tokens: tokens,
+                        tokenBalance: tokenBalance,
                     }),
                 });
             }

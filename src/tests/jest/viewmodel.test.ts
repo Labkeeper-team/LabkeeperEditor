@@ -74,7 +74,7 @@ function createDefaultUserInfo(
             isAuthenticated: isAuthenticated,
             email: 'a@gmail.com',
             id: 1,
-            tokens: 0,
+            tokenBalance: 0,
         },
         isOk: true,
         isUnauth: false,
@@ -462,7 +462,7 @@ test('back-button-resets-forbidden-project-error-for-unauthorized-user', async (
         isAuthenticated: false,
         email: '',
         id: 0,
-        tokens: 0,
+        tokenBalance: 0,
     });
     repository.ideViewModelRepository.setGetProjectRequestState('forbidden');
     repository.projectViewModelRepository.setReadOnly(true);
@@ -764,7 +764,7 @@ test('segments-move-with-result-test', async () => {
             isAuthenticated: false,
             email: 'a@gmail.com',
             id: 1,
-            tokens: 0,
+            tokenBalance: 0,
         },
         isOk: true,
         isUnauth: false,
@@ -872,7 +872,7 @@ test('hint-erase-other-segments-test', async () => {
             isAuthenticated: false,
             email: 'a@gmail.com',
             id: 1,
-            tokens: 0,
+            tokenBalance: 0,
         },
         isOk: true,
         isUnauth: false,

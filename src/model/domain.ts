@@ -35,7 +35,7 @@ export interface UserInfo {
     email: string;
     id: number;
     isAuthenticated: boolean;
-    tokens: number;
+    tokenBalance: number;
 }
 
 export interface LabkeeperFile {

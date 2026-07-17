@@ -38,7 +38,7 @@ export const AppHeader = () => {
     const navigate = useNavigate();
     const dictionary = useSelector(useDictionary);
     const language = useSelector(useCurrentLanguage);
-    const { isAuthenticated, tokens } = useSelector(useUser);
+    const { isAuthenticated, tokenBalance } = useSelector(useUser);
     const projectIsReadonly = useSelector(useIsProjectReadonly);
 
     const onLanguageChange = (lang: unknown) => {
@@ -76,7 +76,7 @@ export const AppHeader = () => {
                             <span className="header-tokens__label">
                                 {dictionary.header_menu.tokens}:{' '}
                                 <span className="header-tokens__count">
-                                    {tokens}
+                                    {tokenBalance}
                                 </span>
                             </span>
                             <button

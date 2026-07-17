@@ -26,7 +26,7 @@ export const MarketingHeader = () => {
     const location = useLocation();
     const dictionary = useSelector(useDictionary);
     const language = useSelector(useCurrentLanguage);
-    const { isAuthenticated, tokens } = useSelector(useUser);
+    const { isAuthenticated, tokenBalance } = useSelector(useUser);
     const [menuIsOpen, setMenuIsOpen] = useState(false);
     const [showLogoutModal, setShowLogoutModal] = useState(false);
 
@@ -178,7 +178,7 @@ export const MarketingHeader = () => {
                             {isAuthenticated ? (
                                 <div className="marketing-header__tokens marketing-header__tokens--mobile">
                                     <span>{dictionary.header_menu.tokens}</span>
-                                    <strong>{tokens}</strong>
+                                    <strong>{tokenBalance}</strong>
                                 </div>
                             ) : null}
                             {isAuthenticated ? (
