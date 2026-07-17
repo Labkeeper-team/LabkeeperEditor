@@ -4,3 +4,6 @@ export const isValidEmail = (email: string): boolean => {
     const normalizedEmail = normalizeEmail(email);
     return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(normalizedEmail);
 };
+
+export const isValidPassword = (password: string): boolean =>
+    password.length >= 8;

@@ -201,6 +201,7 @@ export interface Translations {
         loginVia: string;
         loginAndPasswoord: string;
         login: string;
+        loginInput: string;
         password: string;
         registration: string;
         forgotPassword: string;
@@ -231,6 +232,7 @@ export interface Translations {
             userNotFound: string;
             invalidEmail: string;
             invalidCode: string;
+            invalidPassword: string;
             passwordsDontMatch: string;
             fillAllFields: string;
             passwordSetError: string;

@@ -13,7 +13,7 @@ import { AppDispatch } from '../../../store';
 import { SmartCaptcha } from '@yandex/smart-captcha';
 import { Providers, Secrets, URLS } from '../../../../constants.ts';
 import { controller } from '../../../../main.tsx';
-import { isValidEmail, normalizeEmail } from './validation.ts';
+import { isValidEmail, isValidPassword, normalizeEmail } from './validation.ts';
 
 // Компонент спиннера загрузки
 const LoadingSpinner = () => (
@@ -170,7 +170,7 @@ const LoginView = () => {
                             setLogin(e.target.value)
                         }
                         onBlur={() => setIsLoginTouched(true)}
-                        placeholder={dictionary.authorization.login}
+                        placeholder={dictionary.authorization.loginInput}
                         type="email"
                         error={
                             isLoginTouched && loginEmailError
@@ -633,6 +633,10 @@ const PasswordView = () => {
         }
         if (password !== confirmPassword) {
             setLocalError(dictionary.authorization.errors.passwordsDontMatch);
+            return;
+        }
+        if (!isValidPassword(password)) {
+            setLocalError(dictionary.authorization.errors.invalidPassword);
             return;
         }
         setLocalError('');
