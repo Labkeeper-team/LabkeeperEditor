@@ -53,6 +53,30 @@ export interface CodeValidationResponse {
     valid: boolean;
 }
 
+export interface ServicePrices {
+    latexCompilationTokenCostPerSecond: number;
+    markdownCompilationTokenCostPerSecond: number;
+    gptTextPromptTokenCost: number;
+    gptImagePromptTokenCost: number;
+}
+
+export interface TokenPrice {
+    tokensToPurchase: number;
+    costRubles: number;
+}
+
+export interface UserRegularRefill {
+    refillTokensAmount: number;
+    refillPeriodSeconds: number;
+}
+
+export interface BillingPricingResponse {
+    servicePrices: ServicePrices;
+    tokenPrices: TokenPrice[];
+    userRegularRefill: UserRegularRefill;
+    newUserInitialTokensCount: number;
+}
+
 export interface RichProject extends Project {
     lastProgramResult?: CompileSuccessResult;
     lastPdf?: string;
@@ -201,6 +225,8 @@ export interface Rpi {
         program: Program,
         prompt: string
     ): Promise<RequestResult<Program>>;
+
+    getBillingPricingRequest(): Promise<RequestResult<BillingPricingResponse>>;
 }
 
 export const mockRpi = (): Rpi => {
@@ -265,5 +291,26 @@ export const mockRpi = (): Rpi => {
         getUserInfoRequest: () => {
             throw new Error('Not implemented');
         },
+        getBillingPricingRequest: () =>
+            Promise.resolve({
+                code: 200,
+                body: {
+                    servicePrices: {
+                        latexCompilationTokenCostPerSecond: 0,
+                        markdownCompilationTokenCostPerSecond: 0,
+                        gptTextPromptTokenCost: 0,
+                        gptImagePromptTokenCost: 0,
+                    },
+                    tokenPrices: [],
+                    userRegularRefill: {
+                        refillTokensAmount: 0,
+                        refillPeriodSeconds: 0,
+                    },
+                    newUserInitialTokensCount: 0,
+                },
+                isOk: true,
+                isUnauth: false,
+                isForbidden: false,
+            }),
     } as unknown as Rpi;
 };

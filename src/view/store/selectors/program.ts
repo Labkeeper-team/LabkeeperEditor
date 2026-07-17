@@ -41,6 +41,10 @@ export const useUser = createSelector(
     (state: StorageState) => state,
     (state) => state.user
 );
+export const useBillingPricing = createSelector(
+    (state: StorageState) => state.billing,
+    (billing) => billing
+);
 export const useActiveElement = createSelector(
     (state: StorageState) => state.ide,
     (index) => index.activeSegmentIndex

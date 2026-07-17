@@ -26,6 +26,7 @@ import {
 } from '../../../viewModel/repository';
 import { createEmptyProgram } from '../../../model/repository/ProgramRepository.ts';
 import { PdfPosition } from '../../../model/rpi';
+import { BillingPricingResponse } from '../../../model/rpi';
 import { EditorNavigationTarget } from '../../../viewModel/repository';
 
 interface CallbackState {
@@ -52,6 +53,11 @@ interface SettingsState {
 
 interface ProjectsState {
     projects: ProjectShort[];
+}
+
+interface BillingState {
+    pricing?: BillingPricingResponse;
+    pricingRequestState: BillingPricingRequestState;
 }
 
 interface ProjectState {
@@ -166,6 +172,13 @@ export const projectInitialState: ProjectState = {
 
 export const projectsInitialState: ProjectsState = {
     projects: [],
+};
+
+export type BillingPricingRequestState = 'unknown' | 'loading' | 'ok' | 'error';
+
+export const billingInitialState: BillingState = {
+    pricing: undefined,
+    pricingRequestState: 'unknown',
 };
 
 export const settingsInitialState: SettingsState = {

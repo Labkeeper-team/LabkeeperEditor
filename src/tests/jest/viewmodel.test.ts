@@ -82,6 +82,42 @@ function createDefaultUserInfo(
     };
 }
 
+test('startup-loads-billing-pricing-test', async () => {
+    const { repository, rpi, startupService } = mockContext();
+    const pricing = {
+        servicePrices: {
+            latexCompilationTokenCostPerSecond: 0,
+            markdownCompilationTokenCostPerSecond: 0,
+            gptTextPromptTokenCost: 1,
+            gptImagePromptTokenCost: 2,
+        },
+        tokenPrices: [{ tokensToPurchase: 1, costRubles: 1 }],
+        userRegularRefill: {
+            refillTokensAmount: 1000,
+            refillPeriodSeconds: 86400,
+        },
+        newUserInitialTokensCount: 1000,
+    };
+    rpi.getBillingPricingRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        body: pricing,
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+    });
+    rpi.getUserInfoRequest = jest
+        .fn()
+        .mockResolvedValue(createDefaultUserInfo(false));
+
+    await startupService.onAppStartup();
+
+    expect(rpi.getBillingPricingRequest).toHaveBeenCalledTimes(1);
+    expect(repository.billingViewModelRepository.pricing()).toEqual(pricing);
+    expect(repository.billingViewModelRepository.pricingRequestState()).toBe(
+        'ok'
+    );
+});
+
 test('help-items-add-test', async () => {
     const { repository, programEditorService, projectPageService } =
         mockContext();

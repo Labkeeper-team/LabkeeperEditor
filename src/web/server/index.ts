@@ -21,6 +21,7 @@ import {
     CompileSuccessPdfResponse,
     PdfPosition,
     ProgramDocumentPosition,
+    BillingPricingResponse,
 } from '../../model/rpi';
 
 async function requestWrapper<T>(
@@ -352,6 +353,12 @@ export class WebRpi implements Rpi {
 
     async getUserInfoRequest(): Promise<RequestResult<UserInfo>> {
         return requestWrapper(() => axios.get(URLS.UserInfo));
+    }
+
+    async getBillingPricingRequest(): Promise<
+        RequestResult<BillingPricingResponse>
+    > {
+        return requestWrapper(() => axios.get(URLS.billingPricing));
     }
 
     async getS3FileRequest(path: string): Promise<RequestResult> {

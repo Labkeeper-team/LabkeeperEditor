@@ -181,29 +181,36 @@ export const en: Translations = {
         authenticated_buy_balance_prefix: 'Your balance',
         package_quantity_label: 'Token amount',
         package_card_subline_template: '{tokens} for {price}',
+        pricing_loading: 'Loading current prices...',
+        pricing_error:
+            'Could not load current prices. Try refreshing the page.',
+        pricing_empty: 'No token packages are available right now.',
         buy_button: 'Buy',
         popular: 'Popular',
         tokens_amount: 'tokens',
         usage_title: 'What tokens are used for',
         usage_items: [
             {
-                heading: 'AI assistant (GPT) usage: 2 tokens = 1 text prompt.',
+                heading: 'AI assistant (GPT) usage',
                 body: 'Ask the model to outline a document, convert text to Markdown, or spot bugs in your code.',
             },
             {
-                heading: 'Image generation: 10 tokens = 1 image.',
+                heading: 'Image generation',
                 body: 'Create unique illustrations and graphics for papers and lab reports from a single prompt.',
             },
             {
-                heading:
-                    'Server-side LaTeX compile: 1 token = 1 second of compile time.',
+                heading: 'Server-side compilation',
                 body: 'Build heavy PDF documents without freezes. Tokens are charged only while the powerful remote compiler is running.',
             },
-            {
-                heading: '',
-                body: 'Hybrid syntax: use lightweight Markdown snippets inside complex LaTeX to work faster.',
-            },
         ],
+        usage_rates: {
+            latex_compilation:
+                'LaTeX compilation: {tokens} per 1 second of server time.',
+            markdown_compilation:
+                'Markdown compilation: {tokens} per 1 second of server time.',
+            gpt_text_prompt: 'Text GPT prompt: {tokens} per 1 request.',
+            gpt_image_prompt: 'Image generation: {tokens} per 1 request.',
+        },
         modal: {
             title: 'Token purchase',
             gateway_notice:

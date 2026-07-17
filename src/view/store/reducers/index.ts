@@ -9,6 +9,7 @@ import { callbackSlice } from '../slices/callback';
 import { ideSlice } from '../slices/ide';
 import { authSlice } from '../slices/auth';
 import { persistenceSlice } from '../slices/persistence';
+import { billingSlice } from '../slices/billing';
 
 const LOCAL_STORAGE_KEY = 'PERSISTENCE';
 
@@ -20,6 +21,7 @@ export const createRootReducer = () => {
         settings: settingsSlice.reducer,
         user: userSlice.reducer,
         auth: authSlice.reducer,
+        billing: billingSlice.reducer,
         persistence: persistReducer(
             {
                 key: LOCAL_STORAGE_KEY,

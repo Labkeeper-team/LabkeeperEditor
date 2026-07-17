@@ -3,24 +3,32 @@ import { useSelector } from 'react-redux';
 import type { Translations } from '../../../viewModel/dictionaries/index.ts';
 import { useUser } from '../../store/selectors/program';
 import { useCurrentLanguage } from '../../store/selectors/translations.ts';
-import {
-    formatTokenPackagePrice,
-    TOKEN_PACKAGES,
-    TokenPackage,
-} from './constant.ts';
+import { formatTokenPackagePrice, TokenPackage } from './constant.ts';
 import { TokenPackageCard } from './TokenPackageCard.tsx';
+import { BillingPricingRequestState } from '../../../viewModel/repository';
 
 type TokensBuySectionProps = {
     page: Translations['tokens_page'];
+    packages: TokenPackage[];
+    pricingRequestState: BillingPricingRequestState;
     onPackageSelect: (tokenPackage: TokenPackage) => void;
 };
 
 export const TokensBuySection = ({
     page,
+    packages,
+    pricingRequestState,
     onPackageSelect,
 }: TokensBuySectionProps) => {
     const { isAuthenticated, tokens } = useSelector(useUser);
     const language = useSelector(useCurrentLanguage);
+    const showPackages = pricingRequestState === 'ok' && packages.length > 0;
+    const statusText =
+        pricingRequestState === 'loading' || pricingRequestState === 'unknown'
+            ? page.pricing_loading
+            : pricingRequestState === 'error'
+              ? page.pricing_error
+              : page.pricing_empty;
 
     return (
         <section className="tokens-page__buy-section" id="token-packages">
@@ -62,22 +70,28 @@ export const TokensBuySection = ({
                         </h3>
                     )}
                     <div className="tokens-page__packages">
-                        {TOKEN_PACKAGES.map((tokenPackage) => (
-                            <TokenPackageCard
-                                key={tokenPackage.key}
-                                tokenPackage={tokenPackage}
-                                formattedPrice={formatTokenPackagePrice(
-                                    tokenPackage.price,
-                                    language
-                                )}
-                                quantityLabel={page.package_quantity_label}
-                                sublineTemplate={
-                                    page.package_card_subline_template
-                                }
-                                tokensWord={page.tokens_amount}
-                                onSelect={onPackageSelect}
-                            />
-                        ))}
+                        {showPackages ? (
+                            packages.map((tokenPackage) => (
+                                <TokenPackageCard
+                                    key={tokenPackage.key}
+                                    tokenPackage={tokenPackage}
+                                    formattedPrice={formatTokenPackagePrice(
+                                        tokenPackage.price,
+                                        language
+                                    )}
+                                    quantityLabel={page.package_quantity_label}
+                                    sublineTemplate={
+                                        page.package_card_subline_template
+                                    }
+                                    tokensWord={page.tokens_amount}
+                                    onSelect={onPackageSelect}
+                                />
+                            ))
+                        ) : (
+                            <p className="tokens-page__pricing-status">
+                                {statusText}
+                            </p>
+                        )}
                     </div>
                 </div>
             </div>

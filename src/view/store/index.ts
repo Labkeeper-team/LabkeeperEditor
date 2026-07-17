@@ -82,6 +82,10 @@ import {
 } from '../../model/domain.ts';
 import { setProjects } from './slices/projects';
 import {
+    setBillingPricing,
+    setBillingPricingRequestState,
+} from './slices/billing';
+import {
     setCaptchaBypassToken,
     setEditModeForFilename,
     setEditModeForProjectTitle,
@@ -103,6 +107,7 @@ import { dictionary } from '../../viewModel/dictionaries';
 import { toast, TypeOptions } from 'react-toastify';
 import {
     CloneRequestState,
+    BillingPricingRequestState,
     GetFilesRequestState,
     GetProjectRequestState,
     GetProjectsRequestState,
@@ -315,6 +320,15 @@ export const createViewModelStateFromStore = (
 
             setProjects: (projects: ProjectShort[]) =>
                 store.dispatch(setProjects(projects)),
+        },
+        billingViewModelRepository: {
+            pricing: () => store.getState().billing.pricing,
+            pricingRequestState: () =>
+                store.getState().billing.pricingRequestState,
+
+            setPricing: (pricing) => store.dispatch(setBillingPricing(pricing)),
+            setPricingRequestState: (state: BillingPricingRequestState) =>
+                store.dispatch(setBillingPricingRequestState(state)),
         },
         settingsViewModelRepository: {
             isAutocompleteLoading: () => store.getState().settings.isCompiling,

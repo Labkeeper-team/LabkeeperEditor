@@ -65,6 +65,8 @@ export class StartupService {
         open?: OpenParams
     ): Promise<void> => {
         void open;
+        await this.loadBillingPricing();
+
         const result: RequestResult<UserInfo> =
             await this.rpi.getUserInfoRequest();
 
@@ -140,6 +142,28 @@ export class StartupService {
         }
 
         this.ideService.onProgramUpdated();
+    };
+
+    private loadBillingPricing = async (): Promise<void> => {
+        this.repository.billingViewModelRepository.setPricingRequestState(
+            'loading'
+        );
+
+        const result = await this.rpi.getBillingPricingRequest();
+        if (result.isOk) {
+            this.repository.billingViewModelRepository.setPricing(result.body);
+            this.repository.billingViewModelRepository.setPricingRequestState(
+                'ok'
+            );
+            return;
+        }
+
+        this.observerService.onEvent(
+            Events.EVENT_RPI_UNKNOWN_STARTUP_GET_BILLING_PRICING
+        );
+        this.repository.billingViewModelRepository.setPricingRequestState(
+            'error'
+        );
     };
 
     /**

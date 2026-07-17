@@ -171,6 +171,9 @@ export interface Translations {
         authenticated_buy_balance_prefix: string;
         package_quantity_label: string;
         package_card_subline_template: string;
+        pricing_loading: string;
+        pricing_error: string;
+        pricing_empty: string;
         buy_button: string;
         popular: string;
         tokens_amount: string;
@@ -180,6 +183,12 @@ export interface Translations {
             body: string;
             rateLines?: string[];
         }[];
+        usage_rates: {
+            latex_compilation: string;
+            markdown_compilation: string;
+            gpt_text_prompt: string;
+            gpt_image_prompt: string;
+        };
         modal: {
             title: string;
             gateway_notice: string;
