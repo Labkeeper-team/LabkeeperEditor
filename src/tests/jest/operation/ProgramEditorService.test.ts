@@ -13,10 +13,23 @@ import {
 } from '../../../model/domain.ts';
 import { InMemoryProgramRepository } from '../../../model/repository/ProgramRepository.ts';
 import { ProgramService } from '../../../model/service/ProgramService.ts';
+import { getIdeSegmentEditorView } from '../../../view/pages/project/editor/ide/segments/ideSegmentEditorView.ts';
+
+jest.mock(
+    '../../../view/pages/project/editor/ide/segments/ideSegmentEditorView.ts',
+    () => ({
+        getIdeSegmentEditorView: jest.fn(),
+    })
+);
 
 const IMAGE_FILE_NAME = 'myfile.png';
 const IMAGE_FILE_URL =
     'https://files.labkeeper.io/project/348484/user/43444/myfile.png';
+const getIdeSegmentEditorViewMock = getIdeSegmentEditorView as jest.Mock;
+
+beforeEach(() => {
+    getIdeSegmentEditorViewMock.mockReset();
+});
 
 function mockListFilesRequestWithImageFile(rpi: { listFilesRequest: unknown }) {
     rpi.listFilesRequest = jest.fn().mockResolvedValue({
@@ -330,6 +343,51 @@ test('pendingSegmentEditorCursor: onPrevVersionButtonClicked устанавли�
     // Курсор должен быть в диапазоне длины восстановленного текста
     expect(pending?.offset).toBeGreaterThanOrEqual(0);
     expect(pending?.offset).toBeLessThanOrEqual('hello world'.length);
+});
+
+test('undo: редактор принимает восстановленный текст синхронно сразу после изменений', () => {
+    const { programEditorService, repository } = mockContext();
+    const editedText = 'hello world edited';
+    const restoredText = 'hello world';
+    const view = {
+        state: {
+            doc: {
+                length: editedText.length,
+                toString: () => editedText,
+            },
+        },
+        dispatch: jest.fn(),
+        focus: jest.fn(),
+    };
+    getIdeSegmentEditorViewMock.mockReturnValue(view);
+
+    programEditorService['programService'].addSegmentToLastPosition('md');
+    programEditorService['programService'].changeSegmentTextByPositionIndex(
+        0,
+        restoredText,
+        restoredText.length
+    );
+    programEditorService['programService'].gap();
+    programEditorService['programService'].changeSegmentTextByPositionIndex(
+        0,
+        editedText,
+        editedText.length
+    );
+
+    programEditorService.onPrevVersionButtonClicked();
+
+    expect(view.dispatch).toHaveBeenCalledWith(
+        expect.objectContaining({
+            changes: {
+                from: 0,
+                to: editedText.length,
+                insert: restoredText,
+            },
+        })
+    );
+    expect(
+        repository.ideViewModelRepository.pendingSegmentEditorCursor()
+    ).toBeNull();
 });
 
 test('canUndo/canRedo корректны после серии операций', () => {

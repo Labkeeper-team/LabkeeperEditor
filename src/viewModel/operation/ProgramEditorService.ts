@@ -8,11 +8,16 @@ import { ProgramService } from '../../model/service/ProgramService.ts';
 import { LoaderService } from '../domain/LoaderService.ts';
 import { IdeService } from '../domain/IdeService.ts';
 import { FileService } from '../domain/FileService.ts';
+import { EditorSelection } from '@codemirror/state';
+import type { Annotation } from '@codemirror/state';
+import { EditorView } from '@codemirror/view';
+import { ExternalChange } from '@uiw/react-codemirror';
 import {
     ProgramRoundStrategy,
     Segment,
     SegmentType,
 } from '../../model/domain.ts';
+import { UndoRedoCursorHint } from '../../model/service/ProgramService.ts';
 import { getIdeSegmentEditorView } from '../../view/pages/project/editor/ide/segments/ideSegmentEditorView';
 import { EditorNavigationTarget } from '../repository';
 
@@ -218,8 +223,10 @@ export class ProgramEditorService {
                 cursorHint.segmentIndex
             );
         }
+        const editorSynced =
+            this.syncMountedSegmentEditorAfterHistoryChange(cursorHint);
         this.ideService.onProgramUpdated();
-        if (cursorHint) {
+        if (cursorHint && !editorSynced) {
             this.repository.ideViewModelRepository.setPendingSegmentEditorCursor(
                 {
                     segmentIndex: cursorHint.segmentIndex,
@@ -239,8 +246,10 @@ export class ProgramEditorService {
                 cursorHint.segmentIndex
             );
         }
+        const editorSynced =
+            this.syncMountedSegmentEditorAfterHistoryChange(cursorHint);
         this.ideService.onProgramUpdated();
-        if (cursorHint) {
+        if (cursorHint && !editorSynced) {
             this.repository.ideViewModelRepository.setPendingSegmentEditorCursor(
                 {
                     segmentIndex: cursorHint.segmentIndex,
@@ -249,6 +258,60 @@ export class ProgramEditorService {
             );
             this.scheduleStaleHintClear();
         }
+    };
+
+    private syncMountedSegmentEditorAfterHistoryChange = (
+        cursorHint: UndoRedoCursorHint | undefined
+    ): boolean => {
+        if (!cursorHint) {
+            return false;
+        }
+        const view = getIdeSegmentEditorView(cursorHint.segmentIndex);
+        if (!view) {
+            return false;
+        }
+        const segment =
+            this.programService.getCurrentProgram().segments[
+                cursorHint.segmentIndex
+            ];
+        if (!segment) {
+            return false;
+        }
+
+        const nextText = segment.text;
+        const currentText = view.state.doc.toString();
+        const cursorOffset = Math.max(
+            0,
+            Math.min(cursorHint.cursorOffset, nextText.length)
+        );
+        const externalChangeAnnotations = [
+            ExternalChange.of(true),
+        ] as unknown as Annotation<unknown>[];
+
+        view.dispatch({
+            changes:
+                currentText === nextText
+                    ? undefined
+                    : {
+                          from: 0,
+                          to: view.state.doc.length,
+                          insert: nextText,
+                      },
+            selection: EditorSelection.cursor(cursorOffset),
+            effects: EditorView.scrollIntoView(cursorOffset, {
+                y: 'nearest',
+                x: 'nearest',
+            }),
+            annotations: externalChangeAnnotations,
+        });
+
+        if (
+            this.repository.ideViewModelRepository.activeSegmentIndex() ===
+            cursorHint.segmentIndex
+        ) {
+            view.focus();
+        }
+        return true;
     };
 
     /** Сбрасывает pendingSegmentEditorCursor через 2 rAF-кадра, если CM-слушатель не успел его применить. */
