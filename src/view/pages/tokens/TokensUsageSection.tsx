@@ -36,7 +36,7 @@ export const TokensUsageSection = ({
                                             (line, rateIndex) => (
                                                 <p
                                                     key={`${index}-${rateIndex}`}
-                                                    className="tokens-page__usage-item-heading"
+                                                    className="tokens-page__usage-item-rate"
                                                 >
                                                     {line}
                                                 </p>
