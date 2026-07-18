@@ -2,7 +2,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import svgr from 'vite-plugin-svgr';
 
-const DEFAULT_MAJOR = '4';
+const DEFAULT_MAJOR = '2';
 const DEFAULT_MINOR = '';
 
 function readCliArg(name: string): string | undefined {
