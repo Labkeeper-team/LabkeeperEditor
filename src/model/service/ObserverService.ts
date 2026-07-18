@@ -35,6 +35,9 @@ export const Events = {
     EVENT_RPI_UNKNOWN_STARTUP_OAUTH_CODE: 'rpi_unknown_startup_oauth_code',
     EVENT_RPI_UNKNOWN_STARTUP_GET_USER_INFO:
         'rpi_unknown_startup_get_user_info',
+    EVENT_RPI_UNKNOWN_STARTUP_GET_BILLING_PRICING:
+        'rpi_unknown_startup_get_billing_pricing',
+    EVENT_RPI_UNKNOWN_REFRESH_USER_INFO: 'rpi_unknown_refresh_user_info',
     EVENT_RPI_UNKNOWN_STARTUP_GET_PROJECT: 'rpi_unknown_startup_get_project',
     EVENT_RPI_UNKNOWN_STARTUP_GET_DEFAULT_PROJECT:
         'rpi_unknown_startup_get_default_project',

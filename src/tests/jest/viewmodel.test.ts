@@ -73,7 +73,8 @@ function createDefaultProject(projectId: string, title: string): RichProject {
 
 // Создает дефолтную информацию о юзере
 function createDefaultUserInfo(
-    isAuthenticated: boolean
+    isAuthenticated: boolean,
+    tokenBalance = 0
 ): RequestResult<UserInfo> {
     return {
         code: 200,
@@ -81,13 +82,102 @@ function createDefaultUserInfo(
             isAuthenticated: isAuthenticated,
             email: 'a@gmail.com',
             id: 1,
-            tokens: 0,
+            tokenBalance,
         },
         isOk: true,
         isUnauth: false,
         isForbidden: false,
     };
 }
+
+test('startup-loads-billing-pricing-test', async () => {
+    const { repository, rpi, startupService } = mockContext();
+    const pricing = {
+        servicePrices: {
+            latexCompilationTokenCostPerSecond: 0,
+            markdownCompilationTokenCostPerSecond: 0,
+            gptTextPromptTokenCost: 1,
+            gptImagePromptTokenCost: 2,
+        },
+        tokenPrices: [{ tokensToPurchase: 1, costRubles: 1 }],
+        userRegularRefill: {
+            refillTokensAmount: 1000,
+            refillPeriodSeconds: 86400,
+        },
+        newUserInitialTokensCount: 1000,
+    };
+    rpi.getBillingPricingRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        body: pricing,
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+    });
+    rpi.getUserInfoRequest = jest
+        .fn()
+        .mockResolvedValue(createDefaultUserInfo(false));
+
+    await startupService.onAppStartup();
+
+    expect(rpi.getBillingPricingRequest).toHaveBeenCalledTimes(1);
+    expect(repository.billingViewModelRepository.pricing()).toEqual(pricing);
+    expect(repository.billingViewModelRepository.pricingRequestState()).toBe(
+        'ok'
+    );
+});
+
+test('compilation-refreshes-user-token-balance-test', async () => {
+    const { repository, rpi, projectPageService } = mockContext();
+    repository.userViewModelRepository.setUserInfo(
+        createDefaultUserInfo(true, 10).body
+    );
+    repository.projectViewModelRepository.setProjectType('markdown');
+    rpi.compilationRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        body: { segments: [] },
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+    } as RequestResult<CompileSuccessResult>);
+    rpi.getUserInfoRequest = jest
+        .fn()
+        .mockResolvedValue(createDefaultUserInfo(true, 7));
+
+    await projectPageService.onRunButtonClicked();
+
+    expect(rpi.getUserInfoRequest).toHaveBeenCalledTimes(1);
+    expect(repository.userViewModelRepository.tokenBalance()).toBe(7);
+});
+
+test('prompt-refreshes-user-token-balance-test', async () => {
+    const { repository, rpi, projectPageService } = mockContext();
+    repository.userViewModelRepository.setUserInfo(
+        createDefaultUserInfo(true, 10).body
+    );
+    repository.projectViewModelRepository.setProject(
+        createDefaultProject('project-id', 'title')
+    );
+    rpi.promptProjectRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        body: {
+            segments: [],
+            parameters: {
+                roundStrategy: 'firstMeaningDigit',
+            },
+        },
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+    } as RequestResult<Program>);
+    rpi.getUserInfoRequest = jest
+        .fn()
+        .mockResolvedValue(createDefaultUserInfo(true, 8));
+
+    await projectPageService.sendPromptAndReload('prompt', false);
+
+    expect(rpi.getUserInfoRequest).toHaveBeenCalledTimes(1);
+    expect(repository.userViewModelRepository.tokenBalance()).toBe(8);
+});
 
 test('help-items-add-test', async () => {
     const { repository, programEditorService, projectPageService } =
@@ -436,7 +526,7 @@ test('back-button-resets-forbidden-project-error-for-unauthorized-user', async (
         isAuthenticated: false,
         email: '',
         id: 0,
-        tokens: 0,
+        tokenBalance: 0,
     });
     repository.ideViewModelRepository.setGetProjectRequestState('forbidden');
     repository.projectViewModelRepository.setReadOnly(true);
@@ -738,7 +828,7 @@ test('segments-move-with-result-test', async () => {
             isAuthenticated: false,
             email: 'a@gmail.com',
             id: 1,
-            tokens: 0,
+            tokenBalance: 0,
         },
         isOk: true,
         isUnauth: false,
@@ -846,7 +936,7 @@ test('hint-erase-other-segments-test', async () => {
             isAuthenticated: false,
             email: 'a@gmail.com',
             id: 1,
-            tokens: 0,
+            tokenBalance: 0,
         },
         isOk: true,
         isUnauth: false,

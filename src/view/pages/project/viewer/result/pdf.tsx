@@ -1,7 +1,9 @@
+import '../../../../utils/pdfjsCompatibility.ts';
+import pdfjsWorkerSrc from '../../../../utils/pdfjsWorkerCompatibility.ts?worker&url';
 import { useDispatch, useSelector } from 'react-redux';
 import { StorageState } from '../../../../store';
-import * as pdfjs from 'pdfjs-dist';
-import { TextLayer } from 'pdfjs-dist';
+import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs';
+import { TextLayer } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { PdfPosition } from '../../../../../model/rpi';
 import {
@@ -10,13 +12,13 @@ import {
 } from '../../../../store/slices/ide';
 
 import './style.scss';
-import 'pdfjs-dist/web/pdf_viewer.css';
+import 'pdfjs-dist/legacy/web/pdf_viewer.css';
 import { useDictionary } from '../../../../store/selectors/translations';
 import { Typography } from '../../../../components/typography';
 import { AppDispatch } from '../../../../store';
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-    'pdfjs-dist/build/pdf.worker.min.mjs',
+    pdfjsWorkerSrc,
     import.meta.url
 ).toString();
 

@@ -169,6 +169,70 @@ export interface Translations {
         logout: string;
         logout_confirmation: string;
     };
+    tokens_page: {
+        title: string;
+        subtitle: string;
+        balance_title: string;
+        balance_caption: string;
+        unauth_balance_caption: string;
+        buy_title: string;
+        buy_subtitle: string;
+        buy_section_headline_lead: string;
+        buy_section_headline_rest: string;
+        buy_section_intro: string;
+        buy_packages_heading: string;
+        authenticated_buy_balance_prefix: string;
+        package_quantity_label: string;
+        package_card_subline_template: string;
+        pricing_loading: string;
+        pricing_error: string;
+        pricing_empty: string;
+        buy_button: string;
+        popular: string;
+        tokens_amount: string;
+        usage_title: string;
+        usage_items: {
+            heading: string;
+            body: string;
+            rateLines?: string[];
+        }[];
+        usage_rates: {
+            latex_compilation: string;
+            markdown_compilation: string;
+            gpt_text_prompt: string;
+            gpt_image_prompt: string;
+        };
+        modal: {
+            title: string;
+            gateway_notice: string;
+            consent_offer_prefix: string;
+            consent_offer_link: string;
+            consent_privacy_prefix: string;
+            consent_privacy_link: string;
+            consent_privacy_policy_prefix: string;
+            consent_privacy_policy_link: string;
+            pay_button: string;
+            mock_notice: string;
+        };
+        navigation: {
+            advantages: string;
+            features: string;
+            for_whom: string;
+            examples: string;
+            tokens: string;
+            about: string;
+            login: string;
+            logout: string;
+            editor: string;
+            projects: string;
+        };
+        footer: {
+            copyright: string;
+            wiki_nav: string;
+            nav_aria: string;
+            contact_label: string;
+        };
+    };
 
     compile_error: {
         [CompileError.CODE_NO_END_QUOTES]: string;
@@ -214,6 +278,7 @@ export interface Translations {
         loginVia: string;
         loginAndPasswoord: string;
         login: string;
+        loginInput: string;
         password: string;
         registration: string;
         forgotPassword: string;
@@ -244,6 +309,7 @@ export interface Translations {
             userNotFound: string;
             invalidEmail: string;
             invalidCode: string;
+            invalidPassword: string;
             passwordsDontMatch: string;
             fillAllFields: string;
             passwordSetError: string;

@@ -26,6 +26,7 @@ import {
 } from '../../../viewModel/repository';
 import { createEmptyProgram } from '../../../model/repository/ProgramRepository.ts';
 import { PdfPosition } from '../../../model/rpi';
+import { BillingPricingResponse } from '../../../model/rpi';
 import { EditorNavigationTarget } from '../../../viewModel/repository';
 
 interface CallbackState {
@@ -56,6 +57,11 @@ interface ProjectsState {
     nextTagColor: string;
     nextTagColorInput: string;
     selectedFilterTagKeys: string[];
+}
+
+interface BillingState {
+    pricing?: BillingPricingResponse;
+    pricingRequestState: BillingPricingRequestState;
 }
 
 interface ProjectState {
@@ -176,6 +182,13 @@ export const projectsInitialState: ProjectsState = {
     selectedFilterTagKeys: [],
 };
 
+export type BillingPricingRequestState = 'unknown' | 'loading' | 'ok' | 'error';
+
+export const billingInitialState: BillingState = {
+    pricing: undefined,
+    pricingRequestState: 'unknown',
+};
+
 export const settingsInitialState: SettingsState = {
     showTour: false,
     showFileManager: false,
@@ -198,7 +211,7 @@ export const userInitialState: UserInfo = {
     isAuthenticated: false,
     email: '',
     id: 0,
-    tokens: 0,
+    tokenBalance: 0,
 };
 
 export const callbackInitialState: CallbackState = {

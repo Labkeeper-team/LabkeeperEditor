@@ -6,6 +6,7 @@ import { ProjectsPage } from '../pages/projects';
 import { CodePage } from '../pages/code';
 import { QrPage } from '../pages/qr';
 import { RouterErrorBoundary } from '../pages/error';
+import { TokensPage } from '../pages/tokens';
 import { lazy, Suspense } from 'react';
 
 import './style.scss';
@@ -46,6 +47,10 @@ export const appRouter = createBrowserRouter([
             {
                 path: Routes.Projects,
                 element: <ProjectsPage />,
+            },
+            {
+                path: Routes.Tokens,
+                element: <TokensPage />,
             },
             {
                 path: Routes.CodePage,

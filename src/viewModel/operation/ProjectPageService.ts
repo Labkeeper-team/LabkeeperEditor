@@ -469,6 +469,7 @@ export class ProjectPageService {
                   prompt
               )
             : await this.rpi.promptProjectRequest(project.projectId, prompt);
+        await this.refreshUserInfo();
         if (promptResult.isOk) {
             const newProgram = promptResult.body;
             const oldProgram =
@@ -520,6 +521,17 @@ export class ProjectPageService {
             );
             this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
                 'unknownError'
+            );
+        }
+    };
+
+    private refreshUserInfo = async () => {
+        const result = await this.rpi.getUserInfoRequest();
+        if (result.isOk) {
+            this.repository.userViewModelRepository.setUserInfo(result.body);
+        } else {
+            this.observerService.onEvent(
+                Events.EVENT_RPI_UNKNOWN_REFRESH_USER_INFO
             );
         }
     };

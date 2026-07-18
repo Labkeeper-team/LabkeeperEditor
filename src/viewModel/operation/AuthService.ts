@@ -83,10 +83,24 @@ export class AuthService {
         const response = await this.rpi.logoutRequest();
 
         if (response.isOk) {
+            const pathname = this.normalizeLocationPath(
+                this.repository.location()
+            );
             this.ideService.resetEditor();
-            this.repository.setLocation(Routes.ProjectDefault);
+            const stayAfterLogout =
+                pathname === Routes.Tokens || pathname === Routes.Home;
+            if (!stayAfterLogout) {
+                this.repository.setLocation(Routes.ProjectDefault);
+            }
             this.repository.projectViewModelRepository.setReadOnly(false);
         }
+    };
+
+    private normalizeLocationPath = (path: string) => {
+        if (path === '' || path === '/') {
+            return Routes.Home;
+        }
+        return path.endsWith('/') ? path.slice(0, -1) : path;
     };
 
     onAuthButtonClicked = async () => {
