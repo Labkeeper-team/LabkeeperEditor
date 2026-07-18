@@ -813,6 +813,7 @@ export const AuthModal = () => {
     return (
         <Modal
             showModal={currentView !== 'closed'}
+            focusKey={currentView}
             onClose={() => {
                 dispatch(controller.onAuthClosedRequest());
             }}
