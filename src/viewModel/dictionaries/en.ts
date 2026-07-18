@@ -165,7 +165,7 @@ export const en: Translations = {
     tokens_page: {
         title: 'Top up your token balance',
         subtitle:
-            'Tokens power computations, AI generation, and other resource-heavy LabKeeper features.',
+            'Tokens power computations, AI generation, and other resource-heavy Labkeeper features.',
         balance_title: 'Your balance',
         balance_caption: 'Tokens available',
         unauth_balance_caption:
@@ -176,7 +176,7 @@ export const en: Translations = {
         buy_section_headline_lead: 'One balance',
         buy_section_headline_rest: 'for all your tasks',
         buy_section_intro:
-            'LabKeeper uses a transparent token system. Tokens are the platform’s universal currency: you can allocate resources flexibly for whatever your project needs right now — from AI-assisted content generation to heavy server-side computation. You pay only for what you actually use.',
+            'Labkeeper uses a transparent token system. Tokens are the platform’s universal currency: you can allocate resources flexibly for whatever your project needs right now — from AI-assisted content generation to heavy server-side computation. You pay only for what you actually use.',
         buy_packages_heading: 'Top-up options:',
         authenticated_buy_balance_prefix: 'Your balance',
         package_quantity_label: 'Token amount',
