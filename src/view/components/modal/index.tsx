@@ -3,8 +3,7 @@ import './style.scss';
 import { ModalProps } from './model';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { CloseModalIcon } from '../../icons';
-import { useEffect, useRef } from 'react';
-
+import { useEffect } from 'react';
 const SCROLL_KEYS = new Set([
     ' ',
     'Spacebar',
@@ -15,8 +14,24 @@ const SCROLL_KEYS = new Set([
     'ArrowUp',
     'ArrowDown',
 ]);
+import { useLayoutEffect, useRef } from 'react';
 
-export const Modal = ({ showModal, children, onClose }: ModalProps) => {
+const focusableSelector = [
+    '[data-autofocus]:not([disabled])',
+    'button:not([disabled])',
+    'input:not([disabled])',
+    'textarea:not([disabled])',
+    'select:not([disabled])',
+    'a[href]',
+    '[tabindex]:not([tabindex="-1"])',
+].join(', ');
+
+export const Modal = ({
+    showModal,
+    children,
+    onClose,
+    focusKey,
+}: ModalProps) => {
     useHotkeys(
         'esc',
         () => {
@@ -28,6 +43,19 @@ export const Modal = ({ showModal, children, onClose }: ModalProps) => {
     );
 
     const isMouseDownOnOverlayRef = useRef(false);
+    const modalRef = useRef<HTMLDivElement>(null);
+
+    useLayoutEffect(() => {
+        if (!showModal) {
+            return;
+        }
+
+        const modal = modalRef.current;
+        const focusableElement =
+            modal?.querySelector<HTMLElement>(focusableSelector);
+
+        (focusableElement ?? modal)?.focus();
+    }, [showModal, focusKey]);
 
     useEffect(() => {
         if (!showModal) {
@@ -100,6 +128,8 @@ export const Modal = ({ showModal, children, onClose }: ModalProps) => {
                 <CloseModalIcon />
             </div>
             <div
+                ref={modalRef}
+                tabIndex={-1}
                 onClick={(e) => e.stopPropagation()}
                 className="modal-contaier"
             >
