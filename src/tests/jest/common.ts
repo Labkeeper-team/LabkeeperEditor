@@ -30,23 +30,13 @@ global.structuredClone = (val) => {
 export const mockContext = () => {
     const mvs = mockViewModelState();
     const rpi: Rpi = mockRpi();
-    mockProjectTagsApi(rpi);
+    mockUpdateProjectTagsApi(rpi);
     const observerService: ObserverService = mockObserver();
 
     return setupContext(rpi, mvs, observerService);
 };
 
-export function mockProjectTagsApi(
-    rpi: Rpi,
-    projectTagsByProject: Record<string, Record<string, string>> = {}
-) {
-    rpi.getProjectTagsRequest = jest.fn().mockResolvedValue({
-        code: 200,
-        body: { projectTagsByProject },
-        isOk: true,
-        isUnauth: false,
-        isForbidden: false,
-    });
+export function mockUpdateProjectTagsApi(rpi: Rpi) {
     rpi.updateProjectTagsRequest = jest.fn().mockResolvedValue({
         code: 200,
         body: {},
@@ -164,6 +154,7 @@ export function mockGetAllProjectsRequestWithDefaultProject(rpi: Rpi) {
                     isPublic: false,
                 },
             ],
+            projectTagsByProject: {},
         },
     });
 }

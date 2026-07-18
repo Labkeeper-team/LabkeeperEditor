@@ -513,6 +513,7 @@ export class RouteSetup {
                                 projectType: 'markdown',
                             },
                         ],
+                        projectTagsByProject: {},
                     }),
                 });
             }

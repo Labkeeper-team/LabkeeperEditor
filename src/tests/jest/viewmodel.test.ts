@@ -40,13 +40,6 @@ const defaultParams = {
 const mockContext = () => {
     const mvs = mockViewModelState();
     const rpi: Rpi = mockRpi();
-    rpi.getProjectTagsRequest = jest.fn().mockResolvedValue({
-        code: 200,
-        body: { projectTagsByProject: {} },
-        isOk: true,
-        isUnauth: false,
-        isForbidden: false,
-    });
     rpi.updateProjectTagsRequest = jest.fn().mockResolvedValue({
         code: 200,
         body: {},
@@ -257,6 +250,7 @@ test('remove-readonly-when-project-is-create-test', async () => {
         isForbidden: false,
         body: {
             projects: [],
+            projectTagsByProject: {},
         },
     } as RequestResult<ListProjectsResponse>);
     rpi.createProjectRequest = jest.fn().mockResolvedValue({
@@ -386,6 +380,7 @@ test('display-name-new-project-test', async () => {
         isForbidden: false,
         body: {
             projects: alloldprojects,
+            projectTagsByProject: {},
         },
     } as RequestResult<ListProjectsResponse>); //запрос остальных проектов
 
@@ -409,6 +404,7 @@ test('display-name-new-project-test', async () => {
         isForbidden: false,
         body: {
             projects: allprojects,
+            projectTagsByProject: {},
         },
     } as RequestResult<ListProjectsResponse>); //запрос остальных проектов
     await projectsPageService.onProjectCreate(

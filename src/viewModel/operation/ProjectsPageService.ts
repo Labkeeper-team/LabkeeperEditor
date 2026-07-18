@@ -3,7 +3,7 @@ import { Rpi } from '../../model/rpi';
 import { LoaderService } from '../domain/LoaderService.ts';
 import { IdeService } from '../domain/IdeService.ts';
 import { StartupService } from './StartupService.ts';
-import { Program, Project, ProjectType } from '../../model/domain.ts';
+import { Program, ProjectType } from '../../model/domain.ts';
 import { Routes } from '../routes.ts';
 import {
     Events,
@@ -72,8 +72,21 @@ export class ProjectsPageService {
             okCallback();
             const result2 = await this.rpi.getAllProjectsRequest();
             if (result2.isOk) {
+                const projects = result2.body.projects;
                 this.repository.projectsViewModelRepository.setProjects(
-                    (result2.body as { projects: Array<Project> }).projects
+                    projects
+                );
+                const projectIds = projects
+                    .map((project) => project.projectId)
+                    .filter((id): id is string => !!id);
+                const fromServer = result2.body.projectTagsByProject ?? {};
+                this.repository.projectsViewModelRepository.setByProject(
+                    Object.fromEntries(
+                        projectIds.map((projectId) => [
+                            projectId,
+                            fromServer[projectId] ?? {},
+                        ])
+                    )
                 );
             }
             if (result2.isUnauth) {

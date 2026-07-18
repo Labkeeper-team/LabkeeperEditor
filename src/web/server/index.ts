@@ -14,7 +14,6 @@ import {
     CompilationResponse,
     ListFilesResponse,
     ListProjectsResponse,
-    ProjectTagsByProjectResponse,
     RequestResult,
     RichProject,
     Rpi,
@@ -64,15 +63,6 @@ function withIds(program: Program): Program {
 }
 
 export class WebRpi implements Rpi {
-    getProjectTagsRequest(
-        projectIds: string[]
-    ): Promise<RequestResult<ProjectTagsByProjectResponse>> {
-        return requestWrapper(async () =>
-            axios.post(URLS.getProjectTags, {
-                projectIds,
-            })
-        );
-    }
     updateProjectTagsRequest(
         projectId: string,
         tags: Record<string, string>

@@ -39,8 +39,17 @@ const normalizeTagMap = (
     return result;
 };
 
-async function setupProjectTagsApi(
+type ProjectsListItem = {
+    projectId: string;
+    userId: number;
+    title: string;
+    lastModified: string;
+    projectType: 'markdown' | 'latex';
+};
+
+async function setupProjectsWithTagsApi(
     page: Page,
+    projects: ProjectsListItem[],
     initialByProject: ProjectTagsByProject = {}
 ) {
     const state: ProjectTagsByProject = {};
@@ -48,23 +57,14 @@ async function setupProjectTagsApi(
         state[projectId] = normalizeTagMap(tags);
     }
 
-    await page.route('/api/v2/public/project/tags/list', async (route) => {
-        const rawBody = route.request().postData();
-        const parsedBody = rawBody
-            ? (JSON.parse(rawBody) as { projectIds?: string[] })
-            : {};
-        const projectIds = parsedBody.projectIds ?? [];
-        const projectTagsByProject = Object.fromEntries(
-            projectIds.map((projectId) => [
-                projectId,
-                { ...(state[projectId] ?? {}) },
-            ])
-        );
-
+    await page.route('/api/v2/public/project/all', async (route) => {
         await route.fulfill({
             status: 200,
             contentType,
-            body: JSON.stringify({ projectTagsByProject }),
+            body: JSON.stringify({
+                projects,
+                projectTagsByProject: { ...state },
+            }),
         });
     });
 
@@ -111,15 +111,7 @@ test('add-one-tag-for-one-project', async ({ page }) => {
     ];
 
     await routeSetup.setupGetUserInfoRequest(true, 'a@gmail.com', userId, 0);
-    await setupProjectTagsApi(page);
-
-    await page.route('/api/v2/public/project/all', async (route) => {
-        await route.fulfill({
-            status: 200,
-            contentType,
-            body: JSON.stringify({ projects }),
-        });
-    });
+    await setupProjectsWithTagsApi(page, projects);
 
     await page.goto('/projects');
     await page.waitForLoadState('domcontentloaded');
@@ -187,8 +179,6 @@ test('edit-tags-across-three-projects', async ({ page }) => {
         },
     ];
 
-    await setupProjectTagsApi(page);
-
     await routeSetup.setupGetUserInfoRequest(true, 'a@gmail.com', userId, 0);
     await page.route(/\/api\/v\d+\/public\/user-info.*/, async (route) => {
         await route.fulfill({
@@ -202,14 +192,7 @@ test('edit-tags-across-three-projects', async ({ page }) => {
             }),
         });
     });
-
-    await page.route('/api/v2/public/project/all', async (route) => {
-        await route.fulfill({
-            status: 200,
-            contentType,
-            body: JSON.stringify({ projects }),
-        });
-    });
+    await setupProjectsWithTagsApi(page, projects);
 
     await page.goto('/projects');
     await page.waitForLoadState('domcontentloaded');
@@ -326,17 +309,8 @@ test('filter-three-projects-by-tags', async ({ page }) => {
         },
     ];
 
-    await setupProjectTagsApi(page, seededProjectTagsByProject);
-
     await routeSetup.setupGetUserInfoRequest(true, 'a@gmail.com', userId, 0);
-
-    await page.route('/api/v2/public/project/all', async (route) => {
-        await route.fulfill({
-            status: 200,
-            contentType,
-            body: JSON.stringify({ projects }),
-        });
-    });
+    await setupProjectsWithTagsApi(page, projects, seededProjectTagsByProject);
 
     await page.goto('/projects');
     await page.waitForLoadState('domcontentloaded');
@@ -430,17 +404,8 @@ test('add-many-tags', async ({ page }) => {
         }
     }
 
-    await setupProjectTagsApi(page);
-
     await routeSetup.setupGetUserInfoRequest(true, 'a@gmail.com', userId, 0);
-
-    await page.route('/api/v2/public/project/all', async (route) => {
-        await route.fulfill({
-            status: 200,
-            contentType,
-            body: JSON.stringify({ projects }),
-        });
-    });
+    await setupProjectsWithTagsApi(page, projects);
 
     await page.goto('/projects');
     await page.waitForLoadState('domcontentloaded');
@@ -523,17 +488,8 @@ test('add-two-long-tag-names-and-filter-by-both', async ({ page }) => {
     const firstLongTag = 'aaaaaaaaaaaaaaaaaaaaaaaaaa';
     const secondLongTag = '12345678901234567890';
 
-    await setupProjectTagsApi(page);
-
     await routeSetup.setupGetUserInfoRequest(true, 'a@gmail.com', userId, 0);
-
-    await page.route('/api/v2/public/project/all', async (route) => {
-        await route.fulfill({
-            status: 200,
-            contentType,
-            body: JSON.stringify({ projects }),
-        });
-    });
+    await setupProjectsWithTagsApi(page, projects);
 
     await page.goto('/projects');
     await page.waitForLoadState('domcontentloaded');
@@ -626,17 +582,8 @@ test('remove-tags-from-first-project', async ({ page }) => {
         },
     ];
 
-    await setupProjectTagsApi(page);
-
     await routeSetup.setupGetUserInfoRequest(true, 'a@gmail.com', userId, 0);
-
-    await page.route('/api/v2/public/project/all', async (route) => {
-        await route.fulfill({
-            status: 200,
-            contentType,
-            body: JSON.stringify({ projects }),
-        });
-    });
+    await setupProjectsWithTagsApi(page, projects);
 
     await page.goto('/projects');
     await page.waitForLoadState('domcontentloaded');
@@ -750,17 +697,8 @@ test('cycle-tag-colors', async ({ page }) => {
         },
     ];
 
-    await setupProjectTagsApi(page);
-
     await routeSetup.setupGetUserInfoRequest(true, 'a@gmail.com', userId, 0);
-
-    await page.route('/api/v2/public/project/all', async (route) => {
-        await route.fulfill({
-            status: 200,
-            contentType,
-            body: JSON.stringify({ projects }),
-        });
-    });
+    await setupProjectsWithTagsApi(page, projects);
 
     await page.goto('/projects');
     await page.waitForLoadState('domcontentloaded');
@@ -856,17 +794,8 @@ test('color-panel-swatch-and-input-values', async ({ page }) => {
         },
     ];
 
-    await setupProjectTagsApi(page);
-
     await routeSetup.setupGetUserInfoRequest(true, 'a@gmail.com', userId, 0);
-
-    await page.route('/api/v2/public/project/all', async (route) => {
-        await route.fulfill({
-            status: 200,
-            contentType,
-            body: JSON.stringify({ projects }),
-        });
-    });
+    await setupProjectsWithTagsApi(page, projects);
 
     await page.goto('/projects');
     await page.waitForLoadState('domcontentloaded');

@@ -47,6 +47,7 @@ export interface ListFilesResponse {
 
 export interface ListProjectsResponse {
     projects: ProjectShort[];
+    projectTagsByProject?: Record<string, Record<string, string>>;
 }
 
 export interface CodeValidationResponse {
@@ -56,10 +57,6 @@ export interface CodeValidationResponse {
 export interface RichProject extends Project {
     lastProgramResult?: CompileSuccessResult;
     lastPdf?: string;
-}
-
-export interface ProjectTagsByProjectResponse {
-    projectTagsByProject: Record<string, Record<string, string>>;
 }
 
 export interface Rpi {
@@ -157,10 +154,6 @@ export interface Rpi {
         projectId: string,
         type: ProjectType
     ): Promise<RequestResult>;
-
-    getProjectTagsRequest(
-        projectIds: string[]
-    ): Promise<RequestResult<ProjectTagsByProjectResponse>>;
 
     updateProjectTagsRequest(
         projectId: string,
@@ -264,9 +257,6 @@ export const mockRpi = (): Rpi => {
             throw new Error('Not implemented');
         },
         setProjectVisibilityRequest: () => {
-            throw new Error('Not implemented');
-        },
-        getProjectTagsRequest: () => {
             throw new Error('Not implemented');
         },
         updateProjectTagsRequest: () => {
