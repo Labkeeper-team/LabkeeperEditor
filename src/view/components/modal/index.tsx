@@ -26,6 +26,16 @@ const focusableSelector = [
     '[tabindex]:not([tabindex="-1"])',
 ].join(', ');
 
+const isEditableEventTarget = (target: EventTarget | null): boolean => {
+    if (!(target instanceof HTMLElement)) {
+        return false;
+    }
+
+    return Boolean(
+        target.closest('input, textarea, select, [contenteditable="true"]')
+    );
+};
+
 export const Modal = ({
     showModal,
     children,
@@ -69,7 +79,10 @@ export const Modal = ({
             event.preventDefault();
         };
         const onKeyDown = (event: KeyboardEvent) => {
-            if (SCROLL_KEYS.has(event.key)) {
+            if (
+                SCROLL_KEYS.has(event.key) &&
+                !isEditableEventTarget(event.target)
+            ) {
                 event.preventDefault();
             }
         };
