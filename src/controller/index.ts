@@ -166,6 +166,15 @@ export class Controller {
         }
     );
 
+    onOpenEditorAfterSpaNavigationRequest = createAsyncThunk(
+        'onOpenEditorAfterSpaNavigation',
+        async () => {
+            this.wrapper('onOpenEditorAfterSpaNavigation', () => {
+                void this.startupService.openEditorAfterSpaNavigation();
+            });
+        }
+    );
+
     onPrintButtonPressedRequest = createAsyncThunk(
         'onPrintButtonPressedRequest',
         async () => {

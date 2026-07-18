@@ -65,6 +65,8 @@ export class StartupService {
         open?: OpenParams
     ): Promise<void> => {
         void open;
+        await this.loadBillingPricing();
+
         const result: RequestResult<UserInfo> =
             await this.rpi.getUserInfoRequest();
 
@@ -140,6 +142,45 @@ export class StartupService {
         }
 
         this.ideService.onProgramUpdated();
+    };
+
+    private loadBillingPricing = async (): Promise<void> => {
+        this.repository.billingViewModelRepository.setPricingRequestState(
+            'loading'
+        );
+
+        const result = await this.rpi.getBillingPricingRequest();
+        if (result.isOk) {
+            this.repository.billingViewModelRepository.setPricing(result.body);
+            this.repository.billingViewModelRepository.setPricingRequestState(
+                'ok'
+            );
+            return;
+        }
+
+        this.observerService.onEvent(
+            Events.EVENT_RPI_UNKNOWN_STARTUP_GET_BILLING_PRICING
+        );
+        this.repository.billingViewModelRepository.setPricingRequestState(
+            'error'
+        );
+    };
+
+    /**
+     * After the first {@link onAppStartup}, in-app navigation (e.g. from /tokens) does not run
+     * startup again, so `/project/default` never resolves to `/project/:id` for signed-in users.
+     * Call this instead of `navigate(Routes.ProjectDefault)` from the SPA.
+     */
+    openEditorAfterSpaNavigation = async (): Promise<void> => {
+        const userInfo: UserInfo = {
+            email: this.repository.userViewModelRepository.email(),
+            id: this.repository.userViewModelRepository.id(),
+            isAuthenticated:
+                this.repository.userViewModelRepository.isAuthenticated(),
+            tokenBalance:
+                this.repository.userViewModelRepository.tokenBalance(),
+        };
+        await this.openDefaultProject(userInfo);
     };
 
     private cutOfLastSlash(location: string): string {

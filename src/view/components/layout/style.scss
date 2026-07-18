@@ -2,9 +2,18 @@
     margin-left: 20px;
     margin-right: 20px;
     margin-bottom: 20px;
+
+    &--landing {
+        margin: 0;
+    }
+
     @media screen and (max-width: 1024px) {
         margin-left: 5px;
         margin-right: 5px;
         margin-bottom: 5px;
+
+        &--landing {
+            margin: 0;
+        }
     }
 }

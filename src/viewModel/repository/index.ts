@@ -9,6 +9,7 @@ import {
     ProjectShort,
     UserInfo,
 } from '../../model/domain.ts';
+import { BillingPricingResponse } from '../../model/rpi';
 
 import { Language, Translations } from '../dictionaries';
 
@@ -85,6 +86,8 @@ export type ProjectPromptRequestState =
     | 'payment_required'
     | 'unknownError';
 
+export type BillingPricingRequestState = 'unknown' | 'loading' | 'ok' | 'error';
+
 export type PendingSegmentEditorCursor = {
     segmentIndex: number;
     offset: number;
@@ -143,6 +146,8 @@ class MockViewModelRepositoryState {
     files: LabkeeperFile[] = [];
 
     projects: ProjectShort[] = [];
+    billingPricing: BillingPricingResponse | undefined = undefined;
+    billingPricingRequestState: BillingPricingRequestState = 'unknown';
 
     pdfUpdated: number = 0;
     isAutocompleteLoading = false;
@@ -163,7 +168,7 @@ class MockViewModelRepositoryState {
     email: string = '';
     id: number = -1;
     isAuthenticated: boolean = false;
-    tokens: number = 0;
+    tokenBalance: number = 0;
 
     loginRequest: LoginRequestState = 'unknown';
     codeCheckRequest: CodeRequestState = 'unknown';
@@ -363,6 +368,16 @@ export const mockViewModelState = (): MockViewModelRepository => {
             setProjects: (v: ProjectShort[]) =>
                 (mockViewModelState.projects = structuredClone(v)),
         },
+        billingViewModelRepository: {
+            pricing: () => mockViewModelState.billingPricing,
+            pricingRequestState: () =>
+                mockViewModelState.billingPricingRequestState,
+
+            setPricing: (v) =>
+                (mockViewModelState.billingPricing = structuredClone(v)),
+            setPricingRequestState: (v) =>
+                (mockViewModelState.billingPricingRequestState = v),
+        },
         settingsViewModelRepository: {
             isAutocompleteLoading: () =>
                 mockViewModelState.isAutocompleteLoading,
@@ -418,13 +433,13 @@ export const mockViewModelState = (): MockViewModelRepository => {
             email: () => mockViewModelState.email,
             id: () => mockViewModelState.id,
             isAuthenticated: () => mockViewModelState.isAuthenticated,
-            tokens: () => mockViewModelState.tokens,
+            tokenBalance: () => mockViewModelState.tokenBalance,
 
             setUserInfo: (userInfo) => {
                 mockViewModelState.email = userInfo.email;
                 mockViewModelState.isAuthenticated = userInfo.isAuthenticated;
                 mockViewModelState.id = userInfo.id;
-                mockViewModelState.tokens = userInfo.tokens ?? 0;
+                mockViewModelState.tokenBalance = userInfo.tokenBalance ?? 0;
             },
         },
 
@@ -554,6 +569,14 @@ export interface ProjectsViewModelRepository {
     setProjects: (projects: ProjectShort[]) => void;
 }
 
+export interface BillingViewModelRepository {
+    pricing: () => BillingPricingResponse | undefined;
+    pricingRequestState: () => BillingPricingRequestState;
+
+    setPricing: (pricing: BillingPricingResponse | undefined) => void;
+    setPricingRequestState: (state: BillingPricingRequestState) => void;
+}
+
 export interface AuthViewModelRepository {
     currentView: () => AuthView;
     currentEmail: () => string | null;
@@ -578,7 +601,7 @@ export interface UserViewModelRepository {
     email: () => string;
     id: () => number;
     isAuthenticated: () => boolean;
-    tokens: () => number;
+    tokenBalance: () => number;
 
     setUserInfo: (userInfo: UserInfo) => void;
 }
@@ -603,6 +626,7 @@ export interface ViewModelRepository {
     userViewModelRepository: UserViewModelRepository;
     authViewModelRepository: AuthViewModelRepository;
     projectsViewModelRepository: ProjectsViewModelRepository;
+    billingViewModelRepository: BillingViewModelRepository;
     settingsViewModelRepository: SettingsViewModelRepository;
     setLocation: (url: string) => void;
     toast: (message: string, type: TypeOptions) => void;

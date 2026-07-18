@@ -6,6 +6,21 @@ MockViewModelRepositoryState {
   "activeImageFile": null,
   "activeSegmentIndex": -1,
   "activeTextFile": null,
+  "billingPricing": {
+    "newUserInitialTokensCount": 0,
+    "servicePrices": {
+      "gptImagePromptTokenCost": 0,
+      "gptTextPromptTokenCost": 0,
+      "latexCompilationTokenCostPerSecond": 0,
+      "markdownCompilationTokenCostPerSecond": 0,
+    },
+    "tokenPrices": [],
+    "userRegularRefill": {
+      "refillPeriodSeconds": 0,
+      "refillTokensAmount": 0,
+    },
+  },
+  "billingPricingRequestState": "ok",
   "captchaBypassToken": undefined,
   "cloneRequestState": "unknown",
   "codeCheckRequest": "unknown",
@@ -105,7 +120,7 @@ MockViewModelRepositoryState {
   "synctexEditorPosition": null,
   "textFileContent": "",
   "toasts": [],
-  "tokens": 0,
+  "tokenBalance": 0,
   "undoEnabled": false,
 }
 `;
@@ -116,6 +131,21 @@ MockViewModelRepositoryState {
   "activeImageFile": null,
   "activeSegmentIndex": -1,
   "activeTextFile": null,
+  "billingPricing": {
+    "newUserInitialTokensCount": 0,
+    "servicePrices": {
+      "gptImagePromptTokenCost": 0,
+      "gptTextPromptTokenCost": 0,
+      "latexCompilationTokenCostPerSecond": 0,
+      "markdownCompilationTokenCostPerSecond": 0,
+    },
+    "tokenPrices": [],
+    "userRegularRefill": {
+      "refillPeriodSeconds": 0,
+      "refillTokensAmount": 0,
+    },
+  },
+  "billingPricingRequestState": "ok",
   "captchaBypassToken": undefined,
   "cloneRequestState": "unknown",
   "codeCheckRequest": "unknown",
@@ -186,7 +216,7 @@ MockViewModelRepositoryState {
   "synctexEditorPosition": null,
   "textFileContent": "",
   "toasts": [],
-  "tokens": 0,
+  "tokenBalance": 0,
   "undoEnabled": false,
 }
 `;

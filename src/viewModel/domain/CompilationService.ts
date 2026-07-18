@@ -51,6 +51,21 @@ export class CompilationService {
         await this.loaderService.loadFiles(projectId);
     };
 
+    private refreshUserInfo = async () => {
+        if (!this.repository.userViewModelRepository.isAuthenticated()) {
+            return;
+        }
+
+        const result = await this.rpi.getUserInfoRequest();
+        if (result.isOk) {
+            this.repository.userViewModelRepository.setUserInfo(result.body);
+        } else {
+            this.observerService.onEvent(
+                Events.EVENT_RPI_UNKNOWN_REFRESH_USER_INFO
+            );
+        }
+    };
+
     runCompilation = async () => {
         const projectId =
             this.repository.projectViewModelRepository.project()?.projectId;
@@ -80,6 +95,7 @@ export class CompilationService {
                 result = await this.rpi.compilationRequest(program);
             }
         }
+        await this.refreshUserInfo();
 
         this.repository.settingsViewModelRepository.setIsCompiling(false);
 

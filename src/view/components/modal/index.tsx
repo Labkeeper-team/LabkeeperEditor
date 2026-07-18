@@ -3,6 +3,17 @@ import './style.scss';
 import { ModalProps } from './model';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { CloseModalIcon } from '../../icons';
+import { useEffect } from 'react';
+const SCROLL_KEYS = new Set([
+    ' ',
+    'Spacebar',
+    'PageUp',
+    'PageDown',
+    'End',
+    'Home',
+    'ArrowUp',
+    'ArrowDown',
+]);
 import { useLayoutEffect, useRef } from 'react';
 
 const focusableSelector = [
@@ -14,6 +25,16 @@ const focusableSelector = [
     'a[href]',
     '[tabindex]:not([tabindex="-1"])',
 ].join(', ');
+
+const isEditableEventTarget = (target: EventTarget | null): boolean => {
+    if (!(target instanceof HTMLElement)) {
+        return false;
+    }
+
+    return Boolean(
+        target.closest('input, textarea, select, [contenteditable="true"]')
+    );
+};
 
 export const Modal = ({
     showModal,
@@ -46,8 +67,39 @@ export const Modal = ({
         (focusableElement ?? modal)?.focus();
     }, [showModal, focusKey]);
 
+    useEffect(() => {
+        if (!showModal) {
+            return;
+        }
+
+        const onWheel = (event: WheelEvent) => {
+            event.preventDefault();
+        };
+        const onTouchMove = (event: TouchEvent) => {
+            event.preventDefault();
+        };
+        const onKeyDown = (event: KeyboardEvent) => {
+            if (
+                SCROLL_KEYS.has(event.key) &&
+                !isEditableEventTarget(event.target)
+            ) {
+                event.preventDefault();
+            }
+        };
+
+        window.addEventListener('wheel', onWheel, { passive: false });
+        window.addEventListener('touchmove', onTouchMove, { passive: false });
+        window.addEventListener('keydown', onKeyDown, { passive: false });
+
+        return () => {
+            window.removeEventListener('wheel', onWheel);
+            window.removeEventListener('touchmove', onTouchMove);
+            window.removeEventListener('keydown', onKeyDown);
+        };
+    }, [showModal]);
+
     if (!showModal) {
-        return;
+        return null;
     }
 
     return (
