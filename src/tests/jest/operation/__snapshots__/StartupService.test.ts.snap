@@ -78,7 +78,6 @@ MockViewModelRepositoryState {
   "project": undefined,
   "projectIsReadonly": false,
   "projectPromptRequestState": "unknown",
-  "projectTagsByProject": {},
   "projects": [],
   "redoEnabled": false,
   "saveProjectRequestState": "unknown",

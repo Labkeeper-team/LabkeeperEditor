@@ -105,21 +105,11 @@ export class LoaderService {
         );
         const result = await this.rpi.getAllProjectsRequest();
         if (result.isOk) {
-            const projects = result.body.projects.reverse();
+            const projects = result.body.projects.reverse().map((project) => ({
+                ...project,
+                tags: project.tags ?? [],
+            }));
             this.repository.projectsViewModelRepository.setProjects(projects);
-            const projectIds = projects
-                .map((project) => project.projectId)
-                .filter((id): id is string => !!id);
-            const fromServer = result.body.projectTagsByProject ?? {};
-            const normalizedByProject = Object.fromEntries(
-                projectIds.map((projectId) => [
-                    projectId,
-                    fromServer[projectId] ?? {},
-                ])
-            );
-            this.repository.projectsViewModelRepository.setByProject(
-                normalizedByProject
-            );
             this.repository.ideViewModelRepository.setGetProjectsRequestState(
                 'ok'
             );

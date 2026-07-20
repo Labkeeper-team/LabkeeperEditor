@@ -511,9 +511,9 @@ export class RouteSetup {
                                 title: 'Тестовый проект',
                                 lastModified: '2024-03-20T12:00:00',
                                 projectType: 'markdown',
+                                tags: [],
                             },
                         ],
-                        projectTagsByProject: {},
                     }),
                 });
             }

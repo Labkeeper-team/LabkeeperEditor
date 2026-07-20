@@ -100,11 +100,17 @@ export interface Project {
     projectType: ProjectType;
 }
 
+export interface ProjectTag {
+    name: string;
+    color: string;
+}
+
 export interface ProjectShort {
     projectId: string;
     userId: number;
     title: string;
     lastModified: string;
+    tags: ProjectTag[];
 }
 
 export enum CompileError {

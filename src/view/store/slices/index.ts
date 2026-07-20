@@ -53,7 +53,6 @@ interface SettingsState {
 
 interface ProjectsState {
     projects: ProjectShort[];
-    byProject: Record<string, Record<string, string>>;
     nextTagColor: string;
     nextTagColorInput: string;
     selectedFilterTagKeys: string[];
@@ -176,7 +175,6 @@ export const projectInitialState: ProjectState = {
 
 export const projectsInitialState: ProjectsState = {
     projects: [],
-    byProject: {},
     nextTagColor: 'blue',
     nextTagColorInput: 'blue',
     selectedFilterTagKeys: [],

@@ -80,11 +80,7 @@ import {
     ProjectType,
     ProjectShort,
 } from '../../model/domain.ts';
-import {
-    setProjectTagsByProject,
-    setProjectTagsForProject,
-    setProjects,
-} from './slices/projects';
+import { setProjectTagsForProject, setProjects } from './slices/projects';
 import {
     setBillingPricing,
     setBillingPricingRequestState,
@@ -321,12 +317,9 @@ export const createViewModelStateFromStore = (
         },
         projectsViewModelRepository: {
             projects: () => store.getState().projects.projects,
-            byProject: () => store.getState().projects.byProject,
 
             setProjects: (projects: ProjectShort[]) =>
                 store.dispatch(setProjects(projects)),
-            setByProject: (value) =>
-                store.dispatch(setProjectTagsByProject(value)),
             setForProject: ({ projectId, tags }) =>
                 store.dispatch(setProjectTagsForProject({ projectId, tags })),
         },

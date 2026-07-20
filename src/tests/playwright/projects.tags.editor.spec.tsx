@@ -17,24 +17,34 @@ const fixedLastModified = (() => {
     return relative.toISOString();
 })();
 const contentType = 'application/json';
-type ProjectTagsByProject = Record<string, Record<string, string>>;
 
-const seededProjectTagsByProject: ProjectTagsByProject = {
-    'project-1-id': { tag_1: 'blue', tag_2: 'orange' },
-    'project-2-id': { tag_2: 'orange' },
-    'project-3-id': { tag_1: 'blue', tag_3: 'red' },
+type ProjectTag = {
+    name: string;
+    color: string;
 };
 
-const normalizeTagMap = (
-    value: Record<string, string> | undefined
-): Record<string, string> => {
-    const result: Record<string, string> = {};
-    for (const [rawLabel, rawColor] of Object.entries(value ?? {})) {
-        const label = rawLabel.trim().replace(/\s+/g, ' ');
-        if (!label) {
+type ProjectTagsByProject = Record<string, ProjectTag[]>;
+
+const seededProjectTagsByProject: ProjectTagsByProject = {
+    'project-1-id': [
+        { name: 'tag_1', color: 'blue' },
+        { name: 'tag_2', color: 'orange' },
+    ],
+    'project-2-id': [{ name: 'tag_2', color: 'orange' }],
+    'project-3-id': [
+        { name: 'tag_1', color: 'blue' },
+        { name: 'tag_3', color: 'red' },
+    ],
+};
+
+const normalizeTags = (value: ProjectTag[] | undefined): ProjectTag[] => {
+    const result: ProjectTag[] = [];
+    for (const tag of value ?? []) {
+        const name = tag.name.trim().replace(/\s+/g, ' ');
+        if (!name) {
             continue;
         }
-        result[label] = rawColor;
+        result.push({ name, color: tag.color });
     }
     return result;
 };
@@ -53,8 +63,10 @@ async function setupProjectsWithTagsApi(
     initialByProject: ProjectTagsByProject = {}
 ) {
     const state: ProjectTagsByProject = {};
-    for (const [projectId, tags] of Object.entries(initialByProject)) {
-        state[projectId] = normalizeTagMap(tags);
+    for (const project of projects) {
+        state[project.projectId] = normalizeTags(
+            initialByProject[project.projectId] ?? []
+        );
     }
 
     await page.route('/api/v2/public/project/all', async (route) => {
@@ -62,8 +74,10 @@ async function setupProjectsWithTagsApi(
             status: 200,
             contentType,
             body: JSON.stringify({
-                projects,
-                projectTagsByProject: { ...state },
+                projects: projects.map((project) => ({
+                    ...project,
+                    tags: state[project.projectId] ?? [],
+                })),
             }),
         });
     });
@@ -80,9 +94,9 @@ async function setupProjectsWithTagsApi(
             }
             const rawBody = route.request().postData();
             const parsedBody = rawBody
-                ? (JSON.parse(rawBody) as { tags?: Record<string, string> })
+                ? (JSON.parse(rawBody) as { tags?: ProjectTag[] })
                 : {};
-            state[projectId] = normalizeTagMap(parsedBody.tags);
+            state[projectId] = normalizeTags(parsedBody.tags);
             await route.fulfill({
                 status: 200,
                 contentType,

@@ -7,6 +7,7 @@ import {
     Project,
     ProjectType,
     ProjectShort,
+    ProjectTag,
     UserInfo,
 } from '../../model/domain.ts';
 import { BillingPricingResponse } from '../../model/rpi';
@@ -146,7 +147,6 @@ class MockViewModelRepositoryState {
     files: LabkeeperFile[] = [];
 
     projects: ProjectShort[] = [];
-    projectTagsByProject: Record<string, Record<string, string>> = {};
     billingPricing: BillingPricingResponse | undefined = undefined;
     billingPricingRequestState: BillingPricingRequestState = 'unknown';
 
@@ -365,17 +365,19 @@ export const mockViewModelState = (): MockViewModelRepository => {
         },
         projectsViewModelRepository: {
             projects: () => mockViewModelState.projects,
-            byProject: () => mockViewModelState.projectTagsByProject,
 
             setProjects: (v: ProjectShort[]) =>
                 (mockViewModelState.projects = structuredClone(v)),
-            setByProject: (v) =>
-                (mockViewModelState.projectTagsByProject = structuredClone(v)),
             setForProject: ({ projectId, tags }) => {
-                mockViewModelState.projectTagsByProject = {
-                    ...mockViewModelState.projectTagsByProject,
-                    [projectId]: structuredClone(tags),
-                };
+                mockViewModelState.projects = mockViewModelState.projects.map(
+                    (project) =>
+                        project.projectId === projectId
+                            ? {
+                                  ...project,
+                                  tags: structuredClone(tags),
+                              }
+                            : project
+                );
             },
         },
         billingViewModelRepository: {
@@ -575,14 +577,9 @@ export interface SettingsViewModelRepository {
 
 export interface ProjectsViewModelRepository {
     projects: () => ProjectShort[];
-    byProject: () => Record<string, Record<string, string>>;
 
     setProjects: (projects: ProjectShort[]) => void;
-    setByProject: (value: Record<string, Record<string, string>>) => void;
-    setForProject: (value: {
-        projectId: string;
-        tags: Record<string, string>;
-    }) => void;
+    setForProject: (value: { projectId: string; tags: ProjectTag[] }) => void;
 }
 
 export interface BillingViewModelRepository {

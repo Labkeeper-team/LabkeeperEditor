@@ -5,6 +5,7 @@ import {
     Program,
     Project,
     ProjectShort,
+    ProjectTag,
     ProjectType,
     UserInfo,
 } from '../domain.ts';
@@ -47,7 +48,6 @@ export interface ListFilesResponse {
 
 export interface ListProjectsResponse {
     projects: ProjectShort[];
-    projectTagsByProject?: Record<string, Record<string, string>>;
 }
 
 export interface CodeValidationResponse {
@@ -181,7 +181,7 @@ export interface Rpi {
 
     updateProjectTagsRequest(
         projectId: string,
-        tags: Record<string, string>
+        tags: ProjectTag[]
     ): Promise<RequestResult>;
 
     sendEmailWithCodeRequest(

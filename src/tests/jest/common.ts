@@ -152,9 +152,9 @@ export function mockGetAllProjectsRequestWithDefaultProject(rpi: Rpi) {
                     title: PROJECT_TITLE,
                     lastModified: DEFAULT_INSTANT.toISOString(),
                     isPublic: false,
+                    tags: [],
                 },
             ],
-            projectTagsByProject: {},
         },
     });
 }

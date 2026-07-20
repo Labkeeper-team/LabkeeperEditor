@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { ProjectShort } from '../../../../model/domain.ts';
+import { ProjectShort, ProjectTag } from '../../../../model/domain.ts';
 import { projectsInitialState } from '../index.ts';
 
 export const projectsSlice = createSlice({
@@ -9,22 +9,21 @@ export const projectsSlice = createSlice({
         setProjects: (state, { payload }: PayloadAction<ProjectShort[]>) => {
             state.projects = payload;
         },
-        setProjectTagsByProject: (
-            state,
-            { payload }: PayloadAction<Record<string, Record<string, string>>>
-        ) => {
-            state.byProject = payload;
-        },
         setProjectTagsForProject: (
             state,
             {
                 payload,
             }: PayloadAction<{
                 projectId: string;
-                tags: Record<string, string>;
+                tags: ProjectTag[];
             }>
         ) => {
-            state.byProject[payload.projectId] = payload.tags;
+            const project = state.projects.find(
+                (item) => item.projectId === payload.projectId
+            );
+            if (project) {
+                project.tags = payload.tags;
+            }
         },
         setNextTagColor: (state, { payload }: PayloadAction<string>) => {
             state.nextTagColor = payload;
@@ -42,7 +41,6 @@ export const projectsSlice = createSlice({
 });
 export const {
     setProjects,
-    setProjectTagsByProject,
     setProjectTagsForProject,
     setNextTagColor,
     setNextTagColorInput,

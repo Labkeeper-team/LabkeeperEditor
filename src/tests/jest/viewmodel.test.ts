@@ -340,7 +340,6 @@ test('remove-readonly-when-project-is-create-test', async () => {
         isForbidden: false,
         body: {
             projects: [],
-            projectTagsByProject: {},
         },
     } as RequestResult<ListProjectsResponse>);
     rpi.createProjectRequest = jest.fn().mockResolvedValue({
@@ -469,8 +468,13 @@ test('display-name-new-project-test', async () => {
         isUnauth: false,
         isForbidden: false,
         body: {
-            projects: alloldprojects,
-            projectTagsByProject: {},
+            projects: alloldprojects.map((project) => ({
+                projectId: project.projectId,
+                userId: project.userId,
+                title: project.title,
+                lastModified: project.lastModified,
+                tags: [],
+            })),
         },
     } as RequestResult<ListProjectsResponse>); //запрос остальных проектов
 
@@ -493,8 +497,13 @@ test('display-name-new-project-test', async () => {
         isUnauth: false,
         isForbidden: false,
         body: {
-            projects: allprojects,
-            projectTagsByProject: {},
+            projects: allprojects.map((project) => ({
+                projectId: project.projectId,
+                userId: project.userId,
+                title: project.title,
+                lastModified: project.lastModified,
+                tags: [],
+            })),
         },
     } as RequestResult<ListProjectsResponse>); //запрос остальных проектов
     await projectsPageService.onProjectCreate(

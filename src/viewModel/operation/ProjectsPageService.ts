@@ -3,7 +3,12 @@ import { Rpi } from '../../model/rpi';
 import { LoaderService } from '../domain/LoaderService.ts';
 import { IdeService } from '../domain/IdeService.ts';
 import { StartupService } from './StartupService.ts';
-import { Program, ProjectType } from '../../model/domain.ts';
+import {
+    Program,
+    ProjectShort,
+    ProjectTag,
+    ProjectType,
+} from '../../model/domain.ts';
 import { Routes } from '../routes.ts';
 import {
     Events,
@@ -11,36 +16,37 @@ import {
 } from '../../model/service/ObserverService.ts';
 import { normalizeTagLabel } from '../../view/pages/projects/tagColorUtils.ts';
 
-const findTagLabelByCaseInsensitive = (
-    tags: Record<string, string>,
+const findTagByCaseInsensitive = (
+    tags: ProjectTag[],
     label: string
-): string | null => {
+): ProjectTag | null => {
     const target = label.toLocaleLowerCase();
-    for (const existingLabel of Object.keys(tags)) {
-        if (existingLabel.toLocaleLowerCase() === target) {
-            return existingLabel;
+    for (const tag of tags) {
+        if (tag.name.toLocaleLowerCase() === target) {
+            return tag;
         }
     }
     return null;
 };
 
 const findGlobalTagByCaseInsensitive = (
-    byProject: Record<string, Record<string, string>>,
+    projects: ProjectShort[],
     label: string
-): { label: string; color: string } | null => {
-    const target = label.toLocaleLowerCase();
-    for (const tags of Object.values(byProject)) {
-        for (const [existingLabel, existingColor] of Object.entries(tags)) {
-            if (existingLabel.toLocaleLowerCase() === target) {
-                return {
-                    label: existingLabel,
-                    color: existingColor,
-                };
-            }
+): ProjectTag | null => {
+    for (const project of projects) {
+        const found = findTagByCaseInsensitive(project.tags ?? [], label);
+        if (found) {
+            return found;
         }
     }
     return null;
 };
+
+const withNormalizedTags = (projects: ProjectShort[]): ProjectShort[] =>
+    projects.map((project) => ({
+        ...project,
+        tags: project.tags ?? [],
+    }));
 
 export class ProjectsPageService {
     repository: ViewModelRepository;
@@ -72,21 +78,8 @@ export class ProjectsPageService {
             okCallback();
             const result2 = await this.rpi.getAllProjectsRequest();
             if (result2.isOk) {
-                const projects = result2.body.projects;
                 this.repository.projectsViewModelRepository.setProjects(
-                    projects
-                );
-                const projectIds = projects
-                    .map((project) => project.projectId)
-                    .filter((id): id is string => !!id);
-                const fromServer = result2.body.projectTagsByProject ?? {};
-                this.repository.projectsViewModelRepository.setByProject(
-                    Object.fromEntries(
-                        projectIds.map((projectId) => [
-                            projectId,
-                            fromServer[projectId] ?? {},
-                        ])
-                    )
+                    withNormalizedTags(result2.body.projects)
                 );
             }
             if (result2.isUnauth) {
@@ -224,25 +217,28 @@ export class ProjectsPageService {
             return;
         }
 
-        const previousByProject =
-            this.repository.projectsViewModelRepository.byProject();
-        const previousProjectTags = previousByProject[projectId] ?? {};
-        const existingLabel = findTagLabelByCaseInsensitive(
-            previousProjectTags,
-            normalizedLabel
-        );
-        if (existingLabel) {
+        const projects = this.repository.projectsViewModelRepository.projects();
+        const project = projects.find((item) => item.projectId === projectId);
+        if (!project) {
+            return;
+        }
+
+        const previousProjectTags = project.tags ?? [];
+        if (findTagByCaseInsensitive(previousProjectTags, normalizedLabel)) {
             return;
         }
         const existingGlobalTag = findGlobalTagByCaseInsensitive(
-            previousByProject,
+            projects,
             normalizedLabel
         );
 
-        const nextProjectTags: Record<string, string> = {
+        const nextProjectTags: ProjectTag[] = [
             ...previousProjectTags,
-            [normalizedLabel]: existingGlobalTag?.color ?? color,
-        };
+            {
+                name: normalizedLabel,
+                color: existingGlobalTag?.color ?? color,
+            },
+        ];
 
         this.repository.projectsViewModelRepository.setForProject({
             projectId,
@@ -284,21 +280,24 @@ export class ProjectsPageService {
             return;
         }
 
-        const previousByProject =
-            this.repository.projectsViewModelRepository.byProject();
-        const previousProjectTags = previousByProject[projectId] ?? {};
-        const existingLabel = findTagLabelByCaseInsensitive(
-            previousProjectTags,
-            normalizedLabel
-        );
-        if (!existingLabel) {
+        const project = this.repository.projectsViewModelRepository
+            .projects()
+            .find((item) => item.projectId === projectId);
+        if (!project) {
             return;
         }
 
-        const nextProjectTags = Object.fromEntries(
-            Object.entries(previousProjectTags).filter(
-                ([label]) => label !== existingLabel
-            )
+        const previousProjectTags = project.tags ?? [];
+        const existingTag = findTagByCaseInsensitive(
+            previousProjectTags,
+            normalizedLabel
+        );
+        if (!existingTag) {
+            return;
+        }
+
+        const nextProjectTags = previousProjectTags.filter(
+            (tag) => tag.name !== existingTag.name
         );
 
         this.repository.projectsViewModelRepository.setForProject({

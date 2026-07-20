@@ -6,25 +6,20 @@ import {
     normalizeTagLabel,
 } from '../../pages/projects/tagColorUtils';
 
-export const useProjectTagsByProject = createSelector(
-    (state: StorageState) => state.projects,
-    (p) => p.byProject
-);
-
 type TagInfo = { label: string; color: string };
 
 const useProjectTagsViewModel = createSelector(
-    useProjectTagsByProject,
-    (projectTagsByProject) => {
+    (state: StorageState) => state.projects.projects,
+    (projects) => {
         const tagMap: Record<string, TagInfo> = {};
         const projectTagKeysByProject: Record<string, string[]> = {};
 
-        for (const [projectId, tags] of Object.entries(projectTagsByProject)) {
+        for (const project of projects) {
             const projectTagKeys = new Set<string>();
-            for (const [rawLabel, rawColor] of Object.entries(tags ?? {})) {
-                const label = normalizeTagLabel(rawLabel);
+            for (const tag of project.tags ?? []) {
+                const label = normalizeTagLabel(tag.name);
                 const color =
-                    normalizeColorInput(rawColor) ?? DEFAULT_TAG_COLOR;
+                    normalizeColorInput(tag.color) ?? DEFAULT_TAG_COLOR;
                 if (!label) {
                     continue;
                 }
@@ -34,7 +29,8 @@ const useProjectTagsViewModel = createSelector(
                     tagMap[key] = { label, color };
                 }
             }
-            projectTagKeysByProject[projectId] = Array.from(projectTagKeys);
+            projectTagKeysByProject[project.projectId] =
+                Array.from(projectTagKeys);
         }
 
         return { tagMap, projectTagKeysByProject };
