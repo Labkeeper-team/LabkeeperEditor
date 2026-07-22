@@ -75,7 +75,7 @@ function createDefaultUserInfo(
             isAuthenticated: isAuthenticated,
             email: 'a@gmail.com',
             id: 1,
-            privacyPolicyAccepted: false,
+            privacyPolicyAccepted: isAuthenticated,
             tokenBalance,
         },
         isOk: true,

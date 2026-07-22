@@ -34,6 +34,10 @@ export const PrivacyPolicyAcceptanceModal = () => {
                     <a href="/privacy" target="_blank" rel="noreferrer">
                         {t.privacy_policy}
                     </a>
+                    {t.description_middle}
+                    <a href="/soglas" target="_blank" rel="noreferrer">
+                        {t.personal_data_consent}
+                    </a>
                     {t.description_suffix}
                 </p>
                 <div className="privacy-policy-acceptance-modal__actions">

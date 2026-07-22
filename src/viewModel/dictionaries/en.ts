@@ -398,8 +398,10 @@ export const en: Translations = {
     },
     privacy_policy_acceptance_modal: {
         title: 'Privacy Policy',
-        description_prefix: 'To continue using Labkeeper, please accept ',
+        description_prefix: 'Please read ',
         privacy_policy: 'the Privacy Policy',
+        description_middle: ' and accept ',
+        personal_data_consent: 'the Personal Data Processing Consent',
         description_suffix: '.',
         accept: 'Accept',
         error: 'Failed to save privacy policy acceptance. Please try again',

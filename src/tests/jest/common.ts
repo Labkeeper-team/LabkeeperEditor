@@ -42,7 +42,7 @@ export function mockUserInfoWithDefaultUser(rpi: Rpi) {
             isAuthenticated: true,
             email: USER_EMAIL,
             id: USER_ID,
-            privacyPolicyAccepted: false,
+            privacyPolicyAccepted: true,
             tokenBalance: 0,
         },
         isOk: true,

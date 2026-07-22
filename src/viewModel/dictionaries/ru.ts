@@ -413,8 +413,10 @@ export const ru: Translations = {
     },
     privacy_policy_acceptance_modal: {
         title: 'Политика конфиденциальности',
-        description_prefix: 'Для продолжения работы с Labkeeper примите ',
+        description_prefix: 'Ознакомьтесь с ',
         privacy_policy: 'политику конфиденциальности',
+        description_middle: ' и примите ',
+        personal_data_consent: 'согласие на обработку персональных данных',
         description_suffix: '.',
         accept: 'Принять',
         error: 'Не удалось сохранить принятие политики. Попробуйте ещё раз',

@@ -365,6 +365,8 @@ export interface Translations {
         title: string;
         description_prefix: string;
         privacy_policy: string;
+        description_middle: string;
+        personal_data_consent: string;
         description_suffix: string;
         accept: string;
         error: string;
