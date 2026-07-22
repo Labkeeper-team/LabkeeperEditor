@@ -7,6 +7,7 @@ import { AppDispatch, StorageState } from '../../store';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { controller } from '../../../main.tsx';
 import { DeleteFilesModal } from './modals/delete-files';
+import { PrivacyPolicyAcceptanceModal } from './modals/privacy-policy-acceptance';
 
 export const ProjectPage = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -50,6 +51,7 @@ export const ProjectPage = () => {
             <Editor />
             <Viewer />
             <DeleteFilesModal />
+            <PrivacyPolicyAcceptanceModal />
         </div>
     );
 };

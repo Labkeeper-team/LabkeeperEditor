@@ -41,6 +41,7 @@ export const Modal = ({
     children,
     onClose,
     focusKey,
+    closeable = true,
 }: ModalProps) => {
     useHotkeys(
         'esc',
@@ -49,6 +50,7 @@ export const Modal = ({
         },
         {
             enableOnFormTags: true,
+            enabled: showModal && closeable,
         }
     );
 
@@ -116,7 +118,11 @@ export const Modal = ({
             }}
             onMouseUp={(e) => {
                 const isPureOverlayTarget = e.currentTarget === e.target;
-                if (isMouseDownOnOverlayRef.current && isPureOverlayTarget) {
+                if (
+                    closeable &&
+                    isMouseDownOnOverlayRef.current &&
+                    isPureOverlayTarget
+                ) {
                     onClose?.();
                 }
                 isMouseDownOnOverlayRef.current = false;
@@ -131,15 +137,21 @@ export const Modal = ({
             }}
             onTouchEnd={(e) => {
                 const isPureOverlayTarget = e.currentTarget === e.target;
-                if (isMouseDownOnOverlayRef.current && isPureOverlayTarget) {
+                if (
+                    closeable &&
+                    isMouseDownOnOverlayRef.current &&
+                    isPureOverlayTarget
+                ) {
                     onClose?.();
                 }
                 isMouseDownOnOverlayRef.current = false;
             }}
         >
-            <div className="close-button-container" onClick={onClose}>
-                <CloseModalIcon />
-            </div>
+            {closeable && (
+                <div className="close-button-container" onClick={onClose}>
+                    <CloseModalIcon />
+                </div>
+            )}
             <div
                 ref={modalRef}
                 tabIndex={-1}

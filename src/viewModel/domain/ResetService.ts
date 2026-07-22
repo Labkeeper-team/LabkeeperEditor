@@ -81,6 +81,7 @@ export class ResetService {
             isAuthenticated: false,
             email: '',
             id: -1,
+            privacyPolicyAccepted: false,
             tokenBalance: 0,
         });
     }

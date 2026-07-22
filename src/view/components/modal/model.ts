@@ -5,4 +5,5 @@ export interface ModalProps {
     children: React.ReactNode;
     onClose: () => void;
     focusKey?: unknown;
+    closeable?: boolean;
 }

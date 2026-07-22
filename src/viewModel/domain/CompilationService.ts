@@ -59,6 +59,10 @@ export class CompilationService {
         const result = await this.rpi.getUserInfoRequest();
         if (result.isOk) {
             this.repository.userViewModelRepository.setUserInfo(result.body);
+            this.repository.settingsViewModelRepository.setShowPrivacyPolicyAcceptanceModal(
+                result.body.isAuthenticated &&
+                    result.body.privacyPolicyAccepted === false
+            );
         } else {
             this.observerService.onEvent(
                 Events.EVENT_RPI_UNKNOWN_REFRESH_USER_INFO

@@ -396,6 +396,14 @@ export const en: Translations = {
     delete_files_modal: {
         title: 'You removed all file links from your code. Do you want to delete the following files from the project?',
     },
+    privacy_policy_acceptance_modal: {
+        title: 'Privacy Policy',
+        description_prefix: 'To continue using Labkeeper, please accept ',
+        privacy_policy: 'the Privacy Policy',
+        description_suffix: '.',
+        accept: 'Accept',
+        error: 'Failed to save privacy policy acceptance. Please try again',
+    },
     wiki: 'wiki',
     readonly_public_project: 'readonly public project',
     clone: 'Clone',

@@ -361,6 +361,14 @@ export interface Translations {
     delete_files_modal: {
         title: string;
     };
+    privacy_policy_acceptance_modal: {
+        title: string;
+        description_prefix: string;
+        privacy_policy: string;
+        description_suffix: string;
+        accept: string;
+        error: string;
+    };
     wiki: string;
     readonly_public_project: string;
     clone: string;

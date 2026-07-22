@@ -5,8 +5,8 @@ import {
     Program,
     Project,
     ProjectShort,
-    UserInfo,
     ProjectType,
+    UserInfo,
 } from '../../../model/domain.ts';
 
 import { Language } from '../../../viewModel/dictionaries';
@@ -44,6 +44,7 @@ interface SettingsState {
     isCompiling: boolean;
     showShareModal: boolean;
     showContactModal: boolean;
+    showPrivacyPolicyAcceptanceModal: boolean;
     filesToDelete: LabkeeperFile[];
     captchaBypassToken: string | undefined;
     showProjectPromptModal: boolean;
@@ -192,6 +193,7 @@ export const settingsInitialState: SettingsState = {
     isCompiling: false,
     showShareModal: false,
     showContactModal: false,
+    showPrivacyPolicyAcceptanceModal: false,
     filesToDelete: [],
     captchaBypassToken: undefined,
     showProjectPromptModal: false,
@@ -203,6 +205,7 @@ export const userInitialState: UserInfo = {
     isAuthenticated: false,
     email: '',
     id: 0,
+    privacyPolicyAccepted: false,
     tokenBalance: 0,
 };
 

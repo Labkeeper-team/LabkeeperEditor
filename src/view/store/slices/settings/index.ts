@@ -54,6 +54,12 @@ export const settingsSlice = createSlice({
         setShowContactModal: (state, { payload }: PayloadAction<boolean>) => {
             state.showContactModal = payload;
         },
+        setShowPrivacyPolicyAcceptanceModal: (
+            state,
+            { payload }: PayloadAction<boolean>
+        ) => {
+            state.showPrivacyPolicyAcceptanceModal = payload;
+        },
         setCaptchaBypassToken: (
             state,
             { payload }: PayloadAction<string | undefined>
@@ -90,6 +96,7 @@ export const {
     setIsFileDraggedToFileManager,
     setShowShareModal,
     setShowContactModal,
+    setShowPrivacyPolicyAcceptanceModal,
     setFilesToDelete,
     setCaptchaBypassToken,
     setShowProjectPromptModal,

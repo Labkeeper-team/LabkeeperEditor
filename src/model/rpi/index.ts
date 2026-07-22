@@ -199,6 +199,8 @@ export interface Rpi {
 
     getUserInfoRequest(): Promise<RequestResult<UserInfo>>;
 
+    acceptPrivacyPolicyRequest(): Promise<RequestResult>;
+
     getS3FileRequest(path: string): Promise<RequestResult>;
 
     formLoginRequest(
@@ -289,6 +291,9 @@ export const mockRpi = (): Rpi => {
             throw new Error('Not implemented');
         },
         getUserInfoRequest: () => {
+            throw new Error('Not implemented');
+        },
+        acceptPrivacyPolicyRequest: () => {
             throw new Error('Not implemented');
         },
         getBillingPricingRequest: () =>
