@@ -759,6 +759,10 @@ test('cycle-tag-colors', async ({ page }) => {
     await expect(
         projectRow.locator('.tag-chip').filter({ hasText: /^yellow$/ })
     ).toHaveCount(1);
+    // Create-tag click is inside the tags modal, so the color panel closes.
+    await projectRow
+        .getByRole('button', { name: 'Open color palette' })
+        .click();
     await expect(page).toHaveScreenshot(
         'projects-tags-colors-step-3-added-yellow.png',
         {
@@ -782,6 +786,9 @@ test('cycle-tag-colors', async ({ page }) => {
     await expect(
         projectRow.locator('.tag-chip').filter({ hasText: /^brown$/ })
     ).toHaveCount(1);
+    await projectRow
+        .getByRole('button', { name: 'Open color palette' })
+        .click();
     await expect(page).toHaveScreenshot(
         'projects-tags-colors-step-5-added-brown.png',
         {
