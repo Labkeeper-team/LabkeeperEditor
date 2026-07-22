@@ -32,5 +32,5 @@ export const getDropdownPlacement = ({
     if (fitsAbove) {
         return 'top';
     }
-    return 'top';
+    return 'bottom';
 };
