@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Typography } from '../../../components/typography';
 import { CheckIcon, CloseIcon, PlusIcon } from '../../../icons';
@@ -28,6 +28,9 @@ import {
     setNextTagColorInput,
 } from '../../../store/slices/projects';
 import './style.scss';
+
+const COLOR_PANEL_SELECTOR = '.project-tags-color-panel';
+const COLOR_PICKER_BUTTON_SELECTOR = '.project-tags-color-picker-button';
 
 type ProjectTagsModalProps = {
     onClose: () => void;
@@ -67,6 +70,49 @@ export const ProjectTagsModal = ({
         boundaryRef,
         contentKey,
     });
+
+    useEffect(() => {
+        const handlePointerDown = (event: MouseEvent | TouchEvent) => {
+            const target = event.target;
+            if (!(target instanceof Node)) {
+                return;
+            }
+            const targetElement =
+                target instanceof Element ? target : target.parentElement;
+            if (!targetElement) {
+                return;
+            }
+
+            if (triggerRef.current?.contains(target)) {
+                return;
+            }
+
+            const inDropdown = !!dropdownRef.current?.contains(target);
+            if (!inDropdown) {
+                onClose();
+                return;
+            }
+
+            if (!showColorModal) {
+                return;
+            }
+
+            const inColorPanel = !!targetElement.closest(COLOR_PANEL_SELECTOR);
+            const inColorPickerButton = !!targetElement.closest(
+                COLOR_PICKER_BUTTON_SELECTOR
+            );
+            if (!inColorPanel && !inColorPickerButton) {
+                setShowColorModal(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handlePointerDown);
+        document.addEventListener('touchstart', handlePointerDown);
+        return () => {
+            document.removeEventListener('mousedown', handlePointerDown);
+            document.removeEventListener('touchstart', handlePointerDown);
+        };
+    }, [onClose, showColorModal, triggerRef]);
 
     const addNewTag = () => {
         const normalizedTag = normalizeTagLabel(newTagValue);
