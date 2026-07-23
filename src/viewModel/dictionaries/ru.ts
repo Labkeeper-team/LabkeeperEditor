@@ -414,7 +414,7 @@ export const ru: Translations = {
     privacy_policy_acceptance_modal: {
         title: 'Политика конфиденциальности',
         description_prefix: 'Ознакомьтесь с ',
-        privacy_policy: 'политику конфиденциальности',
+        privacy_policy: 'политикой конфиденциальности',
         description_middle: ' и примите ',
         personal_data_consent: 'согласие на обработку персональных данных',
         description_suffix: '.',
