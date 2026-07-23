@@ -75,6 +75,7 @@ function createDefaultUserInfo(
             isAuthenticated: isAuthenticated,
             email: 'a@gmail.com',
             id: 1,
+            privacyPolicyAccepted: isAuthenticated,
             tokenBalance,
         },
         isOk: true,
@@ -516,6 +517,7 @@ test('back-button-resets-forbidden-project-error-for-unauthorized-user', async (
         isAuthenticated: false,
         email: '',
         id: 0,
+        privacyPolicyAccepted: false,
         tokenBalance: 0,
     });
     repository.ideViewModelRepository.setGetProjectRequestState('forbidden');
@@ -818,6 +820,7 @@ test('segments-move-with-result-test', async () => {
             isAuthenticated: false,
             email: 'a@gmail.com',
             id: 1,
+            privacyPolicyAccepted: false,
             tokenBalance: 0,
         },
         isOk: true,
@@ -926,6 +929,7 @@ test('hint-erase-other-segments-test', async () => {
             isAuthenticated: false,
             email: 'a@gmail.com',
             id: 1,
+            privacyPolicyAccepted: false,
             tokenBalance: 0,
         },
         isOk: true,

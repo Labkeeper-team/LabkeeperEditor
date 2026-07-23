@@ -95,6 +95,7 @@ import {
     setIsFileDraggedToFileManager,
     setShoFileManager,
     setShowProjectPromptModal,
+    setShowPrivacyPolicyAcceptanceModal,
     setShowSearch,
     setTourVisibility,
     setCurrentFolderPath,
@@ -355,6 +356,8 @@ export const createViewModelStateFromStore = (
 
             setShowProjectPromptModal: (v) =>
                 store.dispatch(setShowProjectPromptModal(v)),
+            setShowPrivacyPolicyAcceptanceModal: (v) =>
+                store.dispatch(setShowPrivacyPolicyAcceptanceModal(v)),
             setCaptchaBypassToken: (token) =>
                 store.dispatch(setCaptchaBypassToken(token)),
             setShowSearch: (show: boolean) =>

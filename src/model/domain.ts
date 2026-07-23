@@ -35,6 +35,7 @@ export interface UserInfo {
     email: string;
     id: number;
     isAuthenticated: boolean;
+    privacyPolicyAccepted: boolean;
     tokenBalance: number;
 }
 

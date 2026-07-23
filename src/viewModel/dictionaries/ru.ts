@@ -411,6 +411,16 @@ export const ru: Translations = {
     delete_files_modal: {
         title: 'Вы удалили все ссылки на файлы из вашего кода. Хотите удалить следующие файлы из проекта?',
     },
+    privacy_policy_acceptance_modal: {
+        title: 'Политика конфиденциальности',
+        description_prefix: 'Ознакомьтесь с ',
+        privacy_policy: 'политикой конфиденциальности',
+        description_middle: ' и примите ',
+        personal_data_consent: 'согласие на обработку персональных данных',
+        description_suffix: '.',
+        accept: 'Принять',
+        error: 'Не удалось сохранить принятие политики. Попробуйте ещё раз',
+    },
     wiki: 'wiki',
     readonly_public_project: 'Публичный проект, доступный только для чтения',
     clone: 'Клонировать',

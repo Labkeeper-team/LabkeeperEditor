@@ -224,6 +224,15 @@ export class Controller {
         }
     );
 
+    onPrivacyPolicyAcceptedRequest = createAsyncThunk(
+        'onPrivacyPolicyAccepted',
+        async () => {
+            this.wrapper('onPrivacyPolicyAccepted', () =>
+                this.projectPageService.onPrivacyPolicyAccepted()
+            );
+        }
+    );
+
     onLlmButtonClickedRequest = createAsyncThunk(
         'onLlmButtonClicked',
         async () => {

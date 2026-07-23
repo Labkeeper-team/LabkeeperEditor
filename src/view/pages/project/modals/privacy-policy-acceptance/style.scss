@@ -1,0 +1,26 @@
+.privacy-policy-acceptance-modal {
+    padding: 24px;
+    max-width: 480px;
+}
+
+.privacy-policy-acceptance-modal__title {
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.privacy-policy-acceptance-modal__description {
+    margin: 0;
+    color: #4b5668;
+    font-size: 15px;
+    line-height: 22px;
+}
+
+.privacy-policy-acceptance-modal__description a {
+    color: #1565c0;
+}
+
+.privacy-policy-acceptance-modal__actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px;
+}

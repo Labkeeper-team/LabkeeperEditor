@@ -396,6 +396,16 @@ export const en: Translations = {
     delete_files_modal: {
         title: 'You removed all file links from your code. Do you want to delete the following files from the project?',
     },
+    privacy_policy_acceptance_modal: {
+        title: 'Privacy Policy',
+        description_prefix: 'Please read ',
+        privacy_policy: 'the Privacy Policy',
+        description_middle: ' and accept ',
+        personal_data_consent: 'the Personal Data Processing Consent',
+        description_suffix: '.',
+        accept: 'Accept',
+        error: 'Failed to save privacy policy acceptance. Please try again',
+    },
     wiki: 'wiki',
     readonly_public_project: 'readonly public project',
     clone: 'Clone',

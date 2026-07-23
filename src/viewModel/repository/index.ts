@@ -162,6 +162,7 @@ class MockViewModelRepositoryState {
     filesToDelete: LabkeeperFile[] = [];
     captchaBypassToken: string | undefined = undefined;
     showProjectPromptModal = false;
+    showPrivacyPolicyAcceptanceModal = false;
     currentFolderPath = '';
     ephemeralFolders: string[] = [];
 
@@ -400,6 +401,8 @@ export const mockViewModelState = (): MockViewModelRepository => {
 
             setShowProjectPromptModal: (v) =>
                 (mockViewModelState.showProjectPromptModal = v),
+            setShowPrivacyPolicyAcceptanceModal: (v) =>
+                (mockViewModelState.showPrivacyPolicyAcceptanceModal = v),
             setCaptchaBypassToken: (token) =>
                 (mockViewModelState.captchaBypassToken = token),
             setShowSearch: (v: boolean) => (mockViewModelState.showSearch = v),
@@ -548,6 +551,7 @@ export interface SettingsViewModelRepository {
     ephemeralFolders: () => string[];
 
     setShowProjectPromptModal: (v: boolean) => void;
+    setShowPrivacyPolicyAcceptanceModal: (v: boolean) => void;
     setCaptchaBypassToken: (token?: string) => void;
     setTourVisibility: (visible: boolean) => void;
     setEditModeForFilename: (edit: boolean) => void;

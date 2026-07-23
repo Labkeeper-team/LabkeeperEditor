@@ -26,6 +26,7 @@ import { ContactModal } from '../contact/modal';
 import { Routes } from '../../../../viewModel/routes.ts';
 
 import '../style.scss';
+import { PrivacyPolicyAcceptanceModal } from '../../../pages/project/modals/privacy-policy-acceptance';
 
 const languageOptions = [
     { label: 'English', value: 'en' },
@@ -109,6 +110,7 @@ export const AppHeader = () => {
             <AuthModal />
             <ShareModal />
             <ContactModal />
+            <PrivacyPolicyAcceptanceModal />
         </>
     );
 };

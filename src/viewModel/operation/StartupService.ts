@@ -84,6 +84,9 @@ export class StartupService {
 
         const userInfo = result.body;
         this.repository.userViewModelRepository.setUserInfo(userInfo);
+        this.repository.settingsViewModelRepository.setShowPrivacyPolicyAcceptanceModal(
+            userInfo.isAuthenticated && userInfo.privacyPolicyAccepted === false
+        );
 
         this.observerService.setUserState(States.USER_ID, String(userInfo.id));
         this.observerService.setUserState(
@@ -177,6 +180,7 @@ export class StartupService {
             id: this.repository.userViewModelRepository.id(),
             isAuthenticated:
                 this.repository.userViewModelRepository.isAuthenticated(),
+            privacyPolicyAccepted: false,
             tokenBalance:
                 this.repository.userViewModelRepository.tokenBalance(),
         };

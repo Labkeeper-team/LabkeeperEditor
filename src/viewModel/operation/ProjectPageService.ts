@@ -66,6 +66,23 @@ export class ProjectPageService {
         }
     };
 
+    onPrivacyPolicyAccepted = async () => {
+        const response = await this.rpi.acceptPrivacyPolicyRequest();
+
+        if (!response.isOk) {
+            this.repository.toast(
+                this.repository.dictionary.privacy_policy_acceptance_modal
+                    .error,
+                'error'
+            );
+            return;
+        }
+
+        this.repository.settingsViewModelRepository.setShowPrivacyPolicyAcceptanceModal(
+            false
+        );
+    };
+
     onBackButtonClicked = async () => {
         this.resetService.resetProject();
         this.repository.projectViewModelRepository.setReadOnly(false);
@@ -529,6 +546,10 @@ export class ProjectPageService {
         const result = await this.rpi.getUserInfoRequest();
         if (result.isOk) {
             this.repository.userViewModelRepository.setUserInfo(result.body);
+            this.repository.settingsViewModelRepository.setShowPrivacyPolicyAcceptanceModal(
+                result.body.isAuthenticated &&
+                    result.body.privacyPolicyAccepted === false
+            );
         } else {
             this.observerService.onEvent(
                 Events.EVENT_RPI_UNKNOWN_REFRESH_USER_INFO

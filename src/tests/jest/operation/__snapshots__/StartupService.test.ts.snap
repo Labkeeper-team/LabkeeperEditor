@@ -84,6 +84,7 @@ MockViewModelRepositoryState {
   "saveTextFileRequestState": "unknown",
   "search": undefined,
   "showFileManager": false,
+  "showPrivacyPolicyAcceptanceModal": false,
   "showProjectPromptModal": false,
   "showSearch": false,
   "showShareModal": false,

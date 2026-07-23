@@ -355,6 +355,10 @@ export class WebRpi implements Rpi {
         return requestWrapper(() => axios.get(URLS.UserInfo));
     }
 
+    async acceptPrivacyPolicyRequest(): Promise<RequestResult> {
+        return requestWrapper(() => axios.post(URLS.PrivacyPolicyAcceptance));
+    }
+
     async getBillingPricingRequest(): Promise<
         RequestResult<BillingPricingResponse>
     > {
