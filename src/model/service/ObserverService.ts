@@ -31,6 +31,7 @@ export const Events = {
         'rpi_unknown_projects_create_project',
     EVENT_RPI_UNKNOWN_PROJECTS_SET_PROJECT_TYPE:
         'rpi_unknown_projects_set_project_type',
+    EVENT_RPI_UNKNOWN_PROJECTS_UPDATE_TAGS: 'rpi_unknown_projects_update_tags',
     EVENT_RPI_UNKNOWN_STARTUP_OAUTH_CODE: 'rpi_unknown_startup_oauth_code',
     EVENT_RPI_UNKNOWN_STARTUP_GET_USER_INFO:
         'rpi_unknown_startup_get_user_info',

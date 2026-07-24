@@ -7,6 +7,7 @@ import {
     Project,
     ProjectType,
     ProjectShort,
+    ProjectTag,
     UserInfo,
 } from '../../model/domain.ts';
 import { BillingPricingResponse } from '../../model/rpi';
@@ -368,6 +369,17 @@ export const mockViewModelState = (): MockViewModelRepository => {
 
             setProjects: (v: ProjectShort[]) =>
                 (mockViewModelState.projects = structuredClone(v)),
+            setForProject: ({ projectId, tags }) => {
+                mockViewModelState.projects = mockViewModelState.projects.map(
+                    (project) =>
+                        project.projectId === projectId
+                            ? {
+                                  ...project,
+                                  tags: structuredClone(tags),
+                              }
+                            : project
+                );
+            },
         },
         billingViewModelRepository: {
             pricing: () => mockViewModelState.billingPricing,
@@ -571,6 +583,7 @@ export interface ProjectsViewModelRepository {
     projects: () => ProjectShort[];
 
     setProjects: (projects: ProjectShort[]) => void;
+    setForProject: (value: { projectId: string; tags: ProjectTag[] }) => void;
 }
 
 export interface BillingViewModelRepository {

@@ -40,6 +40,13 @@ const defaultParams = {
 const mockContext = () => {
     const mvs = mockViewModelState();
     const rpi: Rpi = mockRpi();
+    rpi.updateProjectTagsRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        body: {},
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+    });
     const observerService: ObserverService = mockObserver();
 
     return setupContext(rpi, mvs, observerService);
@@ -462,7 +469,13 @@ test('display-name-new-project-test', async () => {
         isUnauth: false,
         isForbidden: false,
         body: {
-            projects: alloldprojects,
+            projects: alloldprojects.map((project) => ({
+                projectId: project.projectId,
+                userId: project.userId,
+                title: project.title,
+                lastModified: project.lastModified,
+                tags: [],
+            })),
         },
     } as RequestResult<ListProjectsResponse>); //запрос остальных проектов
 
@@ -485,7 +498,13 @@ test('display-name-new-project-test', async () => {
         isUnauth: false,
         isForbidden: false,
         body: {
-            projects: allprojects,
+            projects: allprojects.map((project) => ({
+                projectId: project.projectId,
+                userId: project.userId,
+                title: project.title,
+                lastModified: project.lastModified,
+                tags: [],
+            })),
         },
     } as RequestResult<ListProjectsResponse>); //запрос остальных проектов
     await projectsPageService.onProjectCreate(

@@ -104,6 +104,7 @@ MockViewModelRepositoryState {
       "isPublic": false,
       "lastModified": "2025-09-08T12:15:38.514Z",
       "projectId": "2cd18704-6c3f-48cb-96f1-9a923930f8cb",
+      "tags": [],
       "title": "biba project",
       "userId": 111,
     },

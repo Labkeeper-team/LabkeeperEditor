@@ -3,12 +3,50 @@ import { Rpi } from '../../model/rpi';
 import { LoaderService } from '../domain/LoaderService.ts';
 import { IdeService } from '../domain/IdeService.ts';
 import { StartupService } from './StartupService.ts';
-import { Program, Project, ProjectType } from '../../model/domain.ts';
+import {
+    Program,
+    ProjectShort,
+    ProjectTag,
+    ProjectType,
+} from '../../model/domain.ts';
 import { Routes } from '../routes.ts';
 import {
     Events,
     ObserverService,
 } from '../../model/service/ObserverService.ts';
+import { normalizeTagLabel } from '../../view/pages/projects/tagColorUtils.ts';
+
+const findTagByCaseInsensitive = (
+    tags: ProjectTag[],
+    label: string
+): ProjectTag | null => {
+    const target = label.toLocaleLowerCase();
+    for (const tag of tags) {
+        if (tag.name.toLocaleLowerCase() === target) {
+            return tag;
+        }
+    }
+    return null;
+};
+
+const findGlobalTagByCaseInsensitive = (
+    projects: ProjectShort[],
+    label: string
+): ProjectTag | null => {
+    for (const project of projects) {
+        const found = findTagByCaseInsensitive(project.tags ?? [], label);
+        if (found) {
+            return found;
+        }
+    }
+    return null;
+};
+
+const withNormalizedTags = (projects: ProjectShort[]): ProjectShort[] =>
+    projects.map((project) => ({
+        ...project,
+        tags: project.tags ?? [],
+    }));
 
 export class ProjectsPageService {
     repository: ViewModelRepository;
@@ -41,7 +79,7 @@ export class ProjectsPageService {
             const result2 = await this.rpi.getAllProjectsRequest();
             if (result2.isOk) {
                 this.repository.projectsViewModelRepository.setProjects(
-                    (result2.body as { projects: Array<Project> }).projects
+                    withNormalizedTags(result2.body.projects)
                 );
             }
             if (result2.isUnauth) {
@@ -167,6 +205,130 @@ export class ProjectsPageService {
                     this.repository.userViewModelRepository.tokenBalance(),
             },
             projectId
+        );
+    };
+
+    addTagToProject = async (
+        projectId: string,
+        tagLabel: string,
+        color: string
+    ): Promise<void> => {
+        const normalizedLabel = normalizeTagLabel(tagLabel);
+        if (!projectId || !normalizedLabel) {
+            return;
+        }
+
+        const projects = this.repository.projectsViewModelRepository.projects();
+        const project = projects.find((item) => item.projectId === projectId);
+        if (!project) {
+            return;
+        }
+
+        const previousProjectTags = project.tags ?? [];
+        if (findTagByCaseInsensitive(previousProjectTags, normalizedLabel)) {
+            return;
+        }
+        const existingGlobalTag = findGlobalTagByCaseInsensitive(
+            projects,
+            normalizedLabel
+        );
+
+        const nextProjectTags: ProjectTag[] = [
+            ...previousProjectTags,
+            {
+                name: normalizedLabel,
+                color: existingGlobalTag?.color ?? color,
+            },
+        ];
+
+        this.repository.projectsViewModelRepository.setForProject({
+            projectId,
+            tags: nextProjectTags,
+        });
+
+        const result = await this.rpi.updateProjectTagsRequest(
+            projectId,
+            nextProjectTags
+        );
+        if (result.isOk) {
+            return;
+        }
+
+        this.repository.projectsViewModelRepository.setForProject({
+            projectId,
+            tags: previousProjectTags,
+        });
+
+        if (result.isUnauth) {
+            this.repository.toast(
+                this.repository.dictionary.filemanager.errors.sessionExpired,
+                'error'
+            );
+            return;
+        }
+
+        this.observerService.onEvent(
+            Events.EVENT_RPI_UNKNOWN_PROJECTS_UPDATE_TAGS
+        );
+    };
+
+    removeTagFromProject = async (
+        projectId: string,
+        tagLabel: string
+    ): Promise<void> => {
+        const normalizedLabel = normalizeTagLabel(tagLabel);
+        if (!projectId || !normalizedLabel) {
+            return;
+        }
+
+        const project = this.repository.projectsViewModelRepository
+            .projects()
+            .find((item) => item.projectId === projectId);
+        if (!project) {
+            return;
+        }
+
+        const previousProjectTags = project.tags ?? [];
+        const existingTag = findTagByCaseInsensitive(
+            previousProjectTags,
+            normalizedLabel
+        );
+        if (!existingTag) {
+            return;
+        }
+
+        const nextProjectTags = previousProjectTags.filter(
+            (tag) => tag.name !== existingTag.name
+        );
+
+        this.repository.projectsViewModelRepository.setForProject({
+            projectId,
+            tags: nextProjectTags,
+        });
+
+        const result = await this.rpi.updateProjectTagsRequest(
+            projectId,
+            nextProjectTags
+        );
+        if (result.isOk) {
+            return;
+        }
+
+        this.repository.projectsViewModelRepository.setForProject({
+            projectId,
+            tags: previousProjectTags,
+        });
+
+        if (result.isUnauth) {
+            this.repository.toast(
+                this.repository.dictionary.filemanager.errors.sessionExpired,
+                'error'
+            );
+            return;
+        }
+
+        this.observerService.onEvent(
+            Events.EVENT_RPI_UNKNOWN_PROJECTS_UPDATE_TAGS
         );
     };
 }

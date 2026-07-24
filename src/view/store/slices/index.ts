@@ -54,6 +54,9 @@ interface SettingsState {
 
 interface ProjectsState {
     projects: ProjectShort[];
+    nextTagColor: string;
+    nextTagColorInput: string;
+    selectedFilterTagKeys: string[];
 }
 
 interface BillingState {
@@ -173,6 +176,9 @@ export const projectInitialState: ProjectState = {
 
 export const projectsInitialState: ProjectsState = {
     projects: [],
+    nextTagColor: 'blue',
+    nextTagColorInput: 'blue',
+    selectedFilterTagKeys: [],
 };
 
 export type BillingPricingRequestState = 'unknown' | 'loading' | 'ok' | 'error';

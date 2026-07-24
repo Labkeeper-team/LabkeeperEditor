@@ -3,6 +3,7 @@ import {
     CompileSuccessResult,
     Program,
     Project,
+    ProjectTag,
     ProjectType,
     Segment,
     UserInfo,
@@ -64,6 +65,16 @@ function withIds(program: Program): Program {
 }
 
 export class WebRpi implements Rpi {
+    updateProjectTagsRequest(
+        projectId: string,
+        tags: ProjectTag[]
+    ): Promise<RequestResult> {
+        return requestWrapper(async () =>
+            axios.post(URLS.updateProjectTags.replace('{id}', projectId), {
+                tags,
+            })
+        );
+    }
     setProjectTypeRequest(
         projectId: string,
         type: ProjectType

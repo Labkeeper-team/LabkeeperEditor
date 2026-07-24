@@ -1,0 +1,82 @@
+@use '../../../styles/colors' as *;
+
+td:has(.delete-project-container) {
+    padding-top: 0px;
+    padding-bottom: 0px;
+}
+
+.project-title-cell {
+    height: 63px;
+}
+
+.delete-project-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 5px;
+    justify-content: end;
+    padding-left: 5px;
+    // ХАК
+    height: 62px;
+    &:hover {
+        cursor: pointer;
+    }
+    .delete-icon {
+        background-color: $red-20;
+        border-radius: 45px;
+        height: 16px;
+        width: 16px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        rotate: 45deg;
+        svg {
+            path {
+                fill: $red-10;
+            }
+        }
+    }
+}
+
+.project-tags-cell {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: flex-start;
+    align-content: flex-start;
+    height: 44px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    max-width: 100%;
+    scrollbar-width: thin;
+}
+
+.project-tags-cell.single-line {
+    align-items: center;
+    align-content: center;
+}
+
+.project-actions-container {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.project-tags-anchor {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.project-tags-button {
+    border: 1px solid $gray-50;
+    background: $white;
+    color: $gray-20;
+    border-radius: 999px;
+    font-size: 12px;
+    line-height: 16px;
+    height: 28px;
+    padding: 0 10px;
+    cursor: pointer;
+}

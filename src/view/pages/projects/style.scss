@@ -19,11 +19,23 @@
         display: flex;
         flex-direction: column;
         flex: 1;
-        .projects-loading-wrapper {
+        .projects-loading-wrapper,
+        .projects-empty-state {
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 24px 0;
+            flex: 1;
+        }
+        .projects-list-scroll {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            overflow: auto;
+        }
+        .projects-list {
+            display: flex;
+            flex-direction: column;
             flex: 1;
         }
         .projects-loading-icon-with-text {
@@ -88,82 +100,79 @@
         width: 300px;
         height: 90px;
     }
-    .projects-header-cell {
+    .projects-page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+    .projects-filter-button {
+        border: 1px solid $gray-50;
+        background: $white;
+        color: $gray-10;
+        border-radius: 999px;
+        padding: 5px 10px;
+        font-size: 14px;
+        cursor: pointer;
+    }
+    .projects-filter-anchor {
+        position: relative;
         display: inline-flex;
+        align-items: center;
+    }
+    .projects-filter-controls {
+        display: flex;
         align-items: center;
         gap: 8px;
+        min-width: 0;
     }
-    .projects-sort-icon-button {
-        border: none;
-        background: transparent;
-        padding: 0;
-        margin: 0;
-        display: inline-flex;
-        flex-direction: column;
+    .projects-selected-filter-tags {
+        display: flex;
         align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        line-height: 10px;
+        gap: 6px;
+        max-width: min(40vw, 560px);
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: thin;
     }
-    .sort-arrow {
-        color: $gray-30;
-        font-size: 11px;
-        user-select: none;
-        height: 10px;
-    }
-    .sort-arrow.is-active {
-        color: $blue-10;
+    .tag-option-main {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
     }
     table {
-        th:nth-child(1) {
-        }
         td:nth-child(1) {
-            // width: 33%;
             padding: 0px;
             display: flex;
             align-items: center;
         }
-        td {
-            width: 33%;
+        th:nth-child(1),
+        td:nth-child(1) {
+            width: 30%;
+            min-width: 30ch;
+        }
+        th:nth-child(2),
+        td:nth-child(2) {
+            width: 18%;
+            min-width: 16ch;
+        }
+        th:nth-child(3),
+        td:nth-child(3) {
+            width: 32%;
+        }
+        th:nth-child(4),
+        td:nth-child(4) {
+            width: 20%;
         }
     }
     .add-project-button-footer {
         margin-bottom: 20px;
     }
-    td:has(.delete-project-container) {
-        padding-top: 0px;
-        padding-bottom: 0px;
-    }
-    .delete-project-container {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        gap: 5px;
-        justify-content: end;
-        padding-left: 5px;
-        // ХАК
-        height: 62px;
-        &:hover {
-            cursor: pointer;
-        }
-        .delete-icon {
-            background-color: $red-20;
-            border-radius: 45px;
-            height: 16px;
-            width: 16px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            rotate: 45deg;
-            svg {
-                path {
-                    fill: $red-10;
-                }
-            }
-        }
-    }
-
     table {
+        margin-top: 30px;
         border-collapse: collapse;
         tr {
             text-align: left;
