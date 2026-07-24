@@ -23,7 +23,7 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { CompileErrorResult } from '../../../../../../../model/domain';
 import { customLanguageSupport } from './customLanguage';
-import { latexLanguageSupport } from './latexLanguage';
+import { latex } from 'codemirror-lang-latex';
 import {
     getLatexSpellcheckLint,
     getMarkdownSpellcheckLint,
@@ -648,7 +648,13 @@ export const SegmentEditor = memo(
                 return customLanguageSupport;
             }
             if (t === 'latex') {
-                return [langs.tex(), latexLanguageSupport];
+                return latex({
+                    autoCloseTags: true,
+                    enableAutocomplete: true,
+                    enableLinting: false,
+                    enableTooltips: true,
+                    autoCloseBrackets: false,
+                });
             }
             return undefined;
         }, [segment?.type]);
