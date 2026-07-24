@@ -1,12 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import { EditorView } from '@codemirror/view';
-import {
-    defaultHighlightStyle,
-    HighlightStyle,
-    syntaxHighlighting,
-} from '@codemirror/language';
-import { langs } from '@uiw/codemirror-extensions-langs';
+import { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
+import { latex } from 'codemirror-lang-latex';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, StorageState } from '../../../../store';
 import { controller } from '../../../../../main.tsx';
@@ -127,7 +123,15 @@ export const TextFileEditor = () => {
             return [];
         }
         if (isLatexTextFilePath(activeTextFile)) {
-            return [langs.tex(), syntaxHighlighting(defaultHighlightStyle)];
+            return [
+                latex({
+                    autoCloseTags: true,
+                    enableAutocomplete: true,
+                    enableLinting: false,
+                    enableTooltips: true,
+                    autoCloseBrackets: false,
+                }),
+            ];
         }
         return [];
     }, [activeTextFile]);

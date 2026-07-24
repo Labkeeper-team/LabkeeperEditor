@@ -290,6 +290,7 @@ export const en: Translations = {
     },
     error_common: {
         segment: 'Segment',
+        common_errors: 'General errors',
         line: 'line',
         operator_expected: 'Operator expected',
         now: 'Now',
