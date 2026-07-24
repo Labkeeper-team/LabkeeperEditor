@@ -400,7 +400,8 @@ export const en: Translations = {
     },
     privacy_policy_acceptance_modal: {
         title: 'Privacy Policy',
-        description_prefix: 'To continue using the Labkeeper website, please read ',
+        description_prefix:
+            'To continue using the Labkeeper website, please read ',
         privacy_policy: 'the Privacy Policy',
         description_middle: ' and accept ',
         personal_data_consent: 'the Personal Data Processing Consent',
