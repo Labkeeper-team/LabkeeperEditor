@@ -208,7 +208,7 @@ export interface CompileErrorResult {
     payload: {
         line: number;
         position: number;
-        segmentId: number;
+        segmentId: number | null;
     };
 }
 

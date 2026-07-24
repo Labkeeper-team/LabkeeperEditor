@@ -12,7 +12,7 @@ import { ErrorGroupedItem } from './errorGroupItem';
 import { AppDispatch, StorageState } from '../../../../store';
 import { controller } from '../../../../../main.tsx';
 
-type SegmentId = number;
+type SegmentId = number | null;
 export const ProblemViewer = () => {
     const dispatch = useDispatch<AppDispatch>();
     const errors = useSelector(useCompiledErrors);
@@ -80,7 +80,7 @@ export const ProblemViewer = () => {
                     ? errorGroupedBySegmentId.map((erroGroupItem) => {
                           return (
                               <ErrorGroupedItem
-                                  key={erroGroupItem.segment}
+                                  key={erroGroupItem.segment ?? 'common'}
                                   segmentId={erroGroupItem.segment}
                                   errors={erroGroupItem.errors}
                               />

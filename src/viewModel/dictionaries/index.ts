@@ -253,6 +253,7 @@ export interface Translations {
 
     error_common: {
         segment: string;
+        common_errors: string;
         line: string;
         operator_expected: string;
         now: string;

@@ -10,11 +10,16 @@ import { useSelector } from 'react-redux';
 import { useDictionary } from '../../../../../store/selectors/translations';
 
 export const ErrorGroupedItem = (props: {
-    segmentId: number;
+    segmentId: number | null;
     errors: CompileErrorResult[];
 }) => {
     const [expanded, setExpanded] = useState(true);
     const dictionary = useSelector(useDictionary);
+    const groupTitle =
+        props.segmentId === null
+            ? dictionary.error_common.common_errors
+            : `${dictionary.error_common.segment} №${props.segmentId}`;
+
     return (
         <div>
             <div
@@ -28,7 +33,7 @@ export const ErrorGroupedItem = (props: {
                     <Typography
                         color={colors.gray10}
                         type="body-large"
-                        text={`${dictionary.error_common.segment} №${props.segmentId}`}
+                        text={groupTitle}
                     />
                     <Typography
                         color={colors.red10}

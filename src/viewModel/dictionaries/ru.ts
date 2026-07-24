@@ -299,6 +299,7 @@ export const ru: Translations = {
     },
     error_common: {
         segment: 'Сегмент',
+        common_errors: 'Общие ошибки',
         line: 'строка',
         operator_expected: 'Ожидался оператор',
         now: 'Сейчас',
