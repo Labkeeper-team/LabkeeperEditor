@@ -415,7 +415,8 @@ export const ru: Translations = {
     },
     privacy_policy_acceptance_modal: {
         title: 'Политика конфиденциальности',
-        description_prefix: 'Ознакомьтесь с ',
+        description_prefix:
+            'Для продолжения работы с сайтом Labkeeper ознакомьтесь с ',
         privacy_policy: 'политикой конфиденциальности',
         description_middle: ' и примите ',
         personal_data_consent: 'согласие на обработку персональных данных',
