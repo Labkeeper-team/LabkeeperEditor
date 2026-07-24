@@ -335,6 +335,31 @@ test('file-manager-test-onFileNameChanged-shows-bad-name-for-400', async () => {
     expect(repository.ideViewModelRepository.getFilesRequestState()).toBe('ok');
 });
 
+test('file-manager-test-onFileNameChanged-shows-file-exists-for-417', async () => {
+    const { startupService, fileManagerService, rpi, repository } =
+        mockContext();
+    mockAuthenticatedStartup(rpi);
+    await startupService.onAppStartup();
+
+    rpi.renameFileRequest = jest.fn().mockResolvedValue({
+        code: 417,
+        body: '',
+        isOk: false,
+        isUnauth: false,
+        isForbidden: false,
+    });
+    const toastSpy = jest.spyOn(repository, 'toast');
+
+    await fileManagerService.onFileNameChanged('note.txt', 'renamed.txt');
+
+    expect(toastSpy).toHaveBeenCalledTimes(1);
+    expect(toastSpy).toHaveBeenCalledWith(
+        repository.dictionary.filemanager.errors.fileAlreadyExists,
+        'error'
+    );
+    expect(repository.ideViewModelRepository.getFilesRequestState()).toBe('ok');
+});
+
 test('file-manager-test-onFileNameChanged-rejects-too-long-file-name', async () => {
     const { startupService, fileManagerService, rpi, repository } =
         mockContext();
@@ -382,6 +407,31 @@ test('file-manager-test-onFileNameChanged-shows-english-bad-name-for-400', async
     expect(toastSpy).toHaveBeenCalledTimes(1);
     expect(toastSpy).toHaveBeenCalledWith(
         repository.dictionary.filemanager.errors.bad_name,
+        'error'
+    );
+});
+
+test('file-manager-test-onFileNameChanged-shows-english-file-exists-for-417', async () => {
+    const { startupService, fileManagerService, rpi, repository } =
+        mockContext();
+    mockAuthenticatedStartup(rpi);
+    await startupService.onAppStartup();
+    repository.dictionary = en;
+
+    rpi.renameFileRequest = jest.fn().mockResolvedValue({
+        code: 417,
+        body: '',
+        isOk: false,
+        isUnauth: false,
+        isForbidden: false,
+    });
+    const toastSpy = jest.spyOn(repository, 'toast');
+
+    await fileManagerService.onFileNameChanged('note.txt', 'renamed.txt');
+
+    expect(toastSpy).toHaveBeenCalledTimes(1);
+    expect(toastSpy).toHaveBeenCalledWith(
+        repository.dictionary.filemanager.errors.fileAlreadyExists,
         'error'
     );
 });

@@ -219,6 +219,96 @@ test('delete-files-modal-does-not-popup-in-latex-project', async () => {
     ).toStrictEqual([]);
 });
 
+test('synctex editor-to-pdf shows locked error for 423', async () => {
+    const { startupService, rpi, repository, programEditorService } =
+        mockContext();
+    mockAuthenticatedStartup(rpi);
+    await startupService.onAppStartup();
+
+    repository.projectViewModelRepository.setProjectType('latex');
+    repository.projectViewModelRepository.setPdfUri('result.pdf');
+    repository.ideViewModelRepository.setSynctexEditorPosition({
+        segmentIndex: 0,
+        line: 1,
+    });
+    rpi.navigationDocToPdfRequest = jest.fn().mockResolvedValue({
+        code: 423,
+        body: '',
+        isOk: false,
+        isUnauth: false,
+        isForbidden: false,
+    });
+    const toastSpy = jest.spyOn(repository, 'toast');
+
+    await programEditorService.onSyncEditorToPdf();
+
+    expect(toastSpy).toHaveBeenCalledTimes(1);
+    expect(toastSpy).toHaveBeenCalledWith(
+        repository.dictionary.synctex.errors.locked,
+        'error'
+    );
+    expect(repository.ideViewModelRepository.pdfNavigationTarget()).toBeNull();
+});
+
+test('synctex pdf-to-editor shows locked error for 423', async () => {
+    const { startupService, rpi, repository, programEditorService } =
+        mockContext();
+    mockAuthenticatedStartup(rpi);
+    await startupService.onAppStartup();
+
+    repository.projectViewModelRepository.setProjectType('latex');
+    repository.ideViewModelRepository.setPdfClickPosition({
+        page: 1,
+        x: 20,
+        y: 30,
+    });
+    rpi.navigationPdfToDocRequest = jest.fn().mockResolvedValue({
+        code: 423,
+        body: '',
+        isOk: false,
+        isUnauth: false,
+        isForbidden: false,
+    });
+    const toastSpy = jest.spyOn(repository, 'toast');
+
+    await programEditorService.onSyncPdfToEditor();
+
+    expect(toastSpy).toHaveBeenCalledTimes(1);
+    expect(toastSpy).toHaveBeenCalledWith(
+        repository.dictionary.synctex.errors.locked,
+        'error'
+    );
+    expect(
+        repository.ideViewModelRepository.editorNavigationTarget()
+    ).toBeNull();
+});
+
+test('pdf compilation shows locked error for 423', async () => {
+    const { startupService, rpi, repository, projectPageService } =
+        mockContext();
+    mockAuthenticatedStartup(rpi);
+    mockSaveProgramRequest(rpi);
+    await startupService.onAppStartup();
+
+    repository.projectViewModelRepository.setProjectType('latex');
+    rpi.compileProjectPdfRequest = jest.fn().mockResolvedValue({
+        code: 423,
+        body: '',
+        isOk: false,
+        isUnauth: false,
+        isForbidden: false,
+    });
+    const toastSpy = jest.spyOn(repository, 'toast');
+
+    await projectPageService.onRunButtonClicked();
+
+    expect(toastSpy).toHaveBeenCalledTimes(1);
+    expect(toastSpy).toHaveBeenCalledWith(
+        repository.dictionary.synctex.errors.locked,
+        'error'
+    );
+});
+
 // ---------------------------------------------------------------------------
 // ProgramService: курсор после undo
 // ---------------------------------------------------------------------------

@@ -568,6 +568,13 @@ export class ProgramEditorService {
                 line: position.line,
             }
         );
+        if (result.code === 423) {
+            this.repository.toast(
+                this.repository.dictionary.synctex.errors.locked,
+                'error'
+            );
+            return;
+        }
         if (!result.isOk || !result.body) {
             this.observerService.onEvent(
                 Events.EVENT_RPI_UNKNOWN_PROGRAM_EDITOR_SYNC_EDITOR_TO_PDF
@@ -604,6 +611,13 @@ export class ProgramEditorService {
             project.projectId,
             pdfPosition
         );
+        if (result.code === 423) {
+            this.repository.toast(
+                this.repository.dictionary.synctex.errors.locked,
+                'error'
+            );
+            return;
+        }
         if (!result.isOk || !result.body) {
             this.observerService.onEvent(
                 Events.EVENT_RPI_UNKNOWN_PROGRAM_EDITOR_SYNC_PDF_TO_EDITOR

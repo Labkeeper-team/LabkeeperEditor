@@ -148,6 +148,7 @@ export const en: Translations = {
             no_cursor: 'Place the cursor in a segment first.',
             no_pdf_selection: 'Click in the PDF to choose a position.',
             failed: 'Could not sync position. Recompile and try again.',
+            locked: 'The PDF is being processed. Please try again shortly.',
         },
     },
     header_menu: {
@@ -381,6 +382,7 @@ export const en: Translations = {
             notFound: 'Project not found',
             noNetwork: 'No connection with backend',
             bad_name: 'Name contains invalid characters or is too long',
+            fileAlreadyExists: 'A file with this name already exists',
             rename_file_failed: 'Could not rename file. Please try again',
             rename_folder_failed: 'Could not rename folder. Please try again',
             upload_failed: 'Could not upload file. Please try again',
@@ -399,7 +401,8 @@ export const en: Translations = {
     },
     privacy_policy_acceptance_modal: {
         title: 'Privacy Policy',
-        description_prefix: 'Please read ',
+        description_prefix:
+            'To continue using the Labkeeper website, please read ',
         privacy_policy: 'the Privacy Policy',
         description_middle: ' and accept ',
         personal_data_consent: 'the Personal Data Processing Consent',

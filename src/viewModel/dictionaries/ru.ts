@@ -155,6 +155,7 @@ export const ru: Translations = {
             no_cursor: 'Сначала установите курсор в сегменте.',
             no_pdf_selection: 'Кликните в PDF, чтобы выбрать позицию.',
             failed: 'Не удалось синхронизировать позицию. Перекомпилируйте и попробуйте снова.',
+            locked: 'PDF сейчас обрабатывается. Попробуйте ещё раз чуть позже.',
         },
     },
     header_menu: {
@@ -394,6 +395,7 @@ export const ru: Translations = {
             noNetwork: 'Отсутствует соединение с сервером',
             bad_name:
                 'Название содержит недопустимые символы или слишком длинное',
+            fileAlreadyExists: 'Файл с таким именем уже существует',
             rename_file_failed:
                 'Не удалось переименовать файл. Попробуйте ещё раз',
             rename_folder_failed:
@@ -414,7 +416,8 @@ export const ru: Translations = {
     },
     privacy_policy_acceptance_modal: {
         title: 'Политика конфиденциальности',
-        description_prefix: 'Ознакомьтесь с ',
+        description_prefix:
+            'Для продолжения работы с сайтом Labkeeper ознакомьтесь с ',
         privacy_policy: 'политикой конфиденциальности',
         description_middle: ' и примите ',
         personal_data_consent: 'согласие на обработку персональных данных',
