@@ -142,6 +142,7 @@ export interface Translations {
             no_cursor: string;
             no_pdf_selection: string;
             failed: string;
+            locked: string;
         };
     };
     header_menu: {

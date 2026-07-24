@@ -148,6 +148,7 @@ export const en: Translations = {
             no_cursor: 'Place the cursor in a segment first.',
             no_pdf_selection: 'Click in the PDF to choose a position.',
             failed: 'Could not sync position. Recompile and try again.',
+            locked: 'The PDF is being processed. Please try again shortly.',
         },
     },
     header_menu: {

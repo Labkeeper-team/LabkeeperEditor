@@ -161,6 +161,11 @@ export class CompilationService {
                 'error'
             );
             this.observerService.onEvent(Events.EVENT_PAYMENT_REQUIRED);
+        } else if (mode === 'latex' && result.code === 423) {
+            this.repository.toast(
+                this.repository.dictionary.synctex.errors.locked,
+                'error'
+            );
         } else if (result.code === 425) {
             this.repository.projectViewModelRepository.setCompileErrorResult({
                 errors: [
