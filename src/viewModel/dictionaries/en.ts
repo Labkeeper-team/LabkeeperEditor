@@ -380,6 +380,7 @@ export const en: Translations = {
             notFound: 'Project not found',
             noNetwork: 'No connection with backend',
             bad_name: 'Name contains invalid characters or is too long',
+            fileAlreadyExists: 'A file with this name already exists',
             rename_file_failed: 'Could not rename file. Please try again',
             rename_folder_failed: 'Could not rename folder. Please try again',
             upload_failed: 'Could not upload file. Please try again',

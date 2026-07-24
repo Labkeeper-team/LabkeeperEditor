@@ -344,6 +344,7 @@ export interface Translations {
             notEnoughRights: string;
             notFound: string;
             bad_name: string;
+            fileAlreadyExists: string;
             rename_file_failed: string;
             rename_folder_failed: string;
             upload_failed: string;

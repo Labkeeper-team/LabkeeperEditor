@@ -667,6 +667,12 @@ export class FileManagerService {
                 'error'
             );
             this.restoreFilesReadyState();
+        } else if (result.code === 417) {
+            this.repository.toast(
+                this.repository.dictionary.filemanager.errors.fileAlreadyExists,
+                'error'
+            );
+            this.restoreFilesReadyState();
         } else if (!result.isUnauth) {
             this.restoreFilesReadyState();
             this.repository.toast(

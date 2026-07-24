@@ -393,6 +393,7 @@ export const ru: Translations = {
             noNetwork: 'Отсутствует соединение с сервером',
             bad_name:
                 'Название содержит недопустимые символы или слишком длинное',
+            fileAlreadyExists: 'Файл с таким именем уже существует',
             rename_file_failed:
                 'Не удалось переименовать файл. Попробуйте ещё раз',
             rename_folder_failed:
