@@ -64,7 +64,9 @@ export const ContactModal = () => {
                     color={colors.gray20}
                     type={'h2'}
                 />
-                <a href={`mailto:${contactEmail}`} target="_blank">{contactEmail}</a>
+                <a href={`mailto:${contactEmail}`} target="_blank">
+                    {contactEmail}
+                </a>
                 {!isAuthenticated && agreement}
                 {isAuthenticated && (
                     <>
