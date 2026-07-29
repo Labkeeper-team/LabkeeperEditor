@@ -64,7 +64,9 @@ export const ContactModal = () => {
                     color={colors.gray20}
                     type={'h2'}
                 />
-                <a>{contactEmail}</a>
+                <a href={`mailto:${contactEmail}`} target="_blank">
+                    {contactEmail}
+                </a>
                 {!isAuthenticated && agreement}
                 {isAuthenticated && (
                     <>
@@ -86,12 +88,13 @@ export const ContactModal = () => {
                                 value={subject}
                                 onChange={(e) => setSubject(e.target.value)}
                             />
-                            <div className="textarea-container">
+                            <div className="textarea-container input-container">
                                 <label>{t.message}</label>
                                 <textarea
                                     maxLength={2000}
                                     placeholder={t.message_placeholder}
                                     value={message}
+                                    className="input-base input-base--textarea"
                                     onChange={(e) => setMessage(e.target.value)}
                                 />
                             </div>
