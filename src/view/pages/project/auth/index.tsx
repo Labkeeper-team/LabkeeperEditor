@@ -136,6 +136,9 @@ const LoginView = () => {
                 <form
                     onSubmit={(e) => {
                         e.preventDefault();
+                        if (isLoading) {
+                            return;
+                        }
                         const userName: string =
                             e.currentTarget.elements['username'].value;
                         const password: string =
@@ -172,6 +175,7 @@ const LoginView = () => {
                         onBlur={() => setIsLoginTouched(true)}
                         placeholder={dictionary.authorization.loginInput}
                         type="email"
+                        disabled={isLoading}
                         error={
                             isLoginTouched && loginEmailError
                                 ? loginEmailError
@@ -187,6 +191,7 @@ const LoginView = () => {
                         }
                         placeholder={dictionary.authorization.password}
                         type="password"
+                        disabled={isLoading}
                     />
                     {!!Secrets.yandexCaptchaSiteKey && showCaptcha && (
                         <input required hidden value={token} name="captcha" />

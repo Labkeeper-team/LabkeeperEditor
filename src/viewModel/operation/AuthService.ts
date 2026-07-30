@@ -58,9 +58,9 @@ export class AuthService {
         );
 
         if (response.isOk) {
+            this.repository.authViewModelRepository.setCurrentView('closed');
             this.repository.authViewModelRepository.setLoginRequest('ok');
             await this.startupService.onAppStartup();
-            this.repository.authViewModelRepository.setCurrentView('closed');
         } else if (response.code === 401) {
             this.repository.authViewModelRepository.setLoginRequest(
                 'bad_credentials'
@@ -104,22 +104,26 @@ export class AuthService {
     };
 
     onAuthButtonClicked = async () => {
+        this.restartLoginPipeline();
         this.repository.authViewModelRepository.setCurrentView('login');
         this.restartPasswordPipeline();
     };
 
     onAuthClosed = async () => {
         this.repository.authViewModelRepository.setCurrentView('closed');
+        this.restartLoginPipeline();
         this.restartPasswordPipeline();
     };
 
     onRegistrationButtonClicked = async () => {
+        this.restartLoginPipeline();
         this.repository.authViewModelRepository.setCurrentView('email');
         this.repository.authViewModelRepository.setIsRegistration(true);
         this.restartPasswordPipeline();
     };
 
     onForgotPasswordButtonClicked = async () => {
+        this.restartLoginPipeline();
         this.repository.authViewModelRepository.setCurrentView('email');
         this.repository.authViewModelRepository.setIsRegistration(false);
         this.restartPasswordPipeline();
@@ -225,5 +229,9 @@ export class AuthService {
         this.repository.authViewModelRepository.setCodeCheckRequest('unknown');
         this.repository.authViewModelRepository.setCurrentEmail(null);
         this.repository.authViewModelRepository.setLastVerifiedCode(null);
+    };
+
+    private restartLoginPipeline = () => {
+        this.repository.authViewModelRepository.setLoginRequest('unknown');
     };
 }
