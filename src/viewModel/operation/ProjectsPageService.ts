@@ -108,6 +108,7 @@ export class ProjectsPageService {
             );
 
             this.repository.projectViewModelRepository.setProject(result.body);
+            this.ideService.setNewProgram(result.body.program);
             await this.loaderService.loadProjects();
             this.repository.projectViewModelRepository.setReadOnly(false);
             this.repository.projectViewModelRepository.setProjectType(
