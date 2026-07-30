@@ -334,8 +334,12 @@ export class ProjectPageService {
 
     onRunButtonClicked = async (): Promise<void> => {
         try {
-            const lastProgram = this.programService.getCurrentProgram();
             this.repository.settingsViewModelRepository.setIsCompiling(true);
+            if (this.repository.ideViewModelRepository.activeTextFile()) {
+                await this.textFileEditorService.onTextFileSaveTimeout();
+            }
+
+            const lastProgram = this.programService.getCurrentProgram();
             const project =
                 this.repository.projectViewModelRepository.project();
             if (

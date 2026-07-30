@@ -14,6 +14,7 @@ import {
 } from '../../../../utils/refreshCodeMirrorLayout';
 import { textFileEditorWheelScroll } from './textFileEditorWheelScroll';
 import { isLatexTextFilePath } from '../../fileManager/svarFileTreeAdapter.ts';
+import { RunButton } from '../runButton';
 import '../ide/style.scss';
 import '../ide/header/style.scss';
 import './style.scss';
@@ -233,6 +234,7 @@ export const TextFileEditor = () => {
                     />
                 ) : null}
             </div>
+            <RunButton enableHotkey={false} />
         </div>
     );
 };

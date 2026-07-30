@@ -1,10 +1,8 @@
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import './style.scss';
 import { IdeHeader } from './header';
 import { AddBlock } from './addBlock';
 import { Segments } from './segments';
-import { Button } from '../../../../components/button';
-import { RightArrowIcon } from '../../../../icons';
 import {
     useCurrentProgram,
     useIsProjectReadonly,
@@ -12,84 +10,20 @@ import {
 import classNames from 'classnames';
 import { InterfaceTourAnchorClassnames } from '../../../../components/tour/helpers';
 
-import { AppDispatch, StorageState } from '../../../../store';
-import { useEffect, useMemo, useState } from 'react';
+import { StorageState } from '../../../../store';
 import { useDictionary } from '../../../../store/selectors/translations.ts';
-import { controller } from '../../../../../main.tsx';
+import { RunButton } from '../runButton';
 
 export const Ide = () => {
-    const dispatch = useDispatch<AppDispatch>();
-    const [flag, setFlag] = useState(false);
-
     /*
     STATE
      */
-    const isAutocompleteLoading = useSelector(
-        (state: StorageState) => state.settings.isCompiling
-    );
     const program = useSelector(useCurrentProgram);
     const isReadonly = useSelector(useIsProjectReadonly);
     const dictionary = useSelector(useDictionary);
     const getProjectRequestState = useSelector(
         (state: StorageState) => state.ide.getProjectRequestState
     );
-
-    const isLatexMode = useSelector(
-        (state: StorageState) => state.project.mode === 'latex'
-    );
-
-    const disabled = useMemo(
-        () =>
-            !program.segments.length ||
-            isAutocompleteLoading ||
-            (!program.segments.find(
-                (s) => s.type === 'computational' || s.type === 'latex'
-            ) &&
-                !isLatexMode) ||
-            flag,
-        [isLatexMode, flag, isAutocompleteLoading, program.segments]
-    );
-
-    const title = useMemo(() => {
-        if (isAutocompleteLoading || flag) {
-            return `${dictionary.loading}...`;
-        }
-        if (!program.segments.length) {
-            return dictionary.add_segment;
-        }
-        return !disabled ? dictionary.run : dictionary.no_comp_segment;
-    }, [
-        isAutocompleteLoading,
-        flag,
-        program.segments.length,
-        disabled,
-        dictionary,
-    ]);
-
-    /*
-    Горячая клавиша для запуска программы
-     */
-    useEffect(() => {
-        const onKeyDown = (event: KeyboardEvent) => {
-            const isModifierPressed = event.ctrlKey || event.metaKey;
-            const isS = event.code === 'KeyS';
-            if (!isModifierPressed || !isS) return;
-
-            // Предотвращаем стандартное действие (прокрутка/спотлайт в браузере, если возможно)
-            event.preventDefault();
-
-            if (disabled) return;
-
-            setFlag(true);
-            setTimeout(() => {
-                setFlag(false);
-            }, 1000);
-            dispatch(controller.onRunButtonPressedRequest());
-        };
-
-        window.addEventListener('keydown', onKeyDown);
-        return () => window.removeEventListener('keydown', onKeyDown);
-    }, [dispatch, disabled]);
 
     return (
         <div className="ide-container">
@@ -131,23 +65,7 @@ export const Ide = () => {
                 ) : (
                     <Segments />
                 )}
-                <Button
-                    classname="run-button"
-                    title={title}
-                    onPress={() => {
-                        setFlag(true);
-                        setTimeout(() => {
-                            setFlag(false);
-                        }, 1000);
-                        dispatch(controller.onRunButtonPressedRequest());
-                    }}
-                    disabled={disabled}
-                    titleIcon={() =>
-                        disabled ? undefined : <RightArrowIcon />
-                    }
-                    color="green"
-                    minimize={false}
-                />
+                <RunButton enableHotkey />
             </div>
         </div>
     );
