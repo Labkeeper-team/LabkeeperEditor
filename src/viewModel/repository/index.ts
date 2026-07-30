@@ -17,12 +17,7 @@ import { TypeOptions } from 'react-toastify';
 import { en } from '../dictionaries/en.ts';
 
 export type AuthView =
-    | 'login'
-    | 'email'
-    | 'code'
-    | 'password'
-    | 'success'
-    | 'closed';
+    'login' | 'email' | 'code' | 'password' | 'success' | 'closed';
 export type EmailRequestState =
     | 'unknown'
     | 'loading'
@@ -32,11 +27,7 @@ export type EmailRequestState =
     | 'validationError'
     | 'unknownError';
 export type CodeRequestState =
-    | 'unknown'
-    | 'loading'
-    | 'ok'
-    | 'invalid'
-    | 'unknownError';
+    'unknown' | 'loading' | 'ok' | 'invalid' | 'unknownError';
 export type PasswordRequestState =
     | 'unknown'
     | 'loading'
@@ -55,26 +46,13 @@ export type LoginRequestState =
 
 export type CloneRequestState = 'unknown' | 'ok' | 'error' | 'loading';
 export type GetProjectRequestState =
-    | 'unknown'
-    | 'ok'
-    | 'error'
-    | 'loading'
-    | 'forbidden'
-    | 'not_found';
+    'unknown' | 'ok' | 'error' | 'loading' | 'forbidden' | 'not_found';
 
 export type GetFilesRequestState =
-    | 'unknown'
-    | 'ok'
-    | 'error'
-    | 'loading'
-    | 'forbidden';
+    'unknown' | 'ok' | 'error' | 'loading' | 'forbidden';
 
 export type GetProjectsRequestState =
-    | 'unknown'
-    | 'ok'
-    | 'error'
-    | 'loading'
-    | 'unauth';
+    'unknown' | 'ok' | 'error' | 'loading' | 'unauth';
 
 export type SaveProjectRequestState = 'unknown' | 'ok' | 'error' | 'loading';
 

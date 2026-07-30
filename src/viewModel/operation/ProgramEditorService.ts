@@ -497,8 +497,7 @@ export class ProgramEditorService {
         const program =
             this.repository.projectViewModelRepository.currentProgram();
         const segment = program?.segments[segmentIndex] as
-            | (Segment & { id?: number })
-            | undefined;
+            (Segment & { id?: number }) | undefined;
         if (segment?.id != null && segment.id > 0) {
             return segment.id;
         }
