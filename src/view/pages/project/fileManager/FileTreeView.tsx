@@ -231,6 +231,7 @@ const TreeNodeRow = (props: {
                             'tree-row-folder': true,
                             'tree-row-selected': isSelected,
                         })}
+                        onClick={editMode ? undefined : onClickRow}
                     >
                         <button
                             type="button"
@@ -251,7 +252,6 @@ const TreeNodeRow = (props: {
                             className={classNames('tree-row-label', {
                                 'tree-row-label-editing': editMode,
                             })}
-                            onClick={editMode ? undefined : onClickRow}
                         >
                             {editMode ? (
                                 <input
