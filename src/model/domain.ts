@@ -9,7 +9,11 @@ export type ProgramRoundStrategy =
     | 'fiveDigits'
     | 'firstMeaningDigit';
 export type SegmentType =
-    'md' | 'computational' | 'latex' | 'asciimath' | 'empty';
+    | 'md'
+    | 'computational'
+    | 'latex'
+    | 'asciimath'
+    | 'empty';
 
 // Viewer/Project display mode for result rendering
 export type ProjectType = 'markdown' | 'latex';

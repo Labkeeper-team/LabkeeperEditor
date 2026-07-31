@@ -9,17 +9,26 @@ import {
 // Типы для заглушек
 
 type BodyTypeForGetAndDefaultRequest =
-    'default' | 'withTwoSegmentsBibaAndAEqualTen' | 'withSegmentBiba' | 'empty';
+    | 'default'
+    | 'withTwoSegmentsBibaAndAEqualTen'
+    | 'withSegmentBiba'
+    | 'empty';
 
 type BodyTypeForProjectCompileRequest =
-    'defaultMd' | 'longExampleWithTableAndPlot' | 'status203' | 'empty';
+    | 'defaultMd'
+    | 'longExampleWithTableAndPlot'
+    | 'status203'
+    | 'empty';
 
 type BodyTypeForFileListRequest = 'default' | 'emptyFiles' | 'empty';
 
 type BodyTypeForSaveProgramRequest = 'default' | 'empty';
 
 type BodyTypeForCompileRequest =
-    'errorBody' | 'empty' | 'mdTypeBody' | 'computationalTypeBody';
+    | 'errorBody'
+    | 'empty'
+    | 'mdTypeBody'
+    | 'computationalTypeBody';
 
 const uuid = '2cd18704-6c3f-48cb-96f1-9a923930f8cb';
 const version = 'v2';

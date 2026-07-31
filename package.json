@@ -12,7 +12,15 @@
         "build": "vite build --",
         "jest-preview": "jest-preview",
         "check": "eslint . && prettier --check --error-on-unmatched-pattern .",
-        "reformat": "prettier --write ."
+        "reformat": "prettier --write .",
+        "prepare": "husky"
+    },
+    "lint-staged": {
+        "*.{js,jsx,ts,tsx}": [
+            "prettier --write",
+            "eslint"
+        ],
+        "*.{css,html,json,md,scss,svg,yaml,yml}": "prettier --write"
     },
     "dependencies": {
         "@codemirror/lint": "^6.9.7",
@@ -82,6 +90,8 @@
         "jest-environment-jsdom": "^30.4.1",
         "jest-preview": "^0.3.3",
         "prettier": "^3.9.6",
+        "husky": "^9.1.7",
+        "lint-staged": "^15.5.2",
         "sass-embedded": "1.100.0",
         "ts-jest": "^29.4.12",
         "ts-node": "^10.9.2",
