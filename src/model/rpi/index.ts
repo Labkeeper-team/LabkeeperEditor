@@ -19,8 +19,7 @@ export interface RequestResult<T = object> {
 
 export type CompilationResponse = CompileSuccessResult | CompileErrorResultList;
 export type PdfCompilationResponse =
-    | CompileSuccessPdfResponse
-    | CompileErrorResultList;
+    CompileSuccessPdfResponse | CompileErrorResultList;
 
 export interface UploadFileResponse {
     url: string;
