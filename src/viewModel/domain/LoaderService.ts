@@ -14,6 +14,8 @@ export class LoaderService {
     ideService: IdeService;
     programService: ProgramService;
     observerService: ObserverService;
+    private saveProgramPromise: Promise<void> | null = null;
+    private saveProgramRequested = false;
 
     constructor(
         rpi: Rpi,
@@ -66,8 +68,34 @@ export class LoaderService {
         if (this.repository.projectViewModelRepository.projectIsReadonly()) {
             return;
         }
+        this.saveProgramRequested = true;
+        const savePromise =
+            this.saveProgramPromise ?? this.flushProgramSaveRequests();
+        this.saveProgramPromise = savePromise;
+
+        try {
+            await savePromise;
+        } finally {
+            if (this.saveProgramPromise === savePromise) {
+                this.saveProgramPromise = null;
+            }
+        }
+    };
+
+    private flushProgramSaveRequests = async (): Promise<void> => {
+        while (this.saveProgramRequested) {
+            this.saveProgramRequested = false;
+            await this.saveCurrentProgram();
+        }
+    };
+
+    private saveCurrentProgram = async (): Promise<void> => {
         this.programService.gap();
-        const savedProgram = this.programService.getCurrentProgram();
+        const savedProgram = structuredClone(
+            this.programService.getCurrentProgram()
+        );
+        const savingRevision =
+            this.repository.ideViewModelRepository.programChangeRevision();
         const project = this.repository.projectViewModelRepository.project();
         if (project) {
             this.repository.ideViewModelRepository.setSaveProjectRequestState(
@@ -96,6 +124,9 @@ export class LoaderService {
             }
             this.repository.ideViewModelRepository.setSaveProjectRequestState(
                 'ok'
+            );
+            this.repository.ideViewModelRepository.markProgramRevisionSaved(
+                savingRevision
             );
         }
     };

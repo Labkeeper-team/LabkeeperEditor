@@ -34,6 +34,12 @@ import {
     setGetProjectsRequestState,
     setSaveProjectRequestState,
     setSaveTextFileRequestState,
+    markProgramChanged,
+    markProgramRevisionSaved,
+    resetProgramRevisions,
+    markTextFileChanged,
+    markTextFileRevisionSaved,
+    resetTextFileRevisions,
     setLoadTextFileRequestState,
     setActiveTextFile,
     setActiveImageFile,
@@ -198,6 +204,14 @@ export const createViewModelStateFromStore = (
                 store.getState().ide.saveProjectRequestState,
             saveTextFileRequestState: () =>
                 store.getState().ide.saveTextFileRequestState,
+            programChangeRevision: () =>
+                store.getState().ide.programChangeRevision,
+            savedProgramRevision: () =>
+                store.getState().ide.savedProgramRevision,
+            textFileChangeRevision: () =>
+                store.getState().ide.textFileChangeRevision,
+            savedTextFileRevision: () =>
+                store.getState().ide.savedTextFileRevision,
             loadTextFileRequestState: () =>
                 store.getState().ide.loadTextFileRequestState,
             activeTextFile: () => store.getState().ide.activeTextFile,
@@ -229,6 +243,16 @@ export const createViewModelStateFromStore = (
                 store.dispatch(setSaveProjectRequestState(v)),
             setSaveTextFileRequestState: (v: SaveProjectRequestState) =>
                 store.dispatch(setSaveTextFileRequestState(v)),
+            markProgramChanged: () => store.dispatch(markProgramChanged()),
+            markProgramRevisionSaved: (revision: number) =>
+                store.dispatch(markProgramRevisionSaved(revision)),
+            resetProgramRevisions: () =>
+                store.dispatch(resetProgramRevisions()),
+            markTextFileChanged: () => store.dispatch(markTextFileChanged()),
+            markTextFileRevisionSaved: (revision: number) =>
+                store.dispatch(markTextFileRevisionSaved(revision)),
+            resetTextFileRevisions: () =>
+                store.dispatch(resetTextFileRevisions()),
             setLoadTextFileRequestState: (v: SaveProjectRequestState) =>
                 store.dispatch(setLoadTextFileRequestState(v)),
             setActiveTextFile: (fileName: string | null) =>

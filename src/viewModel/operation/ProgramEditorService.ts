@@ -217,6 +217,7 @@ export class ProgramEditorService {
     };
 
     onPrevVersionButtonClicked = () => {
+        const canUndo = this.programService.canUndo();
         const cursorHint = this.programService.undo();
         if (cursorHint) {
             this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(
@@ -237,9 +238,13 @@ export class ProgramEditorService {
             // (например, CM не получил docChanged), сбрасываем его принудительно.
             this.scheduleStaleHintClear();
         }
+        if (canUndo) {
+            this.repository.ideViewModelRepository.markProgramChanged();
+        }
     };
 
     onNextVersionButtonClicked = () => {
+        const canRedo = this.programService.canRedo();
         const cursorHint = this.programService.redo();
         if (cursorHint) {
             this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(
@@ -257,6 +262,9 @@ export class ProgramEditorService {
                 }
             );
             this.scheduleStaleHintClear();
+        }
+        if (canRedo) {
+            this.repository.ideViewModelRepository.markProgramChanged();
         }
     };
 
@@ -329,9 +337,11 @@ export class ProgramEditorService {
         });
     };
 
-    onRoundStrategySet = (strategy: ProgramRoundStrategy) => {
+    onRoundStrategySet = async (strategy: ProgramRoundStrategy) => {
         this.programService.changeRoundStrategy(strategy);
+        this.repository.ideViewModelRepository.markProgramChanged();
         this.ideService.onProgramUpdated();
+        await this.loaderService.segmentEditorSaveProgram();
     };
 
     onProgramSaveTimeout = async () => {
@@ -344,6 +354,7 @@ export class ProgramEditorService {
     ): Promise<void> => {
         this.observerService.onEvent(Events.EVENT_MOVE_SEGMENT);
         this.programService.moveSegment(segmentIndex, direction);
+        this.repository.ideViewModelRepository.markProgramChanged();
         this.ideService.onProgramUpdated();
         await this.loaderService.segmentEditorSaveProgram();
     };
@@ -358,7 +369,9 @@ export class ProgramEditorService {
             parameterName,
             segmentIndex
         );
+        this.repository.ideViewModelRepository.markProgramChanged();
         this.ideService.onProgramUpdated();
+        void this.loaderService.segmentEditorSaveProgram();
     };
 
     deleteSegment = async (segmentIndex: number) => {
@@ -366,6 +379,7 @@ export class ProgramEditorService {
             this.programService.getCurrentProgram()
         );
         this.programService.deleteSegmentByIndex(segmentIndex);
+        this.repository.ideViewModelRepository.markProgramChanged();
         const filesAfter = this.ideService.calculateFilesToDelete(
             this.programService.getCurrentProgram()
         );
@@ -386,6 +400,7 @@ export class ProgramEditorService {
     ) => {
         // TODO observer service call
         this.programService.addSegmentAfterIndex(segmentType, after);
+        this.repository.ideViewModelRepository.markProgramChanged();
         this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(after + 1);
         await this.loaderService.segmentEditorSaveProgram();
         this.ideService.onProgramUpdated();
@@ -456,6 +471,7 @@ export class ProgramEditorService {
             segmentIndex
         );
         const programBefore = this.programService.getCurrentProgram();
+        const previousText = programBefore.segments[segmentIndex]?.text;
         const filesBefore =
             this.ideService.calculateFilesToDelete(programBefore);
         this.programService.changeSegmentTextByPositionIndex(
@@ -463,6 +479,9 @@ export class ProgramEditorService {
             segmentText,
             cursorHead
         );
+        if (previousText !== segmentText) {
+            this.repository.ideViewModelRepository.markProgramChanged();
+        }
         const programAfter = this.programService.getCurrentProgram();
         const filesAfter = this.ideService.calculateFilesToDelete(programAfter);
 
@@ -666,6 +685,7 @@ export class ProgramEditorService {
                 break;
         }
         this.programService.addSegmentToLastPosition(type);
+        this.repository.ideViewModelRepository.markProgramChanged();
         this.repository.ideViewModelRepository.setActiveSegmentIndex(
             this.programService.getCurrentProgram().segments.length
         );

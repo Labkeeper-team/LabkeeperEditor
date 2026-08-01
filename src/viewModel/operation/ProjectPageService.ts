@@ -146,6 +146,7 @@ export class ProjectPageService {
                 );
             }
         }
+        this.repository.ideViewModelRepository.markProgramChanged();
         this.ideService.onProgramUpdated();
     };
 

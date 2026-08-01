@@ -7,12 +7,16 @@ import { AppDispatch, StorageState } from '../../store';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { controller } from '../../../main.tsx';
 import { DeleteFilesModal } from './modals/delete-files';
+import { useLeavePageConfirmation } from '../../hooks/useLeavePageConfirmation';
+import { useHasUnsavedChanges } from '../../store/selectors/program';
 
 export const ProjectPage = () => {
     const dispatch = useDispatch<AppDispatch>();
     const activeTextFile = useSelector(
         (state: StorageState) => state.ide.activeTextFile
     );
+    const hasUnsavedChanges = useSelector(useHasUnsavedChanges);
+    useLeavePageConfirmation(hasUnsavedChanges);
 
     /*
      * ACTIONS

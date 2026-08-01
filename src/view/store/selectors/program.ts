@@ -91,6 +91,12 @@ export const useIsProjectReadonly = createSelector(
     (state: StorageState) => state.project.projectIsReadonly,
     (s) => s
 );
+export const useHasUnsavedChanges = createSelector(
+    (state: StorageState) => state.ide,
+    (ide) =>
+        ide.programChangeRevision !== ide.savedProgramRevision ||
+        ide.textFileChangeRevision !== ide.savedTextFileRevision
+);
 
 export const useFileInFileManager = createSelector(
     (state: StorageState) => state.project.files,

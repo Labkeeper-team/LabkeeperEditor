@@ -246,6 +246,7 @@ export class IdeService {
     setNewProgram = (program: Program, result?: CompileSuccessResult) => {
         this.flushPreviewUpdate();
         this.programService.setNewProgram(program);
+        this.repository.ideViewModelRepository.resetProgramRevisions();
         if (result) {
             this.repository.projectViewModelRepository.setCompileResult(result);
         }

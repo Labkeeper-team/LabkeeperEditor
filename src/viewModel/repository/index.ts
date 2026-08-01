@@ -168,6 +168,10 @@ export interface MockViewModelRepository extends ViewModelRepository {
 
 export const mockViewModelState = (): MockViewModelRepository => {
     const mockViewModelState = new MockViewModelRepositoryState();
+    let programChangeRevision = 0;
+    let savedProgramRevision = 0;
+    let textFileChangeRevision = 0;
+    let savedTextFileRevision = 0;
     return {
         mockState: () => mockViewModelState,
         scrollEditorToBottom: () => ({}),
@@ -216,6 +220,10 @@ export const mockViewModelState = (): MockViewModelRepository => {
                 mockViewModelState.saveProjectRequestState,
             saveTextFileRequestState: () =>
                 mockViewModelState.saveTextFileRequestState,
+            programChangeRevision: () => programChangeRevision,
+            savedProgramRevision: () => savedProgramRevision,
+            textFileChangeRevision: () => textFileChangeRevision,
+            savedTextFileRevision: () => savedTextFileRevision,
             loadTextFileRequestState: () =>
                 mockViewModelState.loadTextFileRequestState,
             activeTextFile: () => mockViewModelState.activeTextFile,
@@ -247,6 +255,28 @@ export const mockViewModelState = (): MockViewModelRepository => {
                 (mockViewModelState.saveProjectRequestState = v),
             setSaveTextFileRequestState: (v: SaveProjectRequestState) =>
                 (mockViewModelState.saveTextFileRequestState = v),
+            markProgramChanged: () => (programChangeRevision += 1),
+            markProgramRevisionSaved: (revision: number) =>
+                revision <= programChangeRevision
+                    ? (savedProgramRevision = Math.max(
+                          savedProgramRevision,
+                          revision
+                      ))
+                    : undefined,
+            resetProgramRevisions: () => {
+                savedProgramRevision = programChangeRevision;
+            },
+            markTextFileChanged: () => (textFileChangeRevision += 1),
+            markTextFileRevisionSaved: (revision: number) =>
+                revision <= textFileChangeRevision
+                    ? (savedTextFileRevision = Math.max(
+                          savedTextFileRevision,
+                          revision
+                      ))
+                    : undefined,
+            resetTextFileRevisions: () => {
+                savedTextFileRevision = textFileChangeRevision;
+            },
             setLoadTextFileRequestState: (v: SaveProjectRequestState) =>
                 (mockViewModelState.loadTextFileRequestState = v),
             setActiveTextFile: (fileName: string | null) =>
@@ -469,6 +499,10 @@ export interface IdeViewModelRepository {
     getProjectsRequestState: () => GetProjectsRequestState;
     saveProjectRequestState: () => SaveProjectRequestState;
     saveTextFileRequestState: () => SaveProjectRequestState;
+    programChangeRevision: () => number;
+    savedProgramRevision: () => number;
+    textFileChangeRevision: () => number;
+    savedTextFileRevision: () => number;
     loadTextFileRequestState: () => SaveProjectRequestState;
     activeTextFile: () => string | null;
     activeImageFile: () => string | null;
@@ -506,6 +540,12 @@ export interface IdeViewModelRepository {
     setGetProjectsRequestState: (state: GetProjectsRequestState) => void;
     setSaveProjectRequestState: (state: SaveProjectRequestState) => void;
     setSaveTextFileRequestState: (state: SaveProjectRequestState) => void;
+    markProgramChanged: () => void;
+    markProgramRevisionSaved: (revision: number) => void;
+    resetProgramRevisions: () => void;
+    markTextFileChanged: () => void;
+    markTextFileRevisionSaved: (revision: number) => void;
+    resetTextFileRevisions: () => void;
     setLoadTextFileRequestState: (state: SaveProjectRequestState) => void;
     setActiveTextFile: (fileName: string | null) => void;
     setActiveImageFile: (fileName: string | null) => void;
