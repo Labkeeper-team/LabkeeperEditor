@@ -33,6 +33,12 @@ export const Result = () => {
     );
     const mode = useSelector((state: StorageState) => state.project.mode);
     const dictionary = useSelector(useDictionary);
+    const isSaveToPdfDisabled =
+        mode === 'latex'
+            ? !pdfUri
+            : compileResult === undefined ||
+              compileResult.segments === undefined ||
+              compileResult.segments.length === 0;
 
     const contentRef = useRef<HTMLDivElement>(null);
     const reactToPrintFn = useReactToPrint({
@@ -146,11 +152,7 @@ export const Result = () => {
                 classname={`save-to-pdf-button ${InterfaceTourAnchorClassnames.SavePdf}`}
                 title={dictionary.label_save_to_pdf}
                 onPress={onPress}
-                disabled={
-                    compileResult === undefined ||
-                    compileResult.segments === undefined ||
-                    compileResult.segments.length === 0
-                }
+                disabled={isSaveToPdfDisabled}
                 titleIcon={() => <SavePdfIcon />}
                 color="blue"
                 minimize={false}
