@@ -101,6 +101,8 @@ export class ResetService {
         this.repository.ideViewModelRepository.setSaveTextFileRequestState(
             'unknown'
         );
+        this.repository.ideViewModelRepository.resetProgramRevisions();
+        this.repository.ideViewModelRepository.resetTextFileRevisions();
         this.repository.ideViewModelRepository.setLoadTextFileRequestState(
             'unknown'
         );

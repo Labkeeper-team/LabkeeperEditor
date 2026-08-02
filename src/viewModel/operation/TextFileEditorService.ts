@@ -18,6 +18,9 @@ export class TextFileEditorService {
     private saveTimeout: ReturnType<typeof setTimeout> | null = null;
     private pendingSaveContent: string | null = null;
     private pendingSaveFileName: string | null = null;
+    private savePromise: Promise<void> | null = null;
+    private saveRequested = false;
+    private loadRequestId = 0;
 
     constructor(
         repository: ViewModelRepository,
@@ -44,14 +47,21 @@ export class TextFileEditorService {
 
         const currentFile =
             this.repository.ideViewModelRepository.activeTextFile();
+        if (currentFile === fileName) {
+            return;
+        }
         if (currentFile && currentFile !== fileName) {
             if (this.saveTimeout) {
                 clearTimeout(this.saveTimeout);
                 this.saveTimeout = null;
             }
-            await this.flushSave();
+            const saved = await this.flushSave();
+            if (!saved) {
+                return;
+            }
         }
 
+        const loadRequestId = ++this.loadRequestId;
         this.repository.ideViewModelRepository.setActiveImageFile(null);
         this.repository.ideViewModelRepository.setActiveTextFile(fileName);
         this.repository.ideViewModelRepository.setTextFileContent('');
@@ -65,11 +75,26 @@ export class TextFileEditorService {
         try {
             const response = await fetch(file.url);
             const content = await response.text();
+            if (
+                loadRequestId !== this.loadRequestId ||
+                this.repository.ideViewModelRepository.activeTextFile() !==
+                    fileName
+            ) {
+                return;
+            }
             this.repository.ideViewModelRepository.setTextFileContent(content);
+            this.repository.ideViewModelRepository.resetTextFileRevisions();
             this.repository.ideViewModelRepository.setLoadTextFileRequestState(
                 'ok'
             );
         } catch {
+            if (
+                loadRequestId !== this.loadRequestId ||
+                this.repository.ideViewModelRepository.activeTextFile() !==
+                    fileName
+            ) {
+                return;
+            }
             this.repository.ideViewModelRepository.setLoadTextFileRequestState(
                 'error'
             );
@@ -92,7 +117,10 @@ export class TextFileEditorService {
         }
 
         if (this.repository.ideViewModelRepository.activeTextFile()) {
-            await this.onTextFileEditorClosed();
+            const closed = await this.onTextFileEditorClosed();
+            if (!closed) {
+                return;
+            }
         }
 
         this.repository.ideViewModelRepository.setActiveImageFile(fileName);
@@ -103,6 +131,7 @@ export class TextFileEditorService {
     };
 
     onTextFileContentChanged = (content: string) => {
+        this.repository.ideViewModelRepository.markTextFileChanged();
         this.repository.ideViewModelRepository.setTextFileContent(content);
         if (this.saveTimeout) {
             clearTimeout(this.saveTimeout);
@@ -120,12 +149,16 @@ export class TextFileEditorService {
         await this.flushSave();
     };
 
-    onTextFileEditorClosed = async () => {
+    onTextFileEditorClosed = async (): Promise<boolean> => {
         if (this.saveTimeout) {
             clearTimeout(this.saveTimeout);
             this.saveTimeout = null;
         }
-        await this.flushSave();
+        const saved = await this.flushSave();
+        if (!saved) {
+            return false;
+        }
+        this.loadRequestId += 1;
         this.repository.ideViewModelRepository.setActiveTextFile(null);
         this.repository.ideViewModelRepository.setTextFileContent('');
         this.repository.ideViewModelRepository.setLoadTextFileRequestState(
@@ -134,6 +167,7 @@ export class TextFileEditorService {
         this.repository.ideViewModelRepository.setSaveTextFileRequestState(
             'unknown'
         );
+        return true;
     };
 
     onOpenFileDeleted = (fileName: string) => {
@@ -145,6 +179,7 @@ export class TextFileEditorService {
         if (
             this.repository.ideViewModelRepository.activeTextFile() === fileName
         ) {
+            this.loadRequestId += 1;
             if (this.saveTimeout) {
                 clearTimeout(this.saveTimeout);
                 this.saveTimeout = null;
@@ -157,6 +192,7 @@ export class TextFileEditorService {
             this.repository.ideViewModelRepository.setSaveTextFileRequestState(
                 'unknown'
             );
+            this.repository.ideViewModelRepository.resetTextFileRevisions();
         }
 
         if (
@@ -208,7 +244,34 @@ export class TextFileEditorService {
         }
     };
 
-    private flushSave = async () => {
+    private flushSave = async (): Promise<boolean> => {
+        this.saveRequested = true;
+        const savePromise = this.savePromise ?? this.flushSaveRequests();
+        this.savePromise = savePromise;
+
+        try {
+            await savePromise;
+        } finally {
+            if (this.savePromise === savePromise) {
+                this.savePromise = null;
+            }
+        }
+
+        return (
+            this.repository.ideViewModelRepository.activeTextFile() !== null &&
+            this.repository.ideViewModelRepository.textFileChangeRevision() ===
+                this.repository.ideViewModelRepository.savedTextFileRevision()
+        );
+    };
+
+    private flushSaveRequests = async (): Promise<void> => {
+        while (this.saveRequested) {
+            this.saveRequested = false;
+            await this.saveCurrentTextFile();
+        }
+    };
+
+    private saveCurrentTextFile = async (): Promise<void> => {
         const fileName =
             this.pendingSaveFileName ??
             this.repository.ideViewModelRepository.activeTextFile();
@@ -217,6 +280,8 @@ export class TextFileEditorService {
             this.repository.ideViewModelRepository.textFileContent();
         this.pendingSaveContent = null;
         this.pendingSaveFileName = null;
+        const savingRevision =
+            this.repository.ideViewModelRepository.textFileChangeRevision();
 
         if (
             !fileName ||
@@ -262,6 +327,9 @@ export class TextFileEditorService {
         if (result.isOk) {
             this.repository.ideViewModelRepository.setSaveTextFileRequestState(
                 'ok'
+            );
+            this.repository.ideViewModelRepository.markTextFileRevisionSaved(
+                savingRevision
             );
         } else {
             this.observerService.onEvent(

@@ -76,6 +76,42 @@ export const ideSlice = createSlice({
         ) => {
             state.saveTextFileRequestState = payload;
         },
+        markProgramChanged: (state) => {
+            state.programChangeRevision += 1;
+        },
+        markProgramRevisionSaved: (
+            state,
+            { payload }: PayloadAction<number>
+        ) => {
+            if (payload > state.programChangeRevision) {
+                return;
+            }
+            state.savedProgramRevision = Math.max(
+                state.savedProgramRevision,
+                payload
+            );
+        },
+        resetProgramRevisions: (state) => {
+            state.savedProgramRevision = state.programChangeRevision;
+        },
+        markTextFileChanged: (state) => {
+            state.textFileChangeRevision += 1;
+        },
+        markTextFileRevisionSaved: (
+            state,
+            { payload }: PayloadAction<number>
+        ) => {
+            if (payload > state.textFileChangeRevision) {
+                return;
+            }
+            state.savedTextFileRevision = Math.max(
+                state.savedTextFileRevision,
+                payload
+            );
+        },
+        resetTextFileRevisions: (state) => {
+            state.savedTextFileRevision = state.textFileChangeRevision;
+        },
         setLoadTextFileRequestState: (
             state,
             { payload }: PayloadAction<SaveProjectRequestState>
@@ -151,6 +187,12 @@ export const {
     setGetProjectsRequestState,
     setSaveProjectRequestState,
     setSaveTextFileRequestState,
+    markProgramChanged,
+    markProgramRevisionSaved,
+    resetProgramRevisions,
+    markTextFileChanged,
+    markTextFileRevisionSaved,
+    resetTextFileRevisions,
     setLoadTextFileRequestState,
     setActiveTextFile,
     setActiveImageFile,
