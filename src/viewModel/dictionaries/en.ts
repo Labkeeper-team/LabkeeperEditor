@@ -33,10 +33,10 @@ export const en: Translations = {
 
     segment_divider: {
         add: 'Add',
-        computation: 'computation',
-        markdown: 'markdown',
-        latex: 'latex',
-        asciimath: 'simple-math',
+        computation: 'Computation',
+        markdown: 'Markdown',
+        latex: 'Latex',
+        asciimath: 'Simple-math',
     },
     latex_boundary: {
         header: 'LaTeX heading',
