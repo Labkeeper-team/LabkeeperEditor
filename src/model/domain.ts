@@ -13,6 +13,7 @@ export type SegmentType =
 
 // Viewer/Project display mode for result rendering
 export type ProjectType = 'markdown' | 'latex';
+export const PROJECT_TITLE_MAX_LENGTH = 60;
 export type StatementType =
     | 'assignment'
     | 'calculation'

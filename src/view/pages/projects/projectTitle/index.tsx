@@ -8,7 +8,10 @@ import { colors } from '../../../styles/colors';
 
 import { useHotkeys } from 'react-hotkeys-hook';
 import { useDispatch } from 'react-redux';
-import { ProjectShort } from '../../../../model/domain.ts';
+import {
+    PROJECT_TITLE_MAX_LENGTH,
+    ProjectShort,
+} from '../../../../model/domain.ts';
 import { AppDispatch } from '../../../store';
 import { controller } from '../../../../main.tsx';
 
@@ -64,6 +67,8 @@ export const ProjectTitle = (props: { project: ProjectShort }) => {
                         e.key === 'Enter' ? onInputBlur() : () => {}
                     }
                     onChange={(e) => setCurrentTitle(e.target.value)}
+                    showCharacterCount
+                    maxLength={PROJECT_TITLE_MAX_LENGTH}
                 />
             ) : (
                 <>

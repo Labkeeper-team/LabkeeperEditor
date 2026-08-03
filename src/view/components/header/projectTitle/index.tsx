@@ -11,6 +11,7 @@ import classNames from 'classnames';
 import { AppDispatch, StorageState } from '../../../store';
 import { setEditModeForProjectTitle } from '../../../store/slices/settings';
 import { controller } from '../../../../main.tsx';
+import { PROJECT_TITLE_MAX_LENGTH } from '../../../../model/domain.ts';
 
 export const ProjectTitle = () => {
     const project = useSelector(useCurrentProject);
@@ -89,18 +90,22 @@ export const ProjectTitle = () => {
                 onBlur={editMode ? onInputBlur : undefined}
                 onKeyDown={editMode ? onKeyDown : undefined}
                 disabled={!editMode}
+                maxLength={PROJECT_TITLE_MAX_LENGTH}
                 className={`${classNames('change-title-input', { disabled: !editMode })}`}
             />
-            {!projectIsReadonly && (
-                <div
-                    onClick={onPressPencil}
-                    className={classNames('change-titlepress-button', {
-                        'edit-mode-on': editMode,
-                    })}
-                >
-                    <PencilIcon />
-                </div>
-            )}
+            {!projectIsReadonly &&
+                (editMode ? (
+                    <div className="change-title-character-count">
+                        {draftTitle.length} / {PROJECT_TITLE_MAX_LENGTH}
+                    </div>
+                ) : (
+                    <div
+                        onClick={onPressPencil}
+                        className="change-titlepress-button"
+                    >
+                        <PencilIcon />
+                    </div>
+                ))}
         </div>
     );
 };
