@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import YooWidget from 'react-yoomoneycheckoutwidget';
 
 import { controller } from '../../../main.tsx';
 import { AppDispatch } from '../../store';
@@ -28,6 +29,8 @@ import { TokensUsageSection } from './TokensUsageSection.tsx';
 
 const applyTokenTemplate = (template: string, tokens: string): string =>
     template.replace('{tokens}', tokens);
+
+type PurchaseRequestState = 'idle' | 'loading' | 'error' | 'widget-error';
 
 const getUsagePricingStatus = (
     page: Translations['tokens_page'],
@@ -129,11 +132,25 @@ export const TokensPage = () => {
     const [acceptedTerms, setAcceptedTerms] = useState(false);
     const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
     const [acceptedPrivacyPolicy, setAcceptedPrivacyPolicy] = useState(false);
+    const [purchaseWidgetToken, setPurchaseWidgetToken] = useState<
+        string | null
+    >(null);
+    const [purchaseRequestState, setPurchaseRequestState] =
+        useState<PurchaseRequestState>('idle');
 
     const page = dictionary.tokens_page;
     const canProceedToPayment = useMemo(
-        () => acceptedTerms && acceptedPrivacy && acceptedPrivacyPolicy,
-        [acceptedPrivacy, acceptedPrivacyPolicy, acceptedTerms]
+        () =>
+            acceptedTerms &&
+            acceptedPrivacy &&
+            acceptedPrivacyPolicy &&
+            purchaseRequestState !== 'loading',
+        [
+            acceptedPrivacy,
+            acceptedPrivacyPolicy,
+            acceptedTerms,
+            purchaseRequestState,
+        ]
     );
     const tokenPackages = useMemo(
         () => mapTokenPricesToPackages(pricing?.tokenPrices),
@@ -160,11 +177,68 @@ export const TokensPage = () => {
         setAcceptedTerms(false);
         setAcceptedPrivacy(false);
         setAcceptedPrivacyPolicy(false);
+        setPurchaseWidgetToken(null);
+        setPurchaseRequestState('idle');
     };
 
     const closePurchaseModal = () => {
         setSelectedPackage(null);
+        setPurchaseWidgetToken(null);
+        setPurchaseRequestState('idle');
     };
+
+    const onPaymentButtonPress = useCallback(async () => {
+        if (!selectedPackage || purchaseRequestState === 'loading') {
+            return;
+        }
+
+        setPurchaseRequestState('loading');
+        setPurchaseWidgetToken(null);
+
+        const result = await dispatch(
+            controller.onBillingPurchaseCreateRequest({
+                tokenPriceId: selectedPackage.tokenPriceId,
+            })
+        ).unwrap();
+        const widgetToken =
+            result.body.token ?? result.body.yookassa.widgetToken;
+
+        if (result.isOk && widgetToken) {
+            setPurchaseWidgetToken(widgetToken);
+            setPurchaseRequestState('idle');
+            return;
+        }
+
+        setPurchaseRequestState('error');
+    }, [dispatch, purchaseRequestState, selectedPackage]);
+
+    const yoomoneyWidgetConfig = useMemo(
+        () =>
+            purchaseWidgetToken
+                ? {
+                      confirmation_token: purchaseWidgetToken,
+                      error_callback: () =>
+                          setPurchaseRequestState('widget-error'),
+                      customization: {
+                          modal: false,
+                          colors: {
+                              control_primary: '#4469E0',
+                              control_primary_content: '#FFFFFF',
+                          },
+                      },
+                  }
+                : null,
+        [purchaseWidgetToken]
+    );
+
+    const purchaseStatusMessage =
+        purchaseRequestState === 'loading'
+            ? page.modal.payment_loading
+            : purchaseRequestState === 'error'
+              ? page.modal.payment_error
+              : purchaseRequestState === 'widget-error'
+                ? page.modal.widget_error
+                : null;
 
     return (
         <>
@@ -200,85 +274,117 @@ export const TokensPage = () => {
                                 )}
                             </span>
                         </div>
-                        <p className="tokens-purchase-modal__gateway-notice">
-                            {page.modal.gateway_notice}
-                        </p>
-                        <label className="tokens-purchase-modal__consent-row">
-                            <input
-                                type="checkbox"
-                                checked={acceptedTerms}
-                                onChange={(event) =>
-                                    setAcceptedTerms(event.target.checked)
-                                }
-                            />
-                            <span className="tokens-purchase-modal__consent-text">
-                                {page.modal.consent_offer_prefix}
-                                <a
-                                    className="tokens-purchase-modal__consent-link"
-                                    href={TOKEN_LEGAL_LINKS.publicOffer}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    onClick={(e) => e.stopPropagation()}
-                                >
-                                    {page.modal.consent_offer_link}
-                                </a>
-                            </span>
-                        </label>
-                        <label className="tokens-purchase-modal__consent-row">
-                            <input
-                                type="checkbox"
-                                checked={acceptedPrivacy}
-                                onChange={(event) =>
-                                    setAcceptedPrivacy(event.target.checked)
-                                }
-                            />
-                            <span className="tokens-purchase-modal__consent-text">
-                                {page.modal.consent_privacy_prefix}
-                                <a
-                                    className="tokens-purchase-modal__consent-link"
-                                    href={TOKEN_LEGAL_LINKS.personalData}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    onClick={(e) => e.stopPropagation()}
-                                >
-                                    {page.modal.consent_privacy_link}
-                                </a>
-                            </span>
-                        </label>
-                        <label className="tokens-purchase-modal__consent-row">
-                            <input
-                                type="checkbox"
-                                checked={acceptedPrivacyPolicy}
-                                onChange={(event) =>
-                                    setAcceptedPrivacyPolicy(
-                                        event.target.checked
-                                    )
-                                }
-                            />
-                            <span className="tokens-purchase-modal__consent-text">
-                                {page.modal.consent_privacy_policy_prefix}
-                                <a
-                                    className="tokens-purchase-modal__consent-link"
-                                    href={TOKEN_LEGAL_LINKS.privacyPolicy}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    onClick={(e) => e.stopPropagation()}
-                                >
-                                    {page.modal.consent_privacy_policy_link}
-                                </a>
-                            </span>
-                        </label>
-                        <Button
-                            title={page.modal.pay_button}
-                            color="green"
-                            rounded
-                            minimize={false}
-                            disabled={!canProceedToPayment}
-                            classname="tokens-purchase-modal__button"
-                        />
-                        <p className="tokens-purchase-modal__notice">
-                            {page.modal.mock_notice}
-                        </p>
+                        {yoomoneyWidgetConfig ? (
+                            <div className="tokens-purchase-modal__widget">
+                                <YooWidget
+                                    key={purchaseWidgetToken}
+                                    config={yoomoneyWidgetConfig}
+                                    onComplete={closePurchaseModal}
+                                    onFail={() =>
+                                        setPurchaseRequestState('widget-error')
+                                    }
+                                />
+                            </div>
+                        ) : (
+                            <>
+                                <p className="tokens-purchase-modal__gateway-notice">
+                                    {page.modal.gateway_notice}
+                                </p>
+                                <label className="tokens-purchase-modal__consent-row">
+                                    <input
+                                        type="checkbox"
+                                        checked={acceptedTerms}
+                                        onChange={(event) =>
+                                            setAcceptedTerms(
+                                                event.target.checked
+                                            )
+                                        }
+                                    />
+                                    <span className="tokens-purchase-modal__consent-text">
+                                        {page.modal.consent_offer_prefix}
+                                        <a
+                                            className="tokens-purchase-modal__consent-link"
+                                            href={TOKEN_LEGAL_LINKS.publicOffer}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            {page.modal.consent_offer_link}
+                                        </a>
+                                    </span>
+                                </label>
+                                <label className="tokens-purchase-modal__consent-row">
+                                    <input
+                                        type="checkbox"
+                                        checked={acceptedPrivacy}
+                                        onChange={(event) =>
+                                            setAcceptedPrivacy(
+                                                event.target.checked
+                                            )
+                                        }
+                                    />
+                                    <span className="tokens-purchase-modal__consent-text">
+                                        {page.modal.consent_privacy_prefix}
+                                        <a
+                                            className="tokens-purchase-modal__consent-link"
+                                            href={
+                                                TOKEN_LEGAL_LINKS.personalData
+                                            }
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            {page.modal.consent_privacy_link}
+                                        </a>
+                                    </span>
+                                </label>
+                                <label className="tokens-purchase-modal__consent-row">
+                                    <input
+                                        type="checkbox"
+                                        checked={acceptedPrivacyPolicy}
+                                        onChange={(event) =>
+                                            setAcceptedPrivacyPolicy(
+                                                event.target.checked
+                                            )
+                                        }
+                                    />
+                                    <span className="tokens-purchase-modal__consent-text">
+                                        {
+                                            page.modal
+                                                .consent_privacy_policy_prefix
+                                        }
+                                        <a
+                                            className="tokens-purchase-modal__consent-link"
+                                            href={
+                                                TOKEN_LEGAL_LINKS.privacyPolicy
+                                            }
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            {
+                                                page.modal
+                                                    .consent_privacy_policy_link
+                                            }
+                                        </a>
+                                    </span>
+                                </label>
+                                <Button
+                                    title={page.modal.pay_button}
+                                    color="green"
+                                    rounded
+                                    minimize={false}
+                                    disabled={!canProceedToPayment}
+                                    onPress={onPaymentButtonPress}
+                                    classname="tokens-purchase-modal__button"
+                                />
+                            </>
+                        )}
+                        {purchaseStatusMessage ? (
+                            <p className="tokens-purchase-modal__notice">
+                                {purchaseStatusMessage}
+                            </p>
+                        ) : null}
                     </div>
                 ) : null}
             </Modal>

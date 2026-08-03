@@ -226,8 +226,10 @@ export const en: Translations = {
                 'By clicking “Proceed to payment”, you agree to the ',
             consent_privacy_policy_link: 'Privacy Policy',
             pay_button: 'Proceed to payment',
-            mock_notice:
-                'Payment is not available yet: this button is a mock placeholder.',
+            payment_loading: 'Creating payment...',
+            payment_error: 'Could not create payment. Please try again later.',
+            widget_error:
+                'Could not open the payment form. Please try again later.',
         },
         navigation: {
             advantages: 'Advantages',
