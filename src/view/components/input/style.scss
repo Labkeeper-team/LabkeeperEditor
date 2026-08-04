@@ -54,9 +54,21 @@
         }
     }
 
-    .error-text-container {
-        width: 100%;
-        text-align: end;
+    .input-hint {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        margin-top: 4px;
+
+        .error-text-container {
+            margin-left: auto;
+            text-align: end;
+        }
+
+        .input-character-count {
+            flex-shrink: 0;
+            padding-top: 2px;
+        }
     }
     .input-delete-icon {
         position: absolute;

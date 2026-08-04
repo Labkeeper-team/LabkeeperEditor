@@ -16,8 +16,7 @@
         width: 100%;
     }
     .input-base {
-        /* height: 24px;
-    font-size: 22px;*/
+        height: 40px;
         padding-left: 14px;
         border: none;
         border-bottom: 0px solid $gray-60;
@@ -26,6 +25,9 @@
         &:hover {
             border: none;
         }
+    }
+    .input-hint {
+        margin-left: 14px;
     }
     .change-icon-container {
         display: flex;
