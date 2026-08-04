@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import YooWidget from 'react-yoomoneycheckoutwidget';
 
 import { controller } from '../../../main.tsx';
 import { AppDispatch } from '../../store';
@@ -26,6 +25,7 @@ import {
 } from './constant.ts';
 import { TokensBuySection } from './TokensBuySection.tsx';
 import { TokensUsageSection } from './TokensUsageSection.tsx';
+import { YooMoneyCheckoutWidget } from './YooMoneyCheckoutWidget.tsx';
 
 const applyTokenTemplate = (template: string, tokens: string): string =>
     template.replace('{tokens}', tokens);
@@ -281,7 +281,7 @@ export const TokensPage = () => {
                         </div>
                         {yoomoneyWidgetConfig ? (
                             <div className="tokens-purchase-modal__widget">
-                                <YooWidget
+                                <YooMoneyCheckoutWidget
                                     key={purchaseWidgetToken}
                                     config={yoomoneyWidgetConfig}
                                     onComplete={onPaymentComplete}
