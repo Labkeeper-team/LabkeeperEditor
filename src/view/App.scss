@@ -45,6 +45,19 @@ body {
     }
 }
 
+@media screen and (max-width: 767px) {
+    input,
+    textarea,
+    select {
+        font-size: 16px;
+    }
+
+    .cm-content,
+    .cm-line {
+        font-size: 16px;
+    }
+}
+
 /* Лендинг токенов — полноценная прокрутка документа (остальной UI крутится во внутренних панелях). */
 html.tokens-route {
     max-height: none;

@@ -15,6 +15,8 @@ import { Typography } from '../../../../../components/typography';
 import { Button } from '../../../../../components/button';
 import { useDictionary } from '../../../../../store/selectors/translations';
 import { controller } from '../../../../../../main.tsx';
+import { useIsMobile } from '../../../../../hooks/useMobile';
+import { SynctexButton } from '../../../syncButtons';
 
 export const IdeHeader = () => {
     const program = useSelector(useCurrentProgram);
@@ -23,6 +25,7 @@ export const IdeHeader = () => {
     const isReadonly = useSelector(useIsProjectReadonly);
     const project = useSelector(useCurrentProject);
     const dictionary = useSelector(useDictionary);
+    const isMobile = useIsMobile();
     const cloneRequestState = useSelector(
         (state: StorageState) => state.ide.cloneRequestState
     );
@@ -30,7 +33,7 @@ export const IdeHeader = () => {
     return (
         <div className="ide-header">
             <div className="ide-wrapper">
-                {!!project && !showFileManager ? (
+                {!!project && !showFileManager && !isMobile ? (
                     <div
                         className="file-manager-button "
                         onClick={() =>
@@ -41,6 +44,7 @@ export const IdeHeader = () => {
                     </div>
                 ) : null}
                 {!isReadonly && <HistoryButtons />}
+                {isMobile ? <SynctexButton direction="toPdf" /> : null}
             </div>
             {program?.segments.length && !isReadonly ? (
                 <AddBlock isFirst={false} />

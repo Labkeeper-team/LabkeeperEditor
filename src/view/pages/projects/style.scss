@@ -19,6 +19,10 @@
         display: flex;
         flex-direction: column;
         flex: 1;
+
+        @media screen and (max-width: $mobile-breakpoint) {
+            padding: 16px;
+        }
         .projects-loading-wrapper {
             display: flex;
             align-items: center;
@@ -87,6 +91,13 @@
     .add-project-button {
         width: 300px;
         height: 90px;
+
+        @media screen and (max-width: $mobile-breakpoint) {
+            width: 100%;
+            max-width: none;
+            height: auto;
+            min-height: 64px;
+        }
     }
     .projects-header-cell {
         display: inline-flex;
@@ -129,6 +140,98 @@
     }
     .add-project-button-footer {
         margin-bottom: 20px;
+
+        @media screen and (max-width: $mobile-breakpoint) {
+            position: sticky;
+            bottom: 0;
+            width: 100%;
+            margin-bottom: 0;
+            padding-top: 12px;
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+            background: linear-gradient(to top, $white 70%, rgba($white, 0));
+
+            .labkeeper-button {
+                width: 100%;
+            }
+
+            @media (hover: none) {
+                .labkeeper-button.gray-color:hover:not(:disabled) {
+                    background-color: $gray-60;
+                }
+            }
+        }
+    }
+
+    .projects-list-wrapper {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        overflow: auto;
+        min-height: 0;
+    }
+
+    .projects-mobile-sort {
+        display: none;
+
+        @media screen and (max-width: $mobile-breakpoint) {
+            display: block;
+            margin-top: 16px;
+            margin-bottom: 12px;
+        }
+    }
+
+    .projects-card-list {
+        display: none;
+
+        @media screen and (max-width: $mobile-breakpoint) {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding-bottom: 12px;
+        }
+    }
+
+    .projects-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 14px 12px;
+        border: 1px solid $gray-50;
+        border-radius: 10px;
+        background: $white;
+        cursor: pointer;
+
+        &__main {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 0;
+            flex: 1;
+        }
+
+        &__delete {
+            height: auto;
+            flex-shrink: 0;
+            align-self: center;
+        }
+
+        .project-title-container {
+            width: fit-content;
+            max-width: 100%;
+            gap: 6px;
+
+            .text-base {
+                padding-left: 0;
+                max-width: none;
+                width: auto;
+                flex: 0 1 auto;
+            }
+
+            .input-base {
+                padding-left: 0;
+            }
+        }
     }
     td:has(.delete-project-container) {
         padding-top: 0px;

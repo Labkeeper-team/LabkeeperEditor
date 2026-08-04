@@ -1,4 +1,5 @@
 @use '../../../../../styles/colors' as *;
+@use '../../../../../styles/common' as *;
 
 .ide-container {
     .ide-header {
@@ -33,6 +34,18 @@
             gap: 20px;
             @media screen and (max-width: 1024px) {
                 gap: 7px;
+            }
+
+            @media screen and (max-width: $mobile-breakpoint) {
+                .input-show {
+                    z-index: 10;
+                    background: $gray-50;
+
+                    .input-delete-icon {
+                        top: 15px;
+                        transform: none;
+                    }
+                }
             }
         }
         .file-manager-button {

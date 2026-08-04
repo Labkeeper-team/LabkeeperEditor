@@ -55,9 +55,19 @@
         transform: rotateY(180deg);
     }
 
-    &:disabled,
-    &--disabled {
-        opacity: 0.35;
-        cursor: default;
+    &--compact {
+        width: 36px;
+        height: 36px;
+    }
+
+    &--header {
+        width: 32px;
+        height: 32px;
+        flex-shrink: 0;
+
+        svg {
+            width: 16px;
+            height: 16px;
+        }
     }
 }

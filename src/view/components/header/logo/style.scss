@@ -1,9 +1,17 @@
+@use '../../../styles/common' as *;
+
 .logo-container {
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: 5px;
     user-select: none;
+
+    &__title {
+        @media screen and (max-width: $mobile-breakpoint) {
+            display: none;
+        }
+    }
 
     .version-tooltip {
         cursor: help;

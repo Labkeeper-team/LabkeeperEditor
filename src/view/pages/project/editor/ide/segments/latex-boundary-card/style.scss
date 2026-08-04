@@ -1,4 +1,5 @@
 @use '../../../../../../styles/colors' as *;
+@use '../../../../../../styles/common' as *;
 
 .segments-container {
     .latex-header-segment {
@@ -96,5 +97,35 @@
         font-size: 12px;
         line-height: 1.4;
         color: $gray-20;
+    }
+
+    @media screen and (max-width: $mobile-breakpoint) {
+        .latex-header-segment,
+        .latex-footer-segment {
+            padding: 10px 12px;
+        }
+
+        .latex-boundary-meta {
+            top: 6px;
+            right: 6px;
+            gap: 4px;
+            max-width: calc(100% - 12px);
+        }
+
+        .latex-boundary-badge {
+            height: auto;
+            min-height: 16px;
+            padding: 2px 6px;
+            font-size: 9px;
+            line-height: 1.15;
+            white-space: nowrap;
+        }
+
+        .latex-boundary-hint {
+            font-size: 9px;
+            line-height: 1.15;
+            max-width: 46%;
+            text-align: right;
+        }
     }
 }

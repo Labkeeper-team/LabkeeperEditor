@@ -78,6 +78,10 @@ export const Modal = ({
             event.preventDefault();
         };
         const onTouchMove = (event: TouchEvent) => {
+            const target = event.target;
+            if (target instanceof Node && modalRef.current?.contains(target)) {
+                return;
+            }
             event.preventDefault();
         };
         const onKeyDown = (event: KeyboardEvent) => {

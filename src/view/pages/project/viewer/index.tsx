@@ -12,11 +12,14 @@ import { useIsProjectReadonly } from '../../../store/selectors/program.ts';
 import { Button } from '../../../components/button';
 import { PromptModal } from './promptModal';
 import { SparkleIcon } from '../../../icons';
+import { SynctexButton } from '../syncButtons';
+import { useIsMobile } from '../../../hooks/useMobile';
 
 export const Viewer = () => {
     const dispatch = useDispatch<AppDispatch>();
     const dictionary = useSelector(useDictionary);
     const isReadonly = useSelector(useIsProjectReadonly);
+    const isMobile = useIsMobile();
 
     return (
         <div className="viewer-container">
@@ -37,6 +40,7 @@ export const Viewer = () => {
                             titleIcon={() => <SparkleIcon />}
                         />
                     )}
+                    {isMobile ? <SynctexButton direction="toEditor" /> : null}
                 </div>
                 <div />
             </div>

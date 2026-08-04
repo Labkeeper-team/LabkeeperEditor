@@ -169,6 +169,14 @@ export const ru: Translations = {
         my_projects: 'Мои проекты',
         logout: 'Выход',
         logout_confirmation: 'Вы уверены, что хотите выйти?',
+        share: 'Поделиться',
+        language: 'Язык',
+        change_language_to: 'Поменять язык на «{language}»',
+    },
+    mobile_view: {
+        files: 'Файлы',
+        editor: 'Редактор',
+        pdf: 'PDF',
     },
     tokens_page: {
         title: 'Пополните баланс токенов',

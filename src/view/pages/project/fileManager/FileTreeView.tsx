@@ -17,6 +17,8 @@ import { colors } from '../../../styles/colors';
 import { useDictionary } from '../../../store/selectors/translations';
 import { AppDispatch, StorageState } from '../../../store';
 import { controller } from '../../../../main.tsx';
+import { useIsMobile } from '../../../hooks/useMobile';
+import { setMobileView } from '../../../store/slices/settings';
 import {
     buildFileTree,
     FileTreeNode,
@@ -468,6 +470,7 @@ export const FileTreeView = (props: {
     isDragged: boolean;
 }) => {
     const dispatch = useDispatch<AppDispatch>();
+    const isMobile = useIsMobile();
     const dictionary = useSelector(useDictionary);
     const inputRef = useRef<HTMLInputElement>(null);
     const currentFolderPath = useSelector(
@@ -615,6 +618,9 @@ export const FileTreeView = (props: {
                         fileName: file.fileName,
                     })
                 );
+                if (isMobile) {
+                    dispatch(setMobileView('editor'));
+                }
                 return;
             }
             if (isImageFilePath(file.fileName)) {
@@ -623,11 +629,14 @@ export const FileTreeView = (props: {
                         fileName: file.fileName,
                     })
                 );
+                if (isMobile) {
+                    dispatch(setMobileView('editor'));
+                }
                 return;
             }
             window.open(file.url, '_blank');
         },
-        [dispatch]
+        [dispatch, isMobile]
     );
 
     const onCreateFile = useCallback(() => {

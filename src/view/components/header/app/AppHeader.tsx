@@ -24,6 +24,8 @@ import { HeaderMenu } from '../menu';
 import { controller } from '../../../../main.tsx';
 import { ContactModal } from '../contact/modal';
 import { Routes } from '../../../../viewModel/routes.ts';
+import { MobileViewSwitcher } from '../mobileViewSwitcher';
+import { useIsMobile } from '../../../hooks/useMobile';
 
 import '../style.scss';
 import { PrivacyPolicyAcceptanceModal } from '../../../pages/project/modals/privacy-policy-acceptance';
@@ -41,6 +43,10 @@ export const AppHeader = () => {
     const language = useSelector(useCurrentLanguage);
     const { isAuthenticated, tokenBalance } = useSelector(useUser);
     const projectIsReadonly = useSelector(useIsProjectReadonly);
+    const isMobile = useIsMobile();
+
+    const isProjectPage = location.pathname.startsWith('/project/');
+    const showMobileViewSwitcher = isProjectPage && isMobile;
 
     const onLanguageChange = (lang: unknown) => {
         dispatch(setLanguage(lang as Language));
@@ -52,60 +58,67 @@ export const AppHeader = () => {
 
     return (
         <>
-            <div className="labkeeper_header">
-                <div className="labkeeper_header__left">
-                    {location.pathname.startsWith('/project/') &&
-                    !location.pathname.includes('default') ? (
-                        <Back />
-                    ) : null}
-                    <HeaderLogo />
-                    <div style={{ marginLeft: 20 }}>
-                        <Select
-                            options={languageOptions}
-                            onChange={onLanguageChange}
-                            value={language}
-                        />
+            <div className="labkeeper_header-shell">
+                <div className="labkeeper_header">
+                    <div className="labkeeper_header__left">
+                        {isProjectPage &&
+                        !location.pathname.includes('default') ? (
+                            <Back />
+                        ) : null}
+                        <HeaderLogo />
+                        {!isMobile ? (
+                            <div className="labkeeper_header__language">
+                                <Select
+                                    options={languageOptions}
+                                    onChange={onLanguageChange}
+                                    value={language}
+                                />
+                            </div>
+                        ) : null}
+                    </div>
+                    <div className="labkeeper_header__center">
+                        <ProjectTitle />
+                        {!projectIsReadonly && !isMobile ? (
+                            <ShareButton />
+                        ) : null}
+                    </div>
+                    <div className="labkeeper_header__right">
+                        {isAuthenticated && !isMobile ? (
+                            <div className="header-tokens">
+                                <span className="header-tokens__label">
+                                    {dictionary.header_menu.tokens}:{' '}
+                                    <span className="header-tokens__count">
+                                        {tokenBalance}
+                                    </span>
+                                </span>
+                                <button
+                                    className="header-tokens__add"
+                                    type="button"
+                                    onClick={() => navigate(Routes.Tokens)}
+                                    aria-label={
+                                        dictionary.header_menu.top_up_balance
+                                    }
+                                >
+                                    <span className="header-tokens__add-icon">
+                                        +
+                                    </span>
+                                </button>
+                            </div>
+                        ) : null}
+                        {!isAuthenticated ? (
+                            <Button
+                                title={dictionary.login}
+                                rounded
+                                classname="login-button"
+                                onPress={onLoginClick}
+                                minimize
+                                color="inherit"
+                            />
+                        ) : null}
+                        <HeaderMenu />
                     </div>
                 </div>
-                <div className="labkeeper_header__center">
-                    <ProjectTitle />
-                    {!projectIsReadonly && <ShareButton />}
-                </div>
-                <div className="labkeeper_header__right">
-                    {isAuthenticated ? (
-                        <div className="header-tokens">
-                            <span className="header-tokens__label">
-                                {dictionary.header_menu.tokens}:{' '}
-                                <span className="header-tokens__count">
-                                    {tokenBalance}
-                                </span>
-                            </span>
-                            <button
-                                className="header-tokens__add"
-                                type="button"
-                                onClick={() => navigate(Routes.Tokens)}
-                                aria-label={
-                                    dictionary.header_menu.top_up_balance
-                                }
-                            >
-                                <span className="header-tokens__add-icon">
-                                    +
-                                </span>
-                            </button>
-                        </div>
-                    ) : null}
-                    {!isAuthenticated ? (
-                        <Button
-                            title={dictionary.login}
-                            rounded
-                            classname="login-button"
-                            onPress={onLoginClick}
-                            minimize
-                            color="inherit"
-                        />
-                    ) : null}
-                    <HeaderMenu />
-                </div>
+                {showMobileViewSwitcher ? <MobileViewSwitcher /> : null}
             </div>
             <AuthModal />
             <ShareModal />

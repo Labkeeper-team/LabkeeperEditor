@@ -17,7 +17,7 @@ import './style.scss';
 
 export const AddBlock = (props: AddBlockProps) => {
     const dispatch = useDispatch<AppDispatch>();
-    const isMobile = useIsMobile();
+    const isMobile = useIsMobile(1024);
     const dictionary = useSelector(useDictionary);
 
     const headerSelectOptions = [

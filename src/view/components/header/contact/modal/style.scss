@@ -1,8 +1,15 @@
 @use '../../../../styles/colors' as *;
+@use '../../../../styles/common' as *;
 
 .contact-modal {
     padding: 20px;
     min-width: 480px;
+
+    @media screen and (max-width: $mobile-breakpoint) {
+        min-width: 0;
+        width: 100%;
+        padding: 16px;
+    }
 }
 
 .contact-modal__title {

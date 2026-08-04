@@ -1,14 +1,22 @@
+import { ReactNode } from 'react';
+
 export type SelectOption = {
     value: string | number;
     label: string;
     separator?: false;
+    info?: false;
 };
 
 export type SelectSeparator = {
     separator: true;
 };
 
-export type SelectItem = SelectOption | SelectSeparator;
+export type SelectInfoItem = {
+    info: true;
+    label: string;
+};
+
+export type SelectItem = SelectOption | SelectSeparator | SelectInfoItem;
 
 export interface ISelectOptions {
     options: SelectItem[];
@@ -19,6 +27,7 @@ export interface ISelectOptions {
     minimize?: boolean;
     title?: string;
     fitToOptionsWidth?: boolean;
+    triggerContent?: ReactNode;
 }
 
 export enum SelectClassNames {

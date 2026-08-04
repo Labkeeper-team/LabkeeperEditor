@@ -1,4 +1,5 @@
 @use '../../../styles/colors' as *;
+@use '../../../styles/common' as *;
 
 .viewer-container {
     display: flex;
@@ -8,6 +9,12 @@
     gap: 8px;
     max-width: 50%;
     min-width: 50%;
+
+    @media screen and (max-width: $mobile-breakpoint) {
+        max-width: none;
+        min-width: 0;
+        width: 100%;
+    }
 }
 
 .viewer-header {

@@ -1,0 +1,76 @@
+@use '../../../styles/colors' as *;
+@use '../../../styles/common' as *;
+
+.mobile-view-switcher-bar {
+    position: relative;
+    z-index: 10;
+    background-color: $gray-10;
+    border-top: 1px solid rgba($white, 0.08);
+
+    &__toggle {
+        display: flex;
+        width: 100%;
+        min-height: $mobile-view-switcher-height;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 4px 12px;
+        border: none;
+        background: transparent;
+        color: $gray-30;
+        cursor: pointer;
+    }
+
+    &__label {
+        font-size: 13px;
+        font-weight: 600;
+        line-height: 1.2;
+    }
+
+    &__chevron {
+        width: 7px;
+        height: 7px;
+        border-right: 2px solid currentColor;
+        border-bottom: 2px solid currentColor;
+        transform: rotate(45deg);
+        transition: transform 0.2s ease;
+        margin-top: -3px;
+
+        &--open {
+            transform: rotate(-135deg);
+            margin-top: 3px;
+        }
+    }
+
+    &__options {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        display: flex;
+        gap: 6px;
+        padding: 6px 8px;
+        background-color: $gray-10;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
+    }
+
+    &__option {
+        flex: 1;
+        min-height: 32px;
+        padding: 4px 6px;
+        border: 1px solid rgba($white, 0.25);
+        border-radius: 6px;
+        background: transparent;
+        color: $gray-30;
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1.1;
+        cursor: pointer;
+
+        &--active {
+            background: $white;
+            color: $gray-10;
+            border-color: $white;
+        }
+    }
+}

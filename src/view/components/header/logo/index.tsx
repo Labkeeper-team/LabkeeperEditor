@@ -17,7 +17,11 @@ export const HeaderLogo = () => {
                 <MiptLogo height={32} width={32} />
             )}
             <LogoIcon />
-            <Typography type="body-large" text="Labkeeper" />
+            <Typography
+                type="body-large"
+                text="Labkeeper"
+                className="logo-container__title"
+            />
             <span className="version-tooltip" data-tooltip={INFO}>
                 <Typography
                     type="body-large"
