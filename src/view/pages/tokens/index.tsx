@@ -181,11 +181,16 @@ export const TokensPage = () => {
         setPurchaseRequestState('idle');
     };
 
-    const closePurchaseModal = () => {
+    const closePurchaseModal = useCallback(() => {
         setSelectedPackage(null);
         setPurchaseWidgetToken(null);
         setPurchaseRequestState('idle');
-    };
+    }, []);
+
+    const onPaymentComplete = useCallback(async () => {
+        await dispatch(controller.onPaymentStatusChangedRequest()).unwrap();
+        closePurchaseModal();
+    }, [closePurchaseModal, dispatch]);
 
     const onPaymentButtonPress = useCallback(async () => {
         if (!selectedPackage || purchaseRequestState === 'loading') {
@@ -279,7 +284,7 @@ export const TokensPage = () => {
                                 <YooWidget
                                     key={purchaseWidgetToken}
                                     config={yoomoneyWidgetConfig}
-                                    onComplete={closePurchaseModal}
+                                    onComplete={onPaymentComplete}
                                     onFail={() =>
                                         setPurchaseRequestState('widget-error')
                                     }

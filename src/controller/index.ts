@@ -118,6 +118,11 @@ export class Controller {
             this.tokenPageService.onBillingPurchaseCreate(tokenPriceId)
     );
 
+    onPaymentStatusChangedRequest = createAsyncThunk(
+        'onPaymentStatusChanged',
+        async () => this.tokenPageService.onPaymentStatusChanged()
+    );
+
     onAuthClosedRequest = createAsyncThunk('onAuthClosed', async () => {
         this.wrapper('onAuthClosed', () => this.authService.onAuthClosed());
     });

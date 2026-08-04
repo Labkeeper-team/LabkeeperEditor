@@ -119,7 +119,11 @@ export function setupContext(
         startupService,
         observerService
     );
-    const tokenPageService: TokenPageService = new TokenPageService(rpi);
+    const tokenPageService: TokenPageService = new TokenPageService(
+        rpi,
+        repository,
+        observerService
+    );
 
     /*
     FACADE
