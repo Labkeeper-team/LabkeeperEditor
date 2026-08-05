@@ -88,8 +88,10 @@ import {
 } from '../../model/domain.ts';
 import { setProjects } from './slices/projects';
 import {
+    setBillingPaymentWidgetToken,
     setBillingPricing,
     setBillingPricingRequestState,
+    setBillingPurchaseRequestState,
 } from './slices/billing';
 import {
     setCaptchaBypassToken,
@@ -115,6 +117,7 @@ import { toast, TypeOptions } from 'react-toastify';
 import {
     CloneRequestState,
     BillingPricingRequestState,
+    BillingPurchaseRequestState,
     GetFilesRequestState,
     GetProjectRequestState,
     GetProjectsRequestState,
@@ -347,10 +350,18 @@ export const createViewModelStateFromStore = (
                 store.dispatch(setProjects(projects)),
         },
         billingViewModelRepository: {
+            paymentWidgetToken: () =>
+                store.getState().billing.paymentWidgetToken,
+            purchaseRequestState: () =>
+                store.getState().billing.purchaseRequestState,
             pricing: () => store.getState().billing.pricing,
             pricingRequestState: () =>
                 store.getState().billing.pricingRequestState,
 
+            setPaymentWidgetToken: (token: string | undefined) =>
+                store.dispatch(setBillingPaymentWidgetToken(token)),
+            setPurchaseRequestState: (state: BillingPurchaseRequestState) =>
+                store.dispatch(setBillingPurchaseRequestState(state)),
             setPricing: (pricing) => store.dispatch(setBillingPricing(pricing)),
             setPricingRequestState: (state: BillingPricingRequestState) =>
                 store.dispatch(setBillingPricingRequestState(state)),

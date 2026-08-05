@@ -118,6 +118,11 @@ export class Controller {
             this.tokenPageService.onBillingPurchaseCreate(tokenPriceId)
     );
 
+    onBillingPurchaseFlowResetRequest = createAsyncThunk(
+        'onBillingPurchaseFlowReset',
+        async () => this.tokenPageService.resetBillingPurchaseFlow()
+    );
+
     onPaymentStatusChangedRequest = createAsyncThunk(
         'onPaymentStatusChanged',
         async () => this.tokenPageService.onPaymentStatusChanged()

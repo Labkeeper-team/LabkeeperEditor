@@ -1,0 +1,47 @@
+@use '../../styles/colors' as *;
+
+.pay-page {
+    display: flex;
+    justify-content: center;
+    min-height: calc(100vh - 180px);
+    padding: 120px 20px 64px;
+    box-sizing: border-box;
+    background: $white;
+    color: $gray-10;
+    font-family: Roboto, sans-serif;
+}
+
+.pay-page__card {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: min(560px, 100%);
+    padding: 28px;
+    box-sizing: border-box;
+    border: 1px solid $gray-60;
+    border-radius: 24px;
+    background: $white;
+
+    h1 {
+        margin: 0;
+        font-size: 28px;
+        line-height: 34px;
+    }
+
+    p {
+        margin: 0;
+        color: $gray-20;
+        font-size: 14px;
+        line-height: 20px;
+        text-align: center;
+    }
+}
+
+.pay-page__widget {
+    min-height: 360px;
+    width: 100%;
+}
+
+.pay-page__error {
+    color: $red-10;
+}
