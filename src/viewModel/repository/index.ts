@@ -439,6 +439,7 @@ export const mockViewModelState = (): MockViewModelRepository => {
                     mockViewModelState.ephemeralFolders.push(folder);
                 }
             },
+            setMobileView: () => undefined,
         },
         userViewModelRepository: {
             email: () => mockViewModelState.email,
@@ -583,6 +584,7 @@ export interface SettingsViewModelRepository {
     setCurrentFolderPath: (path: string) => void;
     setEphemeralFolders: (folders: string[]) => void;
     addEphemeralFolder: (folder: string) => void;
+    setMobileView: (view: 'files' | 'editor' | 'pdf') => void;
 }
 
 export interface ProjectsViewModelRepository {

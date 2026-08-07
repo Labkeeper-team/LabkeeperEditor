@@ -13,7 +13,6 @@ import { useLeavePageConfirmation } from '../../hooks/useLeavePageConfirmation';
 import {
     useCurrentProject,
     useHasUnsavedChanges,
-    useIsProjectReadonly,
     useMobileView,
 } from '../../store/selectors/program';
 import { useIsMobile } from '../../hooks/useMobile';
@@ -32,13 +31,17 @@ export const ProjectPage = () => {
         (state: StorageState) => state.ide.pdfUpdated
     );
     const pdfUri = useSelector((state: StorageState) => state.project.pdfUri);
-    const isReadonly = useSelector(useIsProjectReadonly);
     const project = useSelector(useCurrentProject);
     const getProjectRequestState = useSelector(
         (state: StorageState) => state.ide.getProjectRequestState
     );
+    const projectPromptRequestState = useSelector(
+        (state: StorageState) => state.ide.projectPromptRequestState
+    );
     const prevPdfUpdatedRef = useRef(pdfUpdated);
-    const publicViewInitializedRef = useRef<string | null>(null);
+    const prevPromptStateRef = useRef(projectPromptRequestState);
+    const initialViewProjectIdRef = useRef<string | null>(null);
+    const initialPdfViewAppliedRef = useRef(false);
 
     useLeavePageConfirmation(hasUnsavedChanges);
 
@@ -50,6 +53,7 @@ export const ProjectPage = () => {
         refreshCodeMirrorLayout();
     }, [isMobile, mobileView]);
 
+    // После компиляции (PDF или MD) — показать результат
     useEffect(() => {
         if (!isMobile) {
             return;
@@ -62,23 +66,55 @@ export const ProjectPage = () => {
         prevPdfUpdatedRef.current = pdfUpdated;
     }, [dispatch, isMobile, pdfUpdated]);
 
+    // После успешного запроса к ИИ — показать сегменты (редактор).
+    // Дублирует switchToMobileEditorView в сервисе на случай гонки с pdfUpdated.
     useEffect(() => {
-        if (!isMobile || getProjectRequestState !== 'ok' || !isReadonly) {
+        if (!isMobile) {
+            prevPromptStateRef.current = projectPromptRequestState;
+            return;
+        }
+
+        if (
+            prevPromptStateRef.current !== 'ok' &&
+            projectPromptRequestState === 'ok'
+        ) {
+            dispatch(setMobileView('editor'));
+        }
+
+        prevPromptStateRef.current = projectPromptRequestState;
+    }, [dispatch, isMobile, projectPromptRequestState]);
+
+    // При открытии проекта с уже существующим PDF — сразу показать PDF
+    useEffect(() => {
+        if (!isMobile || getProjectRequestState !== 'ok') {
             return;
         }
 
         const projectId = project?.projectId;
-        if (!projectId || publicViewInitializedRef.current === projectId) {
+        if (!projectId) {
             return;
         }
 
-        publicViewInitializedRef.current = projectId;
-        dispatch(setMobileView(pdfUri ? 'pdf' : 'editor'));
+        if (initialViewProjectIdRef.current !== projectId) {
+            initialViewProjectIdRef.current = projectId;
+            initialPdfViewAppliedRef.current = false;
+        }
+
+        if (initialPdfViewAppliedRef.current) {
+            return;
+        }
+
+        // Ждём появления pdfUri (lastPdf / файл из filemanager), затем один раз выбираем вкладку
+        if (!pdfUri) {
+            return;
+        }
+
+        initialPdfViewAppliedRef.current = true;
+        dispatch(setMobileView('pdf'));
     }, [
         dispatch,
         getProjectRequestState,
         isMobile,
-        isReadonly,
         pdfUri,
         project?.projectId,
     ]);

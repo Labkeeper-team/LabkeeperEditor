@@ -5,6 +5,7 @@ import { RightArrowIcon } from '../../../icons';
 import { AppDispatch, StorageState } from '../../../store';
 import { useDictionary } from '../../../store/selectors/translations';
 import {
+    useCurrentProgram,
     useCurrentProject,
     useIsProjectReadonly,
 } from '../../../store/selectors/program';
@@ -23,18 +24,36 @@ export const SynctexButton = ({ direction, className }: SynctexButtonProps) => {
     const dispatch = useDispatch<AppDispatch>();
     const dictionary = useSelector(useDictionary);
     const project = useSelector(useCurrentProject);
+    const program = useSelector(useCurrentProgram);
     const isReadonly = useSelector(useIsProjectReadonly);
-    const isLatexMode = useSelector(
-        (state: StorageState) => state.project.mode === 'latex'
-    );
+    const mode = useSelector((state: StorageState) => state.project.mode);
+    const isLatexMode = mode === 'latex';
     const isAuth = useSelector(
         (state: StorageState) => state.user.isAuthenticated
     );
     const pdfUri = useSelector((state: StorageState) => state.project.pdfUri);
+    const activeSegmentIndex = useSelector(
+        (state: StorageState) => state.ide.activeSegmentIndex
+    );
+    const previousActiveSegmentIndex = useSelector(
+        (state: StorageState) => state.ide.previousActiveSegmentIndex
+    );
+    const synctexEditorPosition = useSelector(
+        (state: StorageState) => state.ide.synctexEditorPosition
+    );
     const isMobile = useIsMobile();
 
+    const segmentCount = program?.segments?.length ?? 0;
+    // Markdown-навигация по сегментам — только mobile; на desktop latex SyncTeX как раньше
     const visible =
-        isAuth && isLatexMode && !isReadonly && Boolean(project?.projectId);
+        isAuth &&
+        !isReadonly &&
+        Boolean(project?.projectId) &&
+        (isLatexMode || (isMobile && mode === 'markdown'));
+
+    const canNavigate = isLatexMode
+        ? Boolean(pdfUri)
+        : isMobile && segmentCount > 0;
 
     if (!visible) {
         return null;
@@ -45,7 +64,50 @@ export const SynctexButton = ({ direction, className }: SynctexButtonProps) => {
         ? dictionary.synctex.to_pdf
         : dictionary.synctex.to_editor;
 
-    const onActivate = () => {
+    const resolveMarkdownSegmentIndex = () => {
+        if (activeSegmentIndex >= 0) {
+            return activeSegmentIndex;
+        }
+        if (
+            synctexEditorPosition &&
+            synctexEditorPosition.segmentIndex >= 0 &&
+            synctexEditorPosition.segmentIndex < segmentCount
+        ) {
+            return synctexEditorPosition.segmentIndex;
+        }
+        if (
+            previousActiveSegmentIndex >= 0 &&
+            previousActiveSegmentIndex < segmentCount
+        ) {
+            return previousActiveSegmentIndex;
+        }
+        return segmentCount > 0 ? 0 : -1;
+    };
+
+    /** Сброс → фокус, чтобы useScrollableToActive сработал после смены вкладки. */
+    const focusMarkdownSegment = (index: number) => {
+        dispatch(controller.onFocusSegmentRequest({ segmentIndex: -1 }));
+        window.setTimeout(() => {
+            dispatch(controller.onFocusSegmentRequest({ segmentIndex: index }));
+        }, 0);
+    };
+
+    const onActivateMarkdown = () => {
+        if (!isMobile) {
+            return;
+        }
+
+        const index = resolveMarkdownSegmentIndex();
+        if (index < 0) {
+            return;
+        }
+
+        dispatch(setMobileView(isToPdf ? 'pdf' : 'editor'));
+        // Ждём показа панели (display:none → flex), затем скролл к сегменту
+        window.setTimeout(() => focusMarkdownSegment(index), 50);
+    };
+
+    const onActivateLatex = () => {
         if (!pdfUri) {
             return;
         }
@@ -64,6 +126,17 @@ export const SynctexButton = ({ direction, className }: SynctexButtonProps) => {
         }
     };
 
+    const onActivate = () => {
+        if (!canNavigate) {
+            return;
+        }
+        if (isLatexMode) {
+            onActivateLatex();
+            return;
+        }
+        onActivateMarkdown();
+    };
+
     return (
         <button
             type="button"
@@ -71,17 +144,18 @@ export const SynctexButton = ({ direction, className }: SynctexButtonProps) => {
                 'synctex-button',
                 {
                     'synctex-button--reverse': !isToPdf,
-                    'synctex-button--disabled': !pdfUri,
+                    'synctex-button--disabled': !canNavigate,
                     'synctex-button--header': isMobile,
                 },
                 className
             )}
             title={title}
             aria-label={title}
-            disabled={!pdfUri}
+            disabled={!canNavigate}
             onMouseDown={
                 isToPdf
                     ? (event) => {
+                          // mousedown: успеть до blur сегмента (active → -1)
                           event.preventDefault();
                           onActivate();
                       }

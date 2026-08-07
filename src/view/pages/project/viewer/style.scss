@@ -29,11 +29,19 @@
     border-top-right-radius: 8px;
     padding-left: 14px;
     padding-right: 14px;
+    gap: 8px;
+
     .ide-wrapper {
         display: flex;
         flex-direction: row;
         align-items: center;
         gap: 24px;
+        flex-shrink: 0;
+    }
+
+    .clone-project-panel {
+        margin-left: auto;
+        min-width: 0;
     }
 }
 

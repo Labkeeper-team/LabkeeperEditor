@@ -14,6 +14,7 @@ import { PromptModal } from './promptModal';
 import { SparkleIcon } from '../../../icons';
 import { SynctexButton } from '../syncButtons';
 import { useIsMobile } from '../../../hooks/useMobile';
+import { CloneProjectButton } from '../cloneProjectButton';
 
 export const Viewer = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -42,7 +43,7 @@ export const Viewer = () => {
                     )}
                     {isMobile ? <SynctexButton direction="toEditor" /> : null}
                 </div>
-                <div />
+                {isReadonly && isMobile ? <CloneProjectButton /> : <div />}
             </div>
             <Result />
             <Instruction />

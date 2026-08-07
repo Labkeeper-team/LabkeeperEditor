@@ -122,6 +122,10 @@ export class CompilationService {
                 this.repository.projectViewModelRepository.setCompileResult(
                     result.body as CompileSuccessResult
                 );
+                // Как и для PDF: сигнал UI переключить мобильный вид на результат
+                this.repository.ideViewModelRepository.setPdfUpdated(
+                    this.repository.ideViewModelRepository.pdfUpdated() + 1
+                );
             }
             this.repository.projectViewModelRepository.setCompileErrorResult({
                 errors: [],

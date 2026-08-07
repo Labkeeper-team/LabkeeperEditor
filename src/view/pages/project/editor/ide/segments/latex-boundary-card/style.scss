@@ -102,7 +102,20 @@
     @media screen and (max-width: $mobile-breakpoint) {
         .latex-header-segment,
         .latex-footer-segment {
+            max-width: 100%;
+            min-width: 0;
             padding: 10px 12px;
+        }
+        // Задача про преамбуле
+        .latex-boundary-content {
+            max-width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
+            /* Как soft-wrap в сегментах (CM lineWrapping): ломаем длинные \usepackage{...} без пробелов */
+            overflow-wrap: anywhere;
+            word-break: break-word;
+            /* Место под badge справа, чтобы строки не уезжали под плашку */
+            padding-right: 88px;
         }
 
         .latex-boundary-meta {
