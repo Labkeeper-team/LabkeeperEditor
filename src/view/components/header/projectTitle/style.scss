@@ -13,27 +13,16 @@
             svg {
                 path {
                     fill: white;
-                    // stroke: white;
                 }
             }
         }
-        &.edit-mode-on {
-            svg {
-                path {
-                    fill: white;
-                    // stroke: white;
-                }
-            }
-            &:hover {
-                cursor: pointer;
-                svg {
-                    path {
-                        fill: $gray-30;
-                        // stroke: white;
-                    }
-                }
-            }
-        }
+    }
+    .change-title-character-count {
+        color: $gray-30;
+        font-size: 11px;
+        font-variant-numeric: tabular-nums;
+        line-height: 12px;
+        white-space: nowrap;
     }
     .change-title-input {
         font-family: Inter;

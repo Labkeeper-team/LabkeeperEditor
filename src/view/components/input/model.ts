@@ -19,4 +19,6 @@ export interface InputProps {
     type?: 'text' | 'password';
     multiline?: boolean;
     rows?: number;
+    maxLength?: number;
+    showCharacterCount?: boolean;
 }
