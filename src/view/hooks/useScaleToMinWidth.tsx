@@ -5,7 +5,10 @@ import { refreshCodeMirrorLayout } from '../utils/refreshCodeMirrorLayout';
 const RESCALE_EVENT = 'labkeeper:viewport-rescale';
 
 function isTokensLandingPath() {
-    return window.location.pathname === Routes.Tokens;
+    return (
+        window.location.pathname === Routes.Tokens ||
+        window.location.pathname === Routes.Pay
+    );
 }
 
 /**
