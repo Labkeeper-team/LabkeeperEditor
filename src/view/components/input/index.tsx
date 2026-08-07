@@ -8,6 +8,8 @@ import { CloseIcon } from '../../icons';
 import { colors } from '../../styles/colors';
 
 export const Input = forwardRef((props: InputProps, ref) => {
+    const maxLength = props.maxLength ?? 60;
+
     return (
         <div className={classNames('input-container', props.className)}>
             {props.title ? (
@@ -38,12 +40,13 @@ export const Input = forwardRef((props: InputProps, ref) => {
                     onClick={(e) => e.stopPropagation()}
                     placeholder={props.placeholder}
                     disabled={props.disabled}
+                    maxLength={props.maxLength}
                 />
             ) : (
                 <input
                     required={props.required}
                     ref={ref as LegacyRef<HTMLInputElement>}
-                    maxLength={60}
+                    maxLength={maxLength}
                     value={props.value}
                     id={props.id}
                     name={props.name}
@@ -57,9 +60,24 @@ export const Input = forwardRef((props: InputProps, ref) => {
                     disabled={props.disabled}
                 />
             )}
-            {props.error ? (
-                <div className="error-text-container">
-                    <Typography color={colors.red10} text={props.error} />
+            {props.error || props.showCharacterCount ? (
+                <div className="input-hint">
+                    {!props.error && props.showCharacterCount ? (
+                        <Typography
+                            className="input-character-count"
+                            color={colors.gray30}
+                            type="label-small"
+                            text={`${props.value?.length ?? 0} / ${maxLength}`}
+                        />
+                    ) : null}
+                    {props.error ? (
+                        <div className="error-text-container">
+                            <Typography
+                                color={colors.red10}
+                                text={props.error}
+                            />
+                        </div>
+                    ) : null}
                 </div>
             ) : null}
             {props.onClear && !props.multiline ? (

@@ -22,15 +22,15 @@ export const AddBlock = (props: AddBlockProps) => {
 
     const headerSelectOptions = [
         { value: 'md', label: dictionary.label_add_markdown },
-        { value: 'computational', label: dictionary.label_add_code },
         { value: 'latex', label: dictionary.label_add_latex },
         { value: 'asciimath', label: dictionary.label_add_asciimath },
+        { value: 'computational', label: dictionary.label_add_code },
     ];
 
     const emptyProjectSelectOptions = [
         { value: 'md', label: dictionary.label_add_markdown },
-        { value: 'computational', label: dictionary.label_add_code },
         { value: 'asciimath', label: dictionary.label_add_asciimath },
+        { value: 'computational', label: dictionary.label_add_code },
     ];
 
     const addMoreTitle = isMobile

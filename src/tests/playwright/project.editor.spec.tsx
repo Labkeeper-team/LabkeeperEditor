@@ -182,7 +182,10 @@ test('insert-segment-between', async ({ page }) => {
         .locator('.labkeeper_select.computation .select-header')
         .first()
         .click();
-    await page.getByRole('listitem').filter({ hasText: 'Simple-math' }).click();
+    await page
+        .getByRole('listitem')
+        .filter({ hasText: 'Simple-formula' })
+        .click();
 
     // пишем в него
     editor = page.locator('.cm-content').nth(1);
@@ -1616,7 +1619,10 @@ test('latex-segments-and-asciimath', async ({ page }) => {
         .locator('.labkeeper_select.computation .select-header')
         .first()
         .click();
-    await page.getByRole('listitem').filter({ hasText: 'Simple-math' }).click();
+    await page
+        .getByRole('listitem')
+        .filter({ hasText: 'Simple-formula' })
+        .click();
 
     // пишем в него
     editor = page.locator('.cm-content').nth(2);

@@ -3,6 +3,7 @@ import { useCurrentProgram } from '../../../../../../store/selectors/program';
 import { useDictionary } from '../../../../../../store/selectors/translations.ts';
 import { AppDispatch, StorageState } from '../../../../../../store';
 import { controller } from '../../../../../../../main.tsx';
+import { SegmentDivider } from '../segment-divider';
 import './style.scss';
 
 const LATEX_HEADER_TEXT = String.raw`\documentclass[a4paper,12pt]{article}
@@ -110,19 +111,22 @@ export const LatexFooterBoundaryCard = () => {
     }
 
     return (
-        <LatexBoundaryCardBase
-            containerClassName="latex-footer-segment"
-            title={dictionary.latex_boundary.footer}
-            hint={dictionary.latex_boundary.insert_hint}
-            content={LATEX_FOOTER_TEXT}
-            onClick={() =>
-                dispatch(
-                    controller.onAddLatexBoundarySegmentRequest({
-                        text: LATEX_FOOTER_TEXT,
-                        placement: 'end',
-                    })
-                )
-            }
-        />
+        <>
+            <SegmentDivider index={segments.length - 1} showDivider />
+            <LatexBoundaryCardBase
+                containerClassName="latex-footer-segment"
+                title={dictionary.latex_boundary.footer}
+                hint={dictionary.latex_boundary.insert_hint}
+                content={LATEX_FOOTER_TEXT}
+                onClick={() =>
+                    dispatch(
+                        controller.onAddLatexBoundarySegmentRequest({
+                            text: LATEX_FOOTER_TEXT,
+                            placement: 'end',
+                        })
+                    )
+                }
+            />
+        </>
     );
 };

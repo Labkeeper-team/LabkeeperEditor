@@ -9,7 +9,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useDictionary } from '../../../store/selectors/translations';
 import { AppDispatch } from '../../../store';
 import { controller } from '../../../../main.tsx';
-import { ProjectType } from '../../../../model/domain.ts';
+import {
+    PROJECT_TITLE_MAX_LENGTH,
+    ProjectType,
+} from '../../../../model/domain.ts';
 import { Radio } from '../../../components/radiobutton';
 
 export const AddProjectModal = (props: { onClose: () => unknown }) => {
@@ -55,6 +58,8 @@ export const AddProjectModal = (props: { onClose: () => unknown }) => {
                     title={dictionary.create_modal.name}
                     value={projectName}
                     error={projectNameError}
+                    showCharacterCount
+                    maxLength={PROJECT_TITLE_MAX_LENGTH}
                 />
                 <div className="add-project-modal-type">
                     <Typography

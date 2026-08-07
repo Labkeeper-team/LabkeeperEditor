@@ -14,7 +14,7 @@ export const en: Translations = {
 
     warning_dontuselongvarioables: 'Do not use long name variables',
 
-    label_add_asciimath: 'Simple-math',
+    label_add_asciimath: 'Simple-formula',
     label_add_markdown: 'Markdown',
     label_add_markdown_short: 'MD',
     label_add_code: 'Computation',
@@ -33,10 +33,10 @@ export const en: Translations = {
 
     segment_divider: {
         add: 'Add',
-        computation: 'computation',
-        markdown: 'markdown',
-        latex: 'latex',
-        asciimath: 'simple-math',
+        computation: 'Computation',
+        markdown: 'Markdown',
+        latex: 'Latex',
+        asciimath: 'Simple-formula',
     },
     latex_boundary: {
         header: 'LaTeX heading',
@@ -117,7 +117,7 @@ export const en: Translations = {
             non_authorized_paste_image: 'You need authorize to paste images',
         },
         latex: 'latex',
-        asciimath: 'simple-math',
+        asciimath: 'simple-formula',
         no_computation_result: 'No computation result',
         run_to_view: 'Press the run button to see computations',
         hide_assignment: 'Hide the main formula used for calculations',
