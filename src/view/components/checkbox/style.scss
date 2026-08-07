@@ -5,6 +5,8 @@
     flex-direction: row;
     align-items: center;
     gap: 6px;
+    min-width: 0;
+
     label {
         user-select: none;
     }
@@ -19,6 +21,10 @@
         border-radius: 2px;
         border: 1px solid $gray-40;
         transition-duration: 0.3s;
+        flex-shrink: 0;
+    }
+    .typography {
+        min-width: 0;
     }
     &:hover {
         cursor: pointer !important;

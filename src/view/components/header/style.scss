@@ -257,6 +257,7 @@
 .auth-modal {
     .auth-header {
         text-align: center;
+        padding: 0 36px;
     }
 
     .labkeeper-button {
@@ -271,5 +272,6 @@
         width: 100%;
         max-width: 100%;
         box-sizing: border-box;
+        padding: 28px 16px 20px !important;
     }
 }

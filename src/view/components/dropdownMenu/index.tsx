@@ -12,6 +12,7 @@ import './style.scss';
 import classNames from 'classnames';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { useIsMobile } from '../../hooks/useMobile';
+import { DropdownCloseContext } from './context';
 
 export const DropdownMenu = (
     props: PropsWithChildren<{
@@ -77,6 +78,33 @@ export const DropdownMenu = (
 
     const isMenuVisible = showMenu && props.children;
 
+    useHotkeys(
+        'esc',
+        () => {
+            if (!showMenu) {
+                return;
+            }
+            onHide();
+        },
+        { enableOnFormTags: true }
+    );
+
+    const menuContent = (
+        <DropdownCloseContext.Provider value={onHide}>
+            <div
+                ref={ref}
+                className={classNames(
+                    'dropdown-menu-content-container',
+                    useFullScreen &&
+                        'dropdown-menu-content-container--fullscreen',
+                    props.containerClassname
+                )}
+            >
+                {props.children}
+            </div>
+        </DropdownCloseContext.Provider>
+    );
+
     const fullscreenOverlay =
         isMenuVisible && useFullScreen ? (
             <div ref={fullscreenRef} className="dropdown-menu-fullscreen">
@@ -93,29 +121,9 @@ export const DropdownMenu = (
                         <CloseModalIcon />
                     </button>
                 </div>
-                <div
-                    ref={ref}
-                    className={classNames(
-                        'dropdown-menu-content-container',
-                        'dropdown-menu-content-container--fullscreen',
-                        props.containerClassname
-                    )}
-                >
-                    {props.children}
-                </div>
+                {menuContent}
             </div>
         ) : null;
-
-    useHotkeys(
-        'esc',
-        () => {
-            if (!showMenu) {
-                return;
-            }
-            onHide();
-        },
-        { enableOnFormTags: true }
-    );
 
     return (
         <div
@@ -148,21 +156,11 @@ export const DropdownMenu = (
             >
                 {props.icon ? props.icon : <DotssIcon />}
             </div>
-            {isMenuVisible ? (
-                useFullScreen ? (
-                    createPortal(fullscreenOverlay, document.body)
-                ) : (
-                    <div
-                        ref={ref}
-                        className={classNames(
-                            'dropdown-menu-content-container',
-                            props.containerClassname
-                        )}
-                    >
-                        {props.children}
-                    </div>
-                )
-            ) : null}
+            {isMenuVisible
+                ? useFullScreen
+                    ? createPortal(fullscreenOverlay, document.body)
+                    : menuContent
+                : null}
         </div>
     );
 };

@@ -8,7 +8,8 @@
 }
 html {
     @media screen and (max-width: 1024px) {
-        max-height: 100dvh;
+        max-height: var(--inner-height, 100dvh);
+        height: var(--inner-height, 100dvh);
         overflow: hidden;
     }
 }
@@ -33,7 +34,8 @@ body {
         }
     }
     @media screen and (max-width: 1024px) {
-        max-height: 100dvh;
+        max-height: var(--inner-height, 100dvh);
+        height: var(--inner-height, 100dvh);
         overflow: hidden;
     }
 }
@@ -42,6 +44,15 @@ body {
     overflow: auto;
     @media screen and (max-width: 1024px) {
         overflow-x: hidden;
+        height: 100%;
+        max-height: 100%;
+    }
+}
+
+.scale-wrapper {
+    @media screen and (max-width: 1024px) {
+        height: 100%;
+        max-height: 100%;
     }
 }
 
@@ -49,7 +60,7 @@ body {
     input,
     textarea,
     select {
-        font-size: 16px;
+        font-size: 16px !important;
     }
 
     .cm-content,
