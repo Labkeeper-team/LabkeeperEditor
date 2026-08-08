@@ -18,6 +18,23 @@
         border-radius: 50%;
         animation: spin 1s linear infinite;
     }
+
+    @media screen and (max-width: $mobile-breakpoint) {
+        /*
+         * Сбрасываем desktop-calc: он не учитывает mobile switcher/margin
+         * и ломает flex. Тянемся на весь outlet (+ fallback min-height).
+         */
+        height: auto;
+        min-height: calc(
+            var(--inner-height, 100dvh) / var(--mobile-scale, 1) -
+                #{$header-height} - #{$mobile-view-switcher-height} -
+                #{$main-margin-mobile}
+        );
+        flex: 1 1 0;
+        align-self: stretch;
+        width: 100%;
+        box-sizing: border-box;
+    }
 }
 
 @keyframes spin {

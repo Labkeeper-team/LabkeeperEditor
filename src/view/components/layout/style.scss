@@ -22,18 +22,32 @@
     @media screen and (max-width: 1024px) {
         height: 100%;
         max-height: 100%;
+        flex: 1 1 0;
+        min-height: 0;
         display: flex;
         flex-direction: column;
         overflow: hidden;
+
+        > .labkeeper_header-shell {
+            flex-shrink: 0;
+        }
     }
 
     .layout-outlet-container:not(.layout-outlet-container--landing) {
         @media screen and (max-width: 1024px) {
-            flex: 1;
+            flex: 1 1 0;
             min-height: 0;
             display: flex;
             flex-direction: column;
             overflow: hidden;
+
+            /* Suspense fallback — растянуть на весь outlet */
+            > .suspnese-loader {
+                flex: 1 1 0;
+                min-height: 0;
+                height: auto;
+                width: 100%;
+            }
         }
     }
 }

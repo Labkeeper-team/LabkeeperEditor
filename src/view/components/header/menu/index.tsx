@@ -303,7 +303,7 @@ export const HeaderMenu = () => {
         : isAuthenticated
           ? authenticatedMenuItems
           : publicMenuItems;
-    const useIconTrigger = isMobile && isAuthenticated;
+    const useIconTrigger = isMobile;
     const triggerTitle = useIconTrigger
         ? dictionary.header_menu.menu
         : isAuthenticated && email
@@ -322,7 +322,7 @@ export const HeaderMenu = () => {
                 : [option];
         });
 
-        if (useIconTrigger) {
+        if (useIconTrigger && isAuthenticated) {
             const headerInfo: SelectItem[] = [
                 ...(email ? [{ info: true as const, label: email }] : []),
                 {
@@ -339,6 +339,7 @@ export const HeaderMenu = () => {
     }, [
         dictionary.header_menu.tokens,
         email,
+        isAuthenticated,
         items,
         tokenBalance,
         useIconTrigger,
