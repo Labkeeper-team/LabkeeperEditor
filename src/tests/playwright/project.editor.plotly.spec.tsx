@@ -21,7 +21,7 @@ async function plotlyTest(statement, page) {
     // меняем тип на latex
     await page.locator('div.dropdown-menu-container').first().click();
     await page.getByText('markdown', { exact: true }).click();
-    await page.getByText('Labkeeper').first().click();
+    await page.keyboard.press('Escape');
 
     // Добавляем код
     await page
