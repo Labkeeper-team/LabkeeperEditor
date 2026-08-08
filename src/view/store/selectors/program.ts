@@ -45,6 +45,10 @@ export const useBillingPricing = createSelector(
     (state: StorageState) => state.billing,
     (billing) => billing
 );
+export const useBillingPaymentWidgetToken = createSelector(
+    (state: StorageState) => state.billing.paymentWidgetToken,
+    (paymentWidgetToken) => paymentWidgetToken
+);
 export const useActiveElement = createSelector(
     (state: StorageState) => state.ide,
     (index) => index.activeSegmentIndex

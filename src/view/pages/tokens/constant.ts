@@ -2,6 +2,7 @@ import { TokenPrice } from '../../../model/rpi';
 
 export type TokenPackage = {
     key: string;
+    tokenPriceId: string;
     amount: number;
     price: number;
 };
@@ -54,6 +55,7 @@ export const mapTokenPricesToPackages = (
 ): TokenPackage[] =>
     tokenPrices.map((tokenPrice, index) => ({
         key: `${tokenPrice.tokensToPurchase}-${tokenPrice.costRubles}-${index}`,
+        tokenPriceId: tokenPrice.id,
         amount: tokenPrice.tokensToPurchase,
         price: tokenPrice.costRubles,
     }));

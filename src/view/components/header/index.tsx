@@ -7,7 +7,10 @@ import { MarketingHeader } from './marketing/MarketingHeader';
 export const Header = () => {
     const location = useLocation();
 
-    if (location.pathname === Routes.Tokens) {
+    if (
+        location.pathname === Routes.Tokens ||
+        location.pathname === Routes.Pay
+    ) {
         return <MarketingHeader />;
     }
 

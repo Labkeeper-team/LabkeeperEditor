@@ -200,7 +200,9 @@ export interface Translations {
             consent_privacy_policy_prefix: string;
             consent_privacy_policy_link: string;
             pay_button: string;
-            mock_notice: string;
+            payment_loading: string;
+            payment_error: string;
+            widget_error: string;
         };
         navigation: {
             advantages: string;

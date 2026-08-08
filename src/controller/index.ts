@@ -15,6 +15,7 @@ import { ProgramEditorService } from '../viewModel/operation/ProgramEditorServic
 import { ProjectPageService } from '../viewModel/operation/ProjectPageService.ts';
 import { ProjectsPageService } from '../viewModel/operation/ProjectsPageService.ts';
 import { StartupService } from '../viewModel/operation/StartupService.ts';
+import { TokenPageService } from '../viewModel/operation/TokenPageService.ts';
 
 export class Controller {
     authService: AuthService;
@@ -23,6 +24,7 @@ export class Controller {
     programEditorService: ProgramEditorService;
     projectPageService: ProjectPageService;
     projectsPageService: ProjectsPageService;
+    tokenPageService: TokenPageService;
     startupService: StartupService;
     observerService: ObserverService;
 
@@ -33,6 +35,7 @@ export class Controller {
         programEditorService: ProgramEditorService,
         projectPageService: ProjectPageService,
         projectsPageService: ProjectsPageService,
+        tokenPageService: TokenPageService,
         startupService: StartupService,
         observerService: ObserverService
     ) {
@@ -43,6 +46,7 @@ export class Controller {
         this.programEditorService = programEditorService;
         this.projectPageService = projectPageService;
         this.projectsPageService = projectsPageService;
+        this.tokenPageService = tokenPageService;
         this.startupService = startupService;
     }
 
@@ -106,6 +110,22 @@ export class Controller {
                 this.authService.onAuthButtonClicked()
             );
         }
+    );
+
+    onBillingPurchaseCreateRequest = createAsyncThunk(
+        'onBillingPurchaseCreate',
+        async ({ tokenPriceId }: { tokenPriceId: string }) =>
+            this.tokenPageService.onBillingPurchaseCreate(tokenPriceId)
+    );
+
+    onBillingPurchaseFlowResetRequest = createAsyncThunk(
+        'onBillingPurchaseFlowReset',
+        async () => this.tokenPageService.resetBillingPurchaseFlow()
+    );
+
+    onPaymentStatusChangedRequest = createAsyncThunk(
+        'onPaymentStatusChanged',
+        async () => this.tokenPageService.onPaymentStatusChanged()
     );
 
     onAuthClosedRequest = createAsyncThunk('onAuthClosed', async () => {

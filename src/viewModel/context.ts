@@ -14,6 +14,7 @@ import { TextFileEditorService } from './operation/TextFileEditorService.ts';
 import { ProgramEditorService } from './operation/ProgramEditorService.ts';
 import { ProjectPageService } from './operation/ProjectPageService.ts';
 import { ProjectsPageService } from './operation/ProjectsPageService.ts';
+import { TokenPageService } from './operation/TokenPageService.ts';
 import {
     InMemoryProgramRepository,
     ProgramRepository,
@@ -118,6 +119,11 @@ export function setupContext(
         startupService,
         observerService
     );
+    const tokenPageService: TokenPageService = new TokenPageService(
+        rpi,
+        repository,
+        observerService
+    );
 
     /*
     FACADE
@@ -129,6 +135,7 @@ export function setupContext(
         programEditorService,
         projectPageService,
         projectsPageService,
+        tokenPageService,
         startupService,
         observerService
     );
@@ -150,6 +157,7 @@ export function setupContext(
         programEditorService,
         projectPageService,
         projectsPageService,
+        tokenPageService,
         /*
         DOMAIN
          */
