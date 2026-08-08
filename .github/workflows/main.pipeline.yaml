@@ -16,4 +16,3 @@ jobs:
       - uses: ./.github/actions/playwright-tests
         with:
           node-version: '20'
-          github-token: ${{ secrets.GITHUB_TOKEN }}

@@ -1,4 +1,3 @@
-import { ProjectShort } from '../../model/domain.ts';
 import { ViewModelRepository } from '../repository';
 import { Rpi } from '../../model/rpi';
 import { IdeService } from './IdeService.ts';
@@ -146,9 +145,11 @@ export class LoaderService {
         );
         const result = await this.rpi.getAllProjectsRequest();
         if (result.isOk) {
-            this.repository.projectsViewModelRepository.setProjects(
-                (result.body as { projects: ProjectShort[] }).projects.reverse()
-            );
+            const projects = result.body.projects.reverse().map((project) => ({
+                ...project,
+                tags: project.tags ?? [],
+            }));
+            this.repository.projectsViewModelRepository.setProjects(projects);
             this.repository.ideViewModelRepository.setGetProjectsRequestState(
                 'ok'
             );
