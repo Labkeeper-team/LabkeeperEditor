@@ -20,9 +20,12 @@ import {
 } from '../../store/selectors/translations';
 import { AppDispatch, StorageState } from '../../store';
 import { controller } from '../../../main.tsx';
+import { useIsMobile } from '../../hooks/useMobile';
+import { Select } from '../../components/select';
 
 type SortMode = 'time' | 'title';
 type SortDirection = 'asc' | 'desc';
+type SortOption = `${SortMode}-${SortDirection}`;
 
 export const ProjectsPage = () => {
     const [showAddModal, setShowAddModal] = useState(false);
@@ -39,6 +42,7 @@ export const ProjectsPage = () => {
         (state: StorageState) => state.ide.getProjectsRequestState
     );
     const dispatch = useDispatch<AppDispatch>();
+    const isMobile = useIsMobile();
 
     const localize = useMemo(() => {
         switch (lang) {
@@ -94,6 +98,52 @@ export const ProjectsPage = () => {
             sortDirection === 'asc' ? byTimeAsc : byTimeDesc
         );
     }, [projects, sortMode, sortDirection]);
+
+    const sortOptions = useMemo(
+        () => [
+            {
+                value: 'time-desc',
+                label: `${dictionary.projects.last_modified} ↓`,
+            },
+            {
+                value: 'time-asc',
+                label: `${dictionary.projects.last_modified} ↑`,
+            },
+            {
+                value: 'title-asc',
+                label: `${dictionary.projects.title} A-Z`,
+            },
+            {
+                value: 'title-desc',
+                label: `${dictionary.projects.title} Z-A`,
+            },
+        ],
+        [dictionary.projects.last_modified, dictionary.projects.title]
+    );
+
+    const currentSortValue: SortOption = `${sortMode}-${sortDirection}`;
+
+    const onSortOptionChange = useCallback((value: unknown) => {
+        const [mode, direction] = String(value).split('-') as [
+            SortMode,
+            SortDirection,
+        ];
+        setSortMode(mode);
+        setSortDirection(direction);
+    }, []);
+
+    const openProject = useCallback(
+        (projectId?: string) => {
+            if (projectId) {
+                dispatch(
+                    controller.onRowClickedInProjectsListRequest({
+                        projectId,
+                    })
+                );
+            }
+        },
+        [dispatch]
+    );
 
     return (
         <>
@@ -160,194 +210,39 @@ export const ProjectsPage = () => {
                             />
                         </div>
                     ) : (
-                        <div
-                            style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                flex: 1,
-                                overflow: 'auto',
-                            }}
-                        >
-                            <div
-                                style={{
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    flex: 1,
-                                }}
-                            >
-                                <table style={{ marginTop: 30 }}>
-                                    <tr>
-                                        <th>
-                                            <div className="projects-header-cell">
-                                                <Typography
-                                                    color={colors.gray30}
-                                                    text={
-                                                        dictionary.projects
-                                                            .title
-                                                    }
-                                                />
-                                                <button
-                                                    className="projects-sort-icon-button"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setSortMode('title');
-                                                        setSortDirection('asc');
-                                                    }}
-                                                    type="button"
-                                                    aria-label={
-                                                        dictionary.projects
-                                                            .title
-                                                    }
-                                                >
-                                                    <span
-                                                        className={`sort-arrow ${
-                                                            sortMode ===
-                                                                'title' &&
-                                                            sortDirection ===
-                                                                'asc'
-                                                                ? 'is-active'
-                                                                : ''
-                                                        }`}
-                                                    >
-                                                        ▲
-                                                    </span>
-                                                </button>
-                                                <button
-                                                    className="projects-sort-icon-button"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setSortMode('title');
-                                                        setSortDirection(
-                                                            'desc'
-                                                        );
-                                                    }}
-                                                    type="button"
-                                                    aria-label={
-                                                        dictionary.projects
-                                                            .title
-                                                    }
-                                                >
-                                                    <span
-                                                        className={`sort-arrow ${
-                                                            sortMode ===
-                                                                'title' &&
-                                                            sortDirection ===
-                                                                'desc'
-                                                                ? 'is-active'
-                                                                : ''
-                                                        }`}
-                                                    >
-                                                        ▼
-                                                    </span>
-                                                </button>
-                                            </div>
-                                        </th>
-                                        <th>
-                                            <div className="projects-header-cell">
-                                                <Typography
-                                                    color={colors.gray30}
-                                                    text={
-                                                        dictionary.projects
-                                                            .last_modified
-                                                    }
-                                                />
-                                                <button
-                                                    className="projects-sort-icon-button"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setSortMode('time');
-                                                        setSortDirection('asc');
-                                                    }}
-                                                    type="button"
-                                                    aria-label={
-                                                        dictionary.projects
-                                                            .last_modified
-                                                    }
-                                                >
-                                                    <span
-                                                        className={`sort-arrow ${
-                                                            sortMode ===
-                                                                'time' &&
-                                                            sortDirection ===
-                                                                'asc'
-                                                                ? 'is-active'
-                                                                : ''
-                                                        }`}
-                                                    >
-                                                        ▲
-                                                    </span>
-                                                </button>
-                                                <button
-                                                    className="projects-sort-icon-button"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setSortMode('time');
-                                                        setSortDirection(
-                                                            'desc'
-                                                        );
-                                                    }}
-                                                    type="button"
-                                                    aria-label={
-                                                        dictionary.projects
-                                                            .last_modified
-                                                    }
-                                                >
-                                                    <span
-                                                        className={`sort-arrow ${
-                                                            sortMode ===
-                                                                'time' &&
-                                                            sortDirection ===
-                                                                'desc'
-                                                                ? 'is-active'
-                                                                : ''
-                                                        }`}
-                                                    >
-                                                        ▼
-                                                    </span>
-                                                </button>
-                                            </div>
-                                        </th>
-                                        <th></th>
-                                    </tr>
-                                    {sortedProjects.map((p) => (
-                                        <tr
-                                            onClick={() => {
-                                                if (p.projectId) {
-                                                    dispatch(
-                                                        controller.onRowClickedInProjectsListRequest(
-                                                            {
-                                                                projectId:
-                                                                    p.projectId,
-                                                            }
-                                                        )
-                                                    );
+                        <div className="projects-list-wrapper">
+                            {isMobile ? (
+                                <>
+                                    <div className="projects-mobile-sort">
+                                        <Select
+                                            options={sortOptions}
+                                            value={currentSortValue}
+                                            onChange={onSortOptionChange}
+                                        />
+                                    </div>
+                                    <div className="projects-card-list">
+                                        {sortedProjects.map((p) => (
+                                            <div
+                                                key={`${p.projectId}-${p.title}`}
+                                                className="projects-card"
+                                                onClick={() =>
+                                                    openProject(p.projectId)
                                                 }
-                                            }}
-                                            key={`${p.projectId}-${p.title}`}
-                                        >
-                                            <td
-                                                style={{
-                                                    height: 63,
-                                                    width: '33%',
-                                                    minWidth: '40ch',
-                                                }}
                                             >
-                                                <ProjectTitle project={p} />
-                                            </td>
-                                            <td>
-                                                <Typography
-                                                    color={colors.gray30}
-                                                    text={formatDistance(
-                                                        new Date(),
-                                                        new Date(
-                                                            p.lastModified!
-                                                        ),
-                                                        { locale: localize }
-                                                    )}
-                                                    type="body-large"
-                                                />
-                                            </td>
-                                            <td>
+                                                <div className="projects-card__main">
+                                                    <ProjectTitle project={p} />
+                                                    <Typography
+                                                        color={colors.gray30}
+                                                        text={formatDistance(
+                                                            new Date(),
+                                                            new Date(
+                                                                p.lastModified!
+                                                            ),
+                                                            { locale: localize }
+                                                        )}
+                                                        type="body-large"
+                                                    />
+                                                </div>
                                                 <div
                                                     onClick={(e) =>
                                                         onClickDeleteProject(
@@ -355,7 +250,7 @@ export const ProjectsPage = () => {
                                                             p
                                                         )
                                                     }
-                                                    className="delete-project-container"
+                                                    className="delete-project-container projects-card__delete"
                                                 >
                                                     <div className="delete-icon">
                                                         <PlusIcon />
@@ -364,27 +259,234 @@ export const ProjectsPage = () => {
                                                         color={colors.black}
                                                         text={dictionary.delete}
                                                     />
-                                                    <div
-                                                        style={{ width: 10 }}
-                                                    />
                                                 </div>
-                                            </td>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </>
+                            ) : (
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        flex: 1,
+                                    }}
+                                >
+                                    <table style={{ marginTop: 30 }}>
+                                        <tr>
+                                            <th>
+                                                <div className="projects-header-cell">
+                                                    <Typography
+                                                        color={colors.gray30}
+                                                        text={
+                                                            dictionary.projects
+                                                                .title
+                                                        }
+                                                    />
+                                                    <button
+                                                        className="projects-sort-icon-button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setSortMode(
+                                                                'title'
+                                                            );
+                                                            setSortDirection(
+                                                                'asc'
+                                                            );
+                                                        }}
+                                                        type="button"
+                                                        aria-label={
+                                                            dictionary.projects
+                                                                .title
+                                                        }
+                                                    >
+                                                        <span
+                                                            className={`sort-arrow ${
+                                                                sortMode ===
+                                                                    'title' &&
+                                                                sortDirection ===
+                                                                    'asc'
+                                                                    ? 'is-active'
+                                                                    : ''
+                                                            }`}
+                                                        >
+                                                            ▲
+                                                        </span>
+                                                    </button>
+                                                    <button
+                                                        className="projects-sort-icon-button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setSortMode(
+                                                                'title'
+                                                            );
+                                                            setSortDirection(
+                                                                'desc'
+                                                            );
+                                                        }}
+                                                        type="button"
+                                                        aria-label={
+                                                            dictionary.projects
+                                                                .title
+                                                        }
+                                                    >
+                                                        <span
+                                                            className={`sort-arrow ${
+                                                                sortMode ===
+                                                                    'title' &&
+                                                                sortDirection ===
+                                                                    'desc'
+                                                                    ? 'is-active'
+                                                                    : ''
+                                                            }`}
+                                                        >
+                                                            ▼
+                                                        </span>
+                                                    </button>
+                                                </div>
+                                            </th>
+                                            <th>
+                                                <div className="projects-header-cell">
+                                                    <Typography
+                                                        color={colors.gray30}
+                                                        text={
+                                                            dictionary.projects
+                                                                .last_modified
+                                                        }
+                                                    />
+                                                    <button
+                                                        className="projects-sort-icon-button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setSortMode('time');
+                                                            setSortDirection(
+                                                                'asc'
+                                                            );
+                                                        }}
+                                                        type="button"
+                                                        aria-label={
+                                                            dictionary.projects
+                                                                .last_modified
+                                                        }
+                                                    >
+                                                        <span
+                                                            className={`sort-arrow ${
+                                                                sortMode ===
+                                                                    'time' &&
+                                                                sortDirection ===
+                                                                    'asc'
+                                                                    ? 'is-active'
+                                                                    : ''
+                                                            }`}
+                                                        >
+                                                            ▲
+                                                        </span>
+                                                    </button>
+                                                    <button
+                                                        className="projects-sort-icon-button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setSortMode('time');
+                                                            setSortDirection(
+                                                                'desc'
+                                                            );
+                                                        }}
+                                                        type="button"
+                                                        aria-label={
+                                                            dictionary.projects
+                                                                .last_modified
+                                                        }
+                                                    >
+                                                        <span
+                                                            className={`sort-arrow ${
+                                                                sortMode ===
+                                                                    'time' &&
+                                                                sortDirection ===
+                                                                    'desc'
+                                                                    ? 'is-active'
+                                                                    : ''
+                                                            }`}
+                                                        >
+                                                            ▼
+                                                        </span>
+                                                    </button>
+                                                </div>
+                                            </th>
+                                            <th></th>
                                         </tr>
-                                    ))}
-                                </table>
-                            </div>
+                                        {sortedProjects.map((p) => (
+                                            <tr
+                                                onClick={() =>
+                                                    openProject(p.projectId)
+                                                }
+                                                key={`${p.projectId}-${p.title}`}
+                                            >
+                                                <td
+                                                    style={{
+                                                        height: 63,
+                                                        width: '33%',
+                                                        minWidth: '40ch',
+                                                    }}
+                                                >
+                                                    <ProjectTitle project={p} />
+                                                </td>
+                                                <td>
+                                                    <Typography
+                                                        color={colors.gray30}
+                                                        text={formatDistance(
+                                                            new Date(),
+                                                            new Date(
+                                                                p.lastModified!
+                                                            ),
+                                                            { locale: localize }
+                                                        )}
+                                                        type="body-large"
+                                                    />
+                                                </td>
+                                                <td>
+                                                    <div
+                                                        onClick={(e) =>
+                                                            onClickDeleteProject(
+                                                                e,
+                                                                p
+                                                            )
+                                                        }
+                                                        className="delete-project-container"
+                                                    >
+                                                        <div className="delete-icon">
+                                                            <PlusIcon />
+                                                        </div>
+                                                        <Typography
+                                                            color={colors.black}
+                                                            text={
+                                                                dictionary.delete
+                                                            }
+                                                        />
+                                                        <div
+                                                            style={{
+                                                                width: 10,
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </table>
+                                </div>
+                            )}
                         </div>
                     )}
                     {projects.length ? (
-                        <Button
-                            classname="add-project-button-footer"
-                            rounded
-                            color="gray"
-                            title={dictionary.projects.add}
-                            minimize={false}
-                            titleIcon={() => <PlusIcon />}
-                            onPress={onAddProjectClick}
-                        />
+                        <div className="add-project-button-footer">
+                            <Button
+                                rounded
+                                color="gray"
+                                title={dictionary.projects.add}
+                                minimize={false}
+                                titleIcon={() => <PlusIcon />}
+                                onPress={onAddProjectClick}
+                            />
+                        </div>
                     ) : null}
                 </div>
             </div>

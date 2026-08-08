@@ -66,6 +66,76 @@
     align-items: start;
     gap: 6px;
     white-space: nowrap;
+    max-width: min(320px, calc(100vw - 24px));
+    box-sizing: border-box;
+
+    .labkeeper-checkbox,
+    .labkeeper-radio {
+        align-items: flex-start;
+        white-space: normal;
+        max-width: 100%;
+
+        .typography {
+            white-space: normal;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+            line-height: 1.35;
+        }
+    }
+
+    .delete-segment-container {
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 6px;
+        white-space: normal;
+
+        .delete-icon {
+            background-color: $red-20;
+            border: 1px solid $red-20;
+            border-radius: 45px;
+            height: 15px;
+            width: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            rotate: 45deg;
+            flex-shrink: 0;
+            transition-duration: 0.3s;
+
+            svg path {
+                fill: $red-10;
+            }
+        }
+
+        &:hover {
+            cursor: pointer;
+            color: $gray-30;
+
+            .delete-icon {
+                border-color: $red-10;
+            }
+        }
+    }
+
+    &--fullscreen {
+        position: static;
+        width: 100%;
+        max-width: none;
+        height: auto;
+        min-height: 0;
+        flex: 1;
+        overflow-y: auto;
+        white-space: normal;
+        box-shadow: none;
+        border-radius: 0;
+        padding: 16px;
+        padding-bottom: max(16px, env(safe-area-inset-bottom));
+        justify-content: flex-start;
+        align-items: stretch;
+    }
+
     &:before {
         content: '';
         position: absolute;
@@ -74,5 +144,65 @@
         height: 2px;
         background-color: white;
         width: 28px;
+    }
+
+    &--fullscreen:before {
+        display: none;
+    }
+}
+
+.dropdown-menu-fullscreen {
+    position: fixed;
+    inset: 0;
+    z-index: 120;
+    display: flex;
+    flex-direction: column;
+    background: white;
+
+    &__header {
+        flex-shrink: 0;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        min-height: 56px;
+        padding: max(8px, env(safe-area-inset-top))
+            max(12px, env(safe-area-inset-right)) 8px
+            max(12px, env(safe-area-inset-left));
+        border-bottom: 1px solid $gray-50;
+        box-sizing: border-box;
+    }
+
+    &__close {
+        width: 44px;
+        height: 44px;
+        border: 1px solid $gray-40;
+        border-radius: 50%;
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        flex-shrink: 0;
+
+        svg {
+            width: 18px;
+            height: 18px;
+
+            path {
+                stroke: $gray-10;
+            }
+        }
+
+        &:hover {
+            border-color: $gray-30;
+
+            svg path {
+                stroke: $gray-30;
+            }
+        }
+
+        &:active {
+            box-shadow: 0 0 10px rgba($gray-40, 0.5);
+        }
     }
 }

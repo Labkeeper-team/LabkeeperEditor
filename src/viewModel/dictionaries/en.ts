@@ -162,6 +162,14 @@ export const en: Translations = {
         my_projects: 'My projects',
         logout: 'Log out',
         logout_confirmation: 'Are you sure you want to log out?',
+        share: 'Share',
+        language: 'Language',
+        change_language_to: 'Switch language to {language}',
+    },
+    mobile_view: {
+        files: 'Files',
+        editor: 'Editor',
+        pdf: 'PDF',
     },
     tokens_page: {
         title: 'Top up your token balance',

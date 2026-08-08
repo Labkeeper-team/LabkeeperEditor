@@ -156,6 +156,14 @@ export interface Translations {
         my_projects: string;
         logout: string;
         logout_confirmation: string;
+        share: string;
+        language: string;
+        change_language_to: string;
+    };
+    mobile_view: {
+        files: string;
+        editor: string;
+        pdf: string;
     };
     tokens_page: {
         title: string;

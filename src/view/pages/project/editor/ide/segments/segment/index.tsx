@@ -843,6 +843,7 @@ export const SegmentEditor = memo(
                     </div>
                     <DropdownMenu
                         clickable={!projectIsReadonly}
+                        fullScreenOnMobile
                         containerClassname="dropdown-content-contanier-additional"
                     >
                         <DropdownMenuContent
