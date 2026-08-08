@@ -97,6 +97,15 @@ export class LoaderService {
         const savingRevision =
             this.repository.ideViewModelRepository.programChangeRevision();
         const project = this.repository.projectViewModelRepository.project();
+        if (
+            !project &&
+            !this.repository.userViewModelRepository.isAuthenticated()
+        ) {
+            this.repository.persistenceViewModelRepository.setLastProgram(
+                savedProgram
+            );
+            return;
+        }
         if (project) {
             this.repository.ideViewModelRepository.setSaveProjectRequestState(
                 'loading'
