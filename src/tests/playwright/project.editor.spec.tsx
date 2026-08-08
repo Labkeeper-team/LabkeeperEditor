@@ -25,7 +25,7 @@ test('425-display', async ({ page }) => {
     // меняем тип на latex
     await page.locator('div.dropdown-menu-container').first().click();
     await page.getByText('markdown', { exact: true }).click();
-    await page.getByText('Labkeeper').first().click();
+    await page.keyboard.press('Escape');
 
     // Добавляем маркдаун
     await page
@@ -99,7 +99,7 @@ test('phystech-icon-test', async ({ page }) => {
     // меняем тип на latex
     await page.locator('div.dropdown-menu-container').first().click();
     await page.getByText('markdown', { exact: true }).click();
-    await page.getByText('Labkeeper').first().click();
+    await page.keyboard.press('Escape');
 
     // Добавляем маркдаун
     await page
@@ -162,7 +162,7 @@ test('insert-segment-between', async ({ page }) => {
     // меняем тип на latex
     await page.locator('div.dropdown-menu-container').first().click();
     await page.getByText('markdown', { exact: true }).click();
-    await page.getByText('Labkeeper').first().click();
+    await page.keyboard.press('Escape');
 
     // добавляем вычислительный
     await page
@@ -351,7 +351,7 @@ test('save-test', async ({ page }) => {
     // меняем тип на latex
     await page.locator('div.dropdown-menu-container').first().click();
     await page.getByText('markdown', { exact: true }).click();
-    await page.getByText('Labkeeper').first().click();
+    await page.keyboard.press('Escape');
 
     // Добавляем маркдаун
     await page
@@ -419,7 +419,7 @@ test('ESC-test', async ({ page }) => {
     // меняем тип на latex
     await page.locator('div.dropdown-menu-container').first().click();
     await page.getByText('markdown', { exact: true }).click();
-    await page.getByText('Labkeeper').first().click();
+    await page.keyboard.press('Escape');
 
     // Добавляем маркдаун
     await page
@@ -492,7 +492,7 @@ test('Search-test', async ({ page }) => {
     // меняем тип на latex
     await page.locator('div.dropdown-menu-container').first().click();
     await page.getByText('markdown', { exact: true }).click();
-    await page.getByText('Labkeeper').first().click();
+    await page.keyboard.press('Escape');
 
     // Добавляем маркдаун
     await page
@@ -776,7 +776,7 @@ test('llm-prompt-ok-request-test', async ({ page }) => {
     // меняем тип на latex
     await page.locator('div.dropdown-menu-container').first().click();
     await page.getByText('markdown', { exact: true }).click();
-    await page.getByText('Labkeeper').first().click();
+    await page.keyboard.press('Escape');
 
     await page.getByText('GPT').click();
 
@@ -887,7 +887,7 @@ test('many-segments-move', async ({ page }) => {
     // меняем тип на latex
     await page.locator('div.dropdown-menu-container').first().click();
     await page.getByText('markdown', { exact: true }).click();
-    await page.getByText('Labkeeper').first().click();
+    await page.keyboard.press('Escape');
 
     // первый сегмент
     await page
@@ -1036,7 +1036,7 @@ test('remove-lines-with-errors-test', async ({ page }) => {
     // меняем тип на latex
     await page.locator('div.dropdown-menu-container').first().click();
     await page.getByText('markdown', { exact: true }).click();
-    await page.getByText('Labkeeper').first().click();
+    await page.keyboard.press('Escape');
 
     // Добавляем маркдаун
     await page
@@ -1454,7 +1454,7 @@ test('file-list-changes-after-compilation', async ({ page }) => {
     // меняем тип на latex
     await page.locator('div.dropdown-menu-container').first().click();
     await page.getByText('markdown', { exact: true }).click();
-    await page.getByText('Labkeeper').first().click();
+    await page.keyboard.press('Escape');
 
     // Открываем файловый менеджер
     await page.locator('div.file-manager-button').click();
@@ -1527,7 +1527,7 @@ test('double-plots-and-tables-test', async ({ page }) => {
     // меняем тип на latex
     await page.locator('div.dropdown-menu-container').first().click();
     await page.getByText('markdown', { exact: true }).click();
-    await page.getByText('Labkeeper').first().click();
+    await page.keyboard.press('Escape');
 
     // добавляем вычислительный
     await page
