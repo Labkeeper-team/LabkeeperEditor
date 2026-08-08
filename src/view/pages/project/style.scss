@@ -5,7 +5,7 @@
     position: relative;
     display: flex;
     flex-direction: row;
-    height: calc(100vh - $header-height - $main-margin);
+    height: calc(100vh - $header-height);
     width: 100%;
     gap: 8px;
 

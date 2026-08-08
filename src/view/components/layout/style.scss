@@ -51,3 +51,12 @@
         }
     }
 }
+
+/* Tokens: document-scroll — не зажимать layout по viewport */
+html.tokens-route .layout-root {
+    height: auto;
+    max-height: none;
+    flex: none;
+    min-height: 0;
+    overflow: visible;
+}

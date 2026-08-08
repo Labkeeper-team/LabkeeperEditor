@@ -9,6 +9,12 @@
     }
 }
 
+html.tokens-route .fade-in {
+    height: auto;
+    min-height: 0;
+    display: block;
+}
+
 @keyframes fadeIn {
     from {
         opacity: 0;

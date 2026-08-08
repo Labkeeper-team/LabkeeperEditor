@@ -71,6 +71,7 @@ body {
 
 /* Лендинг токенов — полноценная прокрутка документа (остальной UI крутится во внутренних панелях). */
 html.tokens-route {
+    height: auto;
     max-height: none;
     overflow-x: hidden;
     overflow-y: auto;
@@ -79,7 +80,15 @@ html.tokens-route {
 }
 
 body.tokens-route {
+    height: auto;
     overflow-x: auto;
     overflow-y: auto;
     max-height: none;
+}
+
+html.tokens-route #root,
+html.tokens-route .scale-wrapper {
+    height: auto;
+    max-height: none;
+    overflow: visible;
 }
