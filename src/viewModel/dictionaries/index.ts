@@ -279,6 +279,12 @@ export interface Translations {
         alreadyHaveAccount: string;
         createAccount: string;
         continue: string;
+        closeConfirmation: {
+            title: string;
+            description: string;
+            interrupt: string;
+            continue: string;
+        };
         personalDataAgreement: string;
         personalDataPolicyLink: string;
         personalDataAgreementAnd: string;
