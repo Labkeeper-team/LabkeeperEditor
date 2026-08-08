@@ -8,8 +8,6 @@ export interface BuildInfo {
 const version = `v${BUILD_INFO.major}`;
 const uri = '';
 
-export const LABKEEPER_URL = 'https://labkeeper.io/';
-
 export const URLS = {
     compile: `${uri}/api/${version}/public/compile`,
     compilePdf: `${uri}/api/${version}/public/compile/pdf`,
