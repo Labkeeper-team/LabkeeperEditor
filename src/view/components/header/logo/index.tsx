@@ -3,7 +3,7 @@ import { colors } from '../../../styles/colors';
 import { Typography } from '../../typography';
 
 import './style.scss';
-import { BUILD_INFO, LABKEEPER_URL } from '../../../../constants.ts';
+import { BUILD_INFO } from '../../../../constants.ts';
 import { useSelector } from 'react-redux';
 import { useUser } from '../../../store/selectors/program.ts';
 
@@ -13,7 +13,7 @@ export const HeaderLogo = () => {
     const { isAuthenticated, email } = useSelector(useUser);
     return (
         <div className="logo-container">
-            <a className="logo-link" href={LABKEEPER_URL}>
+            <a className="logo-link" href="/">
                 {isAuthenticated && email.includes('@phystech.edu') && (
                     <MiptLogo height={32} width={32} />
                 )}
