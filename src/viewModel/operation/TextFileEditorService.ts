@@ -47,10 +47,7 @@ export class TextFileEditorService {
 
         const currentFile =
             this.repository.ideViewModelRepository.activeTextFile();
-        if (currentFile === fileName) {
-            return;
-        }
-        if (currentFile && currentFile !== fileName) {
+        if (currentFile) {
             if (this.saveTimeout) {
                 clearTimeout(this.saveTimeout);
                 this.saveTimeout = null;

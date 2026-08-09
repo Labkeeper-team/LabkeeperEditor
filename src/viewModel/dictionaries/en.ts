@@ -323,6 +323,13 @@ export const en: Translations = {
         alreadyHaveAccount: 'Already have an account?',
         createAccount: 'Create account',
         continue: 'Continue',
+        closeConfirmation: {
+            title: 'Interrupt the process?',
+            description:
+                'The entered data will be lost, and registration or password recovery will be interrupted.',
+            interrupt: 'Interrupt',
+            continue: 'Continue',
+        },
         personalDataAgreement:
             'I consent to the processing of my personal data in accordance with',
         personalDataPolicyLink: 'the Personal Data Processing Policy',

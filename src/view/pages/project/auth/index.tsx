@@ -790,7 +790,34 @@ export const AuthModal = () => {
     const currentView = useSelector(
         (state: StorageState) => state.auth.currentView
     );
+    const emailRequest = useSelector(
+        (state: StorageState) => state.auth.emailRequest
+    );
     const dispatch = useDispatch<AppDispatch>();
+    const dictionary = useSelector(useDictionary);
+    const [closeConfirmationRequested, setCloseConfirmationRequested] =
+        useState(false);
+
+    const authProcessStarted =
+        (currentView === 'email' && emailRequest !== 'unknown') ||
+        currentView === 'code' ||
+        currentView === 'password';
+    const showCloseConfirmation =
+        closeConfirmationRequested && authProcessStarted;
+
+    const closeAuth = () => {
+        setCloseConfirmationRequested(false);
+        dispatch(controller.onAuthClosedRequest());
+    };
+
+    const requestClose = () => {
+        if (authProcessStarted) {
+            setCloseConfirmationRequested(true);
+            return;
+        }
+
+        closeAuth();
+    };
 
     const renderView = () => {
         switch (currentView) {
@@ -815,15 +842,73 @@ export const AuthModal = () => {
         }
     }, [currentView]);
 
+    useEffect(() => {
+        if (!authProcessStarted && closeConfirmationRequested) {
+            queueMicrotask(() => setCloseConfirmationRequested(false));
+        }
+    }, [authProcessStarted, closeConfirmationRequested]);
+
     return (
-        <Modal
-            showModal={currentView !== 'closed'}
-            focusKey={currentView}
-            onClose={() => {
-                dispatch(controller.onAuthClosedRequest());
-            }}
-        >
-            {renderView()}
-        </Modal>
+        <>
+            <Modal
+                showModal={currentView !== 'closed'}
+                focusKey={currentView}
+                closeable={!showCloseConfirmation}
+                onClose={requestClose}
+            >
+                {renderView()}
+            </Modal>
+            <Modal
+                showModal={showCloseConfirmation}
+                onClose={() => setCloseConfirmationRequested(false)}
+            >
+                <div
+                    style={{
+                        padding: '30px 40px 40px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        textAlign: 'center',
+                        maxWidth: 420,
+                    }}
+                >
+                    <Typography
+                        text={dictionary.authorization.closeConfirmation.title}
+                        type="h2"
+                        color={colors.gray10}
+                    />
+                    <Typography
+                        text={
+                            dictionary.authorization.closeConfirmation
+                                .description
+                        }
+                        type="body"
+                        color={colors.gray20}
+                        style={{ marginTop: 16 }}
+                    />
+                    <Button
+                        classname="full-width"
+                        onPress={() => setCloseConfirmationRequested(false)}
+                        title={
+                            dictionary.authorization.closeConfirmation.continue
+                        }
+                        color="blue"
+                        rounded
+                        minimize={false}
+                        style={{ marginTop: 24 }}
+                    />
+                    <Button
+                        classname="full-width"
+                        onPress={closeAuth}
+                        title={
+                            dictionary.authorization.closeConfirmation.interrupt
+                        }
+                        color="gray"
+                        rounded
+                        minimize={false}
+                        style={{ marginTop: 11 }}
+                    />
+                </div>
+            </Modal>
+        </>
     );
 };

@@ -333,6 +333,13 @@ export const ru: Translations = {
         alreadyHaveAccount: 'Уже есть аккаунт?',
         createAccount: 'Создать аккаунт',
         continue: 'Продолжить',
+        closeConfirmation: {
+            title: 'Прервать процесс?',
+            description:
+                'Введённые данные будут потеряны, а процесс регистрации или восстановления пароля прервётся.',
+            interrupt: 'Прервать',
+            continue: 'Продолжить',
+        },
         personalDataAgreement:
             'Я даю согласие на обработку моих персональных данных в соответствии с',
         personalDataPolicyLink: 'Политикой обработки персональных данных',
