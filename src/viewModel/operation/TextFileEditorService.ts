@@ -70,7 +70,7 @@ export class TextFileEditorService {
         );
 
         try {
-            const response = await fetch(file.url);
+            const response = await fetch(file.url, { cache: 'no-store' });
             const content = await response.text();
             if (
                 loadRequestId !== this.loadRequestId ||
