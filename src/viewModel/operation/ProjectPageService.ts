@@ -13,6 +13,7 @@ import { CompilationService } from '../domain/CompilationService.ts';
 import { ResetService } from '../domain/ResetService.ts';
 import { Program, ProjectType } from '../../model/domain.ts';
 import { TextFileEditorService } from './TextFileEditorService.ts';
+import { MOBILE_BREAKPOINT } from '../../view/hooks/useMobile';
 
 export class ProjectPageService {
     repository: ViewModelRepository;
@@ -436,6 +437,7 @@ export class ProjectPageService {
                 this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(
                     activeIndex
                 );
+                this.switchToMobileEditorView();
             } else if (promptResult.isUnauth) {
                 this.repository.toast(
                     this.repository.dictionary.filemanager.errors
@@ -518,6 +520,9 @@ export class ProjectPageService {
             this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(
                 newIndex
             );
+            // После компиляции (generateImage) pdfUpdated может увести на PDF —
+            // редактор ставим последним, чтобы остаться на сегментах.
+            this.switchToMobileEditorView();
         } else if (promptResult.isUnauth) {
             this.repository.toast(
                 this.repository.dictionary.filemanager.errors.sessionExpired,
@@ -606,5 +611,20 @@ export class ProjectPageService {
         this.repository.settingsViewModelRepository.setShowProjectPromptModal(
             false
         );
+    }
+
+    private switchToMobileEditorView() {
+        if (
+            typeof window === 'undefined' ||
+            window.innerWidth > MOBILE_BREAKPOINT
+        ) {
+            return;
+        }
+        const switchView = () =>
+            this.repository.settingsViewModelRepository.setMobileView('editor');
+        // Сразу и на следующем macrotask: перекрываем эффект pdfUpdated
+        // после generateImage → compile.
+        switchView();
+        setTimeout(switchView, 0);
     }
 }

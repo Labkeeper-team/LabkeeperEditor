@@ -4,20 +4,26 @@
         width: 21px;
         height: 45px;
         right: 130px;
-        top: 0px;
+        top: 0;
         pointer-events: none;
+
         input {
             display: none;
         }
-        //transition: width 0.4s;
     }
+
     .input-show {
         right: 5px;
-        top: 0px;
+        top: 0;
         height: 45px;
         width: 98%;
         position: absolute;
         transition: width 0.4s;
-        //width: 100px;
+        z-index: 5;
+    }
+
+    .action-button--search-hidden {
+        visibility: hidden;
+        pointer-events: none;
     }
 }

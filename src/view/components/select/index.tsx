@@ -9,6 +9,7 @@ import {
 import {
     ISelectOptions,
     SelectClassNames,
+    SelectInfoItem,
     SelectItem,
     SelectOption,
 } from './model';
@@ -20,8 +21,20 @@ import { useHotkeys } from 'react-hotkeys-hook';
 const isSelectSeparator = (option: SelectItem): option is { separator: true } =>
     option.separator === true;
 
+const isSelectInfo = (option: SelectItem): option is SelectInfoItem =>
+    'info' in option && option.info === true;
+
+const isSelectOption = (option: SelectItem): option is SelectOption =>
+    !isSelectSeparator(option) && !isSelectInfo(option);
+
 const getOptionKey = (option: SelectItem, index: number): Key => {
-    return isSelectSeparator(option) ? `separator-${index}` : option.value;
+    if (isSelectSeparator(option)) {
+        return `separator-${index}`;
+    }
+    if (isSelectInfo(option)) {
+        return `info-${index}`;
+    }
+    return option.value;
 };
 
 export const Select = ({
@@ -33,6 +46,7 @@ export const Select = ({
     containerClassName,
     minimize = false,
     fitToOptionsWidth = false,
+    triggerContent,
 }: ISelectOptions) => {
     const [isOpen, setIsOpen] = useState(false); // Состояние открытия/закрытия списка
     const [optionsWidth, setOptionsWidth] = useState<number>();
@@ -42,10 +56,11 @@ export const Select = ({
     const selectHeaderRef = useRef<HTMLDivElement>(null);
     const selectedValue = useMemo(() => {
         return options.find(
-            (o): o is SelectOption => !isSelectSeparator(o) && o.value === value
+            (o): o is SelectOption => isSelectOption(o) && o.value === value
         );
     }, [value, options]);
     const displayTitle = title || selectedValue?.label;
+    const useIconTrigger = Boolean(triggerContent);
 
     useLayoutEffect(() => {
         if (
@@ -65,7 +80,9 @@ export const Select = ({
             (parseFloat(headerStyles.borderLeftWidth) || 0) +
             (parseFloat(headerStyles.borderRightWidth) || 0);
         const titleWidth =
-            titleWidthMeasurerRef.current.getBoundingClientRect().width +
+            (useIconTrigger
+                ? 36
+                : titleWidthMeasurerRef.current.getBoundingClientRect().width) +
             headerHorizontalSpacing;
 
         setOptionsWidth(
@@ -74,7 +91,7 @@ export const Select = ({
                 titleWidth
             )
         );
-    }, [displayTitle, fitToOptionsWidth, options]);
+    }, [displayTitle, fitToOptionsWidth, options, useIconTrigger]);
 
     // Обработчик клика по опции
     const handleOptionClick = (_value: SelectOption) => {
@@ -125,6 +142,7 @@ export const Select = ({
                     open: isOpen,
                     minimize: minimize,
                     'fit-options-width': fitToOptionsWidth,
+                    'select--icon-trigger': useIconTrigger,
                 }
             )}
             style={
@@ -145,6 +163,13 @@ export const Select = ({
                                 key={getOptionKey(option, index)}
                                 className="select-option-separator"
                             />
+                        ) : isSelectInfo(option) ? (
+                            <div
+                                key={getOptionKey(option, index)}
+                                className="select-width-measurer__option select-option-info"
+                            >
+                                {option.label}
+                            </div>
                         ) : (
                             <div
                                 key={getOptionKey(option, index)}
@@ -157,11 +182,13 @@ export const Select = ({
                 </div>
             ) : null}
             <div
-                className="select-header"
+                className={classNames('select-header', {
+                    'select-header--icon-trigger': useIconTrigger,
+                })}
                 onClick={toggleDropdown}
                 ref={selectHeaderRef}
             >
-                {fitToOptionsWidth ? (
+                {fitToOptionsWidth && !useIconTrigger ? (
                     <span
                         className="select-title-width-measurer"
                         aria-hidden
@@ -170,7 +197,13 @@ export const Select = ({
                         {displayTitle}
                     </span>
                 ) : null}
-                <span className="selected-value">{displayTitle}</span>
+                {useIconTrigger ? (
+                    <span className="select-header__trigger-content">
+                        {triggerContent}
+                    </span>
+                ) : (
+                    <span className="selected-value">{displayTitle}</span>
+                )}
             </div>
             {isOpen && (
                 <ul className="select-options">
@@ -181,6 +214,14 @@ export const Select = ({
                                 className="select-option-separator"
                                 role="presentation"
                             />
+                        ) : isSelectInfo(option) ? (
+                            <li
+                                key={getOptionKey(option, index)}
+                                className="select-option-info"
+                                role="presentation"
+                            >
+                                {option.label}
+                            </li>
                         ) : (
                             <li
                                 key={getOptionKey(option, index)}

@@ -19,11 +19,19 @@ import '../ide/style.scss';
 import '../ide/header/style.scss';
 import './style.scss';
 
-/** Базовый цвет для текста без синтаксических тегов (fallback в CM6). */
+/** Fallback для обычных текстовых файлов без языкового режима. */
 const TEXT_FILE_PLAIN_TEXT_HIGHLIGHT = syntaxHighlighting(
     HighlightStyle.define([], { all: { color: '#000' } }),
     { fallback: true }
 );
+
+const TEXT_FILE_EDITOR_BASIC_SETUP = {
+    lineNumbers: true,
+    foldGutter: false,
+    highlightSelectionMatches: false,
+    highlightActiveLine: false,
+    highlightActiveLineGutter: false,
+} as const;
 
 const TEXT_FILE_EDITOR_THEME = EditorView.theme({
     '.cm-content': {
@@ -119,11 +127,15 @@ export const TextFileEditor = () => {
         []
     );
 
+    const isLatexFile = activeTextFile
+        ? isLatexTextFilePath(activeTextFile)
+        : false;
+
     const languageExtension = useMemo(() => {
         if (!activeTextFile) {
             return [];
         }
-        if (isLatexTextFilePath(activeTextFile)) {
+        if (isLatexFile) {
             return [
                 latex({
                     autoCloseTags: true,
@@ -135,17 +147,17 @@ export const TextFileEditor = () => {
             ];
         }
         return [];
-    }, [activeTextFile]);
+    }, [activeTextFile, isLatexFile]);
 
     const codeMirrorExtensions = useMemo(
         () => [
             ...languageExtension,
             EditorView.lineWrapping,
-            TEXT_FILE_PLAIN_TEXT_HIGHLIGHT,
+            ...(isLatexFile ? [] : [TEXT_FILE_PLAIN_TEXT_HIGHLIGHT]),
             TEXT_FILE_EDITOR_THEME,
             textFileEditorWheelScroll,
         ],
-        [languageExtension]
+        [isLatexFile, languageExtension]
     );
 
     const onCreateEditor = useCallback((view: EditorView) => {
@@ -226,11 +238,7 @@ export const TextFileEditor = () => {
                         onChange={onChange}
                         onCreateEditor={onCreateEditor}
                         readOnly={isReadonly}
-                        basicSetup={{
-                            lineNumbers: true,
-                            foldGutter: false,
-                            syntaxHighlighting: false,
-                        }}
+                        basicSetup={TEXT_FILE_EDITOR_BASIC_SETUP}
                     />
                 ) : null}
             </div>

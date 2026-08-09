@@ -13,9 +13,12 @@ import {
 import { controller } from '../../../../main.tsx';
 import { LabkeeperFile } from '../../../../model/domain.ts';
 import { FileTreeView } from './FileTreeView.tsx';
+import { useIsMobile } from '../../../hooks/useMobile';
+import { setMobileView } from '../../../store/slices/settings';
 
 export const FileManager = () => {
     const dispatch = useDispatch<AppDispatch>();
+    const isMobile = useIsMobile();
 
     const dictionary = useSelector(useDictionary);
     const showFileManager = useSelector(useShowFileManager);
@@ -54,9 +57,18 @@ export const FileManager = () => {
     const showRefreshLoader =
         getFilesRequestState === 'loading' && filesLoadedOnce;
 
-    if (!showFileManager) {
+    if (!isMobile && !showFileManager) {
         return null;
     }
+
+    const onClose = () => {
+        if (isMobile) {
+            dispatch(setMobileView('editor'));
+            return;
+        }
+
+        dispatch(controller.onCrossButtonInFileManagerClickedRequest());
+    };
 
     return (
         <div className="manager-container">
@@ -64,14 +76,7 @@ export const FileManager = () => {
                 <div className="manager-header-title">
                     {dictionary.filemanager.title}
                 </div>
-                <div
-                    onClick={() =>
-                        dispatch(
-                            controller.onCrossButtonInFileManagerClickedRequest()
-                        )
-                    }
-                    className="close-icon-container"
-                >
+                <div onClick={onClose} className="close-icon-container">
                     <PlusIcon style={{ rotate: '45deg' }} />
                 </div>
             </div>

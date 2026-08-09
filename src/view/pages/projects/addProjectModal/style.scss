@@ -3,6 +3,10 @@
     display: flex;
     flex-direction: column;
 
+    @media screen and (max-width: 767px) {
+        padding: 20px 16px 24px;
+    }
+
     form {
         display: flex;
         flex-direction: column;
@@ -19,9 +23,17 @@
         display: flex;
         gap: 18px;
         align-items: center;
+        flex-wrap: wrap;
+
+        @media screen and (max-width: 767px) {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 12px;
+        }
     }
 
     .add-project-modal-button {
         margin-top: 24px;
+        min-height: 44px;
     }
 }

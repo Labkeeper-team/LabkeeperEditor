@@ -1,37 +1,66 @@
-// components/ScaleWrapper.jsx
 import { useEffect, useRef } from 'react';
-import { useScaleToMinWidth } from '../../hooks/useScaleToMinWidth';
+import {
+    isTokensLandingPath,
+    useScaleToMinWidth,
+} from '../../hooks/useScaleToMinWidth';
+
+function syncInnerHeight() {
+    const vv = window.visualViewport;
+    const height = vv?.height ?? window.innerHeight;
+    document.documentElement.style.setProperty(
+        '--inner-height',
+        `${Math.round(height)}px`
+    );
+}
+
+function resetWindowScroll() {
+    // iOS often shifts the layout viewport when the keyboard opens,
+    // leaving an empty strip under the app chrome.
+    if (window.scrollY !== 0 || window.scrollX !== 0) {
+        window.scrollTo(0, 0);
+    }
+    if (document.documentElement.scrollTop !== 0) {
+        document.documentElement.scrollTop = 0;
+    }
+    if (document.body.scrollTop !== 0) {
+        document.body.scrollTop = 0;
+    }
+}
 
 export default function ScaleWrapper({ minWidth = 1024, children }) {
     const ref = useRef(null);
     useScaleToMinWidth(ref, minWidth);
 
     useEffect(() => {
-        // Здесь долждны быть логика с калькулируемой высотой.но пока оставим так
-        // Вместо 100dvh ставить window.innerHeight
-        const setVh = () => {
-            document.documentElement.style.setProperty(
-                '--inner-height',
-                `100dvh`
-            );
+        const onViewportChange = () => {
+            syncInnerHeight();
+            // /tokens uses document scroll; visualViewport resize/scroll
+            // (URL bar, etc.) must not yank the page back to the top.
+            if (!isTokensLandingPath()) {
+                resetWindowScroll();
+            }
         };
 
-        setVh();
+        onViewportChange();
 
-        // Для более точного рассчета  надо производить калькуляции с window.innerHeight
-        // это нужно для поддержки старых браузеров
-        // так же надо добавить какие то ивенЛистенеры для появвления.исчезновения клавиатуры. focusIn focusOut не отработал
-        /*window.addEventListener('resize', setVh);
-        window.addEventListener('orientationchange', setVh);
+        const vv = window.visualViewport;
+        vv?.addEventListener('resize', onViewportChange);
+        vv?.addEventListener('scroll', onViewportChange);
+        window.addEventListener('resize', onViewportChange);
+        window.addEventListener('orientationchange', onViewportChange);
 
         return () => {
-            window.removeEventListener('resize', setVh);
-            window.removeEventListener('orientationchange', setVh);
-        };*/
+            vv?.removeEventListener('resize', onViewportChange);
+            vv?.removeEventListener('scroll', onViewportChange);
+            window.removeEventListener('resize', onViewportChange);
+            window.removeEventListener('orientationchange', onViewportChange);
+        };
     }, []);
+
     return (
         <div
             ref={ref}
+            className="scale-wrapper"
             style={{ transition: 'transform .2s ease, width .2s ease' }}
         >
             {children}

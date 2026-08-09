@@ -1,3 +1,4 @@
+@use '../../../styles/common' as *;
 @use '../../../styles/colors' as *;
 
 .logo-container {
@@ -6,6 +7,12 @@
     align-items: center;
     gap: 5px;
     user-select: none;
+
+    &__title {
+        @media screen and (max-width: $mobile-breakpoint) {
+            display: none;
+        }
+    }
 
     .logo-link {
         display: inline-flex;

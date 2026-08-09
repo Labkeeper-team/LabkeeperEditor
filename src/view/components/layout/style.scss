@@ -17,3 +17,46 @@
         }
     }
 }
+
+.layout-root {
+    @media screen and (max-width: 1024px) {
+        height: 100%;
+        max-height: 100%;
+        flex: 1 1 0;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+
+        > .labkeeper_header-shell {
+            flex-shrink: 0;
+        }
+    }
+
+    .layout-outlet-container:not(.layout-outlet-container--landing) {
+        @media screen and (max-width: 1024px) {
+            flex: 1 1 0;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+
+            /* Suspense fallback — растянуть на весь outlet */
+            > .suspnese-loader {
+                flex: 1 1 0;
+                min-height: 0;
+                height: auto;
+                width: 100%;
+            }
+        }
+    }
+}
+
+/* Tokens: document-scroll — не зажимать layout по viewport */
+html.tokens-route .layout-root {
+    height: auto;
+    max-height: none;
+    flex: none;
+    min-height: 0;
+    overflow: visible;
+}

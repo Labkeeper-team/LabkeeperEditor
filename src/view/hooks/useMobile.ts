@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 
-export const useIsMobile = (maxWidth = 1024) => {
+export const MOBILE_BREAKPOINT = 767;
+
+export const useIsMobile = (maxWidth = MOBILE_BREAKPOINT) => {
     const [isMobile, setIsMobile] = useState(
         () => window.innerWidth <= maxWidth
     );

@@ -18,11 +18,13 @@ import { useDictionary } from '../../../../../../store/selectors/translations';
 import { AppDispatch, StorageState } from '../../../../../../store';
 import { setShowSearch } from '../../../../../../store/slices/settings';
 import { controller } from '../../../../../../../main.tsx';
+import { useIsMobile } from '../../../../../../hooks/useMobile';
 
 export const SettingsButton = () => {
     const dispatch = useDispatch<AppDispatch>();
     const dictionary = useSelector(useDictionary);
     const search = useSelector(useSearch);
+    const isMobile = useIsMobile();
     const showSearch = useSelector(
         (state: StorageState) => state.settings.showSearch
     );
@@ -31,22 +33,27 @@ export const SettingsButton = () => {
         <div
             className={classNames(
                 InterfaceTourAnchorClassnames.CodeSettings,
-                'code-settings-header-container'
+                'code-settings-header-container',
+                {
+                    'code-settings-header-container--mobile': isMobile,
+                }
             )}
         >
             <div className="action-button">
-                <DropdownMenu icon={<CodeSettingsIcon />}>
+                <DropdownMenu icon={<CodeSettingsIcon />} fullScreenOnMobile>
                     {showSearch ? null : <ProjectSettings />}
                 </DropdownMenu>
             </div>
             <div className="action-button">
-                <DropdownMenu icon={<BookIcon />}>
+                <DropdownMenu icon={<BookIcon />} fullScreenOnMobile>
                     {showSearch ? null : <HeaderHelperItems />}
                 </DropdownMenu>
             </div>
             <div
                 onClick={() => dispatch(setShowSearch(true))}
-                className="action-button"
+                className={classNames('action-button', {
+                    'action-button--search-hidden': showSearch,
+                })}
             >
                 <SearchIcon />
             </div>

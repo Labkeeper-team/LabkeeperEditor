@@ -3,7 +3,9 @@ import './style.scss';
 import { ModalProps } from './model';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { CloseModalIcon } from '../../icons';
-import { useEffect } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
+import { useIsMobile } from '../../hooks/useMobile';
+
 const SCROLL_KEYS = new Set([
     ' ',
     'Spacebar',
@@ -14,7 +16,6 @@ const SCROLL_KEYS = new Set([
     'ArrowUp',
     'ArrowDown',
 ]);
-import { useLayoutEffect, useRef } from 'react';
 
 const focusableSelector = [
     '[data-autofocus]:not([disabled])',
@@ -43,6 +44,8 @@ export const Modal = ({
     focusKey,
     closeable = true,
 }: ModalProps) => {
+    const isMobile = useIsMobile();
+
     useHotkeys(
         'esc',
         () => {
@@ -78,6 +81,10 @@ export const Modal = ({
             event.preventDefault();
         };
         const onTouchMove = (event: TouchEvent) => {
+            const target = event.target;
+            if (target instanceof Node && modalRef.current?.contains(target)) {
+                return;
+            }
             event.preventDefault();
         };
         const onKeyDown = (event: KeyboardEvent) => {
@@ -103,6 +110,17 @@ export const Modal = ({
     if (!showModal) {
         return null;
     }
+
+    const closeButton = closeable ? (
+        <button
+            type="button"
+            className="close-button-container"
+            onClick={onClose}
+            aria-label="Close"
+        >
+            <CloseModalIcon />
+        </button>
+    ) : null;
 
     return (
         <div
@@ -147,17 +165,14 @@ export const Modal = ({
                 isMouseDownOnOverlayRef.current = false;
             }}
         >
-            {closeable && (
-                <div className="close-button-container" onClick={onClose}>
-                    <CloseModalIcon />
-                </div>
-            )}
+            {!isMobile && closeButton}
             <div
                 ref={modalRef}
                 tabIndex={-1}
                 onClick={(e) => e.stopPropagation()}
                 className="modal-contaier"
             >
+                {isMobile && closeButton}
                 {children}
             </div>
         </div>

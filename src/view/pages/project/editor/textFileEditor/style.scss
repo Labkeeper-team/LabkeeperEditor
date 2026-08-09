@@ -105,11 +105,9 @@
     min-width: 0;
     width: 100%;
 
-    > .run-button {
-        flex-shrink: 0;
-    }
-
     .ide-flexibility-container.text-file-editor-body {
         overflow: hidden;
+        flex: 1;
+        min-height: 0;
     }
 }

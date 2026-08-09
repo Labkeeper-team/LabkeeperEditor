@@ -79,6 +79,11 @@ export const useShowFileManager = createSelector(
     (settings) => settings.showFileManager
 );
 
+export const useMobileView = createSelector(
+    (state: StorageState) => state.settings,
+    (settings) => settings.mobileView
+);
+
 export const useInstructionsExpanded = createSelector(
     (state: StorageState) => state.persistence.instructionExpanded,
     (s) => s
