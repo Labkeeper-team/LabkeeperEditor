@@ -10,6 +10,26 @@
     min-height: 0;
     height: inherit;
     background-color: $white;
+
+    .run-button-bar {
+        flex-shrink: 0;
+        width: 100%;
+        box-sizing: border-box;
+        z-index: 6;
+        background-color: $white;
+
+        @media screen and (max-width: $mobile-breakpoint) {
+            // Потенциально решение некоторох проблем телефонных -но и баги тоже  могут быть
+            // padding-bottom: env(safe-area-inset-bottom, 0px);
+            box-shadow: 0 -4px 12px rgba(14, 22, 33, 0.06);
+        }
+
+        .run-button {
+            width: 100%;
+            box-sizing: border-box;
+        }
+    }
+
     .ide-flexibility-container {
         display: flex;
         flex-direction: column;
@@ -19,21 +39,10 @@
         min-height: 0;
 
         .run-button-bar {
-            flex-shrink: 0;
             position: sticky;
             bottom: 0;
-            z-index: 6;
-            background-color: $white;
-
-            @media screen and (max-width: $mobile-breakpoint) {
-                padding-bottom: env(safe-area-inset-bottom, 0px);
-                box-shadow: 0 -4px 12px rgba(14, 22, 33, 0.06);
-            }
-
-            .run-button {
-                width: 100%;
-            }
         }
+
         .ide-loading-wrapper {
             display: flex;
             align-items: center;

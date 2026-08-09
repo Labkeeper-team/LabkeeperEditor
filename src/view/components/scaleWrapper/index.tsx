@@ -1,5 +1,8 @@
 import { useEffect, useRef } from 'react';
-import { useScaleToMinWidth } from '../../hooks/useScaleToMinWidth';
+import {
+    isTokensLandingPath,
+    useScaleToMinWidth,
+} from '../../hooks/useScaleToMinWidth';
 
 function syncInnerHeight() {
     const vv = window.visualViewport;
@@ -31,7 +34,11 @@ export default function ScaleWrapper({ minWidth = 1024, children }) {
     useEffect(() => {
         const onViewportChange = () => {
             syncInnerHeight();
-            resetWindowScroll();
+            // /tokens uses document scroll; visualViewport resize/scroll
+            // (URL bar, etc.) must not yank the page back to the top.
+            if (!isTokensLandingPath()) {
+                resetWindowScroll();
+            }
         };
 
         onViewportChange();

@@ -5,7 +5,8 @@ import { MOBILE_BREAKPOINT } from './useMobile';
 
 const RESCALE_EVENT = 'labkeeper:viewport-rescale';
 
-function isTokensLandingPath() {
+/** Document-scrolled marketing page; must not force window scroll to 0. */
+export function isTokensLandingPath() {
     return window.location.pathname === Routes.Tokens;
 }
 
