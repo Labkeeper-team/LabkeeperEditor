@@ -1,0 +1,166 @@
+@use '../../../styles/colors' as *;
+
+.project-tags-dropdown {
+    position: absolute;
+    right: 0;
+    width: 260px;
+    max-width: min(260px, calc(100vw - 12px));
+    box-sizing: border-box;
+    border: 1px solid $gray-50;
+    border-radius: 10px;
+    background: $white;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+    z-index: 1000;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.project-tags-dropdown.open-down {
+    top: 100%;
+    margin-top: 2px;
+}
+
+.project-tags-dropdown.open-up {
+    bottom: 100%;
+    margin-bottom: 2px;
+}
+
+.project-tags-dropdown-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.project-tags-dropdown .typography.project-tags-hint {
+    font-size: 13px;
+    line-height: 18px;
+    flex: 1;
+}
+
+.project-tags-close-button {
+    border: none;
+    background: transparent;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    svg {
+        width: 12px;
+        height: 12px;
+        path {
+            fill: $gray-20;
+        }
+    }
+}
+
+.project-tags-scroll {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 146px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+.project-tag-option {
+    border: 1px solid $gray-50;
+    background: $white;
+    text-align: left;
+    border-radius: 8px;
+    padding: 6px 8px;
+    font-size: 13px;
+    line-height: 18px;
+    color: $gray-10;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    &[data-selected='true'] {
+        border-color: $blue-10;
+        background: rgba($blue-10, 0.12);
+        color: $blue-10;
+    }
+}
+
+.project-tag-option-check {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    svg {
+        width: 12px;
+        height: 12px;
+    }
+}
+
+.project-tags-input-row {
+    display: flex;
+    position: relative;
+}
+
+.project-tags-new-input-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    min-width: 0;
+}
+
+.project-tags-color-picker-button {
+    width: 28px;
+    min-width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid $gray-50;
+    background: $white;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+}
+
+.project-tags-color-preview {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.project-tags-input {
+    flex: 1;
+    min-width: 0;
+    border: 1px solid $gray-50;
+    border-radius: 8px;
+    padding: 8px;
+    font-size: 13px;
+    line-height: 18px;
+    outline: none;
+}
+
+.project-tags-add-button {
+    border: none;
+    width: 28px;
+    min-width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: $blue-10;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    svg {
+        width: 11px;
+        height: 11px;
+        path {
+            fill: $white;
+        }
+    }
+}

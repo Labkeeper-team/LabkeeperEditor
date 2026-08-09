@@ -1,0 +1,97 @@
+@use '../../../styles/colors' as *;
+
+.project-tags-filter-dropdown {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 4px);
+    width: min(420px, 65vw);
+    max-height: min(60vh, 520px);
+    background: $white;
+    border: 1px solid $gray-50;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+    z-index: 1000;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.project-tags-filter-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.project-tags-filter-title {
+    flex: 1;
+}
+
+.project-tags-filter-close-button {
+    border: none;
+    background: transparent;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    svg {
+        width: 12px;
+        height: 12px;
+        path {
+            fill: $gray-20;
+        }
+    }
+}
+
+.project-tags-filter-list {
+    max-height: 168px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.project-tags-filter-option {
+    border: 1px solid $gray-50;
+    border-radius: 8px;
+    padding: 8px 10px;
+    background: $white;
+    color: $gray-10;
+    font-size: 13px;
+    line-height: 18px;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    cursor: pointer;
+    &[data-selected='true'] {
+        border-color: $blue-10;
+        background: rgba($blue-10, 0.12);
+        color: $blue-10;
+    }
+    svg {
+        width: 12px;
+        height: 12px;
+    }
+}
+
+.project-tags-filter-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.projects-filter-clear-button {
+    border: 1px solid $gray-50;
+    background: $white;
+    color: $gray-20;
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 12px;
+    cursor: pointer;
+}

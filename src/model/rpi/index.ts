@@ -5,6 +5,7 @@ import {
     Program,
     Project,
     ProjectShort,
+    ProjectTag,
     ProjectType,
     UserInfo,
 } from '../domain.ts';
@@ -177,6 +178,11 @@ export interface Rpi {
         type: ProjectType
     ): Promise<RequestResult>;
 
+    updateProjectTagsRequest(
+        projectId: string,
+        tags: ProjectTag[]
+    ): Promise<RequestResult>;
+
     sendEmailWithCodeRequest(
         email: string,
         registration: boolean,
@@ -278,6 +284,9 @@ export const mockRpi = (): Rpi => {
             throw new Error('Not implemented');
         },
         setProjectVisibilityRequest: () => {
+            throw new Error('Not implemented');
+        },
+        updateProjectTagsRequest: () => {
             throw new Error('Not implemented');
         },
         sendEmailWithCodeRequest: () => {

@@ -1,7 +1,5 @@
-import { useDispatch, useSelector } from 'react-redux';
-import { formatDistance } from 'date-fns';
-import { enGB, ru } from 'date-fns/locale';
-import React, { useCallback, useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
+import React, { useCallback, useState, useRef } from 'react';
 
 import './style.scss';
 import { Typography } from '../../components/typography';
@@ -11,45 +9,68 @@ import { Modal } from '../../components/modal';
 import { AddProjectModal } from './addProjectModal';
 import { DeleteProjectModal } from './deleteProjectModal';
 import { ProjectShort } from '../../../model/domain';
-import { ProjectTitle } from './projectTitle';
+import { ProjectRow } from './projectRow';
+import { ProjectTagsFilterModal } from './projectTagsFilterModal';
+import { SortableHeaderCell } from './sortableHeaderCell';
+import { TagChip } from './tagChip';
+import { DEFAULT_TAG_COLOR } from './tagColorUtils';
+import {
+    SortDirection,
+    SortMode,
+    usePruneSelectedFilterTags,
+    useSortedFilteredProjects,
+} from './useSortedFilteredProjects';
+import {
+    useProjectTagKeysByProject,
+    useSelectedFilterTagKeys,
+    useTagMap,
+} from '../../store/selectors/projectTags';
 import { useProjects } from '../../store/selectors/program';
 import { colors } from '../../styles/colors';
-import {
-    useCurrentLanguage,
-    useDictionary,
-} from '../../store/selectors/translations';
-import { AppDispatch, StorageState } from '../../store';
-import { controller } from '../../../main.tsx';
+import { useDictionary } from '../../store/selectors/translations';
+import { StorageState } from '../../store';
+import useClickOutside from '../../hooks/useClickOutside';
 
-type SortMode = 'time' | 'title';
-type SortDirection = 'asc' | 'desc';
+const NO_IGNORE_SELECTORS: string[] = [];
 
 export const ProjectsPage = () => {
     const [showAddModal, setShowAddModal] = useState(false);
+    const [showTagsFilterModal, setShowTagsFilterModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState<
         false | ProjectShort
     >(false);
     const [sortMode, setSortMode] = useState<SortMode>('time');
     const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+    const [openedTagPickerProjectId, setOpenedTagPickerProjectId] = useState<
+        string | null
+    >(null);
+    const projectsScrollContainerRef = useRef<HTMLDivElement | null>(null);
 
     const dictionary = useSelector(useDictionary);
-    const lang = useSelector(useCurrentLanguage);
     const projects = useSelector(useProjects);
+    const selectedFilterTagKeys = useSelector(useSelectedFilterTagKeys);
+    const tagMap = useSelector(useTagMap);
+    const projectTagKeysByProject = useSelector(useProjectTagKeysByProject);
     const getProjectsRequestState = useSelector(
         (state: StorageState) => state.ide.getProjectsRequestState
     );
-    const dispatch = useDispatch<AppDispatch>();
 
-    const localize = useMemo(() => {
-        switch (lang) {
-            case 'ru': {
-                return ru;
-            }
-            default: {
-                return enGB;
-            }
-        }
-    }, [lang]);
+    usePruneSelectedFilterTags();
+
+    const closeTagsFilterModal = useCallback(() => {
+        setShowTagsFilterModal(false);
+    }, []);
+
+    const tagsFilterAnchorRef = useClickOutside(
+        closeTagsFilterModal,
+        NO_IGNORE_SELECTORS,
+        showTagsFilterModal
+    );
+
+    const closeTagsUi = useCallback(() => {
+        setShowTagsFilterModal(false);
+        setOpenedTagPickerProjectId(null);
+    }, []);
 
     const onAddProjectClick = useCallback(() => {
         setShowAddModal(true);
@@ -63,47 +84,91 @@ export const ProjectsPage = () => {
         [setShowDeleteModal]
     );
 
-    const sortedProjects = useMemo(() => {
-        const toTimestamp = (value?: string) => {
-            if (!value) {
-                return 0;
-            }
-            const timestamp = new Date(value).getTime();
-            return Number.isNaN(timestamp) ? 0 : timestamp;
-        };
-        const titleCollator = new Intl.Collator(['en', 'ru'], {
-            sensitivity: 'base',
-            numeric: true,
-        });
-        const byTimeDesc = (a: ProjectShort, b: ProjectShort) =>
-            toTimestamp(b.lastModified) - toTimestamp(a.lastModified);
-        const byTimeAsc = (a: ProjectShort, b: ProjectShort) =>
-            toTimestamp(a.lastModified) - toTimestamp(b.lastModified);
-        const byTitleAsc = (a: ProjectShort, b: ProjectShort) =>
-            titleCollator.compare(a.title ?? '', b.title ?? '');
-        const byTitleDesc = (a: ProjectShort, b: ProjectShort) =>
-            titleCollator.compare(b.title ?? '', a.title ?? '');
-
-        const projectsCopy = [...projects];
-        if (sortMode === 'title') {
-            return projectsCopy.sort(
-                sortDirection === 'asc' ? byTitleAsc : byTitleDesc
-            );
+    const onTagsFilterButtonClick = useCallback(() => {
+        if (showTagsFilterModal) {
+            setShowTagsFilterModal(false);
+            return;
         }
-        return projectsCopy.sort(
-            sortDirection === 'asc' ? byTimeAsc : byTimeDesc
-        );
-    }, [projects, sortMode, sortDirection]);
+        setOpenedTagPickerProjectId(null);
+        setShowTagsFilterModal(true);
+    }, [showTagsFilterModal]);
+
+    const onTagPickerButtonClick = useCallback(
+        (e: React.MouseEvent<HTMLElement, unknown>, projectId: string) => {
+            e.stopPropagation();
+            if (openedTagPickerProjectId === projectId) {
+                setOpenedTagPickerProjectId(null);
+                return;
+            }
+            setShowTagsFilterModal(false);
+            setOpenedTagPickerProjectId(projectId);
+        },
+        [openedTagPickerProjectId]
+    );
+
+    const filteredProjects = useSortedFilteredProjects({
+        projects,
+        sortMode,
+        sortDirection,
+        selectedFilterTagKeys,
+        projectTagKeysByProject,
+    });
+
+    const onSortChange = useCallback(
+        (mode: SortMode, direction: SortDirection) => {
+            setSortMode(mode);
+            setSortDirection(direction);
+        },
+        []
+    );
 
     return (
         <>
             <div className="projects-container">
                 <div className="project-content-container">
-                    <Typography
-                        type="h1"
-                        text={dictionary.projects.label}
-                        color={colors.black}
-                    />
+                    <div className="projects-page-header">
+                        <Typography
+                            type="h1"
+                            text={dictionary.projects.label}
+                            color={colors.black}
+                        />
+                        <div className="projects-filter-controls">
+                            <div className="projects-selected-filter-tags">
+                                {selectedFilterTagKeys.map((tagKey) => (
+                                    <TagChip
+                                        key={`selected-filter-tag-${tagKey}`}
+                                        label={tagMap[tagKey]?.label ?? tagKey}
+                                        color={
+                                            tagMap[tagKey]?.color ??
+                                            DEFAULT_TAG_COLOR
+                                        }
+                                    />
+                                ))}
+                            </div>
+                            <div
+                                className="projects-filter-anchor"
+                                ref={tagsFilterAnchorRef}
+                            >
+                                <button
+                                    className="projects-filter-button"
+                                    type="button"
+                                    onClick={onTagsFilterButtonClick}
+                                >
+                                    {dictionary.projects.tags.filter_open}
+                                    {selectedFilterTagKeys.length
+                                        ? ` (${selectedFilterTagKeys.length})`
+                                        : ''}
+                                </button>
+                                {showTagsFilterModal ? (
+                                    <ProjectTagsFilterModal
+                                        onClose={() =>
+                                            setShowTagsFilterModal(false)
+                                        }
+                                    />
+                                ) : null}
+                            </div>
+                        </div>
+                    </div>
                     {getProjectsRequestState === 'loading' ? (
                         <div className="projects-loading-wrapper" aria-hidden>
                             <span className="projects-loading-spinner" />
@@ -141,14 +206,7 @@ export const ProjectsPage = () => {
                             </div>
                         </div>
                     ) : !projects.length ? (
-                        <div
-                            style={{
-                                display: 'flex',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                flex: 1,
-                            }}
-                        >
+                        <div className="projects-empty-state">
                             <Button
                                 classname="add-project-button"
                                 rounded
@@ -161,215 +219,66 @@ export const ProjectsPage = () => {
                         </div>
                     ) : (
                         <div
-                            style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                flex: 1,
-                                overflow: 'auto',
-                            }}
+                            ref={projectsScrollContainerRef}
+                            className="projects-list-scroll"
                         >
-                            <div
-                                style={{
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    flex: 1,
-                                }}
-                            >
-                                <table style={{ marginTop: 30 }}>
+                            <div className="projects-list">
+                                <table>
                                     <tr>
                                         <th>
-                                            <div className="projects-header-cell">
-                                                <Typography
-                                                    color={colors.gray30}
-                                                    text={
-                                                        dictionary.projects
-                                                            .title
-                                                    }
-                                                />
-                                                <button
-                                                    className="projects-sort-icon-button"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setSortMode('title');
-                                                        setSortDirection('asc');
-                                                    }}
-                                                    type="button"
-                                                    aria-label={
-                                                        dictionary.projects
-                                                            .title
-                                                    }
-                                                >
-                                                    <span
-                                                        className={`sort-arrow ${
-                                                            sortMode ===
-                                                                'title' &&
-                                                            sortDirection ===
-                                                                'asc'
-                                                                ? 'is-active'
-                                                                : ''
-                                                        }`}
-                                                    >
-                                                        ▲
-                                                    </span>
-                                                </button>
-                                                <button
-                                                    className="projects-sort-icon-button"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setSortMode('title');
-                                                        setSortDirection(
-                                                            'desc'
-                                                        );
-                                                    }}
-                                                    type="button"
-                                                    aria-label={
-                                                        dictionary.projects
-                                                            .title
-                                                    }
-                                                >
-                                                    <span
-                                                        className={`sort-arrow ${
-                                                            sortMode ===
-                                                                'title' &&
-                                                            sortDirection ===
-                                                                'desc'
-                                                                ? 'is-active'
-                                                                : ''
-                                                        }`}
-                                                    >
-                                                        ▼
-                                                    </span>
-                                                </button>
-                                            </div>
+                                            <SortableHeaderCell
+                                                label={
+                                                    dictionary.projects.title
+                                                }
+                                                mode="title"
+                                                sortMode={sortMode}
+                                                sortDirection={sortDirection}
+                                                onSortChange={onSortChange}
+                                            />
                                         </th>
                                         <th>
-                                            <div className="projects-header-cell">
-                                                <Typography
-                                                    color={colors.gray30}
-                                                    text={
-                                                        dictionary.projects
-                                                            .last_modified
-                                                    }
-                                                />
-                                                <button
-                                                    className="projects-sort-icon-button"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setSortMode('time');
-                                                        setSortDirection('asc');
-                                                    }}
-                                                    type="button"
-                                                    aria-label={
-                                                        dictionary.projects
-                                                            .last_modified
-                                                    }
-                                                >
-                                                    <span
-                                                        className={`sort-arrow ${
-                                                            sortMode ===
-                                                                'time' &&
-                                                            sortDirection ===
-                                                                'asc'
-                                                                ? 'is-active'
-                                                                : ''
-                                                        }`}
-                                                    >
-                                                        ▲
-                                                    </span>
-                                                </button>
-                                                <button
-                                                    className="projects-sort-icon-button"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setSortMode('time');
-                                                        setSortDirection(
-                                                            'desc'
-                                                        );
-                                                    }}
-                                                    type="button"
-                                                    aria-label={
-                                                        dictionary.projects
-                                                            .last_modified
-                                                    }
-                                                >
-                                                    <span
-                                                        className={`sort-arrow ${
-                                                            sortMode ===
-                                                                'time' &&
-                                                            sortDirection ===
-                                                                'desc'
-                                                                ? 'is-active'
-                                                                : ''
-                                                        }`}
-                                                    >
-                                                        ▼
-                                                    </span>
-                                                </button>
-                                            </div>
+                                            <SortableHeaderCell
+                                                label={
+                                                    dictionary.projects
+                                                        .last_modified
+                                                }
+                                                mode="time"
+                                                sortMode={sortMode}
+                                                sortDirection={sortDirection}
+                                                onSortChange={onSortChange}
+                                            />
+                                        </th>
+                                        <th>
+                                            <Typography
+                                                color={colors.gray30}
+                                                text={
+                                                    dictionary.projects.tags
+                                                        .column
+                                                }
+                                            />
                                         </th>
                                         <th></th>
                                     </tr>
-                                    {sortedProjects.map((p) => (
-                                        <tr
-                                            onClick={() => {
-                                                if (p.projectId) {
-                                                    dispatch(
-                                                        controller.onRowClickedInProjectsListRequest(
-                                                            {
-                                                                projectId:
-                                                                    p.projectId,
-                                                            }
-                                                        )
-                                                    );
-                                                }
-                                            }}
+                                    {filteredProjects.map((p) => (
+                                        <ProjectRow
                                             key={`${p.projectId}-${p.title}`}
-                                        >
-                                            <td
-                                                style={{
-                                                    height: 63,
-                                                    width: '33%',
-                                                    minWidth: '40ch',
-                                                }}
-                                            >
-                                                <ProjectTitle project={p} />
-                                            </td>
-                                            <td>
-                                                <Typography
-                                                    color={colors.gray30}
-                                                    text={formatDistance(
-                                                        new Date(),
-                                                        new Date(
-                                                            p.lastModified!
-                                                        ),
-                                                        { locale: localize }
-                                                    )}
-                                                    type="body-large"
-                                                />
-                                            </td>
-                                            <td>
-                                                <div
-                                                    onClick={(e) =>
-                                                        onClickDeleteProject(
-                                                            e,
-                                                            p
-                                                        )
-                                                    }
-                                                    className="delete-project-container"
-                                                >
-                                                    <div className="delete-icon">
-                                                        <PlusIcon />
-                                                    </div>
-                                                    <Typography
-                                                        color={colors.black}
-                                                        text={dictionary.delete}
-                                                    />
-                                                    <div
-                                                        style={{ width: 10 }}
-                                                    />
-                                                </div>
-                                            </td>
-                                        </tr>
+                                            project={p}
+                                            isTagPickerOpen={
+                                                openedTagPickerProjectId ===
+                                                p.projectId
+                                            }
+                                            tagsListBoundaryRef={
+                                                projectsScrollContainerRef
+                                            }
+                                            onTagPickerButtonClick={(e) =>
+                                                onTagPickerButtonClick(
+                                                    e,
+                                                    p.projectId
+                                                )
+                                            }
+                                            onCloseTagsUi={closeTagsUi}
+                                            onDeleteClick={onClickDeleteProject}
+                                        />
                                     ))}
                                 </table>
                             </div>

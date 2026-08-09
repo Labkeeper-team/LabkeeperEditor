@@ -93,6 +93,19 @@ export interface Translations {
         title: string;
         last_modified: string;
         add: string;
+        tags: {
+            column: string;
+            add: string;
+            add_new: string;
+            new_placeholder: string;
+            empty: string;
+            hint: string;
+            filter_open: string;
+            filter_title: string;
+            filter_empty: string;
+            filter_clear: string;
+            color_placeholder: string;
+        };
         errors: {
             empty_name: string;
             sessionExpiredReload: string;

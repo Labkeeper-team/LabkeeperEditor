@@ -100,6 +100,19 @@ export const ru: Translations = {
         title: 'Имя',
         last_modified: 'Последнее изменение',
         add: 'Добавить',
+        tags: {
+            column: 'Теги',
+            add: 'Редактировать теги',
+            add_new: 'Создать тег',
+            new_placeholder: 'Новый тег',
+            empty: 'Пока нет тегов',
+            hint: 'Добавьте теги проекту или выберите из существующих',
+            filter_open: 'Фильтры по тегам',
+            filter_title: 'Выберите один или несколько тегов',
+            filter_empty: 'Пока нет тегов для фильтрации',
+            filter_clear: 'Сбросить фильтр',
+            color_placeholder: 'Введите цвет (#FF0000 или red)',
+        },
         errors: {
             empty_name:
                 'Имя не должно быть пустым или состоять только из пробелов',
