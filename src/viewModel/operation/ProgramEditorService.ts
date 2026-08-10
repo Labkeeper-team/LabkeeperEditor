@@ -13,6 +13,7 @@ import type { Annotation } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { ExternalChange } from '@uiw/react-codemirror';
 import {
+    CompileErrorResult,
     ProgramRoundStrategy,
     Segment,
     SegmentType,
@@ -20,6 +21,11 @@ import {
 import { UndoRedoCursorHint } from '../../model/service/ProgramService.ts';
 import { getIdeSegmentEditorView } from '../../view/pages/project/editor/ide/segments/ideSegmentEditorView';
 import { EditorNavigationTarget } from '../repository';
+import { TextFileEditorService } from './TextFileEditorService.ts';
+import {
+    projectFilePathsMatch,
+    resolveProjectFileName,
+} from '../utils/projectFilePath.ts';
 
 export class ProgramEditorService {
     repository: ViewModelRepository;
@@ -29,6 +35,7 @@ export class ProgramEditorService {
     ideService: IdeService;
     observerService: ObserverService;
     fileService: FileService;
+    textFileEditorService: TextFileEditorService;
 
     constructor(
         repository: ViewModelRepository,
@@ -37,7 +44,8 @@ export class ProgramEditorService {
         loaderService: LoaderService,
         ideService: IdeService,
         observerService: ObserverService,
-        fileService: FileService
+        fileService: FileService,
+        textFileEditorService: TextFileEditorService
     ) {
         this.rpi = rpi;
         this.programService = programService;
@@ -46,6 +54,7 @@ export class ProgramEditorService {
         this.repository = repository;
         this.observerService = observerService;
         this.fileService = fileService;
+        this.textFileEditorService = textFileEditorService;
     }
 
     onAddedFilesToSegmentEditor = async (
@@ -525,10 +534,21 @@ export class ProgramEditorService {
 
     private resolveSynctexEditorPosition =
         (): EditorNavigationTarget | null => {
-            const activeIndex =
-                this.repository.ideViewModelRepository.activeSegmentIndex();
             const activeLine =
                 this.repository.ideViewModelRepository.activeEditorLine();
+            const activeTextFile =
+                this.repository.ideViewModelRepository.activeTextFile();
+
+            if (activeTextFile && activeLine != null && activeLine >= 1) {
+                return {
+                    segmentIndex: -1,
+                    line: activeLine,
+                    file: activeTextFile,
+                };
+            }
+
+            const activeIndex =
+                this.repository.ideViewModelRepository.activeSegmentIndex();
 
             if (activeIndex >= 0 && activeLine != null && activeLine >= 1) {
                 return { segmentIndex: activeIndex, line: activeLine };
@@ -536,8 +556,13 @@ export class ProgramEditorService {
 
             const saved =
                 this.repository.ideViewModelRepository.synctexEditorPosition();
-            if (saved && saved.segmentIndex >= 0 && saved.line >= 1) {
-                return saved;
+            if (saved && saved.line >= 1) {
+                if (saved.file) {
+                    return saved;
+                }
+                if (saved.segmentIndex >= 0) {
+                    return saved;
+                }
             }
 
             const previousIndex =
@@ -553,6 +578,68 @@ export class ProgramEditorService {
 
             return null;
         };
+
+    private navigateToProjectFile = async (
+        requestedFile: string,
+        line: number
+    ): Promise<boolean> => {
+        const files = this.repository.projectViewModelRepository.files();
+        const fileName = resolveProjectFileName(files, requestedFile);
+        if (!fileName) {
+            return false;
+        }
+        const active = this.repository.ideViewModelRepository.activeTextFile();
+        if (!projectFilePathsMatch(active, fileName)) {
+            await this.textFileEditorService.onTextFileOpened(fileName);
+        }
+        if (
+            !projectFilePathsMatch(
+                this.repository.ideViewModelRepository.activeTextFile(),
+                fileName
+            )
+        ) {
+            return false;
+        }
+        this.repository.ideViewModelRepository.setEditorNavigationTarget({
+            segmentIndex: -1,
+            line,
+            file: fileName,
+        });
+        return true;
+    };
+
+    private navigateToSegmentLine = async (
+        segmentId: number,
+        line: number
+    ): Promise<boolean> => {
+        const program =
+            this.repository.projectViewModelRepository.currentProgram();
+        const segments = program?.segments ?? [];
+        let segmentIndex = segments.findIndex(
+            (s) => (s as Segment & { id?: number }).id === segmentId
+        );
+        if (segmentIndex < 0) {
+            segmentIndex = segmentId - 1;
+        }
+        if (segmentIndex < 0 || segmentIndex >= segments.length) {
+            return false;
+        }
+        if (this.repository.ideViewModelRepository.activeTextFile()) {
+            const closed =
+                await this.textFileEditorService.onTextFileEditorClosed();
+            if (!closed) {
+                return false;
+            }
+        }
+        this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(
+            segmentIndex
+        );
+        this.repository.ideViewModelRepository.setEditorNavigationTarget({
+            segmentIndex,
+            line,
+        });
+        return true;
+    };
 
     onSyncEditorToPdf = async () => {
         if (!this.canUseSynctexNavigation()) {
@@ -577,14 +664,17 @@ export class ProgramEditorService {
             );
             return;
         }
+        const requestBody = position.file
+            ? { file: position.file, line: position.line }
+            : {
+                  segmentId: this.getSegmentIdForNavigation(
+                      position.segmentIndex
+                  ),
+                  line: position.line,
+              };
         const result = await this.rpi.navigationDocToPdfRequest(
             project.projectId,
-            {
-                segmentId: this.getSegmentIdForNavigation(
-                    position.segmentIndex
-                ),
-                line: position.line,
-            }
+            requestBody
         );
         if (result.code === 423) {
             this.repository.toast(
@@ -646,25 +736,38 @@ export class ProgramEditorService {
             );
             return;
         }
-        const program =
-            this.repository.projectViewModelRepository.currentProgram();
-        const segments = program?.segments ?? [];
-        let segmentIndex = segments.findIndex(
-            (s) => (s as Segment & { id?: number }).id === result.body.segmentId
-        );
-        if (segmentIndex < 0) {
-            segmentIndex = result.body.segmentId - 1;
-        }
-        if (segmentIndex < 0 || segmentIndex >= segments.length) {
+        if (result.body.file) {
+            await this.navigateToProjectFile(
+                result.body.file,
+                result.body.line
+            );
             return;
         }
-        this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(
-            segmentIndex
+        if (result.body.segmentId == null) {
+            return;
+        }
+        await this.navigateToSegmentLine(
+            result.body.segmentId,
+            result.body.line
         );
-        this.repository.ideViewModelRepository.setEditorNavigationTarget({
-            segmentIndex,
-            line: result.body.line,
-        });
+    };
+
+    /** Клик по ошибке: скролл к строке сегмента или открытие файла. */
+    onCompileErrorClicked = async (error: CompileErrorResult) => {
+        const { line, segmentId, latexFile } = error.payload;
+        if (Number.isNaN(+line)) {
+            return;
+        }
+        if (latexFile) {
+            // В файлах line уже 1-based
+            await this.navigateToProjectFile(latexFile, line);
+            return;
+        }
+        if (segmentId == null) {
+            return;
+        }
+        // В сегментах line 0-based → CodeMirror 1-based
+        await this.navigateToSegmentLine(segmentId, line + 1);
     };
 
     onAddSegmentClicked = (type: SegmentType) => {

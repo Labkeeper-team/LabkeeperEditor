@@ -194,11 +194,14 @@ export const SegmentEditor = memo(
         /*
         Events
          */
-        // При обновлении глобального списка ошибок фильтруем и устанавливаем локальный
+        // При обновлении глобального списка ошибок фильтруем и устанавливаем локальный.
+        // Ошибки с latexFile относятся только к файлу — сегмент не подсвечиваем.
         useEffect(() => {
             setTempSegmentErrors(
                 (compileErrors ?? []).filter(
-                    (e) => e.payload.segmentId === props.index + 1
+                    (e) =>
+                        !e.payload.latexFile &&
+                        e.payload.segmentId === props.index + 1
                 )
             );
         }, [compileErrors, props.index]);

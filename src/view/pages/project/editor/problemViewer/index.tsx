@@ -12,7 +12,13 @@ import { ErrorGroupedItem } from './errorGroupItem';
 import { AppDispatch, StorageState } from '../../../../store';
 import { controller } from '../../../../../main.tsx';
 
-type SegmentId = number | null;
+type ErrorGroup = {
+    key: string;
+    segmentId: number | null;
+    latexFile?: string | null;
+    errors: CompileErrorResult[];
+};
+
 export const ProblemViewer = () => {
     const dispatch = useDispatch<AppDispatch>();
     const errors = useSelector(useCompiledErrors);
@@ -21,27 +27,81 @@ export const ProblemViewer = () => {
     );
     const dictionary = useSelector(useDictionary);
 
-    const errorGroupedBySegmentId = useMemo(() => {
+    const errorGroupedByLocation = useMemo(() => {
         if (!errors || !errors.length) {
-            return [];
+            return [] as ErrorGroup[];
         }
-        const groupedErrors: Map<SegmentId, CompileErrorResult[]> = new Map();
+        const groupedErrors: Map<string, ErrorGroup> = new Map();
         errors.forEach((error) => {
-            const isGroupExist = groupedErrors.get(error.payload.segmentId);
-            if (isGroupExist) {
-                groupedErrors.set(error.payload.segmentId, [
-                    ...isGroupExist,
-                    error,
-                ]);
+            const latexFile = error.payload.latexFile || null;
+            const segmentId = latexFile ? null : error.payload.segmentId;
+            const key = latexFile
+                ? `file:${latexFile}`
+                : segmentId == null
+                  ? 'common'
+                  : `segment:${segmentId}`;
+            const existing = groupedErrors.get(key);
+            if (existing) {
+                existing.errors.push(error);
             } else {
-                groupedErrors.set(error.payload.segmentId, [error]);
+                groupedErrors.set(key, {
+                    key,
+                    segmentId,
+                    latexFile,
+                    errors: [error],
+                });
             }
         });
 
-        return Array.from(groupedErrors, ([segment, errors]) => ({
-            segment,
-            errors,
-        }));
+        const compareErrors = (
+            a: CompileErrorResult,
+            b: CompileErrorResult
+        ) => {
+            const lineA = Number.isNaN(+a.payload.line)
+                ? Number.POSITIVE_INFINITY
+                : a.payload.line;
+            const lineB = Number.isNaN(+b.payload.line)
+                ? Number.POSITIVE_INFINITY
+                : b.payload.line;
+            if (lineA !== lineB) {
+                return lineA - lineB;
+            }
+            const posA = Number.isNaN(+a.payload.position)
+                ? 0
+                : a.payload.position;
+            const posB = Number.isNaN(+b.payload.position)
+                ? 0
+                : b.payload.position;
+            return posA - posB;
+        };
+
+        return Array.from(groupedErrors.values())
+            .map((group) => ({
+                ...group,
+                errors: [...group.errors].sort(compareErrors),
+            }))
+            .sort((a, b) => {
+                // Сегменты по номеру → файлы по пути → общие
+                if (a.segmentId != null && b.segmentId != null) {
+                    return a.segmentId - b.segmentId;
+                }
+                if (a.segmentId != null) {
+                    return -1;
+                }
+                if (b.segmentId != null) {
+                    return 1;
+                }
+                if (a.latexFile && b.latexFile) {
+                    return a.latexFile.localeCompare(b.latexFile);
+                }
+                if (a.latexFile) {
+                    return -1;
+                }
+                if (b.latexFile) {
+                    return 1;
+                }
+                return 0;
+            });
     }, [errors]);
 
     return (
@@ -77,11 +137,12 @@ export const ProblemViewer = () => {
                 })}
             >
                 {expanded
-                    ? errorGroupedBySegmentId.map((erroGroupItem) => {
+                    ? errorGroupedByLocation.map((erroGroupItem) => {
                           return (
                               <ErrorGroupedItem
-                                  key={erroGroupItem.segment ?? 'common'}
-                                  segmentId={erroGroupItem.segment}
+                                  key={erroGroupItem.key}
+                                  segmentId={erroGroupItem.segmentId}
+                                  latexFile={erroGroupItem.latexFile}
                                   errors={erroGroupItem.errors}
                               />
                           );

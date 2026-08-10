@@ -1,4 +1,4 @@
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { Typography } from '../../../../../components/typography';
 import { WarningIcon } from '../../../../../icons';
 import {
@@ -12,8 +12,13 @@ import {
 import { colors } from '../../../../../styles/colors';
 import { ErrorItemProps } from './model';
 import { useDictionary } from '../../../../../store/selectors/translations';
+import { AppDispatch } from '../../../../../store';
+import { controller } from '../../../../../../main.tsx';
+
+import './style.scss';
 
 export const ErrorItem = ({ code, payload }: ErrorItemProps) => {
+    const dispatch = useDispatch<AppDispatch>();
     const dictionary = useSelector(useDictionary);
     const quotaPayload = payload as unknown as QuotaPayload;
     const operatorExpectedPayload =
@@ -21,14 +26,40 @@ export const ErrorItem = ({ code, payload }: ErrorItemProps) => {
     const functionErrorPayload = payload as unknown as FunctionErrorPayload;
     const noSuchVariablePayload = payload as unknown as NoSuchVariablePayload;
     const latexErrorPayload = payload as unknown as LatexErrorPayload;
+    const canNavigate =
+        !Number.isNaN(+payload.line) &&
+        (Boolean(payload.latexFile) || payload.segmentId != null);
+
+    const onClick = () => {
+        if (!canNavigate) {
+            return;
+        }
+        dispatch(
+            controller.onCompileErrorClickedRequest({
+                code,
+                payload,
+            })
+        );
+    };
+
     return (
         <div
-            style={{
-                display: 'flex',
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 5,
-            }}
+            className={
+                canNavigate ? 'error-item error-item--clickable' : 'error-item'
+            }
+            onClick={onClick}
+            role={canNavigate ? 'button' : undefined}
+            tabIndex={canNavigate ? 0 : undefined}
+            onKeyDown={
+                canNavigate
+                    ? (event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                              event.preventDefault();
+                              onClick();
+                          }
+                      }
+                    : undefined
+            }
         >
             <WarningIcon />
             <Typography
@@ -64,7 +95,10 @@ export const ErrorItem = ({ code, payload }: ErrorItemProps) => {
             <span style={{ color: colors.errorLine, fontSize: 12 }}>
                 {Number.isNaN(+payload.line)
                     ? ''
-                    : `${dictionary.error_common.line} ${payload.line + 1}${payload.position !== undefined ? `.${payload.position}` : ''}`}
+                    : `${dictionary.error_common.line} ${
+                          // В сегментах line 0-based; в файлах — уже 1-based
+                          payload.latexFile ? payload.line : payload.line + 1
+                      }${payload.position !== undefined ? `.${payload.position}` : ''}`}
             </span>
         </div>
     );

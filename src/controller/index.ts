@@ -1,5 +1,6 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import {
+    CompileErrorResult,
     OpenParams,
     ProgramRoundStrategy,
     ProjectType,
@@ -390,6 +391,15 @@ export class Controller {
         async () => {
             this.wrapper('onSyncPdfToEditorRequest', () =>
                 this.programEditorService.onSyncPdfToEditor()
+            );
+        }
+    );
+
+    onCompileErrorClickedRequest = createAsyncThunk(
+        'onCompileErrorClickedRequest',
+        async (error: CompileErrorResult) => {
+            this.wrapper('onCompileErrorClickedRequest', () =>
+                this.programEditorService.onCompileErrorClicked(error)
             );
         }
     );

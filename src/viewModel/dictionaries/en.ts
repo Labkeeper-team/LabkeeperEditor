@@ -145,7 +145,7 @@ export const en: Translations = {
         to_editor: 'Go to source',
         errors: {
             no_pdf: 'Compile the project to sync with the PDF.',
-            no_cursor: 'Place the cursor in a segment first.',
+            no_cursor: 'Place the cursor in a segment or file first.',
             no_pdf_selection: 'Click in the PDF to choose a position.',
             failed: 'Could not sync position. Recompile and try again.',
             locked: 'The PDF is being processed. Please try again shortly.',
@@ -306,6 +306,7 @@ export const en: Translations = {
     },
     error_common: {
         segment: 'Segment',
+        file: 'File',
         common_errors: 'General errors',
         line: 'line',
         operator_expected: 'Operator expected',

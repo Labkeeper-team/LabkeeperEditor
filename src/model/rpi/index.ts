@@ -30,8 +30,11 @@ export interface CompileSuccessPdfResponse {
 }
 
 export interface ProgramDocumentPosition {
-    segmentId: number;
+    /** Сегмент программы (1-based id). Может отсутствовать при навигации по файлу. */
+    segmentId?: number | null;
     line: number;
+    /** Путь к файлу проекта при SyncTeX для внешних .tex/.txt и т.п. */
+    file?: string | null;
 }
 
 export interface PdfPosition {

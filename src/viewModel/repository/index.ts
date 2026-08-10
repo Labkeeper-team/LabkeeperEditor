@@ -73,8 +73,11 @@ export type PendingSegmentEditorCursor = {
 };
 
 export type EditorNavigationTarget = {
+    /** Индекс сегмента; -1 если цель — текстовый файл (`file`). */
     segmentIndex: number;
     line: number;
+    /** Путь к открытому/открываемому текстовому файлу проекта. */
+    file?: string;
 };
 
 class MockViewModelRepositoryState {

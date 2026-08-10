@@ -206,6 +206,8 @@ export interface CompileErrorResult {
         line: number;
         position: number;
         segmentId: number | null;
+        /** Путь к latex/текстовому файлу проекта, если ошибка не в сегменте. */
+        latexFile?: string | null;
     };
 }
 

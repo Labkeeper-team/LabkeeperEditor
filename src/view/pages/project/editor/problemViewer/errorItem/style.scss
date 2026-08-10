@@ -1,0 +1,17 @@
+.error-item {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 5px;
+}
+
+.error-item--clickable {
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 2px 4px;
+    margin: 0 -4px;
+
+    &:hover {
+        background: rgba(0, 0, 0, 0.04);
+    }
+}
