@@ -103,6 +103,7 @@ export class ProjectsPageService {
             this.ideService.resetEditor();
         }
         if (result.isOk) {
+            this.observerService.onEvent(Events.EVENT_CREATE_PROJECT);
             this.repository.setLocation(
                 Routes.Project.replace(':id', result.body.projectId + '')
             );

@@ -10,6 +10,10 @@ export const Events = {
     EVENT_PRINT: 'print_doc',
     EVENT_QR_V1: 'qr_v1',
     EVENT_PAYMENT_REQUIRED: 'payment_required',
+    EVENT_PAYMENT_STARTED: 'payment_started',
+    EVENT_PAYMENT_SUCCESS: 'payment_success',
+    EVENT_CREATE_PROJECT: 'create_project',
+    EVENT_GPT_REQUEST: 'gpt_request',
     FRONTEND_ERROR: 'frontend_error',
     EVENT_RPI_UNKNOWN_AUTH_LOGIN: 'rpi_unknown_auth_login',
     EVENT_RPI_UNKNOWN_AUTH_SEND_EMAIL_WITH_CODE:

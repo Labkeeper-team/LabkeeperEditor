@@ -50,6 +50,7 @@ export class TokenPageService {
                 this.repository.billingViewModelRepository.setPurchaseRequestState(
                     'ok'
                 );
+                this.observerService.onEvent(Events.EVENT_PAYMENT_STARTED);
                 this.repository.setLocation(Routes.Pay);
                 return;
             }
@@ -88,6 +89,7 @@ export class TokenPageService {
     };
 
     onPaymentStatusChanged = async () => {
+        this.observerService.onEvent(Events.EVENT_PAYMENT_SUCCESS);
         await this.refreshUserInfo();
         this.repository.billingViewModelRepository.setPaymentWidgetToken(
             undefined

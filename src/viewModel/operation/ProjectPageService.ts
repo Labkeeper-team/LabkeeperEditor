@@ -420,6 +420,7 @@ export class ProjectPageService {
                     prompt
                 );
             if (promptResult.isOk) {
+                this.observerService.onEvent(Events.EVENT_GPT_REQUEST);
                 const newProgram = promptResult.body;
                 const oldProgram =
                     this.repository.projectViewModelRepository.currentProgram();
@@ -495,6 +496,9 @@ export class ProjectPageService {
             : await this.rpi.promptProjectRequest(project.projectId, prompt);
         await this.refreshUserInfo();
         if (promptResult.isOk) {
+            if (!generateImage) {
+                this.observerService.onEvent(Events.EVENT_GPT_REQUEST);
+            }
             const newProgram = promptResult.body;
             const oldProgram =
                 this.repository.projectViewModelRepository.currentProgram();
