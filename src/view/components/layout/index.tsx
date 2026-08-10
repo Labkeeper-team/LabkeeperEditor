@@ -28,7 +28,8 @@ export const BaseLayout = () => {
     const code = searchParams.get('code') || '';
     const dragCounter = useRef(0);
     const captcha = searchParams.get('captcha') || undefined;
-    const isTokensPage = location.pathname === Routes.Tokens;
+    const isLandingPage =
+        location.pathname === Routes.Tokens || location.pathname === Routes.Pay;
     const open = (searchParams.get('open') as OpenParams) || undefined;
 
     /*
@@ -90,7 +91,7 @@ export const BaseLayout = () => {
 
     useEffect(() => {
         const cls = 'tokens-route';
-        if (isTokensPage) {
+        if (isLandingPage) {
             document.documentElement.classList.add(cls);
             document.body.classList.add(cls);
         } else {
@@ -101,7 +102,7 @@ export const BaseLayout = () => {
             document.documentElement.classList.remove(cls);
             document.body.classList.remove(cls);
         };
-    }, [isTokensPage]);
+    }, [isLandingPage]);
 
     useLayoutEffect(() => {
         window.dispatchEvent(new Event(VIEWPORT_RESCALE_EVENT));
@@ -119,7 +120,7 @@ export const BaseLayout = () => {
             <Header />
             <div
                 className={classNames('layout-outlet-container', {
-                    'layout-outlet-container--landing': isTokensPage,
+                    'layout-outlet-container--landing': isLandingPage,
                 })}
             >
                 <Outlet />

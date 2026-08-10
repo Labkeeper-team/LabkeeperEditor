@@ -127,6 +127,15 @@ export class StartupService {
             await this.openDefaultProject(userInfo, open);
         }
 
+        // PAY PAGE ENTER
+        else if (locationWithoutLastSlash === Routes.Pay) {
+            if (
+                !this.repository.billingViewModelRepository.paymentWidgetToken()
+            ) {
+                this.repository.setLocation(Routes.Tokens);
+            }
+        }
+
         // PROJECTS PAGE ENTER
         else if (locationWithoutLastSlash === Routes.Projects) {
             if (!userInfo.isAuthenticated) {

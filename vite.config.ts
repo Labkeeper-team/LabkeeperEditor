@@ -40,6 +40,9 @@ export default defineConfig(() => {
 
     return {
         plugins: [react(), svgr()],
+        resolve: {
+            dedupe: ['react', 'react-dom'],
+        },
         server: {
             port: 3000,
         },

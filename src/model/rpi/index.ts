@@ -60,6 +60,7 @@ export interface ServicePrices {
 }
 
 export interface TokenPrice {
+    id: string;
     tokensToPurchase: number;
     costRubles: number;
 }
@@ -74,6 +75,18 @@ export interface BillingPricingResponse {
     tokenPrices: TokenPrice[];
     userRegularRefill: UserRegularRefill;
     newUserInitialTokensCount: number;
+}
+
+export interface BillingPurchaseResponse {
+    id: string;
+    tokenPriceId: string;
+    token?: string;
+    yookassa: {
+        widgetToken: string;
+    };
+    status: 'pending' | 'canceled' | 'success';
+    createdAt: string;
+    updatedAt: string;
 }
 
 export interface RichProject extends Project {
@@ -228,6 +241,10 @@ export interface Rpi {
     ): Promise<RequestResult<Program>>;
 
     getBillingPricingRequest(): Promise<RequestResult<BillingPricingResponse>>;
+
+    createBillingPurchaseRequest(
+        tokenPriceId: string
+    ): Promise<RequestResult<BillingPurchaseResponse>>;
 }
 
 export const mockRpi = (): Rpi => {
@@ -316,5 +333,8 @@ export const mockRpi = (): Rpi => {
                 isUnauth: false,
                 isForbidden: false,
             }),
+        createBillingPurchaseRequest: () => {
+            throw new Error('Not implemented');
+        },
     } as unknown as Rpi;
 };

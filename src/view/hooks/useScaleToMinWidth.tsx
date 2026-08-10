@@ -7,7 +7,10 @@ const RESCALE_EVENT = 'labkeeper:viewport-rescale';
 
 /** Document-scrolled marketing page; must not force window scroll to 0. */
 export function isTokensLandingPath() {
-    return window.location.pathname === Routes.Tokens;
+    return (
+        window.location.pathname === Routes.Tokens ||
+        window.location.pathname === Routes.Pay
+    );
 }
 
 function isNativeMobileLayoutPath() {

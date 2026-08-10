@@ -65,6 +65,7 @@ export type ProjectPromptRequestState =
     | 'unknownError';
 
 export type BillingPricingRequestState = 'unknown' | 'loading' | 'ok' | 'error';
+export type BillingPurchaseRequestState = 'idle' | 'loading' | 'ok' | 'error';
 
 export type PendingSegmentEditorCursor = {
     segmentIndex: number;
@@ -126,6 +127,8 @@ class MockViewModelRepositoryState {
     projects: ProjectShort[] = [];
     billingPricing: BillingPricingResponse | undefined = undefined;
     billingPricingRequestState: BillingPricingRequestState = 'unknown';
+    billingPurchaseRequestState: BillingPurchaseRequestState = 'idle';
+    billingPaymentWidgetToken: string | undefined = undefined;
 
     pdfUpdated: number = 0;
     isAutocompleteLoading = false;
@@ -378,10 +381,18 @@ export const mockViewModelState = (): MockViewModelRepository => {
                 (mockViewModelState.projects = structuredClone(v)),
         },
         billingViewModelRepository: {
+            paymentWidgetToken: () =>
+                mockViewModelState.billingPaymentWidgetToken,
+            purchaseRequestState: () =>
+                mockViewModelState.billingPurchaseRequestState,
             pricing: () => mockViewModelState.billingPricing,
             pricingRequestState: () =>
                 mockViewModelState.billingPricingRequestState,
 
+            setPaymentWidgetToken: (token) =>
+                (mockViewModelState.billingPaymentWidgetToken = token),
+            setPurchaseRequestState: (state) =>
+                (mockViewModelState.billingPurchaseRequestState = state),
             setPricing: (v) =>
                 (mockViewModelState.billingPricing = structuredClone(v)),
             setPricingRequestState: (v) =>
@@ -594,9 +605,13 @@ export interface ProjectsViewModelRepository {
 }
 
 export interface BillingViewModelRepository {
+    paymentWidgetToken: () => string | undefined;
+    purchaseRequestState: () => BillingPurchaseRequestState;
     pricing: () => BillingPricingResponse | undefined;
     pricingRequestState: () => BillingPricingRequestState;
 
+    setPaymentWidgetToken: (token: string | undefined) => void;
+    setPurchaseRequestState: (state: BillingPurchaseRequestState) => void;
     setPricing: (pricing: BillingPricingResponse | undefined) => void;
     setPricingRequestState: (state: BillingPricingRequestState) => void;
 }

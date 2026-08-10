@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { controller } from '../../../main.tsx';
@@ -122,18 +122,27 @@ export const TokensPage = () => {
     const dictionary = useSelector(useDictionary);
     const language = useSelector(useCurrentLanguage);
     const { isAuthenticated } = useSelector(useUser);
-    const { pricing, pricingRequestState } = useSelector(useBillingPricing);
+    const { pricing, pricingRequestState, purchaseRequestState } =
+        useSelector(useBillingPricing);
     const [selectedPackage, setSelectedPackage] = useState<TokenPackage | null>(
         null
     );
     const [acceptedTerms, setAcceptedTerms] = useState(false);
     const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
     const [acceptedPrivacyPolicy, setAcceptedPrivacyPolicy] = useState(false);
-
     const page = dictionary.tokens_page;
     const canProceedToPayment = useMemo(
-        () => acceptedTerms && acceptedPrivacy && acceptedPrivacyPolicy,
-        [acceptedPrivacy, acceptedPrivacyPolicy, acceptedTerms]
+        () =>
+            acceptedTerms &&
+            acceptedPrivacy &&
+            acceptedPrivacyPolicy &&
+            purchaseRequestState !== 'loading',
+        [
+            acceptedPrivacy,
+            acceptedPrivacyPolicy,
+            acceptedTerms,
+            purchaseRequestState,
+        ]
     );
     const tokenPackages = useMemo(
         () => mapTokenPricesToPackages(pricing?.tokenPrices),
@@ -160,11 +169,32 @@ export const TokensPage = () => {
         setAcceptedTerms(false);
         setAcceptedPrivacy(false);
         setAcceptedPrivacyPolicy(false);
+        dispatch(controller.onBillingPurchaseFlowResetRequest());
     };
 
-    const closePurchaseModal = () => {
+    const closePurchaseModal = useCallback(() => {
         setSelectedPackage(null);
-    };
+        dispatch(controller.onBillingPurchaseFlowResetRequest());
+    }, [dispatch]);
+
+    const onPaymentButtonPress = useCallback(() => {
+        if (!selectedPackage || purchaseRequestState === 'loading') {
+            return;
+        }
+
+        dispatch(
+            controller.onBillingPurchaseCreateRequest({
+                tokenPriceId: selectedPackage.tokenPriceId,
+            })
+        );
+    }, [dispatch, purchaseRequestState, selectedPackage]);
+
+    const purchaseStatusMessage =
+        purchaseRequestState === 'loading'
+            ? page.modal.payment_loading
+            : purchaseRequestState === 'error'
+              ? page.modal.payment_error
+              : null;
 
     return (
         <>
@@ -274,11 +304,14 @@ export const TokensPage = () => {
                             rounded
                             minimize={false}
                             disabled={!canProceedToPayment}
+                            onPress={onPaymentButtonPress}
                             classname="tokens-purchase-modal__button"
                         />
-                        <p className="tokens-purchase-modal__notice">
-                            {page.modal.mock_notice}
-                        </p>
+                        {purchaseStatusMessage ? (
+                            <p className="tokens-purchase-modal__notice">
+                                {purchaseStatusMessage}
+                            </p>
+                        ) : null}
                     </div>
                 ) : null}
             </Modal>

@@ -6,6 +6,7 @@ MockViewModelRepositoryState {
   "activeImageFile": null,
   "activeSegmentIndex": -1,
   "activeTextFile": null,
+  "billingPaymentWidgetToken": undefined,
   "billingPricing": {
     "newUserInitialTokensCount": 0,
     "servicePrices": {
@@ -21,6 +22,7 @@ MockViewModelRepositoryState {
     },
   },
   "billingPricingRequestState": "ok",
+  "billingPurchaseRequestState": "idle",
   "captchaBypassToken": undefined,
   "cloneRequestState": "unknown",
   "codeCheckRequest": "unknown",
@@ -132,6 +134,7 @@ MockViewModelRepositoryState {
   "activeImageFile": null,
   "activeSegmentIndex": -1,
   "activeTextFile": null,
+  "billingPaymentWidgetToken": undefined,
   "billingPricing": {
     "newUserInitialTokensCount": 0,
     "servicePrices": {
@@ -147,6 +150,7 @@ MockViewModelRepositoryState {
     },
   },
   "billingPricingRequestState": "ok",
+  "billingPurchaseRequestState": "idle",
   "captchaBypassToken": undefined,
   "cloneRequestState": "unknown",
   "codeCheckRequest": "unknown",

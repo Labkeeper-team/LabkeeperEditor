@@ -44,6 +44,7 @@ export const URLS = {
     Password: `${uri}/api/${version}/public/password`,
     Contact: `${uri}/api/${version}/public/contact`,
     billingPricing: `${uri}/api/${version}/public/billing/pricing`,
+    billingPurchases: `${uri}/api/${version}/public/billing/purchases`,
 
     FormLogin: `${uri}/api/${version}/sec/formlogin`,
     OauthCode: `${uri}/api/${version}/sec/login/oauth2/code`,

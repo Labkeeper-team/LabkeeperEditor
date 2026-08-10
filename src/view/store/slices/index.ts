@@ -60,6 +60,8 @@ interface ProjectsState {
 interface BillingState {
     pricing?: BillingPricingResponse;
     pricingRequestState: BillingPricingRequestState;
+    purchaseRequestState: BillingPurchaseRequestState;
+    paymentWidgetToken?: string;
 }
 
 interface ProjectState {
@@ -185,10 +187,13 @@ export const projectsInitialState: ProjectsState = {
 };
 
 export type BillingPricingRequestState = 'unknown' | 'loading' | 'ok' | 'error';
+export type BillingPurchaseRequestState = 'idle' | 'loading' | 'ok' | 'error';
 
 export const billingInitialState: BillingState = {
     pricing: undefined,
     pricingRequestState: 'unknown',
+    purchaseRequestState: 'idle',
+    paymentWidgetToken: undefined,
 };
 
 export const settingsInitialState: SettingsState = {

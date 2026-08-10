@@ -21,6 +21,7 @@ import {
     CompileSuccessPdfResponse,
     PdfPosition,
     ProgramDocumentPosition,
+    BillingPurchaseResponse,
     BillingPricingResponse,
 } from '../../model/rpi';
 
@@ -363,6 +364,19 @@ export class WebRpi implements Rpi {
         RequestResult<BillingPricingResponse>
     > {
         return requestWrapper(() => axios.get(URLS.billingPricing));
+    }
+
+    async createBillingPurchaseRequest(
+        tokenPriceId: string
+    ): Promise<RequestResult<BillingPurchaseResponse>> {
+        return requestWrapper(() =>
+            axios.post(URLS.billingPurchases, null, {
+                params: {
+                    tokenPriceId,
+                    integration: 'yookassa',
+                },
+            })
+        );
     }
 
     async getS3FileRequest(path: string): Promise<RequestResult> {
