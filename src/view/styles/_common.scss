@@ -1,4 +1,6 @@
 $header-height: 60px;
 $main-margin: 20px;
 $main-margin-mobile: 5px;
+$mobile-breakpoint: 767px;
+$mobile-view-switcher-height: 36px;
 $screen-height: calc(var(--inner-height) / var(--mobile-scale));

@@ -47,10 +47,7 @@ export class TextFileEditorService {
 
         const currentFile =
             this.repository.ideViewModelRepository.activeTextFile();
-        if (currentFile === fileName) {
-            return;
-        }
-        if (currentFile && currentFile !== fileName) {
+        if (currentFile) {
             if (this.saveTimeout) {
                 clearTimeout(this.saveTimeout);
                 this.saveTimeout = null;
@@ -73,7 +70,7 @@ export class TextFileEditorService {
         );
 
         try {
-            const response = await fetch(file.url);
+            const response = await fetch(file.url, { cache: 'no-store' });
             const content = await response.text();
             if (
                 loadRequestId !== this.loadRequestId ||

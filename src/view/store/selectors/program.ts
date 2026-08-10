@@ -83,6 +83,11 @@ export const useShowFileManager = createSelector(
     (settings) => settings.showFileManager
 );
 
+export const useMobileView = createSelector(
+    (state: StorageState) => state.settings,
+    (settings) => settings.mobileView
+);
+
 export const useInstructionsExpanded = createSelector(
     (state: StorageState) => state.persistence.instructionExpanded,
     (s) => s
@@ -96,10 +101,16 @@ export const useIsProjectReadonly = createSelector(
     (s) => s
 );
 export const useHasUnsavedChanges = createSelector(
-    (state: StorageState) => state.ide,
-    (ide) =>
-        ide.programChangeRevision !== ide.savedProgramRevision ||
-        ide.textFileChangeRevision !== ide.savedTextFileRevision
+    [
+        (state: StorageState) => state.ide,
+        (state: StorageState) => state.user.isAuthenticated,
+        (state: StorageState) => state.project.projectIsReadonly,
+    ],
+    (ide, isAuthenticated, projectIsReadonly) =>
+        isAuthenticated &&
+        !projectIsReadonly &&
+        (ide.programChangeRevision !== ide.savedProgramRevision ||
+            ide.textFileChangeRevision !== ide.savedTextFileRevision)
 );
 
 export const useFileInFileManager = createSelector(

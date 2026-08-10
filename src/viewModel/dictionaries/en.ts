@@ -162,6 +162,14 @@ export const en: Translations = {
         my_projects: 'My projects',
         logout: 'Log out',
         logout_confirmation: 'Are you sure you want to log out?',
+        share: 'Share',
+        language: 'Language',
+        change_language_to: 'Switch language to {language}',
+    },
+    mobile_view: {
+        files: 'Files',
+        editor: 'Editor',
+        pdf: 'PDF',
     },
     tokens_page: {
         title: 'Top up your token balance',
@@ -317,6 +325,13 @@ export const en: Translations = {
         alreadyHaveAccount: 'Already have an account?',
         createAccount: 'Create account',
         continue: 'Continue',
+        closeConfirmation: {
+            title: 'Interrupt the process?',
+            description:
+                'The entered data will be lost, and registration or password recovery will be interrupted.',
+            interrupt: 'Interrupt',
+            continue: 'Continue',
+        },
         personalDataAgreement:
             'I consent to the processing of my personal data in accordance with',
         personalDataPolicyLink: 'the Personal Data Processing Policy',

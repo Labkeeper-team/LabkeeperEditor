@@ -50,6 +50,7 @@ interface SettingsState {
     showProjectPromptModal: boolean;
     currentFolderPath: string;
     ephemeralFolders: string[];
+    mobileView: 'files' | 'editor' | 'pdf';
 }
 
 interface ProjectsState {
@@ -212,6 +213,7 @@ export const settingsInitialState: SettingsState = {
     showProjectPromptModal: false,
     currentFolderPath: '',
     ephemeralFolders: [],
+    mobileView: 'editor',
 };
 
 export const userInitialState: UserInfo = {

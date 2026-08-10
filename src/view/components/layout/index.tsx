@@ -110,6 +110,7 @@ export const BaseLayout = () => {
 
     return (
         <div
+            className="layout-root"
             onDragEnter={isReadonly ? undefined : handleDragEnter}
             onDrop={isReadonly ? undefined : handleDrageEnd}
             onDragEnd={isReadonly ? undefined : handleDrageEnd}

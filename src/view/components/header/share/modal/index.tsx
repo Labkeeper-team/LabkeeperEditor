@@ -10,6 +10,7 @@ import { AppDispatch, StorageState } from '../../../../store';
 import { toast } from 'react-toastify';
 import { useDictionary } from '../../../../store/selectors/translations';
 import { controller } from '../../../../../main.tsx';
+import { colors } from '../../../../styles/colors';
 
 export const ShareModal = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -38,7 +39,7 @@ export const ShareModal = () => {
                 <Typography
                     text={dictionary.share_modal.title}
                     className="share-modal__title"
-                    color="gray20"
+                    color={colors.gray20}
                 />
                 <div className="share-modal__content">
                     <div

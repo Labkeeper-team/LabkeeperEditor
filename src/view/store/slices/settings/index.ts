@@ -83,6 +83,12 @@ export const settingsSlice = createSlice({
                 state.ephemeralFolders.push(payload);
             }
         },
+        setMobileView: (
+            state,
+            { payload }: PayloadAction<'files' | 'editor' | 'pdf'>
+        ) => {
+            state.mobileView = payload;
+        },
     },
 });
 export const {
@@ -103,4 +109,5 @@ export const {
     setCurrentFolderPath,
     setEphemeralFolders,
     addEphemeralFolder,
+    setMobileView,
 } = settingsSlice.actions;

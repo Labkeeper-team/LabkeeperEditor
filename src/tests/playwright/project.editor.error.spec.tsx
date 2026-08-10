@@ -23,7 +23,7 @@ async function testError(page, error, name) {
     // меняем тип на latex
     await page.locator('div.dropdown-menu-container').first().click();
     await page.getByText('markdown', { exact: true }).click();
-    await page.getByText('Labkeeper').first().click();
+    await page.keyboard.press('Escape');
 
     // Добавляем маркдаун
     await page

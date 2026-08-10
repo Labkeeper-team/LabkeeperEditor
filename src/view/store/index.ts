@@ -109,6 +109,7 @@ import {
     setCurrentFolderPath,
     setEphemeralFolders,
     addEphemeralFolder,
+    setMobileView,
 } from './slices/settings';
 import { setUser } from './slices/user';
 import { setScrollEditorToBottom } from './slices/callback';
@@ -419,6 +420,7 @@ export const createViewModelStateFromStore = (
                 store.dispatch(setEphemeralFolders(folders)),
             addEphemeralFolder: (folder: string) =>
                 store.dispatch(addEphemeralFolder(folder)),
+            setMobileView: (view) => store.dispatch(setMobileView(view)),
         },
         userViewModelRepository: {
             email: () => store.getState().user.email,

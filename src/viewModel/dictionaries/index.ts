@@ -156,6 +156,14 @@ export interface Translations {
         my_projects: string;
         logout: string;
         logout_confirmation: string;
+        share: string;
+        language: string;
+        change_language_to: string;
+    };
+    mobile_view: {
+        files: string;
+        editor: string;
+        pdf: string;
     };
     tokens_page: {
         title: string;
@@ -281,6 +289,12 @@ export interface Translations {
         alreadyHaveAccount: string;
         createAccount: string;
         continue: string;
+        closeConfirmation: {
+            title: string;
+            description: string;
+            interrupt: string;
+            continue: string;
+        };
         personalDataAgreement: string;
         personalDataPolicyLink: string;
         personalDataAgreementAnd: string;

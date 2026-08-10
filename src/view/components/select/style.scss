@@ -161,6 +161,20 @@
                     pointer-events: none;
                     transition: none;
                 }
+                &.select-option-info {
+                    padding: 10px 12px 6px;
+                    color: $gray-30;
+                    font-weight: 400;
+                    font-size: 13px;
+                    text-align: left;
+                    pointer-events: none;
+                    cursor: default;
+
+                    &:hover {
+                        color: $gray-30;
+                        background-color: transparent;
+                    }
+                }
             }
         }
     }
@@ -333,5 +347,25 @@
 @media (prefers-reduced-motion: reduce) {
     .labkeeper_select.open .select-options:not(.select-width-measurer) {
         animation: none;
+    }
+}
+
+@media screen and (max-width: 767px) {
+    .labkeeper_select.open .select-options:not(.select-width-measurer) {
+        position: fixed;
+        left: 16px;
+        right: 16px;
+        top: auto;
+        width: auto;
+        max-height: min(70dvh, calc(100dvh - 120px));
+        overflow-y: auto;
+        z-index: 120;
+        border-radius: 12px;
+        border: 1px solid $gray-40;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+    }
+
+    .labkeeper_select.open.default .select-header {
+        border-radius: 40px;
     }
 }

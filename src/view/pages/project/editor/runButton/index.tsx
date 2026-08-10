@@ -82,14 +82,16 @@ export const RunButton = ({ enableHotkey = false }: RunButtonProps) => {
     }, [enableHotkey, run]);
 
     return (
-        <Button
-            classname="run-button"
-            title={title}
-            onPress={run}
-            disabled={disabled}
-            titleIcon={() => (disabled ? undefined : <RightArrowIcon />)}
-            color="green"
-            minimize={false}
-        />
+        <div className="run-button-bar">
+            <Button
+                classname="run-button"
+                title={title}
+                onPress={run}
+                disabled={disabled}
+                titleIcon={() => (disabled ? undefined : <RightArrowIcon />)}
+                color="green"
+                minimize={false}
+            />
+        </div>
     );
 };

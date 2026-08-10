@@ -64,19 +64,22 @@ export const ContactModal = () => {
                     color={colors.gray20}
                     type={'h2'}
                 />
-                <a href={`mailto:${contactEmail}`} target="_blank">
+                <a
+                    className="contact-modal__email"
+                    href={`mailto:${contactEmail}`}
+                    target="_blank"
+                >
                     {contactEmail}
                 </a>
                 {!isAuthenticated && agreement}
                 {isAuthenticated && (
                     <>
-                        <br />
-                        <br />
                         <Typography
                             text={t.contact_form}
                             className="contact-modal__title"
                             color={colors.gray20}
                             type={'h2'}
+                            style={{ marginTop: 16 }}
                         />
                         <form
                             onSubmit={handleSubmit}
