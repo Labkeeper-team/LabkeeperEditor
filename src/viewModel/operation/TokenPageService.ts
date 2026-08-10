@@ -60,6 +60,33 @@ export class TokenPageService {
         );
     };
 
+    restorePendingPurchaseForPayPage = async (): Promise<boolean> => {
+        const result = await this.rpi.listBillingPurchasesRequest({
+            page: 0,
+            size: 1,
+            status: 'pending',
+        });
+
+        if (!result.isOk) {
+            return false;
+        }
+
+        const purchase = result.body.purchases[0];
+        if (!purchase) {
+            return false;
+        }
+
+        const widgetToken = purchase.token ?? purchase.yookassa.widgetToken;
+        if (!widgetToken) {
+            return false;
+        }
+
+        this.repository.billingViewModelRepository.setPaymentWidgetToken(
+            widgetToken
+        );
+        return true;
+    };
+
     onPaymentStatusChanged = async () => {
         await this.refreshUserInfo();
         this.repository.billingViewModelRepository.setPaymentWidgetToken(

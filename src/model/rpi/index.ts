@@ -89,6 +89,10 @@ export interface BillingPurchaseResponse {
     updatedAt: string;
 }
 
+export interface BillingPurchasesListResponse {
+    purchases: BillingPurchaseResponse[];
+}
+
 export interface RichProject extends Project {
     lastProgramResult?: CompileSuccessResult;
     lastPdf?: string;
@@ -245,6 +249,12 @@ export interface Rpi {
     createBillingPurchaseRequest(
         tokenPriceId: string
     ): Promise<RequestResult<BillingPurchaseResponse>>;
+
+    listBillingPurchasesRequest(params?: {
+        page?: number;
+        size?: number;
+        status?: BillingPurchaseResponse['status'];
+    }): Promise<RequestResult<BillingPurchasesListResponse>>;
 }
 
 export const mockRpi = (): Rpi => {
@@ -334,6 +344,9 @@ export const mockRpi = (): Rpi => {
                 isForbidden: false,
             }),
         createBillingPurchaseRequest: () => {
+            throw new Error('Not implemented');
+        },
+        listBillingPurchasesRequest: () => {
             throw new Error('Not implemented');
         },
     } as unknown as Rpi;

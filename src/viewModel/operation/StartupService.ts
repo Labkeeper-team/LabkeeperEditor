@@ -10,6 +10,7 @@ import {
     States,
 } from '../../model/service/ObserverService.ts';
 import { IdeService } from '../domain/IdeService.ts';
+import { TokenPageService } from './TokenPageService.ts';
 
 const qrPagePattern = /\/qr\/v\d+/i;
 const projectPagePattern = /\/project\/\S+/i;
@@ -21,6 +22,7 @@ export class StartupService {
     repository: ViewModelRepository;
     observerService: ObserverService;
     ideService: IdeService;
+    tokenPageService: TokenPageService;
 
     constructor(
         rpi: Rpi,
@@ -28,7 +30,8 @@ export class StartupService {
         loader: LoaderService,
         repository: ViewModelRepository,
         observerService: ObserverService,
-        ideService: IdeService
+        ideService: IdeService,
+        tokenPageService: TokenPageService
     ) {
         this.rpi = rpi;
         this.programService = programService;
@@ -36,6 +39,7 @@ export class StartupService {
         this.repository = repository;
         this.ideService = ideService;
         this.observerService = observerService;
+        this.tokenPageService = tokenPageService;
     }
 
     onAppEnterWithOauthCode = async (code: string, state: string) => {
@@ -132,7 +136,15 @@ export class StartupService {
             if (
                 !this.repository.billingViewModelRepository.paymentWidgetToken()
             ) {
-                this.repository.setLocation(Routes.Tokens);
+                if (!userInfo.isAuthenticated) {
+                    this.repository.setLocation(Routes.Tokens);
+                } else {
+                    const restored =
+                        await this.tokenPageService.restorePendingPurchaseForPayPage();
+                    if (!restored) {
+                        this.repository.setLocation(Routes.Tokens);
+                    }
+                }
             }
         }
 

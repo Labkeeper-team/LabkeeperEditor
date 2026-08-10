@@ -64,13 +64,19 @@ export function setupContext(
     /*
     OPERATION
      */
+    const tokenPageService: TokenPageService = new TokenPageService(
+        rpi,
+        repository,
+        observerService
+    );
     const startupService: StartupService = new StartupService(
         rpi,
         programService,
         loaderService,
         repository,
         observerService,
-        ideService
+        ideService,
+        tokenPageService
     );
     const authService: AuthService = new AuthService(
         repository,
@@ -117,11 +123,6 @@ export function setupContext(
         loaderService,
         ideService,
         startupService,
-        observerService
-    );
-    const tokenPageService: TokenPageService = new TokenPageService(
-        rpi,
-        repository,
         observerService
     );
 

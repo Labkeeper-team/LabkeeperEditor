@@ -22,6 +22,7 @@ import {
     PdfPosition,
     ProgramDocumentPosition,
     BillingPurchaseResponse,
+    BillingPurchasesListResponse,
     BillingPricingResponse,
 } from '../../model/rpi';
 
@@ -374,6 +375,22 @@ export class WebRpi implements Rpi {
                 params: {
                     tokenPriceId,
                     integration: 'yookassa',
+                },
+            })
+        );
+    }
+
+    async listBillingPurchasesRequest(params?: {
+        page?: number;
+        size?: number;
+        status?: BillingPurchaseResponse['status'];
+    }): Promise<RequestResult<BillingPurchasesListResponse>> {
+        return requestWrapper(() =>
+            axios.get(URLS.billingPurchases, {
+                params: {
+                    page: params?.page ?? 0,
+                    size: params?.size ?? 1,
+                    status: params?.status ?? 'pending',
                 },
             })
         );
