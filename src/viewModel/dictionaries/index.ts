@@ -186,6 +186,12 @@ export interface Translations {
         buy_button: string;
         popular: string;
         tokens_amount: string;
+        free_benefits: {
+            initial_label: string;
+            initial_caption: string;
+            refill_label: string;
+            refill_caption: string;
+        };
         usage_title: string;
         usage_items: {
             heading: string;

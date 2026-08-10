@@ -197,6 +197,12 @@ export const en: Translations = {
         buy_button: 'Buy',
         popular: 'Popular',
         tokens_amount: 'tokens',
+        free_benefits: {
+            initial_label: 'At registration',
+            initial_caption: 'added to a new account right away',
+            refill_label: 'Regular top-up',
+            refill_caption: 'free every {period}',
+        },
         usage_title: 'What tokens are used for',
         usage_items: [
             {

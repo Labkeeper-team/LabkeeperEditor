@@ -148,6 +148,19 @@ export const TokensPage = () => {
         () => mapTokenPricesToPackages(pricing?.tokenPrices),
         [pricing?.tokenPrices]
     );
+    const freeBenefits =
+        pricingRequestState === 'ok' &&
+        pricing != null &&
+        typeof pricing.newUserInitialTokensCount === 'number' &&
+        pricing.userRegularRefill != null
+            ? {
+                  initialTokensCount: pricing.newUserInitialTokensCount,
+                  refillTokensAmount:
+                      pricing.userRegularRefill.refillTokensAmount,
+                  refillPeriodSeconds:
+                      pricing.userRegularRefill.refillPeriodSeconds,
+              }
+            : undefined;
     const usageItems = useMemo(
         () =>
             getUsageItemsWithPrices(
@@ -203,6 +216,7 @@ export const TokensPage = () => {
                     page={page}
                     packages={tokenPackages}
                     pricingRequestState={pricingRequestState}
+                    freeBenefits={freeBenefits}
                     onPackageSelect={onPackageClick}
                 />
                 <TokensUsageSection

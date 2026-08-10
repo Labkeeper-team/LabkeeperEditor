@@ -5,12 +5,20 @@ import { useUser } from '../../store/selectors/program';
 import { useCurrentLanguage } from '../../store/selectors/translations.ts';
 import { formatTokenPackagePrice, TokenPackage } from './constant.ts';
 import { TokenPackageCard } from './TokenPackageCard.tsx';
+import { TokensFreeBenefits } from './TokensFreeBenefits.tsx';
 import { BillingPricingRequestState } from '../../../viewModel/repository';
+
+type FreeBenefitsData = {
+    initialTokensCount: number;
+    refillTokensAmount: number;
+    refillPeriodSeconds: number;
+};
 
 type TokensBuySectionProps = {
     page: Translations['tokens_page'];
     packages: TokenPackage[];
     pricingRequestState: BillingPricingRequestState;
+    freeBenefits?: FreeBenefitsData;
     onPackageSelect: (tokenPackage: TokenPackage) => void;
 };
 
@@ -18,6 +26,7 @@ export const TokensBuySection = ({
     page,
     packages,
     pricingRequestState,
+    freeBenefits,
     onPackageSelect,
 }: TokensBuySectionProps) => {
     const { isAuthenticated, tokenBalance } = useSelector(useUser);
@@ -47,6 +56,16 @@ export const TokensBuySection = ({
                         {page.buy_section_intro}
                     </p>
                 </div>
+
+                {freeBenefits ? (
+                    <TokensFreeBenefits
+                        page={page}
+                        language={language}
+                        initialTokensCount={freeBenefits.initialTokensCount}
+                        refillTokensAmount={freeBenefits.refillTokensAmount}
+                        refillPeriodSeconds={freeBenefits.refillPeriodSeconds}
+                    />
+                ) : null}
 
                 <div className="tokens-page__buy-packages-block">
                     {isAuthenticated ? (

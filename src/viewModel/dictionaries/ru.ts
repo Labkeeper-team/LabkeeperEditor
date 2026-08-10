@@ -204,6 +204,12 @@ export const ru: Translations = {
         buy_button: 'Купить',
         popular: 'Популярно',
         tokens_amount: 'токенов',
+        free_benefits: {
+            initial_label: 'При регистрации',
+            initial_caption: 'сразу на баланс нового аккаунта',
+            refill_label: 'Регулярное пополнение',
+            refill_caption: 'бесплатно каждые {period}',
+        },
         usage_title: 'На что\nрасходуются\nтокены',
         usage_items: [
             {
