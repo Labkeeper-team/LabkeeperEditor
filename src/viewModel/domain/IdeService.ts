@@ -89,7 +89,7 @@ export class IdeService {
             const segmentType =
                 this.programService.getCurrentProgram().segments[segmentIndex]
                     .type;
-            if (dollarPattern.test(segmentText)) {
+            if (this.hasReplaceableDollars(segmentText)) {
                 this.schedulePreviewUpdate(() => {
                     this.repository.projectViewModelRepository.setCompileResultForSegment(
                         segmentIndex,
@@ -176,7 +176,7 @@ export class IdeService {
             ) {
                 if (
                     this.isRenderedOnServer(program.segments[i]) ||
-                    dollarPattern.test(program.segments[i].text)
+                    this.hasReplaceableDollars(program.segments[i].text)
                 ) {
                     if (program.segments[i].parameters.visible) {
                         output = {
@@ -196,7 +196,7 @@ export class IdeService {
                 }
             } else if (
                 !this.isRenderedOnServer(program.segments[i]) &&
-                !dollarPattern.test(program.segments[i].text)
+                !this.hasReplaceableDollars(program.segments[i].text)
             ) {
                 output = {
                     type: program.segments[i].type,
@@ -257,5 +257,15 @@ export class IdeService {
         this.flushPreviewUpdate();
         this.programService.replaceWithNewProgram(program);
         this.onProgramUpdated();
+    };
+
+    hasReplaceableDollars = (text: string) => {
+        return (
+            this.programService
+                .getCurrentProgram()
+                .segments.find(
+                    (segment) => segment.type === 'computational'
+                ) !== undefined && dollarPattern.test(text)
+        );
     };
 }
