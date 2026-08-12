@@ -12,6 +12,7 @@ import {
 import { controller } from '../../../../main.tsx';
 import { setMobileView } from '../../../store/slices/settings';
 import { useIsMobile } from '../../../hooks/useMobile';
+import { resetLockedViewportScrollAfterFocus } from '../../../utils/resetLockedViewportScroll';
 
 import './style.scss';
 
@@ -105,6 +106,9 @@ export const SynctexButton = ({ direction, className }: SynctexButtonProps) => {
         dispatch(setMobileView(isToPdf ? 'pdf' : 'editor'));
         // Ждём показа панели (display:none → flex), затем скролл к сегменту
         window.setTimeout(() => focusMarkdownSegment(index), 50);
+        if (!isToPdf) {
+            resetLockedViewportScrollAfterFocus();
+        }
     };
 
     const onActivateLatex = () => {
@@ -123,6 +127,7 @@ export const SynctexButton = ({ direction, className }: SynctexButtonProps) => {
         dispatch(controller.onSyncPdfToEditorRequest());
         if (isMobile) {
             dispatch(setMobileView('editor'));
+            resetLockedViewportScrollAfterFocus();
         }
     };
 

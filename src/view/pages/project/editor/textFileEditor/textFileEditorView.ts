@@ -1,5 +1,6 @@
 import { EditorSelection } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
+import { resetLockedViewportScrollAfterFocus } from '../../../../utils/resetLockedViewportScroll';
 
 export const TEXT_FILE_EDITOR_HOST_ID = 'text-file-editor-host';
 
@@ -30,5 +31,6 @@ export function scrollTextFileEditorLineIntoView(line: number): boolean {
         }),
     });
     view.focus();
+    resetLockedViewportScrollAfterFocus();
     return true;
 }
