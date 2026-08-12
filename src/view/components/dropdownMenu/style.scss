@@ -1,5 +1,12 @@
 @use '../../styles/colors' as *;
 
+/** Ниже этого viewport длинные пункты переносятся, чтобы меню не уезжало за overflow сегментов. */
+$dropdown-wrap-breakpoint: 1600px;
+$dropdown-desktop-max-width: 320px;
+/** ScaleWrapper (minWidth 1024): layout ≈ 1024, с FM колонка IDE ~200–240px. */
+$dropdown-scaled-breakpoint: 1024px;
+$dropdown-scaled-max-width: 200px;
+
 .dropdown-menu-container {
     display: flex;
     align-items: center;
@@ -151,6 +158,60 @@
 
     &--fullscreen:before {
         display: none;
+    }
+}
+
+@media screen and (max-width: $dropdown-wrap-breakpoint) {
+    .dropdown-menu-content-container:not(
+        .dropdown-menu-content-container--fullscreen
+    ) {
+        /* Явная width, не только max-width: иначе flex + break-word схлопывает меню.
+           100vw / --mobile-scale = ширина layout при ScaleWrapper. */
+        width: min(
+            #{$dropdown-desktop-max-width},
+            calc(100vw / var(--mobile-scale, 1) - 24px)
+        );
+        max-width: min(
+            #{$dropdown-desktop-max-width},
+            calc(100vw / var(--mobile-scale, 1) - 24px)
+        );
+        white-space: normal;
+        align-items: stretch;
+
+        .labkeeper-checkbox,
+        .labkeeper-radio {
+            align-items: flex-start;
+            white-space: normal;
+            width: 100%;
+            max-width: 100%;
+
+            .typography {
+                white-space: normal;
+                overflow-wrap: break-word;
+                word-break: normal;
+                line-height: 1.35;
+            }
+        }
+
+        .delete-segment-container {
+            white-space: normal;
+        }
+    }
+}
+
+@media screen and (max-width: $dropdown-scaled-breakpoint) {
+    .dropdown-menu-content-container:not(
+        .dropdown-menu-content-container--fullscreen
+    ) {
+        /* viewer 50% + FM 260px → IDE узкий; 320px не влезает. */
+        width: min(
+            #{$dropdown-scaled-max-width},
+            calc(100vw / var(--mobile-scale, 1) * 0.5 - 280px)
+        );
+        max-width: min(
+            #{$dropdown-scaled-max-width},
+            calc(100vw / var(--mobile-scale, 1) * 0.5 - 280px)
+        );
     }
 }
 
