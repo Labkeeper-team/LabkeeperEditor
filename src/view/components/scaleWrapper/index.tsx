@@ -3,6 +3,7 @@ import {
     isTokensLandingPath,
     useScaleToMinWidth,
 } from '../../hooks/useScaleToMinWidth';
+import { resetLockedViewportScroll } from '../../utils/resetLockedViewportScroll';
 
 function syncInnerHeight() {
     const vv = window.visualViewport;
@@ -11,20 +12,6 @@ function syncInnerHeight() {
         '--inner-height',
         `${Math.round(height)}px`
     );
-}
-
-function resetWindowScroll() {
-    // iOS often shifts the layout viewport when the keyboard opens,
-    // leaving an empty strip under the app chrome.
-    if (window.scrollY !== 0 || window.scrollX !== 0) {
-        window.scrollTo(0, 0);
-    }
-    if (document.documentElement.scrollTop !== 0) {
-        document.documentElement.scrollTop = 0;
-    }
-    if (document.body.scrollTop !== 0) {
-        document.body.scrollTop = 0;
-    }
 }
 
 export default function ScaleWrapper({ minWidth = 1024, children }) {
@@ -37,7 +24,7 @@ export default function ScaleWrapper({ minWidth = 1024, children }) {
             // /tokens uses document scroll; visualViewport resize/scroll
             // (URL bar, etc.) must not yank the page back to the top.
             if (!isTokensLandingPath()) {
-                resetWindowScroll();
+                resetLockedViewportScroll();
             }
         };
 

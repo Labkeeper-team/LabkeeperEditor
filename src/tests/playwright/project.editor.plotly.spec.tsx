@@ -81,7 +81,7 @@ test('plotly-line', async ({ page }) => {
         },
         page
     );
-    await page.locator('.expnad-container.expanded > svg').click();
+    await page.locator('.expnad-container.expanded > svg').first().click();
     await expect(page).toHaveScreenshot('plotly-line.png');
 });
 
@@ -101,7 +101,7 @@ test('plotly-dotted', async ({ page }) => {
         },
         page
     );
-    await page.locator('.expnad-container.expanded > svg').click();
+    await page.locator('.expnad-container.expanded > svg').first().click();
     await expect(page).toHaveScreenshot('plotly-dotted.png');
 });
 
@@ -121,7 +121,7 @@ test('plotly-scatter', async ({ page }) => {
         },
         page
     );
-    await page.locator('.expnad-container.expanded > svg').click();
+    await page.locator('.expnad-container.expanded > svg').first().click();
     await expect(page).toHaveScreenshot('plotly-scatter.png');
 });
 
@@ -151,7 +151,7 @@ test('plotly-with-grid', async ({ page }) => {
         },
         page
     );
-    await page.locator('.expnad-container.expanded > svg').click();
+    await page.locator('.expnad-container.expanded > svg').first().click();
     await expect(page).toHaveScreenshot('plotly-with-grid.png');
 });
 
@@ -181,7 +181,7 @@ test('plotly-with-matjax', async ({ page }) => {
         },
         page
     );
-    await page.locator('.expnad-container.expanded > svg').click();
+    await page.locator('.expnad-container.expanded > svg').first().click();
     await expect(page).toHaveScreenshot('plotly-with-mathjax.png');
 });
 
@@ -221,7 +221,7 @@ test('plotly-with-matjax-longvalues', async ({ page }) => {
         },
         page
     );
-    await page.locator('.expnad-container.expanded > svg').click();
+    await page.locator('.expnad-container.expanded > svg').first().click();
     await expect(page).toHaveScreenshot('plotly-with-mathjax-longvalues.png');
 });
 */
@@ -286,7 +286,7 @@ test('plotly-histogram', async ({ page }) => {
         },
         page
     );
-    await page.locator('.expnad-container.expanded > svg').click();
+    await page.locator('.expnad-container.expanded > svg').first().click();
     await expect(page).toHaveScreenshot('plotly-histogram.png');
 });
 
@@ -351,7 +351,7 @@ test('plotly-histogram-bar', async ({ page }) => {
         },
         page
     );
-    await page.locator('.expnad-container.expanded > svg').click();
+    await page.locator('.expnad-container.expanded > svg').first().click();
     await expect(page).toHaveScreenshot('plotly-histogram.png');
 });
 
@@ -375,7 +375,7 @@ test('plotly-histogram-single', async ({ page }) => {
         },
         page
     );
-    await page.locator('.expnad-container.expanded > svg').click();
+    await page.locator('.expnad-container.expanded > svg').first().click();
     await expect(page).toHaveScreenshot('plotly-histogram-single.png', {
         maxDiffPixels: 1000,
     });
@@ -394,7 +394,7 @@ test('plotly-histogram-two-dims-test', async ({ page }) => {
         },
         page
     );
-    await page.locator('.expnad-container.expanded > svg').click();
+    await page.locator('.expnad-container.expanded > svg').first().click();
     await expect(page).toHaveScreenshot('plotly-histogram-two-dims.png');
 });
 
@@ -411,7 +411,7 @@ test('plotly-histogram-simple-ladder-test', async ({ page }) => {
         },
         page
     );
-    await page.locator('.expnad-container.expanded > svg').click();
+    await page.locator('.expnad-container.expanded > svg').first().click();
     await expect(page).toHaveScreenshot('plotly-histogram-simple-ladder.png');
 });
 
@@ -431,7 +431,7 @@ test('plotly-scatter-error', async ({ page }) => {
         },
         page
     );
-    await page.locator('.expnad-container.expanded > svg').click();
+    await page.locator('.expnad-container.expanded > svg').first().click();
     await expect(page).toHaveScreenshot('plotly-scatter-error.png');
 });
 
@@ -455,7 +455,7 @@ test('plotly-from-lab', async ({ page }) => {
         },
         page
     );
-    await page.locator('.expnad-container.expanded > svg').click();
+    await page.locator('.expnad-container.expanded > svg').first().click();
     await expect(page).toHaveScreenshot('plotly-from-lab.png');
 });
 
@@ -473,7 +473,7 @@ test('plotly-bar-with-double-xGrid', async ({ page }) => {
         },
         page
     );
-    await page.locator('.expnad-container.expanded > svg').click();
+    await page.locator('.expnad-container.expanded > svg').first().click();
     await expect(page).toHaveScreenshot('plotly-bar-with-double-xGrid.png');
 });
 
@@ -491,7 +491,7 @@ test('plotly-bar-with-duplicate-negative-xGrid', async ({ page }) => {
         },
         page
     );
-    await page.locator('.expnad-container.expanded > svg').click();
+    await page.locator('.expnad-container.expanded > svg').first().click();
     await expect(page).toHaveScreenshot('plotly-bar-with-duplicate-xGrid.png', {
         maxDiffPixels: 1000,
     });
