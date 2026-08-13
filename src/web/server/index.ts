@@ -201,14 +201,19 @@ export class WebRpi implements Rpi {
 
     async getDefaultProjectRequest(
         lang: string,
-        program: Program
+        program: Program,
+        projectType: ProjectType
     ): Promise<RequestResult<RichProject>> {
         return requestWrapper(async () =>
-            axios.post(URLS.getDefaultProject, withIds(program), {
-                headers: {
-                    'Accept-Language': lang || 'en',
-                },
-            })
+            axios.post(
+                `${URLS.getDefaultProject}?type=${projectType}`,
+                withIds(program),
+                {
+                    headers: {
+                        'Accept-Language': lang || 'en',
+                    },
+                }
+            )
         );
     }
 
@@ -268,11 +273,12 @@ export class WebRpi implements Rpi {
 
     async createProjectRequest(
         projectName: string,
-        program: Program
+        program: Program,
+        projectType: ProjectType
     ): Promise<RequestResult<Project>> {
         return requestWrapper(async () =>
             axios.put(
-                `${URLS.createProject}?name=${projectName}`,
+                `${URLS.createProject}?name=${projectName}&type=${projectType}`,
                 withIds(program)
             )
         );

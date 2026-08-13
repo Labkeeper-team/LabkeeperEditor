@@ -146,7 +146,8 @@ export interface Rpi {
 
     getDefaultProjectRequest(
         lang: string,
-        program: Program
+        program: Program,
+        projectType: ProjectType
     ): Promise<RequestResult<RichProject>>;
 
     getProjectRequest(projectId: string): Promise<RequestResult<RichProject>>;
@@ -175,7 +176,8 @@ export interface Rpi {
 
     createProjectRequest(
         projectName: string,
-        program: Program
+        program: Program,
+        projectType: ProjectType
     ): Promise<RequestResult<Project>>;
 
     cloneProjectRequest(projectId: string): Promise<RequestResult<Project>>;
