@@ -93,7 +93,8 @@ export class ProjectsPageService {
 
         const result = await this.rpi.createProjectRequest(
             projectName,
-            emptyProject
+            emptyProject,
+            projectType
         );
         if (result.isUnauth) {
             this.repository.toast(
@@ -108,38 +109,16 @@ export class ProjectsPageService {
                 Routes.Project.replace(':id', result.body.projectId + '')
             );
 
-            this.repository.projectViewModelRepository.setProject(result.body);
+            this.repository.projectViewModelRepository.setProject({
+                ...result.body,
+                projectType,
+            });
             this.ideService.setNewProgram(result.body.program);
             await this.loaderService.loadProjects();
             this.repository.projectViewModelRepository.setReadOnly(false);
             this.repository.projectViewModelRepository.setProjectType(
                 projectType
             );
-            const setTypeResult = await this.rpi.setProjectTypeRequest(
-                result.body.projectId,
-                projectType
-            );
-
-            if (setTypeResult.isUnauth) {
-                this.repository.toast(
-                    this.repository.dictionary.filemanager.errors
-                        .sessionExpired,
-                    'error'
-                );
-                this.ideService.resetEditor();
-            }
-
-            if (setTypeResult.isOk) {
-                this.repository.projectViewModelRepository.setProject({
-                    ...result.body,
-                    projectType: projectType,
-                });
-                this.repository.projectViewModelRepository.setReadOnly(false);
-            } else if (!setTypeResult.isUnauth) {
-                this.observerService.onEvent(
-                    Events.EVENT_RPI_UNKNOWN_PROJECTS_SET_PROJECT_TYPE
-                );
-            }
             okCallback();
         } else {
             if (result.code !== 417 && !result.isUnauth) {

@@ -324,11 +324,15 @@ export class StartupService {
         if (userInfo.isAuthenticated) {
             const result = await this.rpi.getDefaultProjectRequest(
                 this.repository.persistenceViewModelRepository.language(),
-                this.repository.persistenceViewModelRepository.lastProgram()
+                this.repository.persistenceViewModelRepository.lastProgram(),
+                this.repository.projectViewModelRepository.mode()
             );
             if (result.isOk) {
                 const project = result.body as RichProject;
                 this.repository.projectViewModelRepository.setProject(project);
+                this.repository.projectViewModelRepository.setProjectType(
+                    project.projectType
+                );
                 this.ideService.setNewProgram(
                     project.program,
                     project.lastProgramResult
