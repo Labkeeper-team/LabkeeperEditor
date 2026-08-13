@@ -270,6 +270,7 @@ export interface Translations {
 
     error_common: {
         segment: string;
+        file: string;
         common_errors: string;
         line: string;
         operator_expected: string;

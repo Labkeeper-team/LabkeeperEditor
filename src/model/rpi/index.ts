@@ -30,8 +30,11 @@ export interface CompileSuccessPdfResponse {
 }
 
 export interface ProgramDocumentPosition {
-    segmentId: number;
+    /** Сегмент программы (1-based id). Может отсутствовать при навигации по файлу. */
+    segmentId?: number | null;
     line: number;
+    /** Путь к файлу проекта при SyncTeX для внешних .tex/.txt и т.п. */
+    file?: string | null;
 }
 
 export interface PdfPosition {
@@ -143,7 +146,8 @@ export interface Rpi {
 
     getDefaultProjectRequest(
         lang: string,
-        program: Program
+        program: Program,
+        projectType: ProjectType
     ): Promise<RequestResult<RichProject>>;
 
     getProjectRequest(projectId: string): Promise<RequestResult<RichProject>>;
@@ -172,7 +176,8 @@ export interface Rpi {
 
     createProjectRequest(
         projectName: string,
-        program: Program
+        program: Program,
+        projectType: ProjectType
     ): Promise<RequestResult<Project>>;
 
     cloneProjectRequest(projectId: string): Promise<RequestResult<Project>>;

@@ -1,5 +1,6 @@
 import { EditorSelection } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
+import { resetLockedViewportScrollAfterFocus } from '../../../../../utils/resetLockedViewportScroll';
 
 const SEGMENTS_CONTAINER_ID = 'segments-container';
 const SEGMENTS_CONTAINER_TOP_PADDING_PX = 10;
@@ -59,6 +60,7 @@ export function scrollIdeEditorLineToContainerTop(
     }
 
     view.focus();
+    resetLockedViewportScrollAfterFocus();
     return true;
 }
 

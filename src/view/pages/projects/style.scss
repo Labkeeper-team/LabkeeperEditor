@@ -141,6 +141,9 @@
     .add-project-button-footer {
         margin-bottom: 20px;
 
+        .labkeeper-button {
+            width: 100%;
+        }
         @media screen and (max-width: $mobile-breakpoint) {
             position: sticky;
             bottom: 0;
@@ -149,10 +152,6 @@
             padding-top: 12px;
             padding-bottom: env(safe-area-inset-bottom, 0px);
             background: linear-gradient(to top, $white 70%, rgba($white, 0));
-
-            .labkeeper-button {
-                width: 100%;
-            }
 
             @media (hover: none) {
                 .labkeeper-button.gray-color:hover:not(:disabled) {

@@ -104,7 +104,8 @@ export function setupContext(
         loaderService,
         ideService,
         observerService,
-        fileService
+        fileService,
+        textFileEditorService
     );
     const projectPageService: ProjectPageService = new ProjectPageService(
         repository,
