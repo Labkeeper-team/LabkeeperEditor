@@ -165,9 +165,10 @@ $dropdown-scaled-max-width: 200px;
     .dropdown-menu-content-container:not(
         .dropdown-menu-content-container--fullscreen
     ) {
-        /* Явная width, не только max-width: иначе flex + break-word схлопывает меню.
-           100vw / --mobile-scale = ширина layout при ScaleWrapper. */
+        /* Hug content; 320px / доступная ширина — только потолок.
+           min(max-content, …) даёт definite width: иначе flex + break-word схлопывает меню. */
         width: min(
+            max-content,
             #{$dropdown-desktop-max-width},
             calc(100vw / var(--mobile-scale, 1) - 24px)
         );
@@ -179,10 +180,12 @@ $dropdown-scaled-max-width: 200px;
         align-items: stretch;
 
         .labkeeper-checkbox,
-        .labkeeper-radio {
+        .labkeeper-radio,
+        .full-width-checkbox {
             align-items: flex-start;
             white-space: normal;
-            width: 100%;
+            /* auto, не 100%: иначе max-content родителя схлопывается. */
+            width: auto;
             max-width: 100%;
 
             .typography {
@@ -195,6 +198,26 @@ $dropdown-scaled-max-width: 200px;
 
         .delete-segment-container {
             white-space: normal;
+            width: auto;
+            max-width: 100%;
+        }
+
+        &.dropdown-menu-content-container--computational {
+            width: min(
+                #{$dropdown-desktop-max-width},
+                calc(100vw / var(--mobile-scale, 1) - 24px)
+            );
+            max-width: min(
+                #{$dropdown-desktop-max-width},
+                calc(100vw / var(--mobile-scale, 1) - 24px)
+            );
+
+            .labkeeper-checkbox,
+            .labkeeper-radio,
+            .full-width-checkbox,
+            .delete-segment-container {
+                width: 100%;
+            }
         }
     }
 }
@@ -205,6 +228,7 @@ $dropdown-scaled-max-width: 200px;
     ) {
         /* viewer 50% + FM 260px → IDE узкий; 320px не влезает. */
         width: min(
+            max-content,
             #{$dropdown-scaled-max-width},
             calc(100vw / var(--mobile-scale, 1) * 0.5 - 280px)
         );
@@ -212,6 +236,17 @@ $dropdown-scaled-max-width: 200px;
             #{$dropdown-scaled-max-width},
             calc(100vw / var(--mobile-scale, 1) * 0.5 - 280px)
         );
+
+        &.dropdown-menu-content-container--computational {
+            width: min(
+                #{$dropdown-scaled-max-width},
+                calc(100vw / var(--mobile-scale, 1) * 0.5 - 280px)
+            );
+            max-width: min(
+                #{$dropdown-scaled-max-width},
+                calc(100vw / var(--mobile-scale, 1) * 0.5 - 280px)
+            );
+        }
     }
 }
 

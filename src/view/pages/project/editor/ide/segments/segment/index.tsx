@@ -847,7 +847,11 @@ export const SegmentEditor = memo(
                     <DropdownMenu
                         clickable={!projectIsReadonly}
                         fullScreenOnMobile
-                        containerClassname="dropdown-content-contanier-additional"
+                        containerClassname={classNames(
+                            'dropdown-content-contanier-additional',
+                            segment.type === 'computational' &&
+                                'dropdown-menu-content-container--computational'
+                        )}
                     >
                         <DropdownMenuContent
                             index={props.index}
