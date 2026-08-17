@@ -422,7 +422,7 @@ const TreeNodeRow = (props: {
                     </div>
                     {!props.readonly && !editMode ? (
                         <div onClick={(event) => event.stopPropagation()}>
-                            <DropdownMenu>
+                            <DropdownMenu fullScreenOnMobile>
                                 <div
                                     className="tree-menu-item tree-menu-item-delete"
                                     onClick={() =>
