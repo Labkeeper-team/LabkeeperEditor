@@ -1,4 +1,5 @@
 @use '../../styles/colors' as *;
+@use '../../styles/common' as *;
 
 /** Ниже этого viewport длинные пункты переносятся, чтобы меню не уезжало за overflow сегментов. */
 $dropdown-wrap-breakpoint: 1600px;
@@ -144,6 +145,12 @@ $dropdown-scaled-max-width: 200px;
         .delete-segment-container {
             white-space: normal;
         }
+
+        .tree-menu-item {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px 4px;
+        }
     }
 
     &:before {
@@ -222,7 +229,8 @@ $dropdown-scaled-max-width: 200px;
     }
 }
 
-@media screen and (max-width: $dropdown-scaled-breakpoint) {
+/* Не на native mobile: там --mobile-scale = 1, calc(50vw - 280px) < 0. */
+@media screen and (max-width: $dropdown-scaled-breakpoint) and (min-width: $mobile-breakpoint + 1px) {
     .dropdown-menu-content-container:not(
         .dropdown-menu-content-container--fullscreen
     ) {

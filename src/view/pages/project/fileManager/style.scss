@@ -533,45 +533,45 @@
             border-color: $red-10;
         }
     }
+}
 
-    .tree-menu-item {
+.tree-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    cursor: pointer;
+
+    svg {
+        width: 14px;
+        height: 14px;
+    }
+}
+
+.tree-menu-item-delete {
+    .tree-delete-icon {
+        background-color: $red-20;
+        border: 1px solid $red-20;
+        border-radius: 45px;
+        height: 15px;
+        width: 15px;
         display: flex;
+        justify-content: center;
         align-items: center;
-        gap: 8px;
-        padding: 6px 10px;
-        cursor: pointer;
+        rotate: 45deg;
+        flex-shrink: 0;
 
         svg {
-            width: 14px;
-            height: 14px;
+            width: 10px;
+            height: 10px;
+
+            path {
+                fill: $red-10;
+            }
         }
     }
 
-    .tree-menu-item-delete {
-        .tree-delete-icon {
-            background-color: $red-20;
-            border: 1px solid $red-20;
-            border-radius: 45px;
-            height: 15px;
-            width: 15px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            rotate: 45deg;
-            flex-shrink: 0;
-
-            svg {
-                width: 10px;
-                height: 10px;
-
-                path {
-                    fill: $red-10;
-                }
-            }
-        }
-
-        &:hover .tree-delete-icon {
-            border-color: $red-10;
-        }
+    &:hover .tree-delete-icon {
+        border-color: $red-10;
     }
 }
