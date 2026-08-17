@@ -146,11 +146,8 @@ export class LoaderService {
         );
         const result = await this.rpi.getAllProjectsRequest();
         if (result.isOk) {
-            const projects =
-                (result.body as { projects?: ProjectShort[] } | null)
-                    ?.projects ?? [];
             this.repository.projectsViewModelRepository.setProjects(
-                [...projects].reverse()
+                (result.body as { projects: ProjectShort[] }).projects.reverse()
             );
             this.repository.ideViewModelRepository.setGetProjectsRequestState(
                 'ok'
