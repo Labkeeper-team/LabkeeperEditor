@@ -77,7 +77,7 @@ MockViewModelRepositoryState {
   "loadTextFileRequestState": "unknown",
   "location": "/project/2cd18704-6c3f-48cb-96f1-9a923930f8cb",
   "loginRequest": "unknown",
-  "mode": "latex",
+  "mode": "markdown",
   "passwordSetRequest": "unknown",
   "pdfClickPosition": null,
   "pdfNavigationTarget": null,
