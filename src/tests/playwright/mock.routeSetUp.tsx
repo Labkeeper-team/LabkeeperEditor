@@ -58,7 +58,7 @@ export class RouteSetup {
         privacyPolicyAccepted: boolean = isAuthenticated
     ) {
         await this.page.route(
-            `/api/${version}/public/user-info`,
+            `**/api/${version}/public/user-info**`,
             async (route) => {
                 await route.fulfill({
                     status: 200,
@@ -77,7 +77,7 @@ export class RouteSetup {
 
     async setupLlmPrompt(code: number) {
         await this.page.route(
-            `/api/${version}/public/project/${uuid}/prompt?prompt=biba`,
+            `**/api/${version}/public/project/${uuid}/prompt?prompt=biba`,
             async (route) => {
                 await route.fulfill({
                     status: code,
@@ -178,7 +178,7 @@ export class RouteSetup {
         bodyType: BodyTypeForGetAndDefaultRequest = 'default'
     ) {
         await this.page.route(
-            `/api/${version}/public/project/${uuid}/get`,
+            `**/api/${version}/public/project/${uuid}/get**`,
             async (route) => {
                 await route.fulfill({
                     status: status,
@@ -197,7 +197,7 @@ export class RouteSetup {
         onRoute?: () => void
     ) {
         await this.page.route(
-            `/api/${version}/public/project/default`,
+            `**/api/${version}/public/project/default**`,
             async (route) => {
                 if (onRoute) {
                     onRoute();
@@ -333,7 +333,7 @@ export class RouteSetup {
         onRoute?: () => void
     ) {
         await this.page.route(
-            `/api/${version}/public/project/${uuid}/compile`,
+            `**/api/${version}/public/project/${uuid}/compile**`,
             async (route) => {
                 if (onRoute) {
                     onRoute();
@@ -356,7 +356,7 @@ export class RouteSetup {
 
     async setupCompileProjectPdfRequest(status: number) {
         await this.page.route(
-            `/api/${version}/public/project/${uuid}/compile/pdf`,
+            `**/api/${version}/public/project/${uuid}/compile/pdf**`,
             async (route) => {
                 await route.fulfill({
                     status,
@@ -398,7 +398,7 @@ export class RouteSetup {
     ) {
         let fileName: string;
         await this.page.route(
-            `/api/${version}/public/project/${uuid}/file/list`,
+            `**/api/${version}/public/project/${uuid}/file/list**`,
             async (route) => {
                 if (onRoute) {
                     onRoute();
@@ -455,7 +455,7 @@ export class RouteSetup {
         onRoute?: (route: Route) => void
     ) {
         await this.page.route(
-            `/api/${version}/public/project/${uuid}/program`,
+            `**/api/${version}/public/project/${uuid}/program**`,
             async (route) => {
                 if (onRoute) {
                     onRoute(route);
@@ -473,7 +473,7 @@ export class RouteSetup {
 
     async setupGetTitleRequest(onRoute?: () => void) {
         await this.page.route(
-            `/api/${version}/public/project/${uuid}/title*`,
+            `**/api/${version}/public/project/${uuid}/title**`,
             async (route) => {
                 if (onRoute) {
                     onRoute();
@@ -491,7 +491,7 @@ export class RouteSetup {
 
     async setupGetAllProjectsRequest() {
         await this.page.route(
-            `/api/${version}/public/project/all`,
+            `**/api/${version}/public/project/all**`,
             async (route) => {
                 await route.fulfill({
                     status: 200,
@@ -573,18 +573,18 @@ export class RouteSetup {
         };
 
         await this.page.route(
-            `/api/${version}/public/compile`,
+            `**/api/${version}/public/compile**`,
             fulfillCompilation
         );
         await this.page.route(
-            `/api/${version}/public/project/*/compile`,
+            `**/api/${version}/public/project/*/compile**`,
             fulfillCompilation
         );
     }
 
     async setupProject() {
         await this.page.route(
-            `/api/${version}/public/project/*`,
+            `**/api/${version}/public/project/**`,
             async (route) => {
                 await route.fulfill({
                     status: 200,
@@ -609,12 +609,32 @@ export class RouteSetup {
 
     // Блокируем все запросы по умолчанию
     async setupApi(onRoute?: () => void) {
-        await this.page.route('/api/*', async (route) => {
+        await this.page.route('**/api/**', async (route) => {
             if (onRoute) {
                 onRoute();
             }
             await route.abort();
         });
+        // Allowlist: startup always calls billing/pricing.
+        // Registered after the abort route so it takes precedence.
+        await this.page.route(
+            `**/api/${version}/public/billing/pricing**`,
+            async (route) => {
+                await route.fulfill({
+                    status: 200,
+                    contentType: contentType,
+                    body: JSON.stringify({
+                        servicePrices: {
+                            latexCompilationTokenCostPerSecond: 1,
+                            markdownCompilationTokenCostPerSecond: 1,
+                            gptTextPromptTokenCost: 1,
+                            gptImagePromptTokenCost: 1,
+                        },
+                        tokenPrices: [],
+                    }),
+                });
+            }
+        );
     }
 
     async setupUploadFileRequest(status: number = 200) {

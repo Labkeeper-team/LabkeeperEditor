@@ -169,6 +169,7 @@ test('public-project-different-user-compilation-ok', async ({ page }) => {
         200,
         'withTwoSegmentsBibaAndAEqualTen'
     );
+    await routeSetup.setupGetAllProjectsRequest();
 
     // Перехватываем запрос на список файлов
     await routeSetup.setupListFilesRequest();
