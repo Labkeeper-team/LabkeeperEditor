@@ -499,7 +499,9 @@ test('display-name-new-project-test', async () => {
         repository.projectsViewModelRepository
             .projects()
             .map((p) => p.projectId + p.title)
-    ).toStrictEqual(allprojects.map((p) => p.projectId + p.title));
+    ).toStrictEqual(
+        [...allprojects].reverse().map((p) => p.projectId + p.title)
+    );
 });
 
 test('back-button-resets-forbidden-project-error-for-unauthorized-user', async () => {
