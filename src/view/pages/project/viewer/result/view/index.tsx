@@ -20,6 +20,7 @@ export const ViewResult = forwardRef((_, ref) => {
             }}
         >
             <MathJaxContext
+                src="/mathjax/tex-mml-chtml.js"
                 config={{
                     loader: {
                         load: [
