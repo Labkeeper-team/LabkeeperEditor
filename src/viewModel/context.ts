@@ -76,7 +76,8 @@ export function setupContext(
         repository,
         observerService,
         ideService,
-        tokenPageService
+        tokenPageService,
+        resetService
     );
     const authService: AuthService = new AuthService(
         repository,
@@ -124,7 +125,8 @@ export function setupContext(
         loaderService,
         ideService,
         startupService,
-        observerService
+        observerService,
+        resetService
     );
 
     /*

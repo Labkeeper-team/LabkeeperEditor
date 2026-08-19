@@ -11,6 +11,7 @@ import {
 } from '../../model/service/ObserverService.ts';
 import { IdeService } from '../domain/IdeService.ts';
 import { TokenPageService } from './TokenPageService.ts';
+import { ResetService } from '../domain/ResetService.ts';
 
 const qrPagePattern = /\/qr\/v\d+/i;
 const projectPagePattern = /\/project\/\S+/i;
@@ -23,6 +24,7 @@ export class StartupService {
     observerService: ObserverService;
     ideService: IdeService;
     tokenPageService: TokenPageService;
+    resetService: ResetService;
 
     constructor(
         rpi: Rpi,
@@ -31,7 +33,8 @@ export class StartupService {
         repository: ViewModelRepository,
         observerService: ObserverService,
         ideService: IdeService,
-        tokenPageService: TokenPageService
+        tokenPageService: TokenPageService,
+        resetService: ResetService
     ) {
         this.rpi = rpi;
         this.programService = programService;
@@ -40,6 +43,7 @@ export class StartupService {
         this.ideService = ideService;
         this.observerService = observerService;
         this.tokenPageService = tokenPageService;
+        this.resetService = resetService;
     }
 
     onAppEnterWithOauthCode = async (code: string, state: string) => {
@@ -266,6 +270,7 @@ export class StartupService {
                 this.repository.projectViewModelRepository.project()
                     ?.projectId !== project.projectId
             ) {
+                this.resetService.resetFileManagerProjectState();
                 this.repository.projectViewModelRepository.setPdfUri(undefined);
                 this.repository.ideViewModelRepository.setPdfUpdated(0);
             }
@@ -329,6 +334,12 @@ export class StartupService {
             );
             if (result.isOk) {
                 const project = result.body as RichProject;
+                if (
+                    this.repository.projectViewModelRepository.project()
+                        ?.projectId !== project.projectId
+                ) {
+                    this.resetService.resetFileManagerProjectState();
+                }
                 this.repository.projectViewModelRepository.setProject(project);
                 this.repository.projectViewModelRepository.setProjectType(
                     project.projectType

@@ -9,6 +9,7 @@ import {
     Events,
     ObserverService,
 } from '../../model/service/ObserverService.ts';
+import { ResetService } from '../domain/ResetService.ts';
 
 export class ProjectsPageService {
     repository: ViewModelRepository;
@@ -17,6 +18,7 @@ export class ProjectsPageService {
     ideService: IdeService;
     startupService: StartupService;
     observerService: ObserverService;
+    resetService: ResetService;
 
     constructor(
         repository: ViewModelRepository,
@@ -24,7 +26,8 @@ export class ProjectsPageService {
         loaderService: LoaderService,
         ideService: IdeService,
         startupService: StartupService,
-        observerService: ObserverService
+        observerService: ObserverService,
+        resetService: ResetService
     ) {
         this.rpi = rpi;
         this.loaderService = loaderService;
@@ -32,6 +35,7 @@ export class ProjectsPageService {
         this.startupService = startupService;
         this.repository = repository;
         this.observerService = observerService;
+        this.resetService = resetService;
     }
 
     onDeleteProject = async (projectId: string, okCallback: () => void) => {
@@ -109,6 +113,7 @@ export class ProjectsPageService {
                 Routes.Project.replace(':id', result.body.projectId + '')
             );
 
+            this.resetService.resetFileManagerProjectState();
             this.repository.projectViewModelRepository.setProject({
                 ...result.body,
                 projectType,

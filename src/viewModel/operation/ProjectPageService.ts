@@ -308,6 +308,7 @@ export class ProjectPageService {
             this.repository.setLocation(
                 Routes.Project.replace(':id', result.body.projectId)
             );
+            this.resetService.resetFileManagerProjectState();
             this.repository.projectViewModelRepository.setProject(result.body);
             this.ideService.setNewProgram(result.body.program);
             await this.loaderService.loadProjects();
