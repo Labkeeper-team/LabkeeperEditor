@@ -114,12 +114,9 @@ export const MarketingHeader = () => {
                             <span className="marketing-header__burger-line" />
                             <span className="marketing-header__burger-line" />
                         </button>
-                        <button
+                        <a
                             className="marketing-header__logo"
-                            type="button"
-                            onClick={() =>
-                                closeMenuAndRun(() => navigate(Routes.Home))
-                            }
+                            href={Routes.Home}
                         >
                             <img
                                 src={marketingLogoMark}
@@ -131,7 +128,7 @@ export const MarketingHeader = () => {
                             <span className="marketing-header__logo-text">
                                 Labkeeper
                             </span>
-                        </button>
+                        </a>
                         <MarketingHeaderLang
                             language={language}
                             onSelect={onLanguageSelect}

@@ -1,5 +1,4 @@
 import { useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
 
 import externalLinkIcon from '../../../assets/marketing-footer-external.svg';
 import footerWordmark from '../../../assets/marketing-footer-wordmark.svg';
@@ -88,9 +87,9 @@ export const MarketingFooter = () => {
                             </a>
                         ))}
                     </nav>
-                    <Link
+                    <a
                         className="marketing-footer__logo-link"
-                        to={Routes.Home}
+                        href={Routes.Home}
                         aria-label="Labkeeper"
                     >
                         <img
@@ -101,7 +100,7 @@ export const MarketingFooter = () => {
                             height={48}
                             loading="lazy"
                         />
-                    </Link>
+                    </a>
                     <div className="marketing-footer__contact">
                         <span className="marketing-footer__contact-label">
                             {footer.contact_label}
