@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import svgr from 'vite-plugin-svgr';
+import { viteStaticCopy } from 'vite-plugin-static-copy';
 
 const DEFAULT_MAJOR = '2';
 const DEFAULT_MINOR = '';
@@ -39,7 +40,19 @@ export default defineConfig(() => {
     const { major, minor } = resolveBuildVersion();
 
     return {
-        plugins: [react(), svgr()],
+        plugins: [
+            react(),
+            svgr(),
+            viteStaticCopy({
+                targets: [
+                    {
+                        src: 'node_modules/mathjax/es5/**/*',
+                        dest: 'mathjax',
+                        rename: { stripBase: 3 },
+                    },
+                ],
+            }),
+        ],
         resolve: {
             dedupe: ['react', 'react-dom'],
         },
