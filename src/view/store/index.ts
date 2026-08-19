@@ -329,8 +329,15 @@ export const createViewModelStateFromStore = (
                     })
                 ),
             setReadOnly: (value: boolean) => store.dispatch(setReadOnly(value)),
-            setProject: (project?: Project) =>
-                store.dispatch(setProject(project)),
+            setProject: (project?: Project) => {
+                const currentProjectId =
+                    store.getState().project.project?.projectId;
+                if (currentProjectId !== project?.projectId) {
+                    store.dispatch(setCurrentFolderPath(''));
+                    store.dispatch(setEphemeralFolders([]));
+                }
+                store.dispatch(setProject(project));
+            },
             setCompileResult: (compileResult: CompileSuccessResult) =>
                 store.dispatch(setCompileResult(compileResult)),
             setCompileErrorResult: (

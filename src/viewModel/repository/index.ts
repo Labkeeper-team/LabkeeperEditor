@@ -366,8 +366,13 @@ export const mockViewModelState = (): MockViewModelRepository => {
             },
             setReadOnly: (v: boolean) =>
                 (mockViewModelState.projectIsReadonly = v),
-            setProject: (v?: Project) =>
-                (mockViewModelState.project = structuredClone(v)),
+            setProject: (v?: Project) => {
+                if (mockViewModelState.project?.projectId !== v?.projectId) {
+                    mockViewModelState.currentFolderPath = '';
+                    mockViewModelState.ephemeralFolders = [];
+                }
+                mockViewModelState.project = structuredClone(v);
+            },
             setCompileResult: (v: CompileSuccessResult) =>
                 (mockViewModelState.compileSuccessResult = structuredClone(v)),
             setCompileErrorResult: (v: CompileErrorResultList) =>
