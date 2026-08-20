@@ -210,10 +210,6 @@ export const en: Translations = {
                 body: 'Ask the model to outline a document, convert text to Markdown, or spot bugs in your code.',
             },
             {
-                heading: 'Image generation',
-                body: 'Create unique illustrations and graphics for papers and lab reports from a single prompt.',
-            },
-            {
                 heading: 'Server-side compilation',
                 body: 'Build heavy PDF documents without freezes. Tokens are charged only while the powerful remote compiler is running.',
             },
@@ -224,7 +220,6 @@ export const en: Translations = {
             markdown_compilation:
                 'Markdown compilation: {tokens} per 1 second of server time.',
             gpt_text_prompt: 'Text GPT prompt: {tokens} per 1 request.',
-            gpt_image_prompt: 'Image generation: {tokens} per 1 request.',
         },
         modal: {
             title: 'Token purchase',
@@ -461,9 +456,6 @@ export const en: Translations = {
         description:
             'AI will process your request and add a new code segment in the right place in the project.',
         placeholder: 'Enter prompt',
-        generateImage: 'Generate images',
-        generateImageDescription:
-            'When enabled, the bot will generate an IMAGE from your description and insert it into the project.',
         submit: 'Send',
         sending: 'Sending...',
         errors: {

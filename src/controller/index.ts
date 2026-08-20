@@ -229,18 +229,9 @@ export class Controller {
 
     onPromptSubmitRequest = createAsyncThunk(
         'onPromptSubmit',
-        async ({
-            prompt,
-            generateImage,
-        }: {
-            prompt: string;
-            generateImage: boolean;
-        }) => {
+        async ({ prompt }: { prompt: string }) => {
             this.wrapper('onRunButtonPressed', () =>
-                this.projectPageService.sendPromptAndReload(
-                    prompt,
-                    generateImage
-                )
+                this.projectPageService.sendPromptAndReload(prompt)
             );
         }
     );

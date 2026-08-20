@@ -10,7 +10,6 @@ MockViewModelRepositoryState {
   "billingPricing": {
     "newUserInitialTokensCount": 0,
     "servicePrices": {
-      "gptImagePromptTokenCost": 0,
       "gptTextPromptTokenCost": 0,
       "latexCompilationTokenCostPerSecond": 0,
       "markdownCompilationTokenCostPerSecond": 0,
@@ -149,7 +148,6 @@ MockViewModelRepositoryState {
   "billingPricing": {
     "newUserInitialTokensCount": 0,
     "servicePrices": {
-      "gptImagePromptTokenCost": 0,
       "gptTextPromptTokenCost": 0,
       "latexCompilationTokenCostPerSecond": 0,
       "markdownCompilationTokenCostPerSecond": 0,

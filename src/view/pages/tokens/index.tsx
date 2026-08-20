@@ -82,21 +82,6 @@ const getUsageItemsWithPrices = (
                 rateLines: [
                     ...(item.rateLines ?? []),
                     applyTokenTemplate(
-                        rates.gpt_image_prompt,
-                        formatTokenAmount(
-                            servicePrices.gptImagePromptTokenCost,
-                            language
-                        )
-                    ),
-                ],
-            };
-        }
-        if (index === 2) {
-            return {
-                ...item,
-                rateLines: [
-                    ...(item.rateLines ?? []),
-                    applyTokenTemplate(
                         rates.latex_compilation,
                         formatTokenAmount(
                             servicePrices.latexCompilationTokenCostPerSecond,

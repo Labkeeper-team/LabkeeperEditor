@@ -3,7 +3,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Modal } from '../../../../components/modal';
 import { Input } from '../../../../components/input';
 import { Button } from '../../../../components/button';
-import { Checkbox } from '../../../../components/checkbox';
 import { AppDispatch, StorageState } from '../../../../store';
 import { useDictionary } from '../../../../store/selectors/translations';
 import { controller } from '../../../../../main.tsx';
@@ -21,7 +20,6 @@ export const PromptModal = () => {
         (state: StorageState) => state.ide.projectPromptRequestState
     );
     const [prompt, setPrompt] = useState('');
-    const [generateImage, setGenerateImage] = useState(false);
 
     const errorMessage = useMemo((): string => {
         if (promptRequestState === 'bad_request') {
@@ -51,14 +49,12 @@ export const PromptModal = () => {
                         text={dictionary.prompt_modal.title}
                     />
                 </div>
-                {!generateImage && (
-                    <Typography
-                        type="label-small"
-                        color={colors.gray20}
-                        text={dictionary.prompt_modal.description}
-                        className="prompt-modal__description"
-                    />
-                )}
+                <Typography
+                    type="label-small"
+                    color={colors.gray20}
+                    text={dictionary.prompt_modal.description}
+                    className="prompt-modal__description"
+                />
                 <Input
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
@@ -66,12 +62,6 @@ export const PromptModal = () => {
                     disabled={promptRequestState === 'loading'}
                     multiline
                     rows={10}
-                />
-                <Checkbox
-                    id="prompt-modal-generate-image"
-                    checked={generateImage}
-                    onChange={setGenerateImage}
-                    title={dictionary.prompt_modal.generateImage}
                 />
                 {errorMessage && (
                     <Typography
@@ -81,23 +71,6 @@ export const PromptModal = () => {
                     />
                 )}
                 <div className="prompt-modal__footer">
-                    <div className="prompt-modal__footer-text">
-                        <Typography
-                            type="label-small"
-                            color={colors.gray20}
-                            text={
-                                dictionary.prompt_modal.generateImageDescription
-                            }
-                            style={{
-                                whiteSpace: 'normal',
-                                wordBreak: 'break-word',
-                                lineHeight: '18px',
-                                visibility: generateImage
-                                    ? 'visible'
-                                    : 'hidden',
-                            }}
-                        />
-                    </div>
                     <Button
                         classname="prompt-modal__submit"
                         title={
@@ -109,7 +82,6 @@ export const PromptModal = () => {
                             dispatch(
                                 controller.onPromptSubmitRequest({
                                     prompt,
-                                    generateImage,
                                 })
                             )
                         }

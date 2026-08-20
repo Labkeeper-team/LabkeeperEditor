@@ -400,18 +400,8 @@ export class ProjectPageService {
         }
     };
 
-    sendPromptAndReload = async (
-        prompt: string,
-        generateImage: boolean
-    ): Promise<void> => {
+    sendPromptAndReload = async (prompt: string): Promise<void> => {
         if (!this.repository.userViewModelRepository.isAuthenticated()) {
-            if (generateImage) {
-                this.repository.authViewModelRepository.setCurrentView('login');
-                this.repository.settingsViewModelRepository.setShowProjectPromptModal(
-                    false
-                );
-                return;
-            }
             this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
                 'loading'
             );
@@ -489,17 +479,13 @@ export class ProjectPageService {
         this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
             'loading'
         );
-        const promptResult = generateImage
-            ? await this.rpi.generateImageInProjectRequest(
-                  project.projectId,
-                  prompt
-              )
-            : await this.rpi.promptProjectRequest(project.projectId, prompt);
+        const promptResult = await this.rpi.promptProjectRequest(
+            project.projectId,
+            prompt
+        );
         await this.refreshUserInfo();
         if (promptResult.isOk) {
-            if (!generateImage) {
-                this.observerService.onEvent(Events.EVENT_GPT_REQUEST);
-            }
+            this.observerService.onEvent(Events.EVENT_GPT_REQUEST);
             const newProgram = promptResult.body;
             const oldProgram =
                 this.repository.projectViewModelRepository.currentProgram();
@@ -514,19 +500,9 @@ export class ProjectPageService {
             this.repository.settingsViewModelRepository.setShowProjectPromptModal(
                 false
             );
-            if (generateImage) {
-                await this.loaderService.loadFiles(project.projectId);
-                await this.compilationService.runCompilation();
-                this.repository.ideViewModelRepository.setActiveSegmentIndex(
-                    this.programService.getCurrentProgram().segments.length - 1
-                );
-                this.ideService.onProgramUpdated();
-            }
             this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(
                 newIndex
             );
-            // После компиляции (generateImage) pdfUpdated может увести на PDF —
-            // редактор ставим последним, чтобы остаться на сегментах.
             this.switchToMobileEditorView();
         } else if (promptResult.isUnauth) {
             this.repository.toast(
@@ -625,11 +601,6 @@ export class ProjectPageService {
         ) {
             return;
         }
-        const switchView = () =>
-            this.repository.settingsViewModelRepository.setMobileView('editor');
-        // Сразу и на следующем macrotask: перекрываем эффект pdfUpdated
-        // после generateImage → compile.
-        switchView();
-        setTimeout(switchView, 0);
+        this.repository.settingsViewModelRepository.setMobileView('editor');
     }
 }

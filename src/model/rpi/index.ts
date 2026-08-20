@@ -59,7 +59,6 @@ export interface ServicePrices {
     latexCompilationTokenCostPerSecond: number;
     markdownCompilationTokenCostPerSecond: number;
     gptTextPromptTokenCost: number;
-    gptImagePromptTokenCost: number;
 }
 
 export interface TokenPrice {
@@ -239,11 +238,6 @@ export interface Rpi {
         prompt: string
     ): Promise<RequestResult<Program>>;
 
-    generateImageInProjectRequest(
-        projectId: string,
-        prompt: string
-    ): Promise<RequestResult<Program>>;
-
     unauthorizedPromptProjectRequest(
         program: Program,
         prompt: string
@@ -335,7 +329,6 @@ export const mockRpi = (): Rpi => {
                         latexCompilationTokenCostPerSecond: 0,
                         markdownCompilationTokenCostPerSecond: 0,
                         gptTextPromptTokenCost: 0,
-                        gptImagePromptTokenCost: 0,
                     },
                     tokenPrices: [],
                     userRegularRefill: {
