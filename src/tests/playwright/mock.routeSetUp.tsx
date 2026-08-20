@@ -628,7 +628,6 @@ export class RouteSetup {
                             latexCompilationTokenCostPerSecond: 1,
                             markdownCompilationTokenCostPerSecond: 1,
                             gptTextPromptTokenCost: 1,
-                            gptImagePromptTokenCost: 1,
                         },
                         tokenPrices: [],
                     }),

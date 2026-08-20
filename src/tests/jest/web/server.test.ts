@@ -44,7 +44,6 @@ describe('WebRpi', () => {
                 latexCompilationTokenCostPerSecond: 0,
                 markdownCompilationTokenCostPerSecond: 0,
                 gptTextPromptTokenCost: 1,
-                gptImagePromptTokenCost: 2,
             },
             tokenPrices: [{ tokensToPurchase: 1, costRubles: 1 }],
             userRegularRefill: {

@@ -91,7 +91,6 @@ test('startup-loads-billing-pricing-test', async () => {
             latexCompilationTokenCostPerSecond: 0,
             markdownCompilationTokenCostPerSecond: 0,
             gptTextPromptTokenCost: 1,
-            gptImagePromptTokenCost: 2,
         },
         tokenPrices: [{ tokensToPurchase: 1, costRubles: 1 }],
         userRegularRefill: {
@@ -167,7 +166,7 @@ test('prompt-refreshes-user-token-balance-test', async () => {
         .fn()
         .mockResolvedValue(createDefaultUserInfo(true, 8));
 
-    await projectPageService.sendPromptAndReload('prompt', false);
+    await projectPageService.sendPromptAndReload('prompt');
 
     expect(rpi.getUserInfoRequest).toHaveBeenCalledTimes(1);
     expect(repository.userViewModelRepository.tokenBalance()).toBe(8);

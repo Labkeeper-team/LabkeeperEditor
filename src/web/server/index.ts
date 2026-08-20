@@ -457,19 +457,4 @@ export class WebRpi implements Rpi {
             })
         );
     }
-
-    async generateImageInProjectRequest(
-        projectId: string,
-        prompt: string
-    ): Promise<RequestResult<Program>> {
-        return requestWrapper(() =>
-            axios.post(
-                URLS.generateImageInProjectPrompt.replace('{id}', projectId),
-                null,
-                {
-                    params: { prompt },
-                }
-            )
-        );
-    }
 }

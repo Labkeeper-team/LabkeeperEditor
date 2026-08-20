@@ -202,7 +202,6 @@ export interface Translations {
             latex_compilation: string;
             markdown_compilation: string;
             gpt_text_prompt: string;
-            gpt_image_prompt: string;
         };
         modal: {
             title: string;
@@ -422,8 +421,6 @@ export interface Translations {
         title: string;
         description: string;
         placeholder: string;
-        generateImage: string;
-        generateImageDescription: string;
         submit: string;
         sending: string;
         errors: {

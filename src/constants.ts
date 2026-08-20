@@ -26,7 +26,6 @@ export const URLS = {
     setVisibility: `${uri}/api/${version}/public/project/{id}/visibility`,
     setType: `${uri}/api/${version}/public/project/{id}/type`,
     projectPrompt: `${uri}/api/${version}/public/project/{id}/prompt`,
-    generateImageInProjectPrompt: `${uri}/api/${version}/public/project/{id}/prompt/image`,
     unauthorizedPrompt: `${uri}/api/${version}/public/prompt`,
 
     filesGetList: `${uri}/api/${version}/public/project/{id}/file/list`,
