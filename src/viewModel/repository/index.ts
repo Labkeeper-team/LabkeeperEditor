@@ -469,7 +469,9 @@ export const mockViewModelState = (): MockViewModelRepository => {
             },
         },
 
-        setLocation: (url: string) => (mockViewModelState.location = url),
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        setLocation: (url: string, _options?: SetLocationOptions) =>
+            (mockViewModelState.location = url),
         dictionary: en,
         toast: (message: string, type: TypeOptions) =>
             mockViewModelState.toasts.push({ message, type }),
@@ -661,6 +663,10 @@ export interface PersistenceViewModelRepository {
     clearLastProgram: () => void;
 }
 
+export type SetLocationOptions = {
+    replace?: boolean;
+};
+
 export interface ViewModelRepository {
     projectViewModelRepository: ProjectViewModelRepository;
     ideViewModelRepository: IdeViewModelRepository;
@@ -670,7 +676,7 @@ export interface ViewModelRepository {
     projectsViewModelRepository: ProjectsViewModelRepository;
     billingViewModelRepository: BillingViewModelRepository;
     settingsViewModelRepository: SettingsViewModelRepository;
-    setLocation: (url: string) => void;
+    setLocation: (url: string, options?: SetLocationOptions) => void;
     toast: (message: string, type: TypeOptions) => void;
     dictionary: Translations;
     location: () => string;

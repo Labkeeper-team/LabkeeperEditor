@@ -221,6 +221,21 @@ export class StartupService {
             : location;
     }
 
+    /**
+     * `/` and `/project/default` (including `?open=latex`) are landing URLs.
+     * Replace them in history so Back skips the extra editor entry.
+     */
+    private isEditorLandingPath(location: string): boolean {
+        const path = this.cutOfLastSlash(location);
+        return path === Routes.Home || path === Routes.ProjectDefault;
+    }
+
+    private setEditorLocation(url: string): void {
+        this.repository.setLocation(url, {
+            replace: this.isEditorLandingPath(this.repository.location()),
+        });
+    }
+
     private extractProjectIdFromUrl(location: string): string {
         const withoutLastSlash = this.cutOfLastSlash(location);
         return withoutLastSlash.substring(
@@ -356,7 +371,7 @@ export class StartupService {
                         errors: [],
                     }
                 );
-                this.repository.setLocation(
+                this.setEditorLocation(
                     Routes.Project.replace(':id', project.projectId)
                 );
                 if (userInfo.isAuthenticated) {
@@ -364,7 +379,7 @@ export class StartupService {
                 }
             }
             if (result.isUnauth) {
-                this.repository.setLocation(Routes.ProjectDefault);
+                this.setEditorLocation(Routes.ProjectDefault);
                 this.repository.toast(
                     this.repository.dictionary.filemanager.errors
                         .sessionExpired,
@@ -387,7 +402,7 @@ export class StartupService {
                     'markdown'
                 );
             }
-            this.repository.setLocation(Routes.ProjectDefault);
+            this.setEditorLocation(Routes.ProjectDefault);
             this.programService.setNewProgram(
                 this.repository.persistenceViewModelRepository.lastProgram()
             );

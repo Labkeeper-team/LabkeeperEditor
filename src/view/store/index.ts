@@ -123,6 +123,7 @@ import {
     GetProjectRequestState,
     GetProjectsRequestState,
     SaveProjectRequestState,
+    SetLocationOptions,
     ViewModelRepository,
 } from '../../viewModel/repository';
 
@@ -431,7 +432,8 @@ export const createViewModelStateFromStore = (
             setUserInfo: (userInfo) => store.dispatch(setUser(userInfo)),
         },
 
-        setLocation: (url: string) => appRouter.navigate(url),
+        setLocation: (url: string, options?: SetLocationOptions) =>
+            appRouter.navigate(url, { replace: options?.replace }),
         dictionary: dictionary[store.getState().persistence.language],
         toast: (message: string, type: TypeOptions) => {
             toast(message, { type });
