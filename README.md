@@ -4,9 +4,9 @@
 
 # Labkeeper
 
-**Online document editor with a built-in scientific calculator**
+**Online LaTeX editor with a built-in scientific calculator**
 
-Compose Markdown and LaTeX, run calculations, plot results, and export to PDF â€” in one place.
+Write and compile LaTeX in the browser, mix in calculations and plots, and export the result to PDF.
 
 [labkeeper.io](https://labkeeper.io)
 
@@ -34,11 +34,12 @@ Compose Markdown and LaTeX, run calculations, plot results, and export to PDF â€
 
 ## About
 
-This repository is the **Labkeeper** web frontend: a scientific notebook and PDF editor.
+This repository is the **Labkeeper** web frontend: an online **LaTeX editor** with a scientific calculator and PDF export.
 
-You can mix document text with computational blocks, formulas, tables, and plots, then compile the result to PDF. Typical building blocks:
+The core workflow is writing LaTeX (full TeX Live compilation on the backend). You can also drop in computational blocks, formulas, tables, and plots, then compile the document to PDF. Typical building blocks:
 
-- **Markdown** and **LaTeX** segments for writing
+- **LaTeX** as the primary authoring mode, with full document compilation
+- **Markdown** segments when you need lighter markup alongside LaTeX
 - **Computational** segments for assignments, formulas, and error propagation
 - **Plots** (line, scatter, histogram) via Apache ECharts
 - **AsciiMath** for a lighter math notation
