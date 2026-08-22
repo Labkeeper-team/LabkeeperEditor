@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { controller } from '../../../main.tsx';
@@ -16,6 +16,10 @@ export const PayPage = () => {
     const paymentWidgetToken = useSelector(useBillingPaymentWidgetToken);
     const [hasWidgetError, setHasWidgetError] = useState(false);
     const page = dictionary.tokens_page;
+
+    useLayoutEffect(() => {
+        window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+    }, []);
 
     const yoomoneyWidgetConfig = useMemo(
         () =>
