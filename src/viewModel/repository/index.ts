@@ -78,6 +78,22 @@ export type EditorNavigationTarget = {
     line: number;
     /** Путь к открытому/открываемому текстовому файлу проекта. */
     file?: string;
+    /** false: только прокрутить, без курсора и фокуса. По умолчанию true */
+    focus?: boolean;
+};
+
+/** Совпадение, к которому перешли. Смещения 0-based в тексте сегмента */
+export type SearchCurrentMatch = {
+    segmentIndex: number;
+    from: number;
+    to: number;
+};
+
+/** Верх видимой области списка сегментов */
+export type SegmentsViewportAnchor = {
+    segmentIndex: number;
+    /** 1-based */
+    line: number;
 };
 
 class MockViewModelRepositoryState {
@@ -85,6 +101,9 @@ class MockViewModelRepositoryState {
 
     activeSegmentIndex = -1;
     search: string | undefined = undefined;
+    searchInput = '';
+    searchNoMatch = false;
+    searchCurrentMatch: SearchCurrentMatch | null = null;
     previousActiveSegmentIndex = -1;
     pendingSegmentEditorCursor: PendingSegmentEditorCursor | null = null;
     activeEditorLine: number | null = null;
@@ -210,6 +229,11 @@ export const mockViewModelState = (): MockViewModelRepository => {
         ideViewModelRepository: {
             activeSegmentIndex: () => mockViewModelState.activeSegmentIndex,
             search: () => mockViewModelState.search,
+            searchInput: () => mockViewModelState.searchInput,
+            searchNoMatch: () => mockViewModelState.searchNoMatch,
+            searchCurrentMatch: () => mockViewModelState.searchCurrentMatch,
+            /** В jsdom списка сегментов нет, считаем что видно начало документа */
+            segmentsViewportAnchor: () => ({ segmentIndex: 0, line: 1 }),
             previousActiveSegmentIndex: () =>
                 mockViewModelState.previousActiveSegmentIndex,
             pendingSegmentEditorCursor: () =>
@@ -297,6 +321,11 @@ export const mockViewModelState = (): MockViewModelRepository => {
                 (mockViewModelState.redoEnabled = v),
             setSearch: (v: string | undefined) =>
                 (mockViewModelState.search = v),
+            setSearchInput: (v: string) => (mockViewModelState.searchInput = v),
+            setSearchNoMatch: (v: boolean) =>
+                (mockViewModelState.searchNoMatch = v),
+            setSearchCurrentMatch: (v: SearchCurrentMatch | null) =>
+                (mockViewModelState.searchCurrentMatch = v),
             setActiveSegmentIndex: (index: number) =>
                 (mockViewModelState.activeSegmentIndex = index),
             setPreviousActiveSegmentIndex: (index: number) =>
@@ -504,7 +533,14 @@ export interface ProjectViewModelRepository {
 }
 
 export interface IdeViewModelRepository {
+    /** Запрос, зафиксированный по Enter. По нему идёт подсветка */
     search: () => string | undefined;
+    /** Текст в поле. Меняется на каждый символ, подсветку не трогает */
+    searchInput: () => string;
+    searchNoMatch: () => boolean;
+    searchCurrentMatch: () => SearchCurrentMatch | null;
+    /** Считается по DOM во view-слое */
+    segmentsViewportAnchor: () => SegmentsViewportAnchor | null;
     activeSegmentIndex: () => number;
     previousActiveSegmentIndex: () => number;
     pendingSegmentEditorCursor: () => PendingSegmentEditorCursor | null;
@@ -537,6 +573,9 @@ export interface IdeViewModelRepository {
     setRedoEnabled: (v: boolean) => void;
     setUndoEnabled: (v: boolean) => void;
     setSearch: (search: string | undefined) => void;
+    setSearchInput: (text: string) => void;
+    setSearchNoMatch: (noMatch: boolean) => void;
+    setSearchCurrentMatch: (match: SearchCurrentMatch | null) => void;
     setActiveSegmentIndex: (index: number) => void;
     setPreviousActiveSegmentIndex: (index: number) => void;
     setPendingSegmentEditorCursor: (

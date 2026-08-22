@@ -1,9 +1,16 @@
 import { EditorSelection } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { resetLockedViewportScrollAfterFocus } from '../../../../../utils/resetLockedViewportScroll';
+import { SegmentsViewportAnchor } from '../../../../../../viewModel/repository';
 
 const SEGMENTS_CONTAINER_ID = 'segments-container';
 const SEGMENTS_CONTAINER_TOP_PADDING_PX = 10;
+
+function getEffectiveScale(): number {
+    const scaleFactor =
+        +document.documentElement.style.getPropertyValue('--mobile-scale') || 1;
+    return scaleFactor > 0 ? scaleFactor : 1;
+}
 
 export function getIdeSegmentEditorView(
     segmentIndex: number
@@ -15,10 +22,15 @@ export function getIdeSegmentEditorView(
     return EditorView.findFromDOM(dom) ?? null;
 }
 
-/** Ставит курсор на строку и прокручивает её к верху списка сегментов (SyncTeX PDF → editor). */
+/**
+ * Прокручивает строку сегмента к верху списка.
+ * По умолчанию ещё ставит курсор и фокусирует редактор (SyncTeX, переход по ошибке).
+ * С focus: false курсор и фокус не трогаем, это нужно поиску
+ */
 export function scrollIdeEditorLineToContainerTop(
     segmentIndex: number,
-    line: number
+    line: number,
+    options?: { focus?: boolean }
 ): boolean {
     const view = getIdeSegmentEditorView(segmentIndex);
     const segmentsContainer = document.getElementById(SEGMENTS_CONTAINER_ID);
@@ -26,12 +38,15 @@ export function scrollIdeEditorLineToContainerTop(
         return false;
     }
 
+    const shouldFocus = options?.focus !== false;
     const doc = view.state.doc;
     const lineNumber = Math.max(1, Math.min(line, doc.lines));
     const offset = doc.line(lineNumber).from;
 
     view.dispatch({
-        selection: EditorSelection.cursor(offset),
+        ...(shouldFocus
+            ? { selection: EditorSelection.cursor(offset) }
+            : undefined),
         effects: EditorView.scrollIntoView(offset, {
             y: 'start',
             x: 'nearest',
@@ -41,13 +56,8 @@ export function scrollIdeEditorLineToContainerTop(
     const lineCoords = view.coordsAtPos(offset);
     if (lineCoords) {
         const containerRect = segmentsContainer.getBoundingClientRect();
-        const scaleFactor =
-            +document.documentElement.style.getPropertyValue(
-                '--mobile-scale'
-            ) || 1;
-        const effectiveScale = scaleFactor > 0 ? scaleFactor : 1;
         const lineTopRelativeToContainer =
-            (lineCoords.top - containerRect.top) / effectiveScale;
+            (lineCoords.top - containerRect.top) / getEffectiveScale();
         const newScrollTop =
             segmentsContainer.scrollTop +
             lineTopRelativeToContainer -
@@ -59,9 +69,61 @@ export function scrollIdeEditorLineToContainerTop(
         });
     }
 
-    view.focus();
-    resetLockedViewportScrollAfterFocus();
+    if (shouldFocus) {
+        view.focus();
+        resetLockedViewportScrollAfterFocus();
+    }
     return true;
+}
+
+/**
+ * Сегмент и строка у верхнего края видимой области.
+ * Нужно поиску: первый Enter идёт к ближайшему совпадению ниже скролла.
+ * null, если списка сегментов на странице нет
+ */
+export function getSegmentsViewportAnchor(): SegmentsViewportAnchor | null {
+    const segmentsContainer = document.getElementById(SEGMENTS_CONTAINER_ID);
+    if (!segmentsContainer) {
+        return null;
+    }
+    const containerTop = segmentsContainer.getBoundingClientRect().top;
+    const segments = segmentsContainer.querySelectorAll(
+        '.segment-editor-container'
+    );
+
+    for (const segment of segments) {
+        const rect = segment.getBoundingClientRect();
+        // сегмент целиком выше видимой области
+        if (rect.bottom <= containerTop + 1) {
+            continue;
+        }
+        const segmentIndex = getIdeSegmentIndexFromTarget(segment);
+        if (segmentIndex === null) {
+            continue;
+        }
+        // начинается ниже верхнего края, значит якорь на первой строке
+        if (rect.top >= containerTop) {
+            return { segmentIndex, line: 1 };
+        }
+        // край проходит внутри сегмента, ищем строку под ним
+        const view = getIdeSegmentEditorView(segmentIndex);
+        if (!view) {
+            return { segmentIndex, line: 1 };
+        }
+        // posAtCoords и getBoundingClientRect в одних координатах, --mobile-scale учитывать не надо
+        const position = view.posAtCoords(
+            { x: rect.left + 1, y: containerTop },
+            false
+        );
+        return {
+            segmentIndex,
+            line: view.state.doc.lineAt(
+                Math.max(0, Math.min(position, view.state.doc.length))
+            ).number,
+        };
+    }
+
+    return null;
 }
 
 export function clearIdeSegmentEditorSelection(segmentIndex: number): void {
