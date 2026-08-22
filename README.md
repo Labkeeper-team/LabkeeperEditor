@@ -34,7 +34,7 @@ Write and compile LaTeX in the browser, mix in calculations and plots, and expor
 
 ## About
 
-This repository is the **Labkeeper** web frontend: an online **LaTeX editor** with a scientific calculator and PDF export.
+This repository is the **Labkeeper** web frontend: an online **LaTeX editor** with a scientific calculator and AI agent.
 
 The core workflow is writing LaTeX (full TeX Live compilation on the backend). You can also drop in computational blocks, formulas, tables, and plots, then compile the document to PDF. Typical building blocks:
 
