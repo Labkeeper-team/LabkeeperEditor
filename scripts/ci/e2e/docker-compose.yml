@@ -7,7 +7,7 @@ services:
         environment:
             HUSKY: '0'
         volumes:
-            - ${GITHUB_WORKSPACE:-../../..}:/app
+            - ${E2E_WORKSPACE:-../../..}:/app
             - frontend_node_modules:/app/node_modules
         command: sh -c "npm ci && npm run dev"
         expose:
@@ -62,8 +62,8 @@ services:
             E2E_SECOND_USER_EMAIL: ${E2E_SECOND_USER_EMAIL:-}
             E2E_SECOND_USER_PASSWORD: ${E2E_SECOND_USER_PASSWORD:-}
         volumes:
-            - ${GITHUB_WORKSPACE:-../../..}/test-results:/app/test-results
-            - ${GITHUB_WORKSPACE:-../../..}/playwright-report:/app/playwright-report
+            - ${E2E_WORKSPACE:-../../..}/test-results:/app/test-results
+            - ${E2E_WORKSPACE:-../../..}/playwright-report:/app/playwright-report
         depends_on:
             nginx:
                 condition: service_healthy

@@ -15,11 +15,12 @@ permissions:
 jobs:
   e2e:
     if: ${{ contains(github.event.pull_request.labels.*.name, 'E2E') && (github.event.action != 'labeled' || github.event.label.name == 'E2E') }}
-    runs-on: self-hosted
+    runs-on: [self-hosted, windows]
     timeout-minutes: 120
     env:
       COMPOSE_PROJECT_NAME: e2e-pr-${{ github.run_id }}
       COMPOSE_FILE: scripts/ci/e2e/docker-compose.yml
+      COMPOSE_CONVERT_WINDOWS_PATHS: '1'
       DOCKER_CONFIG: ${{ github.workspace }}/.docker-ci
       E2E_IMAGE: cr.yandex/crpjhav5dledksn6gaeo/labkeeper-e2e:latest
       E2E_CAPTCHA_BYPASS_TOKEN: ${{ secrets.E2E_CAPTCHA_BYPASS_TOKEN }}
@@ -27,17 +28,26 @@ jobs:
       E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
     defaults:
       run:
-        shell: bash
+        shell: powershell
     steps:
+      - name: Add Git and Docker to PATH
+        run: |
+          Add-Content -Path $env:GITHUB_PATH -Value "$env:ProgramFiles\Git\cmd"
+          Add-Content -Path $env:GITHUB_PATH -Value "$env:ProgramFiles\Docker\Docker\resources\bin"
+
       - uses: actions/checkout@v6
 
       - name: Prepare artifact directories
         run: |
-          mkdir -p test-results playwright-report .docker-ci
-          chmod 777 test-results playwright-report
+          New-Item -ItemType Directory -Force -Path test-results, playwright-report, .docker-ci | Out-Null
+          Add-Content -Path $env:GITHUB_ENV -Value "E2E_WORKSPACE=$($env:GITHUB_WORKSPACE.Replace('\', '/'))"
 
       - name: Login to Yandex Container Registry
-        run: echo "${{ secrets.YC_DOCKER_REGISTRY_TOKEN }}" | docker login cr.yandex --username oauth --password-stdin
+        uses: docker/login-action@v3
+        with:
+          registry: cr.yandex
+          username: oauth
+          password: ${{ secrets.YC_DOCKER_REGISTRY_TOKEN }}
 
       - name: Pull images
         run: docker compose pull
@@ -61,7 +71,8 @@ jobs:
 
       - name: Cleanup
         if: always()
+        continue-on-error: true
         run: |
-          docker compose down -v --remove-orphans --rmi local || true
-          rm -rf test-results playwright-report .docker-ci
-          docker logout cr.yandex || true
+          docker compose down -v --remove-orphans --rmi local
+          Remove-Item -Recurse -Force test-results, playwright-report, .docker-ci -ErrorAction SilentlyContinue
+          docker logout cr.yandex
