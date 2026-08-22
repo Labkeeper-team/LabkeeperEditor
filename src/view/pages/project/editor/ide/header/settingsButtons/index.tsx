@@ -13,7 +13,10 @@ import {
 import { DropdownMenu } from '../../../../../../components/dropdownMenu';
 import { HeaderHelperItems } from './markdownType';
 import { ProjectSettings } from './projectSettings';
-import { useSearch } from '../../../../../../store/selectors/program';
+import {
+    useSearchInput,
+    useSearchNoMatch,
+} from '../../../../../../store/selectors/program';
 import { useDictionary } from '../../../../../../store/selectors/translations';
 import { AppDispatch, StorageState } from '../../../../../../store';
 import { setShowSearch } from '../../../../../../store/slices/settings';
@@ -23,7 +26,8 @@ import { useIsMobile } from '../../../../../../hooks/useMobile';
 export const SettingsButton = () => {
     const dispatch = useDispatch<AppDispatch>();
     const dictionary = useSelector(useDictionary);
-    const search = useSelector(useSearch);
+    const searchInput = useSelector(useSearchInput);
+    const searchNoMatch = useSelector(useSearchNoMatch);
     const isMobile = useIsMobile();
     const showSearch = useSelector(
         (state: StorageState) => state.settings.showSearch
@@ -72,11 +76,20 @@ export const SettingsButton = () => {
                         })
                     );
                 }}
+                onKeyDown={(e) => {
+                    if (e.key !== 'Enter') {
+                        return;
+                    }
+                    e.preventDefault();
+                    dispatch(controller.onSearchSubmitRequest());
+                }}
+                enterKeyHint="search"
                 className={classNames({
                     'input-hide': !showSearch,
                     'input-show': showSearch,
+                    'search-no-match': searchNoMatch,
                 })}
-                value={search}
+                value={searchInput}
             />
         </div>
     );

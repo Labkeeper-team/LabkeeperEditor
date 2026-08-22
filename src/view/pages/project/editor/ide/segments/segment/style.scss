@@ -110,6 +110,10 @@ $segment-editor-min-height: 80px;
     .highlight-text-editor {
         background: yellow;
     }
+    .highlight-text-editor--current {
+        background: #f5a623;
+        outline: 1px solid #c47d00;
+    }
     .highlight-text-editor-error {
         text-decoration: underline;
         text-decoration-line: spelling-error;

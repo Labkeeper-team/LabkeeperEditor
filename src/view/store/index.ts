@@ -48,6 +48,9 @@ import {
     setPreviousActiveSegmentIndex,
     setRedoEnabled,
     setSearch,
+    setSearchInput,
+    setSearchNoMatch,
+    setSearchCurrentMatch,
     setUndoEnabled,
     setPdfUpdated,
     setProjectPromptRequestState,
@@ -113,6 +116,7 @@ import {
 } from './slices/settings';
 import { setUser } from './slices/user';
 import { setScrollEditorToBottom } from './slices/callback';
+import { getSegmentsViewportAnchor } from '../pages/project/editor/ide/segments/ideSegmentEditorView.ts';
 import { dictionary } from '../../viewModel/dictionaries';
 import { toast, TypeOptions } from 'react-toastify';
 import {
@@ -123,6 +127,7 @@ import {
     GetProjectRequestState,
     GetProjectsRequestState,
     SaveProjectRequestState,
+    SearchCurrentMatch,
     SetLocationOptions,
     ViewModelRepository,
 } from '../../viewModel/repository';
@@ -192,6 +197,10 @@ export const createViewModelStateFromStore = (
         ideViewModelRepository: {
             activeSegmentIndex: () => store.getState().ide.activeSegmentIndex,
             search: () => store.getState().ide.search,
+            searchInput: () => store.getState().ide.searchInput,
+            searchNoMatch: () => store.getState().ide.searchNoMatch,
+            searchCurrentMatch: () => store.getState().ide.searchCurrentMatch,
+            segmentsViewportAnchor: () => getSegmentsViewportAnchor(),
             previousActiveSegmentIndex: () =>
                 store.getState().ide.previousActiveSegmentIndex,
             pendingSegmentEditorCursor: () =>
@@ -269,6 +278,12 @@ export const createViewModelStateFromStore = (
             setUndoEnabled: (v: boolean) => store.dispatch(setUndoEnabled(v)),
             setRedoEnabled: (v: boolean) => store.dispatch(setRedoEnabled(v)),
             setSearch: (search?: string) => store.dispatch(setSearch(search)),
+            setSearchInput: (text: string) =>
+                store.dispatch(setSearchInput(text)),
+            setSearchNoMatch: (noMatch: boolean) =>
+                store.dispatch(setSearchNoMatch(noMatch)),
+            setSearchCurrentMatch: (match: SearchCurrentMatch | null) =>
+                store.dispatch(setSearchCurrentMatch(match)),
             setActiveSegmentIndex: (index: number) =>
                 store.dispatch(setActiveSegmentIndex(index)),
             setPreviousActiveSegmentIndex: (index: number) =>

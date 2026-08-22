@@ -1,3 +1,5 @@
+@use '../../../../../../styles/colors' as *;
+
 .code-settings-header-container {
     .input-hide {
         position: absolute;
@@ -25,5 +27,15 @@
     .action-button--search-hidden {
         visibility: hidden;
         pointer-events: none;
+    }
+
+    // :hover в компоненте Input специфичнее, поэтому дублируем его тут
+    .input-show.search-no-match .input-base,
+    .input-show.search-no-match .input-base:hover {
+        border-color: $red-10;
+        background-color: $red-20;
+        transition:
+            border-color 0.2s,
+            background-color 0.2s;
     }
 }

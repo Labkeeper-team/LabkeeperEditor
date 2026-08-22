@@ -20,6 +20,7 @@ import {
     ProgramRepository,
 } from '../model/repository/ProgramRepository.ts';
 import { ResetService } from './domain/ResetService.ts';
+import { SearchService } from './domain/SearchService.ts';
 import { Controller } from '../controller/index.ts';
 
 export function setupContext(
@@ -44,6 +45,7 @@ export function setupContext(
         programService,
         resetService
     );
+    const searchService: SearchService = new SearchService();
     const loaderService: LoaderService = new LoaderService(
         rpi,
         repository,
@@ -117,7 +119,8 @@ export function setupContext(
         observerService,
         compilationService,
         resetService,
-        textFileEditorService
+        textFileEditorService,
+        searchService
     );
     const projectsPageService: ProjectsPageService = new ProjectsPageService(
         repository,
@@ -167,5 +170,6 @@ export function setupContext(
          */
         fileService,
         programService,
+        searchService,
     };
 }

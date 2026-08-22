@@ -57,6 +57,10 @@ export const useSearch = createSelector(
     (state: StorageState) => state.ide,
     (s) => s.search
 );
+// примитивы читаем напрямую, createSelector тут только мешает мемоизации
+export const useSearchInput = (state: StorageState) => state.ide.searchInput;
+export const useSearchNoMatch = (state: StorageState) =>
+    state.ide.searchNoMatch;
 export const useIsSegmentIsActive = (id: number) =>
     createSelector(
         (state: StorageState) => state.ide.activeSegmentIndex,
