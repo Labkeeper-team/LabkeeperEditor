@@ -1,4 +1,4 @@
-name: labkeeper-e2e-pr
+name: e2e-pr
 
 on:
   pull_request:
