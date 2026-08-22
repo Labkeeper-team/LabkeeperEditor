@@ -1,0 +1,67 @@
+name: e2e-pr
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+
+concurrency:
+  group: e2e-self-hosted
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  e2e:
+    if: ${{ contains(github.event.pull_request.labels.*.name, 'E2E') && (github.event.action != 'labeled' || github.event.label.name == 'E2E') }}
+    runs-on: self-hosted
+    timeout-minutes: 120
+    env:
+      COMPOSE_PROJECT_NAME: e2e-pr-${{ github.run_id }}
+      COMPOSE_FILE: scripts/ci/e2e/docker-compose.yml
+      DOCKER_CONFIG: ${{ runner.temp }}/.docker
+      E2E_IMAGE: cr.yandex/crpjhav5dledksn6gaeo/labkeeper-e2e:latest
+      E2E_CAPTCHA_BYPASS_TOKEN: ${{ secrets.E2E_CAPTCHA_BYPASS_TOKEN }}
+      E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
+      E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Login to Yandex Container Registry
+        run: echo "${{ secrets.YC_DOCKER_REGISTRY_TOKEN }}" | docker login cr.yandex --username oauth --password-stdin
+
+      - name: Prepare artifact directories
+        run: |
+          mkdir -p test-results playwright-report
+          chmod 777 test-results playwright-report
+
+      - name: Pull images
+        run: docker compose pull
+
+      - name: Start frontend and nginx
+        run: docker compose up -d frontend nginx --wait --wait-timeout 360
+
+      - name: Run Playwright tests
+        run: docker compose run --rm --no-deps -T playwright
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-results
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker compose down -v --remove-orphans --rmi local || true
+          rm -rf test-results playwright-report
+          docker logout cr.yandex || true
