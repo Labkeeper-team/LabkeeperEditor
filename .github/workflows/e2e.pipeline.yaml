@@ -30,11 +30,6 @@ jobs:
       run:
         shell: powershell
     steps:
-      - name: Add Git and Docker to PATH
-        run: |
-          Add-Content -Path $env:GITHUB_PATH -Value "$env:ProgramFiles\Git\cmd"
-          Add-Content -Path $env:GITHUB_PATH -Value "$env:ProgramFiles\Docker\Docker\resources\bin"
-
       - uses: actions/checkout@v6
 
       - name: Prepare artifact directories
