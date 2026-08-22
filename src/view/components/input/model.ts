@@ -21,4 +21,7 @@ export interface InputProps {
     rows?: number;
     maxLength?: number;
     showCharacterCount?: boolean;
+    /** Подпись на Enter у мобильной клавиатуры */
+    enterKeyHint?:
+        'enter' | 'done' | 'go' | 'next' | 'previous' | 'search' | 'send';
 }

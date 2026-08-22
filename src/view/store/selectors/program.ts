@@ -57,6 +57,14 @@ export const useSearch = createSelector(
     (state: StorageState) => state.ide,
     (s) => s.search
 );
+export const useSearchInput = createSelector(
+    (state: StorageState) => state.ide.searchInput,
+    (s) => s
+);
+export const useSearchNoMatch = createSelector(
+    (state: StorageState) => state.ide.searchNoMatch,
+    (s) => s
+);
 export const useIsSegmentIsActive = (id: number) =>
     createSelector(
         (state: StorageState) => state.ide.activeSegmentIndex,

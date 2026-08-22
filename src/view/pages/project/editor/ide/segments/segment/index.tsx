@@ -60,6 +60,7 @@ import {
     shouldPlaceCursorOnIdeSegmentClick,
 } from '../ideSegmentDeactivate';
 import { scrollIdeEditorLineToContainerTop } from '../ideSegmentEditorView';
+import { SearchCurrentMatch } from '../../../../../../../viewModel/repository';
 
 const CURSOR_MAP_CAPACITY = 100;
 
@@ -180,6 +181,12 @@ export const SegmentEditor = memo(
             (state: StorageState) => state.project.compileErrorResult?.errors
         );
         const projectIsReadonly = useSelector(useIsProjectReadonly);
+        // берём совпадение только для своего сегмента, иначе перерисуются все
+        const currentMatch = useSelector((state: StorageState) =>
+            state.ide.searchCurrentMatch?.segmentIndex === props.index
+                ? state.ide.searchCurrentMatch
+                : null
+        );
 
         /*
         LOCAL STATE
@@ -227,8 +234,18 @@ export const SegmentEditor = memo(
             if (!view) {
                 return;
             }
-            processDecorations(view, debouncedSearch, segmentTempErrors);
-        }, [debouncedSearch, segmentTempErrors, editor?.current?.view]);
+            processDecorations(
+                view,
+                debouncedSearch,
+                segmentTempErrors,
+                currentMatch
+            );
+        }, [
+            debouncedSearch,
+            segmentTempErrors,
+            currentMatch,
+            editor?.current?.view,
+        ]);
         // Фиксируем горизонтальный скролл на 0, чтобы сегмент не смещался при выделении
         useEffect(() => {
             const view = editor?.current?.view;
@@ -560,7 +577,11 @@ export const SegmentEditor = memo(
                 }
                 attempts += 1;
                 if (
-                    scrollIdeEditorLineToContainerTop(props.index, target.line)
+                    scrollIdeEditorLineToContainerTop(
+                        props.index,
+                        target.line,
+                        { focus: target.focus !== false }
+                    )
                 ) {
                     dispatch(setEditorNavigationTarget(null));
                     return;
@@ -867,7 +888,8 @@ export const SegmentEditor = memo(
 function processDecorations(
     view: EditorView,
     search: string | undefined,
-    segmentTempErrors: CompileErrorResult[]
+    segmentTempErrors: CompileErrorResult[],
+    currentMatch: SearchCurrentMatch | null
 ) {
     const docText = view.state.doc.toString(); // Получаем текст документа
 
@@ -878,9 +900,14 @@ function processDecorations(
             // Ищем все вхождения текста
             while (startIndex !== -1) {
                 const endIndex = startIndex + search.length;
+                // текущее совпадение красим отдельным классом в том же mark,
+                // два mark на один диапазон ломают сортировку Decoration.set
+                const isCurrent = currentMatch?.from === startIndex;
                 decorations.push(
                     Decoration.mark({
-                        class: 'highlight-text-editor',
+                        class: isCurrent
+                            ? 'highlight-text-editor highlight-text-editor--current'
+                            : 'highlight-text-editor',
                     }).range(startIndex, endIndex)
                 );
                 startIndex = docText.indexOf(search, endIndex); // Ищем следующее вхождение
@@ -921,17 +948,18 @@ function processDecorations(
     };
 
     const validChunks = decorations.filter(isChunkValid);
-    validChunks.sort((a, b) => a.from - b.from);
     const isVAlidChunkExistAndTextExist =
         validChunks.length && docText.length > 0;
     const decSet = Decoration.set(
-        isVAlidChunkExistAndTextExist ? validChunks : []
+        isVAlidChunkExistAndTextExist ? validChunks : [],
+        true
     );
     const signature = JSON.stringify({
         h: computeDocKey(docText),
         s: typeof search === 'string' ? search : '',
         e: segmentTempErrors.map((x) => x.payload.line).join(','),
         n: validChunks.length,
+        c: currentMatch ? `${currentMatch.from}:${currentMatch.to}` : '',
     });
     if (lastDecorationSignatureByView.get(view) === signature) {
         return;
