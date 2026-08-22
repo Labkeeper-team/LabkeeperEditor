@@ -26,5 +26,6 @@ dist-ssr
 # Playwright
 /test-results/
 /playwright-report/
+/.docker-ci/
 /blob-report/
 /playwright/.cache/
