@@ -101,13 +101,70 @@ export class ProjectPageService {
 
     onSearchIconPress = () => {
         if (this.repository.settingsViewModelRepository.showSearch()) {
-            this.repository.ideViewModelRepository.setSearch('');
-            this.repository.settingsViewModelRepository.setShowSearch(false);
+            this.closeSearch();
         }
     };
 
+    /** Ввод только копит текст. Подсветку и переходы делает Enter */
     onSearchInputChanged = (text: string) => {
-        this.repository.ideViewModelRepository.setSearch(text);
+        this.repository.ideViewModelRepository.setSearchInput(text);
+        this.repository.ideViewModelRepository.setSearchNoMatch(false);
+        // сброшенное совпадение это и есть признак "текст меняли после прошлого Enter"
+        this.repository.ideViewModelRepository.setSearchCurrentMatch(null);
+    };
+
+    onSearchSubmit = () => {
+        const input = this.repository.ideViewModelRepository.searchInput();
+        if (input.length === 0) {
+            return;
+        }
+
+        const matches = this.searchService.findMatches(
+            this.programService.getCurrentProgram(),
+            input
+        );
+
+        if (matches.length === 0) {
+            this.repository.ideViewModelRepository.setSearch(input);
+            this.repository.ideViewModelRepository.setSearchCurrentMatch(null);
+            this.repository.ideViewModelRepository.setSearchNoMatch(true);
+            return;
+        }
+        this.repository.ideViewModelRepository.setSearchNoMatch(false);
+
+        const committed = this.repository.ideViewModelRepository.search();
+        const current =
+            this.repository.ideViewModelRepository.searchCurrentMatch();
+        const isNewQuery = input !== committed || current === null;
+
+        const index = isNewQuery
+            ? this.searchService.firstIndexAtOrAfter(
+                  matches,
+                  this.repository.ideViewModelRepository.segmentsViewportAnchor()
+              )
+            : this.searchService.nextIndexAfter(matches, current);
+
+        const match = matches[index];
+        this.repository.ideViewModelRepository.setSearch(input);
+        this.repository.ideViewModelRepository.setSearchCurrentMatch({
+            segmentIndex: match.segmentIndex,
+            from: match.from,
+            to: match.to,
+        });
+        // активный сегмент не трогаем: это увело бы фокус из поля и запустило smooth-скролл
+        this.repository.ideViewModelRepository.setEditorNavigationTarget({
+            segmentIndex: match.segmentIndex,
+            line: match.line,
+            focus: false,
+        });
+    };
+
+    private closeSearch = () => {
+        this.repository.ideViewModelRepository.setSearch('');
+        this.repository.ideViewModelRepository.setSearchInput('');
+        this.repository.ideViewModelRepository.setSearchNoMatch(false);
+        this.repository.ideViewModelRepository.setSearchCurrentMatch(null);
+        this.repository.settingsViewModelRepository.setShowSearch(false);
     };
 
     onHelpItemCreated = (item: HeaderHelpItem) => {
@@ -188,8 +245,7 @@ export class ProjectPageService {
             return;
         }
         if (this.repository.settingsViewModelRepository.showSearch()) {
-            this.repository.ideViewModelRepository.setSearch('');
-            this.repository.settingsViewModelRepository.setShowSearch(false);
+            this.closeSearch();
             return;
         }
         if (this.repository.settingsViewModelRepository.expandProblemViewer()) {
