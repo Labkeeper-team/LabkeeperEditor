@@ -21,7 +21,6 @@ jobs:
       COMPOSE_PROJECT_NAME: e2e-pr-${{ github.run_id }}
       COMPOSE_FILE: scripts/ci/e2e/docker-compose.yml
       COMPOSE_CONVERT_WINDOWS_PATHS: '1'
-      DOCKER_CONFIG: ${{ github.workspace }}/.docker-ci
       E2E_IMAGE: cr.yandex/crpjhav5dledksn6gaeo/labkeeper-e2e:latest
       E2E_CAPTCHA_BYPASS_TOKEN: ${{ secrets.E2E_CAPTCHA_BYPASS_TOKEN }}
       E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
@@ -34,15 +33,27 @@ jobs:
 
       - name: Prepare artifact directories
         run: |
-          New-Item -ItemType Directory -Force -Path test-results, playwright-report, .docker-ci | Out-Null
+          $dockerConfig = Join-Path $env:GITHUB_WORKSPACE '.docker-ci'
+          New-Item -ItemType Directory -Force -Path test-results, playwright-report, $dockerConfig | Out-Null
+          Add-Content -Path $env:GITHUB_ENV -Value "DOCKER_CONFIG=$dockerConfig"
           Add-Content -Path $env:GITHUB_ENV -Value "E2E_WORKSPACE=$($env:GITHUB_WORKSPACE.Replace('\', '/'))"
 
       - name: Login to Yandex Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: cr.yandex/crpjhav5dledksn6gaeo
-          username: oauth
-          password: ${{ secrets.YC_DOCKER_REGISTRY_TOKEN }}
+        env:
+          YC_DOCKER_REGISTRY_TOKEN: ${{ secrets.YC_DOCKER_REGISTRY_TOKEN }}
+        run: |
+          $token = "$env:YC_DOCKER_REGISTRY_TOKEN".Trim().Trim('"').Trim("'")
+          if (-not $token) { throw 'YC_DOCKER_REGISTRY_TOKEN is empty' }
+          $user = 'oauth'
+          if ($token.StartsWith('t1.')) { $user = 'iam' }
+          $tokenFile = Join-Path $env:RUNNER_TEMP 'yc-cr-token.txt'
+          [System.IO.File]::WriteAllText($tokenFile, $token, (New-Object System.Text.UTF8Encoding $false))
+          try {
+            cmd /c "docker login cr.yandex --username $user --password-stdin < `"$tokenFile`""
+            if ($LASTEXITCODE -ne 0) { throw 'docker login to cr.yandex failed' }
+          } finally {
+            Remove-Item -Force $tokenFile -ErrorAction SilentlyContinue
+          }
 
       - name: Pull images
         run: docker compose pull
