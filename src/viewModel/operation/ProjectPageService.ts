@@ -13,6 +13,7 @@ import { CompilationService } from '../domain/CompilationService.ts';
 import { ResetService } from '../domain/ResetService.ts';
 import { Program, ProjectType } from '../../model/domain.ts';
 import { TextFileEditorService } from './TextFileEditorService.ts';
+import { SearchService } from '../domain/SearchService.ts';
 import { MOBILE_BREAKPOINT } from '../../view/hooks/useMobile';
 
 export class ProjectPageService {
@@ -25,6 +26,7 @@ export class ProjectPageService {
     compilationService: CompilationService;
     resetService: ResetService;
     textFileEditorService: TextFileEditorService;
+    searchService: SearchService;
 
     constructor(
         repository: ViewModelRepository,
@@ -35,7 +37,8 @@ export class ProjectPageService {
         observerService: ObserverService,
         compilationService: CompilationService,
         resetService: ResetService,
-        textFileEditorService: TextFileEditorService
+        textFileEditorService: TextFileEditorService,
+        searchService: SearchService
     ) {
         this.rpi = rpi;
         this.programService = programService;
@@ -46,6 +49,7 @@ export class ProjectPageService {
         this.compilationService = compilationService;
         this.resetService = resetService;
         this.textFileEditorService = textFileEditorService;
+        this.searchService = searchService;
     }
 
     onContactUsFormSubmitted = async (subject: string, body: string) => {
