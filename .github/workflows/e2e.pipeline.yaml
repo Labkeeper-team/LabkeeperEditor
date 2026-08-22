@@ -20,7 +20,7 @@ jobs:
     env:
       COMPOSE_PROJECT_NAME: e2e-pr-${{ github.run_id }}
       COMPOSE_FILE: scripts/ci/e2e/docker-compose.yml
-      DOCKER_CONFIG: ${{ runner.temp }}/.docker
+      DOCKER_CONFIG: ${{ github.workspace }}/.docker-ci
       E2E_IMAGE: cr.yandex/crpjhav5dledksn6gaeo/labkeeper-e2e:latest
       E2E_CAPTCHA_BYPASS_TOKEN: ${{ secrets.E2E_CAPTCHA_BYPASS_TOKEN }}
       E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
@@ -31,13 +31,13 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Login to Yandex Container Registry
-        run: echo "${{ secrets.YC_DOCKER_REGISTRY_TOKEN }}" | docker login cr.yandex --username oauth --password-stdin
-
       - name: Prepare artifact directories
         run: |
-          mkdir -p test-results playwright-report
+          mkdir -p test-results playwright-report .docker-ci
           chmod 777 test-results playwright-report
+
+      - name: Login to Yandex Container Registry
+        run: echo "${{ secrets.YC_DOCKER_REGISTRY_TOKEN }}" | docker login cr.yandex --username oauth --password-stdin
 
       - name: Pull images
         run: docker compose pull
@@ -63,5 +63,5 @@ jobs:
         if: always()
         run: |
           docker compose down -v --remove-orphans --rmi local || true
-          rm -rf test-results playwright-report
+          rm -rf test-results playwright-report .docker-ci
           docker logout cr.yandex || true
