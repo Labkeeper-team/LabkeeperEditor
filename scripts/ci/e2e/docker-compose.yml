@@ -62,6 +62,10 @@ services:
             E2E_USER_PASSWORD: ${E2E_USER_PASSWORD}
             E2E_SECOND_USER_EMAIL: ${E2E_SECOND_USER_EMAIL:-}
             E2E_SECOND_USER_PASSWORD: ${E2E_SECOND_USER_PASSWORD:-}
+            PLAYWRIGHT_JSON_OUTPUT_NAME: test-results/results.json
+            PLAYWRIGHT_HTML_OPEN: never
+        command:
+            - --reporter=list,html,json
         volumes:
             - ${E2E_WORKSPACE:-../../..}/test-results:/app/test-results
             - ${E2E_WORKSPACE:-../../..}/playwright-report:/app/playwright-report
