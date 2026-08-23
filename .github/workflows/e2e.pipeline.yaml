@@ -48,8 +48,11 @@ jobs:
           YC_DOCKER_REGISTRY_TOKEN: ${{ secrets.YC_DOCKER_REGISTRY_TOKEN }}
         run: echo %YC_DOCKER_REGISTRY_TOKEN%| docker login cr.yandex --username oauth --password-stdin
 
-      - name: Start frontend and nginx
-        run: docker-compose up --detach frontend nginx --wait --wait-timeout 360
+      - name: Build frontend
+        run: docker-compose run --rm --no-TTY builder
+
+      - name: Start nginx
+        run: docker-compose up --detach nginx --wait --wait-timeout 60
 
       - name: Run Playwright tests
         run: docker-compose run --rm --no-deps --no-TTY playwright
@@ -196,5 +199,6 @@ jobs:
           docker-compose down --volumes --remove-orphans --rmi local
           if exist test-results rmdir /s /q test-results
           if exist playwright-report rmdir /s /q playwright-report
+          if exist dist rmdir /s /q dist
           if exist .docker-ci rmdir /s /q .docker-ci
           docker logout cr.yandex
