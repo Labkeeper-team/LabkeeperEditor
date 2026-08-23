@@ -55,9 +55,6 @@ jobs:
             Remove-Item -Force $tokenFile -ErrorAction SilentlyContinue
           }
 
-      - name: Pull images
-        run: docker compose pull
-
       - name: Start frontend and nginx
         run: docker compose up -d frontend nginx --wait --wait-timeout 360
 
