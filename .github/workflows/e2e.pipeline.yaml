@@ -21,7 +21,7 @@ jobs:
       COMPOSE_PROJECT_NAME: e2e-pr-${{ github.run_id }}
       COMPOSE_FILE: scripts/ci/e2e/docker-compose.yml
       COMPOSE_CONVERT_WINDOWS_PATHS: '1'
-      E2E_IMAGE: cr.yandex/crpjhav5dledksn6gaeo/labkeeper-e2e:latest
+      E2E_IMAGE: cr.yandex/crpjhav5dledksn6gaeo/labkeeper-e2e:44
       E2E_CAPTCHA_BYPASS_TOKEN: ${{ secrets.E2E_CAPTCHA_BYPASS_TOKEN }}
       E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
       E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
