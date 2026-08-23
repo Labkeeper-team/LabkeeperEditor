@@ -40,9 +40,10 @@ async function openProjectWith(page: Page, texts: string[]) {
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
     await expect(page).toHaveURL(`/project/${uuid}`);
-    await expect(
-        page.locator('.segment-editor-container').first()
-    ).toBeVisible();
+    // на загруженном раннере первая отрисовка сегментов не укладывается в дефолтные 5 секунд
+    await expect(page.locator('.segment-editor-container').first()).toBeVisible(
+        { timeout: 20000 }
+    );
 }
 
 function searchField(page: Page) {
