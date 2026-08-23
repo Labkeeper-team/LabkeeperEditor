@@ -38,6 +38,9 @@ export const ProjectPage = () => {
     const projectPromptRequestState = useSelector(
         (state: StorageState) => state.ide.projectPromptRequestState
     );
+    const showProjectPromptModal = useSelector(
+        (state: StorageState) => state.settings.showProjectPromptModal
+    );
     const prevPdfUpdatedRef = useRef(pdfUpdated);
     const prevPromptStateRef = useRef(projectPromptRequestState);
     const initialViewProjectIdRef = useRef<string | null>(null);
@@ -52,6 +55,13 @@ export const ProjectPage = () => {
 
         refreshCodeMirrorLayout();
     }, [isMobile, mobileView]);
+
+    // GPT-модалка находится во вкладке PDF — на мобильных сначала показать её.
+    useEffect(() => {
+        if (isMobile && showProjectPromptModal) {
+            dispatch(setMobileView('pdf'));
+        }
+    }, [dispatch, isMobile, showProjectPromptModal]);
 
     // После компиляции (PDF или MD) — показать результат
     useEffect(() => {
