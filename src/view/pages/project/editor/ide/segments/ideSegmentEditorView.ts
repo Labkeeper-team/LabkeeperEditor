@@ -71,8 +71,9 @@ export function scrollIdeEditorLineToContainerTop(
 
     if (shouldFocus) {
         view.focus();
-        resetLockedViewportScrollAfterFocus();
     }
+    // CM в scrollIntoView доходит до body и утаскивает весь документ, фокус тут ни при чём
+    resetLockedViewportScrollAfterFocus();
     return true;
 }
 

@@ -203,3 +203,16 @@ test('search-is-case-sensitive', async ({ page }) => {
 
     await expect(page.locator(HIGHLIGHT)).toHaveCount(1);
 });
+
+/** Прокрутка к совпадению не должна утаскивать за собой всю страницу */
+test('enter-does-not-scroll-the-whole-page', async ({ page }) => {
+    await openProjectWith(page, ['первый foo текст', 'второй foo текст']);
+    await openSearch(page);
+    await typeQuery(page, 'foo');
+
+    for (let i = 0; i < 4; i++) {
+        await searchField(page).press('Enter');
+        await expect(page.locator(CURRENT)).toHaveCount(1);
+        await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+    }
+});
