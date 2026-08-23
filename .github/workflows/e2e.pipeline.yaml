@@ -51,7 +51,7 @@ jobs:
         run: docker-compose up --detach frontend nginx --wait --wait-timeout 360
 
       - name: Run Playwright tests
-        run: docker-compose run --rm --no-deps --no-TTY playwright
+        run: docker-compose run --rm --no-deps --no-TTY --cpus 1 playwright
 
       - name: Upload test results
         if: always()

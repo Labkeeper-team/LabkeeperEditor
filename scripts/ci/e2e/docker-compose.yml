@@ -51,6 +51,7 @@ services:
     playwright:
         image: ${E2E_IMAGE}
         restart: 'no'
+        cpus: 1.0
         environment:
             CI: 'true'
             E2E_HOST: http://nginx:80
