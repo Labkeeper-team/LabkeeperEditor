@@ -1,7 +1,7 @@
 import { Typography } from '../../../components/typography';
 import { colors } from '../../../styles/colors.ts';
 import { Button } from '../../../components/button';
-import { Login2Icon } from '../../../icons';
+import { Login2Icon, WarningIcon } from '../../../icons';
 import { Modal } from '../../../components/modal';
 import { useSelector, useDispatch } from 'react-redux';
 import { useDictionary } from '../../../store/selectors/translations.ts';
@@ -14,6 +14,31 @@ import { SmartCaptcha } from '@yandex/smart-captcha';
 import { Providers, Secrets, URLS } from '../../../../constants.ts';
 import { controller } from '../../../../main.tsx';
 import { isValidEmail, isValidPassword, normalizeEmail } from './validation.ts';
+
+const AuthErrorMessage = ({
+    text,
+    centered = false,
+}: {
+    text: string;
+    centered?: boolean;
+}) => (
+    <div
+        style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: centered ? 'center' : undefined,
+            gap: 8,
+        }}
+    >
+        <WarningIcon style={{ flexShrink: 0 }} />
+        <Typography
+            color={colors.red10}
+            type="body"
+            text={text}
+            style={{ fontWeight: 600 }}
+        />
+    </div>
+);
 
 // Компонент спиннера загрузки
 const LoadingSpinner = () => (
@@ -197,13 +222,7 @@ const LoginView = () => {
                         <input required hidden value={token} name="captcha" />
                     )}
                     {errorMessage && (
-                        <div style={{ textAlign: 'center' }}>
-                            <Typography
-                                color={colors.gray10}
-                                type="body"
-                                text={errorMessage}
-                            />
-                        </div>
+                        <AuthErrorMessage text={errorMessage} centered />
                     )}
                     {showCaptcha &&
                         password &&
@@ -502,11 +521,7 @@ const EmailView = () => {
                     />
                 )}
                 {getErrorMessage() && (
-                    <Typography
-                        color={colors.gray10}
-                        type="body"
-                        text={getErrorMessage()}
-                    />
+                    <AuthErrorMessage text={getErrorMessage()} />
                 )}
                 <Button
                     classname="full-width"
@@ -584,16 +599,12 @@ const CodeView = () => {
                     disabled={status === 'loading'}
                 />
                 {status === 'invalid' && (
-                    <Typography
-                        color={colors.gray10}
-                        type="body"
+                    <AuthErrorMessage
                         text={dictionary.authorization.errors.invalidCode}
                     />
                 )}
                 {status === 'unknownError' && (
-                    <Typography
-                        color={colors.gray10}
-                        type="body"
+                    <AuthErrorMessage
                         text={dictionary.authorization.errors.unknownError}
                     />
                 )}
@@ -714,11 +725,7 @@ const PasswordView = () => {
                     disabled={status === 'loading'}
                 />
                 {getErrorMessage() && (
-                    <Typography
-                        color={colors.gray10}
-                        type="body"
-                        text={getErrorMessage()}
-                    />
+                    <AuthErrorMessage text={getErrorMessage()} />
                 )}
                 <Button
                     classname="full-width"
