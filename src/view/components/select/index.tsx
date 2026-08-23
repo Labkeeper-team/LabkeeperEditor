@@ -50,6 +50,7 @@ export const Select = ({
 }: ISelectOptions) => {
     const [isOpen, setIsOpen] = useState(false); // Состояние открытия/закрытия списка
     const [optionsWidth, setOptionsWidth] = useState<number>();
+    const [fontsRevision, setFontsRevision] = useState(0);
     const selectRef = useRef<HTMLDivElement>(null); // Ссылка на контейнер
     const widthMeasurerRef = useRef<HTMLDivElement>(null);
     const titleWidthMeasurerRef = useRef<HTMLSpanElement>(null);
@@ -61,6 +62,27 @@ export const Select = ({
     }, [value, options]);
     const displayTitle = title || selectedValue?.label;
     const useIconTrigger = Boolean(triggerContent);
+
+    // Ширина считается по факту отрисовки. Если шрифт приехал позже первого кадра,
+    // замер сделан по системному и плашка навсегда остаётся уже, чем нужно
+    useEffect(() => {
+        const fonts = document.fonts;
+        if (!fonts) {
+            return;
+        }
+        let cancelled = false;
+        const remeasure = () => {
+            if (!cancelled) {
+                setFontsRevision((revision) => revision + 1);
+            }
+        };
+        fonts.ready?.then(remeasure).catch(() => {});
+        fonts.addEventListener?.('loadingdone', remeasure);
+        return () => {
+            cancelled = true;
+            fonts.removeEventListener?.('loadingdone', remeasure);
+        };
+    }, []);
 
     useLayoutEffect(() => {
         if (
@@ -91,7 +113,13 @@ export const Select = ({
                 titleWidth
             )
         );
-    }, [displayTitle, fitToOptionsWidth, options, useIconTrigger]);
+    }, [
+        displayTitle,
+        fitToOptionsWidth,
+        options,
+        useIconTrigger,
+        fontsRevision,
+    ]);
 
     // Обработчик клика по опции
     const handleOptionClick = (_value: SelectOption) => {
