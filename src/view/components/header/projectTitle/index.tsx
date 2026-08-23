@@ -12,8 +12,14 @@ import { AppDispatch, StorageState } from '../../../store';
 import { setEditModeForProjectTitle } from '../../../store/slices/settings';
 import { controller } from '../../../../main.tsx';
 import { PROJECT_TITLE_MAX_LENGTH } from '../../../../model/domain.ts';
+import { Tooltip } from 'react-tooltip';
+import { Typography } from '../../typography';
+import { colors } from '../../../styles/colors.ts';
+import { isElementTextTruncated } from '../../../helpers/index.ts';
 
-export const ProjectTitle = () => {
+const PROJECT_TITLE_TOOLTIP_ID = 'header-project-title-tooltip';
+
+export const ProjectTitle = ({ isMobile }: { isMobile: boolean }) => {
     const project = useSelector(useCurrentProject);
     const [draftTitle, setDraftTitle] = useState(project?.title ?? '');
     const editMode = useSelector(
@@ -80,32 +86,77 @@ export const ProjectTitle = () => {
     }
 
     return (
-        <div className="change-title-container">
-            <input
-                ref={inputRef as never}
-                value={editMode ? draftTitle : project.title}
-                onChange={
-                    editMode ? (e) => setDraftTitle(e.target.value) : undefined
-                }
-                onBlur={editMode ? onInputBlur : undefined}
-                onKeyDown={editMode ? onKeyDown : undefined}
-                disabled={!editMode}
-                maxLength={PROJECT_TITLE_MAX_LENGTH}
-                className={`${classNames('change-title-input', { disabled: !editMode })}`}
-            />
-            {!projectIsReadonly &&
-                (editMode ? (
-                    <div className="change-title-character-count">
-                        {draftTitle.length} / {PROJECT_TITLE_MAX_LENGTH}
-                    </div>
+        <>
+            <div
+                className={classNames('change-title-container', {
+                    'change-title-container--readonly': projectIsReadonly,
+                })}
+            >
+                {projectIsReadonly ? (
+                    <Typography
+                        className="change-title-readonly"
+                        color={colors.white}
+                        data-tooltip-content={project.title}
+                        data-tooltip-id={PROJECT_TITLE_TOOLTIP_ID}
+                        tabIndex={0}
+                        text={project.title}
+                        type="body-large"
+                    />
                 ) : (
-                    <div
-                        onClick={onPressPencil}
-                        className="change-titlepress-button"
-                    >
-                        <PencilIcon />
-                    </div>
-                ))}
-        </div>
+                    <input
+                        ref={inputRef as never}
+                        value={editMode ? draftTitle : project.title}
+                        onChange={
+                            editMode
+                                ? (e) => setDraftTitle(e.target.value)
+                                : undefined
+                        }
+                        onBlur={editMode ? onInputBlur : undefined}
+                        onKeyDown={editMode ? onKeyDown : undefined}
+                        disabled={!editMode}
+                        maxLength={PROJECT_TITLE_MAX_LENGTH}
+                        className={`${classNames('change-title-input', { disabled: !editMode })}`}
+                    />
+                )}
+                {!projectIsReadonly &&
+                    (editMode ? (
+                        <div className="change-title-character-count">
+                            {draftTitle.length} / {PROJECT_TITLE_MAX_LENGTH}
+                        </div>
+                    ) : (
+                        <div
+                            onClick={onPressPencil}
+                            className="change-titlepress-button"
+                        >
+                            <PencilIcon />
+                        </div>
+                    ))}
+            </div>
+            <Tooltip
+                id={PROJECT_TITLE_TOOLTIP_ID}
+                closeEvents={isMobile ? {} : { blur: true, mouseleave: true }}
+                disableTooltip={(anchor) => !isElementTextTruncated(anchor)}
+                globalCloseEvents={{
+                    clickOutsideAnchor: true,
+                    escape: true,
+                    resize: true,
+                    scroll: true,
+                }}
+                openEvents={
+                    isMobile
+                        ? { click: true }
+                        : { focus: true, mouseenter: true }
+                }
+                place="bottom"
+                positionStrategy="fixed"
+                variant="light"
+                style={{
+                    maxWidth: 'min(480px, calc(100vw - 32px))',
+                    overflowWrap: 'anywhere',
+                    zIndex: 1000,
+                }}
+                wrapper="div"
+            />
+        </>
     );
 };

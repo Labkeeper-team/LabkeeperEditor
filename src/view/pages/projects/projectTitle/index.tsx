@@ -1,10 +1,10 @@
 import { useRef, useState } from 'react';
-import { Typography } from '../../../components/typography';
 import { PencilIcon } from '../../../icons';
 
 import './style.scss';
 import { Input } from '../../../components/input';
-import { colors } from '../../../styles/colors';
+import { Typography } from '../../../components/typography';
+import { colors } from '../../../styles/colors.ts';
 
 import { useHotkeys } from 'react-hotkeys-hook';
 import { useDispatch } from 'react-redux';
@@ -73,7 +73,7 @@ export const ProjectTitle = (props: { project: ProjectShort }) => {
             ) : (
                 <>
                     <Typography
-                        className="text-base "
+                        className="project-title-text"
                         color={colors.gray10}
                         text={currentTitle}
                         type="body-large"
