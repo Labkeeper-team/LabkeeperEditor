@@ -1,4 +1,10 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, {
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import classNames from 'classnames';
 import { useIsProjectReadonly } from '../../../../../../store/selectors/program';
@@ -21,7 +27,30 @@ export const SegmentDivider: React.FC<SegmentDividerProps> = ({
     const projectIsReadonly = useSelector(useIsProjectReadonly);
 
     const [isOpen, setIsOpen] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
     const dictionary = useSelector(useDictionary);
+
+    useEffect(() => {
+        if (!isOpen) {
+            return;
+        }
+
+        const onDocumentClick = (event: MouseEvent) => {
+            const target = event.target;
+            if (
+                !(target instanceof Node) ||
+                containerRef.current?.contains(target)
+            ) {
+                return;
+            }
+            setIsOpen(false);
+        };
+
+        document.addEventListener('click', onDocumentClick);
+        return () => {
+            document.removeEventListener('click', onDocumentClick);
+        };
+    }, [isOpen]);
 
     const onAdd = useCallback(
         (type: SegmentType) => {
@@ -72,7 +101,7 @@ export const SegmentDivider: React.FC<SegmentDividerProps> = ({
     return (
         <div className="segment-divider">
             <div className="divider-line" />
-            <div className="divider-button-container">
+            <div ref={containerRef} className="divider-button-container">
                 <button
                     className={classNames('divider-button', { active: isOpen })}
                     disabled={projectIsReadonly}
