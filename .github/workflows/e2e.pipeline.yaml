@@ -17,7 +17,7 @@ jobs:
   e2e:
     if: ${{ contains(github.event.pull_request.labels.*.name, 'E2E') && (github.event.action != 'labeled' || github.event.label.name == 'E2E') }}
     runs-on: [self-hosted, windows]
-    timeout-minutes: 120
+    timeout-minutes: 360
     env:
       COMPOSE_PROJECT_NAME: e2e-pr-${{ github.run_id }}
       COMPOSE_FILE: scripts/ci/e2e/docker-compose.yml
@@ -74,17 +74,56 @@ jobs:
             const path = require('path');
             const marker = '<!-- labkeeper-e2e-report -->';
             const reportPath = path.join('test-results', 'results.json');
-            const runUrl = `${process.env.GITHUB_SERVER_URL}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const runUrl = `${process.env.GITHUB_SERVER_URL}/${owner}/${repo}/actions/runs/${context.runId}`;
+
+            let artifactUrl = runUrl;
+            try {
+              const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+                owner,
+                repo,
+                run_id: context.runId,
+              });
+              const artifact = artifacts.data.artifacts.find(
+                (item) => item.name === 'e2e-test-results'
+              );
+              if (artifact) {
+                artifactUrl = `${runUrl}/artifacts/${artifact.id}`;
+              }
+            } catch (error) {
+              core.warning(`Could not resolve artifact URL: ${error.message}`);
+            }
+
+            const links = [
+              `- [Скачать отчёт (test-results, playwright-report)](${artifactUrl})`,
+              `- [Лог запуска](${runUrl})`,
+            ].join('\n');
+
+            const collectFailedTitles = (suites, acc = []) => {
+              for (const suite of suites || []) {
+                for (const spec of suite.specs || []) {
+                  for (const test of spec.tests || []) {
+                    if (test.status === 'unexpected') {
+                      const project = test.projectName ? `${test.projectName}: ` : '';
+                      acc.push(`${project}${spec.title}`);
+                    }
+                  }
+                }
+                collectFailedTitles(suite.suites, acc);
+              }
+              return acc;
+            };
 
             let body;
             if (!fs.existsSync(reportPath)) {
               body = [
                 marker,
-                '## E2E-тесты',
+                '## E2E Playwright',
                 '',
-                'Отчёт Playwright не найден — тесты не запустились или упали до записи результатов.',
+                'Отчёт Playwright не найден: тесты не запустились или упали до записи результатов.',
                 '',
-                `[Лог запуска](${runUrl})`,
+                links,
               ].join('\n');
             } else {
               const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
@@ -94,22 +133,36 @@ jobs:
               const skipped = stats.skipped ?? 0;
               const flaky = stats.flaky ?? 0;
               const total = passed + failed + skipped + flaky;
-              const status = failed > 0 ? 'не прошли' : 'прошли';
+              const headline = failed > 0 ? 'не прошли' : 'прошли';
+              const failedTitles = [...new Set(collectFailedTitles(report.suites))];
+              const failedList =
+                failedTitles.length > 0
+                  ? [
+                      '',
+                      'Упавшие тесты:',
+                      '',
+                      ...failedTitles.slice(0, 15).map((title) => `- ${title}`),
+                      ...(failedTitles.length > 15
+                        ? [`- … и ещё ${failedTitles.length - 15}`]
+                        : []),
+                    ]
+                  : [];
+
               body = [
                 marker,
-                '## E2E-тесты',
+                '## E2E Playwright',
                 '',
-                `Результат: **${status}**`,
+                `**${headline}** · ${passed} из ${total} прошли`,
                 '',
-                `| | |`,
-                `| --- | ---: |`,
-                `| Всего | ${total} |`,
-                `| Прошло | ${passed} |`,
-                `| Не прошло | ${failed} |`,
-                `| Пропущено | ${skipped} |`,
+                '| | Кол-во |',
+                '| --- | ---: |',
+                `| Прошли | ${passed} |`,
+                `| Не прошли | ${failed} |`,
                 `| Flaky | ${flaky} |`,
+                `| Пропущены | ${skipped} |`,
+                ...failedList,
                 '',
-                `[Лог запуска](${runUrl})`,
+                links,
               ].join('\n');
             }
 
