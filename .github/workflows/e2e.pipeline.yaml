@@ -101,11 +101,11 @@ jobs:
             }
 
             const links = [
-              '### Артефакты',
+              '### Artifacts',
               '',
-              `[Скачать отчёт (test-results, playwright-report)](${artifactUrl})`,
+              `[Download report (test-results, playwright-report)](${artifactUrl})`,
               '',
-              `[Лог запуска](${runUrl})`,
+              `[Run log](${runUrl})`,
             ].join('\n');
 
             const collectFailedTitles = (suites, acc = []) => {
@@ -129,9 +129,9 @@ jobs:
                 marker,
                 '## E2E Playwright',
                 '',
-                `Бэкенд: \`${backend}\``,
+                `Backend: \`${backend}\``,
                 '',
-                'Отчёт Playwright не найден: тесты не запустились или упали до записи результатов.',
+                'Playwright report not found: tests did not start or failed before results were written.',
                 '',
                 links,
               ].join('\n');
@@ -143,17 +143,17 @@ jobs:
               const skipped = stats.skipped ?? 0;
               const flaky = stats.flaky ?? 0;
               const total = passed + failed + skipped + flaky;
-              const headline = failed > 0 ? '❌ **не прошли**' : '✅ **прошли**';
+              const headline = failed > 0 ? '❌ **Failed**' : '✅ **OK**';
               const failedTitles = [...new Set(collectFailedTitles(report.suites))];
               const failedList =
                 failedTitles.length > 0
                   ? [
                       '',
-                      'Упавшие тесты:',
+                      'Failed tests:',
                       '',
                       ...failedTitles.slice(0, 15).map((title) => `- ${title}`),
                       ...(failedTitles.length > 15
-                        ? [`- … и ещё ${failedTitles.length - 15}`]
+                        ? [`- … and ${failedTitles.length - 15} more`]
                         : []),
                     ]
                   : [];
@@ -162,16 +162,16 @@ jobs:
                 marker,
                 '## E2E Playwright',
                 '',
-                `Бэкенд: \`${backend}\``,
+                `Backend: \`${backend}\``,
                 '',
-                `${headline} · ${passed} из ${total} прошли`,
+                `${headline} · ${passed} of ${total} passed`,
                 '',
-                '| | Кол-во |',
+                '| | Count |',
                 '| --- | ---: |',
-                `| ✅ Прошли | ${passed} |`,
-                `| ❌ Не прошли | ${failed} |`,
+                `| ✅ Passed | ${passed} |`,
+                `| ❌ Failed | ${failed} |`,
                 `| Flaky | ${flaky} |`,
-                `| Пропущены | ${skipped} |`,
+                `| Skipped | ${skipped} |`,
                 ...failedList,
                 '',
                 links,
