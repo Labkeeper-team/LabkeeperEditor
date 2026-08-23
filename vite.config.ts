@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 import svgr from 'vite-plugin-svgr';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 
-const DEFAULT_MAJOR = '2';
+const DEFAULT_MAJOR = '4';
 const DEFAULT_MINOR = '';
 
 function readCliArg(name: string): string | undefined {
