@@ -15,13 +15,14 @@ permissions:
 
 jobs:
   e2e:
-    if: ${{ contains(github.event.pull_request.labels.*.name, 'E2E') && (github.event.action != 'labeled' || github.event.label.name == 'E2E') }}
+    if: ${{ (github.event.action != 'labeled' && (contains(github.event.pull_request.labels.*.name, 'e2e/prod') || contains(github.event.pull_request.labels.*.name, 'e2e/preprod'))) || github.event.label.name == 'e2e/prod' || github.event.label.name == 'e2e/preprod' }}
     runs-on: [self-hosted, windows]
     timeout-minutes: 360
     env:
       COMPOSE_PROJECT_NAME: e2e-pr-${{ github.run_id }}
       COMPOSE_FILE: scripts/ci/e2e/docker-compose.yml
       COMPOSE_CONVERT_WINDOWS_PATHS: '1'
+      E2E_BACKEND_HOST: ${{ github.event.label.name == 'e2e/prod' && 'labkeeper.io' || github.event.label.name == 'e2e/preprod' && 'preprod.labkeeper.io' || contains(github.event.pull_request.labels.*.name, 'e2e/preprod') && 'preprod.labkeeper.io' || 'labkeeper.io' }}
       E2E_IMAGE: cr.yandex/crpjhav5dledksn6gaeo/labkeeper-e2e:44
       E2E_CAPTCHA_BYPASS_TOKEN: ${{ secrets.E2E_CAPTCHA_BYPASS_TOKEN }}
       E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
@@ -75,7 +76,8 @@ jobs:
           script: |
             const fs = require('fs');
             const path = require('path');
-            const marker = '<!-- labkeeper-e2e-report -->';
+            const marker = `<!-- labkeeper-e2e-report-${process.env.E2E_BACKEND_HOST} -->`;
+            const backend = process.env.E2E_BACKEND_HOST || 'labkeeper.io';
             const reportPath = path.join('test-results', 'results.json');
             const owner = context.repo.owner;
             const repo = context.repo.repo;
@@ -99,8 +101,11 @@ jobs:
             }
 
             const links = [
-              `- [Скачать отчёт (test-results, playwright-report)](${artifactUrl})`,
-              `- [Лог запуска](${runUrl})`,
+              '### Артефакты',
+              '',
+              `[Скачать отчёт (test-results, playwright-report)](${artifactUrl})`,
+              '',
+              `[Лог запуска](${runUrl})`,
             ].join('\n');
 
             const collectFailedTitles = (suites, acc = []) => {
@@ -124,6 +129,8 @@ jobs:
                 marker,
                 '## E2E Playwright',
                 '',
+                `Бэкенд: \`${backend}\``,
+                '',
                 'Отчёт Playwright не найден: тесты не запустились или упали до записи результатов.',
                 '',
                 links,
@@ -136,7 +143,7 @@ jobs:
               const skipped = stats.skipped ?? 0;
               const flaky = stats.flaky ?? 0;
               const total = passed + failed + skipped + flaky;
-              const headline = failed > 0 ? 'не прошли' : 'прошли';
+              const headline = failed > 0 ? '❌ **не прошли**' : '✅ **прошли**';
               const failedTitles = [...new Set(collectFailedTitles(report.suites))];
               const failedList =
                 failedTitles.length > 0
@@ -155,12 +162,14 @@ jobs:
                 marker,
                 '## E2E Playwright',
                 '',
-                `**${headline}** · ${passed} из ${total} прошли`,
+                `Бэкенд: \`${backend}\``,
+                '',
+                `${headline} · ${passed} из ${total} прошли`,
                 '',
                 '| | Кол-во |',
                 '| --- | ---: |',
-                `| Прошли | ${passed} |`,
-                `| Не прошли | ${failed} |`,
+                `| ✅ Прошли | ${passed} |`,
+                `| ❌ Не прошли | ${failed} |`,
                 `| Flaky | ${flaky} |`,
                 `| Пропущены | ${skipped} |`,
                 ...failedList,
