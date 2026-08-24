@@ -77,7 +77,7 @@ export const AppHeader = () => {
                         ) : null}
                     </div>
                     <div className="labkeeper_header__center">
-                        <ProjectTitle />
+                        <ProjectTitle isMobile={isMobile} />
                         {!projectIsReadonly && !isMobile ? (
                             <ShareButton />
                         ) : null}
