@@ -1,0 +1,213 @@
+name: labkeeper-e2e
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+
+concurrency:
+  group: e2e-self-hosted
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  actions: write
+  pull-requests: write
+
+jobs:
+  e2e:
+    if: ${{ (github.event.action != 'labeled' && (contains(github.event.pull_request.labels.*.name, 'e2e/prod') || contains(github.event.pull_request.labels.*.name, 'e2e/preprod'))) || github.event.label.name == 'e2e/prod' || github.event.label.name == 'e2e/preprod' }}
+    runs-on: [self-hosted, windows]
+    timeout-minutes: 360
+    env:
+      COMPOSE_PROJECT_NAME: e2e-pr-${{ github.run_id }}
+      COMPOSE_FILE: scripts/ci/e2e/docker-compose.yml
+      COMPOSE_CONVERT_WINDOWS_PATHS: '1'
+      E2E_BACKEND_HOST: ${{ github.event.label.name == 'e2e/prod' && 'labkeeper.io' || github.event.label.name == 'e2e/preprod' && 'preprod.labkeeper.io' || contains(github.event.pull_request.labels.*.name, 'e2e/preprod') && 'preprod.labkeeper.io' || 'labkeeper.io' }}
+      E2E_IMAGE: cr.yandex/crpjhav5dledksn6gaeo/labkeeper-e2e:44
+      E2E_CAPTCHA_BYPASS_TOKEN: ${{ secrets.E2E_CAPTCHA_BYPASS_TOKEN }}
+      E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
+      E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
+    defaults:
+      run:
+        shell: cmd
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Prepare
+        run: |
+          echo %ProgramFiles%\Git\cmd>> "%GITHUB_PATH%"
+          echo %ProgramFiles%\Docker\Docker\resources\bin>> "%GITHUB_PATH%"
+          echo %ProgramFiles%\Docker\Docker\resources\cli-plugins>> "%GITHUB_PATH%"
+          if not exist test-results mkdir test-results
+          if not exist playwright-report mkdir playwright-report
+          if not exist .docker-ci mkdir .docker-ci
+          echo DOCKER_CONFIG=%GITHUB_WORKSPACE%\.docker-ci>> "%GITHUB_ENV%"
+          echo E2E_WORKSPACE=%GITHUB_WORKSPACE:\=/%>> "%GITHUB_ENV%"
+
+      - name: Login to Yandex Container Registry
+        env:
+          YC_DOCKER_REGISTRY_TOKEN: ${{ secrets.YC_DOCKER_REGISTRY_TOKEN }}
+        run: echo %YC_DOCKER_REGISTRY_TOKEN%| docker login cr.yandex --username oauth --password-stdin
+
+      - name: Build frontend
+        run: docker-compose run --rm --no-TTY builder
+
+      - name: Start nginx
+        run: docker-compose up --detach nginx --wait --wait-timeout 60
+
+      - name: Run Playwright tests
+        run: docker-compose run --rm --no-deps --no-TTY playwright
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-results
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Comment E2E summary on PR
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const marker = `<!-- labkeeper-e2e-report-${process.env.E2E_BACKEND_HOST} -->`;
+            const backend = process.env.E2E_BACKEND_HOST || 'labkeeper.io';
+            const reportPath = path.join('test-results', 'results.json');
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const runUrl = `${process.env.GITHUB_SERVER_URL}/${owner}/${repo}/actions/runs/${context.runId}`;
+
+            let artifactUrl = runUrl;
+            try {
+              const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+                owner,
+                repo,
+                run_id: context.runId,
+              });
+              const artifact = artifacts.data.artifacts.find(
+                (item) => item.name === 'e2e-test-results'
+              );
+              if (artifact) {
+                artifactUrl = `${runUrl}/artifacts/${artifact.id}`;
+              }
+            } catch (error) {
+              core.warning(`Could not resolve artifact URL: ${error.message}`);
+            }
+
+            const links = [
+              '### Artifacts',
+              '',
+              `[Download report (test-results, playwright-report)](${artifactUrl})`,
+              '',
+              `[Run log](${runUrl})`,
+            ].join('\n');
+
+            const collectFailedTitles = (suites, acc = []) => {
+              for (const suite of suites || []) {
+                for (const spec of suite.specs || []) {
+                  for (const test of spec.tests || []) {
+                    if (test.status === 'unexpected') {
+                      const project = test.projectName ? `${test.projectName}: ` : '';
+                      acc.push(`${project}${spec.title}`);
+                    }
+                  }
+                }
+                collectFailedTitles(suite.suites, acc);
+              }
+              return acc;
+            };
+
+            let body;
+            if (!fs.existsSync(reportPath)) {
+              body = [
+                marker,
+                '## E2E Playwright',
+                '',
+                `Backend: \`${backend}\``,
+                '',
+                'Playwright report not found: tests did not start or failed before results were written.',
+                '',
+                links,
+              ].join('\n');
+            } else {
+              const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+              const stats = report.stats || {};
+              const passed = stats.expected ?? 0;
+              const failed = stats.unexpected ?? 0;
+              const skipped = stats.skipped ?? 0;
+              const flaky = stats.flaky ?? 0;
+              const total = passed + failed + skipped + flaky;
+              const headline = failed > 0 ? '❌ **Failed**' : '✅ **OK**';
+              const failedTitles = [...new Set(collectFailedTitles(report.suites))];
+              const failedList =
+                failedTitles.length > 0
+                  ? [
+                      '',
+                      'Failed tests:',
+                      '',
+                      ...failedTitles.slice(0, 15).map((title) => `- ${title}`),
+                      ...(failedTitles.length > 15
+                        ? [`- … and ${failedTitles.length - 15} more`]
+                        : []),
+                    ]
+                  : [];
+
+              body = [
+                marker,
+                '## E2E Playwright',
+                '',
+                `Backend: \`${backend}\``,
+                '',
+                `${headline} · ${passed} of ${total} passed`,
+                '',
+                '| | Count |',
+                '| --- | ---: |',
+                `| ✅ Passed | ${passed} |`,
+                `| ❌ Failed | ${failed} |`,
+                `| Flaky | ${flaky} |`,
+                `| Skipped | ${skipped} |`,
+                ...failedList,
+                '',
+                links,
+              ].join('\n');
+            }
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              per_page: 100,
+            });
+            const existing = comments.find((comment) => comment.body && comment.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+      - name: Cleanup
+        if: always()
+        continue-on-error: true
+        run: |
+          docker-compose down --volumes --remove-orphans --rmi local
+          if exist test-results rmdir /s /q test-results
+          if exist playwright-report rmdir /s /q playwright-report
+          if exist dist rmdir /s /q dist
+          if exist .docker-ci rmdir /s /q .docker-ci
+          docker logout cr.yandex

@@ -1,0 +1,59 @@
+services:
+    builder:
+        image: node:22.13.0
+        restart: 'no'
+        working_dir: /app
+        init: true
+        environment:
+            HUSKY: '0'
+        volumes:
+            - ${E2E_WORKSPACE:-../../..}:/app
+            - frontend_node_modules:/app/node_modules
+        command: sh -c "npm ci && npm run build"
+
+    nginx:
+        image: nginx:alpine
+        restart: 'no'
+        environment:
+            NGINX_ENVSUBST_OUTPUT_DIR: /etc/nginx
+            YANDEX_CAPTCHA_SITE_KEY: ysc1_hGTLsqtwdF4rdRDCezgRRJNM9St2o0vBCZOC97qMd63bcd7e
+            E2E_BACKEND_HOST: ${E2E_BACKEND_HOST:-labkeeper.io}
+        volumes:
+            - ./nginx.conf.template:/etc/nginx/templates/nginx.conf.template:ro
+            - ${E2E_WORKSPACE:-../../..}/dist:/usr/share/nginx/html:ro
+        expose:
+            - '80'
+        healthcheck:
+            test:
+                [
+                    'CMD-SHELL',
+                    'wget -q -O /dev/null http://127.0.0.1/ || exit 1',
+                ]
+            interval: 5s
+            timeout: 3s
+            retries: 12
+
+    playwright:
+        image: ${E2E_IMAGE}
+        restart: 'no'
+        cpus: 1.0
+        environment:
+            CI: 'true'
+            E2E_HOST: http://nginx:80
+            E2E_CAPTCHA_BYPASS_TOKEN: ${E2E_CAPTCHA_BYPASS_TOKEN}
+            E2E_USER_EMAIL: ${E2E_USER_EMAIL}
+            E2E_USER_PASSWORD: ${E2E_USER_PASSWORD}
+            PLAYWRIGHT_JSON_OUTPUT_NAME: test-results/results.json
+            PLAYWRIGHT_HTML_OPEN: never
+        command:
+            - --reporter=list,html,json
+            - --retries=0
+        volumes:
+            - ${E2E_WORKSPACE:-../../..}/test-results:/app/test-results
+            - ${E2E_WORKSPACE:-../../..}/playwright-report:/app/playwright-report
+        depends_on:
+            nginx:
+                condition: service_healthy
+
+volumes:
+    frontend_node_modules:

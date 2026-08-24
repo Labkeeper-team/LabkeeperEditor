@@ -1,0 +1,49 @@
+events {
+    worker_connections 1024;
+}
+
+http {
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+
+    log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+                    '$status $body_bytes_sent "$http_referer" '
+                    '"$http_user_agent" "$http_x_forwarded_for"';
+
+    access_log /var/log/nginx/access.log main;
+    error_log /var/log/nginx/error.log;
+
+    sendfile on;
+    keepalive_timeout 65;
+
+    server {
+        listen 80;
+        server_name _;
+        root /usr/share/nginx/html;
+
+        location /api {
+            proxy_pass https://${E2E_BACKEND_HOST};
+            proxy_set_header Host ${E2E_BACKEND_HOST};
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+
+            proxy_ssl_server_name on;
+            proxy_ssl_verify off;
+
+            proxy_cookie_domain ${E2E_BACKEND_HOST} nginx;
+            proxy_cookie_domain .${E2E_BACKEND_HOST} nginx;
+            proxy_cookie_domain .labkeeper.io nginx;
+            proxy_cookie_flags ~ nosecure samesite=lax;
+        }
+
+        location / {
+            try_files $uri $uri/ /index.html;
+
+            sub_filter 'IO_LABKEEPER_FRONTEND_YANDEX_CAPTCHA_SITE_KEY'
+                       '${YANDEX_CAPTCHA_SITE_KEY}';
+            sub_filter_once off;
+            sub_filter_types text/html;
+        }
+    }
+}
