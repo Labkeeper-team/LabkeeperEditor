@@ -12,6 +12,7 @@ import {
 import { IdeService } from '../domain/IdeService.ts';
 import { TokenPageService } from './TokenPageService.ts';
 import { ResetService } from '../domain/ResetService.ts';
+import { markNextProjectRouteAsPreloaded } from './projectRouteNavigation.ts';
 
 const qrPagePattern = /\/qr\/v\d+/i;
 const projectPagePattern = /\/project\/\S+/i;
@@ -25,6 +26,7 @@ export class StartupService {
     ideService: IdeService;
     tokenPageService: TokenPageService;
     resetService: ResetService;
+    private projectLoadRequestId = 0;
 
     constructor(
         rpi: Rpi,
@@ -126,7 +128,10 @@ export class StartupService {
             if (!lastOpenedProjectUuid) {
                 await this.openDefaultProject(userInfo, open);
             } else {
-                await this.openProjectById(userInfo, lastOpenedProjectUuid);
+                this.repository.setLocation(
+                    Routes.Project.replace(':id', lastOpenedProjectUuid),
+                    { replace: true }
+                );
             }
         }
 
@@ -200,7 +205,17 @@ export class StartupService {
      * Call this instead of `navigate(Routes.ProjectDefault)` from the SPA.
      */
     openEditorAfterSpaNavigation = async (): Promise<void> => {
-        const userInfo: UserInfo = {
+        await this.openDefaultProject(this.currentUserInfo());
+    };
+
+    openProjectAfterRouteNavigation = async (
+        projectId: string
+    ): Promise<void> => {
+        await this.openProjectById(this.currentUserInfo(), projectId);
+    };
+
+    private currentUserInfo(): UserInfo {
+        return {
             email: this.repository.userViewModelRepository.email(),
             id: this.repository.userViewModelRepository.id(),
             isAuthenticated:
@@ -209,8 +224,7 @@ export class StartupService {
             tokenBalance:
                 this.repository.userViewModelRepository.tokenBalance(),
         };
-        await this.openDefaultProject(userInfo);
-    };
+    }
 
     private cutOfLastSlash(location: string): string {
         if (location === '/' || location === '') {
@@ -244,11 +258,23 @@ export class StartupService {
         );
     }
 
+    private isCurrentProjectLoad(requestId: number, projectId: string) {
+        return (
+            requestId === this.projectLoadRequestId &&
+            this.cutOfLastSlash(this.repository.location()) ===
+                Routes.Project.replace(':id', projectId)
+        );
+    }
+
     async openProjectById(userInfo: UserInfo, id: string): Promise<void> {
+        const requestId = ++this.projectLoadRequestId;
         this.repository.ideViewModelRepository.setGetProjectRequestState(
             'loading'
         );
         const result = await this.rpi.getProjectRequest(id);
+        if (!this.isCurrentProjectLoad(requestId, id)) {
+            return;
+        }
         if (result.isUnauth) {
             this.repository.toast(
                 this.repository.dictionary.filemanager.errors.sessionExpired,
@@ -300,9 +326,6 @@ export class StartupService {
             this.repository.projectViewModelRepository.setProjectType(
                 project.projectType
             );
-            this.repository.setLocation(
-                Routes.Project.replace(':id', project.projectId)
-            );
             this.observerService.setUserState(
                 States.STATE_PROJECT,
                 project.projectId
@@ -314,7 +337,12 @@ export class StartupService {
                 'ok'
             );
             if (userInfo.isAuthenticated) {
-                await this.loader.loadFiles(project.projectId);
+                await this.loader.loadFiles(project.projectId, () =>
+                    this.isCurrentProjectLoad(requestId, id)
+                );
+                if (!this.isCurrentProjectLoad(requestId, id)) {
+                    return;
+                }
                 const pdfFile = this.repository.projectViewModelRepository
                     .files()
                     .find((file) => file.fileName.endsWith('.pdf'));
@@ -340,6 +368,8 @@ export class StartupService {
         userInfo: UserInfo,
         open?: OpenParams
     ): Promise<void> {
+        const requestId = ++this.projectLoadRequestId;
+        const sourceLocation = this.cutOfLastSlash(this.repository.location());
         this.repository.projectViewModelRepository.setReadOnly(false);
         if (userInfo.isAuthenticated) {
             const result = await this.rpi.getDefaultProjectRequest(
@@ -347,6 +377,13 @@ export class StartupService {
                 this.repository.persistenceViewModelRepository.lastProgram(),
                 this.repository.projectViewModelRepository.mode()
             );
+            if (
+                requestId !== this.projectLoadRequestId ||
+                this.cutOfLastSlash(this.repository.location()) !==
+                    sourceLocation
+            ) {
+                return;
+            }
             if (result.isOk) {
                 const project = result.body as RichProject;
                 if (
@@ -371,11 +408,28 @@ export class StartupService {
                         errors: [],
                     }
                 );
-                this.setEditorLocation(
-                    Routes.Project.replace(':id', project.projectId)
+                const projectPath = Routes.Project.replace(
+                    ':id',
+                    project.projectId
                 );
+                markNextProjectRouteAsPreloaded(projectPath);
+                this.setEditorLocation(projectPath);
                 if (userInfo.isAuthenticated) {
-                    await this.loader.loadFiles(project.projectId);
+                    await this.loader.loadFiles(project.projectId, () =>
+                        this.isCurrentProjectLoad(requestId, project.projectId)
+                    );
+                    if (
+                        !this.isCurrentProjectLoad(requestId, project.projectId)
+                    ) {
+                        if (
+                            requestId === this.projectLoadRequestId &&
+                            this.repository.projectViewModelRepository.project()
+                                ?.projectId === project.projectId
+                        ) {
+                            this.resetService.resetProject();
+                        }
+                        return;
+                    }
                 }
             }
             if (result.isUnauth) {

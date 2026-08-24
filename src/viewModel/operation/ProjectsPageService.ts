@@ -2,7 +2,6 @@ import { ViewModelRepository } from '../repository';
 import { Rpi } from '../../model/rpi';
 import { LoaderService } from '../domain/LoaderService.ts';
 import { IdeService } from '../domain/IdeService.ts';
-import { StartupService } from './StartupService.ts';
 import { Program, Project, ProjectType } from '../../model/domain.ts';
 import { Routes } from '../routes.ts';
 import {
@@ -16,7 +15,6 @@ export class ProjectsPageService {
     rpi: Rpi;
     loaderService: LoaderService;
     ideService: IdeService;
-    startupService: StartupService;
     observerService: ObserverService;
     resetService: ResetService;
 
@@ -25,14 +23,12 @@ export class ProjectsPageService {
         rpi: Rpi,
         loaderService: LoaderService,
         ideService: IdeService,
-        startupService: StartupService,
         observerService: ObserverService,
         resetService: ResetService
     ) {
         this.rpi = rpi;
         this.loaderService = loaderService;
         this.ideService = ideService;
-        this.startupService = startupService;
         this.repository = repository;
         this.observerService = observerService;
         this.resetService = resetService;
@@ -140,19 +136,7 @@ export class ProjectsPageService {
         }
     };
 
-    onRowClickedInProjectsList = async (projectId: string) => {
+    onRowClickedInProjectsList = (projectId: string) => {
         this.repository.setLocation(Routes.Project.replace(':id', projectId));
-        await this.startupService.openProjectById(
-            {
-                isAuthenticated:
-                    this.repository.userViewModelRepository.isAuthenticated(),
-                id: this.repository.userViewModelRepository.id(),
-                email: this.repository.userViewModelRepository.email(),
-                privacyPolicyAccepted: false,
-                tokenBalance:
-                    this.repository.userViewModelRepository.tokenBalance(),
-            },
-            projectId
-        );
     };
 }
