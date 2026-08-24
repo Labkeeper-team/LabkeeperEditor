@@ -10,3 +10,14 @@ export const createEmptySegment = (type: SegmentType) => {
         text: '',
     };
 };
+
+export const isElementTextTruncated = (element: Element | null): boolean => {
+    if (!(element instanceof HTMLElement)) {
+        return false;
+    }
+
+    return (
+        element.scrollHeight > element.clientHeight + 1 ||
+        element.scrollWidth > element.clientWidth + 1
+    );
+};

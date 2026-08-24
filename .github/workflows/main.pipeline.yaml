@@ -1,4 +1,4 @@
-name: run-all-checks
+name: labkeeper-check
 
 on:
   pull_request:

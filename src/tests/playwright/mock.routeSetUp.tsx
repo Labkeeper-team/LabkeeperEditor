@@ -22,7 +22,7 @@ type BodyTypeForCompileRequest =
     'errorBody' | 'empty' | 'mdTypeBody' | 'computationalTypeBody';
 
 const uuid = '2cd18704-6c3f-48cb-96f1-9a923930f8cb';
-const version = 'v2';
+const version = 'v4';
 const contentType = 'application/json';
 const defaultUserId = 1;
 const anotherUserId = 2;

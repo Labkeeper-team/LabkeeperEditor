@@ -5,8 +5,28 @@
     flex-direction: row;
     align-items: center;
     gap: 6px;
+    min-width: 0;
+    max-width: 100%;
     font-family: Inter;
     font-size: 15px;
+
+    &--readonly {
+        flex: 1;
+        justify-content: center;
+    }
+
+    .change-title-readonly {
+        display: -webkit-box;
+        min-width: 0;
+        max-width: min(720px, 100%);
+        overflow: hidden;
+        overflow-wrap: anywhere;
+        text-overflow: ellipsis;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 1;
+        text-align: center;
+    }
+
     .change-titlepress-button {
         &:hover {
             cursor: pointer;
@@ -46,6 +66,11 @@
         justify-content: center;
         align-items: center;
         max-width: calc(100vw - 160px);
+
+        &--readonly {
+            width: 100%;
+            max-width: 100%;
+        }
 
         .change-title-input {
             text-align: center;

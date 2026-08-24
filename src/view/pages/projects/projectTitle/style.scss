@@ -3,17 +3,21 @@
 .project-title-container {
     display: flex;
     flex-direction: row;
-    // width: 33%;
     max-width: 100%;
     gap: 10px;
     align-items: center;
-    .text-base {
+    min-width: 0;
+
+    .project-title-text {
+        display: -webkit-box;
         padding-left: 14px;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        overflow: hidden;
         max-width: 40ch;
         width: 100%;
+        overflow: hidden;
+        overflow-wrap: anywhere;
+        text-overflow: ellipsis;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 1;
     }
     .input-base {
         height: 40px;

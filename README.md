@@ -76,25 +76,21 @@ The UI talks to the Labkeeper backend over `/api`. For local work against the re
     ```
 2. In file ```index.html``` change line ```IO_LABKEEPER_FRONTEND_YANDEX_CAPTCHA_SITE_KEY``` to ```ysc1_hGTLsqtwdF4rdRDCezgRRJNM9St2o0vBCZOC97qMd63bcd7e``` (this is public ym site key)
 
-3. In file ```vite.config.ts``` change ```const DEFAULT_MAJOR = '2';``` to ```const DEFAULT_MAJOR = '4';```
-
-4. Start the Nginx reverse proxy (API → release backend, app → Vite):
+3. Start the Nginx reverse proxy (API → release backend, app → Vite):
 
     ```bash
     docker compose -f scripts/local/nginx/docker-compose.yml up
     ```
 
-5. Start the Vite dev server from the repo root:
+4. Start the Vite dev server from the repo root:
 
     ```bash
     npm run dev
     ```
 
-6. Open [http://localhost](http://localhost). The app from this repo is served on port 80 through Nginx and can talk to the release server.
+5. Open [http://localhost](http://localhost). The app from this repo is served on port 80 through Nginx and can talk to the release server.
 
-Do not commit local-only tweaks in `index.html` or `vite.config.ts`.
-
-> **Playwright:** use `DEFAULT_MAJOR = '2'` in `vite.config.ts` when running E2E tests. Restore your local value afterwards. If you changed the Yandex SmartCaptcha site key in `index.html` for local use, revert that change before Playwright as well.
+Do not commit local-only tweaks in `index.html`.
 
 ## Scripts
 

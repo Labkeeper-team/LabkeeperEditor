@@ -88,8 +88,6 @@
     }
 
     @media screen and (max-width: $mobile-breakpoint) {
-        position: relative;
-
         &__left,
         &__right {
             position: relative;
@@ -97,16 +95,9 @@
         }
 
         &__center {
-            position: absolute;
-            left: 0;
-            right: 0;
+            position: static;
             justify-content: center;
-            pointer-events: none;
-            z-index: 0;
-
-            > * {
-                pointer-events: auto;
-            }
+            overflow: hidden;
         }
     }
 }

@@ -1,4 +1,7 @@
-export interface TypographyProps {
+export interface TypographyProps extends Omit<
+    React.HTMLAttributes<HTMLDivElement>,
+    'color'
+> {
     text: string;
     color?: string; //'black' | 'white';
     type?:
