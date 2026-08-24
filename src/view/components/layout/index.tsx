@@ -98,11 +98,13 @@ export const BaseLayout = () => {
 
     useEffect(() => {
         const pathname = location.pathname;
+        // не загружаем проект повторно при первом рендере
         if (previousPathname.current === pathname) {
             return;
         }
         previousPathname.current = pathname;
 
+        // Назад/Вперед меняют url без повторного запуска startup
         const projectWasPreloaded = consumePreloadedProjectRoute(pathname);
         const projectMatch = matchPath(Routes.Project, pathname);
         const projectId = projectMatch?.params.id;

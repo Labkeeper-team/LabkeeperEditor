@@ -258,6 +258,9 @@ export class StartupService {
         );
     }
 
+    /**
+     * Проверяет, что текущий проект последний загруженный, в URL также id этого проекта
+     */
     private isCurrentProjectLoad(requestId: number, projectId: string) {
         return (
             requestId === this.projectLoadRequestId &&
@@ -272,6 +275,7 @@ export class StartupService {
             'loading'
         );
         const result = await this.rpi.getProjectRequest(id);
+        // За время запроса пользователь мог уйти на другую страницу
         if (!this.isCurrentProjectLoad(requestId, id)) {
             return;
         }
@@ -412,6 +416,7 @@ export class StartupService {
                     ':id',
                     project.projectId
                 );
+                // Проект уже загружен, переходы назад/вперед (или изменение url) не должны загружать его повторно
                 markNextProjectRouteAsPreloaded(projectPath);
                 this.setEditorLocation(projectPath);
                 if (userInfo.isAuthenticated) {

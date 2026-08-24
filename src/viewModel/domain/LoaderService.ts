@@ -31,6 +31,8 @@ export class LoaderService {
         this.observerService = observerService;
     }
 
+    // При быстром переходе Назад/Вперед в браузере ответ старого проекта может прийти позже,
+    // не показываем его файлы в другом открытом проекте
     loadFiles = async (
         projectId: string,
         shouldApplyResult: () => boolean = () => true
