@@ -1,8 +1,20 @@
 name: labkeeper-e2e
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened, labeled]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'Номер pull request'
+        required: true
+        type: number
+      backend:
+        description: 'Окружение для e2e'
+        required: true
+        type: choice
+        options:
+          - prod
+          - preprod
+        default: prod
 
 concurrency:
   group: e2e-self-hosted
@@ -15,23 +27,43 @@ permissions:
 
 jobs:
   e2e:
-    if: ${{ (github.event.action != 'labeled' && (contains(github.event.pull_request.labels.*.name, 'e2e/prod') || contains(github.event.pull_request.labels.*.name, 'e2e/preprod'))) || github.event.label.name == 'e2e/prod' || github.event.label.name == 'e2e/preprod' }}
     runs-on: [self-hosted, windows]
     timeout-minutes: 360
     env:
       COMPOSE_PROJECT_NAME: e2e-pr-${{ github.run_id }}
       COMPOSE_FILE: scripts/ci/e2e/docker-compose.yml
       COMPOSE_CONVERT_WINDOWS_PATHS: '1'
-      E2E_BACKEND_HOST: ${{ github.event.label.name == 'e2e/prod' && 'labkeeper.io' || github.event.label.name == 'e2e/preprod' && 'preprod.labkeeper.io' || contains(github.event.pull_request.labels.*.name, 'e2e/preprod') && 'preprod.labkeeper.io' || 'labkeeper.io' }}
+      E2E_BACKEND_HOST: ${{ inputs.backend == 'preprod' && 'preprod.labkeeper.io' || 'labkeeper.io' }}
       E2E_IMAGE: cr.yandex/crpjhav5dledksn6gaeo/labkeeper-e2e:44
       E2E_CAPTCHA_BYPASS_TOKEN: ${{ secrets.E2E_CAPTCHA_BYPASS_TOKEN }}
       E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
       E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
+      PR_NUMBER: ${{ inputs.pr_number }}
     defaults:
       run:
         shell: cmd
     steps:
+      - name: Resolve pull request
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = Number(process.env.PR_NUMBER);
+            if (!Number.isInteger(prNumber) || prNumber <= 0) {
+              core.setFailed(`Invalid PR number: ${process.env.PR_NUMBER}`);
+              return;
+            }
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+            });
+            core.info(`PR #${pr.number}: ${pr.title}`);
+            core.info(`head ${pr.head.repo.full_name}@${pr.head.ref} (${pr.head.sha})`);
+
       - uses: actions/checkout@v6
+        with:
+          ref: refs/pull/${{ inputs.pr_number }}/head
+          persist-credentials: false
 
       - name: Prepare
         run: |
@@ -76,6 +108,11 @@ jobs:
           script: |
             const fs = require('fs');
             const path = require('path');
+            const prNumber = Number(process.env.PR_NUMBER);
+            if (!Number.isInteger(prNumber) || prNumber <= 0) {
+              core.setFailed(`Invalid PR number: ${process.env.PR_NUMBER}`);
+              return;
+            }
             const marker = `<!-- labkeeper-e2e-report-${process.env.E2E_BACKEND_HOST} -->`;
             const backend = process.env.E2E_BACKEND_HOST || 'labkeeper.io';
             const reportPath = path.join('test-results', 'results.json');
@@ -181,7 +218,7 @@ jobs:
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.issue.number,
+              issue_number: prNumber,
               per_page: 100,
             });
             const existing = comments.find((comment) => comment.body && comment.body.includes(marker));
@@ -196,7 +233,7 @@ jobs:
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: context.issue.number,
+                issue_number: prNumber,
                 body,
               });
             }
