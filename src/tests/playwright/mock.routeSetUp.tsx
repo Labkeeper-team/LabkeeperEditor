@@ -99,8 +99,21 @@ export class RouteSetup {
 
     //вспомогательная функция для default project и project get
     private getProjectBodyForGetAndDefault(
-        typeBody: BodyTypeForGetAndDefaultRequest
+        typeBody: BodyTypeForGetAndDefaultRequest,
+        programOverride?: Program
     ) {
+        // готовая программа вместо сборки сегментов кликами по UI
+        if (programOverride) {
+            return {
+                projectId: uuid,
+                userId: defaultUserId,
+                title: 'Default Project',
+                lastModified: new Date().toISOString(),
+                isPublic: false,
+                program: programOverride,
+                projectType: 'markdown',
+            };
+        }
         if (typeBody == 'withTwoSegmentsBibaAndAEqualTen') {
             return {
                 projectId: uuid,
@@ -175,7 +188,8 @@ export class RouteSetup {
 
     async setupGetProjectRequest(
         status: number = 200,
-        bodyType: BodyTypeForGetAndDefaultRequest = 'default'
+        bodyType: BodyTypeForGetAndDefaultRequest = 'default',
+        programOverride?: Program
     ) {
         await this.page.route(
             `**/api/${version}/public/project/${uuid}/get**`,
@@ -184,7 +198,10 @@ export class RouteSetup {
                     status: status,
                     contentType: contentType,
                     body: JSON.stringify(
-                        this.getProjectBodyForGetAndDefault(bodyType)
+                        this.getProjectBodyForGetAndDefault(
+                            bodyType,
+                            programOverride
+                        )
                     ),
                 });
             }
@@ -194,7 +211,8 @@ export class RouteSetup {
     async setupGetDefaultProjectRequest(
         status: number = 200,
         bodyType: BodyTypeForGetAndDefaultRequest = 'default',
-        onRoute?: () => void
+        onRoute?: () => void,
+        programOverride?: Program
     ) {
         await this.page.route(
             `**/api/${version}/public/project/default**`,
@@ -206,7 +224,10 @@ export class RouteSetup {
                     status: status,
                     contentType: contentType,
                     body: JSON.stringify(
-                        this.getProjectBodyForGetAndDefault(bodyType)
+                        this.getProjectBodyForGetAndDefault(
+                            bodyType,
+                            programOverride
+                        )
                     ),
                 });
             }

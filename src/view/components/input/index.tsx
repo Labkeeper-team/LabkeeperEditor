@@ -55,6 +55,7 @@ export const Input = forwardRef((props: InputProps, ref) => {
                     onChange={props.onChange}
                     onBlur={props.onBlur}
                     onKeyDown={props.onKeyDown}
+                    enterKeyHint={props.enterKeyHint}
                     onClick={(e) => e.stopPropagation()}
                     placeholder={props.placeholder}
                     disabled={props.disabled}

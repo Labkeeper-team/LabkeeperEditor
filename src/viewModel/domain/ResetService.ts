@@ -44,7 +44,7 @@ export class ResetService {
         );
         this.repository.ideViewModelRepository.setUndoEnabled(false);
         this.repository.ideViewModelRepository.setRedoEnabled(false);
-        this.repository.ideViewModelRepository.setSearch(undefined);
+        this.resetSearchState();
         this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
             'unknown'
         );
@@ -92,6 +92,7 @@ export class ResetService {
     resetProject(): void {
         this.programService.clearHistory();
         this.resetFileManagerProjectState();
+        this.resetSearchState();
 
         this.repository.ideViewModelRepository.setGetProjectRequestState(
             'unknown'
@@ -129,5 +130,14 @@ export class ResetService {
         });
         this.repository.projectViewModelRepository.setPdfUri(undefined);
         this.repository.projectViewModelRepository.setProjectType('latex');
+    }
+
+    /** Смещения совпадения привязаны к сегментам открытого проекта, при смене сбрасываем */
+    private resetSearchState(): void {
+        this.repository.ideViewModelRepository.setSearch(undefined);
+        this.repository.ideViewModelRepository.setSearchInput('');
+        this.repository.ideViewModelRepository.setSearchNoMatch(false);
+        this.repository.ideViewModelRepository.setSearchCurrentMatch(null);
+        this.repository.settingsViewModelRepository.setShowSearch(false);
     }
 }

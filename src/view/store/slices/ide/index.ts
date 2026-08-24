@@ -10,6 +10,7 @@ import {
     PendingSegmentEditorCursor,
     ProjectPromptRequestState,
     SaveProjectRequestState,
+    SearchCurrentMatch,
 } from '../../../../viewModel/repository';
 
 export const ideSlice = createSlice({
@@ -18,6 +19,18 @@ export const ideSlice = createSlice({
     reducers: {
         setSearch: (state, { payload }: PayloadAction<string | undefined>) => {
             state.search = payload;
+        },
+        setSearchInput: (state, { payload }: PayloadAction<string>) => {
+            state.searchInput = payload;
+        },
+        setSearchNoMatch: (state, { payload }: PayloadAction<boolean>) => {
+            state.searchNoMatch = payload;
+        },
+        setSearchCurrentMatch: (
+            state,
+            { payload }: PayloadAction<SearchCurrentMatch | null>
+        ) => {
+            state.searchCurrentMatch = payload;
         },
         setActiveSegmentIndex: (state, { payload }: PayloadAction<number>) => {
             state.activeSegmentIndex = payload;
@@ -176,6 +189,9 @@ export const ideSlice = createSlice({
 });
 export const {
     setSearch,
+    setSearchInput,
+    setSearchNoMatch,
+    setSearchCurrentMatch,
     setActiveSegmentIndex,
     setPreviousActiveSegmentIndex,
     setPendingSegmentEditorCursor,

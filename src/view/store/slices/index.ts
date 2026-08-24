@@ -27,7 +27,10 @@ import {
 import { createEmptyProgram } from '../../../model/repository/ProgramRepository.ts';
 import { PdfPosition } from '../../../model/rpi';
 import { BillingPricingResponse } from '../../../model/rpi';
-import { EditorNavigationTarget } from '../../../viewModel/repository';
+import {
+    EditorNavigationTarget,
+    SearchCurrentMatch,
+} from '../../../viewModel/repository';
 
 interface CallbackState {
     scrollEditorToBottom: boolean;
@@ -115,6 +118,12 @@ interface IdeState {
     pdfClickPosition: PdfPosition | null;
     pdfNavigationTarget: PdfPosition | null;
     editorNavigationTarget: EditorNavigationTarget | null;
+    /** Текст в поле. Подсветка идёт от search */
+    searchInput: string;
+    /** Последний Enter ничего не нашёл */
+    searchNoMatch: boolean;
+    /** Совпадение, к которому перешли последним Enter */
+    searchCurrentMatch: SearchCurrentMatch | null;
 }
 
 interface PersistenceState {
@@ -163,6 +172,9 @@ export const ideInitialState: IdeState = {
     pdfClickPosition: null,
     pdfNavigationTarget: null,
     editorNavigationTarget: null,
+    searchInput: '',
+    searchNoMatch: false,
+    searchCurrentMatch: null,
 };
 
 export const persistenceInitialState: PersistenceState = {

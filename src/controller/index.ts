@@ -507,6 +507,15 @@ export class Controller {
         }
     );
 
+    onSearchSubmitRequest = createAsyncThunk(
+        'onSearchSubmitRequest',
+        async () => {
+            this.wrapper('onSearchSubmitRequest', () =>
+                this.projectPageService.onSearchSubmit()
+            );
+        }
+    );
+
     onOauthLoginRequest = createAsyncThunk('onOauthLoginRequest', async () => {
         this.wrapper('onOauthLoginRequest', () =>
             this.authService.onOauthLogin()
