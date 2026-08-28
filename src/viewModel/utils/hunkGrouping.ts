@@ -455,6 +455,16 @@ export function segmentIdsWithHunks(hunks: Hunk[]): Set<number> {
     return ids;
 }
 
+export function hasHunksForSegment(hunks: Hunk[], segmentId: number): boolean {
+    return hunks.some((h) => h.segmentId === segmentId);
+}
+
+export function hasHunksForFile(hunks: Hunk[], fileName: string): boolean {
+    return hunks.some(
+        (h) => h.fileName != null && projectFilePathsMatch(h.fileName, fileName)
+    );
+}
+
 export function hunksForSegment(hunks: Hunk[], segmentId: number): Hunk[] {
     return hunks.filter((h) => h.segmentId === segmentId);
 }

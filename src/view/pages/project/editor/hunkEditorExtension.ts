@@ -437,11 +437,13 @@ function buildHunkDecorations(
             (group.isWholeSegment || group.isCreation) &&
             !group.isNewSegment
         ) {
-            for (let lineNo = 1; lineNo <= docLines; lineNo++) {
+            if (docLines > 0) {
                 decorations.push(
-                    Decoration.line({ class: addedClass }).range(
-                        state.doc.line(lineNo).from
-                    )
+                    Decoration.line({
+                        class: group.isNewFile
+                            ? 'cm-hunk-whole-doc cm-hunk-whole-doc--file'
+                            : 'cm-hunk-whole-doc',
+                    }).range(state.doc.line(1).from)
                 );
             }
         } else if (group.addedLineRange) {
@@ -527,6 +529,17 @@ export function dispatchHunkGroups(
     canRevert: boolean,
     revertLabel: string
 ): void {
+    const signature = serializeHunkDispatchPayload(
+        groups,
+        pendingHunkIds,
+        canRevert,
+        revertLabel
+    );
+    if (lastHunkDispatchByView.get(view) === signature) {
+        return;
+    }
+    lastHunkDispatchByView.set(view, signature);
+
     view.dispatch({
         effects: setHunkGroupsEffect.of({
             groups,
@@ -537,11 +550,35 @@ export function dispatchHunkGroups(
     });
 }
 
+const lastHunkDispatchByView = new WeakMap<EditorView, string>();
+
+function serializeHunkDispatchPayload(
+    groups: HunkGroupView[],
+    pendingHunkIds: string[],
+    canRevert: boolean,
+    revertLabel: string
+): string {
+    const groupKey = groups
+        .map(
+            (group) =>
+                `${group.key}:${group.hunks.map((hunk) => hunk.id).join(',')}:${group.acceptLabel}`
+        )
+        .join('|');
+    const pendingKey = [...pendingHunkIds].sort().join(',');
+    return `${groupKey}#${pendingKey}#${canRevert}#${revertLabel}`;
+}
+
 export const hunkEditorTheme = EditorView.theme({
     '.cm-hunk-added-line': {
         backgroundColor: `${colors.green}2E`,
     },
     '.cm-hunk-added-file-line': {
+        backgroundColor: `${colors.green}2E`,
+    },
+    '.cm-content:has(.cm-hunk-whole-doc) > .cm-line': {
+        backgroundColor: `${colors.green}2E`,
+    },
+    '.cm-content:has(.cm-hunk-whole-doc--file) > .cm-line': {
         backgroundColor: `${colors.green}2E`,
     },
     '.cm-hunk-added-block': {

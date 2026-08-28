@@ -4,17 +4,17 @@ import { EditorView } from '@codemirror/view';
 import { AppDispatch, StorageState } from '../store';
 import { useDictionary } from '../store/selectors/translations';
 import { useIsProjectReadonly } from '../store/selectors/program.ts';
+import { selectExpandedHunkGroups } from '../store/selectors/hunks.ts';
 import { controller } from '../../main.tsx';
 import {
     dispatchHunkGroups,
     setHunkActionHandler,
 } from '../pages/project/editor/hunkEditorExtension.ts';
 import {
-    expandGroupsForDisplay,
     filterHunkGroupsForFile,
     filterHunkGroupsForSegment,
-    getNewSegmentHunkGroup,
-    groupHunks,
+    hasHunksForFile,
+    hasHunksForSegment,
 } from '../../viewModel/utils/hunkGrouping.ts';
 
 export function useHunkActionHandler(): void {
@@ -43,26 +43,46 @@ export function useSyncHunksToEditorView(
     const isAuthenticated = useSelector(
         (state: StorageState) => state.user.isAuthenticated
     );
-    const hunks = useSelector((state: StorageState) => state.ide.hunks);
+    const expandedGroups = useSelector(selectExpandedHunkGroups);
     const pendingHunkIds = useSelector(
         (state: StorageState) => state.ide.pendingHunkIds
     );
+    const hunks = useSelector((state: StorageState) => state.ide.hunks);
 
     const sync = useCallback(() => {
         const view = getView();
         if (!view || isReadonly) {
             return;
         }
-        const groups = expandGroupsForDisplay(groupHunks(hunks));
+
+        const hasTargetHunks =
+            fileName != null
+                ? hasHunksForFile(hunks, fileName)
+                : segmentId != null && hasHunksForSegment(hunks, segmentId);
+
+        if (!hasTargetHunks) {
+            dispatchHunkGroups(
+                view,
+                [],
+                pendingHunkIds,
+                isAuthenticated,
+                dictionary.hunks.revert
+            );
+            return;
+        }
+
         const hasNewSegmentHunk =
             segmentId != null &&
             fileName == null &&
-            getNewSegmentHunkGroup(hunks, segmentId) != null;
+            hunks.some(
+                (hunk) =>
+                    hunk.type === 'addSegment' && hunk.segmentId === segmentId
+            );
         const filtered = hasNewSegmentHunk
             ? []
             : fileName != null
-              ? filterHunkGroupsForFile(groups, fileName)
-              : filterHunkGroupsForSegment(groups, segmentId);
+              ? filterHunkGroupsForFile(expandedGroups, fileName)
+              : filterHunkGroupsForSegment(expandedGroups, segmentId);
         const viewGroups = filtered.map((group) => ({
             ...group,
             acceptLabel: dictionary.hunks.accept,
@@ -78,6 +98,7 @@ export function useSyncHunksToEditorView(
         getView,
         isReadonly,
         hunks,
+        expandedGroups,
         pendingHunkIds,
         isAuthenticated,
         segmentId,
