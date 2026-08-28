@@ -63,7 +63,10 @@ import { scrollIdeEditorLineToContainerTop } from '../ideSegmentEditorView';
 import { SearchCurrentMatch } from '../../../../../../../viewModel/repository';
 import { hunkEditorExtensions } from '../../../hunkEditorExtension.ts';
 import { useSyncHunksToEditorView } from '../../../../../../hooks/useHunkEditorSync.ts';
-import { getNewSegmentHunkGroup, hunksForSegment } from '../../../../../../../viewModel/utils/hunkGrouping.ts';
+import {
+    getNewSegmentHunkGroup,
+    hunksForSegment,
+} from '../../../../../../../viewModel/utils/hunkGrouping.ts';
 import { Segment } from '../../../../../../../model/domain';
 
 const CURSOR_MAP_CAPACITY = 100;
@@ -170,7 +173,12 @@ export const SegmentEditor = memo(
             () => segmentHunkIds.some((id) => pendingHunkIds.includes(id)),
             [segmentHunkIds, pendingHunkIds]
         );
-        useSyncHunksToEditorView(getEditorView, segmentId, null, editorViewEpoch);
+        useSyncHunksToEditorView(
+            getEditorView,
+            segmentId,
+            null,
+            editorViewEpoch
+        );
         const lastCursorPosRef = useRef<number | null>(null);
         const cursorByDocKeyRef = useRef<LRUMap<string, number>>(
             new LRUMap(CURSOR_MAP_CAPACITY)
@@ -861,93 +869,97 @@ export const SegmentEditor = memo(
                     onMouseDownCapture={onSegmentMouseDownCapture}
                 >
                     <CodeMirror
-                    ref={editor as LegacyRef<ReactCodeMirrorRef>}
-                    id={`ide-segment-${props.index}`}
-                    value={segment?.text}
-                    onChange={onChange}
-                    onCreateEditor={() =>
-                        setEditorViewEpoch((epoch) => epoch + 1)
-                    }
-                    readOnly={projectIsReadonly}
-                    extensions={codeMirrorExtensions}
-                    basicSetup={SEGMENT_CODE_MIRROR_BASIC_SETUP}
-                />
-                <div className="editor-rules">
-                    {!projectIsReadonly && (
-                        <div
-                            style={{
-                                display: 'flex',
-                                flexDirection: 'row',
-                                gap: 2,
-                                alignItems: 'center',
-                            }}
-                        >
-                            {props.index ? (
-                                <div
-                                    onClick={() =>
-                                        dispatch(
-                                            controller.segmentEditorChangeSegmentPositionRequest(
-                                                {
-                                                    direction: 'up',
-                                                    segmentIndex: props.index,
-                                                }
+                        ref={editor as LegacyRef<ReactCodeMirrorRef>}
+                        id={`ide-segment-${props.index}`}
+                        value={segment?.text}
+                        onChange={onChange}
+                        onCreateEditor={() =>
+                            setEditorViewEpoch((epoch) => epoch + 1)
+                        }
+                        readOnly={projectIsReadonly}
+                        extensions={codeMirrorExtensions}
+                        basicSetup={SEGMENT_CODE_MIRROR_BASIC_SETUP}
+                    />
+                    <div className="editor-rules">
+                        {!projectIsReadonly && (
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    flexDirection: 'row',
+                                    gap: 2,
+                                    alignItems: 'center',
+                                }}
+                            >
+                                {props.index ? (
+                                    <div
+                                        onClick={() =>
+                                            dispatch(
+                                                controller.segmentEditorChangeSegmentPositionRequest(
+                                                    {
+                                                        direction: 'up',
+                                                        segmentIndex:
+                                                            props.index,
+                                                    }
+                                                )
                                             )
-                                        )
-                                    }
-                                    className="change-position-button"
-                                >
-                                    <ArrowUp />
-                                </div>
-                            ) : null}
-                            {!props.isLast ? (
-                                <div
-                                    onClick={() =>
-                                        dispatch(
-                                            controller.segmentEditorChangeSegmentPositionRequest(
-                                                {
-                                                    direction: 'down',
-                                                    segmentIndex: props.index,
-                                                }
+                                        }
+                                        className="change-position-button"
+                                    >
+                                        <ArrowUp />
+                                    </div>
+                                ) : null}
+                                {!props.isLast ? (
+                                    <div
+                                        onClick={() =>
+                                            dispatch(
+                                                controller.segmentEditorChangeSegmentPositionRequest(
+                                                    {
+                                                        direction: 'down',
+                                                        segmentIndex:
+                                                            props.index,
+                                                    }
+                                                )
                                             )
-                                        )
-                                    }
-                                    className="change-position-button rotate"
-                                >
-                                    <ArrowUp />
-                                </div>
-                            ) : null}
-                        </div>
-                    )}
-                    <div className="segment-type-container">
-                        <Typography
-                            color={colors.gray10}
-                            text={dictionary.short_segment[segment.type]}
-                        />
-                    </div>
-                    <div className="segment-position">
-                        <Typography
-                            type={
-                                (props.index ?? 0) < 10 ? 'body' : 'label-small'
-                            }
-                            text={`${props.index + 1}`}
-                            color={colors.white}
-                        />
-                    </div>
-                    <DropdownMenu
-                        clickable={!projectIsReadonly}
-                        fullScreenOnMobile
-                        containerClassname={classNames(
-                            'dropdown-content-contanier-additional',
-                            segment.type === 'computational' &&
-                                'dropdown-menu-content-container--computational'
+                                        }
+                                        className="change-position-button rotate"
+                                    >
+                                        <ArrowUp />
+                                    </div>
+                                ) : null}
+                            </div>
                         )}
-                    >
-                        <DropdownMenuContent
-                            index={props.index}
-                            segment={segment}
-                        />
-                    </DropdownMenu>
-                </div>
+                        <div className="segment-type-container">
+                            <Typography
+                                color={colors.gray10}
+                                text={dictionary.short_segment[segment.type]}
+                            />
+                        </div>
+                        <div className="segment-position">
+                            <Typography
+                                type={
+                                    (props.index ?? 0) < 10
+                                        ? 'body'
+                                        : 'label-small'
+                                }
+                                text={`${props.index + 1}`}
+                                color={colors.white}
+                            />
+                        </div>
+                        <DropdownMenu
+                            clickable={!projectIsReadonly}
+                            fullScreenOnMobile
+                            containerClassname={classNames(
+                                'dropdown-content-contanier-additional',
+                                segment.type === 'computational' &&
+                                    'dropdown-menu-content-container--computational'
+                            )}
+                        >
+                            <DropdownMenuContent
+                                index={props.index}
+                                segment={segment}
+                            />
+                        </DropdownMenu>
+                    </div>
                 </div>
                 {newSegmentHunkGroup && !projectIsReadonly ? (
                     <div className="segment-hunk-actions">

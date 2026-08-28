@@ -103,11 +103,7 @@ test('acceptGroup calls DELETE with revert=false', async () => {
 
     await hunkService.acceptGroup(['h1']);
 
-    expect(rpi.deleteHunkRequest).toHaveBeenCalledWith(
-        PROJECT_ID,
-        'h1',
-        false
-    );
+    expect(rpi.deleteHunkRequest).toHaveBeenCalledWith(PROJECT_ID, 'h1', false);
     expect(repository.ideViewModelRepository.hunks()).toEqual([]);
 });
 
@@ -121,15 +117,13 @@ test('revertGroup calls DELETE sequentially with revert=true', async () => {
     mockGetProjectRequestWithDefaultProject(rpi);
     mockListFilesRequestWithDefaultFile(rpi);
     mockListHunksRequestWithHunks(rpi, []);
-    const deleteMock = jest
-        .fn()
-        .mockResolvedValue({
-            code: 200,
-            isOk: true,
-            isUnauth: false,
-            isForbidden: false,
-            body: {},
-        });
+    const deleteMock = jest.fn().mockResolvedValue({
+        code: 200,
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+        body: {},
+    });
     rpi.deleteHunkRequest = deleteMock;
 
     await hunkService.revertGroup(['h1', 'h2']);
@@ -153,8 +147,7 @@ test('acceptHunksInBackground removes hunks optimistically from UI', () => {
 });
 
 test('undo clears all hunks via acceptAllHunksInBackground', () => {
-    const { hunkService, programEditorService, rpi, repository } =
-        mockContext();
+    const { programEditorService, rpi, repository } = mockContext();
     setOwnAuthenticatedProject(repository);
     repository.ideViewModelRepository.setHunks([sampleHunk]);
     mockDeleteHunkRequest(rpi);

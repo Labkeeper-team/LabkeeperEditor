@@ -144,7 +144,9 @@ test('shouldShowGlobalHunkBar for mixed file and segment hunks', () => {
         ])
     ).toBe(true);
     expect(
-        shouldShowGlobalHunkBar([{ id: '1', type: 'addFile', fileName: 'a.tex' }])
+        shouldShowGlobalHunkBar([
+            { id: '1', type: 'addFile', fileName: 'a.tex' },
+        ])
     ).toBe(false);
     expect(
         shouldShowGlobalHunkBar([
@@ -194,7 +196,9 @@ test('expandGroupsForDisplay splits delete and add on different lines', () => {
     ];
     const groups = expandGroupsForDisplay(groupHunks(hunks));
     expect(groups).toHaveLength(2);
-    expect(groups[0].deletedLines).toEqual(['Небольшой текст нового сегмента.']);
+    expect(groups[0].deletedLines).toEqual([
+        'Небольшой текст нового сегмента.',
+    ]);
     expect(groups[1].addedLineRange).toEqual({ startLine: 1, endLine: 1 });
     expect(resolveControlsLine(groups[0], 1)).toBe(1);
     expect(resolveControlsLine(groups[1], 1)).toBe(1);

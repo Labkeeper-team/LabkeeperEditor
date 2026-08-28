@@ -183,10 +183,7 @@ export function mockSaveProgramRequest(rpi: Rpi) {
     });
 }
 
-export function mockListHunksRequestWithHunks(
-    rpi: Rpi,
-    hunks: Hunk[] = []
-) {
+export function mockListHunksRequestWithHunks(rpi: Rpi, hunks: Hunk[] = []) {
     rpi.listHunksRequest = jest.fn().mockResolvedValue({
         code: 200,
         isOk: true,

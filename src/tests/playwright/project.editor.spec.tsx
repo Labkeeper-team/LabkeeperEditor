@@ -848,11 +848,7 @@ test('hunk-accept-smoke-test', async ({ page }) => {
     ];
     let deleteCalled = false;
 
-    await routeSetup.setupGetProjectRequest(
-        200,
-        'default',
-        programWithSegment
-    );
+    await routeSetup.setupGetProjectRequest(200, 'default', programWithSegment);
     await routeSetup.setupListFilesRequest();
     await routeSetup.setupGetUserInfoRequest();
     await routeSetup.setupGetAllProjectsRequest();

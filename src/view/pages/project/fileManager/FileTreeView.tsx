@@ -434,9 +434,7 @@ const TreeNodeRow = (props: {
                                         setEditName(event.target.value)
                                     }
                                     onBlur={submitRename}
-                                    onClick={(event) =>
-                                        event.stopPropagation()
-                                    }
+                                    onClick={(event) => event.stopPropagation()}
                                     onMouseDown={(event) =>
                                         event.stopPropagation()
                                     }
@@ -465,12 +463,9 @@ const TreeNodeRow = (props: {
                                         className="tree-menu-item tree-menu-item-delete"
                                         onClick={() =>
                                             dispatch(
-                                                controller.onDeleteFileRequest(
-                                                    {
-                                                        fileName:
-                                                            props.node.path,
-                                                    }
-                                                )
+                                                controller.onDeleteFileRequest({
+                                                    fileName: props.node.path,
+                                                })
                                             )
                                         }
                                     >
@@ -489,9 +484,7 @@ const TreeNodeRow = (props: {
                                         <PencilIcon />
                                         <Typography
                                             color={colors.gray10}
-                                            text={
-                                                dictionary.filemanager.edit
-                                            }
+                                            text={dictionary.filemanager.edit}
                                         />
                                     </div>
                                 </DropdownMenu>

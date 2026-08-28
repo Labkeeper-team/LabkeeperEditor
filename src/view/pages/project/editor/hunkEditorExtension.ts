@@ -101,7 +101,9 @@ class HunkControlsWidget extends WidgetType {
 
     compare(other: WidgetType): number {
         if (other instanceof HunkControlsWidget) {
-            return this.hunkIds.join(',').localeCompare(other.hunkIds.join(','));
+            return this.hunkIds
+                .join(',')
+                .localeCompare(other.hunkIds.join(','));
         }
         if (other instanceof DeletedLinesWidget) {
             return 1;
@@ -322,7 +324,11 @@ function takeNextSide(sideByPos: Map<number, number>, pos: number): number {
     return side;
 }
 
-function reserveSide(sideByPos: Map<number, number>, pos: number, side: number): void {
+function reserveSide(
+    sideByPos: Map<number, number>,
+    pos: number,
+    side: number
+): void {
     sideByPos.set(pos, Math.max(sideByPos.get(pos) ?? 1, side + 1));
 }
 
@@ -347,7 +353,7 @@ function buildHunkDecorations(
             : 'cm-hunk-added-line';
 
         let controlsPos: number | null = null;
-        let controlsSide = 1;
+        let controlsSide: number;
         let deleteOnlyControlsPos: number | null = null;
 
         if (group.deletedLines.length > 0) {
@@ -367,8 +373,7 @@ function buildHunkDecorations(
         }
 
         const lineAddHunk = group.hunks.find(
-            (h) =>
-                h.type === 'addLinesToSegment' || h.type === 'addLinesToFile'
+            (h) => h.type === 'addLinesToSegment' || h.type === 'addLinesToFile'
         );
         const sharesDeleteStack = addGroupSharesDeleteStack(
             sortedGroups,
@@ -389,7 +394,10 @@ function buildHunkDecorations(
             (!addedTextMatchesDoc || sharesDeleteStack);
 
         if (showAddedBlock && group.addedLineRange) {
-            const start = clampDocLine(group.addedLineRange.startLine, docLines);
+            const start = clampDocLine(
+                group.addedLineRange.startLine,
+                docLines
+            );
             const pos = sharesDeleteStack
                 ? state.doc.line(start).from
                 : (() => {
@@ -425,7 +433,10 @@ function buildHunkDecorations(
                     );
                 }
             }
-        } else if ((group.isWholeSegment || group.isCreation) && !group.isNewSegment) {
+        } else if (
+            (group.isWholeSegment || group.isCreation) &&
+            !group.isNewSegment
+        ) {
             for (let lineNo = 1; lineNo <= docLines; lineNo++) {
                 decorations.push(
                     Decoration.line({ class: addedClass }).range(

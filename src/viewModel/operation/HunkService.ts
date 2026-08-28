@@ -82,8 +82,7 @@ export class HunkService {
     };
 
     private markPending = (ids: string[]): void => {
-        const current =
-            this.repository.ideViewModelRepository.pendingHunkIds();
+        const current = this.repository.ideViewModelRepository.pendingHunkIds();
         this.repository.ideViewModelRepository.setPendingHunkIds([
             ...new Set([...current, ...ids]),
         ]);
@@ -94,9 +93,7 @@ export class HunkService {
             this.repository.ideViewModelRepository.pendingHunkIds()
         );
         ids.forEach((id) => pending.delete(id));
-        this.repository.ideViewModelRepository.setPendingHunkIds([
-            ...pending,
-        ]);
+        this.repository.ideViewModelRepository.setPendingHunkIds([...pending]);
     };
 
     private async refreshAfterRevert(): Promise<void> {

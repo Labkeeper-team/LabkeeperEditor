@@ -305,8 +305,7 @@ export const createViewModelStateFromStore = (
             setEditorNavigationTarget: (target) =>
                 store.dispatch(setEditorNavigationTarget(target)),
             setHunks: (hunks) => store.dispatch(setHunks(hunks)),
-            setPendingHunkIds: (ids) =>
-                store.dispatch(setPendingHunkIds(ids)),
+            setPendingHunkIds: (ids) => store.dispatch(setPendingHunkIds(ids)),
         },
         persistenceViewModelRepository: {
             instructionExpanded: () =>

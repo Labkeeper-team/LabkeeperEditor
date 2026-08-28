@@ -230,7 +230,9 @@ export class RouteSetup {
         );
     }
 
-    async setupDeleteHunkRequest(onDelete?: (hunkId: string, revert: boolean) => void) {
+    async setupDeleteHunkRequest(
+        onDelete?: (hunkId: string, revert: boolean) => void
+    ) {
         await this.page.route(
             `**/api/${version}/public/project/${uuid}/hunk/*`,
             async (route) => {

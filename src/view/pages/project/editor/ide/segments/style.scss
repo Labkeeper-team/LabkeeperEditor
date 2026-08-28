@@ -26,7 +26,9 @@
             background: $gray-50;
         }
     }
-    .segment-hunk-block:nth-child(2n) .segment-editor-container.has-new-segment-hunk .cm-gutters,
+    .segment-hunk-block:nth-child(2n)
+        .segment-editor-container.has-new-segment-hunk
+        .cm-gutters,
     .segment-hunk-block:nth-child(2n + 1)
         .segment-editor-container.has-new-segment-hunk
         .cm-gutters {

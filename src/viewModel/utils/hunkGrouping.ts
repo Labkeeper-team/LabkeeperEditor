@@ -2,8 +2,7 @@ import { Hunk } from '../../model/domain.ts';
 import { projectFilePathsMatch } from './projectFilePath.ts';
 
 export type HunkGroupTarget =
-    | { kind: 'segment'; segmentId: number }
-    | { kind: 'file'; fileName: string };
+    { kind: 'segment'; segmentId: number } | { kind: 'file'; fileName: string };
 
 export interface HunkGroup {
     /** Stable key for React / CodeMirror widget identity */
@@ -368,10 +367,9 @@ export function getFileHunkEntries(hunks: Hunk[]): FileHunkEntry[] {
             }
 
             return {
-                fileName: (group.target as Extract<
-                    HunkGroupTarget,
-                    { kind: 'file' }
-                >).fileName,
+                fileName: (
+                    group.target as Extract<HunkGroupTarget, { kind: 'file' }>
+                ).fileName,
                 state,
                 hunkIds: group.hunks.map((h) => h.id),
             };
@@ -420,9 +418,7 @@ export function fileHunkEntryForPath(
     entries: FileHunkEntry[],
     path: string
 ): FileHunkEntry | undefined {
-    return entries.find((entry) =>
-        projectFilePathsMatch(entry.fileName, path)
-    );
+    return entries.find((entry) => projectFilePathsMatch(entry.fileName, path));
 }
 
 /** Global accept/reject bar: several groups, or both file and segment hunks. */

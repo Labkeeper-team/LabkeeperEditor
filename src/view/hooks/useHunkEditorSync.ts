@@ -84,10 +84,9 @@ export function useSyncHunksToEditorView(
         fileName,
         dictionary.hunks.accept,
         dictionary.hunks.revert,
-        viewEpoch,
     ]);
 
     useEffect(() => {
         sync();
-    }, [sync]);
+    }, [sync, viewEpoch]);
 }
