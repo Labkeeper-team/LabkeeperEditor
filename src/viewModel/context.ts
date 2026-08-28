@@ -21,6 +21,7 @@ import {
 } from '../model/repository/ProgramRepository.ts';
 import { ResetService } from './domain/ResetService.ts';
 import { SearchService } from './domain/SearchService.ts';
+import { HunkService } from './operation/HunkService.ts';
 import { Controller } from '../controller/index.ts';
 
 export function setupContext(
@@ -90,6 +91,15 @@ export function setupContext(
     );
     const textFileEditorService: TextFileEditorService =
         new TextFileEditorService(repository, rpi, ideService, observerService);
+    const hunkService = new HunkService(
+        repository,
+        rpi,
+        ideService,
+        loaderService,
+        observerService,
+        textFileEditorService
+    );
+    textFileEditorService.setHunkService(hunkService);
     const fileManagerService: FileManagerService = new FileManagerService(
         repository,
         rpi,
@@ -110,6 +120,7 @@ export function setupContext(
         fileService,
         textFileEditorService
     );
+    programEditorService.setHunkService(hunkService);
     const projectPageService: ProjectPageService = new ProjectPageService(
         repository,
         rpi,
@@ -120,8 +131,10 @@ export function setupContext(
         compilationService,
         resetService,
         textFileEditorService,
-        searchService
+        searchService,
+        hunkService
     );
+    startupService.setHunkService(hunkService);
     const projectsPageService: ProjectsPageService = new ProjectsPageService(
         repository,
         rpi,
@@ -144,7 +157,8 @@ export function setupContext(
         projectsPageService,
         tokenPageService,
         startupService,
-        observerService
+        observerService,
+        hunkService
     );
 
     return {
@@ -165,6 +179,7 @@ export function setupContext(
         projectPageService,
         projectsPageService,
         tokenPageService,
+        hunkService,
         /*
         DOMAIN
          */

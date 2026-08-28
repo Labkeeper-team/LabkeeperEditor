@@ -15,6 +15,11 @@ import { LabkeeperFile } from '../../../../model/domain.ts';
 import { FileTreeView } from './FileTreeView.tsx';
 import { useIsMobile } from '../../../hooks/useMobile';
 import { setMobileView } from '../../../store/slices/settings';
+import {
+    fileNamesWithHunks,
+    getFileHunkEntries,
+    getPhantomFileNamesFromHunks,
+} from '../../../../viewModel/utils/hunkGrouping.ts';
 
 export const FileManager = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -47,6 +52,25 @@ export const FileManager = () => {
         });
         return [user, system];
     }, [files]);
+
+    const hunks = useSelector((state: StorageState) => state.ide.hunks);
+    const fileHunkEntries = useMemo(
+        () => (isReadonly ? [] : getFileHunkEntries(hunks)),
+        [hunks, isReadonly]
+    );
+    const filesWithHunks = useMemo(
+        () => (isReadonly ? new Set<string>() : fileNamesWithHunks(hunks)),
+        [hunks, isReadonly]
+    );
+    const phantomFileNames = useMemo(() => {
+        if (isReadonly) {
+            return [];
+        }
+        return getPhantomFileNamesFromHunks(
+            hunks,
+            userFiles.map((file) => file.fileName)
+        );
+    }, [hunks, isReadonly, userFiles]);
 
     const [filesLoadedOnce, setFilesLoadedOnce] = useState(false);
     if (getFilesRequestState === 'ok' && !filesLoadedOnce) {
@@ -125,6 +149,9 @@ export const FileManager = () => {
                             ephemeralFolders={ephemeralFolders}
                             readonly={isReadonly}
                             isDragged={isDragged}
+                            filesWithHunks={filesWithHunks}
+                            fileHunkEntries={fileHunkEntries}
+                            phantomFileNames={phantomFileNames}
                         />
                     </div>
                 )}

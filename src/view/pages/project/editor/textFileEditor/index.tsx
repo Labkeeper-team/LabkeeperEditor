@@ -36,6 +36,8 @@ import {
     scrollTextFileEditorLineIntoView,
     TEXT_FILE_EDITOR_HOST_ID,
 } from './textFileEditorView';
+import { hunkEditorExtensions } from '../hunkEditorExtension.ts';
+import { useSyncHunksToEditorView } from '../../../../hooks/useHunkEditorSync.ts';
 import '../ide/style.scss';
 import '../ide/header/style.scss';
 import './style.scss';
@@ -171,6 +173,16 @@ export const TextFileEditor = () => {
     const editorRef = useRef<ReactCodeMirrorRef>(null);
     const [editorHeight, setEditorHeight] = useState(0);
     const [editorViewEpoch, setEditorViewEpoch] = useState(0);
+    const getEditorView = useCallback(
+        () => editorRef.current?.view ?? null,
+        []
+    );
+    useSyncHunksToEditorView(
+        getEditorView,
+        undefined,
+        activeTextFile,
+        editorViewEpoch
+    );
     const [showSaveLoading, setShowSaveLoading] = useState(false);
     const saveLoadingStartRef = useRef<number | null>(null);
     const saveHideTimerRef = useRef<number | null>(null);
@@ -373,6 +385,7 @@ export const TextFileEditor = () => {
             TEXT_FILE_EDITOR_THEME,
             textFileEditorWheelScroll,
             decorationsField,
+            ...hunkEditorExtensions,
             cursorPersistenceListener,
         ],
         [isLatexFile, languageExtension, cursorPersistenceListener]

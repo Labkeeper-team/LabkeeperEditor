@@ -1,0 +1,99 @@
+@use '../../styles/colors' as *;
+
+.hunk-global-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 120;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+    box-sizing: border-box;
+}
+
+.hunk-global-bar__inner {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 24px;
+    width: auto;
+    max-width: calc(100% - 32px);
+    pointer-events: auto;
+    background: $white;
+    padding: 12px 16px;
+    border-radius: 8px;
+    box-sizing: border-box;
+    box-shadow: 0 2px 12px rgba(14, 22, 33, 0.12);
+}
+
+.hunk-global-bar__label {
+    color: $gray-10;
+    font-size: 14px;
+    line-height: 1.2;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.hunk-global-bar__actions {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.hunk-global-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 36px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: none;
+    font-size: 13px;
+    line-height: 1.2;
+    cursor: pointer;
+    touch-action: manipulation;
+    white-space: nowrap;
+
+    &:disabled {
+        opacity: 0.65;
+        cursor: default;
+    }
+}
+
+.hunk-global-btn--accept {
+    background: $blue-10;
+    color: $white;
+}
+
+.hunk-global-btn--revert {
+    background: $blue-20;
+    color: $gray-10;
+}
+
+.hunk-global-btn__spinner {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    animation: hunk-global-spin 0.8s linear infinite;
+}
+
+.hunk-global-btn__spinner--accept {
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    border-top-color: $white;
+}
+
+.hunk-global-btn__spinner--revert {
+    border: 2px solid rgba(14, 22, 33, 0.15);
+    border-top-color: $gray-10;
+}
+
+@keyframes hunk-global-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

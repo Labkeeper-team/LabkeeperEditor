@@ -37,9 +37,12 @@ export const PromptModal = () => {
     return (
         <Modal
             showModal={showModal}
-            onClose={() =>
-                dispatch(controller.onPromptModalCrossClickedRequest())
-            }
+            onClose={() => {
+                if (promptRequestState === 'loading') {
+                    return;
+                }
+                dispatch(controller.onPromptModalCrossClickedRequest());
+            }}
         >
             <div className="prompt-modal">
                 <div className="prompt-modal__header">

@@ -48,6 +48,8 @@ export class ResetService {
         this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
             'unknown'
         );
+        this.repository.ideViewModelRepository.setHunks([]);
+        this.repository.ideViewModelRepository.setPendingHunkIds([]);
 
         // Projects
         this.repository.projectsViewModelRepository.setProjects([]);
@@ -114,6 +116,8 @@ export class ResetService {
         this.repository.ideViewModelRepository.setActiveTextFile(null);
         this.repository.ideViewModelRepository.setActiveImageFile(null);
         this.repository.ideViewModelRepository.setTextFileContent('');
+        this.repository.ideViewModelRepository.setHunks([]);
+        this.repository.ideViewModelRepository.setPendingHunkIds([]);
 
         // Project
         this.repository.projectViewModelRepository.setProject(undefined);

@@ -36,6 +36,7 @@ export class ProgramEditorService {
     observerService: ObserverService;
     fileService: FileService;
     textFileEditorService: TextFileEditorService;
+    private hunkService: import('./HunkService.ts').HunkService | null = null;
 
     constructor(
         repository: ViewModelRepository,
@@ -56,6 +57,10 @@ export class ProgramEditorService {
         this.fileService = fileService;
         this.textFileEditorService = textFileEditorService;
     }
+
+    setHunkService = (hunkService: import('./HunkService.ts').HunkService) => {
+        this.hunkService = hunkService;
+    };
 
     onAddedFilesToSegmentEditor = async (
         items: DataTransferItemList,
@@ -226,6 +231,7 @@ export class ProgramEditorService {
     };
 
     onPrevVersionButtonClicked = () => {
+        this.hunkService?.acceptAllHunksInBackground();
         const canUndo = this.programService.canUndo();
         const cursorHint = this.programService.undo();
         if (cursorHint) {
@@ -253,6 +259,7 @@ export class ProgramEditorService {
     };
 
     onNextVersionButtonClicked = () => {
+        this.hunkService?.acceptAllHunksInBackground();
         const canRedo = this.programService.canRedo();
         const cursorHint = this.programService.redo();
         if (cursorHint) {
@@ -384,6 +391,7 @@ export class ProgramEditorService {
     };
 
     deleteSegment = async (segmentIndex: number) => {
+        this.hunkService?.acceptAllHunksInBackground();
         const filesBefore = this.ideService.calculateFilesToDelete(
             this.programService.getCurrentProgram()
         );
@@ -407,6 +415,7 @@ export class ProgramEditorService {
         segmentType: SegmentType,
         after: number
     ) => {
+        this.hunkService?.acceptAllHunksInBackground();
         // TODO observer service call
         this.programService.addSegmentAfterIndex(segmentType, after);
         this.repository.ideViewModelRepository.markProgramChanged();
@@ -476,10 +485,19 @@ export class ProgramEditorService {
         segmentText: string,
         cursorHead?: number
     ) => {
+        const programBefore = this.programService.getCurrentProgram();
+        const segment = programBefore.segments[segmentIndex] as Segment & {
+            id?: number;
+        };
+        const segmentId =
+            segment?.id != null && segment.id > 0
+                ? segment.id
+                : segmentIndex + 1;
+        this.hunkService?.acceptHunksForSegment(segmentId);
+
         this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(
             segmentIndex
         );
-        const programBefore = this.programService.getCurrentProgram();
         const previousText = programBefore.segments[segmentIndex]?.text;
         const filesBefore =
             this.ideService.calculateFilesToDelete(programBefore);
@@ -771,6 +789,7 @@ export class ProgramEditorService {
     };
 
     onAddSegmentClicked = (type: SegmentType) => {
+        this.hunkService?.acceptAllHunksInBackground();
         switch (type) {
             case 'md':
                 this.observerService.onEvent(Events.EVENT_CREATE_MD_SEGMENT);

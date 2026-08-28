@@ -1,0 +1,93 @@
+import { useCallback, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { EditorView } from '@codemirror/view';
+import { AppDispatch, StorageState } from '../store';
+import { useDictionary } from '../store/selectors/translations';
+import { useIsProjectReadonly } from '../store/selectors/program.ts';
+import { controller } from '../../main.tsx';
+import {
+    dispatchHunkGroups,
+    setHunkActionHandler,
+} from '../pages/project/editor/hunkEditorExtension.ts';
+import {
+    expandGroupsForDisplay,
+    filterHunkGroupsForFile,
+    filterHunkGroupsForSegment,
+    getNewSegmentHunkGroup,
+    groupHunks,
+} from '../../viewModel/utils/hunkGrouping.ts';
+
+export function useHunkActionHandler(): void {
+    const dispatch = useDispatch<AppDispatch>();
+
+    useEffect(() => {
+        setHunkActionHandler(({ action, hunkIds }) => {
+            if (action === 'accept') {
+                dispatch(controller.onHunkAcceptRequest({ hunkIds }));
+            } else {
+                dispatch(controller.onHunkRevertRequest({ hunkIds }));
+            }
+        });
+        return () => setHunkActionHandler(null);
+    }, [dispatch]);
+}
+
+export function useSyncHunksToEditorView(
+    getView: () => EditorView | null | undefined,
+    segmentId?: number,
+    fileName?: string | null,
+    viewEpoch = 0
+): void {
+    const dictionary = useSelector(useDictionary);
+    const isReadonly = useSelector(useIsProjectReadonly);
+    const isAuthenticated = useSelector(
+        (state: StorageState) => state.user.isAuthenticated
+    );
+    const hunks = useSelector((state: StorageState) => state.ide.hunks);
+    const pendingHunkIds = useSelector(
+        (state: StorageState) => state.ide.pendingHunkIds
+    );
+
+    const sync = useCallback(() => {
+        const view = getView();
+        if (!view || isReadonly) {
+            return;
+        }
+        const groups = expandGroupsForDisplay(groupHunks(hunks));
+        const hasNewSegmentHunk =
+            segmentId != null &&
+            fileName == null &&
+            getNewSegmentHunkGroup(hunks, segmentId) != null;
+        const filtered = hasNewSegmentHunk
+            ? []
+            : fileName != null
+              ? filterHunkGroupsForFile(groups, fileName)
+              : filterHunkGroupsForSegment(groups, segmentId);
+        const viewGroups = filtered.map((group) => ({
+            ...group,
+            acceptLabel: dictionary.hunks.accept,
+        }));
+        dispatchHunkGroups(
+            view,
+            viewGroups,
+            pendingHunkIds,
+            isAuthenticated,
+            dictionary.hunks.revert
+        );
+    }, [
+        getView,
+        isReadonly,
+        hunks,
+        pendingHunkIds,
+        isAuthenticated,
+        segmentId,
+        fileName,
+        dictionary.hunks.accept,
+        dictionary.hunks.revert,
+        viewEpoch,
+    ]);
+
+    useEffect(() => {
+        sync();
+    }, [sync]);
+}

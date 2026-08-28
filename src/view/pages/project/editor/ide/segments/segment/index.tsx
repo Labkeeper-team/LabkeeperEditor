@@ -61,6 +61,10 @@ import {
 } from '../ideSegmentDeactivate';
 import { scrollIdeEditorLineToContainerTop } from '../ideSegmentEditorView';
 import { SearchCurrentMatch } from '../../../../../../../viewModel/repository';
+import { hunkEditorExtensions } from '../../../hunkEditorExtension.ts';
+import { useSyncHunksToEditorView } from '../../../../../../hooks/useHunkEditorSync.ts';
+import { getNewSegmentHunkGroup, hunksForSegment } from '../../../../../../../viewModel/utils/hunkGrouping.ts';
+import { Segment } from '../../../../../../../model/domain';
 
 const CURSOR_MAP_CAPACITY = 100;
 
@@ -135,9 +139,38 @@ export const SegmentEditor = memo(
         const segment = useSelector(
             (state: StorageState) =>
                 state.project.currentProgram?.segments[props.index]
-        );
+        ) as (Segment & { id?: number }) | undefined;
+        const segmentId =
+            segment?.id != null && segment.id > 0
+                ? segment.id
+                : props.index + 1;
         const ref = useRef<HTMLDivElement>(null);
         const editor = useRef<ReactCodeMirrorRef | undefined>();
+        const getEditorView = useCallback(
+            () => editor.current?.view ?? null,
+            []
+        );
+        const [editorViewEpoch, setEditorViewEpoch] = useState(0);
+        const hunks = useSelector((state: StorageState) => state.ide.hunks);
+        const pendingHunkIds = useSelector(
+            (state: StorageState) => state.ide.pendingHunkIds
+        );
+        const isAuthenticated = useSelector(
+            (state: StorageState) => state.user.isAuthenticated
+        );
+        const newSegmentHunkGroup = useMemo(
+            () => getNewSegmentHunkGroup(hunks, segmentId),
+            [hunks, segmentId]
+        );
+        const segmentHunkIds = useMemo(
+            () => hunksForSegment(hunks, segmentId).map((hunk) => hunk.id),
+            [hunks, segmentId]
+        );
+        const newSegmentHunkPending = useMemo(
+            () => segmentHunkIds.some((id) => pendingHunkIds.includes(id)),
+            [segmentHunkIds, pendingHunkIds]
+        );
+        useSyncHunksToEditorView(getEditorView, segmentId, null, editorViewEpoch);
         const lastCursorPosRef = useRef<number | null>(null);
         const cursorByDocKeyRef = useRef<LRUMap<string, number>>(
             new LRUMap(CURSOR_MAP_CAPACITY)
@@ -220,6 +253,26 @@ export const SegmentEditor = memo(
             });
             return () => clearTimeout(timer);
         }, []);
+
+        useEffect(() => {
+            const view = editor.current?.view;
+            if (!view || segment?.text === undefined) {
+                return;
+            }
+            const docText = view.state.doc.toString();
+            if (docText === segment.text) {
+                return;
+            }
+            view.dispatch({
+                changes: {
+                    from: 0,
+                    to: docText.length,
+                    insert: segment.text,
+                },
+            });
+            lastSentTextRef.current = segment.text;
+            setEditorViewEpoch((epoch) => epoch + 1);
+        }, [segment?.text]);
 
         useEffect(() => {
             const handle = window.setTimeout(() => {
@@ -726,6 +779,7 @@ export const SegmentEditor = memo(
                 SEGMENT_EDITOR_VIEW_THEME,
                 segmentEditorScaleLayoutSync,
                 decorationsField,
+                ...hunkEditorExtensions,
                 languageExtension,
                 eventsExt,
                 eventsDom,
@@ -787,19 +841,33 @@ export const SegmentEditor = memo(
 
         return (
             <div
-                ref={ref}
-                className={classNames('segment-editor-container', {
-                    'is-active': isActiveSegment,
-                    'is-editor-focused': isImmediatelyActiveSegment,
-                    'not-visible': !segment.parameters.visible,
+                className={classNames('segment-hunk-block', {
+                    'segment-hunk-block--new': Boolean(newSegmentHunkGroup),
                 })}
-                onMouseDownCapture={onSegmentMouseDownCapture}
             >
-                <CodeMirror
+                {newSegmentHunkGroup ? (
+                    <div className="segment-hunk-new-badge">
+                        {dictionary.hunks.new}
+                    </div>
+                ) : null}
+                <div
+                    ref={ref}
+                    className={classNames('segment-editor-container', {
+                        'is-active': isActiveSegment,
+                        'is-editor-focused': isImmediatelyActiveSegment,
+                        'not-visible': !segment.parameters.visible,
+                        'has-new-segment-hunk': Boolean(newSegmentHunkGroup),
+                    })}
+                    onMouseDownCapture={onSegmentMouseDownCapture}
+                >
+                    <CodeMirror
                     ref={editor as LegacyRef<ReactCodeMirrorRef>}
                     id={`ide-segment-${props.index}`}
                     value={segment?.text}
                     onChange={onChange}
+                    onCreateEditor={() =>
+                        setEditorViewEpoch((epoch) => epoch + 1)
+                    }
                     readOnly={projectIsReadonly}
                     extensions={codeMirrorExtensions}
                     basicSetup={SEGMENT_CODE_MIRROR_BASIC_SETUP}
@@ -880,6 +948,49 @@ export const SegmentEditor = memo(
                         />
                     </DropdownMenu>
                 </div>
+                </div>
+                {newSegmentHunkGroup && !projectIsReadonly ? (
+                    <div className="segment-hunk-actions">
+                        <button
+                            type="button"
+                            className="segment-hunk-btn segment-hunk-btn--accept"
+                            disabled={newSegmentHunkPending}
+                            onClick={() =>
+                                dispatch(
+                                    controller.onHunkAcceptRequest({
+                                        hunkIds: segmentHunkIds,
+                                    })
+                                )
+                            }
+                        >
+                            {newSegmentHunkPending ? (
+                                <span className="segment-hunk-btn__spinner segment-hunk-btn__spinner--accept" />
+                            ) : (
+                                dictionary.hunks.accept
+                            )}
+                        </button>
+                        {isAuthenticated ? (
+                            <button
+                                type="button"
+                                className="segment-hunk-btn segment-hunk-btn--revert"
+                                disabled={newSegmentHunkPending}
+                                onClick={() =>
+                                    dispatch(
+                                        controller.onHunkRevertRequest({
+                                            hunkIds: segmentHunkIds,
+                                        })
+                                    )
+                                }
+                            >
+                                {newSegmentHunkPending ? (
+                                    <span className="segment-hunk-btn__spinner segment-hunk-btn__spinner--revert" />
+                                ) : (
+                                    dictionary.hunks.revert
+                                )}
+                            </button>
+                        ) : null}
+                    </div>
+                ) : null}
             </div>
         );
     }

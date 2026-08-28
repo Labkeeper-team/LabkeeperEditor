@@ -58,6 +58,7 @@ export const Events = {
     EVENT_RPI_UNKNOWN_PROJECT_PAGE_UNAUTHORIZED_PROMPT:
         'rpi_unknown_project_page_unauthorized_prompt',
     EVENT_RPI_UNKNOWN_PROJECT_PAGE_PROMPT: 'rpi_unknown_project_page_prompt',
+    EVENT_RPI_UNKNOWN_LIST_HUNKS: 'rpi_unknown_list_hunks',
     EVENT_RPI_UNKNOWN_COMPILATION: 'rpi_unknown_compilation',
     EVENT_RPI_UNKNOWN_PROGRAM_EDITOR_SYNC_EDITOR_TO_PDF:
         'rpi_unknown_program_editor_sync_editor_to_pdf',

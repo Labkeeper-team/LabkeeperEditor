@@ -1,6 +1,7 @@
 import { Page, Route } from '@playwright/test';
 import {
     CompileErrorResult,
+    Hunk,
     Program,
     Segment,
     Statement,
@@ -83,15 +84,18 @@ export class RouteSetup {
                     status: code,
                     contentType: contentType,
                     body: JSON.stringify({
-                        segments: [
-                            {
-                                type: 'md',
-                                text: 'LLM GENERATED',
-                                parameters: { visible: true },
-                            },
-                        ],
-                        parameters: { roundStrategy: 'firstMeaningDigit' },
-                    } as Program),
+                        program: {
+                            segments: [
+                                {
+                                    type: 'md',
+                                    text: 'LLM GENERATED',
+                                    parameters: { visible: true },
+                                },
+                            ],
+                            parameters: { roundStrategy: 'firstMeaningDigit' },
+                        },
+                        hunks: [],
+                    }),
                 });
             }
         );
@@ -203,6 +207,45 @@ export class RouteSetup {
                             programOverride
                         )
                     ),
+                });
+            }
+        );
+        await this.setupListHunksRequest();
+    }
+
+    async setupListHunksRequest(hunks: Hunk[] = []) {
+        await this.page.route(
+            `**/api/${version}/public/project/${uuid}/hunk`,
+            async (route) => {
+                if (route.request().method() === 'GET') {
+                    await route.fulfill({
+                        status: 200,
+                        contentType: contentType,
+                        body: JSON.stringify({ hunks }),
+                    });
+                    return;
+                }
+                await route.continue();
+            }
+        );
+    }
+
+    async setupDeleteHunkRequest(onDelete?: (hunkId: string, revert: boolean) => void) {
+        await this.page.route(
+            `**/api/${version}/public/project/${uuid}/hunk/*`,
+            async (route) => {
+                if (route.request().method() !== 'DELETE') {
+                    await route.continue();
+                    return;
+                }
+                const url = route.request().url();
+                const hunkId = url.split('/hunk/')[1]?.split('?')[0] ?? '';
+                const revert = url.includes('revert=true');
+                onDelete?.(hunkId, revert);
+                await route.fulfill({
+                    status: 200,
+                    contentType: contentType,
+                    body: JSON.stringify({}),
                 });
             }
         );

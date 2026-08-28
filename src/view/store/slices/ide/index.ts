@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { Hunk } from '../../../../model/domain.ts';
 import { EditorNavigationTarget } from '../../../../viewModel/repository';
 import { PdfPosition } from '../../../../model/rpi';
 import { ideInitialState } from '../index.ts';
@@ -185,6 +186,12 @@ export const ideSlice = createSlice({
         ) => {
             state.editorNavigationTarget = payload;
         },
+        setHunks: (state, { payload }: PayloadAction<Hunk[]>) => {
+            state.hunks = payload;
+        },
+        setPendingHunkIds: (state, { payload }: PayloadAction<string[]>) => {
+            state.pendingHunkIds = payload;
+        },
     },
 });
 export const {
@@ -220,4 +227,6 @@ export const {
     setPdfClickPosition,
     setPdfNavigationTarget,
     setEditorNavigationTarget,
+    setHunks,
+    setPendingHunkIds,
 } = ideSlice.actions;

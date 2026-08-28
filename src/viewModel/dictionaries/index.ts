@@ -430,6 +430,16 @@ export interface Translations {
         };
     };
 
+    hunks: {
+        accept: string;
+        revert: string;
+        accept_add: string;
+        accept_all: string;
+        revert_all: string;
+        total_changes: string;
+        new: string;
+    };
+
     contact_ok: string;
     contact_error: string;
 }

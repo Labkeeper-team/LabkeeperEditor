@@ -763,6 +763,7 @@ test('llm-prompt-ok-request-test', async ({ page }) => {
 
     // Перехватываем запрос user-info
     await routeSetup.setupGetUserInfoRequest();
+    await routeSetup.setupGetAllProjectsRequest();
 
     await routeSetup.setupLlmPrompt(200);
 
@@ -820,6 +821,58 @@ test('llm-prompt-bad-request-test', async ({ page }) => {
     await page.getByText('Send').click();
 
     await expect(page.getByText('Invalid request')).toBeVisible();
+});
+
+test('hunk-accept-smoke-test', async ({ page }) => {
+    const routeSetup = new RouteSetup(page);
+    const programWithSegment: Program = {
+        segments: [
+            {
+                id: 1,
+                type: 'md',
+                text: 'hello',
+                parameters: { visible: true },
+            },
+        ],
+        parameters: { roundStrategy: 'noRound' },
+    };
+    const hunks = [
+        {
+            id: 'hunk-1',
+            type: 'addLinesToSegment' as const,
+            segmentId: 1,
+            startLine: 1,
+            endLine: 1,
+            text: 'AI suggestion',
+        },
+    ];
+    let deleteCalled = false;
+
+    await routeSetup.setupGetProjectRequest(
+        200,
+        'default',
+        programWithSegment
+    );
+    await routeSetup.setupListFilesRequest();
+    await routeSetup.setupGetUserInfoRequest();
+    await routeSetup.setupGetAllProjectsRequest();
+    await routeSetup.setupListHunksRequest(hunks);
+    await routeSetup.setupDeleteHunkRequest((hunkId, revert) => {
+        deleteCalled = hunkId === 'hunk-1' && revert === false;
+    });
+
+    await page.goto(`/project/${uuid}`);
+
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page).toHaveURL(`/project/${uuid}`);
+
+    await expect(
+        page.getByRole('button', { name: 'Accept change' })
+    ).toBeVisible();
+
+    await page.getByRole('button', { name: 'Accept change' }).click();
+
+    await expect.poll(() => deleteCalled).toBe(true);
 });
 
 /*

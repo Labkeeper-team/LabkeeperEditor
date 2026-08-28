@@ -18,8 +18,11 @@ import {
 import { useIsMobile } from '../../hooks/useMobile';
 import { setMobileView } from '../../store/slices/settings';
 import { refreshCodeMirrorLayout } from '../../utils/refreshCodeMirrorLayout';
+import { useHunkActionHandler } from '../../hooks/useHunkEditorSync';
+import { HunkGlobalButtons } from '../../components/hunkGlobalButtons';
 
 export const ProjectPage = () => {
+    useHunkActionHandler();
     const dispatch = useDispatch<AppDispatch>();
     const isMobile = useIsMobile();
     const mobileView = useSelector(useMobileView);
@@ -188,6 +191,7 @@ export const ProjectPage = () => {
                 <Viewer />
             </div>
             <DeleteFilesModal />
+            <HunkGlobalButtons />
         </div>
     );
 };

@@ -12,6 +12,7 @@ import {
 import { IdeService } from '../domain/IdeService.ts';
 import { TokenPageService } from './TokenPageService.ts';
 import { ResetService } from '../domain/ResetService.ts';
+import { HunkService } from './HunkService.ts';
 
 const qrPagePattern = /\/qr\/v\d+/i;
 const projectPagePattern = /\/project\/\S+/i;
@@ -25,6 +26,7 @@ export class StartupService {
     ideService: IdeService;
     tokenPageService: TokenPageService;
     resetService: ResetService;
+    private hunkService: HunkService | null = null;
 
     constructor(
         rpi: Rpi,
@@ -45,6 +47,10 @@ export class StartupService {
         this.tokenPageService = tokenPageService;
         this.resetService = resetService;
     }
+
+    setHunkService = (hunkService: HunkService) => {
+        this.hunkService = hunkService;
+    };
 
     onAppEnterWithOauthCode = async (code: string, state: string) => {
         const response = await this.rpi.oauthCodeRequest(code, state);
@@ -323,6 +329,15 @@ export class StartupService {
                         pdfFile.url
                     );
                 }
+                if (
+                    !this.repository.projectViewModelRepository.projectIsReadonly()
+                ) {
+                    await this.hunkService?.loadHunks();
+                } else {
+                    this.hunkService?.clearHunks();
+                }
+            } else {
+                this.hunkService?.clearHunks();
             }
             return;
         }

@@ -9,12 +9,14 @@ import {
     isImageFilePath,
     isTextFilePath,
 } from '../../view/pages/project/fileManager/svarFileTreeAdapter.ts';
+import { getFileContentFromHunks } from '../utils/hunkGrouping.ts';
 
 export class TextFileEditorService {
     repository: ViewModelRepository;
     rpi: Rpi;
     ideService: IdeService;
     observerService: ObserverService;
+    private hunkService: import('./HunkService.ts').HunkService | null = null;
     private saveTimeout: ReturnType<typeof setTimeout> | null = null;
     private pendingSaveContent: string | null = null;
     private pendingSaveFileName: string | null = null;
@@ -34,6 +36,19 @@ export class TextFileEditorService {
         this.observerService = observerService;
     }
 
+    setHunkService = (hunkService: import('./HunkService.ts').HunkService) => {
+        this.hunkService = hunkService;
+    };
+
+    reloadActiveTextFileIfOpen = async (): Promise<void> => {
+        const fileName =
+            this.repository.ideViewModelRepository.activeTextFile();
+        if (!fileName) {
+            return;
+        }
+        await this.onTextFileOpened(fileName);
+    };
+
     onTextFileOpened = async (fileName: string) => {
         if (!isTextFilePath(fileName)) {
             return;
@@ -41,9 +56,6 @@ export class TextFileEditorService {
         const file = this.repository.projectViewModelRepository
             .files()
             .find((item) => item.fileName === fileName);
-        if (!file) {
-            return;
-        }
 
         const currentFile =
             this.repository.ideViewModelRepository.activeTextFile();
@@ -62,11 +74,31 @@ export class TextFileEditorService {
         this.repository.ideViewModelRepository.setActiveImageFile(null);
         this.repository.ideViewModelRepository.setActiveTextFile(fileName);
         this.repository.ideViewModelRepository.setTextFileContent('');
-        this.repository.ideViewModelRepository.setLoadTextFileRequestState(
-            'loading'
-        );
         this.repository.ideViewModelRepository.setSaveTextFileRequestState(
             'ok'
+        );
+
+        if (!file) {
+            const hunkContent = getFileContentFromHunks(
+                this.repository.ideViewModelRepository.hunks(),
+                fileName
+            );
+            if (hunkContent === null) {
+                this.repository.ideViewModelRepository.setActiveTextFile(null);
+                return;
+            }
+            this.repository.ideViewModelRepository.setTextFileContent(
+                hunkContent
+            );
+            this.repository.ideViewModelRepository.resetTextFileRevisions();
+            this.repository.ideViewModelRepository.setLoadTextFileRequestState(
+                'ok'
+            );
+            return;
+        }
+
+        this.repository.ideViewModelRepository.setLoadTextFileRequestState(
+            'loading'
         );
 
         try {
@@ -128,6 +160,11 @@ export class TextFileEditorService {
     };
 
     onTextFileContentChanged = (content: string) => {
+        const activeFile =
+            this.repository.ideViewModelRepository.activeTextFile();
+        if (activeFile && this.hunkService) {
+            this.hunkService.acceptHunksForFile(activeFile);
+        }
         this.repository.ideViewModelRepository.markTextFileChanged();
         this.repository.ideViewModelRepository.setTextFileContent(content);
         if (this.saveTimeout) {

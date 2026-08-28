@@ -9,7 +9,7 @@ import {
     ObserverService,
 } from '../../model/service/ObserverService.ts';
 import { setupContext } from '../../viewModel/context.ts';
-import { LabkeeperFile } from '../../model/domain.ts';
+import { Hunk, LabkeeperFile } from '../../model/domain.ts';
 
 export const USER_ID = 111;
 export const USER_EMAIL = 'a@gmail.com';
@@ -183,10 +183,34 @@ export function mockSaveProgramRequest(rpi: Rpi) {
     });
 }
 
+export function mockListHunksRequestWithHunks(
+    rpi: Rpi,
+    hunks: Hunk[] = []
+) {
+    rpi.listHunksRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+        body: { hunks },
+    });
+}
+
+export function mockDeleteHunkRequest(rpi: Rpi) {
+    rpi.deleteHunkRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+        body: {},
+    });
+}
+
 export function mockAuthenticatedStartup(rpi: Rpi) {
     mockUserInfoWithDefaultUser(rpi);
     mockDefaultProjectRequestWithDefaultProject(rpi);
     mockGetProjectRequestWithDefaultProject(rpi);
     mockGetAllProjectsRequestWithDefaultProject(rpi);
     mockListFilesRequestWithDefaultFile(rpi);
+    mockListHunksRequestWithHunks(rpi);
 }

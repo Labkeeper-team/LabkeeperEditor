@@ -14,6 +14,7 @@ import { ResetService } from '../domain/ResetService.ts';
 import { Program, ProjectType } from '../../model/domain.ts';
 import { TextFileEditorService } from './TextFileEditorService.ts';
 import { SearchService } from '../domain/SearchService.ts';
+import { HunkService } from './HunkService.ts';
 import { MOBILE_BREAKPOINT } from '../../view/hooks/useMobile';
 
 export class ProjectPageService {
@@ -27,6 +28,7 @@ export class ProjectPageService {
     resetService: ResetService;
     textFileEditorService: TextFileEditorService;
     searchService: SearchService;
+    hunkService: HunkService;
 
     constructor(
         repository: ViewModelRepository,
@@ -38,7 +40,8 @@ export class ProjectPageService {
         compilationService: CompilationService,
         resetService: ResetService,
         textFileEditorService: TextFileEditorService,
-        searchService: SearchService
+        searchService: SearchService,
+        hunkService: HunkService
     ) {
         this.rpi = rpi;
         this.programService = programService;
@@ -50,6 +53,7 @@ export class ProjectPageService {
         this.resetService = resetService;
         this.textFileEditorService = textFileEditorService;
         this.searchService = searchService;
+        this.hunkService = hunkService;
     }
 
     onContactUsFormSubmitted = async (subject: string, body: string) => {
@@ -461,71 +465,23 @@ export class ProjectPageService {
     };
 
     sendPromptAndReload = async (prompt: string): Promise<void> => {
+        this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
+            'loading'
+        );
+
         if (!this.repository.userViewModelRepository.isAuthenticated()) {
-            this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
-                'loading'
-            );
             const promptResult =
                 await this.rpi.unauthorizedPromptProjectRequest(
                     this.repository.projectViewModelRepository.currentProgram(),
                     prompt
                 );
             if (promptResult.isOk) {
-                this.observerService.onEvent(Events.EVENT_GPT_REQUEST);
-                const newProgram = promptResult.body;
-                const oldProgram =
-                    this.repository.projectViewModelRepository.currentProgram();
-                const activeIndex = this.selectNewSegmentIndexAfterPrompt(
-                    oldProgram,
-                    newProgram
-                );
-                this.ideService.replaceProgram(promptResult.body);
-                this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
-                    'ok'
-                );
-                this.repository.settingsViewModelRepository.setShowProjectPromptModal(
-                    false
-                );
-                this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(
-                    activeIndex
-                );
-                this.switchToMobileEditorView();
-            } else if (promptResult.isUnauth) {
-                this.repository.toast(
-                    this.repository.dictionary.filemanager.errors
-                        .sessionExpired,
-                    'error'
-                );
-                this.ideService.resetEditor();
-            } else if (promptResult.code === 400) {
-                this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
-                    'bad_request'
-                );
-            } else if (promptResult.code === 402) {
-                this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
-                    'payment_required'
-                );
-                this.repository.toast(
-                    this.repository.dictionary.prompt_modal.errors
-                        .payment_required,
-                    'error'
-                );
-                this.observerService.onEvent(Events.EVENT_PAYMENT_REQUIRED);
-            } else if (promptResult.code === 425) {
-                this.repository.authViewModelRepository.setCurrentView('login');
-                this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
-                    'unknown'
-                );
-                this.repository.settingsViewModelRepository.setShowProjectPromptModal(
-                    false
+                await this.applyPromptSuccess(
+                    promptResult.body.program,
+                    promptResult.body.hunks ?? []
                 );
             } else {
-                this.observerService.onEvent(
-                    Events.EVENT_RPI_UNKNOWN_PROJECT_PAGE_UNAUTHORIZED_PROMPT
-                );
-                this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
-                    'unknownError'
-                );
+                this.handlePromptError(promptResult, true);
             }
             return;
         }
@@ -533,38 +489,73 @@ export class ProjectPageService {
         const project = this.repository.projectViewModelRepository.project();
 
         if (!project) {
+            this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
+                'unknownError'
+            );
+            this.repository.settingsViewModelRepository.setShowProjectPromptModal(
+                true
+            );
             return;
         }
 
-        this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
-            'loading'
-        );
         const promptResult = await this.rpi.promptProjectRequest(
             project.projectId,
             prompt
         );
         await this.refreshUserInfo();
         if (promptResult.isOk) {
-            this.observerService.onEvent(Events.EVENT_GPT_REQUEST);
-            const newProgram = promptResult.body;
-            const oldProgram =
-                this.repository.projectViewModelRepository.currentProgram();
-            const newIndex = this.selectNewSegmentIndexAfterPrompt(
-                oldProgram,
-                newProgram
+            await this.applyPromptSuccess(
+                promptResult.body.program,
+                promptResult.body.hunks ?? []
             );
-            this.ideService.replaceProgram(promptResult.body);
-            this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
-                'ok'
-            );
-            this.repository.settingsViewModelRepository.setShowProjectPromptModal(
-                false
-            );
-            this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(
-                newIndex
-            );
-            this.switchToMobileEditorView();
-        } else if (promptResult.isUnauth) {
+        } else {
+            this.handlePromptError(promptResult, false);
+        }
+    };
+
+    private applyPromptSuccess = async (
+        newProgram: Program,
+        hunks: import('../../model/domain.ts').Hunk[]
+    ): Promise<void> => {
+        this.observerService.onEvent(Events.EVENT_GPT_REQUEST);
+        const oldProgram =
+            this.repository.projectViewModelRepository.currentProgram();
+        const activeIndex = this.selectNewSegmentIndexAfterPrompt(
+            oldProgram,
+            newProgram
+        );
+        this.ideService.replaceProgram(newProgram);
+        this.hunkService.setHunksFromPrompt(hunks);
+        this.repository.settingsViewModelRepository.setShowProjectPromptModal(
+            false
+        );
+        this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
+            'ok'
+        );
+        this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(
+            activeIndex
+        );
+        this.repository.scrollEditorToBottom();
+        this.switchToMobileEditorView();
+
+        const project = this.repository.projectViewModelRepository.project();
+        if (
+            project &&
+            this.repository.userViewModelRepository.isAuthenticated()
+        ) {
+            await this.loaderService.loadFiles(project.projectId);
+            await this.textFileEditorService.reloadActiveTextFileIfOpen();
+        }
+    };
+
+    private handlePromptError = (
+        promptResult: import('../../model/rpi').RequestResult<unknown>,
+        unauthorized: boolean
+    ): void => {
+        this.repository.settingsViewModelRepository.setShowProjectPromptModal(
+            true
+        );
+        if (promptResult.isUnauth) {
             this.repository.toast(
                 this.repository.dictionary.filemanager.errors.sessionExpired,
                 'error'
@@ -583,9 +574,19 @@ export class ProjectPageService {
                 'error'
             );
             this.observerService.onEvent(Events.EVENT_PAYMENT_REQUIRED);
+        } else if (promptResult.code === 425) {
+            this.repository.authViewModelRepository.setCurrentView('login');
+            this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
+                'unknown'
+            );
+            this.repository.settingsViewModelRepository.setShowProjectPromptModal(
+                false
+            );
         } else {
             this.observerService.onEvent(
-                Events.EVENT_RPI_UNKNOWN_PROJECT_PAGE_PROMPT
+                unauthorized
+                    ? Events.EVENT_RPI_UNKNOWN_PROJECT_PAGE_UNAUTHORIZED_PROMPT
+                    : Events.EVENT_RPI_UNKNOWN_PROJECT_PAGE_PROMPT
             );
             this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
                 'unknownError'
@@ -640,15 +641,26 @@ export class ProjectPageService {
     }
 
     onLlmButtonClicked() {
-        this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
-            'unknown'
-        );
+        if (
+            this.repository.ideViewModelRepository.projectPromptRequestState() !==
+            'loading'
+        ) {
+            this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
+                'unknown'
+            );
+        }
         this.repository.settingsViewModelRepository.setShowProjectPromptModal(
             true
         );
     }
 
     onPromptModalCrossClicked() {
+        if (
+            this.repository.ideViewModelRepository.projectPromptRequestState() ===
+            'loading'
+        ) {
+            return;
+        }
         this.repository.settingsViewModelRepository.setShowProjectPromptModal(
             false
         );

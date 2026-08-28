@@ -15,12 +15,17 @@ import { SparkleIcon } from '../../../icons';
 import { SynctexButton } from '../syncButtons';
 import { useIsMobile } from '../../../hooks/useMobile';
 import { CloneProjectButton } from '../cloneProjectButton';
+import { StorageState } from '../../../store';
 
 export const Viewer = () => {
     const dispatch = useDispatch<AppDispatch>();
     const dictionary = useSelector(useDictionary);
     const isReadonly = useSelector(useIsProjectReadonly);
     const isMobile = useIsMobile();
+    const promptRequestState = useSelector(
+        (state: StorageState) => state.ide.projectPromptRequestState
+    );
+    const isPromptLoading = promptRequestState === 'loading';
 
     return (
         <div className="viewer-container">
@@ -38,7 +43,14 @@ export const Viewer = () => {
                             minimize
                             rounded
                             color="gray"
-                            titleIcon={() => <SparkleIcon />}
+                            disabled={isPromptLoading}
+                            titleIcon={() =>
+                                isPromptLoading ? (
+                                    <span className="prompt-modal__spinner-inline" />
+                                ) : (
+                                    <SparkleIcon />
+                                )
+                            }
                         />
                     )}
                     {isMobile ? <SynctexButton direction="toEditor" /> : null}

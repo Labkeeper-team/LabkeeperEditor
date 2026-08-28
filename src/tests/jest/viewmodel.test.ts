@@ -153,18 +153,28 @@ test('prompt-refreshes-user-token-balance-test', async () => {
     rpi.promptProjectRequest = jest.fn().mockResolvedValue({
         code: 200,
         body: {
-            segments: [],
-            parameters: {
-                roundStrategy: 'firstMeaningDigit',
+            program: {
+                segments: [],
+                parameters: {
+                    roundStrategy: 'firstMeaningDigit',
+                },
             },
+            hunks: [],
         },
         isOk: true,
         isUnauth: false,
         isForbidden: false,
-    } as RequestResult<Program>);
+    });
     rpi.getUserInfoRequest = jest
         .fn()
         .mockResolvedValue(createDefaultUserInfo(true, 8));
+    rpi.listFilesRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        body: { files: [] },
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+    });
 
     await projectPageService.sendPromptAndReload('prompt');
 
