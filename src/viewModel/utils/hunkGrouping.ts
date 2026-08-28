@@ -309,7 +309,14 @@ export function getNewSegmentHunkGroup(
     hunks: Hunk[],
     segmentId: number
 ): HunkGroup | undefined {
-    return groupHunks(hunks).find(
+    return findNewSegmentHunkGroup(groupHunks(hunks), segmentId);
+}
+
+export function findNewSegmentHunkGroup(
+    groups: HunkGroup[],
+    segmentId: number
+): HunkGroup | undefined {
+    return groups.find(
         (group) =>
             group.isNewSegment &&
             group.target.kind === 'segment' &&
@@ -350,7 +357,11 @@ export interface FileHunkEntry {
 }
 
 export function getFileHunkEntries(hunks: Hunk[]): FileHunkEntry[] {
-    return groupHunks(hunks)
+    return buildFileHunkEntries(groupHunks(hunks));
+}
+
+export function buildFileHunkEntries(groups: HunkGroup[]): FileHunkEntry[] {
+    return groups
         .filter((group) => group.target.kind === 'file')
         .map((group) => {
             const hasAddFile = group.hunks.some((h) => h.type === 'addFile');
@@ -380,9 +391,19 @@ export function getPhantomFileNamesFromHunks(
     hunks: Hunk[],
     existingFileNames: Iterable<string>
 ): string[] {
+    return getPhantomFileNamesFromEntries(
+        getFileHunkEntries(hunks),
+        existingFileNames
+    );
+}
+
+export function getPhantomFileNamesFromEntries(
+    entries: FileHunkEntry[],
+    existingFileNames: Iterable<string>
+): string[] {
     const existing = [...existingFileNames];
     const phantoms = new Set<string>();
-    for (const entry of getFileHunkEntries(hunks)) {
+    for (const entry of entries) {
         if (entry.state !== 'added') {
             continue;
         }
@@ -423,10 +444,16 @@ export function fileHunkEntryForPath(
 
 /** Global accept/reject bar: several groups, or both file and segment hunks. */
 export function shouldShowGlobalHunkBar(hunks: Hunk[]): boolean {
+    return shouldShowGlobalHunkBarFromGroups(hunks, groupHunks(hunks));
+}
+
+export function shouldShowGlobalHunkBarFromGroups(
+    hunks: Hunk[],
+    groups: HunkGroup[]
+): boolean {
     if (hunks.length === 0) {
         return false;
     }
-    const groups = groupHunks(hunks);
     if (groups.length > 1) {
         return true;
     }

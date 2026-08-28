@@ -16,10 +16,15 @@ import { FileTreeView } from './FileTreeView.tsx';
 import { useIsMobile } from '../../../hooks/useMobile';
 import { setMobileView } from '../../../store/slices/settings';
 import {
-    fileNamesWithHunks,
-    getFileHunkEntries,
-    getPhantomFileNamesFromHunks,
-} from '../../../../viewModel/utils/hunkGrouping.ts';
+    selectFileHunkEntries,
+    selectFilesWithHunks,
+    selectPhantomFileNames,
+} from '../../../store/selectors/hunks.ts';
+import type { FileHunkEntry } from '../../../../viewModel/utils/hunkGrouping.ts';
+
+const EMPTY_FILE_HUNK_ENTRIES: FileHunkEntry[] = [];
+const EMPTY_PHANTOM_FILE_NAMES: string[] = [];
+const EMPTY_FILES_WITH_HUNKS = new Set<string>();
 
 export const FileManager = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -53,24 +58,21 @@ export const FileManager = () => {
         return [user, system];
     }, [files]);
 
-    const hunks = useSelector((state: StorageState) => state.ide.hunks);
-    const fileHunkEntries = useMemo(
-        () => (isReadonly ? [] : getFileHunkEntries(hunks)),
-        [hunks, isReadonly]
+    const userFileNames = useMemo(
+        () => userFiles.map((file) => file.fileName),
+        [userFiles]
     );
-    const filesWithHunks = useMemo(
-        () => (isReadonly ? new Set<string>() : fileNamesWithHunks(hunks)),
-        [hunks, isReadonly]
+    const fileHunkEntries = useSelector((state: StorageState) =>
+        isReadonly ? EMPTY_FILE_HUNK_ENTRIES : selectFileHunkEntries(state)
     );
-    const phantomFileNames = useMemo(() => {
-        if (isReadonly) {
-            return [];
-        }
-        return getPhantomFileNamesFromHunks(
-            hunks,
-            userFiles.map((file) => file.fileName)
-        );
-    }, [hunks, isReadonly, userFiles]);
+    const filesWithHunks = useSelector((state: StorageState) =>
+        isReadonly ? EMPTY_FILES_WITH_HUNKS : selectFilesWithHunks(state)
+    );
+    const phantomFileNames = useSelector((state: StorageState) =>
+        isReadonly
+            ? EMPTY_PHANTOM_FILE_NAMES
+            : selectPhantomFileNames(state, userFileNames)
+    );
 
     const [filesLoadedOnce, setFilesLoadedOnce] = useState(false);
     if (getFilesRequestState === 'ok' && !filesLoadedOnce) {

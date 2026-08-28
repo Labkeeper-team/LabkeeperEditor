@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, StorageState } from '../../store';
 import { useDictionary } from '../../store/selectors/translations';
@@ -5,12 +6,12 @@ import { useIsMobile } from '../../hooks/useMobile';
 import { useIsProjectReadonly } from '../../store/selectors/program.ts';
 import { controller } from '../../../main.tsx';
 import {
-    groupHunks,
-    shouldShowGlobalHunkBar,
-} from '../../../viewModel/utils/hunkGrouping.ts';
+    selectGroupedHunkCount,
+    selectShouldShowGlobalHunkBar,
+} from '../../store/selectors/hunks.ts';
 import './hunkGlobalButtons.scss';
 
-export const HunkGlobalButtons = () => {
+export const HunkGlobalButtons = memo(() => {
     const dispatch = useDispatch<AppDispatch>();
     const dictionary = useSelector(useDictionary);
     const isMobile = useIsMobile();
@@ -22,10 +23,10 @@ export const HunkGlobalButtons = () => {
     const pendingHunkIds = useSelector(
         (state: StorageState) => state.ide.pendingHunkIds
     );
+    const changeCount = useSelector(selectGroupedHunkCount);
+    const showGlobalBar = useSelector(selectShouldShowGlobalHunkBar);
 
-    const changeCount = groupHunks(hunks).length;
-
-    if (isMobile || isReadonly || !shouldShowGlobalHunkBar(hunks)) {
+    if (isMobile || isReadonly || !showGlobalBar) {
         return null;
     }
 
@@ -76,4 +77,6 @@ export const HunkGlobalButtons = () => {
             </div>
         </div>
     );
-};
+});
+
+HunkGlobalButtons.displayName = 'HunkGlobalButtons';

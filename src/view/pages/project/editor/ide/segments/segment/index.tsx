@@ -63,10 +63,7 @@ import { scrollIdeEditorLineToContainerTop } from '../ideSegmentEditorView';
 import { SearchCurrentMatch } from '../../../../../../../viewModel/repository';
 import { hunkEditorExtensions } from '../../../hunkEditorExtension.ts';
 import { useSyncHunksToEditorView } from '../../../../../../hooks/useHunkEditorSync.ts';
-import {
-    getNewSegmentHunkGroup,
-    hunksForSegment,
-} from '../../../../../../../viewModel/utils/hunkGrouping.ts';
+import { selectSegmentHunkUiState } from '../../../../../../store/selectors/hunks.ts';
 import { Segment } from '../../../../../../../model/domain';
 
 const CURSOR_MAP_CAPACITY = 100;
@@ -154,25 +151,17 @@ export const SegmentEditor = memo(
             []
         );
         const [editorViewEpoch, setEditorViewEpoch] = useState(0);
-        const hunks = useSelector((state: StorageState) => state.ide.hunks);
-        const pendingHunkIds = useSelector(
-            (state: StorageState) => state.ide.pendingHunkIds
+        const segmentHunkUi = useSelector((state: StorageState) =>
+            selectSegmentHunkUiState(state, segmentId)
         );
         const isAuthenticated = useSelector(
             (state: StorageState) => state.user.isAuthenticated
         );
-        const newSegmentHunkGroup = useMemo(
-            () => getNewSegmentHunkGroup(hunks, segmentId),
-            [hunks, segmentId]
-        );
-        const segmentHunkIds = useMemo(
-            () => hunksForSegment(hunks, segmentId).map((hunk) => hunk.id),
-            [hunks, segmentId]
-        );
-        const newSegmentHunkPending = useMemo(
-            () => segmentHunkIds.some((id) => pendingHunkIds.includes(id)),
-            [segmentHunkIds, pendingHunkIds]
-        );
+        const {
+            newSegmentHunkGroup,
+            segmentHunkIds,
+            isPending: newSegmentHunkPending,
+        } = segmentHunkUi;
         useSyncHunksToEditorView(
             getEditorView,
             segmentId,
