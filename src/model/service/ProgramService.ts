@@ -9,6 +9,7 @@ import {
     ProgramChangeAction,
     ProgramRepository,
 } from '../repository/ProgramRepository.ts';
+import { renumberSegmentIds } from '../../viewModel/utils/segmentId.ts';
 
 const historyLimit = 50;
 
@@ -427,6 +428,7 @@ class DeleteSegmentAction implements ProgramChangeAction {
     apply = (program: Program) => {
         this.segment = program.segments[this.segmentIndex];
         program.segments.splice(this.segmentIndex, 1);
+        renumberSegmentIds(program.segments);
     };
 
     revert = (program: Program) => {
@@ -434,6 +436,7 @@ class DeleteSegmentAction implements ProgramChangeAction {
             throw new Error('No segment data!');
         }
         program.segments.splice(this.segmentIndex, 0, this.segment);
+        renumberSegmentIds(program.segments);
     };
 }
 
@@ -448,10 +451,12 @@ class AddSegmentAction implements ProgramChangeAction {
 
     apply = (program: Program) => {
         program.segments.splice(this.afterIndex, 0, this.segment);
+        renumberSegmentIds(program.segments);
     };
 
     revert = (program: Program) => {
         program.segments.splice(this.afterIndex, 1);
+        renumberSegmentIds(program.segments);
     };
 }
 
@@ -467,6 +472,7 @@ class ReplaceProgramAction implements ProgramChangeAction {
         this.oldProgram = structuredClone(program);
         program.segments = this.newProgram.segments;
         program.parameters = this.newProgram.parameters;
+        renumberSegmentIds(program.segments);
     };
 
     revert = (program: Program) => {
@@ -498,6 +504,7 @@ class MoveSegmentsAction implements ProgramChangeAction {
 
         program.segments[upperSegment] = second;
         program.segments[upperSegment + 1] = first;
+        renumberSegmentIds(program.segments);
     };
 }
 

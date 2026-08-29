@@ -38,9 +38,6 @@ export const PromptModal = () => {
         <Modal
             showModal={showModal}
             onClose={() => {
-                if (promptRequestState === 'loading') {
-                    return;
-                }
                 dispatch(controller.onPromptModalCrossClickedRequest());
             }}
         >
@@ -62,7 +59,6 @@ export const PromptModal = () => {
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
                     placeholder={dictionary.prompt_modal.placeholder}
-                    disabled={promptRequestState === 'loading'}
                     multiline
                     rows={10}
                 />
@@ -76,11 +72,7 @@ export const PromptModal = () => {
                 <div className="prompt-modal__footer">
                     <Button
                         classname="prompt-modal__submit"
-                        title={
-                            promptRequestState === 'loading'
-                                ? dictionary.prompt_modal.sending
-                                : dictionary.prompt_modal.submit
-                        }
+                        title={dictionary.prompt_modal.submit}
                         onPress={() =>
                             dispatch(
                                 controller.onPromptSubmitRequest({
@@ -88,25 +80,12 @@ export const PromptModal = () => {
                                 })
                             )
                         }
-                        disabled={
-                            promptRequestState === 'loading' ||
-                            prompt.length === 0
-                        }
+                        disabled={prompt.length === 0}
                         minimize
                         color="blue"
                         rounded
-                        titleIcon={() =>
-                            promptRequestState === 'loading' ? (
-                                <div className="prompt-modal__spinner-inline" />
-                            ) : null
-                        }
                     />
                 </div>
-                {promptRequestState === 'loading' && (
-                    <div className="prompt-modal__loading-overlay">
-                        <div className="prompt-modal__spinner" />
-                    </div>
-                )}
             </div>
         </Modal>
     );

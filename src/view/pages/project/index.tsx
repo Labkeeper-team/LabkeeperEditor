@@ -168,20 +168,32 @@ export const ProjectPage = () => {
                 'project-container--mobile': isMobile,
             })}
         >
-            <div
-                className={classNames('project-pane', 'project-pane--files', {
-                    'project-pane--active': !isMobile || mobileView === 'files',
-                })}
-            >
-                <FileManager />
-            </div>
-            <div
-                className={classNames('project-pane', 'project-pane--editor', {
-                    'project-pane--active':
-                        !isMobile || mobileView === 'editor',
-                })}
-            >
-                <Editor />
+            <div className="project-left-column">
+                <div
+                    className={classNames(
+                        'project-pane',
+                        'project-pane--files',
+                        {
+                            'project-pane--active':
+                                !isMobile || mobileView === 'files',
+                        }
+                    )}
+                >
+                    <FileManager />
+                </div>
+                <div
+                    className={classNames(
+                        'project-pane',
+                        'project-pane--editor',
+                        {
+                            'project-pane--active':
+                                !isMobile || mobileView === 'editor',
+                        }
+                    )}
+                >
+                    <Editor />
+                </div>
+                <HunkGlobalButtons />
             </div>
             <div
                 className={classNames('project-pane', 'project-pane--pdf', {
@@ -191,7 +203,6 @@ export const ProjectPage = () => {
                 <Viewer />
             </div>
             <DeleteFilesModal />
-            <HunkGlobalButtons />
         </div>
     );
 };

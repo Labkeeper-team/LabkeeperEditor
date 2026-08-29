@@ -19,6 +19,7 @@ test('program-service-test', () => {
 
     expect(service.getCurrentProgram().segments).toStrictEqual([
         {
+            id: 1,
             type: 'md',
             text: 'biba',
             parameters: { visible: true },
@@ -29,6 +30,7 @@ test('program-service-test', () => {
 
     expect(service.getCurrentProgram().segments).toStrictEqual([
         {
+            id: 1,
             type: 'md',
             text: 'biba1',
             parameters: { visible: true },
@@ -39,11 +41,13 @@ test('program-service-test', () => {
 
     expect(service.getCurrentProgram().segments).toStrictEqual([
         {
+            id: 1,
             type: 'md',
             text: 'biba1',
             parameters: { visible: true },
         },
         {
+            id: 2,
             type: 'computational',
             text: '',
             parameters: { visible: true },
@@ -54,11 +58,13 @@ test('program-service-test', () => {
 
     expect(service.getCurrentProgram().segments).toStrictEqual([
         {
+            id: 1,
             type: 'md',
             text: 'biba1',
             parameters: { visible: true },
         },
         {
+            id: 2,
             type: 'computational',
             text: 'boba',
             parameters: { visible: true },
@@ -69,16 +75,19 @@ test('program-service-test', () => {
 
     expect(service.getCurrentProgram().segments).toStrictEqual([
         {
+            id: 1,
             type: 'md',
             text: 'biba1',
             parameters: { visible: true },
         },
         {
+            id: 2,
             type: 'asciimath',
             text: '',
             parameters: { visible: true },
         },
         {
+            id: 3,
             type: 'computational',
             text: 'boba',
             parameters: { visible: true },
@@ -90,11 +99,13 @@ test('program-service-test', () => {
 
     expect(service.getCurrentProgram().segments).toStrictEqual([
         {
+            id: 1,
             type: 'md',
             text: 'biba1',
             parameters: { visible: true },
         },
         {
+            id: 2,
             type: 'computational',
             text: '',
             parameters: { visible: true },
@@ -105,11 +116,13 @@ test('program-service-test', () => {
 
     expect(service.getCurrentProgram().segments).toStrictEqual([
         {
+            id: 1,
             type: 'md',
             text: 'biba1',
             parameters: { visible: true },
         },
         {
+            id: 2,
             type: 'computational',
             text: 'boba',
             parameters: { visible: true },
@@ -120,11 +133,13 @@ test('program-service-test', () => {
 
     expect(service.getCurrentProgram().segments).toStrictEqual([
         {
+            id: 1,
             type: 'md',
             text: 'biba2',
             parameters: { visible: true },
         },
         {
+            id: 2,
             type: 'computational',
             text: 'boba',
             parameters: { visible: true },
@@ -137,11 +152,13 @@ test('program-service-test', () => {
 
     expect(service.getCurrentProgram().segments).toStrictEqual([
         {
+            id: 1,
             type: 'md',
             text: 'biba2',
             parameters: { visible: true },
         },
         {
+            id: 2,
             type: 'computational',
             text: 'boba',
             parameters: { visible: true },
@@ -164,6 +181,7 @@ test('gaps-test', () => {
 
     expect(service.getCurrentProgram().segments).toStrictEqual([
         {
+            id: 1,
             type: 'md',
             text: 'biba',
             parameters: { visible: true },
@@ -176,6 +194,7 @@ test('gaps-test', () => {
 
     expect(service.getCurrentProgram().segments).toStrictEqual([
         {
+            id: 1,
             type: 'md',
             text: 'bibaboba',
             parameters: { visible: true },
@@ -212,6 +231,7 @@ test('auto-gaps-test', () => {
 
     expect(service.getCurrentProgram().segments).toStrictEqual([
         {
+            id: 1,
             type: 'md',
             text: 'aaaa\nbbbbb\ncccc1111\n',
             parameters: { visible: true },
@@ -222,6 +242,7 @@ test('auto-gaps-test', () => {
 
     expect(service.getCurrentProgram().segments).toStrictEqual([
         {
+            id: 1,
             type: 'md',
             text: 'aaaa\nbbbbb\ncccc\n',
             parameters: { visible: true },
@@ -245,11 +266,13 @@ test('limit-history-test', () => {
 
     expect(service.getCurrentProgram().segments).toStrictEqual([
         {
+            id: 1,
             type: 'md',
             text: 'aaa0',
             parameters: { visible: true },
         },
         {
+            id: 2,
             type: 'md',
             text: 'aaa1',
             parameters: { visible: true },
@@ -270,7 +293,12 @@ test('no-duplicate-text-changes-test', () => {
 
     expect(service.getCurrentProgram()).toStrictEqual({
         segments: [
-            { type: 'md', text: '', parameters: { visible: true } } as Segment,
+            {
+                id: 1,
+                type: 'md',
+                text: '',
+                parameters: { visible: true },
+            } as Segment,
         ],
         parameters: { roundStrategy: 'firstMeaningDigit' },
     } as Program);
@@ -291,7 +319,12 @@ test('unite-changes-test', () => {
 
     expect(service.getCurrentProgram()).toStrictEqual({
         segments: [
-            { type: 'md', text: '', parameters: { visible: true } } as Segment,
+            {
+                id: 1,
+                type: 'md',
+                text: '',
+                parameters: { visible: true },
+            } as Segment,
         ],
         parameters: { roundStrategy: 'firstMeaningDigit' },
     } as Program);
@@ -321,6 +354,7 @@ test('replace-program-undo-redo-test', () => {
     expect(service.getCurrentProgram()).toStrictEqual({
         segments: [
             {
+                id: 1,
                 type: 'md',
                 text: 'biba',
                 parameters: { visible: true },
@@ -334,11 +368,13 @@ test('replace-program-undo-redo-test', () => {
     expect(service.getCurrentProgram()).toStrictEqual({
         segments: [
             {
+                id: 1,
                 type: 'md',
                 text: 'biba',
                 parameters: { visible: true },
             } as Segment,
             {
+                id: 2,
                 type: 'latex',
                 text: 'boba',
                 parameters: { visible: true },
@@ -346,4 +382,21 @@ test('replace-program-undo-redo-test', () => {
         ],
         parameters: { roundStrategy: 'firstMeaningDigit' },
     } as Program);
+});
+
+test('insert-between-segments-renumbers-ids', () => {
+    const service: ProgramService = new ProgramService(
+        new InMemoryProgramRepository()
+    );
+
+    service.addSegmentToLastPosition('md');
+    service.changeSegmentTextByPositionIndex(0, 'first');
+    service.addSegmentToLastPosition('md');
+    service.changeSegmentTextByPositionIndex(1, 'second');
+
+    service.addSegmentAfterIndex('md', 0);
+
+    expect(service.getCurrentProgram().segments.map((s) => s.id)).toEqual([
+        1, 2, 3,
+    ]);
 });

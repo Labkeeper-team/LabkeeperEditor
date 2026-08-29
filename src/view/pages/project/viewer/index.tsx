@@ -46,7 +46,7 @@ export const Viewer = () => {
                             disabled={isPromptLoading}
                             titleIcon={() =>
                                 isPromptLoading ? (
-                                    <span className="prompt-modal__spinner-inline" />
+                                    <span className="viewer-gpt-button__spinner" />
                                 ) : (
                                     <SparkleIcon />
                                 )

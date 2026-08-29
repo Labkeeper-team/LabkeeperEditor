@@ -442,7 +442,7 @@ export function fileHunkEntryForPath(
     return entries.find((entry) => projectFilePathsMatch(entry.fileName, path));
 }
 
-/** Global accept/reject bar: several groups, or both file and segment hunks. */
+/** Global accept/reject bar: two or more hunks, several groups, or both file and segment hunks. */
 export function shouldShowGlobalHunkBar(hunks: Hunk[]): boolean {
     return shouldShowGlobalHunkBarFromGroups(hunks, groupHunks(hunks));
 }
@@ -451,15 +451,8 @@ export function shouldShowGlobalHunkBarFromGroups(
     hunks: Hunk[],
     groups: HunkGroup[]
 ): boolean {
-    if (hunks.length === 0) {
-        return false;
-    }
-    if (groups.length > 1) {
-        return true;
-    }
-    const hasFileHunks = hunks.some((h) => h.fileName != null);
-    const hasSegmentHunks = hunks.some((h) => h.segmentId != null);
-    return hasFileHunks && hasSegmentHunks;
+    void groups;
+    return hunks.length > 1;
 }
 
 export function fileNamesWithHunks(hunks: Hunk[]): Set<string> {

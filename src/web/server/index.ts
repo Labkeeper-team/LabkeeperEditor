@@ -4,9 +4,9 @@ import {
     Program,
     Project,
     ProjectType,
-    Segment,
     UserInfo,
 } from '../../model/domain.ts';
+import { withSegmentIds } from '../../viewModel/utils/segmentId.ts';
 import axios, { AxiosError, AxiosResponse } from 'axios';
 import { URLS } from '../../constants.ts';
 import {
@@ -53,18 +53,7 @@ async function requestWrapper<T>(
 }
 
 function withIds(program: Program): Program {
-    return {
-        segments: program.segments.map(
-            (s, index) =>
-                ({
-                    type: s.type,
-                    text: s.text,
-                    parameters: s.parameters,
-                    id: s.id != null && s.id > 0 ? s.id : index + 1,
-                }) as Segment
-        ),
-        parameters: program.parameters,
-    };
+    return withSegmentIds(program);
 }
 
 export class WebRpi implements Rpi {

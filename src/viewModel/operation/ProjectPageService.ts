@@ -468,6 +468,9 @@ export class ProjectPageService {
         this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
             'loading'
         );
+        this.repository.settingsViewModelRepository.setShowProjectPromptModal(
+            false
+        );
 
         if (!this.repository.userViewModelRepository.isAuthenticated()) {
             const promptResult =
@@ -655,12 +658,6 @@ export class ProjectPageService {
     }
 
     onPromptModalCrossClicked() {
-        if (
-            this.repository.ideViewModelRepository.projectPromptRequestState() ===
-            'loading'
-        ) {
-            return;
-        }
         this.repository.settingsViewModelRepository.setShowProjectPromptModal(
             false
         );

@@ -22,6 +22,7 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 
 import { CompileErrorResult } from '../../../../../../../model/domain';
+import { resolveSegmentId } from '../../../../../../../viewModel/utils/segmentId.ts';
 import { customLanguageSupport } from './customLanguage';
 import { latex } from 'codemirror-lang-latex';
 import {
@@ -140,10 +141,11 @@ export const SegmentEditor = memo(
             (state: StorageState) =>
                 state.project.currentProgram?.segments[props.index]
         ) as (Segment & { id?: number }) | undefined;
-        const segmentId =
-            segment?.id != null && segment.id > 0
-                ? segment.id
-                : props.index + 1;
+        const segments = useSelector(
+            (state: StorageState) =>
+                state.project.currentProgram?.segments ?? []
+        );
+        const segmentId = resolveSegmentId(segments, props.index);
         const ref = useRef<HTMLDivElement>(null);
         const editor = useRef<ReactCodeMirrorRef | undefined>();
         const getEditorView = useCallback(
@@ -238,10 +240,10 @@ export const SegmentEditor = memo(
                 (compileErrors ?? []).filter(
                     (e) =>
                         !e.payload.latexFile &&
-                        e.payload.segmentId === props.index + 1
+                        e.payload.segmentId === segmentId
                 )
             );
-        }, [compileErrors, props.index]);
+        }, [compileErrors, segmentId]);
 
         // Проблема с мерцанием редактора кода
         useEffect(() => {

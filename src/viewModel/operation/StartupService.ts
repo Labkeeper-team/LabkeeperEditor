@@ -392,6 +392,13 @@ export class StartupService {
                 if (userInfo.isAuthenticated) {
                     await this.loader.loadFiles(project.projectId);
                 }
+                if (
+                    !this.repository.projectViewModelRepository.projectIsReadonly()
+                ) {
+                    await this.hunkService?.loadHunks();
+                } else {
+                    this.hunkService?.clearHunks();
+                }
             }
             if (result.isUnauth) {
                 this.setEditorLocation(Routes.ProjectDefault);

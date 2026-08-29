@@ -25,6 +25,27 @@
     }
 }
 
+.project-left-column {
+    position: relative;
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    flex-direction: row;
+    gap: 8px;
+
+    @media screen and (max-width: 1024px) {
+        gap: 4px;
+    }
+
+    .project-container--mobile & {
+        flex: 1;
+        flex-direction: column;
+        width: 100%;
+        min-height: 0;
+    }
+}
+
 .project-pane {
     display: contents;
 
@@ -47,6 +68,17 @@
     > .manager-container,
     > .editor-container,
     > .viewer-container {
+        flex: 1;
+        min-height: 0;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+    }
+}
+
+.project-container--mobile .project-left-column .project-pane--active {
+    > .manager-container,
+    > .editor-container {
         flex: 1;
         min-height: 0;
         width: 100%;

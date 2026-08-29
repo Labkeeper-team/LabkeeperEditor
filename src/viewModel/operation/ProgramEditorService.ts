@@ -26,6 +26,7 @@ import {
     projectFilePathsMatch,
     resolveProjectFileName,
 } from '../utils/projectFilePath.ts';
+import { resolveSegmentId } from '../utils/segmentId.ts';
 
 export class ProgramEditorService {
     repository: ViewModelRepository;
@@ -486,13 +487,10 @@ export class ProgramEditorService {
         cursorHead?: number
     ) => {
         const programBefore = this.programService.getCurrentProgram();
-        const segment = programBefore.segments[segmentIndex] as Segment & {
-            id?: number;
-        };
-        const segmentId =
-            segment?.id != null && segment.id > 0
-                ? segment.id
-                : segmentIndex + 1;
+        const segmentId = resolveSegmentId(
+            programBefore.segments,
+            segmentIndex
+        );
         this.hunkService?.acceptHunksForSegment(segmentId);
 
         this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(
@@ -542,12 +540,7 @@ export class ProgramEditorService {
     private getSegmentIdForNavigation = (segmentIndex: number): number => {
         const program =
             this.repository.projectViewModelRepository.currentProgram();
-        const segment = program?.segments[segmentIndex] as
-            (Segment & { id?: number }) | undefined;
-        if (segment?.id != null && segment.id > 0) {
-            return segment.id;
-        }
-        return segmentIndex + 1;
+        return resolveSegmentId(program?.segments ?? [], segmentIndex);
     };
 
     private resolveSynctexEditorPosition =
