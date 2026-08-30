@@ -31,7 +31,10 @@ import {
     mockObserver,
     ObserverService,
 } from '../../model/service/ObserverService.ts';
-import { mockListFilesRequestWithDefaultFile } from './common.ts';
+import {
+    mockListFilesRequestWithDefaultFile,
+    mockListHunksRequestWithHunks,
+} from './common.ts';
 
 const defaultParams = {
     visible: true,
@@ -194,6 +197,7 @@ test('help-items-add-test', async () => {
         },
         segments: [
             {
+                id: 1,
                 parameters: defaultParams,
                 text: `my_array = [1, 2, 3, 4]`,
                 type: 'computational',
@@ -209,11 +213,13 @@ test('help-items-add-test', async () => {
         },
         segments: [
             {
+                id: 1,
                 parameters: defaultParams,
                 text: `my_array = [1, 2, 3, 4]`,
                 type: 'computational',
             },
             {
+                id: 2,
                 parameters: defaultParams,
                 text: `my_array = [1, 2, 3, 4]`,
                 type: 'computational',
@@ -231,11 +237,13 @@ test('help-items-add-test', async () => {
         },
         segments: [
             {
+                id: 1,
                 parameters: defaultParams,
                 text: `my_array = [1, 2, 3, 4]\n\nmy_array = [1, 2, 3, 4]`,
                 type: 'computational',
             },
             {
+                id: 2,
                 parameters: defaultParams,
                 text: `my_array = [1, 2, 3, 4]`,
                 type: 'computational',
@@ -325,6 +333,7 @@ test('remove-readonly-when-project-is-create-test', async () => {
     } = mockContext();
     const uuid = '2cd18704-6c3f-48cb-96f1-9a923930f8cb';
     mockListFilesRequestWithDefaultFile(rpi);
+    mockListHunksRequestWithHunks(rpi);
 
     rpi.getUserInfoRequest = jest
         .fn()
@@ -420,6 +429,7 @@ test('display-name-new-project-test', async () => {
         projectsPageService,
     } = mockContext();
     mockListFilesRequestWithDefaultFile(rpi);
+    mockListHunksRequestWithHunks(rpi);
 
     rpi.getUserInfoRequest = jest
         .fn()

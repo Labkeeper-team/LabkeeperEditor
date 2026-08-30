@@ -47,6 +47,7 @@ MockViewModelRepositoryState {
     },
     "segments": [
       {
+        "id": 1,
         "parameters": {
           "visible": true,
         },
@@ -54,6 +55,7 @@ MockViewModelRepositoryState {
         "type": "md",
       },
       {
+        "id": 2,
         "parameters": {
           "visible": false,
         },
@@ -90,6 +92,7 @@ MockViewModelRepositoryState {
     },
     "segments": [
       {
+        "id": 1,
         "parameters": {
           "visible": true,
         },
@@ -97,6 +100,7 @@ MockViewModelRepositoryState {
         "type": "md",
       },
       {
+        "id": 2,
         "parameters": {
           "visible": false,
         },
@@ -194,6 +198,7 @@ MockViewModelRepositoryState {
     },
     "segments": [
       {
+        "id": 1,
         "parameters": {
           "visible": true,
         },
@@ -201,6 +206,7 @@ MockViewModelRepositoryState {
         "type": "md",
       },
       {
+        "id": 2,
         "parameters": {
           "visible": true,
         },
@@ -208,6 +214,7 @@ MockViewModelRepositoryState {
         "type": "md",
       },
       {
+        "id": 3,
         "parameters": {
           "visible": false,
         },
@@ -244,6 +251,7 @@ MockViewModelRepositoryState {
     },
     "segments": [
       {
+        "id": 1,
         "parameters": {
           "visible": true,
         },
@@ -251,6 +259,7 @@ MockViewModelRepositoryState {
         "type": "md",
       },
       {
+        "id": 2,
         "parameters": {
           "visible": true,
         },
@@ -258,6 +267,7 @@ MockViewModelRepositoryState {
         "type": "md",
       },
       {
+        "id": 3,
         "parameters": {
           "visible": false,
         },

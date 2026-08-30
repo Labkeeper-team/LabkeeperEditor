@@ -1,4 +1,4 @@
-import { Segment } from '../../model/domain.ts';
+import { Program, Segment } from '../../model/domain.ts';
 
 /** Segment id always matches 1-based position in the list. */
 export function resolveSegmentId(
@@ -15,10 +15,7 @@ export function renumberSegmentIds(segments: Segment[]): void {
 }
 
 /** Normalizes ids to 1..n by list order before save/API calls. */
-export function withSegmentIds(program: {
-    segments: Segment[];
-    parameters: { roundStrategy: string };
-}): { segments: Segment[]; parameters: { roundStrategy: string } } {
+export function withSegmentIds(program: Program): Program {
     return {
         segments: program.segments.map((segment, index) => ({
             ...segment,
