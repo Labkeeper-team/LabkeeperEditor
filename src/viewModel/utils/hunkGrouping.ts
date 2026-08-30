@@ -272,9 +272,42 @@ export function expandGroupsForDisplay(groups: HunkGroup[]): HunkGroup[] {
     return expanded.length > 0 ? expanded : groups;
 }
 
+function hunkLineCount(hunk: Hunk): number {
+    if (hunk.text != null) {
+        return hunk.text.split('\n').length;
+    }
+    if (hunk.startLine == null) {
+        return 0;
+    }
+    return Math.max((hunk.endLine ?? hunk.startLine) - hunk.startLine + 1, 0);
+}
+
+/** Maps a 1-based line from the pre-hunk document to the displayed document. */
+export function mapBaseLineToDisplayLine(
+    hunks: Hunk[],
+    baseLine: number
+): number {
+    let shift = 0;
+    for (const hunk of hunks) {
+        if (hunk.startLine == null) {
+            continue;
+        }
+        if (isLineAdd(hunk.type) && hunk.startLine < baseLine) {
+            shift += hunkLineCount(hunk);
+        } else if (isLineDelete(hunk.type)) {
+            const endLine = hunk.endLine ?? hunk.startLine;
+            if (endLine < baseLine) {
+                shift -= hunkLineCount(hunk);
+            }
+        }
+    }
+    return Math.max(baseLine + shift, 1);
+}
+
 export function resolveControlsLine(
     group: HunkGroup,
-    docLines: number
+    docLines: number,
+    targetHunks: Hunk[] = group.hunks
 ): number {
     if (group.isWholeSegment) {
         return docLines;
@@ -286,7 +319,10 @@ export function resolveControlsLine(
 
     if (group.addedLineRange) {
         const start = Math.min(
-            Math.max(group.addedLineRange.startLine, 1),
+            mapBaseLineToDisplayLine(
+                targetHunks,
+                group.addedLineRange.startLine
+            ),
             docLines
         );
         if (lineAdd?.text) {
@@ -300,9 +336,15 @@ export function resolveControlsLine(
         return end;
     }
     if (group.deletedLines.length > 0) {
-        return Math.min(Math.max(group.anchorLine, 1), docLines);
+        return Math.min(
+            mapBaseLineToDisplayLine(targetHunks, group.anchorLine),
+            docLines
+        );
     }
-    return Math.min(Math.max(group.controlsAfterLine, 1), docLines);
+    return Math.min(
+        mapBaseLineToDisplayLine(targetHunks, group.controlsAfterLine),
+        docLines
+    );
 }
 
 export function getNewSegmentHunkGroup(

@@ -5,6 +5,7 @@ import {
     mockGetProjectRequestWithDefaultProject,
     mockListFilesRequestWithDefaultFile,
     mockListHunksRequestWithHunks,
+    mockSaveProgramRequest,
     PROJECT_ID,
     USER_EMAIL,
     USER_ID,
@@ -146,14 +147,49 @@ test('acceptHunksInBackground removes hunks optimistically from UI', () => {
     expect(repository.ideViewModelRepository.hunks()).toEqual([]);
 });
 
-test('undo clears all hunks via acceptAllHunksInBackground', () => {
-    const { programEditorService, rpi, repository } = mockContext();
+test('undo clears remaining hunks and persists the pre-prompt program', async () => {
+    const { programEditorService, programService, rpi, repository } =
+        mockContext();
     setOwnAuthenticatedProject(repository);
     repository.ideViewModelRepository.setHunks([sampleHunk]);
     mockDeleteHunkRequest(rpi);
     mockListHunksRequestWithHunks(rpi, []);
+    mockSaveProgramRequest(rpi);
 
-    programEditorService.onPrevVersionButtonClicked();
+    const original = {
+        segments: [
+            {
+                id: 1,
+                type: 'md' as const,
+                text: 'before prompt',
+                parameters: { visible: true },
+            },
+        ],
+        parameters: { roundStrategy: 'noRound' as const },
+    };
+    const generated = {
+        ...original,
+        segments: [
+            ...original.segments,
+            {
+                id: 2,
+                type: 'md' as const,
+                text: 'generated',
+                parameters: { visible: true },
+            },
+        ],
+    };
+    programService.setNewProgram(original);
+    programService.replaceWithNewProgram(generated);
 
+    await programEditorService.onPrevVersionButtonClicked();
+
+    expect(programService.getCurrentProgram()).toEqual(original);
     expect(repository.ideViewModelRepository.hunks()).toEqual([]);
+    expect(rpi.deleteHunkRequest).toHaveBeenCalledWith(
+        PROJECT_ID,
+        sampleHunk.id,
+        false
+    );
+    expect(rpi.saveProgramRequest).toHaveBeenCalledWith(PROJECT_ID, original);
 });

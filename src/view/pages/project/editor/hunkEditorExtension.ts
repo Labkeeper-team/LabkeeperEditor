@@ -9,9 +9,13 @@ import {
     StateEffect,
     StateField,
     type Extension,
+    type Range,
 } from '@codemirror/state';
 import type { HunkGroup } from '../../../../viewModel/utils/hunkGrouping.ts';
-import { resolveControlsLine } from '../../../../viewModel/utils/hunkGrouping.ts';
+import {
+    mapBaseLineToDisplayLine,
+    resolveControlsLine,
+} from '../../../../viewModel/utils/hunkGrouping.ts';
 import { colors } from '../../../styles/colors';
 
 export type HunkEditorAction = 'accept' | 'revert';
@@ -241,61 +245,19 @@ class AddedLinesWidget extends WidgetType {
 
 function documentLinesMatchHunkText(
     state: EditorState,
-    range: { startLine: number; endLine: number },
+    startLine: number,
     text: string | undefined
 ): boolean {
     if (!text) {
         return true;
     }
     const expected = text.split('\n');
-    const actual: string[] = [];
-    for (
-        let lineNo = range.startLine;
-        lineNo <= range.endLine && lineNo <= state.doc.lines;
-        lineNo++
-    ) {
-        actual.push(state.doc.line(lineNo).text);
-    }
-    if (expected.length !== actual.length) {
+    if (startLine + expected.length - 1 > state.doc.lines) {
         return false;
     }
-    return expected.every((line, index) => line === actual[index]);
-}
-
-function clampDocLine(line: number, docLines: number): number {
-    return Math.min(Math.max(line, 1), docLines);
-}
-
-function deleteAnchorDocLine(group: HunkGroupView, docLines: number): number {
-    return clampDocLine(group.anchorLine, docLines);
-}
-
-function addGroupSharesDeleteStack(
-    groups: HunkGroupView[],
-    addGroup: HunkGroupView,
-    docLines: number
-): boolean {
-    if (addGroup.deletedLines.length > 0) {
-        return true;
-    }
-    if (!addGroup.addedLineRange) {
-        return false;
-    }
-    const addStart = clampDocLine(addGroup.addedLineRange.startLine, docLines);
-    const addEnd = clampDocLine(
-        resolveControlsLine(addGroup, docLines),
-        docLines
+    return expected.every(
+        (line, index) => state.doc.line(startLine + index).text === line
     );
-    for (const group of groups) {
-        if (!isDeleteOnlyGroup(group)) {
-            continue;
-        }
-        const deleteLine = deleteAnchorDocLine(group, docLines);
-        if (deleteLine >= addStart && deleteLine <= addEnd) {
-            return true;
-        }
-    }
-    return false;
 }
 
 function isDeleteOnlyGroup(group: HunkGroupView): boolean {
@@ -339,11 +301,18 @@ function buildHunkDecorations(
     canRevert: boolean,
     revertLabel: string
 ): DecorationSet {
-    const decorations: ReturnType<typeof Decoration.line>[] = [];
-    const widgets: ReturnType<typeof Decoration.widget>[] = [];
+    const decorations: Range<Decoration>[] = [];
+    const widgets: Range<Decoration>[] = [];
     const docLines = state.doc.lines;
     const sideByPos = new Map<number, number>();
     const sortedGroups = [...groups].sort(compareHunkGroupsForDisplay);
+    const targetHunks = [
+        ...new Map(
+            sortedGroups
+                .flatMap((group) => group.hunks)
+                .map((hunk) => [hunk.id, hunk])
+        ).values(),
+    ];
 
     for (const group of sortedGroups) {
         const ids = group.hunks.map((h) => h.id);
@@ -357,16 +326,19 @@ function buildHunkDecorations(
         let deleteOnlyControlsPos: number | null = null;
 
         if (group.deletedLines.length > 0) {
-            const anchor = Math.min(Math.max(group.anchorLine, 1), docLines);
+            const anchor = Math.min(
+                mapBaseLineToDisplayLine(targetHunks, group.anchorLine),
+                docLines
+            );
             const deletePos = state.doc.line(anchor).from;
             widgets.push(
                 Decoration.widget({
                     widget: new DeletedLinesWidget(group.deletedLines),
                     block: true,
-                    side: -1,
+                    side: -2,
                 }).range(deletePos)
             );
-            reserveSide(sideByPos, deletePos, -1);
+            reserveSide(sideByPos, deletePos, -2);
             if (isDeleteOnlyGroup(group)) {
                 deleteOnlyControlsPos = deletePos;
             }
@@ -375,40 +347,27 @@ function buildHunkDecorations(
         const lineAddHunk = group.hunks.find(
             (h) => h.type === 'addLinesToSegment' || h.type === 'addLinesToFile'
         );
-        const sharesDeleteStack = addGroupSharesDeleteStack(
-            sortedGroups,
-            group,
-            docLines
-        );
+        const addedStart = group.addedLineRange
+            ? Math.min(
+                  mapBaseLineToDisplayLine(
+                      targetHunks,
+                      group.addedLineRange.startLine
+                  ),
+                  docLines
+              )
+            : null;
         const addedTextMatchesDoc =
-            group.addedLineRange != null &&
+            addedStart != null &&
             lineAddHunk?.text != null &&
-            documentLinesMatchHunkText(
-                state,
-                group.addedLineRange,
-                lineAddHunk.text
-            );
+            documentLinesMatchHunkText(state, addedStart, lineAddHunk.text);
         const showAddedBlock =
             group.addedLineRange != null &&
             lineAddHunk?.text != null &&
-            (!addedTextMatchesDoc || sharesDeleteStack);
+            !addedTextMatchesDoc;
 
         if (showAddedBlock && group.addedLineRange) {
-            const start = clampDocLine(
-                group.addedLineRange.startLine,
-                docLines
-            );
-            const pos = sharesDeleteStack
-                ? state.doc.line(start).from
-                : (() => {
-                      const insertAfter = Math.min(
-                          Math.max(group.addedLineRange!.startLine - 1, 0),
-                          docLines
-                      );
-                      return insertAfter === 0
-                          ? 0
-                          : state.doc.line(insertAfter).to;
-                  })();
+            const insertAfter = Math.max((addedStart ?? 1) - 1, 0);
+            const pos = insertAfter === 0 ? 0 : state.doc.line(insertAfter).to;
             widgets.push(
                 Decoration.widget({
                     widget: new AddedLinesWidget(
@@ -419,20 +378,6 @@ function buildHunkDecorations(
                 }).range(pos)
             );
             controlsPos = pos;
-
-            if (addedTextMatchesDoc) {
-                const end = clampDocLine(
-                    resolveControlsLine(group, docLines),
-                    docLines
-                );
-                for (let lineNo = start; lineNo <= end; lineNo++) {
-                    decorations.push(
-                        Decoration.line({
-                            class: 'cm-hunk-added-source-line',
-                        }).range(state.doc.line(lineNo).from)
-                    );
-                }
-            }
         } else if (
             (group.isWholeSegment || group.isCreation) &&
             !group.isNewSegment
@@ -447,14 +392,8 @@ function buildHunkDecorations(
                 );
             }
         } else if (group.addedLineRange) {
-            const start = Math.min(
-                Math.max(group.addedLineRange.startLine, 1),
-                docLines
-            );
-            const end = Math.min(
-                Math.max(group.addedLineRange.endLine, start),
-                docLines
-            );
+            const start = addedStart ?? 1;
+            const end = resolveControlsLine(group, docLines, targetHunks);
             for (let lineNo = start; lineNo <= end; lineNo++) {
                 decorations.push(
                     Decoration.line({ class: addedClass }).range(
@@ -463,18 +402,18 @@ function buildHunkDecorations(
                 );
             }
             controlsPos = state.doc.line(
-                resolveControlsLine(group, docLines)
+                resolveControlsLine(group, docLines, targetHunks)
             ).to;
         }
 
         if (!group.isNewSegment) {
             if (deleteOnlyControlsPos != null) {
                 controlsPos = deleteOnlyControlsPos;
-                controlsSide = 1;
+                controlsSide = -1;
                 reserveSide(sideByPos, controlsPos, controlsSide);
             } else if (controlsPos == null) {
                 controlsPos = state.doc.line(
-                    resolveControlsLine(group, docLines)
+                    resolveControlsLine(group, docLines, targetHunks)
                 ).to;
                 controlsSide = takeNextSide(sideByPos, controlsPos);
             } else {
@@ -592,15 +531,6 @@ export const hunkEditorTheme = EditorView.theme({
     '.cm-hunk-added-line-ghost': {
         color: colors.gray10,
         minHeight: '1.2em',
-    },
-    '.cm-hunk-added-source-line': {
-        height: '0 !important',
-        overflow: 'hidden',
-        lineHeight: '0 !important',
-        paddingTop: '0 !important',
-        paddingBottom: '0 !important',
-        margin: '0 !important',
-        visibility: 'hidden',
     },
     '.cm-hunk-deleted-block': {
         backgroundColor: colors.red20,

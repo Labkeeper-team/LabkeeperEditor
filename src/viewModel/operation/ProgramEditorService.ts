@@ -231,8 +231,7 @@ export class ProgramEditorService {
         }
     };
 
-    onPrevVersionButtonClicked = () => {
-        this.hunkService?.acceptAllHunksInBackground();
+    onPrevVersionButtonClicked = async () => {
         const canUndo = this.programService.canUndo();
         const cursorHint = this.programService.undo();
         if (cursorHint) {
@@ -256,11 +255,12 @@ export class ProgramEditorService {
         }
         if (canUndo) {
             this.repository.ideViewModelRepository.markProgramChanged();
+            await this.hunkService?.acceptAllForHistoryChange();
+            await this.loaderService.segmentEditorSaveProgram();
         }
     };
 
-    onNextVersionButtonClicked = () => {
-        this.hunkService?.acceptAllHunksInBackground();
+    onNextVersionButtonClicked = async () => {
         const canRedo = this.programService.canRedo();
         const cursorHint = this.programService.redo();
         if (cursorHint) {
@@ -282,6 +282,8 @@ export class ProgramEditorService {
         }
         if (canRedo) {
             this.repository.ideViewModelRepository.markProgramChanged();
+            await this.hunkService?.acceptAllForHistoryChange();
+            await this.loaderService.segmentEditorSaveProgram();
         }
     };
 

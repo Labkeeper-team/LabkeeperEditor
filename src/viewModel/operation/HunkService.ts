@@ -165,6 +165,27 @@ export class HunkService {
         await this.acceptGroup(ids);
     };
 
+    acceptAllForHistoryChange = async (): Promise<void> => {
+        const ids = this.repository.ideViewModelRepository
+            .hunks()
+            .map((h) => h.id);
+        if (ids.length === 0) {
+            return;
+        }
+        this.removeHunksLocally(ids);
+        if (!this.repository.userViewModelRepository.isAuthenticated()) {
+            return;
+        }
+        const projectId = this.getProjectId();
+        if (!projectId) {
+            return;
+        }
+        await Promise.all(
+            ids.map((id) => this.rpi.deleteHunkRequest(projectId, id, false))
+        );
+        await this.loadHunks();
+    };
+
     revertAll = async (): Promise<void> => {
         if (!this.canRevertHunks()) {
             return;

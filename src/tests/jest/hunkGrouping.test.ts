@@ -4,6 +4,7 @@ import {
     groupHunks,
     hunksForFile,
     hunksForSegment,
+    mapBaseLineToDisplayLine,
     resolveControlsLine,
     shouldShowGlobalHunkBar,
     applyFileHunksToContent,
@@ -254,4 +255,59 @@ test('applyFileHunksToContent deletes old lines then inserts additions', () => {
 
 test('applyFileHunksToContent is a no-op without file hunks', () => {
     expect(applyFileHunksToContent('keep\n', [], 'notes.txt')).toBe('keep\n');
+});
+
+test('mapBaseLineToDisplayLine accumulates earlier hunk line deltas', () => {
+    const hunks: Hunk[] = [
+        {
+            id: 'add-before',
+            type: 'addLinesToFile',
+            fileName: 'notes.txt',
+            startLine: 2,
+            endLine: 3,
+            text: 'new 1\nnew 2',
+        },
+        {
+            id: 'delete-before',
+            type: 'deleteLinesFromFile',
+            fileName: 'notes.txt',
+            startLine: 5,
+            endLine: 6,
+            text: 'old 5\nold 6',
+        },
+        {
+            id: 'add-current',
+            type: 'addLinesToFile',
+            fileName: 'notes.txt',
+            startLine: 10,
+            endLine: 10,
+            text: 'new 10',
+        },
+    ];
+
+    expect(mapBaseLineToDisplayLine(hunks, 2)).toBe(2);
+    expect(mapBaseLineToDisplayLine(hunks, 5)).toBe(7);
+    expect(mapBaseLineToDisplayLine(hunks, 10)).toBe(10);
+});
+
+test('resolveControlsLine uses mapped display line and added text length', () => {
+    const earlierAdd: Hunk = {
+        id: 'earlier',
+        type: 'addLinesToSegment',
+        segmentId: 1,
+        startLine: 2,
+        endLine: 3,
+        text: 'first\nsecond',
+    };
+    const currentAdd: Hunk = {
+        id: 'current',
+        type: 'addLinesToSegment',
+        segmentId: 1,
+        startLine: 5,
+        endLine: 99,
+        text: 'current',
+    };
+    const group = groupHunks([currentAdd])[0];
+
+    expect(resolveControlsLine(group, 20, [earlierAdd, currentAdd])).toBe(7);
 });

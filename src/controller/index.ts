@@ -482,7 +482,7 @@ export class Controller {
     onPrevVersionButtonClickedRequest = createAsyncThunk(
         'onPrevVersionButtonClickedRequest',
         async () => {
-            this.wrapper('onPrevVersionButtonClickedRequest', () =>
+            await this.wrapper('onPrevVersionButtonClickedRequest', () =>
                 this.programEditorService.onPrevVersionButtonClicked()
             );
         }
@@ -491,7 +491,7 @@ export class Controller {
     onNextVersionButtonClickedRequest = createAsyncThunk(
         'onNextVersionButtonClickedRequest',
         async () => {
-            this.wrapper('onNextVersionButtonClickedRequest', () =>
+            await this.wrapper('onNextVersionButtonClickedRequest', () =>
                 this.programEditorService.onNextVersionButtonClicked()
             );
         }
@@ -883,9 +883,12 @@ export class Controller {
         }
     );
 
-    private wrapper = (name: string, method: () => void) => {
+    private wrapper = async <T>(
+        name: string,
+        method: () => T | Promise<T>
+    ): Promise<void> => {
         try {
-            method();
+            await method();
             console.info(`Invoking system operation [${name}]`);
         } catch (error) {
             this.observerService.onEvent(Events.FRONTEND_ERROR);
