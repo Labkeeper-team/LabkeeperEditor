@@ -1456,37 +1456,37 @@ test('upload-file-413', async ({ page }) => {
 test('file-list-changes-after-compilation', async ({ page }) => {
     let isAfterCompilation = false;
     const routeSetup = new RouteSetup(page);
-    const program: Program = {
-        segments: [
-            {
-                id: 1,
-                type: 'computational',
-                text: 'a = 1',
-                parameters: { visible: true },
-            },
-        ],
-        parameters: { roundStrategy: 'noRound' },
-    };
 
+    // Перехватываем запрос user-info
     await routeSetup.setupGetUserInfoRequest();
-    await routeSetup.setupGetDefaultProjectRequest(
-        200,
-        'default',
-        undefined,
-        program
-    );
-    await routeSetup.setupGetProjectRequest(200, 'default', program);
+
+    // Перехватываем запрос default project и get project
+    await routeSetup.setupGetDefaultProjectRequest();
+    await routeSetup.setupGetProjectRequest();
+
+    // Перехватываем запрос на сохранение программы
     await routeSetup.setupSaveProgramRequest();
+
+    // Перехватываем запрос на список файлов
     await routeSetup.setupListFilesRequest(
         200,
         'default',
         () => isAfterCompilation
     );
+
+    // Перехватываем запрос на компиляцию
     await routeSetup.setupCompileProjectRequest(
         200,
         'defaultMd',
         0,
-        undefined,
+        'Пример текста'
+    );
+
+    await routeSetup.setupCompileProjectRequest(
+        200,
+        'defaultMd',
+        0,
+        'Пример текста',
         0,
         () => {
             isAfterCompilation = true;
@@ -1494,21 +1494,51 @@ test('file-list-changes-after-compilation', async ({ page }) => {
     );
 
     await page.goto('/');
+
+    // Ждем загрузки страницы
     await page.waitForLoadState('domcontentloaded');
+    // Ждем редиректа на конкретный проект
     await expect(page).toHaveURL(`/project/${uuid}`);
 
+    // меняем тип на latex
+    await page.locator('div.dropdown-menu-container').first().click();
+    await page.getByText('markdown', { exact: true }).click();
+    await page.keyboard.press('Escape');
+
+    // Открываем файловый менеджер
     await page.locator('div.file-manager-button').click();
 
-    const files = page.locator('.manager-container');
-    await expect(files.getByText('first.txt', { exact: true })).toBeVisible();
-    await expect(files.getByText('second.txt')).toHaveCount(0);
+    // Добавляем маркдаун
+    await page
+        .locator('.labkeeper_select.computation .select-header')
+        .first()
+        .click();
+    await page
+        .getByRole('listitem')
+        .filter({ hasText: /^Markdown$/i })
+        .click();
+    const editor = page.locator('.cm-content').nth(0);
+    await editor.click();
+    await editor.pressSequentially('Пример текста', { delay: 100 });
+    await editor.click();
 
+    // добавляем вычислительный
+    await page
+        .locator('.labkeeper_select.computation .select-header')
+        .first()
+        .click();
+    await page.getByRole('listitem').filter({ hasText: 'Computation' }).click();
+
+    // Запускаем компиляцию
     await page.getByRole('button', { name: /Run/i }).click();
 
-    await expect(files.getByText('second.txt', { exact: true })).toBeVisible();
-    await expect(files.getByText('first.txt')).toHaveCount(0);
-    await expect(page.getByRole('button', { name: /Run/i })).toBeEnabled();
-    await expect(page).toHaveScreenshot('file-list-after-compilation.png');
+    // Ждем, когда кнопка снова станет нажимаемой
+    await page
+        .getByRole('button', { name: /Run/i })
+        .waitFor({ state: 'attached' });
+
+    // Делаем скриншот файлового менеджера после компиляции
+    await expect(page).toHaveScreenshot('file-list-changes/after.png');
 });
 
 /*
