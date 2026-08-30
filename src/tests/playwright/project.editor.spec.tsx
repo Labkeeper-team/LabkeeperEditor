@@ -232,7 +232,7 @@ test('insert-segment-between', async ({ page }) => {
     await page.getByText('Delete').last().click();
 
     await expect(page).toHaveScreenshot(`insert-segment-between2.png`, {
-        maxDiffPixels: 1500,
+        maxDiffPixels: maxDifferentPixelsFor4Segments,
     });
 
     // удаляем asciimath
