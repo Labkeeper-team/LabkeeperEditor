@@ -28,11 +28,12 @@
 .project-left-column {
     position: relative;
     display: flex;
-    flex: 1;
+    flex: 1 1 0;
     min-width: 0;
     min-height: 0;
     flex-direction: row;
     gap: 8px;
+    overflow: hidden;
 
     @media screen and (max-width: 1024px) {
         gap: 4px;
