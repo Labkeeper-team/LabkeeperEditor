@@ -19,7 +19,6 @@ import { useIsMobile } from '../../hooks/useMobile';
 import { setMobileView } from '../../store/slices/settings';
 import { refreshCodeMirrorLayout } from '../../utils/refreshCodeMirrorLayout';
 import { useHunkActionHandler } from '../../hooks/useHunkEditorSync';
-import { HunkGlobalButtons } from '../../components/hunkGlobalButtons';
 
 export const ProjectPage = () => {
     useHunkActionHandler();
@@ -193,7 +192,6 @@ export const ProjectPage = () => {
                 >
                     <Editor />
                 </div>
-                <HunkGlobalButtons />
             </div>
             <div
                 className={classNames('project-pane', 'project-pane--pdf', {

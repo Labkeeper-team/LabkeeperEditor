@@ -54,6 +54,7 @@ export class HunkService {
             this.repository.ideViewModelRepository.setHunks(
                 result.body.hunks ?? []
             );
+            await this.textFileEditorService.reloadActiveTextFileIfOpen();
         } else if (result.isUnauth) {
             this.repository.ideViewModelRepository.setHunks([]);
         } else if (!result.isForbidden) {
@@ -62,11 +63,8 @@ export class HunkService {
     };
 
     setHunksFromPrompt = (hunks: Hunk[]): void => {
-        if (!this.shouldShowHunks()) {
-            this.repository.ideViewModelRepository.setHunks(hunks);
-            return;
-        }
         this.repository.ideViewModelRepository.setHunks(hunks);
+        void this.textFileEditorService.reloadActiveTextFileIfOpen();
     };
 
     clearHunks = (): void => {
@@ -109,7 +107,6 @@ export class HunkService {
             );
         }
         await this.loaderService.loadFiles(projectId);
-        await this.textFileEditorService.reloadActiveTextFileIfOpen();
         await this.loadHunks();
     }
 

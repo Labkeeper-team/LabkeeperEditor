@@ -2,7 +2,6 @@ import { memo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, StorageState } from '../../store';
 import { useDictionary } from '../../store/selectors/translations';
-import { useIsMobile } from '../../hooks/useMobile';
 import { useIsProjectReadonly } from '../../store/selectors/program.ts';
 import { controller } from '../../../main.tsx';
 import {
@@ -14,7 +13,6 @@ import './hunkGlobalButtons.scss';
 export const HunkGlobalButtons = memo(() => {
     const dispatch = useDispatch<AppDispatch>();
     const dictionary = useSelector(useDictionary);
-    const isMobile = useIsMobile();
     const isReadonly = useSelector(useIsProjectReadonly);
     const isAuthenticated = useSelector(
         (state: StorageState) => state.user.isAuthenticated
@@ -26,7 +24,7 @@ export const HunkGlobalButtons = memo(() => {
     const changeCount = useSelector(selectGroupedHunkCount);
     const showGlobalBar = useSelector(selectShouldShowGlobalHunkBar);
 
-    if (isMobile || isReadonly || !showGlobalBar) {
+    if (isReadonly || !showGlobalBar) {
         return null;
     }
 

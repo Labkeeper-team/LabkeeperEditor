@@ -492,3 +492,67 @@ export function hunksForSegment(hunks: Hunk[], segmentId: number): Hunk[] {
 export function hunksForFile(hunks: Hunk[], fileName: string): Hunk[] {
     return hunks.filter((h) => h.fileName === fileName);
 }
+
+/**
+ * File on disk is the old document; hunk line numbers are against that base.
+ * Apply deletes then inserts (bottom-to-top) so the editor shows the new state,
+ * matching how segment hunks are displayed.
+ */
+export function applyFileHunksToContent(
+    content: string,
+    hunks: Hunk[],
+    fileName: string
+): string {
+    const fileHunks = hunksForFile(hunks, fileName).filter(
+        (hunk) =>
+            isLineDelete(hunk.type) ||
+            (isLineAdd(hunk.type) && hunk.text != null)
+    );
+    if (fileHunks.length === 0) {
+        return content;
+    }
+
+    const normalized = content.replace(/\r\n/g, '\n');
+    const endsWithNewline = normalized.endsWith('\n');
+    const lines =
+        normalized === ''
+            ? []
+            : (endsWithNewline ? normalized.slice(0, -1) : normalized).split(
+                  '\n'
+              );
+
+    const ops = [...fileHunks].sort((a, b) => {
+        const lineA = a.startLine ?? 1;
+        const lineB = b.startLine ?? 1;
+        if (lineA !== lineB) {
+            return lineB - lineA;
+        }
+        if (isLineDelete(a.type) !== isLineDelete(b.type)) {
+            return isLineDelete(a.type) ? -1 : 1;
+        }
+        return 0;
+    });
+
+    for (const op of ops) {
+        const start = Math.max((op.startLine ?? 1) - 1, 0);
+        if (isLineDelete(op.type)) {
+            const endInclusive = op.endLine ?? op.startLine ?? 1;
+            const count = Math.min(
+                Math.max(endInclusive - start, 0),
+                Math.max(lines.length - start, 0)
+            );
+            if (count > 0 && start < lines.length) {
+                lines.splice(start, count);
+            }
+            continue;
+        }
+        if (op.text != null) {
+            lines.splice(start, 0, ...op.text.split('\n'));
+        }
+    }
+
+    if (lines.length === 0) {
+        return endsWithNewline ? '\n' : '';
+    }
+    return lines.join('\n') + (endsWithNewline ? '\n' : '');
+}

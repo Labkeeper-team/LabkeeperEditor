@@ -6,6 +6,7 @@ import {
     hunksForSegment,
     resolveControlsLine,
     shouldShowGlobalHunkBar,
+    applyFileHunksToContent,
 } from '../../viewModel/utils/hunkGrouping.ts';
 import { Hunk } from '../../model/domain.ts';
 
@@ -223,4 +224,34 @@ test('hunksForSegment and hunksForFile filter by target', () => {
     ];
     expect(hunksForSegment(hunks, 1)).toHaveLength(1);
     expect(hunksForFile(hunks, 'main.tex')).toHaveLength(1);
+});
+
+test('applyFileHunksToContent deletes old lines then inserts additions', () => {
+    const hunks: Hunk[] = [
+        {
+            id: '40b728ff-82d9-4e4a-8b4b-89b49110ca9b',
+            type: 'deleteLinesFromFile',
+            fileName: 'notes.txt',
+            startLine: 2,
+            endLine: 7,
+            text: '1\n2\n3\n4\n55\n6',
+        },
+        {
+            id: 'ffa6f9d9-c028-4193-be23-f412b5eb6d44',
+            type: 'addLinesToFile',
+            fileName: 'notes.txt',
+            startLine: 1,
+            endLine: 1,
+            text: 'ахаха',
+        },
+    ];
+    const fileOnDisk = 'header\n1\n2\n3\n4\n55\n6\n';
+
+    expect(applyFileHunksToContent(fileOnDisk, hunks, 'notes.txt')).toBe(
+        'ахаха\nheader\n'
+    );
+});
+
+test('applyFileHunksToContent is a no-op without file hunks', () => {
+    expect(applyFileHunksToContent('keep\n', [], 'notes.txt')).toBe('keep\n');
 });

@@ -9,7 +9,10 @@ import {
     isImageFilePath,
     isTextFilePath,
 } from '../../view/pages/project/fileManager/svarFileTreeAdapter.ts';
-import { getFileContentFromHunks } from '../utils/hunkGrouping.ts';
+import {
+    applyFileHunksToContent,
+    getFileContentFromHunks,
+} from '../utils/hunkGrouping.ts';
 
 export class TextFileEditorService {
     repository: ViewModelRepository;
@@ -111,7 +114,13 @@ export class TextFileEditorService {
             ) {
                 return;
             }
-            this.repository.ideViewModelRepository.setTextFileContent(content);
+            this.repository.ideViewModelRepository.setTextFileContent(
+                applyFileHunksToContent(
+                    content,
+                    this.repository.ideViewModelRepository.hunks(),
+                    fileName
+                )
+            );
             this.repository.ideViewModelRepository.resetTextFileRevisions();
             this.repository.ideViewModelRepository.setLoadTextFileRequestState(
                 'ok'
