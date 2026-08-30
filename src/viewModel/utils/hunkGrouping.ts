@@ -490,13 +490,30 @@ export function hunksForSegment(hunks: Hunk[], segmentId: number): Hunk[] {
 }
 
 export function hunksForFile(hunks: Hunk[], fileName: string): Hunk[] {
-    return hunks.filter((h) => h.fileName === fileName);
+    return hunks.filter(
+        (h) => h.fileName != null && projectFilePathsMatch(h.fileName, fileName)
+    );
+}
+
+function linesMatchAt(
+    lines: string[],
+    start: number,
+    expected: string[]
+): boolean {
+    if (expected.length === 0) {
+        return true;
+    }
+    if (start < 0 || start + expected.length > lines.length) {
+        return false;
+    }
+    return expected.every((line, index) => lines[start + index] === line);
 }
 
 /**
  * File on disk is the old document; hunk line numbers are against that base.
  * Apply deletes then inserts (bottom-to-top) so the editor shows the new state,
  * matching how segment hunks are displayed.
+ * Already-applied hunks are skipped so reopening the same file does not duplicate.
  */
 export function applyFileHunksToContent(
     content: string,
@@ -536,9 +553,13 @@ export function applyFileHunksToContent(
     for (const op of ops) {
         const start = Math.max((op.startLine ?? 1) - 1, 0);
         if (isLineDelete(op.type)) {
+            const expected = op.text != null ? op.text.split('\n') : null;
+            if (expected && !linesMatchAt(lines, start, expected)) {
+                continue;
+            }
             const endInclusive = op.endLine ?? op.startLine ?? 1;
             const count = Math.min(
-                Math.max(endInclusive - start, 0),
+                expected?.length ?? Math.max(endInclusive - start, 0),
                 Math.max(lines.length - start, 0)
             );
             if (count > 0 && start < lines.length) {
@@ -547,7 +568,11 @@ export function applyFileHunksToContent(
             continue;
         }
         if (op.text != null) {
-            lines.splice(start, 0, ...op.text.split('\n'));
+            const inserted = op.text.split('\n');
+            if (linesMatchAt(lines, start, inserted)) {
+                continue;
+            }
+            lines.splice(start, 0, ...inserted);
         }
     }
 

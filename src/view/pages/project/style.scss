@@ -33,7 +33,8 @@
     min-height: 0;
     flex-direction: row;
     gap: 8px;
-    overflow: hidden;
+    overflow: visible;
+    z-index: 2;
 
     @media screen and (max-width: 1024px) {
         gap: 4px;
@@ -44,6 +45,8 @@
         flex-direction: column;
         width: 100%;
         min-height: 0;
+        overflow: hidden;
+        z-index: auto;
     }
 }
 

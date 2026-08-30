@@ -247,9 +247,9 @@ test('applyFileHunksToContent deletes old lines then inserts additions', () => {
     ];
     const fileOnDisk = 'header\n1\n2\n3\n4\n55\n6\n';
 
-    expect(applyFileHunksToContent(fileOnDisk, hunks, 'notes.txt')).toBe(
-        'ахаха\nheader\n'
-    );
+    const applied = applyFileHunksToContent(fileOnDisk, hunks, 'notes.txt');
+    expect(applied).toBe('ахаха\nheader\n');
+    expect(applyFileHunksToContent(applied, hunks, 'notes.txt')).toBe(applied);
 });
 
 test('applyFileHunksToContent is a no-op without file hunks', () => {

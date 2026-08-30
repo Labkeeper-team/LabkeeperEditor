@@ -67,9 +67,11 @@ export class TextFileEditorService {
                 clearTimeout(this.saveTimeout);
                 this.saveTimeout = null;
             }
-            const saved = await this.flushSave();
-            if (!saved) {
-                return;
+            if (this.hasUnsavedTextFile() || this.savePromise) {
+                const saved = await this.flushSave();
+                if (!saved) {
+                    return;
+                }
             }
         }
 
@@ -197,9 +199,11 @@ export class TextFileEditorService {
             clearTimeout(this.saveTimeout);
             this.saveTimeout = null;
         }
-        const saved = await this.flushSave();
-        if (!saved) {
-            return false;
+        if (this.hasUnsavedTextFile() || this.savePromise) {
+            const saved = await this.flushSave();
+            if (!saved) {
+                return false;
+            }
         }
         this.loadRequestId += 1;
         this.repository.ideViewModelRepository.setActiveTextFile(null);
@@ -285,6 +289,16 @@ export class TextFileEditorService {
                 updatedPath
             );
         }
+    };
+
+    private hasUnsavedTextFile = (): boolean => {
+        if (this.pendingSaveContent != null) {
+            return true;
+        }
+        return (
+            this.repository.ideViewModelRepository.textFileChangeRevision() !==
+            this.repository.ideViewModelRepository.savedTextFileRevision()
+        );
     };
 
     private flushSave = async (): Promise<boolean> => {
