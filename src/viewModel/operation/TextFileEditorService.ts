@@ -1,3 +1,4 @@
+import { Hunk } from '../../model/domain.ts';
 import { ViewModelRepository } from '../repository';
 import { Rpi } from '../../model/rpi';
 import { IdeService } from '../domain/IdeService.ts';
@@ -13,6 +14,11 @@ import {
     applyFileHunksToContent,
     getFileContentFromHunks,
 } from '../utils/hunkGrouping.ts';
+
+type OpenTextFileOptions = {
+    silent?: boolean;
+    hunksOverride?: Hunk[];
+};
 
 export class TextFileEditorService {
     repository: ViewModelRepository;
@@ -43,53 +49,70 @@ export class TextFileEditorService {
         this.hunkService = hunkService;
     };
 
-    reloadActiveTextFileIfOpen = async (): Promise<void> => {
+    reloadActiveTextFileIfOpen = async (
+        hunksOverride?: Hunk[]
+    ): Promise<void> => {
         const fileName =
             this.repository.ideViewModelRepository.activeTextFile();
         if (!fileName) {
             return;
         }
-        await this.onTextFileOpened(fileName);
+        await this.onTextFileOpened(fileName, {
+            silent: true,
+            hunksOverride,
+        });
     };
 
-    onTextFileOpened = async (fileName: string) => {
+    onTextFileOpened = async (
+        fileName: string,
+        options?: OpenTextFileOptions
+    ) => {
         if (!isTextFilePath(fileName)) {
             return;
         }
         const file = this.repository.projectViewModelRepository
             .files()
             .find((item) => item.fileName === fileName);
+        const hunks =
+            options?.hunksOverride ??
+            this.repository.ideViewModelRepository.hunks();
 
         const currentFile =
             this.repository.ideViewModelRepository.activeTextFile();
-        if (currentFile) {
-            if (this.saveTimeout) {
-                clearTimeout(this.saveTimeout);
-                this.saveTimeout = null;
-            }
-            if (this.hasUnsavedTextFile() || this.savePromise) {
-                const saved = await this.flushSave();
-                if (!saved) {
-                    return;
+        const silent = options?.silent === true && currentFile === fileName;
+
+        if (!silent) {
+            if (currentFile) {
+                if (this.saveTimeout) {
+                    clearTimeout(this.saveTimeout);
+                    this.saveTimeout = null;
+                }
+                if (this.hasUnsavedTextFile() || this.savePromise) {
+                    const saved = await this.flushSave();
+                    if (!saved) {
+                        return;
+                    }
                 }
             }
+
+            this.repository.ideViewModelRepository.setActiveImageFile(null);
+            this.repository.ideViewModelRepository.setActiveTextFile(fileName);
+            this.repository.ideViewModelRepository.setTextFileContent('');
+            this.repository.ideViewModelRepository.setSaveTextFileRequestState(
+                'ok'
+            );
         }
 
         const loadRequestId = ++this.loadRequestId;
-        this.repository.ideViewModelRepository.setActiveImageFile(null);
-        this.repository.ideViewModelRepository.setActiveTextFile(fileName);
-        this.repository.ideViewModelRepository.setTextFileContent('');
-        this.repository.ideViewModelRepository.setSaveTextFileRequestState(
-            'ok'
-        );
 
         if (!file) {
-            const hunkContent = getFileContentFromHunks(
-                this.repository.ideViewModelRepository.hunks(),
-                fileName
-            );
+            const hunkContent = getFileContentFromHunks(hunks, fileName);
             if (hunkContent === null) {
-                this.repository.ideViewModelRepository.setActiveTextFile(null);
+                if (!silent) {
+                    this.repository.ideViewModelRepository.setActiveTextFile(
+                        null
+                    );
+                }
                 return;
             }
             this.repository.ideViewModelRepository.setTextFileContent(
@@ -102,12 +125,17 @@ export class TextFileEditorService {
             return;
         }
 
-        this.repository.ideViewModelRepository.setLoadTextFileRequestState(
-            'loading'
-        );
+        if (!silent) {
+            this.repository.ideViewModelRepository.setLoadTextFileRequestState(
+                'loading'
+            );
+        }
 
         try {
             const response = await fetch(file.url, { cache: 'no-store' });
+            if (!response.ok) {
+                throw new Error(`file-load-${response.status}`);
+            }
             const content = await response.text();
             if (
                 loadRequestId !== this.loadRequestId ||
@@ -117,11 +145,7 @@ export class TextFileEditorService {
                 return;
             }
             this.repository.ideViewModelRepository.setTextFileContent(
-                applyFileHunksToContent(
-                    content,
-                    this.repository.ideViewModelRepository.hunks(),
-                    fileName
-                )
+                applyFileHunksToContent(content, hunks, fileName)
             );
             this.repository.ideViewModelRepository.resetTextFileRevisions();
             this.repository.ideViewModelRepository.setLoadTextFileRequestState(
@@ -135,14 +159,28 @@ export class TextFileEditorService {
             ) {
                 return;
             }
-            this.repository.ideViewModelRepository.setLoadTextFileRequestState(
-                'error'
-            );
-            this.repository.toast(
-                this.repository.dictionary.filemanager.errors.internalError,
-                'error'
-            );
+            if (silent) {
+                return;
+            }
+            this.failTextFileLoad();
         }
+    };
+
+    private failTextFileLoad = () => {
+        this.loadRequestId += 1;
+        this.repository.ideViewModelRepository.setActiveTextFile(null);
+        this.repository.ideViewModelRepository.setTextFileContent('');
+        this.repository.ideViewModelRepository.setLoadTextFileRequestState(
+            'unknown'
+        );
+        this.repository.ideViewModelRepository.setSaveTextFileRequestState(
+            'unknown'
+        );
+        this.repository.ideViewModelRepository.resetTextFileRevisions();
+        this.repository.toast(
+            this.repository.dictionary.filemanager.errors.internalError,
+            'error'
+        );
     };
 
     onImageFileOpened = async (fileName: string) => {

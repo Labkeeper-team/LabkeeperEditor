@@ -51,10 +51,105 @@ function createHunkSpinner(className: string): HTMLSpanElement {
     return spinner;
 }
 
+function setHunkButtonLoading(
+    button: HTMLButtonElement,
+    label: string,
+    loading: boolean,
+    spinnerClassName: string
+): void {
+    button.disabled = loading;
+    button.classList.toggle('cm-hunk-btn--loading', loading);
+    button.replaceChildren();
+    if (loading) {
+        button.appendChild(createHunkSpinner(spinnerClassName));
+        return;
+    }
+    button.textContent = label;
+}
+
+function appendHunkControls(
+    parent: HTMLElement,
+    hunkIds: string[],
+    pending: boolean,
+    canRevert: boolean,
+    acceptLabel: string,
+    revertLabel: string
+): void {
+    const wrap = document.createElement('div');
+    wrap.className = 'cm-hunk-controls';
+    wrap.contentEditable = 'false';
+    wrap.appendChild(
+        createHunkButton(
+            'cm-hunk-btn cm-hunk-btn--accept',
+            acceptLabel,
+            pending,
+            'cm-hunk-btn__spinner cm-hunk-btn__spinner--accept',
+            () =>
+                hunkActionHandler?.({
+                    action: 'accept',
+                    hunkIds,
+                })
+        )
+    );
+    if (canRevert) {
+        wrap.appendChild(
+            createHunkButton(
+                'cm-hunk-btn cm-hunk-btn--revert',
+                revertLabel,
+                pending,
+                'cm-hunk-btn__spinner cm-hunk-btn__spinner--revert',
+                () =>
+                    hunkActionHandler?.({
+                        action: 'revert',
+                        hunkIds,
+                    })
+            )
+        );
+    }
+    parent.appendChild(wrap);
+}
+
+function syncHunkControls(
+    dom: HTMLElement,
+    pending: boolean,
+    canRevert: boolean,
+    acceptLabel: string,
+    revertLabel: string
+): boolean {
+    const acceptBtn = dom.querySelector(
+        '.cm-hunk-btn--accept'
+    ) as HTMLButtonElement | null;
+    if (!acceptBtn) {
+        return false;
+    }
+    setHunkButtonLoading(
+        acceptBtn,
+        acceptLabel,
+        pending,
+        'cm-hunk-btn__spinner cm-hunk-btn__spinner--accept'
+    );
+    const revertBtn = dom.querySelector(
+        '.cm-hunk-btn--revert'
+    ) as HTMLButtonElement | null;
+    if (canRevert) {
+        if (!revertBtn) {
+            return false;
+        }
+        setHunkButtonLoading(
+            revertBtn,
+            revertLabel,
+            pending,
+            'cm-hunk-btn__spinner cm-hunk-btn__spinner--revert'
+        );
+    } else if (revertBtn) {
+        return false;
+    }
+    return true;
+}
+
 function createHunkButton(
     className: string,
     label: string,
-    disabled: boolean,
     loading: boolean,
     spinnerClassName: string,
     onClick: () => void
@@ -64,18 +159,15 @@ function createHunkButton(
     button.className = className;
     button.setAttribute('aria-label', label);
     button.title = label;
-    button.disabled = disabled;
-    if (loading) {
-        button.classList.add('cm-hunk-btn--loading');
-        button.appendChild(createHunkSpinner(spinnerClassName));
-    } else {
-        button.textContent = label;
-        button.addEventListener('click', (event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            onClick();
-        });
-    }
+    button.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (button.disabled) {
+            return;
+        }
+        onClick();
+    });
+    setHunkButtonLoading(button, label, loading, spinnerClassName);
     return button;
 }
 
@@ -103,59 +195,28 @@ class HunkControlsWidget extends WidgetType {
         );
     }
 
-    compare(other: WidgetType): number {
-        if (other instanceof HunkControlsWidget) {
-            return this.hunkIds
-                .join(',')
-                .localeCompare(other.hunkIds.join(','));
-        }
-        if (other instanceof DeletedLinesWidget) {
-            return 1;
-        }
-        if (other instanceof AddedLinesWidget) {
-            return 1;
-        }
-        return 0;
+    updateDOM(dom: HTMLElement): boolean {
+        return syncHunkControls(
+            dom,
+            this.pending,
+            this.canRevert,
+            this.acceptLabel,
+            this.revertLabel
+        );
     }
 
     toDOM(): HTMLElement {
         const wrap = document.createElement('div');
-        wrap.className = 'cm-hunk-controls';
         wrap.contentEditable = 'false';
-
-        wrap.appendChild(
-            createHunkButton(
-                'cm-hunk-btn cm-hunk-btn--accept',
-                this.acceptLabel,
-                this.pending,
-                this.pending,
-                'cm-hunk-btn__spinner cm-hunk-btn__spinner--accept',
-                () =>
-                    hunkActionHandler?.({
-                        action: 'accept',
-                        hunkIds: this.hunkIds,
-                    })
-            )
+        appendHunkControls(
+            wrap,
+            this.hunkIds,
+            this.pending,
+            this.canRevert,
+            this.acceptLabel,
+            this.revertLabel
         );
-
-        if (this.canRevert) {
-            wrap.appendChild(
-                createHunkButton(
-                    'cm-hunk-btn cm-hunk-btn--revert',
-                    this.revertLabel,
-                    this.pending,
-                    this.pending,
-                    'cm-hunk-btn__spinner cm-hunk-btn__spinner--revert',
-                    () =>
-                        hunkActionHandler?.({
-                            action: 'revert',
-                            hunkIds: this.hunkIds,
-                        })
-                )
-            );
-        }
-
-        return wrap;
+        return wrap.firstElementChild as HTMLElement;
     }
 
     ignoreEvent(): boolean {
@@ -164,7 +225,16 @@ class HunkControlsWidget extends WidgetType {
 }
 
 class DeletedLinesWidget extends WidgetType {
-    constructor(private readonly lines: string[]) {
+    constructor(
+        private readonly lines: string[],
+        private readonly controls: {
+            hunkIds: string[];
+            pending: boolean;
+            canRevert: boolean;
+            acceptLabel: string;
+            revertLabel: string;
+        } | null = null
+    ) {
         super();
     }
 
@@ -172,14 +242,35 @@ class DeletedLinesWidget extends WidgetType {
         if (!(other instanceof DeletedLinesWidget)) {
             return false;
         }
-        return other.lines.join('\n') === this.lines.join('\n');
+        if (other.lines.join('\n') !== this.lines.join('\n')) {
+            return false;
+        }
+        if (this.controls == null || other.controls == null) {
+            return this.controls == other.controls;
+        }
+        return (
+            other.controls.pending === this.controls.pending &&
+            other.controls.canRevert === this.controls.canRevert &&
+            other.controls.acceptLabel === this.controls.acceptLabel &&
+            other.controls.revertLabel === this.controls.revertLabel &&
+            other.controls.hunkIds.join(',') === this.controls.hunkIds.join(',')
+        );
     }
 
-    compare(other: WidgetType): number {
-        if (other instanceof DeletedLinesWidget) {
-            return this.lines.join('\n').localeCompare(other.lines.join('\n'));
+    updateDOM(dom: HTMLElement, _view: EditorView, from: this): boolean {
+        if (this.controls == null || from.controls == null) {
+            return false;
         }
-        return -1;
+        if (from.lines.join('\n') !== this.lines.join('\n')) {
+            return false;
+        }
+        return syncHunkControls(
+            dom,
+            this.controls.pending,
+            this.controls.canRevert,
+            this.controls.acceptLabel,
+            this.controls.revertLabel
+        );
     }
 
     toDOM(): HTMLElement {
@@ -191,6 +282,16 @@ class DeletedLinesWidget extends WidgetType {
             row.className = 'cm-hunk-deleted-line';
             row.textContent = line.length > 0 ? line : ' ';
             block.appendChild(row);
+        }
+        if (this.controls) {
+            appendHunkControls(
+                block,
+                this.controls.hunkIds,
+                this.controls.pending,
+                this.controls.canRevert,
+                this.controls.acceptLabel,
+                this.controls.revertLabel
+            );
         }
         return block;
     }
@@ -210,19 +311,6 @@ class AddedLinesWidget extends WidgetType {
             return false;
         }
         return other.lines.join('\n') === this.lines.join('\n');
-    }
-
-    compare(other: WidgetType): number {
-        if (other instanceof AddedLinesWidget) {
-            return this.lines.join('\n').localeCompare(other.lines.join('\n'));
-        }
-        if (other instanceof DeletedLinesWidget) {
-            return 1;
-        }
-        if (other instanceof HunkControlsWidget) {
-            return -1;
-        }
-        return 0;
     }
 
     toDOM(): HTMLElement {
@@ -323,7 +411,7 @@ function buildHunkDecorations(
 
         let controlsPos: number | null = null;
         let controlsSide: number;
-        let deleteOnlyControlsPos: number | null = null;
+        const deleteOnly = isDeleteOnlyGroup(group);
 
         if (group.deletedLines.length > 0) {
             const anchor = Math.min(
@@ -333,15 +421,23 @@ function buildHunkDecorations(
             const deletePos = state.doc.line(anchor).from;
             widgets.push(
                 Decoration.widget({
-                    widget: new DeletedLinesWidget(group.deletedLines),
+                    widget: new DeletedLinesWidget(
+                        group.deletedLines,
+                        deleteOnly
+                            ? {
+                                  hunkIds: ids,
+                                  pending,
+                                  canRevert,
+                                  acceptLabel: group.acceptLabel,
+                                  revertLabel,
+                              }
+                            : null
+                    ),
                     block: true,
                     side: -2,
                 }).range(deletePos)
             );
             reserveSide(sideByPos, deletePos, -2);
-            if (isDeleteOnlyGroup(group)) {
-                deleteOnlyControlsPos = deletePos;
-            }
         }
 
         const lineAddHunk = group.hunks.find(
@@ -406,12 +502,8 @@ function buildHunkDecorations(
             ).to;
         }
 
-        if (!group.isNewSegment) {
-            if (deleteOnlyControlsPos != null) {
-                controlsPos = deleteOnlyControlsPos;
-                controlsSide = -1;
-                reserveSide(sideByPos, controlsPos, controlsSide);
-            } else if (controlsPos == null) {
+        if (!group.isNewSegment && !deleteOnly) {
+            if (controlsPos == null) {
                 controlsPos = state.doc.line(
                     resolveControlsLine(group, docLines, targetHunks)
                 ).to;
@@ -552,7 +644,7 @@ export const hunkEditorTheme = EditorView.theme({
         alignItems: 'center',
         gap: '0',
         marginTop: '4px',
-        marginBottom: '6px',
+        marginBottom: '0',
         paddingRight: '8px',
         userSelect: 'none',
     },
@@ -560,7 +652,9 @@ export const hunkEditorTheme = EditorView.theme({
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
+        boxSizing: 'border-box',
         minHeight: '28px',
+        minWidth: '72px',
         padding: '4px 12px',
         borderRadius: '6px',
         border: 'none',
@@ -584,7 +678,7 @@ export const hunkEditorTheme = EditorView.theme({
         cursor: 'default',
     },
     '.cm-hunk-btn--loading': {
-        minWidth: '72px',
+        pointerEvents: 'none',
     },
     '.cm-hunk-btn__spinner': {
         width: '14px',

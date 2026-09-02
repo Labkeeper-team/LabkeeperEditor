@@ -51,10 +51,11 @@ export class HunkService {
         }
         const result = await this.rpi.listHunksRequest(project.projectId);
         if (result.isOk) {
-            this.repository.ideViewModelRepository.setHunks(
-                result.body.hunks ?? []
+            const nextHunks = result.body.hunks ?? [];
+            this.repository.ideViewModelRepository.setHunks(nextHunks);
+            await this.textFileEditorService.reloadActiveTextFileIfOpen(
+                nextHunks
             );
-            await this.textFileEditorService.reloadActiveTextFileIfOpen();
         } else if (result.isUnauth) {
             this.repository.ideViewModelRepository.setHunks([]);
         } else if (!result.isForbidden) {
@@ -100,14 +101,14 @@ export class HunkService {
             return;
         }
         const projectResult = await this.rpi.getProjectRequest(projectId);
+        await this.loaderService.loadFiles(projectId);
+        await this.loadHunks();
         if (projectResult.isOk) {
             this.ideService.setNewProgram(
                 projectResult.body.program,
                 projectResult.body.lastProgramResult
             );
         }
-        await this.loaderService.loadFiles(projectId);
-        await this.loadHunks();
     }
 
     private async refreshAfterAccept(): Promise<void> {

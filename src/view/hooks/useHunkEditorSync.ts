@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useLayoutEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { EditorView } from '@codemirror/view';
 import { AppDispatch, StorageState } from '../store';
@@ -108,7 +108,7 @@ export function useSyncHunksToEditorView(
         dictionary.hunks.revert,
     ]);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         sync();
     }, [sync, viewEpoch]);
 }
