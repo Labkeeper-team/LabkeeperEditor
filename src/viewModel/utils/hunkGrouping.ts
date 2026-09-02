@@ -484,7 +484,7 @@ export function fileHunkEntryForPath(
     return entries.find((entry) => projectFilePathsMatch(entry.fileName, path));
 }
 
-/** Global accept/reject bar: two or more hunks, several groups, or both file and segment hunks. */
+/** Global accept/reject bar: any pending change, including a single hunk. */
 export function shouldShowGlobalHunkBar(hunks: Hunk[]): boolean {
     return shouldShowGlobalHunkBarFromGroups(hunks, groupHunks(hunks));
 }
@@ -494,7 +494,7 @@ export function shouldShowGlobalHunkBarFromGroups(
     groups: HunkGroup[]
 ): boolean {
     void groups;
-    return hunks.length > 1;
+    return hunks.length > 0;
 }
 
 export function fileNamesWithHunks(hunks: Hunk[]): Set<string> {

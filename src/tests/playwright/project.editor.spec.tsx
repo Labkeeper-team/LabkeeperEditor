@@ -863,6 +863,9 @@ test('hunk-accept-smoke-test', async ({ page }) => {
     await expect(page).toHaveURL(`/project/${uuid}`);
 
     await expect(
+        page.getByRole('button', { name: 'Accept all' })
+    ).toBeVisible();
+    await expect(
         page.getByRole('button', { name: 'Accept change' })
     ).toBeVisible();
 
@@ -1457,12 +1460,16 @@ test('file-list-changes-after-compilation', async ({ page }) => {
     let isAfterCompilation = false;
     const routeSetup = new RouteSetup(page);
 
+    await routeSetup.setupApi();
+    await routeSetup.setupGetAllProjectsRequest();
+
     // Перехватываем запрос user-info
     await routeSetup.setupGetUserInfoRequest();
 
     // Перехватываем запрос default project и get project
     await routeSetup.setupGetDefaultProjectRequest();
     await routeSetup.setupGetProjectRequest();
+    await routeSetup.setupSetProjectTypeRequest();
 
     // Перехватываем запрос на сохранение программы
     await routeSetup.setupSaveProgramRequest();

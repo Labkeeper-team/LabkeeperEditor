@@ -253,6 +253,19 @@ export class RouteSetup {
         );
     }
 
+    async setupSetProjectTypeRequest() {
+        await this.page.route(
+            `**/api/${version}/public/project/${uuid}/type**`,
+            async (route) => {
+                await route.fulfill({
+                    status: 200,
+                    contentType: contentType,
+                    body: '{}',
+                });
+            }
+        );
+    }
+
     async setupGetDefaultProjectRequest(
         status: number = 200,
         bodyType: BodyTypeForGetAndDefaultRequest = 'default',

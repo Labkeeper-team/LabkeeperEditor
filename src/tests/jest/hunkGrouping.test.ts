@@ -149,13 +149,14 @@ test('shouldShowGlobalHunkBar for mixed file and segment hunks', () => {
         shouldShowGlobalHunkBar([
             { id: '1', type: 'addFile', fileName: 'a.tex' },
         ])
-    ).toBe(false);
+    ).toBe(true);
     expect(
         shouldShowGlobalHunkBar([
             { id: '1', type: 'addFile', fileName: 'a.tex' },
             { id: '2', type: 'addFile', fileName: 'b.tex' },
         ])
     ).toBe(true);
+    expect(shouldShowGlobalHunkBar([])).toBe(false);
 });
 
 test('getFileHunkEntries marks addFile as added and delete-only as deleted', () => {

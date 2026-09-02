@@ -167,31 +167,20 @@ export const ProjectPage = () => {
                 'project-container--mobile': isMobile,
             })}
         >
-            <div className="project-left-column">
-                <div
-                    className={classNames(
-                        'project-pane',
-                        'project-pane--files',
-                        {
-                            'project-pane--active':
-                                !isMobile || mobileView === 'files',
-                        }
-                    )}
-                >
-                    <FileManager />
-                </div>
-                <div
-                    className={classNames(
-                        'project-pane',
-                        'project-pane--editor',
-                        {
-                            'project-pane--active':
-                                !isMobile || mobileView === 'editor',
-                        }
-                    )}
-                >
-                    <Editor />
-                </div>
+            <div
+                className={classNames('project-pane', 'project-pane--files', {
+                    'project-pane--active': !isMobile || mobileView === 'files',
+                })}
+            >
+                <FileManager />
+            </div>
+            <div
+                className={classNames('project-pane', 'project-pane--editor', {
+                    'project-pane--active':
+                        !isMobile || mobileView === 'editor',
+                })}
+            >
+                <Editor />
             </div>
             <div
                 className={classNames('project-pane', 'project-pane--pdf', {

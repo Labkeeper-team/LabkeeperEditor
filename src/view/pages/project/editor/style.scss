@@ -5,10 +5,13 @@
     flex-direction: column;
     height: 100%;
     flex: 1;
-    min-width: 0;
     gap: 8px;
     > * {
         border-radius: 8px;
+    }
+
+    &.editor-container--text-file {
+        min-width: 0;
     }
 
     @media screen and (max-width: 767px) {
