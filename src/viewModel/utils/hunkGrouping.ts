@@ -309,6 +309,7 @@ export function resolveControlsLine(
     docLines: number,
     targetHunks: Hunk[] = group.hunks
 ): number {
+    void targetHunks;
     if (group.isWholeSegment) {
         return docLines;
     }
@@ -319,10 +320,7 @@ export function resolveControlsLine(
 
     if (group.addedLineRange) {
         const start = Math.min(
-            mapBaseLineToDisplayLine(
-                targetHunks,
-                group.addedLineRange.startLine
-            ),
+            Math.max(group.addedLineRange.startLine, 1),
             docLines
         );
         if (lineAdd?.text) {
@@ -336,15 +334,9 @@ export function resolveControlsLine(
         return end;
     }
     if (group.deletedLines.length > 0) {
-        return Math.min(
-            mapBaseLineToDisplayLine(targetHunks, group.anchorLine),
-            docLines
-        );
+        return Math.min(Math.max(group.anchorLine, 1), docLines);
     }
-    return Math.min(
-        mapBaseLineToDisplayLine(targetHunks, group.controlsAfterLine),
-        docLines
-    );
+    return Math.min(Math.max(group.controlsAfterLine, 1), docLines);
 }
 
 export function getNewSegmentHunkGroup(
@@ -535,6 +527,126 @@ export function hunksForFile(hunks: Hunk[], fileName: string): Hunk[] {
     return hunks.filter(
         (h) => h.fileName != null && projectFilePathsMatch(h.fileName, fileName)
     );
+}
+
+type OverlayKind = 'add' | 'delete';
+
+function splitContentLines(content: string): {
+    lines: string[];
+    endsWithNewline: boolean;
+} {
+    const normalized = content.replace(/\r\n/g, '\n');
+    const endsWithNewline = normalized.endsWith('\n');
+    const lines =
+        normalized === ''
+            ? []
+            : (endsWithNewline ? normalized.slice(0, -1) : normalized).split(
+                  '\n'
+              );
+    return { lines, endsWithNewline };
+}
+
+function joinContentLines(lines: string[], endsWithNewline: boolean): string {
+    if (lines.length === 0) {
+        return endsWithNewline ? '\n' : '';
+    }
+    return lines.join('\n') + (endsWithNewline ? '\n' : '');
+}
+
+function rawDeleteInserts(hunks: Hunk[]): { at: number; text: string[] }[] {
+    const inserts: { at: number; text: string[] }[] = [];
+    for (const hunk of hunks) {
+        if (
+            !isLineDelete(hunk.type) ||
+            hunk.startLine == null ||
+            hunk.text == null
+        ) {
+            continue;
+        }
+        inserts.push({
+            at: Math.max(hunk.startLine - 1, 0),
+            text: hunk.text.split('\n'),
+        });
+    }
+    return inserts;
+}
+
+/**
+ * startLine is against the already-changed document. Insert each delete at
+ * that original line; do not shift later hunks because a previous hunk was
+ * inserted (apply bottom-to-top).
+ */
+export function overlayDeleteHunksOnNewContent(
+    content: string,
+    hunks: Hunk[]
+): string {
+    const inserts = rawDeleteInserts(hunks);
+    if (inserts.length === 0) {
+        return content;
+    }
+    const { lines, endsWithNewline } = splitContentLines(content);
+    const ordered = [...inserts].sort((a, b) => b.at - a.at);
+    for (const insert of ordered) {
+        const at = Math.min(Math.max(insert.at, 0), lines.length);
+        if (linesMatchAt(lines, at, insert.text)) {
+            continue;
+        }
+        lines.splice(at, 0, ...insert.text);
+    }
+    return joinContentLines(lines, endsWithNewline);
+}
+
+export function stripDeleteHunksFromContent(
+    content: string,
+    hunks: Hunk[]
+): string {
+    const inserts = rawDeleteInserts(hunks);
+    if (inserts.length === 0) {
+        return content;
+    }
+    const { lines, endsWithNewline } = splitContentLines(content);
+    const ordered = inserts
+        .map((insert) => ({
+            start:
+                insert.at +
+                inserts
+                    .filter((other) => other.at < insert.at)
+                    .reduce((sum, other) => sum + other.text.length, 0),
+            text: insert.text,
+        }))
+        .sort((a, b) => b.start - a.start);
+    for (const op of ordered) {
+        if (linesMatchAt(lines, op.start, op.text)) {
+            lines.splice(op.start, op.text.length);
+        }
+    }
+    return joinContentLines(lines, endsWithNewline);
+}
+
+/** Overlayed document line for a hunk startLine (after raw inserts). */
+export function mapBaseLineToOverlayLine(
+    hunks: Hunk[],
+    baseLine: number,
+    kind: OverlayKind
+): number {
+    let shift = 0;
+    for (const hunk of hunks) {
+        if (
+            !isLineDelete(hunk.type) ||
+            hunk.startLine == null ||
+            hunk.text == null
+        ) {
+            continue;
+        }
+        const include =
+            kind === 'add'
+                ? hunk.startLine <= baseLine
+                : hunk.startLine < baseLine;
+        if (include) {
+            shift += hunkLineCount(hunk);
+        }
+    }
+    return Math.max(baseLine + shift, 1);
 }
 
 function linesMatchAt(

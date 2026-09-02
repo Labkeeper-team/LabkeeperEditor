@@ -5,8 +5,10 @@ import {
     hunksForFile,
     hunksForSegment,
     mapBaseLineToDisplayLine,
+    overlayDeleteHunksOnNewContent,
     resolveControlsLine,
     shouldShowGlobalHunkBar,
+    stripDeleteHunksFromContent,
     applyFileHunksToContent,
 } from '../../viewModel/utils/hunkGrouping.ts';
 import { Hunk } from '../../model/domain.ts';
@@ -310,5 +312,69 @@ test('resolveControlsLine uses mapped display line and added text length', () =>
     };
     const group = groupHunks([currentAdd])[0];
 
-    expect(resolveControlsLine(group, 20, [earlierAdd, currentAdd])).toBe(7);
+    expect(resolveControlsLine(group, 20, [earlierAdd, currentAdd])).toBe(5);
+});
+
+test('overlayDeleteHunksOnNewContent inserts at original startLine without shifting later hunks', () => {
+    const hunks: Hunk[] = [
+        {
+            id: 'ae1e950e-9359-4028-adae-77515447d458',
+            type: 'deleteLinesFromSegment',
+            segmentId: 1,
+            startLine: 4,
+            endLine: 4,
+            text: '4',
+        },
+        {
+            id: 'b4b478e1-7694-4443-a684-a5e26eaa1218',
+            type: 'deleteLinesFromSegment',
+            segmentId: 1,
+            startLine: 6,
+            endLine: 7,
+            text: '7\n9',
+        },
+        {
+            id: 'a6c2a856-6c9b-4957-8d24-eeefaee03250',
+            type: 'deleteLinesFromSegment',
+            segmentId: 1,
+            startLine: 12,
+            endLine: 12,
+            text: '15',
+        },
+    ];
+    const newContent = [
+        '1',
+        '2',
+        '3',
+        '5',
+        '6',
+        '10',
+        '11',
+        '12',
+        '13',
+        '14',
+        '16',
+        '17',
+    ].join('\n');
+
+    const overlayed = overlayDeleteHunksOnNewContent(newContent, hunks);
+    expect(overlayed.split('\n')).toEqual([
+        '1',
+        '2',
+        '3',
+        '4',
+        '5',
+        '6',
+        '7',
+        '9',
+        '10',
+        '11',
+        '12',
+        '13',
+        '14',
+        '16',
+        '15',
+        '17',
+    ]);
+    expect(stripDeleteHunksFromContent(overlayed, hunks)).toBe(newContent);
 });

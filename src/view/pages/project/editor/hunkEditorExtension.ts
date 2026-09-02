@@ -13,10 +13,7 @@ import {
     type Transaction,
 } from '@codemirror/state';
 import type { HunkGroup } from '../../../../viewModel/utils/hunkGrouping.ts';
-import {
-    mapBaseLineToDisplayLine,
-    resolveControlsLine,
-} from '../../../../viewModel/utils/hunkGrouping.ts';
+import { resolveControlsLine } from '../../../../viewModel/utils/hunkGrouping.ts';
 import { colors } from '../../../styles/colors';
 
 export type HunkEditorAction = 'accept' | 'revert';
@@ -421,10 +418,7 @@ function buildHunkDecorations(
         const deleteOnly = isDeleteOnlyGroup(group);
 
         if (group.deletedLines.length > 0) {
-            const anchor = Math.min(
-                mapBaseLineToDisplayLine(targetHunks, group.anchorLine),
-                docLines
-            );
+            const anchor = Math.min(Math.max(group.anchorLine, 1), docLines);
             const deletePos = state.doc.line(anchor).from;
             widgets.push(
                 Decoration.widget({
@@ -451,13 +445,7 @@ function buildHunkDecorations(
             (h) => h.type === 'addLinesToSegment' || h.type === 'addLinesToFile'
         );
         const addedStart = group.addedLineRange
-            ? Math.min(
-                  mapBaseLineToDisplayLine(
-                      targetHunks,
-                      group.addedLineRange.startLine
-                  ),
-                  docLines
-              )
+            ? Math.min(Math.max(group.addedLineRange.startLine, 1), docLines)
             : null;
         const addedTextMatchesDoc =
             addedStart != null &&
