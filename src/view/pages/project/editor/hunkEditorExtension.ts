@@ -10,6 +10,7 @@ import {
     StateField,
     type Extension,
     type Range,
+    type Transaction,
 } from '@codemirror/state';
 import type { HunkGroup } from '../../../../viewModel/utils/hunkGrouping.ts';
 import {
@@ -261,6 +262,9 @@ class DeletedLinesWidget extends WidgetType {
         if (this.controls == null || from.controls == null) {
             return false;
         }
+        if (!dom.classList.contains('cm-hunk-deleted-wrap')) {
+            return false;
+        }
         if (from.lines.join('\n') !== this.lines.join('\n')) {
             return false;
         }
@@ -274,18 +278,21 @@ class DeletedLinesWidget extends WidgetType {
     }
 
     toDOM(): HTMLElement {
+        const wrap = document.createElement('div');
+        wrap.className = 'cm-hunk-deleted-wrap';
+        wrap.contentEditable = 'false';
         const block = document.createElement('div');
         block.className = 'cm-hunk-deleted-block';
-        block.contentEditable = 'false';
         for (const line of this.lines) {
             const row = document.createElement('div');
             row.className = 'cm-hunk-deleted-line';
             row.textContent = line.length > 0 ? line : ' ';
             block.appendChild(row);
         }
+        wrap.appendChild(block);
         if (this.controls) {
             appendHunkControls(
-                block,
+                wrap,
                 this.controls.hunkIds,
                 this.controls.pending,
                 this.controls.canRevert,
@@ -293,7 +300,7 @@ class DeletedLinesWidget extends WidgetType {
                 this.controls.revertLabel
             );
         }
-        return block;
+        return wrap;
     }
 
     ignoreEvent(): boolean {
@@ -531,24 +538,71 @@ function buildHunkDecorations(
     return Decoration.set([...decorations, ...widgets], true);
 }
 
+type HunkGroupsPayload = {
+    groups: HunkGroupView[];
+    pendingHunkIds: Set<string>;
+    canRevert: boolean;
+    revertLabel: string;
+};
+
+function isWholeDocumentReplace(tr: Transaction): boolean {
+    if (!tr.docChanged) {
+        return false;
+    }
+    const oldLength = tr.startState.doc.length;
+    let whole = false;
+    tr.changes.iterChanges((fromA, toA) => {
+        if (fromA === 0 && toA === oldLength) {
+            whole = true;
+        }
+    });
+    return whole;
+}
+
+function decorationsFromPayload(
+    state: EditorState,
+    payload: HunkGroupsPayload
+): DecorationSet {
+    return buildHunkDecorations(
+        state,
+        payload.groups,
+        payload.pendingHunkIds,
+        payload.canRevert,
+        payload.revertLabel
+    );
+}
+
+const hunkGroupsPayloadField = StateField.define<HunkGroupsPayload | null>({
+    create: () => null,
+    update(value, tr) {
+        for (const effect of tr.effects) {
+            if (effect.is(setHunkGroupsEffect)) {
+                return effect.value;
+            }
+        }
+        return value;
+    },
+});
+
 export const hunkDecorationsField = StateField.define<DecorationSet>({
     create() {
         return Decoration.none;
     },
     update(value, tr) {
-        let next = value.map(tr.changes);
+        let payloadFromEffect: HunkGroupsPayload | null = null;
         for (const effect of tr.effects) {
             if (effect.is(setHunkGroupsEffect)) {
-                next = buildHunkDecorations(
-                    tr.state,
-                    effect.value.groups,
-                    effect.value.pendingHunkIds,
-                    effect.value.canRevert,
-                    effect.value.revertLabel
-                );
+                payloadFromEffect = effect.value;
             }
         }
-        return next;
+        if (payloadFromEffect) {
+            return decorationsFromPayload(tr.state, payloadFromEffect);
+        }
+        const stored = tr.startState.field(hunkGroupsPayloadField, false);
+        if (stored && isWholeDocumentReplace(tr)) {
+            return decorationsFromPayload(tr.state, stored);
+        }
+        return value.map(tr.changes);
     },
     provide: (field) => EditorView.decorations.from(field),
 });
@@ -623,6 +677,11 @@ export const hunkEditorTheme = EditorView.theme({
     '.cm-hunk-added-line-ghost': {
         color: colors.gray10,
         minHeight: '1.2em',
+    },
+    '.cm-hunk-deleted-wrap': {
+        margin: '0',
+        padding: '0',
+        background: 'transparent',
     },
     '.cm-hunk-deleted-block': {
         backgroundColor: colors.red20,
@@ -700,6 +759,7 @@ export const hunkEditorTheme = EditorView.theme({
 });
 
 export const hunkEditorExtensions: Extension[] = [
+    hunkGroupsPayloadField,
     hunkDecorationsField,
     hunkEditorTheme,
 ];
