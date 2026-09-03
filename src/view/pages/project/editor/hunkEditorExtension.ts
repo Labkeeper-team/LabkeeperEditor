@@ -205,6 +205,7 @@ class HunkControlsWidget extends WidgetType {
 
     toDOM(): HTMLElement {
         const wrap = document.createElement('div');
+        wrap.className = 'cm-hunk-controls-host';
         wrap.contentEditable = 'false';
         appendHunkControls(
             wrap,
@@ -214,8 +215,10 @@ class HunkControlsWidget extends WidgetType {
             this.acceptLabel,
             this.revertLabel
         );
-        return wrap.firstElementChild as HTMLElement;
+        return wrap;
     }
+
+    estimatedHeight = 0;
 
     ignoreEvent(): boolean {
         return true;
@@ -223,16 +226,7 @@ class HunkControlsWidget extends WidgetType {
 }
 
 class DeletedLinesWidget extends WidgetType {
-    constructor(
-        private readonly lines: string[],
-        private readonly controls: {
-            hunkIds: string[];
-            pending: boolean;
-            canRevert: boolean;
-            acceptLabel: string;
-            revertLabel: string;
-        } | null = null
-    ) {
+    constructor(private readonly lines: string[]) {
         super();
     }
 
@@ -240,38 +234,7 @@ class DeletedLinesWidget extends WidgetType {
         if (!(other instanceof DeletedLinesWidget)) {
             return false;
         }
-        if (other.lines.join('\n') !== this.lines.join('\n')) {
-            return false;
-        }
-        if (this.controls == null || other.controls == null) {
-            return this.controls == other.controls;
-        }
-        return (
-            other.controls.pending === this.controls.pending &&
-            other.controls.canRevert === this.controls.canRevert &&
-            other.controls.acceptLabel === this.controls.acceptLabel &&
-            other.controls.revertLabel === this.controls.revertLabel &&
-            other.controls.hunkIds.join(',') === this.controls.hunkIds.join(',')
-        );
-    }
-
-    updateDOM(dom: HTMLElement, _view: EditorView, from: this): boolean {
-        if (this.controls == null || from.controls == null) {
-            return false;
-        }
-        if (!dom.classList.contains('cm-hunk-deleted-wrap')) {
-            return false;
-        }
-        if (from.lines.join('\n') !== this.lines.join('\n')) {
-            return false;
-        }
-        return syncHunkControls(
-            dom,
-            this.controls.pending,
-            this.controls.canRevert,
-            this.controls.acceptLabel,
-            this.controls.revertLabel
-        );
+        return other.lines.join('\n') === this.lines.join('\n');
     }
 
     toDOM(): HTMLElement {
@@ -287,69 +250,12 @@ class DeletedLinesWidget extends WidgetType {
             block.appendChild(row);
         }
         wrap.appendChild(block);
-        if (this.controls) {
-            appendHunkControls(
-                wrap,
-                this.controls.hunkIds,
-                this.controls.pending,
-                this.controls.canRevert,
-                this.controls.acceptLabel,
-                this.controls.revertLabel
-            );
-        }
         return wrap;
     }
 
     ignoreEvent(): boolean {
         return true;
     }
-}
-
-class AddedLinesWidget extends WidgetType {
-    constructor(private readonly lines: string[]) {
-        super();
-    }
-
-    eq(other: WidgetType): boolean {
-        if (!(other instanceof AddedLinesWidget)) {
-            return false;
-        }
-        return other.lines.join('\n') === this.lines.join('\n');
-    }
-
-    toDOM(): HTMLElement {
-        const block = document.createElement('div');
-        block.className = 'cm-hunk-added-block';
-        block.contentEditable = 'false';
-        for (const line of this.lines) {
-            const row = document.createElement('div');
-            row.className = 'cm-hunk-added-line-ghost';
-            row.textContent = line.length > 0 ? line : ' ';
-            block.appendChild(row);
-        }
-        return block;
-    }
-
-    ignoreEvent(): boolean {
-        return true;
-    }
-}
-
-function documentLinesMatchHunkText(
-    state: EditorState,
-    startLine: number,
-    text: string | undefined
-): boolean {
-    if (!text) {
-        return true;
-    }
-    const expected = text.split('\n');
-    if (startLine + expected.length - 1 > state.doc.lines) {
-        return false;
-    }
-    return expected.every(
-        (line, index) => state.doc.line(startLine + index).text === line
-    );
 }
 
 function isDeleteOnlyGroup(group: HunkGroupView): boolean {
@@ -422,57 +328,22 @@ function buildHunkDecorations(
             const deletePos = state.doc.line(anchor).from;
             widgets.push(
                 Decoration.widget({
-                    widget: new DeletedLinesWidget(
-                        group.deletedLines,
-                        deleteOnly
-                            ? {
-                                  hunkIds: ids,
-                                  pending,
-                                  canRevert,
-                                  acceptLabel: group.acceptLabel,
-                                  revertLabel,
-                              }
-                            : null
-                    ),
+                    widget: new DeletedLinesWidget(group.deletedLines),
                     block: true,
                     side: -2,
                 }).range(deletePos)
             );
             reserveSide(sideByPos, deletePos, -2);
+            if (deleteOnly) {
+                controlsPos = deletePos;
+            }
         }
 
-        const lineAddHunk = group.hunks.find(
-            (h) => h.type === 'addLinesToSegment' || h.type === 'addLinesToFile'
-        );
         const addedStart = group.addedLineRange
             ? Math.min(Math.max(group.addedLineRange.startLine, 1), docLines)
             : null;
-        const addedTextMatchesDoc =
-            addedStart != null &&
-            lineAddHunk?.text != null &&
-            documentLinesMatchHunkText(state, addedStart, lineAddHunk.text);
-        const showAddedBlock =
-            group.addedLineRange != null &&
-            lineAddHunk?.text != null &&
-            !addedTextMatchesDoc;
 
-        if (showAddedBlock && group.addedLineRange) {
-            const insertAfter = Math.max((addedStart ?? 1) - 1, 0);
-            const pos = insertAfter === 0 ? 0 : state.doc.line(insertAfter).to;
-            widgets.push(
-                Decoration.widget({
-                    widget: new AddedLinesWidget(
-                        lineAddHunk!.text!.split('\n')
-                    ),
-                    block: true,
-                    side: takeNextSide(sideByPos, pos),
-                }).range(pos)
-            );
-            controlsPos = pos;
-        } else if (
-            (group.isWholeSegment || group.isCreation) &&
-            !group.isNewSegment
-        ) {
+        if ((group.isWholeSegment || group.isCreation) && !group.isNewSegment) {
             if (docLines > 0) {
                 decorations.push(
                     Decoration.line({
@@ -492,13 +363,17 @@ function buildHunkDecorations(
                     )
                 );
             }
-            controlsPos = state.doc.line(
-                resolveControlsLine(group, docLines, targetHunks)
-            ).to;
+            controlsPos = state.doc.line(end).to;
         }
 
-        if (!group.isNewSegment && !deleteOnly) {
-            if (controlsPos == null) {
+        if (!group.isNewSegment) {
+            if (deleteOnly && controlsPos != null) {
+                // Same slot as the deleted block (line.from). Negative side keeps
+                // the 0-height host ABOVE the remaining line, just under the red
+                // lines — matching add controls that sit below the last green line.
+                controlsSide = -1;
+                reserveSide(sideByPos, controlsPos, -1);
+            } else if (controlsPos == null) {
                 controlsPos = state.doc.line(
                     resolveControlsLine(group, docLines, targetHunks)
                 ).to;
@@ -654,18 +529,6 @@ export const hunkEditorTheme = EditorView.theme({
     '.cm-content:has(.cm-hunk-whole-doc--file) > .cm-line': {
         backgroundColor: `${colors.green}2E`,
     },
-    '.cm-hunk-added-block': {
-        backgroundColor: `${colors.green}2E`,
-        borderLeft: `3px solid ${colors.green}`,
-        margin: '0',
-        padding: '2px 8px',
-        fontFamily: 'inherit',
-        whiteSpace: 'pre-wrap',
-    },
-    '.cm-hunk-added-line-ghost': {
-        color: colors.gray10,
-        minHeight: '1.2em',
-    },
     '.cm-hunk-deleted-wrap': {
         margin: '0',
         padding: '0',
@@ -684,16 +547,33 @@ export const hunkEditorTheme = EditorView.theme({
         textDecoration: 'line-through',
         minHeight: '1.2em',
     },
-    '.cm-hunk-controls': {
+    '.cm-hunk-controls-host': {
+        position: 'relative',
+        display: 'block',
+        height: '0',
+        maxHeight: '0',
+        margin: '0',
+        padding: '0',
+        border: 'none',
+        width: '100%',
+        overflow: 'visible',
+        pointerEvents: 'none',
+        lineHeight: '0',
+    },
+    '.cm-hunk-controls-host .cm-hunk-controls': {
         display: 'flex',
         flexDirection: 'row',
         justifyContent: 'flex-end',
         alignItems: 'center',
         gap: '0',
-        marginTop: '4px',
-        marginBottom: '0',
-        paddingRight: '8px',
+        margin: '0',
+        padding: '0',
+        position: 'absolute',
+        right: '8px',
+        top: '4px',
+        zIndex: '2',
         userSelect: 'none',
+        pointerEvents: 'auto',
     },
     '.cm-hunk-btn': {
         display: 'inline-flex',
