@@ -18,6 +18,7 @@ import {
 import { ProgramService } from '../../model/service/ProgramService.ts';
 import { LoaderService } from './LoaderService.ts';
 import { IdeService } from './IdeService.ts';
+import { HunkService } from '../operation/HunkService.ts';
 
 export class CompilationService {
     repository: ViewModelRepository;
@@ -26,6 +27,7 @@ export class CompilationService {
     loaderService: LoaderService;
     observerService: ObserverService;
     ideService: IdeService;
+    private hunkService: HunkService | null = null;
 
     constructor(
         repository: ViewModelRepository,
@@ -43,12 +45,21 @@ export class CompilationService {
         this.ideService = ideService;
     }
 
+    setHunkService = (hunkService: HunkService) => {
+        this.hunkService = hunkService;
+    };
+
     private refreshProjectFiles = async (projectId: string) => {
         if (!this.repository.userViewModelRepository.isAuthenticated()) {
             return;
         }
 
         await this.loaderService.loadFiles(projectId);
+        if (
+            !this.repository.projectViewModelRepository.projectIsReadonly()
+        ) {
+            await this.hunkService?.loadHunks();
+        }
     };
 
     private refreshUserInfo = async () => {

@@ -135,6 +135,7 @@ export function setupContext(
         hunkService
     );
     startupService.setHunkService(hunkService);
+    compilationService.setHunkService(hunkService);
     const projectsPageService: ProjectsPageService = new ProjectsPageService(
         repository,
         rpi,

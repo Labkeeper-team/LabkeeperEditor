@@ -175,7 +175,11 @@ function buildGroup(hunks: Hunk[]): HunkGroup | null {
  * Groups server hunks for display. Server guarantees non-overlapping ranges.
  */
 export function groupHunks(hunks: Hunk[]): HunkGroup[] {
-    const remaining = [...hunks];
+    // Process addFile/addSegment before line hunks so creation pairs stay in one group.
+    const remaining = [...hunks].sort((a, b) => {
+        const priority = (hunk: Hunk) => (isCreation(hunk.type) ? 0 : 1);
+        return priority(a) - priority(b);
+    });
     const groups: HunkGroup[] = [];
 
     while (remaining.length > 0) {
@@ -674,10 +678,16 @@ export function applyFileHunksToContent(
     hunks: Hunk[],
     fileName: string
 ): string {
-    const fileHunks = hunksForFile(hunks, fileName).filter(
+    const allFileHunks = hunksForFile(hunks, fileName);
+    const isNewFileFromHunk = allFileHunks.some((hunk) => hunk.type === 'addFile');
+    // New files already contain final content on disk; addLinesToFile only describes
+    // the diff from empty and must not be applied on top of the downloaded file.
+    const fileHunks = allFileHunks.filter(
         (hunk) =>
             isLineDelete(hunk.type) ||
-            (isLineAdd(hunk.type) && hunk.text != null)
+            (isLineAdd(hunk.type) &&
+                hunk.text != null &&
+                !(isNewFileFromHunk && hunk.type === 'addLinesToFile'))
     );
     if (fileHunks.length === 0) {
         return content;

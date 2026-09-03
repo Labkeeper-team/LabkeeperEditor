@@ -22,6 +22,7 @@ import {
 import { textFileEditorWheelScroll } from './textFileEditorWheelScroll';
 import { isLatexTextFilePath } from '../../fileManager/svarFileTreeAdapter.ts';
 import { RunButton } from '../runButton';
+import { HunkGlobalButtons } from '../../../../components/hunkGlobalButtons';
 import {
     setActiveEditorLine,
     setEditorNavigationTarget,
@@ -455,29 +456,32 @@ export const TextFileEditor = () => {
                     </button>
                 </div>
             </div>
-            <div
-                ref={bodyRef}
-                className="ide-flexibility-container text-file-editor-body"
-            >
-                {isLoading ? (
-                    <div className="ide-loading-wrapper" aria-hidden>
-                        <span className="ide-loading-spinner" />
-                    </div>
-                ) : editorHeight > 0 ? (
-                    <CodeMirror
-                        ref={editorRef}
-                        id={TEXT_FILE_EDITOR_HOST_ID}
-                        value={textFileContent}
-                        height={`${editorHeight}px`}
-                        extensions={codeMirrorExtensions}
-                        onChange={onChange}
-                        onCreateEditor={onCreateEditor}
-                        readOnly={isReadonly}
-                        basicSetup={TEXT_FILE_EDITOR_BASIC_SETUP}
-                    />
-                ) : null}
+            <div className="ide-flexibility-container">
+                <div
+                    ref={bodyRef}
+                    className="text-file-editor-body"
+                >
+                    {isLoading ? (
+                        <div className="ide-loading-wrapper" aria-hidden>
+                            <span className="ide-loading-spinner" />
+                        </div>
+                    ) : editorHeight > 0 ? (
+                        <CodeMirror
+                            ref={editorRef}
+                            id={TEXT_FILE_EDITOR_HOST_ID}
+                            value={textFileContent}
+                            height={`${editorHeight}px`}
+                            extensions={codeMirrorExtensions}
+                            onChange={onChange}
+                            onCreateEditor={onCreateEditor}
+                            readOnly={isReadonly}
+                            basicSetup={TEXT_FILE_EDITOR_BASIC_SETUP}
+                        />
+                    ) : null}
+                </div>
+                <HunkGlobalButtons />
+                <RunButton enableHotkey={false} />
             </div>
-            <RunButton enableHotkey={false} />
         </div>
     );
 };
