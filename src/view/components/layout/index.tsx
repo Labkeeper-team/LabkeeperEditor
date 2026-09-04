@@ -1,5 +1,10 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { Outlet, useLocation, useSearchParams } from 'react-router-dom';
+import {
+    matchPath,
+    Outlet,
+    useLocation,
+    useSearchParams,
+} from 'react-router-dom';
 import { Header } from '../header';
 import { InterfaceTour } from '../tour';
 import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
@@ -17,6 +22,7 @@ import {
 import { controller } from '../../../main.tsx';
 import classNames from 'classnames';
 import { VIEWPORT_RESCALE_EVENT } from '../../hooks/useScaleToMinWidth';
+import { consumePreloadedProjectRoute } from '../../../viewModel/operation/projectRouteNavigation.ts';
 
 let loaded = false;
 
@@ -27,6 +33,7 @@ export const BaseLayout = () => {
     const state = searchParams.get('state') || '';
     const code = searchParams.get('code') || '';
     const dragCounter = useRef(0);
+    const previousPathname = useRef(location.pathname);
     const captcha = searchParams.get('captcha') || undefined;
     const isLandingPage =
         location.pathname === Routes.Tokens || location.pathname === Routes.Pay;
@@ -88,6 +95,29 @@ export const BaseLayout = () => {
             loaded = true;
         }
     }, [dispatch]);
+
+    useEffect(() => {
+        const pathname = location.pathname;
+        // не загружаем проект повторно при первом рендере
+        if (previousPathname.current === pathname) {
+            return;
+        }
+        previousPathname.current = pathname;
+
+        // Назад/Вперед меняют url без повторного запуска startup
+        const projectWasPreloaded = consumePreloadedProjectRoute(pathname);
+        const projectMatch = matchPath(Routes.Project, pathname);
+        const projectId = projectMatch?.params.id;
+        if (!projectId || projectId === 'default' || projectWasPreloaded) {
+            return;
+        }
+
+        dispatch(
+            controller.onProjectRouteChangedRequest({
+                projectId,
+            })
+        );
+    }, [dispatch, location.pathname]);
 
     useEffect(() => {
         const cls = 'tokens-route';

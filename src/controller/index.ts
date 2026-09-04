@@ -89,7 +89,7 @@ export class Controller {
     onAppEnterWithOauthCodeRequest = createAsyncThunk(
         'onAppEnterWithOauthCode',
         async ({ code, state }: { code: string; state: string }) => {
-            this.wrapper('onAppEnterWithOauthCode', () =>
+            await this.wrapper('onAppEnterWithOauthCode', () =>
                 this.startupService.onAppEnterWithOauthCode(code, state)
             );
         }
@@ -181,7 +181,7 @@ export class Controller {
     onAppEnterRequest = createAsyncThunk(
         'onAppEnter',
         async ({ captcha, open }: { captcha?: string; open?: OpenParams }) => {
-            this.wrapper('onAppEnter', () =>
+            await this.wrapper('onAppEnter', () =>
                 this.startupService.onAppStartup(captcha, open)
             );
         }
@@ -190,9 +190,18 @@ export class Controller {
     onOpenEditorAfterSpaNavigationRequest = createAsyncThunk(
         'onOpenEditorAfterSpaNavigation',
         async () => {
-            this.wrapper('onOpenEditorAfterSpaNavigation', () => {
-                void this.startupService.openEditorAfterSpaNavigation();
-            });
+            await this.wrapper('onOpenEditorAfterSpaNavigation', () =>
+                this.startupService.openEditorAfterSpaNavigation()
+            );
+        }
+    );
+
+    onProjectRouteChangedRequest = createAsyncThunk(
+        'onProjectRouteChanged',
+        async ({ projectId }: { projectId: string }) => {
+            await this.wrapper('onProjectRouteChanged', () =>
+                this.startupService.openProjectAfterRouteNavigation(projectId)
+            );
         }
     );
 
@@ -857,9 +866,12 @@ export class Controller {
         }
     );
 
-    private wrapper = (name: string, method: () => void) => {
+    private wrapper = async (
+        name: string,
+        method: () => unknown | Promise<unknown>
+    ) => {
         try {
-            method();
+            await method();
             console.info(`Invoking system operation [${name}]`);
         } catch (error) {
             this.observerService.onEvent(Events.FRONTEND_ERROR);

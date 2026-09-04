@@ -127,7 +127,6 @@ export function setupContext(
         rpi,
         loaderService,
         ideService,
-        startupService,
         observerService,
         resetService
     );

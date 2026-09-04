@@ -31,11 +31,24 @@ export class LoaderService {
         this.observerService = observerService;
     }
 
-    loadFiles = async (projectId: string) => {
+    // При быстром переходе Назад/Вперед в браузере ответ старого проекта может прийти позже,
+    // не показываем его файлы в другом открытом проекте
+    loadFiles = async (
+        projectId: string,
+        shouldApplyResult: () => boolean = () => true
+    ) => {
         this.repository.ideViewModelRepository.setGetFilesRequestState(
             'loading'
         );
         const result = await this.rpi.listFilesRequest(projectId);
+
+        if (
+            !shouldApplyResult() ||
+            this.repository.projectViewModelRepository.project()?.projectId !==
+                projectId
+        ) {
+            return;
+        }
 
         if (result.isOk) {
             this.repository.projectViewModelRepository.setFiles(
