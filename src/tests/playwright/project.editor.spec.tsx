@@ -865,6 +865,16 @@ test('hunk-accept-smoke-test', async ({ page }) => {
     await expect(
         page.getByRole('button', { name: 'Accept all' })
     ).toBeVisible();
+    await page
+        .getByRole('button', { name: 'Collapse changes bar' })
+        .click();
+    await expect(
+        page.getByRole('button', { name: 'Accept all' })
+    ).toHaveCount(0);
+    await page.getByRole('button', { name: 'Expand changes bar' }).click();
+    await expect(
+        page.getByRole('button', { name: 'Accept all' })
+    ).toBeVisible();
     await expect(
         page.getByRole('button', { name: 'Accept change' })
     ).toBeVisible();

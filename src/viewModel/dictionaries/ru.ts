@@ -490,6 +490,8 @@ export const ru: Translations = {
         revert_all: 'Отклонить все',
         total_changes: 'Всего {n} изменений',
         new: 'new',
+        collapse_bar: 'Свернуть плашку изменений',
+        expand_bar: 'Развернуть плашку изменений',
     },
 
     contact_ok: 'Мы получили вашу обратную связь',

@@ -13,7 +13,10 @@ import {
     type Transaction,
 } from '@codemirror/state';
 import type { HunkGroup } from '../../../../viewModel/utils/hunkGrouping.ts';
-import { resolveControlsLine } from '../../../../viewModel/utils/hunkGrouping.ts';
+import {
+    deletedLinesAnchorAtEnd,
+    resolveControlsLine,
+} from '../../../../viewModel/utils/hunkGrouping.ts';
 import { colors } from '../../../styles/colors';
 
 export type HunkEditorAction = 'accept' | 'revert';
@@ -169,6 +172,30 @@ function createHunkButton(
     return button;
 }
 
+const HUNK_TRAILING_LINE_LAST_PX = 32;
+const HUNK_TRAILING_LINE_SECOND_LAST_PX = 16;
+
+/** Trailing delete sits after EOF. Second-to-last delete shifts the next line up, so `controlsLine === docLines` in both cases. */
+function hunkTrailingSpacePx(
+    controlsLine: number,
+    docLines: number,
+    deletedBlockAtEnd: boolean,
+    deleteOnly: boolean
+): number {
+    if (deletedBlockAtEnd) {
+        return HUNK_TRAILING_LINE_LAST_PX;
+    }
+    if (controlsLine >= docLines) {
+        return deleteOnly
+            ? HUNK_TRAILING_LINE_SECOND_LAST_PX
+            : HUNK_TRAILING_LINE_LAST_PX;
+    }
+    if (controlsLine === docLines - 1) {
+        return HUNK_TRAILING_LINE_SECOND_LAST_PX;
+    }
+    return 0;
+}
+
 class HunkControlsWidget extends WidgetType {
     constructor(
         private readonly hunkIds: string[],
@@ -218,7 +245,42 @@ class HunkControlsWidget extends WidgetType {
         return wrap;
     }
 
-    estimatedHeight = 0;
+    get estimatedHeight(): number {
+        return 0;
+    }
+
+    ignoreEvent(): boolean {
+        return true;
+    }
+}
+
+/**
+ * Empty line after EOF so trailing hunks layout like mid-document:
+ * deleted/added lines, then the next line that absolute buttons sit on.
+ */
+class HunkTrailingLineWidget extends WidgetType {
+    constructor(readonly height: number) {
+        super();
+    }
+
+    eq(other: WidgetType): boolean {
+        return (
+            other instanceof HunkTrailingLineWidget &&
+            other.height === this.height
+        );
+    }
+
+    toDOM(): HTMLElement {
+        const el = document.createElement('div');
+        el.className = 'cm-hunk-trailing-line';
+        el.style.height = `${this.height}px`;
+        el.setAttribute('aria-hidden', 'true');
+        return el;
+    }
+
+    get estimatedHeight(): number {
+        return this.height;
+    }
 
     ignoreEvent(): boolean {
         return true;
@@ -311,6 +373,7 @@ function buildHunkDecorations(
                 .map((hunk) => [hunk.id, hunk])
         ).values(),
     ];
+    let trailingSpacePx = 0;
 
     for (const group of sortedGroups) {
         const ids = group.hunks.map((h) => h.id);
@@ -320,22 +383,32 @@ function buildHunkDecorations(
             : 'cm-hunk-added-line';
 
         let controlsPos: number | null = null;
+        let controlsLine: number | null = null;
         let controlsSide: number;
         const deleteOnly = isDeleteOnlyGroup(group);
+        let deletedBlockAtEnd = false;
 
         if (group.deletedLines.length > 0) {
+            deletedBlockAtEnd = deletedLinesAnchorAtEnd(
+                group.anchorLine,
+                docLines
+            );
             const anchor = Math.min(Math.max(group.anchorLine, 1), docLines);
-            const deletePos = state.doc.line(anchor).from;
+            const deletePos = deletedBlockAtEnd
+                ? state.doc.line(anchor).to
+                : state.doc.line(anchor).from;
+            const deleteSide = deletedBlockAtEnd ? 1 : -2;
             widgets.push(
                 Decoration.widget({
                     widget: new DeletedLinesWidget(group.deletedLines),
                     block: true,
-                    side: -2,
+                    side: deleteSide,
                 }).range(deletePos)
             );
-            reserveSide(sideByPos, deletePos, -2);
+            reserveSide(sideByPos, deletePos, deleteSide);
             if (deleteOnly) {
                 controlsPos = deletePos;
+                controlsLine = anchor;
             }
         }
 
@@ -364,23 +437,37 @@ function buildHunkDecorations(
                 );
             }
             controlsPos = state.doc.line(end).to;
+            controlsLine = end;
         }
 
         if (!group.isNewSegment) {
             if (deleteOnly && controlsPos != null) {
-                // Same slot as the deleted block (line.from). Negative side keeps
-                // the 0-height host ABOVE the remaining line, just under the red
-                // lines — matching add controls that sit below the last green line.
-                controlsSide = -1;
-                reserveSide(sideByPos, controlsPos, -1);
+                // Mid-doc: same slot as the deleted block (line.from), side -1
+                // keeps the 0-height host under the red lines and above the
+                // remaining line. Trailing delete: both widgets sit after EOF.
+                controlsSide = deletedBlockAtEnd ? 2 : -1;
+                reserveSide(sideByPos, controlsPos, controlsSide);
             } else if (controlsPos == null) {
-                controlsPos = state.doc.line(
-                    resolveControlsLine(group, docLines, targetHunks)
-                ).to;
+                controlsLine = resolveControlsLine(
+                    group,
+                    docLines,
+                    targetHunks
+                );
+                controlsPos = state.doc.line(controlsLine).to;
                 controlsSide = takeNextSide(sideByPos, controlsPos);
             } else {
                 controlsSide = takeNextSide(sideByPos, controlsPos);
             }
+
+            trailingSpacePx = Math.max(
+                trailingSpacePx,
+                hunkTrailingSpacePx(
+                    controlsLine ?? 0,
+                    docLines,
+                    deletedBlockAtEnd,
+                    deleteOnly
+                )
+            );
 
             widgets.push(
                 Decoration.widget({
@@ -396,6 +483,17 @@ function buildHunkDecorations(
                 }).range(controlsPos)
             );
         }
+    }
+
+    if (trailingSpacePx > 0 && docLines > 0) {
+        const eof = state.doc.line(docLines).to;
+        widgets.push(
+            Decoration.widget({
+                widget: new HunkTrailingLineWidget(trailingSpacePx),
+                block: true,
+                side: takeNextSide(sideByPos, eof),
+            }).range(eof)
+        );
     }
 
     return Decoration.set([...decorations, ...widgets], true);
@@ -556,7 +654,19 @@ export const hunkEditorTheme = EditorView.theme({
         padding: '0',
         border: 'none',
         width: '100%',
-        overflow: 'visible',
+        // Clip so abs buttons do not inflate cm-content/scroller height;
+        // clip-margin keeps them visible over the next line.
+        overflow: 'clip',
+        overflowClipMargin: '36px',
+        pointerEvents: 'none',
+        lineHeight: '0',
+    },
+    '.cm-hunk-trailing-line': {
+        display: 'block',
+        width: '100%',
+        margin: '0',
+        padding: '0',
+        border: 'none',
         pointerEvents: 'none',
         lineHeight: '0',
     },

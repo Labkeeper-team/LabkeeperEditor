@@ -21,6 +21,7 @@
 }
 
 .hunk-global-bar__inner {
+    position: relative;
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
@@ -41,6 +42,54 @@
         width: 100%;
         gap: 8px;
         padding: 10px 12px;
+    }
+
+    &--collapsed {
+        width: 28px;
+        height: 28px;
+        min-width: 28px;
+        padding: 0;
+        gap: 0;
+        background: transparent;
+        box-shadow: none;
+        border-radius: 0;
+    }
+}
+
+.hunk-global-bar__toggle {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: 8px;
+    background: $white;
+    box-shadow: 0 1px 6px rgba(14, 22, 33, 0.16);
+    color: $gray-10;
+    cursor: pointer;
+    touch-action: manipulation;
+    transform: translate(-30%, -40%);
+    pointer-events: auto;
+
+    .hunk-global-bar__inner--collapsed & {
+        transform: none;
+    }
+}
+
+.hunk-global-bar__toggle-icon {
+    width: 14px;
+    height: 14px;
+    display: block;
+    transform: rotate(180deg);
+
+    &--collapsed {
+        transform: none;
     }
 }
 

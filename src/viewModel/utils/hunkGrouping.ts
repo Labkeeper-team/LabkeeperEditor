@@ -343,6 +343,17 @@ export function resolveControlsLine(
     return Math.min(Math.max(group.controlsAfterLine, 1), docLines);
 }
 
+/**
+ * Deleted ghosts sit before the line that shifted into `anchorLine`.
+ * After a trailing delete that line is gone, so the block belongs after EOF.
+ */
+export function deletedLinesAnchorAtEnd(
+    anchorLine: number,
+    docLines: number
+): boolean {
+    return docLines > 0 && anchorLine > docLines;
+}
+
 export function getNewSegmentHunkGroup(
     hunks: Hunk[],
     segmentId: number

@@ -438,6 +438,8 @@ export interface Translations {
         revert_all: string;
         total_changes: string;
         new: string;
+        collapse_bar: string;
+        expand_bar: string;
     };
 
     contact_ok: string;
