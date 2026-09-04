@@ -230,6 +230,45 @@ test('hunksForSegment and hunksForFile filter by target', () => {
     expect(hunksForFile(hunks, 'main.tex')).toHaveLength(1);
 });
 
+test('groupHunks merges addFile with addLinesToFile', () => {
+    const hunks: Hunk[] = [
+        {
+            id: 'add-lines',
+            type: 'addLinesToFile',
+            fileName: 'data.csv',
+            startLine: 1,
+            endLine: 2,
+            text: 'a,b\n1,2',
+        },
+        { id: 'add-file', type: 'addFile', fileName: 'data.csv' },
+    ];
+    const groups = groupHunks(hunks);
+    expect(groups).toHaveLength(1);
+    expect(groups[0].hunks.map((h) => h.id).sort()).toEqual(
+        ['add-file', 'add-lines'].sort()
+    );
+    expect(groups[0].isNewFile).toBe(true);
+});
+
+test('applyFileHunksToContent skips addLinesToFile for new files', () => {
+    const hunks: Hunk[] = [
+        { id: 'add-file', type: 'addFile', fileName: 'data.csv' },
+        {
+            id: 'add-lines',
+            type: 'addLinesToFile',
+            fileName: 'data.csv',
+            startLine: 1,
+            endLine: 2,
+            text: 'a,b\n1,2',
+        },
+    ];
+    const fileOnDisk = 'a,b\n1,2\n';
+
+    expect(applyFileHunksToContent(fileOnDisk, hunks, 'data.csv')).toBe(
+        fileOnDisk
+    );
+});
+
 test('applyFileHunksToContent deletes old lines then inserts additions', () => {
     const hunks: Hunk[] = [
         {

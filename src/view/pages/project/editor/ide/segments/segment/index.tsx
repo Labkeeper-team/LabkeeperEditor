@@ -36,7 +36,7 @@ import './style.scss';
 
 import { Typography } from '../../../../../../components/typography';
 import { DropdownMenu } from '../../../../../../components/dropdownMenu';
-import { ArrowUp } from '../../../../../../icons';
+import { ArrowUp, PlusIcon } from '../../../../../../icons';
 import { AppDispatch, StorageState } from '../../../../../../store';
 import {
     setActiveEditorLine,
@@ -845,8 +845,11 @@ export const SegmentEditor = memo(
                 })}
             >
                 {newSegmentHunkGroup ? (
-                    <div className="segment-hunk-new-badge">
-                        {dictionary.hunks.new}
+                    <div
+                        className="segment-hunk-new-badge"
+                        aria-label={dictionary.hunks.new}
+                    >
+                        <PlusIcon />
                     </div>
                 ) : null}
                 <div
