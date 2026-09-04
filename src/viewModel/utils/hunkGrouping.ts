@@ -690,7 +690,9 @@ export function applyFileHunksToContent(
     fileName: string
 ): string {
     const allFileHunks = hunksForFile(hunks, fileName);
-    const isNewFileFromHunk = allFileHunks.some((hunk) => hunk.type === 'addFile');
+    const isNewFileFromHunk = allFileHunks.some(
+        (hunk) => hunk.type === 'addFile'
+    );
     // New files already contain final content on disk; addLinesToFile only describes
     // the diff from empty and must not be applied on top of the downloaded file.
     const fileHunks = allFileHunks.filter(

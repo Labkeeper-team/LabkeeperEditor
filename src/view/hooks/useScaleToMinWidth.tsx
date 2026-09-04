@@ -1,25 +1,10 @@
 import { useLayoutEffect } from 'react';
-import { Routes } from '../../viewModel/routes.ts';
 import { refreshCodeMirrorLayout } from '../utils/refreshCodeMirrorLayout';
-import { MOBILE_BREAKPOINT } from './useMobile';
-
-const RESCALE_EVENT = 'labkeeper:viewport-rescale';
-
-/** Document-scrolled marketing page; must not force window scroll to 0. */
-export function isTokensLandingPath() {
-    return (
-        window.location.pathname === Routes.Tokens ||
-        window.location.pathname === Routes.Pay
-    );
-}
-
-function isNativeMobileLayoutPath() {
-    const pathname = window.location.pathname;
-    return (
-        window.innerWidth <= MOBILE_BREAKPOINT &&
-        (pathname === Routes.Projects || /^\/project\//.test(pathname))
-    );
-}
+import {
+    VIEWPORT_RESCALE_EVENT,
+    isNativeMobileLayoutPath,
+    isTokensLandingPath,
+} from './viewportScale';
 
 /**
  * Масштабирует node так, чтобы вся вёрстка влезала
@@ -62,12 +47,10 @@ export function useScaleToMinWidth(ref, minWidth = 1024) {
         //вызываем сразу — важно для «первой загрузки» на мобильном
         rescale();
         window.addEventListener('resize', rescale);
-        window.addEventListener(RESCALE_EVENT, rescale);
+        window.addEventListener(VIEWPORT_RESCALE_EVENT, rescale);
         return () => {
             window.removeEventListener('resize', rescale);
-            window.removeEventListener(RESCALE_EVENT, rescale);
+            window.removeEventListener(VIEWPORT_RESCALE_EVENT, rescale);
         };
     }, [ref, minWidth]);
 }
-
-export const VIEWPORT_RESCALE_EVENT = RESCALE_EVENT;

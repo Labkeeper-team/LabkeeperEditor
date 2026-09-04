@@ -55,9 +55,7 @@ export class CompilationService {
         }
 
         await this.loaderService.loadFiles(projectId);
-        if (
-            !this.repository.projectViewModelRepository.projectIsReadonly()
-        ) {
+        if (!this.repository.projectViewModelRepository.projectIsReadonly()) {
             await this.hunkService?.loadHunks();
         }
     };

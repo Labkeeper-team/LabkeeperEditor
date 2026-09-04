@@ -457,10 +457,7 @@ export const TextFileEditor = () => {
                 </div>
             </div>
             <div className="ide-flexibility-container">
-                <div
-                    ref={bodyRef}
-                    className="text-file-editor-body"
-                >
+                <div ref={bodyRef} className="text-file-editor-body">
                     {isLoading ? (
                         <div className="ide-loading-wrapper" aria-hidden>
                             <span className="ide-loading-spinner" />

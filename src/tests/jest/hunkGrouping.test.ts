@@ -432,9 +432,9 @@ test('overlayDeleteHunksOnNewContent appends a trailing deleted line', () => {
     ];
     const newContent = ['1', '2', '3', '4'].join('\n');
 
-    expect(overlayDeleteHunksOnNewContent(newContent, hunks).split('\n')).toEqual(
-        ['1', '2', '3', '4', '5']
-    );
+    expect(
+        overlayDeleteHunksOnNewContent(newContent, hunks).split('\n')
+    ).toEqual(['1', '2', '3', '4', '5']);
     expect(deletedLinesAnchorAtEnd(5, 4)).toBe(true);
     expect(deletedLinesAnchorAtEnd(4, 4)).toBe(false);
 });
