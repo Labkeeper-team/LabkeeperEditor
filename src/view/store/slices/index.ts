@@ -1,6 +1,7 @@
 import {
     CompileErrorResultList,
     CompileSuccessResult,
+    Hunk,
     LabkeeperFile,
     Program,
     Project,
@@ -124,6 +125,8 @@ interface IdeState {
     searchNoMatch: boolean;
     /** Совпадение, к которому перешли последним Enter */
     searchCurrentMatch: SearchCurrentMatch | null;
+    hunks: Hunk[];
+    pendingHunkIds: string[];
 }
 
 interface PersistenceState {
@@ -175,6 +178,8 @@ export const ideInitialState: IdeState = {
     searchInput: '',
     searchNoMatch: false,
     searchCurrentMatch: null,
+    hunks: [],
+    pendingHunkIds: [],
 };
 
 export const persistenceInitialState: PersistenceState = {

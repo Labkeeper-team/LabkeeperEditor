@@ -1,8 +1,6 @@
 import { useEffect, useRef } from 'react';
-import {
-    isTokensLandingPath,
-    useScaleToMinWidth,
-} from '../../hooks/useScaleToMinWidth';
+import { useScaleToMinWidth } from '../../hooks/useScaleToMinWidth';
+import { isTokensLandingPath } from '../../hooks/viewportScale';
 import { resetLockedViewportScroll } from '../../utils/resetLockedViewportScroll';
 
 function syncInnerHeight() {

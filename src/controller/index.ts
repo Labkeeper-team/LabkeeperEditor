@@ -17,6 +17,7 @@ import { ProjectPageService } from '../viewModel/operation/ProjectPageService.ts
 import { ProjectsPageService } from '../viewModel/operation/ProjectsPageService.ts';
 import { StartupService } from '../viewModel/operation/StartupService.ts';
 import { TokenPageService } from '../viewModel/operation/TokenPageService.ts';
+import { HunkService } from '../viewModel/operation/HunkService.ts';
 
 export class Controller {
     authService: AuthService;
@@ -28,6 +29,7 @@ export class Controller {
     tokenPageService: TokenPageService;
     startupService: StartupService;
     observerService: ObserverService;
+    hunkService: HunkService;
 
     constructor(
         authService: AuthService,
@@ -38,7 +40,8 @@ export class Controller {
         projectsPageService: ProjectsPageService,
         tokenPageService: TokenPageService,
         startupService: StartupService,
-        observerService: ObserverService
+        observerService: ObserverService,
+        hunkService: HunkService
     ) {
         this.observerService = observerService;
         this.authService = authService;
@@ -49,6 +52,7 @@ export class Controller {
         this.projectsPageService = projectsPageService;
         this.tokenPageService = tokenPageService;
         this.startupService = startupService;
+        this.hunkService = hunkService;
     }
 
     onFormLoginClickedRequest = createAsyncThunk(
@@ -263,6 +267,28 @@ export class Controller {
         }
     );
 
+    onHunkAcceptRequest = createAsyncThunk(
+        'onHunkAccept',
+        async ({ hunkIds }: { hunkIds: string[] }) => {
+            await this.hunkService.acceptGroup(hunkIds);
+        }
+    );
+
+    onHunkRevertRequest = createAsyncThunk(
+        'onHunkRevert',
+        async ({ hunkIds }: { hunkIds: string[] }) => {
+            await this.hunkService.revertGroup(hunkIds);
+        }
+    );
+
+    onHunkAcceptAllRequest = createAsyncThunk('onHunkAcceptAll', async () => {
+        await this.hunkService.acceptAll();
+    });
+
+    onHunkRevertAllRequest = createAsyncThunk('onHunkRevertAll', async () => {
+        await this.hunkService.revertAll();
+    });
+
     segmentEditorChangeSegmentPositionRequest = createAsyncThunk(
         'segmentEditorChangeSegmentPositionRequest',
         async ({
@@ -456,7 +482,7 @@ export class Controller {
     onPrevVersionButtonClickedRequest = createAsyncThunk(
         'onPrevVersionButtonClickedRequest',
         async () => {
-            this.wrapper('onPrevVersionButtonClickedRequest', () =>
+            await this.wrapper('onPrevVersionButtonClickedRequest', () =>
                 this.programEditorService.onPrevVersionButtonClicked()
             );
         }
@@ -465,7 +491,7 @@ export class Controller {
     onNextVersionButtonClickedRequest = createAsyncThunk(
         'onNextVersionButtonClickedRequest',
         async () => {
-            this.wrapper('onNextVersionButtonClickedRequest', () =>
+            await this.wrapper('onNextVersionButtonClickedRequest', () =>
                 this.programEditorService.onNextVersionButtonClicked()
             );
         }
@@ -857,9 +883,12 @@ export class Controller {
         }
     );
 
-    private wrapper = (name: string, method: () => void) => {
+    private wrapper = async <T>(
+        name: string,
+        method: () => T | Promise<T>
+    ): Promise<void> => {
         try {
-            method();
+            await method();
             console.info(`Invoking system operation [${name}]`);
         } catch (error) {
             this.observerService.onEvent(Events.FRONTEND_ERROR);

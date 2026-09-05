@@ -18,8 +18,10 @@ import {
 import { useIsMobile } from '../../hooks/useMobile';
 import { setMobileView } from '../../store/slices/settings';
 import { refreshCodeMirrorLayout } from '../../utils/refreshCodeMirrorLayout';
+import { useHunkActionHandler } from '../../hooks/useHunkEditorSync';
 
 export const ProjectPage = () => {
+    useHunkActionHandler();
     const dispatch = useDispatch<AppDispatch>();
     const isMobile = useIsMobile();
     const mobileView = useSelector(useMobileView);

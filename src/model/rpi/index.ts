@@ -1,6 +1,7 @@
 import {
     CompileErrorResultList,
     CompileSuccessResult,
+    Hunk,
     LabkeeperFile,
     Program,
     Project,
@@ -98,6 +99,15 @@ export interface BillingPurchasesListResponse {
 export interface RichProject extends Project {
     lastProgramResult?: CompileSuccessResult;
     lastPdf?: string;
+}
+
+export interface PromptResult {
+    program: Program;
+    hunks: Hunk[];
+}
+
+export interface HunkListResponse {
+    hunks: Hunk[];
 }
 
 export interface Rpi {
@@ -236,12 +246,22 @@ export interface Rpi {
     promptProjectRequest(
         projectId: string,
         prompt: string
-    ): Promise<RequestResult<Program>>;
+    ): Promise<RequestResult<PromptResult>>;
 
     unauthorizedPromptProjectRequest(
         program: Program,
         prompt: string
-    ): Promise<RequestResult<Program>>;
+    ): Promise<RequestResult<PromptResult>>;
+
+    listHunksRequest(
+        projectId: string
+    ): Promise<RequestResult<HunkListResponse>>;
+
+    deleteHunkRequest(
+        projectId: string,
+        hunkId: string,
+        revert: boolean
+    ): Promise<RequestResult>;
 
     getBillingPricingRequest(): Promise<RequestResult<BillingPricingResponse>>;
 
@@ -345,6 +365,18 @@ export const mockRpi = (): Rpi => {
             throw new Error('Not implemented');
         },
         listBillingPurchasesRequest: () => {
+            throw new Error('Not implemented');
+        },
+        promptProjectRequest: () => {
+            throw new Error('Not implemented');
+        },
+        unauthorizedPromptProjectRequest: () => {
+            throw new Error('Not implemented');
+        },
+        listHunksRequest: () => {
+            throw new Error('Not implemented');
+        },
+        deleteHunkRequest: () => {
             throw new Error('Not implemented');
         },
     } as unknown as Rpi;

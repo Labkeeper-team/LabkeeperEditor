@@ -15,6 +15,16 @@ import { LabkeeperFile } from '../../../../model/domain.ts';
 import { FileTreeView } from './FileTreeView.tsx';
 import { useIsMobile } from '../../../hooks/useMobile';
 import { setMobileView } from '../../../store/slices/settings';
+import {
+    selectFileHunkEntries,
+    selectFilesWithHunks,
+    selectPhantomFileNames,
+} from '../../../store/selectors/hunks.ts';
+import type { FileHunkEntry } from '../../../../viewModel/utils/hunkGrouping.ts';
+
+const EMPTY_FILE_HUNK_ENTRIES: FileHunkEntry[] = [];
+const EMPTY_PHANTOM_FILE_NAMES: string[] = [];
+const EMPTY_FILES_WITH_HUNKS = new Set<string>();
 
 export const FileManager = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -47,6 +57,22 @@ export const FileManager = () => {
         });
         return [user, system];
     }, [files]);
+
+    const userFileNames = useMemo(
+        () => userFiles.map((file) => file.fileName),
+        [userFiles]
+    );
+    const fileHunkEntries = useSelector((state: StorageState) =>
+        isReadonly ? EMPTY_FILE_HUNK_ENTRIES : selectFileHunkEntries(state)
+    );
+    const filesWithHunks = useSelector((state: StorageState) =>
+        isReadonly ? EMPTY_FILES_WITH_HUNKS : selectFilesWithHunks(state)
+    );
+    const phantomFileNames = useSelector((state: StorageState) =>
+        isReadonly
+            ? EMPTY_PHANTOM_FILE_NAMES
+            : selectPhantomFileNames(state, userFileNames)
+    );
 
     const [filesLoadedOnce, setFilesLoadedOnce] = useState(false);
     if (getFilesRequestState === 'ok' && !filesLoadedOnce) {
@@ -125,6 +151,9 @@ export const FileManager = () => {
                             ephemeralFolders={ephemeralFolders}
                             readonly={isReadonly}
                             isDragged={isDragged}
+                            filesWithHunks={filesWithHunks}
+                            fileHunkEntries={fileHunkEntries}
+                            phantomFileNames={phantomFileNames}
                         />
                     </div>
                 )}

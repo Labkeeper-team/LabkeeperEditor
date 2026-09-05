@@ -22,6 +22,7 @@ import {
 import { textFileEditorWheelScroll } from './textFileEditorWheelScroll';
 import { isLatexTextFilePath } from '../../fileManager/svarFileTreeAdapter.ts';
 import { RunButton } from '../runButton';
+import { HunkGlobalButtons } from '../../../../components/hunkGlobalButtons';
 import {
     setActiveEditorLine,
     setEditorNavigationTarget,
@@ -36,6 +37,8 @@ import {
     scrollTextFileEditorLineIntoView,
     TEXT_FILE_EDITOR_HOST_ID,
 } from './textFileEditorView';
+import { hunkEditorExtensions } from '../hunkEditorExtension.ts';
+import { useSyncHunksToEditorView } from '../../../../hooks/useHunkEditorSync.ts';
 import '../ide/style.scss';
 import '../ide/header/style.scss';
 import './style.scss';
@@ -171,6 +174,16 @@ export const TextFileEditor = () => {
     const editorRef = useRef<ReactCodeMirrorRef>(null);
     const [editorHeight, setEditorHeight] = useState(0);
     const [editorViewEpoch, setEditorViewEpoch] = useState(0);
+    const getEditorView = useCallback(
+        () => editorRef.current?.view ?? null,
+        []
+    );
+    useSyncHunksToEditorView(
+        getEditorView,
+        undefined,
+        activeTextFile,
+        editorViewEpoch
+    );
     const [showSaveLoading, setShowSaveLoading] = useState(false);
     const saveLoadingStartRef = useRef<number | null>(null);
     const saveHideTimerRef = useRef<number | null>(null);
@@ -373,6 +386,7 @@ export const TextFileEditor = () => {
             TEXT_FILE_EDITOR_THEME,
             textFileEditorWheelScroll,
             decorationsField,
+            ...hunkEditorExtensions,
             cursorPersistenceListener,
         ],
         [isLatexFile, languageExtension, cursorPersistenceListener]
@@ -442,29 +456,29 @@ export const TextFileEditor = () => {
                     </button>
                 </div>
             </div>
-            <div
-                ref={bodyRef}
-                className="ide-flexibility-container text-file-editor-body"
-            >
-                {isLoading ? (
-                    <div className="ide-loading-wrapper" aria-hidden>
-                        <span className="ide-loading-spinner" />
-                    </div>
-                ) : editorHeight > 0 ? (
-                    <CodeMirror
-                        ref={editorRef}
-                        id={TEXT_FILE_EDITOR_HOST_ID}
-                        value={textFileContent}
-                        height={`${editorHeight}px`}
-                        extensions={codeMirrorExtensions}
-                        onChange={onChange}
-                        onCreateEditor={onCreateEditor}
-                        readOnly={isReadonly}
-                        basicSetup={TEXT_FILE_EDITOR_BASIC_SETUP}
-                    />
-                ) : null}
+            <div className="ide-flexibility-container">
+                <div ref={bodyRef} className="text-file-editor-body">
+                    {isLoading ? (
+                        <div className="ide-loading-wrapper" aria-hidden>
+                            <span className="ide-loading-spinner" />
+                        </div>
+                    ) : editorHeight > 0 ? (
+                        <CodeMirror
+                            ref={editorRef}
+                            id={TEXT_FILE_EDITOR_HOST_ID}
+                            value={textFileContent}
+                            height={`${editorHeight}px`}
+                            extensions={codeMirrorExtensions}
+                            onChange={onChange}
+                            onCreateEditor={onCreateEditor}
+                            readOnly={isReadonly}
+                            basicSetup={TEXT_FILE_EDITOR_BASIC_SETUP}
+                        />
+                    ) : null}
+                </div>
+                <HunkGlobalButtons />
+                <RunButton enableHotkey={false} />
             </div>
-            <RunButton enableHotkey={false} />
         </div>
     );
 };

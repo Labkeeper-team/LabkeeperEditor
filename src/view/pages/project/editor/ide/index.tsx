@@ -13,6 +13,7 @@ import { InterfaceTourAnchorClassnames } from '../../../../components/tour/helpe
 import { StorageState } from '../../../../store';
 import { useDictionary } from '../../../../store/selectors/translations.ts';
 import { RunButton } from '../runButton';
+import { HunkGlobalButtons } from '../../../../components/hunkGlobalButtons';
 
 export const Ide = () => {
     /*
@@ -65,6 +66,7 @@ export const Ide = () => {
                 ) : (
                     <Segments />
                 )}
+                <HunkGlobalButtons />
                 <RunButton enableHotkey />
             </div>
         </div>

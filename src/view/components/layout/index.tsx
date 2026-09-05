@@ -16,7 +16,7 @@ import {
 } from '../../store/selectors/program';
 import { controller } from '../../../main.tsx';
 import classNames from 'classnames';
-import { VIEWPORT_RESCALE_EVENT } from '../../hooks/useScaleToMinWidth';
+import { VIEWPORT_RESCALE_EVENT } from '../../hooks/viewportScale';
 
 let loaded = false;
 

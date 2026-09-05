@@ -18,7 +18,6 @@ import { useDictionary } from '../../../store/selectors/translations';
 import { AppDispatch, StorageState } from '../../../store';
 import { controller } from '../../../../main.tsx';
 import { useIsMobile } from '../../../hooks/useMobile';
-import { setMobileView } from '../../../store/slices/settings';
 import {
     buildFileTree,
     FileTreeNode,
@@ -27,6 +26,12 @@ import {
     normalizeFileTreeNodeName,
 } from './svarFileTreeAdapter.ts';
 import { LabkeeperFile } from '../../../../model/domain.ts';
+import { projectFilePathsMatch } from '../../../../viewModel/utils/projectFilePath.ts';
+import {
+    fileHunkEntryForPath,
+    type FileHunkEntry,
+} from '../../../../viewModel/utils/hunkGrouping.ts';
+import { setMobileView } from '../../../store/slices/settings';
 
 const SystemFileRow = (props: { file: LabkeeperFile }) => {
     const slashIndex = props.file.fileName.lastIndexOf('/');
@@ -101,6 +106,10 @@ const TreeNodeRow = (props: {
     onExpandFolderOnDrag: (path: string) => void;
     onUploadDrop: (path: string, files: FileList) => void;
     onRenamingChange: (path: string | null) => void;
+    filesWithHunks: Set<string>;
+    fileHunkEntries: FileHunkEntry[];
+    pendingHunkIds: string[];
+    isAuthenticated: boolean;
 }) => {
     const dictionary = useSelector(useDictionary);
     const dispatch = useDispatch<AppDispatch>();
@@ -113,6 +122,18 @@ const TreeNodeRow = (props: {
         isFolder && props.selectedPath === props.node.path && !props.isDragged;
     const isDropTarget =
         props.isDragged && isFolder && props.dropTargetPath === props.node.path;
+    const hasHunks =
+        !isFolder &&
+        [...props.filesWithHunks].some((fileName) =>
+            projectFilePathsMatch(fileName, props.node.path)
+        );
+    const fileHunkEntry = !isFolder
+        ? fileHunkEntryForPath(props.fileHunkEntries, props.node.path)
+        : undefined;
+    const hunkPending =
+        fileHunkEntry?.hunkIds.some((id) =>
+            props.pendingHunkIds.includes(id)
+        ) ?? false;
 
     const handleDragOver = useCallback(
         (event: DragEvent<HTMLElement>) => {
@@ -155,8 +176,8 @@ const TreeNodeRow = (props: {
             props.onSelectFolder(props.node.path);
             return;
         }
-        if (props.node.file) {
-            props.onOpenFile(props.node.file);
+        if (props.node.file || props.node.isHunkPhantom) {
+            props.onOpenFile(props.node);
         }
     }, [editMode, isFolder, props]);
 
@@ -362,6 +383,10 @@ const TreeNodeRow = (props: {
                                     }
                                     onUploadDrop={props.onUploadDrop}
                                     onRenamingChange={props.onRenamingChange}
+                                    filesWithHunks={props.filesWithHunks}
+                                    fileHunkEntries={props.fileHunkEntries}
+                                    pendingHunkIds={props.pendingHunkIds}
+                                    isAuthenticated={props.isAuthenticated}
                                 />
                             ))}
                             {props.creatingFolderIn === props.node.path ? (
@@ -379,83 +404,137 @@ const TreeNodeRow = (props: {
                     ) : null}
                 </div>
             ) : (
-                <div
-                    className="tree-row tree-row-file"
-                    onClick={editMode ? undefined : onClickRow}
-                    onDragOver={handleDragOver}
-                    onDrop={handleDrop}
-                    // TODO(3) draggable + onDragStart — path в dataTransfer;
-                    // isInternalTreeDrag отдельно от isDragged (upload с диска).
-                    // Drop → onMoveFileRequest; см. handleDrop для вариантов A/B.
-                >
-                    <span className="tree-toggle-placeholder" />
-                    <FileIcon className="tree-file-icon" />
+                <div className="tree-file-hunk-wrap">
                     <div
-                        className={classNames('tree-row-label', {
-                            'tree-row-label-editing': editMode,
+                        className={classNames('tree-row tree-row-file', {
+                            'tree-row-file--has-hunks': hasHunks,
+                            'tree-row-file--hunk-added':
+                                fileHunkEntry?.state === 'added',
+                            'tree-row-file--hunk-deleted':
+                                fileHunkEntry?.state === 'deleted',
+                            'tree-row-file--hunk-modified':
+                                fileHunkEntry?.state === 'modified',
                         })}
+                        onClick={editMode ? undefined : onClickRow}
+                        onDragOver={handleDragOver}
+                        onDrop={handleDrop}
                     >
-                        {editMode ? (
-                            <input
-                                autoFocus
-                                value={editName}
-                                onChange={(event) =>
-                                    setEditName(event.target.value)
-                                }
-                                onBlur={submitRename}
-                                onClick={(event) => event.stopPropagation()}
-                                onMouseDown={(event) => event.stopPropagation()}
-                                onKeyDown={(event) => {
-                                    if (event.key === 'Enter') {
-                                        event.preventDefault();
-                                        event.currentTarget.blur();
+                        <span className="tree-toggle-placeholder" />
+                        <FileIcon className="tree-file-icon" />
+                        <div
+                            className={classNames('tree-row-label', {
+                                'tree-row-label-editing': editMode,
+                            })}
+                        >
+                            {editMode ? (
+                                <input
+                                    autoFocus
+                                    value={editName}
+                                    onChange={(event) =>
+                                        setEditName(event.target.value)
                                     }
-                                    if (event.key === 'Escape') {
-                                        event.preventDefault();
-                                        cancelRename();
+                                    onBlur={submitRename}
+                                    onClick={(event) => event.stopPropagation()}
+                                    onMouseDown={(event) =>
+                                        event.stopPropagation()
                                     }
-                                }}
-                            />
+                                    onKeyDown={(event) => {
+                                        if (event.key === 'Enter') {
+                                            event.preventDefault();
+                                            event.currentTarget.blur();
+                                        }
+                                        if (event.key === 'Escape') {
+                                            event.preventDefault();
+                                            cancelRename();
+                                        }
+                                    }}
+                                />
+                            ) : (
+                                props.node.name
+                            )}
+                        </div>
+                        {!props.readonly &&
+                        !editMode &&
+                        !fileHunkEntry &&
+                        props.node.file ? (
+                            <div onClick={(event) => event.stopPropagation()}>
+                                <DropdownMenu fullScreenOnMobile>
+                                    <div
+                                        className="tree-menu-item tree-menu-item-delete"
+                                        onClick={() =>
+                                            dispatch(
+                                                controller.onDeleteFileRequest({
+                                                    fileName: props.node.path,
+                                                })
+                                            )
+                                        }
+                                    >
+                                        <div className="tree-delete-icon">
+                                            <PlusIcon />
+                                        </div>
+                                        <Typography
+                                            color={colors.gray10}
+                                            text={dictionary.delete}
+                                        />
+                                    </div>
+                                    <div
+                                        className="tree-menu-item"
+                                        onClick={onRename}
+                                    >
+                                        <PencilIcon />
+                                        <Typography
+                                            color={colors.gray10}
+                                            text={dictionary.filemanager.edit}
+                                        />
+                                    </div>
+                                </DropdownMenu>
+                            </div>
                         ) : (
-                            props.node.name
+                            <span className="tree-menu-spacer" />
                         )}
                     </div>
-                    {!props.readonly && !editMode ? (
-                        <div onClick={(event) => event.stopPropagation()}>
-                            <DropdownMenu fullScreenOnMobile>
-                                <div
-                                    className="tree-menu-item tree-menu-item-delete"
+                    {fileHunkEntry && !props.readonly ? (
+                        <div className="tree-row-hunk-actions">
+                            <button
+                                type="button"
+                                className="tree-hunk-btn tree-hunk-btn--accept"
+                                disabled={hunkPending}
+                                onClick={() =>
+                                    dispatch(
+                                        controller.onHunkAcceptRequest({
+                                            hunkIds: fileHunkEntry.hunkIds,
+                                        })
+                                    )
+                                }
+                            >
+                                {hunkPending ? (
+                                    <span className="tree-hunk-btn__spinner tree-hunk-btn__spinner--accept" />
+                                ) : (
+                                    dictionary.hunks.accept
+                                )}
+                            </button>
+                            {props.isAuthenticated ? (
+                                <button
+                                    type="button"
+                                    className="tree-hunk-btn tree-hunk-btn--revert"
+                                    disabled={hunkPending}
                                     onClick={() =>
                                         dispatch(
-                                            controller.onDeleteFileRequest({
-                                                fileName: props.node.path,
+                                            controller.onHunkRevertRequest({
+                                                hunkIds: fileHunkEntry.hunkIds,
                                             })
                                         )
                                     }
                                 >
-                                    <div className="tree-delete-icon">
-                                        <PlusIcon />
-                                    </div>
-                                    <Typography
-                                        color={colors.gray10}
-                                        text={dictionary.delete}
-                                    />
-                                </div>
-                                <div
-                                    className="tree-menu-item"
-                                    onClick={onRename}
-                                >
-                                    <PencilIcon />
-                                    <Typography
-                                        color={colors.gray10}
-                                        text={dictionary.filemanager.edit}
-                                    />
-                                </div>
-                            </DropdownMenu>
+                                    {hunkPending ? (
+                                        <span className="tree-hunk-btn__spinner tree-hunk-btn__spinner--revert" />
+                                    ) : (
+                                        dictionary.hunks.revert
+                                    )}
+                                </button>
+                            ) : null}
                         </div>
-                    ) : (
-                        <span className="tree-menu-spacer" />
-                    )}
+                    ) : null}
                 </div>
             )}
         </>
@@ -468,10 +547,19 @@ export const FileTreeView = (props: {
     ephemeralFolders: string[];
     readonly: boolean;
     isDragged: boolean;
+    filesWithHunks: Set<string>;
+    fileHunkEntries: FileHunkEntry[];
+    phantomFileNames: string[];
 }) => {
     const dispatch = useDispatch<AppDispatch>();
     const isMobile = useIsMobile();
     const dictionary = useSelector(useDictionary);
+    const isAuthenticated = useSelector(
+        (state: StorageState) => state.user.isAuthenticated
+    );
+    const pendingHunkIds = useSelector(
+        (state: StorageState) => state.ide.pendingHunkIds
+    );
     const inputRef = useRef<HTMLInputElement>(null);
     const currentFolderPath = useSelector(
         (state: StorageState) => state.settings.currentFolderPath
@@ -538,8 +626,13 @@ export const FileTreeView = (props: {
     }, []);
 
     const tree = useMemo(
-        () => buildFileTree(props.files, props.ephemeralFolders),
-        [props.files, props.ephemeralFolders]
+        () =>
+            buildFileTree(
+                props.files,
+                props.ephemeralFolders,
+                props.phantomFileNames
+            ),
+        [props.files, props.ephemeralFolders, props.phantomFileNames]
     );
 
     const activeDropTargetPath = props.isDragged ? dropTargetPath : null;
@@ -611,11 +704,12 @@ export const FileTreeView = (props: {
     );
 
     const onOpenFile = useCallback(
-        (file: LabkeeperFile) => {
-            if (isTextFilePath(file.fileName)) {
+        (node: FileTreeNode) => {
+            const fileName = node.path;
+            if (isTextFilePath(fileName)) {
                 dispatch(
                     controller.onTextFileOpenedRequest({
-                        fileName: file.fileName,
+                        fileName,
                     })
                 );
                 if (isMobile) {
@@ -623,10 +717,10 @@ export const FileTreeView = (props: {
                 }
                 return;
             }
-            if (isImageFilePath(file.fileName)) {
+            if (node.file && isImageFilePath(fileName)) {
                 dispatch(
                     controller.onImageFileOpenedRequest({
-                        fileName: file.fileName,
+                        fileName,
                     })
                 );
                 if (isMobile) {
@@ -634,7 +728,9 @@ export const FileTreeView = (props: {
                 }
                 return;
             }
-            window.open(file.url, '_blank');
+            if (node.file?.url) {
+                window.open(node.file.url, '_blank');
+            }
         },
         [dispatch, isMobile]
     );
@@ -915,6 +1011,14 @@ export const FileTreeView = (props: {
                                             }
                                             onUploadDrop={onUploadDrop}
                                             onRenamingChange={onRenamingChange}
+                                            filesWithHunks={
+                                                props.filesWithHunks
+                                            }
+                                            fileHunkEntries={
+                                                props.fileHunkEntries
+                                            }
+                                            pendingHunkIds={pendingHunkIds}
+                                            isAuthenticated={isAuthenticated}
                                         />
                                     ))
                                 ) : creatingFolderIn === '' ? null : (

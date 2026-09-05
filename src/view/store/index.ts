@@ -59,6 +59,8 @@ import {
     setPdfClickPosition,
     setPdfNavigationTarget,
     setEditorNavigationTarget,
+    setHunks,
+    setPendingHunkIds,
 } from './slices/ide';
 import {
     clearLastProgram,
@@ -241,6 +243,8 @@ export const createViewModelStateFromStore = (
             pdfNavigationTarget: () => store.getState().ide.pdfNavigationTarget,
             editorNavigationTarget: () =>
                 store.getState().ide.editorNavigationTarget,
+            hunks: () => store.getState().ide.hunks,
+            pendingHunkIds: () => store.getState().ide.pendingHunkIds,
 
             setProjectPromptRequestStatus: (v) =>
                 store.dispatch(setProjectPromptRequestState(v)),
@@ -300,6 +304,8 @@ export const createViewModelStateFromStore = (
                 store.dispatch(setPdfNavigationTarget(target)),
             setEditorNavigationTarget: (target) =>
                 store.dispatch(setEditorNavigationTarget(target)),
+            setHunks: (hunks) => store.dispatch(setHunks(hunks)),
+            setPendingHunkIds: (ids) => store.dispatch(setPendingHunkIds(ids)),
         },
         persistenceViewModelRepository: {
             instructionExpanded: () =>

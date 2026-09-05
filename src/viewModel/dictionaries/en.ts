@@ -466,6 +466,18 @@ export const en: Translations = {
         },
     },
 
+    hunks: {
+        accept: 'Accept change',
+        revert: 'Revert change',
+        accept_add: 'Accept and add',
+        accept_all: 'Accept all',
+        revert_all: 'Revert all',
+        total_changes: 'Total {n} changes',
+        new: 'new',
+        collapse_bar: 'Collapse changes bar',
+        expand_bar: 'Expand changes bar',
+    },
+
     contact_ok: 'We have received your feedback',
     contact_error: 'An unexpected error has occurred',
 };

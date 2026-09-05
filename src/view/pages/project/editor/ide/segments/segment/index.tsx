@@ -22,6 +22,7 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 
 import { CompileErrorResult } from '../../../../../../../model/domain';
+import { resolveSegmentId } from '../../../../../../../viewModel/utils/segmentId.ts';
 import { customLanguageSupport } from './customLanguage';
 import { latex } from 'codemirror-lang-latex';
 import {
@@ -35,7 +36,7 @@ import './style.scss';
 
 import { Typography } from '../../../../../../components/typography';
 import { DropdownMenu } from '../../../../../../components/dropdownMenu';
-import { ArrowUp } from '../../../../../../icons';
+import { ArrowUp, PlusIcon } from '../../../../../../icons';
 import { AppDispatch, StorageState } from '../../../../../../store';
 import {
     setActiveEditorLine,
@@ -61,6 +62,10 @@ import {
 } from '../ideSegmentDeactivate';
 import { scrollIdeEditorLineToContainerTop } from '../ideSegmentEditorView';
 import { SearchCurrentMatch } from '../../../../../../../viewModel/repository';
+import { hunkEditorExtensions } from '../../../hunkEditorExtension.ts';
+import { useSyncHunksToEditorView } from '../../../../../../hooks/useHunkEditorSync.ts';
+import { selectSegmentHunkUiState } from '../../../../../../store/selectors/hunks.ts';
+import { Segment } from '../../../../../../../model/domain';
 
 const CURSOR_MAP_CAPACITY = 100;
 
@@ -135,9 +140,36 @@ export const SegmentEditor = memo(
         const segment = useSelector(
             (state: StorageState) =>
                 state.project.currentProgram?.segments[props.index]
+        ) as (Segment & { id?: number }) | undefined;
+        const segments = useSelector(
+            (state: StorageState) =>
+                state.project.currentProgram?.segments ?? []
         );
+        const segmentId = resolveSegmentId(segments, props.index);
         const ref = useRef<HTMLDivElement>(null);
         const editor = useRef<ReactCodeMirrorRef | undefined>();
+        const getEditorView = useCallback(
+            () => editor.current?.view ?? null,
+            []
+        );
+        const [editorViewEpoch, setEditorViewEpoch] = useState(0);
+        const segmentHunkUi = useSelector((state: StorageState) =>
+            selectSegmentHunkUiState(state, segmentId)
+        );
+        const isAuthenticated = useSelector(
+            (state: StorageState) => state.user.isAuthenticated
+        );
+        const {
+            newSegmentHunkGroup,
+            segmentHunkIds,
+            isPending: newSegmentHunkPending,
+        } = segmentHunkUi;
+        useSyncHunksToEditorView(
+            getEditorView,
+            segmentId,
+            null,
+            editorViewEpoch
+        );
         const lastCursorPosRef = useRef<number | null>(null);
         const cursorByDocKeyRef = useRef<LRUMap<string, number>>(
             new LRUMap(CURSOR_MAP_CAPACITY)
@@ -208,10 +240,10 @@ export const SegmentEditor = memo(
                 (compileErrors ?? []).filter(
                     (e) =>
                         !e.payload.latexFile &&
-                        e.payload.segmentId === props.index + 1
+                        e.payload.segmentId === segmentId
                 )
             );
-        }, [compileErrors, props.index]);
+        }, [compileErrors, segmentId]);
 
         // Проблема с мерцанием редактора кода
         useEffect(() => {
@@ -220,6 +252,26 @@ export const SegmentEditor = memo(
             });
             return () => clearTimeout(timer);
         }, []);
+
+        useEffect(() => {
+            const view = editor.current?.view;
+            if (!view || segment?.text === undefined) {
+                return;
+            }
+            const docText = view.state.doc.toString();
+            if (docText === segment.text) {
+                return;
+            }
+            view.dispatch({
+                changes: {
+                    from: 0,
+                    to: docText.length,
+                    insert: segment.text,
+                },
+            });
+            lastSentTextRef.current = segment.text;
+            setEditorViewEpoch((epoch) => epoch + 1);
+        }, [segment?.text]);
 
         useEffect(() => {
             const handle = window.setTimeout(() => {
@@ -726,6 +778,7 @@ export const SegmentEditor = memo(
                 SEGMENT_EDITOR_VIEW_THEME,
                 segmentEditorScaleLayoutSync,
                 decorationsField,
+                ...hunkEditorExtensions,
                 languageExtension,
                 eventsExt,
                 eventsDom,
@@ -787,99 +840,163 @@ export const SegmentEditor = memo(
 
         return (
             <div
-                ref={ref}
-                className={classNames('segment-editor-container', {
-                    'is-active': isActiveSegment,
-                    'is-editor-focused': isImmediatelyActiveSegment,
-                    'not-visible': !segment.parameters.visible,
+                className={classNames('segment-hunk-block', {
+                    'segment-hunk-block--new': Boolean(newSegmentHunkGroup),
                 })}
-                onMouseDownCapture={onSegmentMouseDownCapture}
             >
-                <CodeMirror
-                    ref={editor as LegacyRef<ReactCodeMirrorRef>}
-                    id={`ide-segment-${props.index}`}
-                    value={segment?.text}
-                    onChange={onChange}
-                    readOnly={projectIsReadonly}
-                    extensions={codeMirrorExtensions}
-                    basicSetup={SEGMENT_CODE_MIRROR_BASIC_SETUP}
-                />
-                <div className="editor-rules">
-                    {!projectIsReadonly && (
-                        <div
-                            style={{
-                                display: 'flex',
-                                flexDirection: 'row',
-                                gap: 2,
-                                alignItems: 'center',
-                            }}
-                        >
-                            {props.index ? (
-                                <div
-                                    onClick={() =>
-                                        dispatch(
-                                            controller.segmentEditorChangeSegmentPositionRequest(
-                                                {
-                                                    direction: 'up',
-                                                    segmentIndex: props.index,
-                                                }
-                                            )
-                                        )
-                                    }
-                                    className="change-position-button"
-                                >
-                                    <ArrowUp />
-                                </div>
-                            ) : null}
-                            {!props.isLast ? (
-                                <div
-                                    onClick={() =>
-                                        dispatch(
-                                            controller.segmentEditorChangeSegmentPositionRequest(
-                                                {
-                                                    direction: 'down',
-                                                    segmentIndex: props.index,
-                                                }
-                                            )
-                                        )
-                                    }
-                                    className="change-position-button rotate"
-                                >
-                                    <ArrowUp />
-                                </div>
-                            ) : null}
-                        </div>
-                    )}
-                    <div className="segment-type-container">
-                        <Typography
-                            color={colors.gray10}
-                            text={dictionary.short_segment[segment.type]}
-                        />
-                    </div>
-                    <div className="segment-position">
-                        <Typography
-                            type={
-                                (props.index ?? 0) < 10 ? 'body' : 'label-small'
-                            }
-                            text={`${props.index + 1}`}
-                            color={colors.white}
-                        />
-                    </div>
-                    <DropdownMenu
-                        clickable={!projectIsReadonly}
-                        fullScreenOnMobile
-                        containerClassname={classNames(
-                            'dropdown-content-contanier-additional',
-                            segment.type === 'computational' &&
-                                'dropdown-menu-content-container--computational'
-                        )}
+                {newSegmentHunkGroup ? (
+                    <div
+                        className="segment-hunk-new-badge"
+                        aria-label={dictionary.hunks.new}
                     >
-                        <DropdownMenuContent
-                            index={props.index}
-                            segment={segment}
-                        />
-                    </DropdownMenu>
+                        <PlusIcon />
+                    </div>
+                ) : null}
+                <div
+                    ref={ref}
+                    className={classNames('segment-editor-container', {
+                        'is-active': isActiveSegment,
+                        'is-editor-focused': isImmediatelyActiveSegment,
+                        'not-visible': !segment.parameters.visible,
+                        'has-new-segment-hunk': Boolean(newSegmentHunkGroup),
+                    })}
+                    onMouseDownCapture={onSegmentMouseDownCapture}
+                >
+                    <CodeMirror
+                        ref={editor as LegacyRef<ReactCodeMirrorRef>}
+                        id={`ide-segment-${props.index}`}
+                        value={segment?.text}
+                        onChange={onChange}
+                        onCreateEditor={() =>
+                            setEditorViewEpoch((epoch) => epoch + 1)
+                        }
+                        readOnly={projectIsReadonly}
+                        extensions={codeMirrorExtensions}
+                        basicSetup={SEGMENT_CODE_MIRROR_BASIC_SETUP}
+                    />
+                    <div className="editor-rules">
+                        {!projectIsReadonly && (
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    flexDirection: 'row',
+                                    gap: 2,
+                                    alignItems: 'center',
+                                }}
+                            >
+                                {props.index ? (
+                                    <div
+                                        onClick={() =>
+                                            dispatch(
+                                                controller.segmentEditorChangeSegmentPositionRequest(
+                                                    {
+                                                        direction: 'up',
+                                                        segmentIndex:
+                                                            props.index,
+                                                    }
+                                                )
+                                            )
+                                        }
+                                        className="change-position-button"
+                                    >
+                                        <ArrowUp />
+                                    </div>
+                                ) : null}
+                                {!props.isLast ? (
+                                    <div
+                                        onClick={() =>
+                                            dispatch(
+                                                controller.segmentEditorChangeSegmentPositionRequest(
+                                                    {
+                                                        direction: 'down',
+                                                        segmentIndex:
+                                                            props.index,
+                                                    }
+                                                )
+                                            )
+                                        }
+                                        className="change-position-button rotate"
+                                    >
+                                        <ArrowUp />
+                                    </div>
+                                ) : null}
+                            </div>
+                        )}
+                        <div className="segment-type-container">
+                            <Typography
+                                color={colors.gray10}
+                                text={dictionary.short_segment[segment.type]}
+                            />
+                        </div>
+                        <div className="segment-position">
+                            <Typography
+                                type={
+                                    (props.index ?? 0) < 10
+                                        ? 'body'
+                                        : 'label-small'
+                                }
+                                text={`${props.index + 1}`}
+                                color={colors.white}
+                            />
+                        </div>
+                        <DropdownMenu
+                            clickable={!projectIsReadonly}
+                            fullScreenOnMobile
+                            containerClassname={classNames(
+                                'dropdown-content-contanier-additional',
+                                segment.type === 'computational' &&
+                                    'dropdown-menu-content-container--computational'
+                            )}
+                        >
+                            <DropdownMenuContent
+                                index={props.index}
+                                segment={segment}
+                            />
+                        </DropdownMenu>
+                    </div>
                 </div>
+                {newSegmentHunkGroup && !projectIsReadonly ? (
+                    <div className="segment-hunk-actions">
+                        <button
+                            type="button"
+                            className="segment-hunk-btn segment-hunk-btn--accept"
+                            disabled={newSegmentHunkPending}
+                            onClick={() =>
+                                dispatch(
+                                    controller.onHunkAcceptRequest({
+                                        hunkIds: segmentHunkIds,
+                                    })
+                                )
+                            }
+                        >
+                            {newSegmentHunkPending ? (
+                                <span className="segment-hunk-btn__spinner segment-hunk-btn__spinner--accept" />
+                            ) : (
+                                dictionary.hunks.accept
+                            )}
+                        </button>
+                        {isAuthenticated ? (
+                            <button
+                                type="button"
+                                className="segment-hunk-btn segment-hunk-btn--revert"
+                                disabled={newSegmentHunkPending}
+                                onClick={() =>
+                                    dispatch(
+                                        controller.onHunkRevertRequest({
+                                            hunkIds: segmentHunkIds,
+                                        })
+                                    )
+                                }
+                            >
+                                {newSegmentHunkPending ? (
+                                    <span className="segment-hunk-btn__spinner segment-hunk-btn__spinner--revert" />
+                                ) : (
+                                    dictionary.hunks.revert
+                                )}
+                            </button>
+                        ) : null}
+                    </div>
+                ) : null}
             </div>
         );
     }

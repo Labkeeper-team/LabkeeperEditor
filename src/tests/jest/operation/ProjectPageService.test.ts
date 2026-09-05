@@ -1,6 +1,11 @@
 import { Project } from '../../../model/domain.ts';
 import { RequestResult } from '../../../model/rpi';
-import { mockContext, USER_EMAIL, USER_ID } from '../common.ts';
+import {
+    mockContext,
+    mockListHunksRequestWithHunks,
+    USER_EMAIL,
+    USER_ID,
+} from '../common.ts';
 
 test('run-button-saves-active-text-file-before-latex-project-compilation', async () => {
     const { programService, projectPageService, repository, rpi } =
@@ -86,6 +91,7 @@ test('run-button-saves-active-text-file-before-latex-project-compilation', async
         isUnauth: false,
         isForbidden: false,
     });
+    mockListHunksRequestWithHunks(rpi);
 
     await projectPageService.onRunButtonClicked();
 

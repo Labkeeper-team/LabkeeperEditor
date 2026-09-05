@@ -47,6 +47,7 @@ MockViewModelRepositoryState {
     },
     "segments": [
       {
+        "id": 1,
         "parameters": {
           "visible": true,
         },
@@ -54,6 +55,7 @@ MockViewModelRepositoryState {
         "type": "md",
       },
       {
+        "id": 2,
         "parameters": {
           "visible": false,
         },
@@ -75,6 +77,7 @@ MockViewModelRepositoryState {
   "getFilesRequestState": "unknown",
   "getProjectRequestState": "unknown",
   "getProjectsRequestState": "unknown",
+  "hunks": [],
   "id": 0,
   "instructionExpanded": false,
   "isAuthenticated": false,
@@ -89,6 +92,7 @@ MockViewModelRepositoryState {
     },
     "segments": [
       {
+        "id": 1,
         "parameters": {
           "visible": true,
         },
@@ -96,6 +100,7 @@ MockViewModelRepositoryState {
         "type": "md",
       },
       {
+        "id": 2,
         "parameters": {
           "visible": false,
         },
@@ -114,6 +119,7 @@ MockViewModelRepositoryState {
   "pdfNavigationTarget": null,
   "pdfUpdated": 1,
   "pdfUri": undefined,
+  "pendingHunkIds": [],
   "pendingSegmentEditorCursor": null,
   "previousActiveSegmentIndex": 0,
   "project": undefined,
@@ -192,6 +198,7 @@ MockViewModelRepositoryState {
     },
     "segments": [
       {
+        "id": 1,
         "parameters": {
           "visible": true,
         },
@@ -199,6 +206,7 @@ MockViewModelRepositoryState {
         "type": "md",
       },
       {
+        "id": 2,
         "parameters": {
           "visible": true,
         },
@@ -206,6 +214,7 @@ MockViewModelRepositoryState {
         "type": "md",
       },
       {
+        "id": 3,
         "parameters": {
           "visible": false,
         },
@@ -227,6 +236,7 @@ MockViewModelRepositoryState {
   "getFilesRequestState": "unknown",
   "getProjectRequestState": "unknown",
   "getProjectsRequestState": "unknown",
+  "hunks": [],
   "id": 0,
   "instructionExpanded": false,
   "isAuthenticated": false,
@@ -241,6 +251,7 @@ MockViewModelRepositoryState {
     },
     "segments": [
       {
+        "id": 1,
         "parameters": {
           "visible": true,
         },
@@ -248,6 +259,7 @@ MockViewModelRepositoryState {
         "type": "md",
       },
       {
+        "id": 2,
         "parameters": {
           "visible": true,
         },
@@ -255,6 +267,7 @@ MockViewModelRepositoryState {
         "type": "md",
       },
       {
+        "id": 3,
         "parameters": {
           "visible": false,
         },
@@ -273,6 +286,7 @@ MockViewModelRepositoryState {
   "pdfNavigationTarget": null,
   "pdfUpdated": 1,
   "pdfUri": undefined,
+  "pendingHunkIds": [],
   "pendingSegmentEditorCursor": null,
   "previousActiveSegmentIndex": 1,
   "project": undefined,

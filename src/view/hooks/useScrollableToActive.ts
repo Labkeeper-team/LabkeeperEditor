@@ -39,7 +39,7 @@ export const useScrollableToActive = (
     }, [ref, mainContainerid]);
 
     const scrollIntoViewIfNeeded = useCallback(() => {
-        const container = ref?.current?.parentElement;
+        const container = document.getElementById(mainContainerid);
         const element = ref?.current;
 
         if (!container || !element) return;
@@ -59,7 +59,7 @@ export const useScrollableToActive = (
             top,
             behavior: 'smooth',
         });
-    }, [ref]);
+    }, [ref, mainContainerid]);
 
     useEffect(() => {
         if (!isActive) {

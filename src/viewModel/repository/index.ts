@@ -1,6 +1,7 @@
 import {
     CompileErrorResultList,
     CompileSuccessResult,
+    Hunk,
     LabkeeperFile,
     OutputSegment,
     Program,
@@ -183,6 +184,8 @@ class MockViewModelRepositoryState {
     passwordSetRequest: PasswordRequestState = 'unknown';
     isRegistration: boolean = false;
     projectPromptRequestState: ProjectPromptRequestState = 'unknown';
+    hunks: Hunk[] = [];
+    pendingHunkIds: string[] = [];
 
     toasts: { message: string; type: TypeOptions }[] = [];
 }
@@ -269,6 +272,8 @@ export const mockViewModelState = (): MockViewModelRepository => {
             pdfNavigationTarget: () => mockViewModelState.pdfNavigationTarget,
             editorNavigationTarget: () =>
                 mockViewModelState.editorNavigationTarget,
+            hunks: () => mockViewModelState.hunks,
+            pendingHunkIds: () => mockViewModelState.pendingHunkIds,
 
             setProjectPromptRequestStatus: (v) =>
                 (mockViewModelState.projectPromptRequestState = v),
@@ -342,6 +347,9 @@ export const mockViewModelState = (): MockViewModelRepository => {
                 (mockViewModelState.pdfNavigationTarget = target),
             setEditorNavigationTarget: (target) =>
                 (mockViewModelState.editorNavigationTarget = target),
+            setHunks: (hunks) => (mockViewModelState.hunks = hunks),
+            setPendingHunkIds: (ids) =>
+                (mockViewModelState.pendingHunkIds = ids),
         },
         persistenceViewModelRepository: {
             instructionExpanded: () => mockViewModelState.instructionExpanded,
@@ -567,6 +575,8 @@ export interface IdeViewModelRepository {
     pdfClickPosition: () => import('../../model/rpi').PdfPosition | null;
     pdfNavigationTarget: () => import('../../model/rpi').PdfPosition | null;
     editorNavigationTarget: () => EditorNavigationTarget | null;
+    hunks: () => Hunk[];
+    pendingHunkIds: () => string[];
 
     setProjectPromptRequestStatus: (v: ProjectPromptRequestState) => void;
     setPdfUpdated: (v: number) => void;
@@ -590,6 +600,8 @@ export interface IdeViewModelRepository {
         target: import('../../model/rpi').PdfPosition | null
     ) => void;
     setEditorNavigationTarget: (target: EditorNavigationTarget | null) => void;
+    setHunks: (hunks: Hunk[]) => void;
+    setPendingHunkIds: (ids: string[]) => void;
     setCloneRequestState: (state: CloneRequestState) => void;
     setGetProjectRequestState: (state: GetProjectRequestState) => void;
     setGetFilesRequestState: (state: GetFilesRequestState) => void;

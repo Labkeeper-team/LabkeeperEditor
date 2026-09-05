@@ -42,7 +42,26 @@ export interface LabkeeperFile {
     url: string;
 }
 
+export type HunkType =
+    | 'addFile'
+    | 'addSegment'
+    | 'addLinesToFile'
+    | 'deleteLinesFromFile'
+    | 'addLinesToSegment'
+    | 'deleteLinesFromSegment';
+
+export interface Hunk {
+    id: string;
+    type: HunkType;
+    fileName?: string;
+    segmentId?: number;
+    startLine?: number;
+    endLine?: number;
+    text?: string | null;
+}
+
 export interface Segment {
+    id?: number;
     type: SegmentType;
     parameters: {
         visible?: boolean;

@@ -482,6 +482,18 @@ export const ru: Translations = {
         },
     },
 
+    hunks: {
+        accept: 'Принять',
+        revert: 'Отклонить',
+        accept_add: 'Принять и добавить',
+        accept_all: 'Принять все',
+        revert_all: 'Отклонить все',
+        total_changes: 'Всего {n} изменений',
+        new: 'new',
+        collapse_bar: 'Свернуть плашку изменений',
+        expand_bar: 'Развернуть плашку изменений',
+    },
+
     contact_ok: 'Мы получили вашу обратную связь',
     contact_error: 'Произошла непредвиденная ошибка',
 };

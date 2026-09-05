@@ -232,7 +232,7 @@ test('insert-segment-between', async ({ page }) => {
     await page.getByText('Delete').last().click();
 
     await expect(page).toHaveScreenshot(`insert-segment-between2.png`, {
-        maxDiffPixels: 1500,
+        maxDiffPixels: maxDifferentPixelsFor4Segments,
     });
 
     // удаляем asciimath
@@ -763,6 +763,7 @@ test('llm-prompt-ok-request-test', async ({ page }) => {
 
     // Перехватываем запрос user-info
     await routeSetup.setupGetUserInfoRequest();
+    await routeSetup.setupGetAllProjectsRequest();
 
     await routeSetup.setupLlmPrompt(200);
 
@@ -820,6 +821,65 @@ test('llm-prompt-bad-request-test', async ({ page }) => {
     await page.getByText('Send').click();
 
     await expect(page.getByText('Invalid request')).toBeVisible();
+});
+
+test('hunk-accept-smoke-test', async ({ page }) => {
+    const routeSetup = new RouteSetup(page);
+    const programWithSegment: Program = {
+        segments: [
+            {
+                id: 1,
+                type: 'md',
+                text: 'hello',
+                parameters: { visible: true },
+            },
+        ],
+        parameters: { roundStrategy: 'noRound' },
+    };
+    const hunks = [
+        {
+            id: 'hunk-1',
+            type: 'addLinesToSegment' as const,
+            segmentId: 1,
+            startLine: 1,
+            endLine: 1,
+            text: 'AI suggestion',
+        },
+    ];
+    let deleteCalled = false;
+
+    await routeSetup.setupGetProjectRequest(200, 'default', programWithSegment);
+    await routeSetup.setupListFilesRequest();
+    await routeSetup.setupGetUserInfoRequest();
+    await routeSetup.setupGetAllProjectsRequest();
+    await routeSetup.setupListHunksRequest(hunks);
+    await routeSetup.setupDeleteHunkRequest((hunkId, revert) => {
+        deleteCalled = hunkId === 'hunk-1' && revert === false;
+    });
+
+    await page.goto(`/project/${uuid}`);
+
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page).toHaveURL(`/project/${uuid}`);
+
+    await expect(
+        page.getByRole('button', { name: 'Accept all' })
+    ).toBeVisible();
+    await page.getByRole('button', { name: 'Collapse changes bar' }).click();
+    await expect(page.getByRole('button', { name: 'Accept all' })).toHaveCount(
+        0
+    );
+    await page.getByRole('button', { name: 'Expand changes bar' }).click();
+    await expect(
+        page.getByRole('button', { name: 'Accept all' })
+    ).toBeVisible();
+    await expect(
+        page.getByRole('button', { name: 'Accept change' })
+    ).toBeVisible();
+
+    await page.getByRole('button', { name: 'Accept change' }).click();
+
+    await expect.poll(() => deleteCalled).toBe(true);
 });
 
 /*
@@ -1408,12 +1468,16 @@ test('file-list-changes-after-compilation', async ({ page }) => {
     let isAfterCompilation = false;
     const routeSetup = new RouteSetup(page);
 
+    await routeSetup.setupApi();
+    await routeSetup.setupGetAllProjectsRequest();
+
     // Перехватываем запрос user-info
     await routeSetup.setupGetUserInfoRequest();
 
     // Перехватываем запрос default project и get project
     await routeSetup.setupGetDefaultProjectRequest();
     await routeSetup.setupGetProjectRequest();
+    await routeSetup.setupSetProjectTypeRequest();
 
     // Перехватываем запрос на сохранение программы
     await routeSetup.setupSaveProgramRequest();

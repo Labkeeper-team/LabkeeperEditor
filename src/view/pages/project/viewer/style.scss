@@ -2,6 +2,7 @@
 @use '../../../styles/common' as *;
 
 .viewer-container {
+    position: relative;
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -42,6 +43,21 @@
     .clone-project-panel {
         margin-left: auto;
         min-width: 0;
+    }
+}
+
+.viewer-gpt-button__spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(14, 22, 33, 0.15);
+    border-top-color: $gray-10;
+    border-radius: 50%;
+    animation: viewer-gpt-button-spin 0.8s linear infinite;
+}
+
+@keyframes viewer-gpt-button-spin {
+    to {
+        transform: rotate(360deg);
     }
 }
 

@@ -12,18 +12,26 @@
     > * {
         flex-shrink: 0;
     }
-    .segment-editor-container [id^='ide-segment-'],
-    .segment-editor-container .cm-editor {
+    .segment-hunk-block .segment-editor-container [id^='ide-segment-'],
+    .segment-hunk-block .segment-editor-container .cm-editor {
         min-height: 80px;
     }
-    .segment-editor-container:nth-child(2n) {
-        .cm-gutters {
+    .segment-hunk-block:nth-child(2n) {
+        .segment-editor-container .cm-gutters {
             background: $gray-60;
         }
     }
-    .segment-editor-container:nth-child(2n + 1) {
-        .cm-gutters {
+    .segment-hunk-block:nth-child(2n + 1) {
+        .segment-editor-container .cm-gutters {
             background: $gray-50;
         }
+    }
+    .segment-hunk-block:nth-child(2n)
+        .segment-editor-container.has-new-segment-hunk
+        .cm-gutters,
+    .segment-hunk-block:nth-child(2n + 1)
+        .segment-editor-container.has-new-segment-hunk
+        .cm-gutters {
+        background: transparent !important;
     }
 }

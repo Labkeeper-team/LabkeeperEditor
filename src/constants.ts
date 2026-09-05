@@ -27,6 +27,8 @@ export const URLS = {
     setType: `${uri}/api/${version}/public/project/{id}/type`,
     projectPrompt: `${uri}/api/${version}/public/project/{id}/prompt`,
     unauthorizedPrompt: `${uri}/api/${version}/public/prompt`,
+    listHunks: `${uri}/api/${version}/public/project/{id}/hunk`,
+    deleteHunk: `${uri}/api/${version}/public/project/{id}/hunk/{hunkId}`,
 
     filesGetList: `${uri}/api/${version}/public/project/{id}/file/list`,
     uploadFile: `${uri}/api/${version}/public/project/{id}/file/upload`,

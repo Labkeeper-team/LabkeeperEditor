@@ -4,16 +4,18 @@ import {
     Program,
     Project,
     ProjectType,
-    Segment,
     UserInfo,
 } from '../../model/domain.ts';
+import { withSegmentIds } from '../../viewModel/utils/segmentId.ts';
 import axios, { AxiosError, AxiosResponse } from 'axios';
 import { URLS } from '../../constants.ts';
 import {
     CodeValidationResponse,
     CompilationResponse,
+    HunkListResponse,
     ListFilesResponse,
     ListProjectsResponse,
+    PromptResult,
     RequestResult,
     RichProject,
     Rpi,
@@ -51,18 +53,7 @@ async function requestWrapper<T>(
 }
 
 function withIds(program: Program): Program {
-    return {
-        segments: program.segments.map(
-            (s, index) =>
-                ({
-                    type: s.type,
-                    text: s.text,
-                    parameters: s.parameters,
-                    id: index + 1,
-                }) as Segment
-        ),
-        parameters: program.parameters,
-    };
+    return withSegmentIds(program);
 }
 
 export class WebRpi implements Rpi {
@@ -439,7 +430,7 @@ export class WebRpi implements Rpi {
     async promptProjectRequest(
         projectId: string,
         prompt: string
-    ): Promise<RequestResult<Program>> {
+    ): Promise<RequestResult<PromptResult>> {
         return requestWrapper(() =>
             axios.post(URLS.projectPrompt.replace('{id}', projectId), null, {
                 params: { prompt },
@@ -450,11 +441,34 @@ export class WebRpi implements Rpi {
     async unauthorizedPromptProjectRequest(
         program: Program,
         prompt: string
-    ): Promise<RequestResult<Program>> {
+    ): Promise<RequestResult<PromptResult>> {
         return requestWrapper(() =>
             axios.post(URLS.unauthorizedPrompt, withIds(program), {
                 params: { prompt },
             })
+        );
+    }
+
+    async listHunksRequest(
+        projectId: string
+    ): Promise<RequestResult<HunkListResponse>> {
+        return requestWrapper(() =>
+            axios.get(URLS.listHunks.replace('{id}', projectId))
+        );
+    }
+
+    async deleteHunkRequest(
+        projectId: string,
+        hunkId: string,
+        revert: boolean
+    ): Promise<RequestResult> {
+        return requestWrapper(() =>
+            axios.delete(
+                URLS.deleteHunk
+                    .replace('{id}', projectId)
+                    .replace('{hunkId}', hunkId),
+                { params: { revert } }
+            )
         );
     }
 }

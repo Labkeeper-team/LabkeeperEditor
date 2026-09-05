@@ -1,0 +1,182 @@
+@use '../../styles/colors' as *;
+@use '../../styles/common' as *;
+
+.hunk-global-bar {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 50px;
+    z-index: 20;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none;
+    padding: 12px 16px;
+    box-sizing: border-box;
+
+    @media screen and (max-width: $mobile-breakpoint) {
+        padding: 8px;
+        padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+    }
+}
+
+.hunk-global-bar__inner {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 12px 24px;
+    width: auto;
+    max-width: 100%;
+    pointer-events: auto;
+    background: $white;
+    padding: 12px 16px;
+    border-radius: 8px;
+    box-sizing: border-box;
+    box-shadow: 0 2px 12px rgba(14, 22, 33, 0.12);
+
+    @media screen and (max-width: $mobile-breakpoint) {
+        flex-direction: column;
+        width: 100%;
+        gap: 8px;
+        padding: 10px 12px;
+    }
+
+    &--collapsed {
+        width: 28px;
+        height: 28px;
+        min-width: 28px;
+        padding: 0;
+        gap: 0;
+        background: transparent;
+        box-shadow: none;
+        border-radius: 0;
+    }
+}
+
+.hunk-global-bar__toggle {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: 8px;
+    background: $white;
+    box-shadow: 0 1px 6px rgba(14, 22, 33, 0.16);
+    color: $gray-10;
+    cursor: pointer;
+    touch-action: manipulation;
+    transform: translate(-30%, -40%);
+    pointer-events: auto;
+
+    .hunk-global-bar__inner--collapsed & {
+        transform: none;
+    }
+}
+
+.hunk-global-bar__toggle-icon {
+    width: 14px;
+    height: 14px;
+    display: block;
+    transform: rotate(180deg);
+
+    &--collapsed {
+        transform: none;
+    }
+}
+
+.hunk-global-bar__label {
+    color: $gray-10;
+    font-size: 14px;
+    line-height: 1.2;
+    font-weight: 500;
+    white-space: nowrap;
+    min-width: 0;
+
+    @media screen and (max-width: $mobile-breakpoint) {
+        white-space: normal;
+        text-align: center;
+    }
+}
+
+.hunk-global-bar__actions {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    flex-shrink: 0;
+
+    @media screen and (max-width: $mobile-breakpoint) {
+        width: 100%;
+        gap: 8px;
+    }
+}
+
+.hunk-global-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 36px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: none;
+    font-size: 13px;
+    line-height: 1.2;
+    cursor: pointer;
+    touch-action: manipulation;
+    white-space: nowrap;
+
+    &:disabled {
+        opacity: 0.65;
+        cursor: default;
+    }
+
+    @media screen and (max-width: $mobile-breakpoint) {
+        flex: 1 1 0;
+        min-width: 0;
+        min-height: 40px;
+    }
+}
+
+.hunk-global-btn--accept {
+    background: $blue-10;
+    color: $white;
+}
+
+.hunk-global-btn--revert {
+    background: $blue-20;
+    color: $gray-10;
+}
+
+.hunk-global-btn__spinner {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    animation: hunk-global-spin 0.8s linear infinite;
+}
+
+.hunk-global-btn__spinner--accept {
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    border-top-color: $white;
+}
+
+.hunk-global-btn__spinner--revert {
+    border: 2px solid rgba(14, 22, 33, 0.15);
+    border-top-color: $gray-10;
+}
+
+@keyframes hunk-global-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
