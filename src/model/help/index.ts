@@ -1,4 +1,5 @@
 import { SegmentType } from '../domain.ts';
+import { WikiLinks } from '../../viewModel/wiki.ts';
 
 export interface HeaderHelpItem {
     description: {
@@ -213,9 +214,6 @@ export const editorHelpItems: EditorHelpItem[] = [
     },
 ];
 
-const wikiRuUrl = 'https://github.com/labkeeper-team/docs/wiki/ru';
-const wikiEnUrl = 'https://github.com/labkeeper-team/docs/wiki/en';
-
 const basicEndingRu = 'Больше информации доступно на';
 const basicEndingEn = 'More information on';
 
@@ -234,7 +232,7 @@ export const instructions: LocalizedInstructionItem[] = [
             image: '/instructions/welcome.png',
             ending: basicEndingRu,
             containsAd: true,
-            wikiLink: wikiRuUrl,
+            wikiLink: WikiLinks.home,
         },
         en: {
             title: 'Welcome',
@@ -247,7 +245,7 @@ export const instructions: LocalizedInstructionItem[] = [
                 `,
             ],
             ending: basicEndingEn,
-            wikiLink: wikiEnUrl,
+            wikiLink: WikiLinks.home,
             image: '/instructions/welcome.png',
         },
     },
@@ -284,7 +282,7 @@ export const instructions: LocalizedInstructionItem[] = [
             ],
             image: '/instructions/quick_start.png',
             ending: basicEndingRu,
-            wikiLink: wikiRuUrl + '#примеры',
+            wikiLink: WikiLinks.examples,
         },
         en: {
             title: 'Markdown',
@@ -298,7 +296,7 @@ export const instructions: LocalizedInstructionItem[] = [
                 'Press the run button',
             ],
             ending: basicEndingEn,
-            wikiLink: wikiEnUrl,
+            wikiLink: WikiLinks.examples,
             image: '/instructions/quick_start.png',
         },
     },
@@ -312,7 +310,7 @@ export const instructions: LocalizedInstructionItem[] = [
             ],
             image: '/instructions/md_insert.png',
             ending: basicEndingRu,
-            wikiLink: wikiRuUrl + '#подстановка-значений-в-текстовые-сегменты',
+            wikiLink: WikiLinks.valueSubstitution,
         },
         en: {
             title: 'Insert computation result into text',
@@ -323,7 +321,7 @@ export const instructions: LocalizedInstructionItem[] = [
             ],
             image: '/instructions/md_insert.png',
             ending: basicEndingEn,
-            wikiLink: wikiEnUrl,
+            wikiLink: WikiLinks.valueSubstitution,
         },
     },
     {
@@ -336,7 +334,7 @@ export const instructions: LocalizedInstructionItem[] = [
             ],
             image: '/instructions/image_insert.png',
             ending: basicEndingRu,
-            wikiLink: wikiRuUrl + '#сегменты',
+            wikiLink: WikiLinks.segments,
         },
         en: {
             title: 'Add an image',
@@ -347,7 +345,7 @@ export const instructions: LocalizedInstructionItem[] = [
             ],
             image: '/instructions/image_insert.png',
             ending: basicEndingEn,
-            wikiLink: wikiEnUrl,
+            wikiLink: WikiLinks.segments,
         },
     },
     {
@@ -360,9 +358,7 @@ export const instructions: LocalizedInstructionItem[] = [
             ],
             image: '/instructions/simple_formula.png',
             ending: basicEndingRu,
-            wikiLink:
-                wikiRuUrl +
-                '#примеры-разнообразных-механизмов-отрисовки-математики',
+            wikiLink: WikiLinks.mathRenderingExamples,
         },
         en: {
             title: 'Simple formulas segment usage',
@@ -373,7 +369,7 @@ export const instructions: LocalizedInstructionItem[] = [
             ],
             image: '/instructions/simple_formula.png',
             ending: basicEndingEn,
-            wikiLink: wikiEnUrl,
+            wikiLink: WikiLinks.mathRenderingExamples,
         },
     },
     {
@@ -388,7 +384,7 @@ export const instructions: LocalizedInstructionItem[] = [
             ],
             image: '/instructions/error.png',
             ending: basicEndingRu,
-            wikiLink: wikiRuUrl + '#оператор-погрешности',
+            wikiLink: WikiLinks.errorOperator,
         },
         en: {
             title: 'Errors',
@@ -400,7 +396,7 @@ export const instructions: LocalizedInstructionItem[] = [
             ],
             image: '/instructions/simple_formula.png',
             ending: basicEndingEn,
-            wikiLink: wikiEnUrl,
+            wikiLink: WikiLinks.errorOperator,
         },
     },
     {
@@ -413,7 +409,7 @@ export const instructions: LocalizedInstructionItem[] = [
             ],
             image: '/instructions/draw_plot.png',
             ending: basicEndingRu,
-            wikiLink: wikiRuUrl + '#прорисовка',
+            wikiLink: WikiLinks.plot,
         },
         en: {
             title: 'Drawing plots',
@@ -424,7 +420,7 @@ export const instructions: LocalizedInstructionItem[] = [
             ],
             image: '/instructions/draw_plot.png',
             ending: basicEndingEn,
-            wikiLink: wikiEnUrl,
+            wikiLink: WikiLinks.plot,
         },
     },
     {
@@ -438,7 +434,7 @@ export const instructions: LocalizedInstructionItem[] = [
             ],
             image: '/instructions/print_pdf.png',
             ending: basicEndingRu,
-            wikiLink: wikiRuUrl,
+            wikiLink: WikiLinks.home,
         },
         en: {
             title: 'Print to pdf',
@@ -450,7 +446,7 @@ export const instructions: LocalizedInstructionItem[] = [
             ],
             image: '/instructions/print_pdf.png',
             ending: basicEndingEn,
-            wikiLink: wikiEnUrl,
+            wikiLink: WikiLinks.home,
         },
     },
 ];

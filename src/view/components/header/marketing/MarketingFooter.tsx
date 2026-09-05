@@ -3,21 +3,16 @@ import { useSelector } from 'react-redux';
 import externalLinkIcon from '../../../assets/marketing-footer-external.svg';
 import footerWordmark from '../../../assets/marketing-footer-wordmark.svg';
 import footerLogoMark from '../../../assets/marketing-footer-logo-mark.svg';
-import {
-    useCurrentLanguage,
-    useDictionary,
-} from '../../../store/selectors/translations';
+import { useDictionary } from '../../../store/selectors/translations';
 import { Routes } from '../../../../viewModel/routes.ts';
+import { WikiLinks } from '../../../../viewModel/wiki.ts';
 
 import './footer.scss';
 
 export const MarketingFooter = () => {
     const dictionary = useSelector(useDictionary);
-    const language = useSelector(useCurrentLanguage);
     const nav = dictionary.tokens_page.navigation;
     const footer = dictionary.tokens_page.footer;
-
-    const wikiHref = `https://github.com/Labkeeper-team/Docs/wiki/${language}`;
 
     /** Same links as labkeeper.io footer (anchors + wiki + about). */
     const navItems: {
@@ -39,7 +34,7 @@ export const MarketingFooter = () => {
         {
             key: 'wiki',
             label: footer.wiki_nav,
-            href: wikiHref,
+            href: WikiLinks.home,
             external: true,
         },
         {

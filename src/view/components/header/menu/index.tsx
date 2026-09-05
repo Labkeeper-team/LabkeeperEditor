@@ -4,6 +4,7 @@ import { matchPath, useLocation, useNavigate } from 'react-router-dom';
 
 import { controller } from '../../../../main.tsx';
 import { Routes } from '../../../../viewModel/routes.ts';
+import { WikiLinks } from '../../../../viewModel/wiki.ts';
 import { Select } from '../../select';
 import { SelectItem } from '../../select/model.ts';
 import {
@@ -35,7 +36,6 @@ type HeaderMenuItem = {
 const SITE_ORIGIN = window.location.origin;
 const ABOUT_URL = `${SITE_ORIGIN}/about`;
 const EXAMPLES_URL = `${SITE_ORIGIN}/#examples`;
-const WIKI_URL = 'https://github.com/Labkeeper-team/Docs/wiki/';
 
 const LANGUAGE_OPTIONS: { label: string; value: Language }[] = [
     { label: 'English', value: 'en' },
@@ -61,8 +61,8 @@ export const HeaderMenu = () => {
     }, []);
 
     const openWiki = useCallback(() => {
-        openExternal(WIKI_URL + language);
-    }, [language, openExternal]);
+        openExternal(WikiLinks.home);
+    }, [openExternal]);
 
     const openContactModal = useCallback(() => {
         dispatch(setShowContactModal(true));

@@ -1,14 +1,11 @@
 import { useSelector } from 'react-redux';
 import { Button } from '../../button';
-import {
-    useCurrentLanguage,
-    useDictionary,
-} from '../../../store/selectors/translations';
+import { useDictionary } from '../../../store/selectors/translations';
 import { GithubIcon } from '../../../icons';
+import { WikiLinks } from '../../../../viewModel/wiki.ts';
 
 export const WikiButton = () => {
     const dictionary = useSelector(useDictionary);
-    const language = useSelector(useCurrentLanguage);
 
     return (
         <Button
@@ -16,12 +13,7 @@ export const WikiButton = () => {
             rounded
             minimize
             titleIcon={() => <GithubIcon />}
-            onPress={() =>
-                window.open(
-                    'https://github.com/Labkeeper-team/Docs/wiki/' + language,
-                    '_blank'
-                )
-            }
+            onPress={() => window.open(WikiLinks.home, '_blank')}
             color={'gray'}
         />
     );
