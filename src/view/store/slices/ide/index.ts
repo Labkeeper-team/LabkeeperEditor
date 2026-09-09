@@ -9,7 +9,6 @@ import {
     GetProjectRequestState,
     GetProjectsRequestState,
     PendingSegmentEditorCursor,
-    ProjectPromptRequestState,
     SaveProjectRequestState,
     SearchCurrentMatch,
 } from '../../../../viewModel/repository';
@@ -150,12 +149,6 @@ export const ideSlice = createSlice({
         setPdfUpdated: (state, { payload }: PayloadAction<number>) => {
             state.pdfUpdated = payload;
         },
-        setProjectPromptRequestState: (
-            state,
-            { payload }: PayloadAction<ProjectPromptRequestState>
-        ) => {
-            state.projectPromptRequestState = payload;
-        },
         setActiveEditorLine: (
             state,
             { payload }: PayloadAction<number | null>
@@ -221,7 +214,6 @@ export const {
     setActiveImageFile,
     setTextFileContent,
     setPdfUpdated,
-    setProjectPromptRequestState,
     setActiveEditorLine,
     setSynctexEditorPosition,
     setPdfClickPosition,

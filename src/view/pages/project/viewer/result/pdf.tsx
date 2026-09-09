@@ -44,6 +44,9 @@ export const PdfResultViewer = () => {
     const lastScrollTopRef = useRef<number>(0);
     const isRestoringRef = useRef<boolean>(true);
 
+    /** Колонка была скрыта в момент отрисовки, ждём, когда её покажут */
+    const waitingForWidthRef = useRef(false);
+    const [widthEpoch, setWidthEpoch] = useState(0);
     const [isPdfLoadingError, setIsPdfLoadingError] = useState<boolean>(false);
     const [isPdfRendering, setIsPdfRendering] = useState<boolean>(false);
     const [pageElements, setPageElements] = useState<HTMLDivElement[]>([]);
@@ -235,6 +238,14 @@ export const PdfResultViewer = () => {
                 const containerWidth =
                     (container.clientWidth ?? 0) - scrollbarWidth;
 
+                // на скрытой вкладке ширина нулевая, масштаб вышел бы отрицательным
+                if (containerWidth <= 0) {
+                    waitingForWidthRef.current = true;
+                    setIsPdfRendering(false);
+                    return;
+                }
+                waitingForWidthRef.current = false;
+
                 const firstPage = await pdf.getPage(1);
                 const unscaledViewport = firstPage.getViewport({ scale: 1 });
 
@@ -392,7 +403,24 @@ export const PdfResultViewer = () => {
             cancelled = true;
             setIsPdfRendering(false);
         };
-    }, [pdfUri, dispatch]);
+    }, [pdfUri, dispatch, widthEpoch]);
+
+    // колонку показали обратно: пересобираем страницы под настоящую ширину
+    useEffect(() => {
+        const container = containerRef.current;
+        if (!container || typeof ResizeObserver === 'undefined') {
+            return;
+        }
+        const observer = new ResizeObserver(() => {
+            if (waitingForWidthRef.current && container.clientWidth > 0) {
+                waitingForWidthRef.current = false;
+                setWidthEpoch((epoch) => epoch + 1);
+            }
+        });
+        observer.observe(container);
+        return () => observer.disconnect();
+        // контейнер существует только когда есть что показывать
+    }, [pdfUri, isPdfLoadingError]);
 
     const showHelpText = !pdfUri || isPdfLoadingError;
     const showPdfLoading = Boolean(

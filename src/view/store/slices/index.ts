@@ -1,4 +1,5 @@
 import {
+    AgentHistoryEntry,
     CompileErrorResultList,
     CompileSuccessResult,
     Hunk,
@@ -22,16 +23,26 @@ import {
     LoginRequestState,
     PasswordRequestState,
     PendingSegmentEditorCursor,
-    ProjectPromptRequestState,
     SaveProjectRequestState,
 } from '../../../viewModel/repository';
 import { createEmptyProgram } from '../../../model/repository/ProgramRepository.ts';
+import {
+    AGENT_ITERATION_OPTIONS,
+    AGENT_TOKEN_OPTIONS,
+} from '../../../model/rpi/agentSocket.ts';
 import { PdfPosition } from '../../../model/rpi';
 import { BillingPricingResponse } from '../../../model/rpi';
 import {
+    AgentRequestState,
+    ChatMessage,
     EditorNavigationTarget,
+    HistoryRequestState,
+    MobileView,
     SearchCurrentMatch,
+    ViewerTab,
 } from '../../../viewModel/repository';
+
+export type { MobileView, ViewerTab };
 
 interface CallbackState {
     scrollEditorToBottom: boolean;
@@ -51,10 +62,10 @@ interface SettingsState {
     showPrivacyPolicyAcceptanceModal: boolean;
     filesToDelete: LabkeeperFile[];
     captchaBypassToken: string | undefined;
-    showProjectPromptModal: boolean;
     currentFolderPath: string;
     ephemeralFolders: string[];
-    mobileView: 'files' | 'editor' | 'pdf';
+    mobileView: MobileView;
+    viewerTab: ViewerTab;
 }
 
 interface ProjectsState {
@@ -112,7 +123,6 @@ interface IdeState {
     activeImageFile: string | null;
     textFileContent: string;
     pdfUpdated: number;
-    projectPromptRequestState: ProjectPromptRequestState;
     activeEditorLine: number | null;
     /** Последняя позиция курсора для SyncTeX (сохраняется при blur). */
     synctexEditorPosition: EditorNavigationTarget | null;
@@ -134,6 +144,18 @@ interface PersistenceState {
     lastProgram: Program;
     instructionExpanded: boolean;
     lastOpenedProjectUuid?: string;
+    /** Настройки агента переживают перезагрузку, история чата — нет */
+    agentMaxTokens: number;
+    agentIterations: number;
+}
+
+export interface ChatState {
+    messages: ChatMessage[];
+    nextMessageId: number;
+    requestState: AgentRequestState;
+    input: string;
+    historyRequestState: HistoryRequestState;
+    history: AgentHistoryEntry[];
 }
 
 export const authInitialState: AuthState = {
@@ -169,7 +191,6 @@ export const ideInitialState: IdeState = {
     activeImageFile: null,
     textFileContent: '',
     pdfUpdated: 0,
-    projectPromptRequestState: 'unknown',
     activeEditorLine: null,
     synctexEditorPosition: null,
     pdfClickPosition: null,
@@ -187,6 +208,17 @@ export const persistenceInitialState: PersistenceState = {
     lastProgram: createEmptyProgram(),
     instructionExpanded: true,
     lastOpenedProjectUuid: undefined,
+    agentMaxTokens: AGENT_TOKEN_OPTIONS[0],
+    agentIterations: AGENT_ITERATION_OPTIONS[0],
+};
+
+export const chatInitialState: ChatState = {
+    messages: [],
+    nextMessageId: 1,
+    requestState: 'idle',
+    input: '',
+    historyRequestState: 'unknown',
+    history: [],
 };
 
 export const projectInitialState: ProjectState = {
@@ -227,10 +259,10 @@ export const settingsInitialState: SettingsState = {
     showPrivacyPolicyAcceptanceModal: false,
     filesToDelete: [],
     captchaBypassToken: undefined,
-    showProjectPromptModal: false,
     currentFolderPath: '',
     ephemeralFolders: [],
     mobileView: 'editor',
+    viewerTab: 'pdf',
 };
 
 export const userInitialState: UserInfo = {

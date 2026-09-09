@@ -16,7 +16,7 @@ import {
     useMobileView,
 } from '../../store/selectors/program';
 import { useIsMobile } from '../../hooks/useMobile';
-import { setMobileView } from '../../store/slices/settings';
+import { setMobileView, setViewerTab } from '../../store/slices/settings';
 import { refreshCodeMirrorLayout } from '../../utils/refreshCodeMirrorLayout';
 import { useHunkActionHandler } from '../../hooks/useHunkEditorSync';
 
@@ -37,18 +37,19 @@ export const ProjectPage = () => {
     const getProjectRequestState = useSelector(
         (state: StorageState) => state.ide.getProjectRequestState
     );
-    const projectPromptRequestState = useSelector(
-        (state: StorageState) => state.ide.projectPromptRequestState
-    );
-    const showProjectPromptModal = useSelector(
-        (state: StorageState) => state.settings.showProjectPromptModal
-    );
     const prevPdfUpdatedRef = useRef(pdfUpdated);
-    const prevPromptStateRef = useRef(projectPromptRequestState);
     const initialViewProjectIdRef = useRef<string | null>(null);
     const initialPdfViewAppliedRef = useRef(false);
 
     useLeavePageConfirmation(hasUnsavedChanges);
+
+    // уход со страницы проекта гасит сокет агента: слушать чужую ленту незачем
+    useEffect(
+        () => () => {
+            dispatch(controller.onProjectPageLeftRequest());
+        },
+        [dispatch]
+    );
 
     useEffect(() => {
         if (!isMobile || mobileView !== 'editor') {
@@ -58,43 +59,17 @@ export const ProjectPage = () => {
         refreshCodeMirrorLayout();
     }, [isMobile, mobileView]);
 
-    // GPT-модалка находится во вкладке PDF — на мобильных сначала показать её.
-    useEffect(() => {
-        if (isMobile && showProjectPromptModal) {
-            dispatch(setMobileView('pdf'));
-        }
-    }, [dispatch, isMobile, showProjectPromptModal]);
-
     // После компиляции (PDF или MD) — показать результат
     useEffect(() => {
-        if (!isMobile) {
-            return;
-        }
-
         if (pdfUpdated > prevPdfUpdatedRef.current) {
-            dispatch(setMobileView('pdf'));
+            dispatch(setViewerTab('pdf'));
+            if (isMobile) {
+                dispatch(setMobileView('pdf'));
+            }
         }
 
         prevPdfUpdatedRef.current = pdfUpdated;
     }, [dispatch, isMobile, pdfUpdated]);
-
-    // После успешного запроса к ИИ — показать сегменты (редактор).
-    // Дублирует switchToMobileEditorView в сервисе на случай гонки с pdfUpdated.
-    useEffect(() => {
-        if (!isMobile) {
-            prevPromptStateRef.current = projectPromptRequestState;
-            return;
-        }
-
-        if (
-            prevPromptStateRef.current !== 'ok' &&
-            projectPromptRequestState === 'ok'
-        ) {
-            dispatch(setMobileView('editor'));
-        }
-
-        prevPromptStateRef.current = projectPromptRequestState;
-    }, [dispatch, isMobile, projectPromptRequestState]);
 
     // При открытии проекта с уже существующим PDF — сразу показать PDF
     useEffect(() => {
@@ -122,6 +97,7 @@ export const ProjectPage = () => {
         }
 
         initialPdfViewAppliedRef.current = true;
+        dispatch(setViewerTab('pdf'));
         dispatch(setMobileView('pdf'));
     }, [
         dispatch,
@@ -184,7 +160,11 @@ export const ProjectPage = () => {
             </div>
             <div
                 className={classNames('project-pane', 'project-pane--pdf', {
-                    'project-pane--active': !isMobile || mobileView === 'pdf',
+                    // чат живёт в той же колонке, что и результат компиляции
+                    'project-pane--active':
+                        !isMobile ||
+                        mobileView === 'pdf' ||
+                        mobileView === 'chat',
                 })}
             >
                 <Viewer />

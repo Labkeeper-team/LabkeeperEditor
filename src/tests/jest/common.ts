@@ -9,7 +9,13 @@ import {
     ObserverService,
 } from '../../model/service/ObserverService.ts';
 import { setupContext } from '../../viewModel/context.ts';
-import { Hunk, LabkeeperFile } from '../../model/domain.ts';
+import {
+    AgentHandlers,
+    AgentSession,
+    AgentSessionParams,
+    AgentSocket,
+} from '../../model/rpi/agentSocket.ts';
+import { Hunk, LabkeeperFile, Program } from '../../model/domain.ts';
 
 export const USER_ID = 111;
 export const USER_EMAIL = 'a@gmail.com';
@@ -27,12 +33,65 @@ global.structuredClone = (val) => {
     return JSON.parse(JSON.stringify(val));
 };
 
+/**
+ * Мок порта агента. Тест сам дёргает handlers, чтобы разыграть поток событий.
+ * Настоящий WebSocket трогать нельзя: в jsdom он есть и полезет в сеть.
+ */
+export const mockAgentSocket = () => {
+    const state: {
+        handlers: AgentHandlers | null;
+        started: AgentSessionParams | null;
+        projectId: string | null;
+        program: Program | null;
+        closeCalls: number;
+        startCalls: number;
+    } = {
+        handlers: null,
+        started: null,
+        projectId: null,
+        program: null,
+        closeCalls: 0,
+        startCalls: 0,
+    };
+
+    const session: AgentSession = {
+        close: () => {
+            state.closeCalls += 1;
+        },
+    };
+
+    const socket: AgentSocket = {
+        startAgent: (projectId, params, handlers) => {
+            state.startCalls += 1;
+            state.projectId = projectId;
+            state.started = params;
+            state.handlers = handlers;
+            return session;
+        },
+        startAgentUnauthorized: (params, handlers) => {
+            state.startCalls += 1;
+            state.started = params;
+            state.program = params.program;
+            state.handlers = handlers;
+            return session;
+        },
+    };
+
+    return { socket, state };
+};
+
 export const mockContext = () => {
     const mvs = mockViewModelState();
     const rpi: Rpi = mockRpi();
     const observerService: ObserverService = mockObserver();
+    const agent = mockAgentSocket();
 
-    return setupContext(rpi, mvs, observerService);
+    return {
+        ...setupContext(rpi, mvs, observerService, agent.socket),
+        agentSocket: agent.socket,
+        agentSocketState: agent.state,
+        observerService,
+    };
 };
 
 export function mockUserInfoWithDefaultUser(rpi: Rpi) {

@@ -9,6 +9,7 @@
         "test:math": "jest",
         "test:ui": "playwright test",
         "test:ui:silent": "playwright test --reporter=line",
+        "test:ui:update": "playwright test --update-snapshots",
         "build": "vite build --",
         "jest-preview": "jest-preview",
         "check": "eslint . && prettier --check --error-on-unmatched-pattern .",

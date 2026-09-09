@@ -10,12 +10,12 @@ import { withSegmentIds } from '../../viewModel/utils/segmentId.ts';
 import axios, { AxiosError, AxiosResponse } from 'axios';
 import { URLS } from '../../constants.ts';
 import {
+    AgentHistoryResponse,
     CodeValidationResponse,
     CompilationResponse,
     HunkListResponse,
     ListFilesResponse,
     ListProjectsResponse,
-    PromptResult,
     RequestResult,
     RichProject,
     Rpi,
@@ -427,28 +427,6 @@ export class WebRpi implements Rpi {
         return requestWrapper(() => axios.post(URLS.Logout));
     }
 
-    async promptProjectRequest(
-        projectId: string,
-        prompt: string
-    ): Promise<RequestResult<PromptResult>> {
-        return requestWrapper(() =>
-            axios.post(URLS.projectPrompt.replace('{id}', projectId), null, {
-                params: { prompt },
-            })
-        );
-    }
-
-    async unauthorizedPromptProjectRequest(
-        program: Program,
-        prompt: string
-    ): Promise<RequestResult<PromptResult>> {
-        return requestWrapper(() =>
-            axios.post(URLS.unauthorizedPrompt, withIds(program), {
-                params: { prompt },
-            })
-        );
-    }
-
     async listHunksRequest(
         projectId: string
     ): Promise<RequestResult<HunkListResponse>> {
@@ -469,6 +447,20 @@ export class WebRpi implements Rpi {
                     .replace('{hunkId}', hunkId),
                 { params: { revert } }
             )
+        );
+    }
+
+    async getAgentHistoryRequest(
+        projectId: string
+    ): Promise<RequestResult<AgentHistoryResponse>> {
+        return requestWrapper(() =>
+            axios.get(URLS.agentHistory.replace('{id}', projectId))
+        );
+    }
+
+    async clearAgentHistoryRequest(projectId: string): Promise<RequestResult> {
+        return requestWrapper(() =>
+            axios.delete(URLS.agentHistory.replace('{id}', projectId))
         );
     }
 }

@@ -1,0 +1,311 @@
+@use '../../../../styles/colors' as *;
+@use '../../../../styles/common' as *;
+
+.agent-chat {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    background: $white;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    padding: 16px;
+    gap: 12px;
+}
+
+/* Пустой чат: поле по центру колонки, дисклеймер прижат к низу, как в макете */
+.agent-chat--empty {
+    .agent-chat__transcript {
+        flex: 0 0 auto;
+    }
+
+    .agent-chat__field,
+    .agent-chat__disclaimer {
+        margin-top: auto;
+    }
+}
+
+.agent-chat__transcript {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-right: 4px;
+
+    &--empty {
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+    }
+}
+
+.agent-chat__pair {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid $gray-60;
+}
+
+.agent-chat__separator {
+    border-top: 1px solid $gray-60;
+    margin: 4px 0;
+}
+
+.agent-chat__request {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px;
+    background: $gray-60;
+    border-radius: 8px;
+    padding: 11px;
+}
+
+.agent-chat__request-text {
+    font-size: 14px;
+    line-height: 18px;
+    color: $gray-10;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.agent-chat__request-time {
+    font-size: 12px;
+    line-height: 16px;
+    color: $gray-30;
+    flex-shrink: 0;
+}
+
+.agent-chat__response-label {
+    font-size: 14px;
+    line-height: 18px;
+    font-weight: 600;
+    color: $gray-10;
+    margin-bottom: 4px;
+}
+
+.agent-chat__response-text {
+    font-size: 14px;
+    line-height: 18px;
+    color: $gray-10;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.agent-chat__notice-label {
+    font-size: 14px;
+    line-height: 18px;
+    color: $gray-20;
+    margin-bottom: 4px;
+}
+
+.agent-chat__notice-text {
+    font-size: 14px;
+    line-height: 18px;
+    color: $gray-10;
+}
+
+.agent-chat__error-label {
+    font-size: 14px;
+    line-height: 18px;
+    color: $red-30;
+    margin-bottom: 4px;
+}
+
+.agent-chat__error-text {
+    font-size: 14px;
+    line-height: 18px;
+    color: $gray-10;
+}
+
+.agent-chat__buy-tokens {
+    margin-top: 8px;
+    border: none;
+    background: $blue-10;
+    color: $white;
+    border-radius: 4px;
+    padding: 4px 20px;
+    font-size: 12px;
+    line-height: 16px;
+    cursor: pointer;
+
+    &:hover {
+        background: $button-action-blue;
+    }
+}
+
+.agent-chat__event {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 18px;
+    font-size: 14px;
+    line-height: 18px;
+}
+
+.agent-chat__event-label {
+    color: $gray-20;
+}
+
+.agent-chat__event-file,
+.agent-chat__event-lines {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: none;
+    background: transparent;
+    padding: 0;
+    font-size: 14px;
+    line-height: 18px;
+    color: $gray-10;
+    cursor: pointer;
+
+    &:disabled {
+        cursor: default;
+    }
+
+    &:hover:not(:disabled) {
+        text-decoration: underline;
+    }
+}
+
+.agent-chat__event-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: $blue-10;
+    flex-shrink: 0;
+}
+
+.agent-chat__spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid $gray-50;
+    border-top-color: $blue-10;
+    border-radius: 50%;
+    animation: agent-chat-spin 0.8s linear infinite;
+    flex-shrink: 0;
+}
+
+@keyframes agent-chat-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.agent-chat__hint {
+    font-size: 12px;
+    line-height: 16px;
+    color: $gray-30;
+
+    &--error {
+        color: $red-30;
+    }
+}
+
+.agent-chat__field {
+    border: 1px solid $gray-50;
+    border-radius: 8px;
+    padding: 12px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.agent-chat__input {
+    border: none;
+    resize: none;
+    outline: none;
+    // без явного фона браузер красит выключенное поле серым, и на время работы
+    // агента посреди чата появляется серый прямоугольник
+    background: transparent;
+    min-height: 56px;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 18px;
+    color: $gray-10;
+
+    &::placeholder {
+        color: $gray-30;
+    }
+
+    &:disabled {
+        color: $gray-30;
+    }
+}
+
+.agent-chat__controls {
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+}
+
+.agent-chat__setting {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.agent-chat__setting-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    line-height: 14px;
+    color: $gray-10;
+    white-space: nowrap;
+}
+
+.agent-chat__info {
+    display: inline-flex;
+    color: $gray-30;
+    cursor: help;
+}
+
+.agent-chat__submit {
+    margin-left: auto;
+    width: 50px;
+    height: 50px;
+    border: none;
+    border-radius: 50%;
+    background: $blue-10;
+    color: $white;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+
+    &:hover:not(:disabled) {
+        background: $button-action-blue;
+    }
+
+    &:disabled {
+        background: $blue-20;
+        cursor: default;
+    }
+}
+
+.agent-chat__disclaimer {
+    font-size: 12px;
+    line-height: 16px;
+    color: $gray-20;
+    flex-shrink: 0;
+}
+
+@media screen and (max-width: $mobile-breakpoint) {
+    .agent-chat {
+        border-radius: 0;
+        padding: 12px;
+    }
+
+    .agent-chat__controls {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+}

@@ -40,6 +40,12 @@
         flex-shrink: 0;
     }
 
+    // таб-бар занимает всю ширину шапки, остальное прижимается вправо
+    .viewer-tabs {
+        flex: 1;
+        min-width: 0;
+    }
+
     .clone-project-panel {
         margin-left: auto;
         min-width: 0;
@@ -61,7 +67,88 @@
     }
 }
 
-/* Убираем только зазор между хедером и результатом */
-.viewer-container > .result-container {
+/* Шапка и содержимое колонки идут вплотную, зазор нужен только внутри содержимого */
+.viewer-container > .viewer-pane,
+.viewer-container > .agent-chat {
     margin-top: -8px;
+}
+
+.viewer-pane {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    gap: 8px;
+
+    // display: flex перебивает hidden из браузерного стиля, и колонка делится надвое
+    &[hidden] {
+        display: none;
+    }
+}
+
+.viewer-tabs {
+    display: flex;
+    align-items: stretch;
+    align-self: stretch;
+    // компенсируем боковые отступы шапки: полоса таба идёт до края колонки
+    margin: 0 -14px;
+    gap: 0;
+}
+
+.viewer-tabs__tab {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    background: transparent;
+    border-bottom: 2px solid transparent;
+    padding: 0 8px;
+    font-size: 14px;
+    line-height: 18px;
+    color: $gray-20;
+    cursor: pointer;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &:hover:not(&--active) {
+        color: $gray-10;
+    }
+
+    &--active {
+        color: $blue-10;
+        border-bottom-color: $blue-10;
+        font-weight: 600;
+    }
+}
+
+.viewer-tabs__clear {
+    flex-shrink: 0;
+    border: none;
+    background: transparent;
+    color: $gray-20;
+    padding: 0 12px;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+        color: $red-30;
+    }
+
+    &:disabled {
+        cursor: default;
+        opacity: 0.5;
+    }
+}
+
+@media screen and (max-width: $mobile-breakpoint) {
+    // на мобильном роль переключателя играет список вкладок в шапке приложения
+    .viewer-tabs__tab {
+        display: none;
+    }
+
+    .viewer-tabs {
+        margin: 0;
+        justify-content: flex-end;
+    }
 }

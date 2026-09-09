@@ -104,6 +104,11 @@ export const useIsProjectReadonly = createSelector(
     (state: StorageState) => state.project.projectIsReadonly,
     (s) => s
 );
+/** Пока агент работает, сервер не принимает изменения проекта, правки блокируем */
+export const useIsAgentRunning = createSelector(
+    (state: StorageState) => state.chat.requestState,
+    (state) => state === 'connecting' || state === 'running'
+);
 export const useHasUnsavedChanges = createSelector(
     [
         (state: StorageState) => state.ide,

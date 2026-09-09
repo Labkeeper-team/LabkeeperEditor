@@ -4,7 +4,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Button } from '../../../../components/button';
 import { RightArrowIcon } from '../../../../icons';
 import { AppDispatch, StorageState } from '../../../../store';
-import { useCurrentProgram } from '../../../../store/selectors/program';
+import {
+    useCurrentProgram,
+    useIsAgentRunning,
+} from '../../../../store/selectors/program';
 import { useDictionary } from '../../../../store/selectors/translations.ts';
 import { controller } from '../../../../../main.tsx';
 
@@ -23,6 +26,7 @@ export const RunButton = ({ enableHotkey = false }: RunButtonProps) => {
     const isLatexMode = useSelector(
         (state: StorageState) => state.project.mode === 'latex'
     );
+    const isAgentRunning = useSelector(useIsAgentRunning);
 
     const disabled = useMemo(
         () =>
@@ -32,13 +36,23 @@ export const RunButton = ({ enableHotkey = false }: RunButtonProps) => {
                 (s) => s.type === 'computational' || s.type === 'latex'
             ) &&
                 !isLatexMode) ||
+            flag ||
+            isAgentRunning,
+        [
+            isLatexMode,
             flag,
-        [isLatexMode, flag, isAutocompleteLoading, program.segments]
+            isAutocompleteLoading,
+            program.segments,
+            isAgentRunning,
+        ]
     );
 
     const title = useMemo(() => {
         if (isAutocompleteLoading || flag) {
             return `${dictionary.loading}...`;
+        }
+        if (isAgentRunning) {
+            return dictionary.agent_chat.run_blocked;
         }
         if (!program.segments.length) {
             return dictionary.add_segment;
@@ -50,9 +64,15 @@ export const RunButton = ({ enableHotkey = false }: RunButtonProps) => {
         program.segments.length,
         disabled,
         dictionary,
+        isAgentRunning,
     ]);
 
     const run = useCallback(() => {
+        // сюда приходит и горячая клавиша, поэтому объясняем, почему ничего не произошло
+        if (isAgentRunning) {
+            dispatch(controller.onBlockedEditAttemptRequest());
+            return;
+        }
         if (disabled) {
             return;
         }
@@ -61,7 +81,7 @@ export const RunButton = ({ enableHotkey = false }: RunButtonProps) => {
             setFlag(false);
         }, 1000);
         dispatch(controller.onRunButtonPressedRequest());
-    }, [dispatch, disabled]);
+    }, [dispatch, disabled, isAgentRunning]);
 
     useEffect(() => {
         if (!enableHotkey) {

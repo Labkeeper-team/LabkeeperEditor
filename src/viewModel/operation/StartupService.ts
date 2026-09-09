@@ -13,6 +13,7 @@ import { IdeService } from '../domain/IdeService.ts';
 import { TokenPageService } from './TokenPageService.ts';
 import { ResetService } from '../domain/ResetService.ts';
 import { HunkService } from './HunkService.ts';
+import type { AgentChatService } from './AgentChatService.ts';
 
 const qrPagePattern = /\/qr\/v\d+/i;
 const projectPagePattern = /\/project\/\S+/i;
@@ -27,6 +28,7 @@ export class StartupService {
     tokenPageService: TokenPageService;
     resetService: ResetService;
     private hunkService: HunkService | null = null;
+    private agentChatService: AgentChatService | null = null;
 
     constructor(
         rpi: Rpi,
@@ -47,6 +49,10 @@ export class StartupService {
         this.tokenPageService = tokenPageService;
         this.resetService = resetService;
     }
+
+    setAgentChatService = (agentChatService: AgentChatService) => {
+        this.agentChatService = agentChatService;
+    };
 
     setHunkService = (hunkService: HunkService) => {
         this.hunkService = hunkService;
@@ -292,6 +298,7 @@ export class StartupService {
                     ?.projectId !== project.projectId
             ) {
                 this.resetService.resetFileManagerProjectState();
+                this.agentChatService?.onProjectChanged();
                 this.repository.projectViewModelRepository.setPdfUri(undefined);
                 this.repository.ideViewModelRepository.setPdfUpdated(0);
             }
@@ -369,6 +376,7 @@ export class StartupService {
                         ?.projectId !== project.projectId
                 ) {
                     this.resetService.resetFileManagerProjectState();
+                    this.agentChatService?.onProjectChanged();
                 }
                 this.repository.projectViewModelRepository.setProject(project);
                 this.repository.projectViewModelRepository.setProjectType(
@@ -430,9 +438,9 @@ export class StartupService {
             );
         }
         if (open === 'ai') {
-            this.repository.settingsViewModelRepository.setShowProjectPromptModal(
-                true
-            );
+            // ссылка ?open=ai разошлась до появления чата, ведём её на ближайший по смыслу экран
+            this.repository.settingsViewModelRepository.setViewerTab('chat');
+            this.repository.settingsViewModelRepository.setMobileView('chat');
         }
         if (open === 'login' && !userInfo.isAuthenticated) {
             this.repository.authViewModelRepository.setCurrentView('login');

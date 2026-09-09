@@ -10,7 +10,7 @@ import {
     useIsProjectReadonly,
 } from '../../../store/selectors/program';
 import { controller } from '../../../../main.tsx';
-import { setMobileView } from '../../../store/slices/settings';
+import { setMobileView, setViewerTab } from '../../../store/slices/settings';
 import { useIsMobile } from '../../../hooks/useMobile';
 import { resetLockedViewportScrollAfterFocus } from '../../../utils/resetLockedViewportScroll';
 
@@ -103,6 +103,9 @@ export const SynctexButton = ({ direction, className }: SynctexButtonProps) => {
             return;
         }
 
+        if (isToPdf) {
+            dispatch(setViewerTab('pdf'));
+        }
         dispatch(setMobileView(isToPdf ? 'pdf' : 'editor'));
         // Ждём показа панели (display:none → flex), затем скролл к сегменту
         window.setTimeout(() => focusMarkdownSegment(index), 50);
@@ -117,6 +120,7 @@ export const SynctexButton = ({ direction, className }: SynctexButtonProps) => {
         }
 
         if (isToPdf) {
+            dispatch(setViewerTab('pdf'));
             dispatch(controller.onSyncEditorToPdfRequest());
             if (isMobile) {
                 dispatch(setMobileView('pdf'));

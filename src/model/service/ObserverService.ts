@@ -13,7 +13,9 @@ export const Events = {
     EVENT_PAYMENT_STARTED: 'payment_started',
     EVENT_PAYMENT_SUCCESS: 'payment_success',
     EVENT_CREATE_PROJECT: 'create_project',
-    EVENT_GPT_REQUEST: 'gpt_request',
+    EVENT_AGENT_STARTED: 'agent_started',
+    EVENT_AGENT_FINISHED: 'agent_finished',
+    EVENT_AGENT_TIMEOUT: 'agent_timeout',
     FRONTEND_ERROR: 'frontend_error',
     EVENT_RPI_UNKNOWN_AUTH_LOGIN: 'rpi_unknown_auth_login',
     EVENT_RPI_UNKNOWN_AUTH_SEND_EMAIL_WITH_CODE:
@@ -59,6 +61,7 @@ export const Events = {
         'rpi_unknown_project_page_unauthorized_prompt',
     EVENT_RPI_UNKNOWN_PROJECT_PAGE_PROMPT: 'rpi_unknown_project_page_prompt',
     EVENT_RPI_UNKNOWN_LIST_HUNKS: 'rpi_unknown_list_hunks',
+    EVENT_RPI_UNKNOWN_AGENT: 'rpi_unknown_agent',
     EVENT_RPI_UNKNOWN_COMPILATION: 'rpi_unknown_compilation',
     EVENT_RPI_UNKNOWN_PROGRAM_EDITOR_SYNC_EDITOR_TO_PDF:
         'rpi_unknown_program_editor_sync_editor_to_pdf',
@@ -69,6 +72,8 @@ export const Events = {
 export type EventValues = (typeof Events)[keyof typeof Events];
 
 export const States = {
+    /** Чем закончился последний прогон агента: без этого в воронке видно только «закончился» */
+    STATE_AGENT_STOP_REASON: 'agent_stop_reason',
     STATE_ONLINE: 'is_logged',
     STATE_EMAIL: 'email',
     STATE_PROJECT: 'project',

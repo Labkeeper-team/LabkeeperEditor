@@ -26,6 +26,12 @@ export const persistenceSlice = createSlice({
         ) {
             state.lastOpenedProjectUuid = payload;
         },
+        setAgentMaxTokens(state, { payload }: PayloadAction<number>) {
+            state.agentMaxTokens = payload;
+        },
+        setAgentIterations(state, { payload }: PayloadAction<number>) {
+            state.agentIterations = payload;
+        },
     },
 });
 export const {
@@ -34,4 +40,6 @@ export const {
     clearLastProgram,
     setLastProgram,
     setLastOpenedProjectUuid,
+    setAgentMaxTokens,
+    setAgentIterations,
 } = persistenceSlice.actions;

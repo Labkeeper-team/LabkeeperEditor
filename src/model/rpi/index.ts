@@ -1,4 +1,5 @@
 import {
+    AgentHistoryEntry,
     CompileErrorResultList,
     CompileSuccessResult,
     Hunk,
@@ -101,13 +102,12 @@ export interface RichProject extends Project {
     lastPdf?: string;
 }
 
-export interface PromptResult {
-    program: Program;
+export interface HunkListResponse {
     hunks: Hunk[];
 }
 
-export interface HunkListResponse {
-    hunks: Hunk[];
+export interface AgentHistoryResponse {
+    history: AgentHistoryEntry[];
 }
 
 export interface Rpi {
@@ -243,16 +243,6 @@ export interface Rpi {
 
     logoutRequest(): Promise<RequestResult>;
 
-    promptProjectRequest(
-        projectId: string,
-        prompt: string
-    ): Promise<RequestResult<PromptResult>>;
-
-    unauthorizedPromptProjectRequest(
-        program: Program,
-        prompt: string
-    ): Promise<RequestResult<PromptResult>>;
-
     listHunksRequest(
         projectId: string
     ): Promise<RequestResult<HunkListResponse>>;
@@ -262,6 +252,12 @@ export interface Rpi {
         hunkId: string,
         revert: boolean
     ): Promise<RequestResult>;
+
+    getAgentHistoryRequest(
+        projectId: string
+    ): Promise<RequestResult<AgentHistoryResponse>>;
+
+    clearAgentHistoryRequest(projectId: string): Promise<RequestResult>;
 
     getBillingPricingRequest(): Promise<RequestResult<BillingPricingResponse>>;
 
@@ -367,17 +363,27 @@ export const mockRpi = (): Rpi => {
         listBillingPurchasesRequest: () => {
             throw new Error('Not implemented');
         },
-        promptProjectRequest: () => {
-            throw new Error('Not implemented');
-        },
-        unauthorizedPromptProjectRequest: () => {
-            throw new Error('Not implemented');
-        },
         listHunksRequest: () => {
             throw new Error('Not implemented');
         },
         deleteHunkRequest: () => {
             throw new Error('Not implemented');
         },
+        getAgentHistoryRequest: () =>
+            Promise.resolve({
+                code: 200,
+                body: { history: [] },
+                isOk: true,
+                isUnauth: false,
+                isForbidden: false,
+            }),
+        clearAgentHistoryRequest: () =>
+            Promise.resolve({
+                code: 200,
+                body: {},
+                isOk: true,
+                isUnauth: false,
+                isForbidden: false,
+            }),
     } as unknown as Rpi;
 };

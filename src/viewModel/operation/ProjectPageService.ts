@@ -11,11 +11,11 @@ import { HeaderHelpItem } from '../../model/help';
 import { Routes } from '../routes.ts';
 import { CompilationService } from '../domain/CompilationService.ts';
 import { ResetService } from '../domain/ResetService.ts';
-import { Program, ProjectType } from '../../model/domain.ts';
+import { ProjectType } from '../../model/domain.ts';
 import { TextFileEditorService } from './TextFileEditorService.ts';
 import { SearchService } from '../domain/SearchService.ts';
 import { HunkService } from './HunkService.ts';
-import { MOBILE_BREAKPOINT } from '../../view/hooks/useMobile';
+import { EditingLockService } from '../domain/EditingLockService.ts';
 
 export class ProjectPageService {
     repository: ViewModelRepository;
@@ -29,6 +29,7 @@ export class ProjectPageService {
     textFileEditorService: TextFileEditorService;
     searchService: SearchService;
     hunkService: HunkService;
+    editingLock: EditingLockService;
 
     constructor(
         repository: ViewModelRepository,
@@ -41,7 +42,8 @@ export class ProjectPageService {
         resetService: ResetService,
         textFileEditorService: TextFileEditorService,
         searchService: SearchService,
-        hunkService: HunkService
+        hunkService: HunkService,
+        editingLock: EditingLockService
     ) {
         this.rpi = rpi;
         this.programService = programService;
@@ -54,6 +56,7 @@ export class ProjectPageService {
         this.textFileEditorService = textFileEditorService;
         this.searchService = searchService;
         this.hunkService = hunkService;
+        this.editingLock = editingLock;
     }
 
     onContactUsFormSubmitted = async (subject: string, body: string) => {
@@ -172,6 +175,9 @@ export class ProjectPageService {
     };
 
     onHelpItemCreated = (item: HeaderHelpItem) => {
+        if (this.editingLock.rejectEdit()) {
+            return;
+        }
         const lastProgram = this.programService.getCurrentProgram();
         if (!lastProgram) {
             return;
@@ -280,6 +286,9 @@ export class ProjectPageService {
         okCallback: () => void,
         failCallback: () => void
     ) => {
+        if (this.editingLock.rejectEdit()) {
+            return;
+        }
         const titleToSend = title.trim();
         if (!titleToSend) {
             this.repository.toast(
@@ -324,6 +333,9 @@ export class ProjectPageService {
     };
 
     onProjectVisibilityChange = async (visible: boolean) => {
+        if (this.editingLock.rejectEdit()) {
+            return;
+        }
         const project = this.repository.projectViewModelRepository.project();
         if (!project) return;
 
@@ -400,6 +412,9 @@ export class ProjectPageService {
     };
 
     onRunButtonClicked = async (): Promise<void> => {
+        if (this.editingLock.rejectEdit()) {
+            return;
+        }
         try {
             this.repository.settingsViewModelRepository.setIsCompiling(true);
             if (this.repository.ideViewModelRepository.activeTextFile()) {
@@ -431,6 +446,9 @@ export class ProjectPageService {
     };
 
     setProjectType = async (type: ProjectType): Promise<void> => {
+        if (this.editingLock.rejectEdit()) {
+            return;
+        }
         this.repository.projectViewModelRepository.setProjectType(type);
 
         const project = this.repository.projectViewModelRepository.project();
@@ -463,213 +481,4 @@ export class ProjectPageService {
             );
         }
     };
-
-    sendPromptAndReload = async (prompt: string): Promise<void> => {
-        this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
-            'loading'
-        );
-        this.repository.settingsViewModelRepository.setShowProjectPromptModal(
-            false
-        );
-
-        if (!this.repository.userViewModelRepository.isAuthenticated()) {
-            const promptResult =
-                await this.rpi.unauthorizedPromptProjectRequest(
-                    this.repository.projectViewModelRepository.currentProgram(),
-                    prompt
-                );
-            if (promptResult.isOk) {
-                await this.applyPromptSuccess(
-                    promptResult.body.program,
-                    promptResult.body.hunks ?? []
-                );
-            } else {
-                this.handlePromptError(promptResult, true);
-            }
-            return;
-        }
-
-        const project = this.repository.projectViewModelRepository.project();
-
-        if (!project) {
-            this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
-                'unknownError'
-            );
-            this.repository.settingsViewModelRepository.setShowProjectPromptModal(
-                true
-            );
-            return;
-        }
-
-        const promptResult = await this.rpi.promptProjectRequest(
-            project.projectId,
-            prompt
-        );
-        await this.refreshUserInfo();
-        if (promptResult.isOk) {
-            await this.applyPromptSuccess(
-                promptResult.body.program,
-                promptResult.body.hunks ?? []
-            );
-        } else {
-            this.handlePromptError(promptResult, false);
-        }
-    };
-
-    private applyPromptSuccess = async (
-        newProgram: Program,
-        hunks: import('../../model/domain.ts').Hunk[]
-    ): Promise<void> => {
-        this.observerService.onEvent(Events.EVENT_GPT_REQUEST);
-        const oldProgram =
-            this.repository.projectViewModelRepository.currentProgram();
-        const activeIndex = this.selectNewSegmentIndexAfterPrompt(
-            oldProgram,
-            newProgram
-        );
-        this.ideService.replaceProgram(newProgram);
-        this.hunkService.setHunksFromPrompt(hunks);
-        this.repository.settingsViewModelRepository.setShowProjectPromptModal(
-            false
-        );
-        this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
-            'ok'
-        );
-        this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(
-            activeIndex
-        );
-        this.repository.scrollEditorToBottom();
-        this.switchToMobileEditorView();
-
-        const project = this.repository.projectViewModelRepository.project();
-        if (
-            project &&
-            this.repository.userViewModelRepository.isAuthenticated()
-        ) {
-            await this.loaderService.loadFiles(project.projectId);
-            await this.textFileEditorService.reloadActiveTextFileIfOpen();
-        }
-    };
-
-    private handlePromptError = (
-        promptResult: import('../../model/rpi').RequestResult<unknown>,
-        unauthorized: boolean
-    ): void => {
-        this.repository.settingsViewModelRepository.setShowProjectPromptModal(
-            true
-        );
-        if (promptResult.isUnauth) {
-            this.repository.toast(
-                this.repository.dictionary.filemanager.errors.sessionExpired,
-                'error'
-            );
-            this.ideService.resetEditor();
-        } else if (promptResult.code === 400) {
-            this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
-                'bad_request'
-            );
-        } else if (promptResult.code === 402) {
-            this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
-                'payment_required'
-            );
-            this.repository.toast(
-                this.repository.dictionary.prompt_modal.errors.payment_required,
-                'error'
-            );
-            this.observerService.onEvent(Events.EVENT_PAYMENT_REQUIRED);
-        } else if (promptResult.code === 425) {
-            this.repository.authViewModelRepository.setCurrentView('login');
-            this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
-                'unknown'
-            );
-            this.repository.settingsViewModelRepository.setShowProjectPromptModal(
-                false
-            );
-        } else {
-            this.observerService.onEvent(
-                unauthorized
-                    ? Events.EVENT_RPI_UNKNOWN_PROJECT_PAGE_UNAUTHORIZED_PROMPT
-                    : Events.EVENT_RPI_UNKNOWN_PROJECT_PAGE_PROMPT
-            );
-            this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
-                'unknownError'
-            );
-        }
-    };
-
-    private refreshUserInfo = async () => {
-        const result = await this.rpi.getUserInfoRequest();
-        if (result.isOk) {
-            this.repository.userViewModelRepository.setUserInfo(result.body);
-            this.repository.settingsViewModelRepository.setShowPrivacyPolicyAcceptanceModal(
-                result.body.isAuthenticated &&
-                    result.body.privacyPolicyAccepted === false
-            );
-        } else {
-            this.observerService.onEvent(
-                Events.EVENT_RPI_UNKNOWN_REFRESH_USER_INFO
-            );
-        }
-    };
-
-    private selectNewSegmentIndexAfterPrompt(
-        oldProgram: Program,
-        newProgram: Program
-    ) {
-        if (newProgram.segments.length === oldProgram.segments.length + 1) {
-            for (let i = 0; i < oldProgram.segments.length; i++) {
-                if (
-                    newProgram.segments[i].text !== oldProgram.segments[i].text
-                ) {
-                    return i;
-                }
-            }
-            return newProgram.segments.length - 1;
-        }
-        if (newProgram.segments.length === oldProgram.segments.length + 2) {
-            let result: number | undefined = undefined;
-            for (let i = 0; i < oldProgram.segments.length; i++) {
-                if (
-                    newProgram.segments[i].text !== oldProgram.segments[i].text
-                ) {
-                    if (result !== undefined) {
-                        return i;
-                    }
-                    result = i;
-                }
-            }
-            return newProgram.segments.length - 2;
-        }
-        return newProgram.segments.length - 1;
-    }
-
-    onLlmButtonClicked() {
-        if (
-            this.repository.ideViewModelRepository.projectPromptRequestState() !==
-            'loading'
-        ) {
-            this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
-                'unknown'
-            );
-        }
-        this.repository.settingsViewModelRepository.setShowProjectPromptModal(
-            true
-        );
-    }
-
-    onPromptModalCrossClicked() {
-        this.repository.settingsViewModelRepository.setShowProjectPromptModal(
-            false
-        );
-    }
-
-    private switchToMobileEditorView() {
-        if (
-            typeof window === 'undefined' ||
-            window.innerWidth > MOBILE_BREAKPOINT
-        ) {
-            return;
-        }
-        this.repository.settingsViewModelRepository.setMobileView('editor');
-    }
 }

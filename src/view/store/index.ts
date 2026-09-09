@@ -53,7 +53,6 @@ import {
     setSearchCurrentMatch,
     setUndoEnabled,
     setPdfUpdated,
-    setProjectPromptRequestState,
     setActiveEditorLine,
     setSynctexEditorPosition,
     setPdfClickPosition,
@@ -67,8 +66,19 @@ import {
     setInstructionExpanded,
     setLanguage,
     setLastOpenedProjectUuid,
+    setAgentMaxTokens,
+    setAgentIterations,
     setLastProgram,
 } from './slices/persistence';
+import {
+    appendChatMessage,
+    resetChat,
+    setChatHistory,
+    setChatHistoryRequestState,
+    setChatInput,
+    setChatMessages,
+    setChatRequestState,
+} from './slices/chat';
 import {
     setCompileError,
     setCompileResult,
@@ -107,7 +117,6 @@ import {
     setIsCompiling,
     setIsFileDraggedToFileManager,
     setShoFileManager,
-    setShowProjectPromptModal,
     setShowPrivacyPolicyAcceptanceModal,
     setShowSearch,
     setTourVisibility,
@@ -115,6 +124,7 @@ import {
     setEphemeralFolders,
     addEphemeralFolder,
     setMobileView,
+    setViewerTab,
 } from './slices/settings';
 import { setUser } from './slices/user';
 import { setScrollEditorToBottom } from './slices/callback';
@@ -234,8 +244,6 @@ export const createViewModelStateFromStore = (
             activeImageFile: () => store.getState().ide.activeImageFile,
             textFileContent: () => store.getState().ide.textFileContent,
             pdfUpdated: () => store.getState().ide.pdfUpdated,
-            projectPromptRequestState: () =>
-                store.getState().ide.projectPromptRequestState,
             activeEditorLine: () => store.getState().ide.activeEditorLine,
             synctexEditorPosition: () =>
                 store.getState().ide.synctexEditorPosition,
@@ -246,8 +254,6 @@ export const createViewModelStateFromStore = (
             hunks: () => store.getState().ide.hunks,
             pendingHunkIds: () => store.getState().ide.pendingHunkIds,
 
-            setProjectPromptRequestStatus: (v) =>
-                store.dispatch(setProjectPromptRequestState(v)),
             setPdfUpdated: (v) => store.dispatch(setPdfUpdated(v)),
             setCloneRequestState: (v: CloneRequestState) =>
                 store.dispatch(setCloneRequestState(v)),
@@ -307,6 +313,26 @@ export const createViewModelStateFromStore = (
             setHunks: (hunks) => store.dispatch(setHunks(hunks)),
             setPendingHunkIds: (ids) => store.dispatch(setPendingHunkIds(ids)),
         },
+        chatViewModelRepository: {
+            messages: () => store.getState().chat.messages,
+            requestState: () => store.getState().chat.requestState,
+            input: () => store.getState().chat.input,
+            historyRequestState: () =>
+                store.getState().chat.historyRequestState,
+            history: () => store.getState().chat.history,
+
+            appendMessage: (message) =>
+                store.dispatch(appendChatMessage(message)),
+            setMessages: (messages) =>
+                store.dispatch(setChatMessages(messages)),
+            setRequestState: (state) =>
+                store.dispatch(setChatRequestState(state)),
+            setInput: (input) => store.dispatch(setChatInput(input)),
+            setHistoryRequestState: (state) =>
+                store.dispatch(setChatHistoryRequestState(state)),
+            setHistory: (history) => store.dispatch(setChatHistory(history)),
+            reset: () => store.dispatch(resetChat()),
+        },
         persistenceViewModelRepository: {
             instructionExpanded: () =>
                 store.getState().persistence.instructionExpanded,
@@ -314,7 +340,13 @@ export const createViewModelStateFromStore = (
             lastProgram: () => store.getState().persistence.lastProgram,
             lastOpenedProjectUuid: () =>
                 store.getState().persistence.lastOpenedProjectUuid,
+            agentMaxTokens: () => store.getState().persistence.agentMaxTokens,
+            agentIterations: () => store.getState().persistence.agentIterations,
 
+            setAgentMaxTokens: (value) =>
+                store.dispatch(setAgentMaxTokens(value)),
+            setAgentIterations: (value) =>
+                store.dispatch(setAgentIterations(value)),
             setLastOpenedProjectUuid: (uuid) =>
                 store.dispatch(setLastOpenedProjectUuid(uuid)),
             setInstructionExpanded: (instructionExpanded) =>
@@ -406,14 +438,10 @@ export const createViewModelStateFromStore = (
             filesToDelete: () => store.getState().settings.filesToDelete,
             captchaBypassToken: () =>
                 store.getState().settings.captchaBypassToken,
-            showProjectPromptModal: () =>
-                store.getState().settings.showProjectPromptModal,
             currentFolderPath: () =>
                 store.getState().settings.currentFolderPath,
             ephemeralFolders: () => store.getState().settings.ephemeralFolders,
 
-            setShowProjectPromptModal: (v) =>
-                store.dispatch(setShowProjectPromptModal(v)),
             setShowPrivacyPolicyAcceptanceModal: (v) =>
                 store.dispatch(setShowPrivacyPolicyAcceptanceModal(v)),
             setCaptchaBypassToken: (token) =>
@@ -443,6 +471,8 @@ export const createViewModelStateFromStore = (
             addEphemeralFolder: (folder: string) =>
                 store.dispatch(addEphemeralFolder(folder)),
             setMobileView: (view) => store.dispatch(setMobileView(view)),
+            viewerTab: () => store.getState().settings.viewerTab,
+            setViewerTab: (tab) => store.dispatch(setViewerTab(tab)),
         },
         userViewModelRepository: {
             email: () => store.getState().user.email,

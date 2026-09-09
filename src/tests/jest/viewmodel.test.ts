@@ -27,6 +27,7 @@ import {
     UserInfo,
 } from '../../model/domain.ts';
 import { setupContext } from '../../viewModel/context.ts';
+import { mockAgentSocket } from './common.ts';
 import {
     mockObserver,
     ObserverService,
@@ -45,7 +46,7 @@ const mockContext = () => {
     const rpi: Rpi = mockRpi();
     const observerService: ObserverService = mockObserver();
 
-    return setupContext(rpi, mvs, observerService);
+    return setupContext(rpi, mvs, observerService, mockAgentSocket().socket);
 };
 
 // Создает дефолтный пустой проект
@@ -143,46 +144,6 @@ test('compilation-refreshes-user-token-balance-test', async () => {
 
     expect(rpi.getUserInfoRequest).toHaveBeenCalledTimes(1);
     expect(repository.userViewModelRepository.tokenBalance()).toBe(7);
-});
-
-test('prompt-refreshes-user-token-balance-test', async () => {
-    const { repository, rpi, projectPageService } = mockContext();
-    repository.userViewModelRepository.setUserInfo(
-        createDefaultUserInfo(true, 10).body
-    );
-    repository.projectViewModelRepository.setProject(
-        createDefaultProject('project-id', 'title')
-    );
-    rpi.promptProjectRequest = jest.fn().mockResolvedValue({
-        code: 200,
-        body: {
-            program: {
-                segments: [],
-                parameters: {
-                    roundStrategy: 'firstMeaningDigit',
-                },
-            },
-            hunks: [],
-        },
-        isOk: true,
-        isUnauth: false,
-        isForbidden: false,
-    });
-    rpi.getUserInfoRequest = jest
-        .fn()
-        .mockResolvedValue(createDefaultUserInfo(true, 8));
-    rpi.listFilesRequest = jest.fn().mockResolvedValue({
-        code: 200,
-        body: { files: [] },
-        isOk: true,
-        isUnauth: false,
-        isForbidden: false,
-    });
-
-    await projectPageService.sendPromptAndReload('prompt');
-
-    expect(rpi.getUserInfoRequest).toHaveBeenCalledTimes(1);
-    expect(repository.userViewModelRepository.tokenBalance()).toBe(8);
 });
 
 test('help-items-add-test', async () => {

@@ -4,9 +4,13 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 
 import { useDictionary } from '../../../store/selectors/translations';
-import { useMobileView } from '../../../store/selectors/program';
+import {
+    useIsProjectReadonly,
+    useMobileView,
+} from '../../../store/selectors/program';
 import { AppDispatch } from '../../../store';
-import { setMobileView } from '../../../store/slices/settings';
+import { setMobileView, setViewerTab } from '../../../store/slices/settings';
+import { MobileView } from '../../../store/slices';
 import { controller } from '../../../../main.tsx';
 import { useIsMobile } from '../../../hooks/useMobile';
 
@@ -17,6 +21,7 @@ export const MobileViewSwitcher = () => {
     const location = useLocation();
     const dictionary = useSelector(useDictionary);
     const mobileView = useSelector(useMobileView);
+    const isReadonly = useSelector(useIsProjectReadonly);
     const isMobile = useIsMobile();
     const [open, setOpen] = useState(false);
     const barRef = useRef<HTMLDivElement>(null);
@@ -48,13 +53,21 @@ export const MobileViewSwitcher = () => {
         { id: 'files' as const, label: dictionary.mobile_view.files },
         { id: 'editor' as const, label: dictionary.mobile_view.editor },
         { id: 'pdf' as const, label: dictionary.mobile_view.pdf },
+        // на чужом проекте чата нет, как нет и вкладки в правой колонке
+        ...(isReadonly
+            ? []
+            : [{ id: 'chat' as const, label: dictionary.mobile_view.chat }]),
     ];
 
     const currentView = views.find((view) => view.id === mobileView);
 
-    const onSelectView = (id: 'files' | 'editor' | 'pdf') => {
+    const onSelectView = (id: MobileView) => {
         if (id === 'files') {
             dispatch(controller.onFolderButtonClickedRequest());
+        }
+        // чат и результат делят одну колонку, поэтому синхронизируем таб внутри неё
+        if (id === 'chat' || id === 'pdf') {
+            dispatch(setViewerTab(id === 'chat' ? 'chat' : 'pdf'));
         }
         dispatch(setMobileView(id));
         setOpen(false);

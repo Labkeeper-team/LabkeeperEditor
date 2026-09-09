@@ -127,7 +127,6 @@ export interface Translations {
     viewer: {
         no_pdf: string;
         pdf_loading: string;
-        gpt_prompt_button: string;
         mode: {
             label: string;
             markdown: string;
@@ -160,10 +159,66 @@ export interface Translations {
         language: string;
         change_language_to: string;
     };
+    agent_chat: {
+        tab_label: string;
+        pdf_tab_label: string;
+        placeholder: string;
+        send: string;
+        disclaimer: string;
+        result: string;
+        error: string;
+        notice: string;
+        buy_tokens: string;
+        clear_history: string;
+        history_loading: string;
+        history_error: string;
+        history_clear_error: string;
+        run_blocked: string;
+        context_size: string;
+        max_iterations: string;
+        context_size_hint: string;
+        max_iterations_hint: string;
+        editing_locked: string;
+        event: {
+            model_call: string;
+            add_segment: string;
+            add_lines_to_segment: string;
+            delete_lines_from_segment: string;
+            add_file: string;
+            add_lines_to_file: string;
+            delete_lines_from_file: string;
+            add_segment_plain: string;
+            add_lines_to_segment_plain: string;
+            delete_lines_from_segment_plain: string;
+            add_file_plain: string;
+            add_lines_to_file_plain: string;
+            delete_lines_from_file_plain: string;
+            list_workspace: string;
+            read_segment: string;
+            read_segments: string;
+            search_segments: string;
+            read_file: string;
+            done: string;
+        };
+        stop: {
+            ContextOverflow: string;
+            IterationLimit: string;
+            Timeout: string;
+            UnauthorizedLimitExceeded: string;
+            PaymentRequired: string;
+            Locked: string;
+            UnknownError: string;
+            timeout: string;
+            disconnected: string;
+            connect_failed: string;
+            save_failed: string;
+        };
+    };
     mobile_view: {
         files: string;
         editor: string;
         pdf: string;
+        chat: string;
     };
     tokens_page: {
         title: string;
@@ -417,16 +472,10 @@ export interface Translations {
         agreement_and: string;
         personal_data_consent: string;
     };
+    /** От удалённой модалки GPT остался один текст: его показывает компиляция */
     prompt_modal: {
-        title: string;
-        description: string;
-        placeholder: string;
-        submit: string;
-        sending: string;
         errors: {
-            bad_request: string;
             payment_required: string;
-            unknownError: string;
         };
     };
 

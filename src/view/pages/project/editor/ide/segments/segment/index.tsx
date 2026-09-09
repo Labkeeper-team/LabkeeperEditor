@@ -45,9 +45,11 @@ import {
     setSynctexEditorPosition,
 } from '../../../../../../store/slices/ide';
 import {
+    useIsAgentRunning,
     useIsProjectReadonly,
     useSearch,
 } from '../../../../../../store/selectors/program';
+import { useBlockedEditNotice } from '../../../../../../hooks/useBlockedEditNotice.ts';
 import classNames from 'classnames';
 import { colors } from '../../../../../../styles/colors';
 import { DropdownMenuContent } from './dropdownMenuContent';
@@ -213,6 +215,8 @@ export const SegmentEditor = memo(
             (state: StorageState) => state.project.compileErrorResult?.errors
         );
         const projectIsReadonly = useSelector(useIsProjectReadonly);
+        const isAgentRunning = useSelector(useIsAgentRunning);
+        const onBlockedEditKeyDown = useBlockedEditNotice();
         // берём совпадение только для своего сегмента, иначе перерисуются все
         const currentMatch = useSelector((state: StorageState) =>
             state.ide.searchCurrentMatch?.segmentIndex === props.index
@@ -861,6 +865,7 @@ export const SegmentEditor = memo(
                         'has-new-segment-hunk': Boolean(newSegmentHunkGroup),
                     })}
                     onMouseDownCapture={onSegmentMouseDownCapture}
+                    onKeyDownCapture={onBlockedEditKeyDown}
                 >
                     <CodeMirror
                         ref={editor as LegacyRef<ReactCodeMirrorRef>}
@@ -870,7 +875,7 @@ export const SegmentEditor = memo(
                         onCreateEditor={() =>
                             setEditorViewEpoch((epoch) => epoch + 1)
                         }
-                        readOnly={projectIsReadonly}
+                        readOnly={projectIsReadonly || isAgentRunning}
                         extensions={codeMirrorExtensions}
                         basicSetup={SEGMENT_CODE_MIRROR_BASIC_SETUP}
                     />
