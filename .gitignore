@@ -29,3 +29,6 @@ dist-ssr
 /.docker-ci/
 /blob-report/
 /playwright/.cache/
+
+# отчёт замеров производительности, генерится playwright.perf.config.ts
+perf-report.jsonl
