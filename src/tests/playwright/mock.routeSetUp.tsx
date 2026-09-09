@@ -1,9 +1,9 @@
 import { Page, Route } from '@playwright/test';
 import {
+    AgentHistoryEntry,
     CompileErrorResult,
     Hunk,
     Program,
-    Segment,
     Statement,
 } from '../../model/domain.ts';
 
@@ -70,31 +70,6 @@ export class RouteSetup {
                         id: id,
                         privacyPolicyAccepted: privacyPolicyAccepted,
                         tokenBalance: tokenBalance,
-                    }),
-                });
-            }
-        );
-    }
-
-    async setupLlmPrompt(code: number) {
-        await this.page.route(
-            `**/api/${version}/public/project/${uuid}/prompt?prompt=biba`,
-            async (route) => {
-                await route.fulfill({
-                    status: code,
-                    contentType: contentType,
-                    body: JSON.stringify({
-                        program: {
-                            segments: [
-                                {
-                                    type: 'md',
-                                    text: 'LLM GENERATED',
-                                    parameters: { visible: true },
-                                },
-                            ],
-                            parameters: { roundStrategy: 'firstMeaningDigit' },
-                        },
-                        hunks: [],
                     }),
                 });
             }
@@ -251,6 +226,61 @@ export class RouteSetup {
                 });
             }
         );
+    }
+
+    /**
+     * История чата с агентом. Мок с состоянием: DELETE чистит список,
+     * следующий GET уже отдаёт пустую историю, как это делает сервер.
+     */
+    async setupAgentHistoryRequest(entries: AgentHistoryEntry[] = []) {
+        const history = [...entries];
+        await this.page.route(
+            `**/api/${version}/public/project/${uuid}/history`,
+            async (route) => {
+                if (route.request().method() === 'DELETE') {
+                    history.length = 0;
+                    await route.fulfill({
+                        status: 200,
+                        contentType: contentType,
+                        body: JSON.stringify({}),
+                    });
+                    return;
+                }
+                await route.fulfill({
+                    status: 200,
+                    contentType: contentType,
+                    body: JSON.stringify({ history }),
+                });
+            }
+        );
+        return history;
+    }
+
+    /**
+     * Канал агента. connectToServer не зовём, поэтому сокет замокан целиком
+     * и наружу ничего не уходит. Хендлер живёт в процессе теста, так что
+     * отправленные страницей кадры просто копятся в массиве.
+     */
+    async setupAgentSocket(
+        frames: Record<string, unknown>[] = [],
+        options: { dropConnection?: boolean } = {}
+    ) {
+        const received: Record<string, unknown>[] = [];
+        await this.page.routeWebSocket(
+            `**/api/${version}/ws/**`,
+            async (ws) => {
+                ws.onMessage((message) => {
+                    received.push(JSON.parse(String(message)));
+                    for (const frame of frames) {
+                        ws.send(JSON.stringify(frame));
+                    }
+                    if (options.dropConnection) {
+                        ws.close({ code: 1011 });
+                    }
+                });
+            }
+        );
+        return received;
     }
 
     async setupSetProjectTypeRequest() {
