@@ -4,6 +4,7 @@ jest.mock('../../../constants.ts', () => ({
     URLS: {
         renameFile: '/api/v2/public/project/{id}/file/rename',
         billingPricing: '/api/v4/public/billing/pricing',
+        agentHistory: '/api/v4/public/project/{id}/history',
     },
 }));
 
@@ -14,6 +15,7 @@ jest.mock('axios', () => ({
     default: {
         post: jest.fn(),
         get: jest.fn(),
+        delete: jest.fn(),
     },
 }));
 
@@ -62,6 +64,41 @@ describe('WebRpi', () => {
 
         expect(getMock).toHaveBeenCalledWith('/api/v4/public/billing/pricing');
         expect(result.body).toEqual(pricing);
+        expect(result.isOk).toBe(true);
+    });
+
+    test('getAgentHistoryRequest asks the history of the given project', async () => {
+        const getMock = axios.get as jest.Mock;
+        const history = [
+            {
+                id: 1,
+                request: 'сделай таблицу',
+                response: 'готово',
+                createdAt: '2026-09-08T10:00:00Z',
+            },
+        ];
+        getMock.mockResolvedValue({ status: 200, data: { history } });
+        const rpi = new WebRpi();
+
+        const result = await rpi.getAgentHistoryRequest('project-id');
+
+        expect(getMock).toHaveBeenCalledWith(
+            '/api/v4/public/project/project-id/history'
+        );
+        expect(result.body.history).toEqual(history);
+        expect(result.isOk).toBe(true);
+    });
+
+    test('clearAgentHistoryRequest deletes the history of the given project', async () => {
+        const deleteMock = axios.delete as jest.Mock;
+        deleteMock.mockResolvedValue({ status: 200, data: {} });
+        const rpi = new WebRpi();
+
+        const result = await rpi.clearAgentHistoryRequest('project-id');
+
+        expect(deleteMock).toHaveBeenCalledWith(
+            '/api/v4/public/project/project-id/history'
+        );
         expect(result.isOk).toBe(true);
     });
 });

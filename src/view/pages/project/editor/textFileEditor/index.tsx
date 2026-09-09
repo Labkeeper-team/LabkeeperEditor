@@ -13,7 +13,11 @@ import { latex } from 'codemirror-lang-latex';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, StorageState } from '../../../../store';
 import { controller } from '../../../../../main.tsx';
-import { useIsProjectReadonly } from '../../../../store/selectors/program.ts';
+import {
+    useIsAgentRunning,
+    useIsProjectReadonly,
+} from '../../../../store/selectors/program.ts';
+import { useBlockedEditNotice } from '../../../../hooks/useBlockedEditNotice.ts';
 import { CheckIcon, PlusIcon, WarningIcon } from '../../../../icons';
 import {
     refreshCodeMirrorLayout,
@@ -167,6 +171,8 @@ export const TextFileEditor = () => {
         (state: StorageState) => state.ide.editorNavigationTarget
     );
     const isReadonly = useSelector(useIsProjectReadonly);
+    const isAgentRunning = useSelector(useIsAgentRunning);
+    const onBlockedEditKeyDown = useBlockedEditNotice();
     const isAuth = useSelector(
         (state: StorageState) => state.user.isAuthenticated
     );
@@ -313,7 +319,11 @@ export const TextFileEditor = () => {
                 return;
             }
             attempts += 1;
-            if (scrollTextFileEditorLineIntoView(target.line)) {
+            if (
+                scrollTextFileEditorLineIntoView(target.line, {
+                    focus: target.focus,
+                })
+            ) {
                 dispatch(setEditorNavigationTarget(null));
                 return;
             }
@@ -457,7 +467,11 @@ export const TextFileEditor = () => {
                 </div>
             </div>
             <div className="ide-flexibility-container">
-                <div ref={bodyRef} className="text-file-editor-body">
+                <div
+                    ref={bodyRef}
+                    className="text-file-editor-body"
+                    onKeyDownCapture={onBlockedEditKeyDown}
+                >
                     {isLoading ? (
                         <div className="ide-loading-wrapper" aria-hidden>
                             <span className="ide-loading-spinner" />
@@ -471,7 +485,7 @@ export const TextFileEditor = () => {
                             extensions={codeMirrorExtensions}
                             onChange={onChange}
                             onCreateEditor={onCreateEditor}
-                            readOnly={isReadonly}
+                            readOnly={isReadonly || isAgentRunning}
                             basicSetup={TEXT_FILE_EDITOR_BASIC_SETUP}
                         />
                     ) : null}

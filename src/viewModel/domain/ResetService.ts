@@ -5,6 +5,11 @@ import { createEmptyProgram } from '../../model/repository/ProgramRepository.ts'
 export class ResetService {
     repository: ViewModelRepository;
     programService: ProgramService;
+    /**
+     * Что сделать перед сбросом проекта. Сюда подключается закрытие сокета агента:
+     * очистить ленту мало, живой сокет продолжит писать в неё после логаута.
+     */
+    private beforeProjectReset: (() => void) | null = null;
 
     constructor(
         repository: ViewModelRepository,
@@ -12,6 +17,10 @@ export class ResetService {
     ) {
         this.repository = repository;
         this.programService = programService;
+    }
+
+    setBeforeProjectReset(hook: () => void): void {
+        this.beforeProjectReset = hook;
     }
 
     resetAll(): void {
@@ -45,9 +54,6 @@ export class ResetService {
         this.repository.ideViewModelRepository.setUndoEnabled(false);
         this.repository.ideViewModelRepository.setRedoEnabled(false);
         this.resetSearchState();
-        this.repository.ideViewModelRepository.setProjectPromptRequestStatus(
-            'unknown'
-        );
         this.repository.ideViewModelRepository.setHunks([]);
         this.repository.ideViewModelRepository.setPendingHunkIds([]);
 
@@ -72,9 +78,6 @@ export class ResetService {
         this.repository.settingsViewModelRepository.setIsCompiling(false);
         this.repository.settingsViewModelRepository.setShowSearch(false);
         this.repository.settingsViewModelRepository.setFilesToDelete([]);
-        this.repository.settingsViewModelRepository.setShowProjectPromptModal(
-            false
-        );
 
         // User
         this.repository.userViewModelRepository.setUserInfo({
@@ -92,6 +95,7 @@ export class ResetService {
     }
 
     resetProject(): void {
+        this.beforeProjectReset?.();
         this.programService.clearHistory();
         this.resetFileManagerProjectState();
         this.resetSearchState();
@@ -118,6 +122,9 @@ export class ResetService {
         this.repository.ideViewModelRepository.setTextFileContent('');
         this.repository.ideViewModelRepository.setHunks([]);
         this.repository.ideViewModelRepository.setPendingHunkIds([]);
+
+        // Chat: лента и история привязаны к проекту, настройки агента переживают смену
+        this.repository.chatViewModelRepository.reset();
 
         // Project
         this.repository.projectViewModelRepository.setProject(undefined);

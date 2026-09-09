@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { settingsInitialState } from '../index.ts';
+import { MobileView, settingsInitialState, ViewerTab } from '../index.ts';
 import { LabkeeperFile } from '../../../../model/domain.ts';
 
 export const settingsSlice = createSlice({
@@ -66,12 +66,6 @@ export const settingsSlice = createSlice({
         ) => {
             state.captchaBypassToken = payload;
         },
-        setShowProjectPromptModal: (
-            state,
-            { payload }: PayloadAction<boolean>
-        ) => {
-            state.showProjectPromptModal = payload;
-        },
         setCurrentFolderPath: (state, { payload }: PayloadAction<string>) => {
             state.currentFolderPath = payload;
         },
@@ -83,11 +77,11 @@ export const settingsSlice = createSlice({
                 state.ephemeralFolders.push(payload);
             }
         },
-        setMobileView: (
-            state,
-            { payload }: PayloadAction<'files' | 'editor' | 'pdf'>
-        ) => {
+        setMobileView: (state, { payload }: PayloadAction<MobileView>) => {
             state.mobileView = payload;
+        },
+        setViewerTab: (state, { payload }: PayloadAction<ViewerTab>) => {
+            state.viewerTab = payload;
         },
     },
 });
@@ -105,9 +99,9 @@ export const {
     setShowPrivacyPolicyAcceptanceModal,
     setFilesToDelete,
     setCaptchaBypassToken,
-    setShowProjectPromptModal,
     setCurrentFolderPath,
     setEphemeralFolders,
     addEphemeralFolder,
     setMobileView,
+    setViewerTab,
 } = settingsSlice.actions;

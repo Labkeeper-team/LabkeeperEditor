@@ -1,4 +1,13 @@
+import { AgentStopReason } from '../../model/rpi/agentSocket.ts';
 import {
+    AGENT_ITERATION_OPTIONS,
+    AGENT_TOKEN_OPTIONS,
+} from '../../model/rpi/agentSocket.ts';
+
+export type MobileView = 'files' | 'editor' | 'pdf' | 'chat';
+export type ViewerTab = 'pdf' | 'chat';
+import {
+    AgentHistoryEntry,
     CompileErrorResultList,
     CompileSuccessResult,
     Hunk,
@@ -57,15 +66,52 @@ export type GetProjectsRequestState =
 
 export type SaveProjectRequestState = 'unknown' | 'ok' | 'error' | 'loading';
 
-export type ProjectPromptRequestState =
-    | 'unknown'
-    | 'loading'
-    | 'ok'
-    | 'bad_request'
-    | 'payment_required'
-    | 'unknownError';
-
 export type BillingPricingRequestState = 'unknown' | 'loading' | 'ok' | 'error';
+
+/** Стадия прогона агента. Блокировка правок и спиннер в ленте — производные от неё */
+export type AgentRequestState =
+    'idle' | 'connecting' | 'running' | 'ok' | 'error';
+
+export type HistoryRequestState = 'unknown' | 'loading' | 'ok' | 'error';
+
+/**
+ * Элемент ленты чата. Спиннер тут не хранится: он рисуется на последнем элементе,
+ * пока requestState это connecting или running. Иначе на каждое событие пришлось бы
+ * переписывать предыдущий элемент, а при обрыве спиннер остался бы навсегда.
+ */
+export type ChatMessage =
+    | { kind: 'request'; id: number; text: string; createdAt: string }
+    | { kind: 'response'; id: number; text: string }
+    | { kind: 'error'; id: number; reason: AgentErrorReason }
+    /** Прогон дошёл до конца, но с оговоркой: изменения применены, а не отменены */
+    | { kind: 'notice'; id: number; reason: AgentErrorReason }
+    | {
+          kind: 'event';
+          id: number;
+          /** Ключ строки в словаре, например event.add_segment */
+          labelKey: string;
+          file?: string;
+          segmentId?: number;
+          lines?: string;
+          /** Куда прокрутить редактор по клику */
+          target?: EditorNavigationTarget;
+      };
+
+/** Omit по объединению должен раздаваться по вариантам, иначе union схлопнется */
+type DistributiveOmit<T, K extends PropertyKey> = T extends unknown
+    ? Omit<T, K>
+    : never;
+
+export type ChatMessageDraft = DistributiveOmit<ChatMessage, 'id'>;
+
+/** Причина, по которой в ленте показана ошибка */
+export type AgentErrorReason =
+    | AgentStopReason
+    | 'timeout'
+    | 'disconnected'
+    | 'connect_failed'
+    /** Проект не удалось сохранить перед запуском, агент работал бы со старой версией */
+    | 'save_failed';
 export type BillingPurchaseRequestState = 'idle' | 'loading' | 'ok' | 'error';
 
 export type PendingSegmentEditorCursor = {
@@ -165,7 +211,6 @@ class MockViewModelRepositoryState {
     showTour = false;
     filesToDelete: LabkeeperFile[] = [];
     captchaBypassToken: string | undefined = undefined;
-    showProjectPromptModal = false;
     showPrivacyPolicyAcceptanceModal = false;
     currentFolderPath = '';
     ephemeralFolders: string[] = [];
@@ -183,9 +228,16 @@ class MockViewModelRepositoryState {
     lastVerifiedCode: string | null = null;
     passwordSetRequest: PasswordRequestState = 'unknown';
     isRegistration: boolean = false;
-    projectPromptRequestState: ProjectPromptRequestState = 'unknown';
     hunks: Hunk[] = [];
     pendingHunkIds: string[] = [];
+    agentMaxTokens: number = AGENT_TOKEN_OPTIONS[0];
+    agentIterations: number = AGENT_ITERATION_OPTIONS[0];
+    chatMessages: ChatMessage[] = [];
+    chatNextMessageId: number = 1;
+    chatRequestState: AgentRequestState = 'idle';
+    chatInput: string = '';
+    chatHistoryRequestState: HistoryRequestState = 'unknown';
+    chatHistory: AgentHistoryEntry[] = [];
 
     toasts: { message: string; type: TypeOptions }[] = [];
 }
@@ -263,8 +315,6 @@ export const mockViewModelState = (): MockViewModelRepository => {
             activeImageFile: () => mockViewModelState.activeImageFile,
             textFileContent: () => mockViewModelState.textFileContent,
             pdfUpdated: () => mockViewModelState.pdfUpdated,
-            projectPromptRequestState: () =>
-                mockViewModelState.projectPromptRequestState,
             activeEditorLine: () => mockViewModelState.activeEditorLine,
             synctexEditorPosition: () =>
                 mockViewModelState.synctexEditorPosition,
@@ -275,8 +325,6 @@ export const mockViewModelState = (): MockViewModelRepository => {
             hunks: () => mockViewModelState.hunks,
             pendingHunkIds: () => mockViewModelState.pendingHunkIds,
 
-            setProjectPromptRequestStatus: (v) =>
-                (mockViewModelState.projectPromptRequestState = v),
             setPdfUpdated: (v) => (mockViewModelState.pdfUpdated = v),
             setGetProjectsRequestState: (v: GetProjectsRequestState) =>
                 (mockViewModelState.getProjectsRequestState = v),
@@ -351,12 +399,50 @@ export const mockViewModelState = (): MockViewModelRepository => {
             setPendingHunkIds: (ids) =>
                 (mockViewModelState.pendingHunkIds = ids),
         },
+        chatViewModelRepository: {
+            messages: () => mockViewModelState.chatMessages,
+            requestState: () => mockViewModelState.chatRequestState,
+            input: () => mockViewModelState.chatInput,
+            historyRequestState: () =>
+                mockViewModelState.chatHistoryRequestState,
+            history: () => mockViewModelState.chatHistory,
+            appendMessage: (message) => {
+                mockViewModelState.chatMessages = [
+                    ...mockViewModelState.chatMessages,
+                    {
+                        ...message,
+                        id: mockViewModelState.chatNextMessageId,
+                    } as ChatMessage,
+                ];
+                mockViewModelState.chatNextMessageId += 1;
+            },
+            setMessages: (messages) =>
+                (mockViewModelState.chatMessages = messages),
+            setRequestState: (state) =>
+                (mockViewModelState.chatRequestState = state),
+            setInput: (input) => (mockViewModelState.chatInput = input),
+            setHistoryRequestState: (state) =>
+                (mockViewModelState.chatHistoryRequestState = state),
+            setHistory: (history) => (mockViewModelState.chatHistory = history),
+            reset: () => {
+                mockViewModelState.chatMessages = [];
+                mockViewModelState.chatNextMessageId = 1;
+                mockViewModelState.chatRequestState = 'idle';
+                mockViewModelState.chatInput = '';
+                mockViewModelState.chatHistoryRequestState = 'unknown';
+                mockViewModelState.chatHistory = [];
+            },
+        },
         persistenceViewModelRepository: {
             instructionExpanded: () => mockViewModelState.instructionExpanded,
             language: () => mockViewModelState.language,
             lastProgram: () => mockViewModelState.lastProgram,
             lastOpenedProjectUuid: () =>
                 mockViewModelState.lastOpenedProjectUuid,
+            agentMaxTokens: () => mockViewModelState.agentMaxTokens,
+            agentIterations: () => mockViewModelState.agentIterations,
+            setAgentMaxTokens: (v) => (mockViewModelState.agentMaxTokens = v),
+            setAgentIterations: (v) => (mockViewModelState.agentIterations = v),
             setLastOpenedProjectUuid: (uuid) =>
                 (mockViewModelState.lastOpenedProjectUuid = uuid),
             setInstructionExpanded: (v) =>
@@ -453,13 +539,9 @@ export const mockViewModelState = (): MockViewModelRepository => {
             showTour: () => mockViewModelState.showTour,
             filesToDelete: () => mockViewModelState.filesToDelete,
             captchaBypassToken: () => mockViewModelState.captchaBypassToken,
-            showProjectPromptModal: () =>
-                mockViewModelState.showProjectPromptModal,
             currentFolderPath: () => mockViewModelState.currentFolderPath,
             ephemeralFolders: () => mockViewModelState.ephemeralFolders,
 
-            setShowProjectPromptModal: (v) =>
-                (mockViewModelState.showProjectPromptModal = v),
             setShowPrivacyPolicyAcceptanceModal: (v) =>
                 (mockViewModelState.showPrivacyPolicyAcceptanceModal = v),
             setCaptchaBypassToken: (token) =>
@@ -491,6 +573,8 @@ export const mockViewModelState = (): MockViewModelRepository => {
                 }
             },
             setMobileView: () => undefined,
+            viewerTab: () => 'pdf',
+            setViewerTab: () => undefined,
         },
         userViewModelRepository: {
             email: () => mockViewModelState.email,
@@ -568,7 +652,6 @@ export interface IdeViewModelRepository {
     activeTextFile: () => string | null;
     activeImageFile: () => string | null;
     textFileContent: () => string;
-    projectPromptRequestState: () => ProjectPromptRequestState;
     pdfUpdated: () => number;
     activeEditorLine: () => number | null;
     synctexEditorPosition: () => EditorNavigationTarget | null;
@@ -578,7 +661,6 @@ export interface IdeViewModelRepository {
     hunks: () => Hunk[];
     pendingHunkIds: () => string[];
 
-    setProjectPromptRequestStatus: (v: ProjectPromptRequestState) => void;
     setPdfUpdated: (v: number) => void;
     setRedoEnabled: (v: boolean) => void;
     setUndoEnabled: (v: boolean) => void;
@@ -632,11 +714,9 @@ export interface SettingsViewModelRepository {
     showShareModal: () => boolean;
     captchaBypassToken: () => string | undefined;
     filesToDelete: () => LabkeeperFile[];
-    showProjectPromptModal: () => boolean;
     currentFolderPath: () => string;
     ephemeralFolders: () => string[];
 
-    setShowProjectPromptModal: (v: boolean) => void;
     setShowPrivacyPolicyAcceptanceModal: (v: boolean) => void;
     setCaptchaBypassToken: (token?: string) => void;
     setTourVisibility: (visible: boolean) => void;
@@ -651,7 +731,9 @@ export interface SettingsViewModelRepository {
     setCurrentFolderPath: (path: string) => void;
     setEphemeralFolders: (folders: string[]) => void;
     addEphemeralFolder: (folder: string) => void;
-    setMobileView: (view: 'files' | 'editor' | 'pdf') => void;
+    setMobileView: (view: MobileView) => void;
+    viewerTab: () => ViewerTab;
+    setViewerTab: (tab: ViewerTab) => void;
 }
 
 export interface ProjectsViewModelRepository {
@@ -701,12 +783,32 @@ export interface UserViewModelRepository {
     setUserInfo: (userInfo: UserInfo) => void;
 }
 
+export interface ChatViewModelRepository {
+    messages: () => ChatMessage[];
+    requestState: () => AgentRequestState;
+    input: () => string;
+    historyRequestState: () => HistoryRequestState;
+    history: () => AgentHistoryEntry[];
+
+    appendMessage: (message: ChatMessageDraft) => void;
+    setMessages: (messages: ChatMessage[]) => void;
+    setRequestState: (state: AgentRequestState) => void;
+    setInput: (input: string) => void;
+    setHistoryRequestState: (state: HistoryRequestState) => void;
+    setHistory: (history: AgentHistoryEntry[]) => void;
+    reset: () => void;
+}
+
 export interface PersistenceViewModelRepository {
     language: () => Language;
     lastProgram: () => Program;
     instructionExpanded: () => boolean;
     lastOpenedProjectUuid: () => string | undefined;
+    agentMaxTokens: () => number;
+    agentIterations: () => number;
 
+    setAgentMaxTokens: (value: number) => void;
+    setAgentIterations: (value: number) => void;
     setLastOpenedProjectUuid: (uuid: string | undefined) => void;
     setLanguage: (language: Language) => void;
     setInstructionExpanded: (instructionExpanded: boolean) => void;
@@ -727,6 +829,7 @@ export interface ViewModelRepository {
     projectsViewModelRepository: ProjectsViewModelRepository;
     billingViewModelRepository: BillingViewModelRepository;
     settingsViewModelRepository: SettingsViewModelRepository;
+    chatViewModelRepository: ChatViewModelRepository;
     setLocation: (url: string, options?: SetLocationOptions) => void;
     toast: (message: string, type: TypeOptions) => void;
     dictionary: Translations;

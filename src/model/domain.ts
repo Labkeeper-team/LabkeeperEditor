@@ -60,6 +60,14 @@ export interface Hunk {
     text?: string | null;
 }
 
+/** Одна пара «запрос пользователя, ответ агента» из истории проекта. */
+export interface AgentHistoryEntry {
+    id: string;
+    request: string;
+    response: string;
+    createdAt: string;
+}
+
 export interface Segment {
     id?: number;
     type: SegmentType;

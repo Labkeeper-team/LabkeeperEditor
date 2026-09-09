@@ -18,6 +18,7 @@ import { ProjectsPageService } from '../viewModel/operation/ProjectsPageService.
 import { StartupService } from '../viewModel/operation/StartupService.ts';
 import { TokenPageService } from '../viewModel/operation/TokenPageService.ts';
 import { HunkService } from '../viewModel/operation/HunkService.ts';
+import { AgentChatService } from '../viewModel/operation/AgentChatService.ts';
 
 export class Controller {
     authService: AuthService;
@@ -30,6 +31,7 @@ export class Controller {
     startupService: StartupService;
     observerService: ObserverService;
     hunkService: HunkService;
+    agentChatService: AgentChatService;
 
     constructor(
         authService: AuthService,
@@ -41,7 +43,8 @@ export class Controller {
         tokenPageService: TokenPageService,
         startupService: StartupService,
         observerService: ObserverService,
-        hunkService: HunkService
+        hunkService: HunkService,
+        agentChatService: AgentChatService
     ) {
         this.observerService = observerService;
         this.authService = authService;
@@ -53,6 +56,7 @@ export class Controller {
         this.tokenPageService = tokenPageService;
         this.startupService = startupService;
         this.hunkService = hunkService;
+        this.agentChatService = agentChatService;
     }
 
     onFormLoginClickedRequest = createAsyncThunk(
@@ -66,7 +70,7 @@ export class Controller {
             password: string;
             captcha?: string;
         }) => {
-            this.wrapper('onFormLoginClicked', () =>
+            await this.wrapper('onFormLoginClicked', () =>
                 this.authService.onFormLoginClicked(userName, password, captcha)
             );
         }
@@ -75,7 +79,7 @@ export class Controller {
     onQrPageEnterRequest = createAsyncThunk(
         'onQrPageEnter',
         async ({ version }: { version: string }) => {
-            this.wrapper('onQrPageEnter', () =>
+            await this.wrapper('onQrPageEnter', () =>
                 this.startupService.onQrPageEnter(version)
             );
         }
@@ -84,7 +88,7 @@ export class Controller {
     onProgramSaveTimeoutRequest = createAsyncThunk(
         'onProgramSaveTimeout',
         async () => {
-            this.wrapper('onProgramSaveTimeout', () =>
+            await this.wrapper('onProgramSaveTimeout', () =>
                 this.programEditorService.onProgramSaveTimeout()
             );
         }
@@ -93,7 +97,7 @@ export class Controller {
     onAppEnterWithOauthCodeRequest = createAsyncThunk(
         'onAppEnterWithOauthCode',
         async ({ code, state }: { code: string; state: string }) => {
-            this.wrapper('onAppEnterWithOauthCode', () =>
+            await this.wrapper('onAppEnterWithOauthCode', () =>
                 this.startupService.onAppEnterWithOauthCode(code, state)
             );
         }
@@ -102,7 +106,7 @@ export class Controller {
     onLogoutButtonClickedRequest = createAsyncThunk(
         'onLogoutButtonClicked',
         async () => {
-            this.wrapper('onLogoutButtonClicked', () =>
+            await this.wrapper('onLogoutButtonClicked', () =>
                 this.authService.onLogoutButtonClicked()
             );
         }
@@ -111,7 +115,7 @@ export class Controller {
     onAuthButtonClickedRequest = createAsyncThunk(
         'onAuthButtonClicked',
         async () => {
-            this.wrapper('onAuthButtonClicked', () =>
+            await this.wrapper('onAuthButtonClicked', () =>
                 this.authService.onAuthButtonClicked()
             );
         }
@@ -134,13 +138,15 @@ export class Controller {
     );
 
     onAuthClosedRequest = createAsyncThunk('onAuthClosed', async () => {
-        this.wrapper('onAuthClosed', () => this.authService.onAuthClosed());
+        await this.wrapper('onAuthClosed', () =>
+            this.authService.onAuthClosed()
+        );
     });
 
     onRegistrationButtonClickedRequest = createAsyncThunk(
         'onRegistrationButtonClicked',
         async () => {
-            this.wrapper('onRegistrationButtonClicked', () =>
+            await this.wrapper('onRegistrationButtonClicked', () =>
                 this.authService.onRegistrationButtonClicked()
             );
         }
@@ -149,7 +155,7 @@ export class Controller {
     onForgotPasswordButtonClickedRequest = createAsyncThunk(
         'onForgotPasswordButtonClicked',
         async () => {
-            this.wrapper('onForgotPasswordButtonClicked', () =>
+            await this.wrapper('onForgotPasswordButtonClicked', () =>
                 this.authService.onForgotPasswordButtonClicked()
             );
         }
@@ -158,7 +164,7 @@ export class Controller {
     onEmailSendButtonClickedRequest = createAsyncThunk(
         'onEmailSendButtonClicked',
         async ({ email, captcha }: { email: string; captcha: string }) => {
-            this.wrapper('onEmailSendButtonClicked', () =>
+            await this.wrapper('onEmailSendButtonClicked', () =>
                 this.authService.onEmailSendButtonClicked(email, captcha)
             );
         }
@@ -167,7 +173,7 @@ export class Controller {
     onSendPasswordButtonClickedRequest = createAsyncThunk(
         'onSendPasswordButtonClicked',
         async ({ password }: { password: string }) => {
-            this.wrapper('onSendPasswordButtonClicked', () =>
+            await this.wrapper('onSendPasswordButtonClicked', () =>
                 this.authService.onSendPasswordButtonClicked(password)
             );
         }
@@ -176,7 +182,7 @@ export class Controller {
     onSendCodeButtonClickedRequest = createAsyncThunk(
         'onSendCodeButtonClicked',
         async ({ code }: { code: string }) => {
-            this.wrapper('onSendCodeButtonClicked', () =>
+            await this.wrapper('onSendCodeButtonClicked', () =>
                 this.authService.onSendCodeButtonClicked(code)
             );
         }
@@ -185,7 +191,7 @@ export class Controller {
     onAppEnterRequest = createAsyncThunk(
         'onAppEnter',
         async ({ captcha, open }: { captcha?: string; open?: OpenParams }) => {
-            this.wrapper('onAppEnter', () =>
+            await this.wrapper('onAppEnter', () =>
                 this.startupService.onAppStartup(captcha, open)
             );
         }
@@ -194,7 +200,7 @@ export class Controller {
     onOpenEditorAfterSpaNavigationRequest = createAsyncThunk(
         'onOpenEditorAfterSpaNavigation',
         async () => {
-            this.wrapper('onOpenEditorAfterSpaNavigation', () => {
+            await this.wrapper('onOpenEditorAfterSpaNavigation', () => {
                 void this.startupService.openEditorAfterSpaNavigation();
             });
         }
@@ -203,7 +209,7 @@ export class Controller {
     onPrintButtonPressedRequest = createAsyncThunk(
         'onPrintButtonPressedRequest',
         async () => {
-            this.wrapper('onPrintButtonPressedRequest', () =>
+            await this.wrapper('onPrintButtonPressedRequest', () =>
                 this.projectPageService.onPrintButtonPressed()
             );
         }
@@ -212,7 +218,7 @@ export class Controller {
     onProjectPageEscButtonClickedRequest = createAsyncThunk(
         'onProjectPageEscButtonClicked',
         async () => {
-            this.wrapper('onProjectPageEscButtonClicked', () =>
+            await this.wrapper('onProjectPageEscButtonClicked', () =>
                 this.projectPageService.onProjectPageEscButtonPressed()
             );
         }
@@ -225,17 +231,8 @@ export class Controller {
     onRunButtonPressedRequest = createAsyncThunk(
         'onRunButtonPressed',
         async () => {
-            this.wrapper('onRunButtonPressed', () =>
+            await this.wrapper('onRunButtonPressed', () =>
                 this.projectPageService.onRunButtonClicked()
-            );
-        }
-    );
-
-    onPromptSubmitRequest = createAsyncThunk(
-        'onPromptSubmit',
-        async ({ prompt }: { prompt: string }) => {
-            this.wrapper('onRunButtonPressed', () =>
-                this.projectPageService.sendPromptAndReload(prompt)
             );
         }
     );
@@ -243,26 +240,8 @@ export class Controller {
     onPrivacyPolicyAcceptedRequest = createAsyncThunk(
         'onPrivacyPolicyAccepted',
         async () => {
-            this.wrapper('onPrivacyPolicyAccepted', () =>
+            await this.wrapper('onPrivacyPolicyAccepted', () =>
                 this.projectPageService.onPrivacyPolicyAccepted()
-            );
-        }
-    );
-
-    onLlmButtonClickedRequest = createAsyncThunk(
-        'onLlmButtonClicked',
-        async () => {
-            this.wrapper('onLlmButtonClicked', () =>
-                this.projectPageService.onLlmButtonClicked()
-            );
-        }
-    );
-
-    onPromptModalCrossClickedRequest = createAsyncThunk(
-        'onPromptModalCrossClicked',
-        async () => {
-            this.wrapper('onPromptModalCrossClicked', () =>
-                this.projectPageService.onPromptModalCrossClicked()
             );
         }
     );
@@ -298,11 +277,13 @@ export class Controller {
             direction: 'down' | 'up';
             segmentIndex: number;
         }) => {
-            this.wrapper('segmentEditorChangeSegmentPositionRequest', () =>
-                this.programEditorService.segmentEditorChangeSegmentPosition(
-                    direction,
-                    segmentIndex
-                )
+            await this.wrapper(
+                'segmentEditorChangeSegmentPositionRequest',
+                () =>
+                    this.programEditorService.segmentEditorChangeSegmentPosition(
+                        direction,
+                        segmentIndex
+                    )
             );
         }
     );
@@ -318,12 +299,14 @@ export class Controller {
             parameterName: string;
             segmentIndex: number;
         }) => {
-            this.wrapper('segmentEditorChangeSegmentVisibilityRequest', () =>
-                this.programEditorService.segmentEditorChangeSegmentVisibility(
-                    visible,
-                    parameterName,
-                    segmentIndex
-                )
+            await this.wrapper(
+                'segmentEditorChangeSegmentVisibilityRequest',
+                () =>
+                    this.programEditorService.segmentEditorChangeSegmentVisibility(
+                        visible,
+                        parameterName,
+                        segmentIndex
+                    )
             );
         }
     );
@@ -331,7 +314,7 @@ export class Controller {
     deleteSegmentRequest = createAsyncThunk(
         'deleteSegmentRequest',
         async ({ segmentIndex }: { segmentIndex: number }) => {
-            this.wrapper('deleteSegmentRequest', () =>
+            await this.wrapper('deleteSegmentRequest', () =>
                 this.programEditorService.deleteSegment(segmentIndex)
             );
         }
@@ -348,7 +331,7 @@ export class Controller {
             segmentIndex: number;
             cursorPosition: number;
         }) => {
-            this.wrapper('onAddedFilesToSegmentEditorRequest', () =>
+            await this.wrapper('onAddedFilesToSegmentEditorRequest', () =>
                 this.programEditorService.onAddedFilesToSegmentEditor(
                     items,
                     segmentIndex,
@@ -367,7 +350,7 @@ export class Controller {
             segmentType: SegmentType;
             after: number;
         }) => {
-            this.wrapper('onSegmentAdded', () =>
+            await this.wrapper('onSegmentAdded', () =>
                 this.programEditorService.onSegmentAddedViaDivider(
                     segmentType,
                     after
@@ -385,7 +368,7 @@ export class Controller {
             text: string;
             placement: 'start' | 'end';
         }) => {
-            this.wrapper('onAddLatexBoundarySegmentRequest', () =>
+            await this.wrapper('onAddLatexBoundarySegmentRequest', () =>
                 this.programEditorService.addLatexBoundarySegment(
                     text,
                     placement
@@ -397,7 +380,7 @@ export class Controller {
     onSyncEditorToPdfRequest = createAsyncThunk(
         'onSyncEditorToPdfRequest',
         async () => {
-            this.wrapper('onSyncEditorToPdfRequest', () =>
+            await this.wrapper('onSyncEditorToPdfRequest', () =>
                 this.programEditorService.onSyncEditorToPdf()
             );
         }
@@ -406,7 +389,7 @@ export class Controller {
     onSyncPdfToEditorRequest = createAsyncThunk(
         'onSyncPdfToEditorRequest',
         async () => {
-            this.wrapper('onSyncPdfToEditorRequest', () =>
+            await this.wrapper('onSyncPdfToEditorRequest', () =>
                 this.programEditorService.onSyncPdfToEditor()
             );
         }
@@ -415,7 +398,7 @@ export class Controller {
     onCompileErrorClickedRequest = createAsyncThunk(
         'onCompileErrorClickedRequest',
         async (error: CompileErrorResult) => {
-            this.wrapper('onCompileErrorClickedRequest', () =>
+            await this.wrapper('onCompileErrorClickedRequest', () =>
                 this.programEditorService.onCompileErrorClicked(error)
             );
         }
@@ -424,7 +407,7 @@ export class Controller {
     onFocusSegmentRequest = createAsyncThunk(
         'onFocusSegmentRequest',
         async ({ segmentIndex }: { segmentIndex: number }) => {
-            this.wrapper('onFocusSegmentRequest', () =>
+            await this.wrapper('onFocusSegmentRequest', () =>
                 this.programEditorService.onFocusSegment(segmentIndex)
             );
         }
@@ -433,7 +416,7 @@ export class Controller {
     onBlurSegmentRequest = createAsyncThunk(
         'onBlurSegmentRequest',
         async ({ segmentIndex }: { segmentIndex: number }) => {
-            this.wrapper('onBlurSegmentRequest', () =>
+            await this.wrapper('onBlurSegmentRequest', () =>
                 this.programEditorService.onBlurSegment(segmentIndex)
             );
         }
@@ -451,7 +434,7 @@ export class Controller {
             /** Позиция курсора в segmentText (для корректного undo после больших вставок). */
             cursorHead?: number;
         }) => {
-            this.wrapper('onSegmentTextChanged', () =>
+            await this.wrapper('onSegmentTextChanged', () =>
                 this.programEditorService.onSegmentTextEdited(
                     segmentIndex,
                     segmentText,
@@ -464,7 +447,7 @@ export class Controller {
     onAddSegmentButtonClickedRequest = createAsyncThunk(
         'onAddSegmentButtonClickedRequest',
         async ({ type }: { type: SegmentType }) => {
-            this.wrapper('onAddSegmentButtonClickedRequest', () =>
+            await this.wrapper('onAddSegmentButtonClickedRequest', () =>
                 this.programEditorService.onAddSegmentClicked(type)
             );
         }
@@ -473,7 +456,7 @@ export class Controller {
     onFolderButtonClickedRequest = createAsyncThunk(
         'onFolderButtonClickedRequest',
         async () => {
-            this.wrapper('onFolderButtonClickedRequest', () =>
+            await this.wrapper('onFolderButtonClickedRequest', () =>
                 this.fileManagerService.onFolderButtonClicked()
             );
         }
@@ -500,7 +483,7 @@ export class Controller {
     onDeleteFilesConfirmRequest = createAsyncThunk(
         'onDeleteFilesConfirmRequest',
         async () => {
-            this.wrapper('onDeleteFilesConfirmRequest', () =>
+            await this.wrapper('onDeleteFilesConfirmRequest', () =>
                 this.fileManagerService.onConfirmDeleteFiles()
             );
         }
@@ -509,7 +492,7 @@ export class Controller {
     onDeleteFilesCancelRequest = createAsyncThunk(
         'onDeleteFilesCancelRequest',
         async () => {
-            this.wrapper('onDeleteFilesCancelRequest', () =>
+            await this.wrapper('onDeleteFilesCancelRequest', () =>
                 this.fileManagerService.onCancelDeleteFiles()
             );
         }
@@ -518,7 +501,7 @@ export class Controller {
     onSearchIconPressRequest = createAsyncThunk(
         'onSearchIconPressRequest',
         async () => {
-            this.wrapper('onSearchIconPressRequest', () =>
+            await this.wrapper('onSearchIconPressRequest', () =>
                 this.projectPageService.onSearchIconPress()
             );
         }
@@ -527,7 +510,7 @@ export class Controller {
     onSearchInputChangedRequest = createAsyncThunk(
         'onSearchInputChangedRequest',
         async ({ text }: { text: string }) => {
-            this.wrapper('onSearchInputChangedRequest', () =>
+            await this.wrapper('onSearchInputChangedRequest', () =>
                 this.projectPageService.onSearchInputChanged(text)
             );
         }
@@ -536,14 +519,14 @@ export class Controller {
     onSearchSubmitRequest = createAsyncThunk(
         'onSearchSubmitRequest',
         async () => {
-            this.wrapper('onSearchSubmitRequest', () =>
+            await this.wrapper('onSearchSubmitRequest', () =>
                 this.projectPageService.onSearchSubmit()
             );
         }
     );
 
     onOauthLoginRequest = createAsyncThunk('onOauthLoginRequest', async () => {
-        this.wrapper('onOauthLoginRequest', () =>
+        await this.wrapper('onOauthLoginRequest', () =>
             this.authService.onOauthLogin()
         );
     });
@@ -551,7 +534,7 @@ export class Controller {
     onRoundStrategySetRequest = createAsyncThunk(
         'onRoundStrategySetRequest',
         async ({ strategy }: { strategy: ProgramRoundStrategy }) => {
-            this.wrapper('onRoundStrategySetRequest', () =>
+            await this.wrapper('onRoundStrategySetRequest', () =>
                 this.programEditorService.onRoundStrategySet(strategy)
             );
         }
@@ -560,7 +543,7 @@ export class Controller {
     onHelpItemCreatedRequest = createAsyncThunk(
         'onHelpItemCreatedRequest',
         async ({ item }: { item: HeaderHelpItem }) => {
-            this.wrapper('onHelpItemCreatedRequest', () =>
+            await this.wrapper('onHelpItemCreatedRequest', () =>
                 this.projectPageService.onHelpItemCreated(item)
             );
         }
@@ -569,7 +552,7 @@ export class Controller {
     onExpandErrorsClickedRequest = createAsyncThunk(
         'onExpandErrorsClickedRequest',
         async () => {
-            this.wrapper('onExpandErrorsClickedRequest', () =>
+            await this.wrapper('onExpandErrorsClickedRequest', () =>
                 this.projectPageService.onExpandErrorsClicked()
             );
         }
@@ -578,7 +561,7 @@ export class Controller {
     onCrossButtonInFileManagerClickedRequest = createAsyncThunk(
         'onCrossButtonInFileManagerClickedRequest',
         async () => {
-            this.wrapper('onCrossButtonInFileManagerClickedRequest', () =>
+            await this.wrapper('onCrossButtonInFileManagerClickedRequest', () =>
                 this.fileManagerService.onCrossButtonInFileManagerClicked()
             );
         }
@@ -593,7 +576,7 @@ export class Controller {
             files: File[];
             folderPrefix?: string;
         }) => {
-            this.wrapper('onUploadFilesRequest', () =>
+            await this.wrapper('onUploadFilesRequest', () =>
                 this.fileManagerService.onUploadFiles(files, folderPrefix)
             );
         }
@@ -602,7 +585,7 @@ export class Controller {
     onCurrentFolderPathChangedRequest = createAsyncThunk(
         'onCurrentFolderPathChangedRequest',
         async ({ path }: { path: string }) => {
-            this.wrapper('onCurrentFolderPathChangedRequest', () =>
+            await this.wrapper('onCurrentFolderPathChangedRequest', () =>
                 this.fileManagerService.onCurrentFolderPathChanged(path)
             );
         }
@@ -611,14 +594,14 @@ export class Controller {
     onCreateFolderRequest = createAsyncThunk(
         'onCreateFolderRequest',
         async ({ name, parentPath }: { name: string; parentPath: string }) => {
-            this.wrapper('onCreateFolderRequest', () =>
+            await this.wrapper('onCreateFolderRequest', () =>
                 this.fileManagerService.onCreateFolder(name, parentPath)
             );
         }
     );
 
     onCreateFileRequest = createAsyncThunk('onCreateFileRequest', async () => {
-        this.wrapper('onCreateFileRequest', () =>
+        await this.wrapper('onCreateFileRequest', () =>
             this.fileManagerService.onCreateFile()
         );
     });
@@ -630,7 +613,7 @@ export class Controller {
             parent: string;
             newId?: string;
         }) => {
-            this.wrapper('onSvarCreateFileRequest', () =>
+            await this.wrapper('onSvarCreateFileRequest', () =>
                 this.fileManagerService.onSvarCreateFile(ev)
             );
         }
@@ -639,7 +622,7 @@ export class Controller {
     onSvarDeleteFilesRequest = createAsyncThunk(
         'onSvarDeleteFilesRequest',
         async ({ ids }: { ids: string[] }) => {
-            this.wrapper('onSvarDeleteFilesRequest', () =>
+            await this.wrapper('onSvarDeleteFilesRequest', () =>
                 this.fileManagerService.onSvarDeleteFiles(ids)
             );
         }
@@ -648,7 +631,7 @@ export class Controller {
     onSvarRenameFileRequest = createAsyncThunk(
         'onSvarRenameFileRequest',
         async ({ id, name }: { id: string; name: string }) => {
-            this.wrapper('onSvarRenameFileRequest', () =>
+            await this.wrapper('onSvarRenameFileRequest', () =>
                 this.fileManagerService.onSvarRenameFile(id, name)
             );
         }
@@ -657,7 +640,7 @@ export class Controller {
     onSvarMoveFilesRequest = createAsyncThunk(
         'onSvarMoveFilesRequest',
         async ({ ids, target }: { ids: string[]; target: string }) => {
-            this.wrapper('onSvarMoveFilesRequest', () =>
+            await this.wrapper('onSvarMoveFilesRequest', () =>
                 this.fileManagerService.onSvarMoveFiles(ids, target)
             );
         }
@@ -670,7 +653,7 @@ export class Controller {
     onTextFileOpenedRequest = createAsyncThunk(
         'onTextFileOpenedRequest',
         async ({ fileName }: { fileName: string }) => {
-            this.wrapper('onTextFileOpenedRequest', () =>
+            await this.wrapper('onTextFileOpenedRequest', () =>
                 this.textFileEditorService.onTextFileOpened(fileName)
             );
         }
@@ -679,7 +662,7 @@ export class Controller {
     onTextFileContentChangedRequest = createAsyncThunk(
         'onTextFileContentChangedRequest',
         async ({ content }: { content: string }) => {
-            this.wrapper('onTextFileContentChangedRequest', () =>
+            await this.wrapper('onTextFileContentChangedRequest', () =>
                 this.textFileEditorService.onTextFileContentChanged(content)
             );
         }
@@ -688,7 +671,7 @@ export class Controller {
     onTextFileEditorClosedRequest = createAsyncThunk(
         'onTextFileEditorClosedRequest',
         async () => {
-            this.wrapper('onTextFileEditorClosedRequest', () =>
+            await this.wrapper('onTextFileEditorClosedRequest', () =>
                 this.textFileEditorService.onTextFileEditorClosed()
             );
         }
@@ -697,7 +680,7 @@ export class Controller {
     onTextFileSaveTimeoutRequest = createAsyncThunk(
         'onTextFileSaveTimeoutRequest',
         async () => {
-            this.wrapper('onTextFileSaveTimeoutRequest', () =>
+            await this.wrapper('onTextFileSaveTimeoutRequest', () =>
                 this.textFileEditorService.onTextFileSaveTimeout()
             );
         }
@@ -706,7 +689,7 @@ export class Controller {
     onImageFileOpenedRequest = createAsyncThunk(
         'onImageFileOpenedRequest',
         async ({ fileName }: { fileName: string }) => {
-            this.wrapper('onImageFileOpenedRequest', () =>
+            await this.wrapper('onImageFileOpenedRequest', () =>
                 this.textFileEditorService.onImageFileOpened(fileName)
             );
         }
@@ -715,7 +698,7 @@ export class Controller {
     onImageFilePreviewClosedRequest = createAsyncThunk(
         'onImageFilePreviewClosedRequest',
         async () => {
-            this.wrapper('onImageFilePreviewClosedRequest', () =>
+            await this.wrapper('onImageFilePreviewClosedRequest', () =>
                 this.textFileEditorService.onImageFilePreviewClosed()
             );
         }
@@ -724,7 +707,7 @@ export class Controller {
     onDeleteFileRequest = createAsyncThunk(
         'onDeleteFileRequest',
         async ({ fileName }: { fileName: string }) => {
-            this.wrapper('onDeleteFileRequest', () =>
+            await this.wrapper('onDeleteFileRequest', () =>
                 this.fileManagerService.onDeleteFile(fileName)
             );
         }
@@ -733,7 +716,7 @@ export class Controller {
     onFileNameChangedRequest = createAsyncThunk(
         'onFileNameChangedRequest',
         async ({ oldName, newName }: { oldName: string; newName: string }) => {
-            this.wrapper('onFileNameChangedRequest', () =>
+            await this.wrapper('onFileNameChangedRequest', () =>
                 this.fileManagerService.onFileNameChanged(oldName, newName)
             );
         }
@@ -742,7 +725,7 @@ export class Controller {
     onRenameFolderRequest = createAsyncThunk(
         'onRenameFolderRequest',
         async ({ oldPath, newPath }: { oldPath: string; newPath: string }) => {
-            this.wrapper('onRenameFolderRequest', () =>
+            await this.wrapper('onRenameFolderRequest', () =>
                 this.fileManagerService.onRenameFolder(oldPath, newPath)
             );
         }
@@ -751,7 +734,7 @@ export class Controller {
     onDeleteFolderRequest = createAsyncThunk(
         'onDeleteFolderRequest',
         async ({ path }: { path: string }) => {
-            this.wrapper('onDeleteFolderRequest', () =>
+            await this.wrapper('onDeleteFolderRequest', () =>
                 this.fileManagerService.onDeleteFolder(path)
             );
         }
@@ -760,7 +743,7 @@ export class Controller {
     onFileRenameButtonClickedRequest = createAsyncThunk(
         'onFileRenameButtonClickedRequest',
         async () => {
-            this.wrapper('onFileRenameButtonClickedRequest', () =>
+            await this.wrapper('onFileRenameButtonClickedRequest', () =>
                 this.fileManagerService.onFileRenameButtonClicked()
             );
         }
@@ -769,7 +752,7 @@ export class Controller {
     onRowClickedInProjectsListRequest = createAsyncThunk(
         'onRowClickedInProjectsListRequest',
         async ({ projectId }: { projectId: string }) => {
-            this.wrapper('onRowClickedInProjectsListRequest', () =>
+            await this.wrapper('onRowClickedInProjectsListRequest', () =>
                 this.projectsPageService.onRowClickedInProjectsList(projectId)
             );
         }
@@ -788,7 +771,7 @@ export class Controller {
             okCallback: () => void;
             failCallback: () => void;
         }) => {
-            this.wrapper('onProjectTitleChangedRequest', () =>
+            await this.wrapper('onProjectTitleChangedRequest', () =>
                 this.projectPageService.onProjectTitleChanged(
                     projectId,
                     title,
@@ -802,7 +785,7 @@ export class Controller {
     onProjectVisibilityChangeRequest = createAsyncThunk(
         'onProjectVisibilityChangeRequest',
         async ({ visible }: { visible: boolean }) => {
-            this.wrapper('onProjectVisibilityChangeRequest', () =>
+            await this.wrapper('onProjectVisibilityChangeRequest', () =>
                 this.projectPageService.onProjectVisibilityChange(visible)
             );
         }
@@ -821,7 +804,7 @@ export class Controller {
             okCallback: () => void;
             errorCallback: (message: string) => void;
         }) => {
-            this.wrapper('onProjectCreateRequest', () =>
+            await this.wrapper('onProjectCreateRequest', () =>
                 this.projectsPageService.onProjectCreate(
                     projectName,
                     projectType,
@@ -835,7 +818,7 @@ export class Controller {
     onBackButtonClickedRequest = createAsyncThunk(
         'onBackButtonClickedRequest',
         async () => {
-            this.wrapper('onBackButtonClickedRequest', () =>
+            await this.wrapper('onBackButtonClickedRequest', () =>
                 this.projectPageService.onBackButtonClicked()
             );
         }
@@ -844,7 +827,7 @@ export class Controller {
     onContactUsFormSubmittedRequest = createAsyncThunk(
         'onContactUsFormSubmittedRequest',
         async ({ body, subject }: { body: string; subject: string }) => {
-            this.wrapper('onContactUsFormSubmittedRequest', () =>
+            await this.wrapper('onContactUsFormSubmittedRequest', () =>
                 this.projectPageService.onContactUsFormSubmitted(subject, body)
             );
         }
@@ -859,7 +842,7 @@ export class Controller {
             projectId: string;
             okCallback: () => void;
         }) => {
-            this.wrapper('onDeleteProjectRequest', () =>
+            await this.wrapper('onDeleteProjectRequest', () =>
                 this.projectsPageService.onDeleteProject(projectId, okCallback)
             );
         }
@@ -868,7 +851,7 @@ export class Controller {
     onCloneProjectRequest = createAsyncThunk(
         'onCloneProjectRequest',
         async () => {
-            this.wrapper('onCloneProjectRequest', () =>
+            await this.wrapper('onCloneProjectRequest', () =>
                 this.projectPageService.onCloneProject()
             );
         }
@@ -877,8 +860,90 @@ export class Controller {
     onProjectModeChangeRequest = createAsyncThunk(
         'onProjectModeChangeRequest',
         async ({ type }: { type: ProjectType }) => {
-            this.wrapper('onProjectModeChangeRequest', () =>
+            await this.wrapper('onProjectModeChangeRequest', () =>
                 this.projectPageService.setProjectType(type)
+            );
+        }
+    );
+
+    onChatOpenedRequest = createAsyncThunk('onChatOpened', async () => {
+        await this.wrapper('onChatOpened', () =>
+            this.agentChatService.onChatOpened()
+        );
+    });
+
+    onAgentPromptChangedRequest = createAsyncThunk(
+        'onAgentPromptChanged',
+        async ({ text }: { text: string }) => {
+            await this.wrapper('onAgentPromptChanged', () =>
+                this.agentChatService.onInputChanged(text)
+            );
+        }
+    );
+
+    onAgentPromptSubmitRequest = createAsyncThunk(
+        'onAgentPromptSubmit',
+        async () => {
+            await this.wrapper('onAgentPromptSubmit', () =>
+                this.agentChatService.onPromptSubmit()
+            );
+        }
+    );
+
+    onAgentMaxTokensChangedRequest = createAsyncThunk(
+        'onAgentMaxTokensChanged',
+        async ({ value }: { value: number }) => {
+            await this.wrapper('onAgentMaxTokensChanged', () =>
+                this.agentChatService.onMaxTokensChanged(value)
+            );
+        }
+    );
+
+    onAgentIterationsChangedRequest = createAsyncThunk(
+        'onAgentIterationsChanged',
+        async ({ value }: { value: number }) => {
+            await this.wrapper('onAgentIterationsChanged', () =>
+                this.agentChatService.onIterationsChanged(value)
+            );
+        }
+    );
+
+    onClearChatHistoryRequest = createAsyncThunk(
+        'onClearChatHistory',
+        async () => {
+            await this.wrapper('onClearChatHistory', () =>
+                this.agentChatService.onClearHistoryClicked()
+            );
+        }
+    );
+
+    onProjectPageLeftRequest = createAsyncThunk(
+        'onProjectPageLeft',
+        async () => {
+            await this.wrapper('onProjectPageLeft', () =>
+                this.agentChatService.closeSession()
+            );
+        }
+    );
+
+    onBlockedEditAttemptRequest = createAsyncThunk(
+        'onBlockedEditAttempt',
+        async () => {
+            await this.wrapper('onBlockedEditAttempt', () =>
+                this.agentChatService.onBlockedEditAttempt()
+            );
+        }
+    );
+
+    onAgentChangeClickedRequest = createAsyncThunk(
+        'onAgentChangeClicked',
+        async ({
+            target,
+        }: {
+            target: { segmentIndex: number; line: number; file?: string };
+        }) => {
+            await this.wrapper('onAgentChangeClicked', () =>
+                this.programEditorService.navigateToAgentChange(target)
             );
         }
     );

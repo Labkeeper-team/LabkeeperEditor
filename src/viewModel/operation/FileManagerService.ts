@@ -14,6 +14,7 @@ import {
     svarIdToPath,
 } from '../../view/pages/project/fileManager/svarFileTreeAdapter.ts';
 import { TextFileEditorService } from './TextFileEditorService.ts';
+import { EditingLockService } from '../domain/EditingLockService.ts';
 
 export class FileManagerService {
     repository: ViewModelRepository;
@@ -24,6 +25,7 @@ export class FileManagerService {
     fileService: FileService;
     observerService: ObserverService;
     textFileEditorService: TextFileEditorService;
+    editingLock: EditingLockService;
 
     constructor(
         repository: ViewModelRepository,
@@ -33,7 +35,8 @@ export class FileManagerService {
         ideService: IdeService,
         fileService: FileService,
         observerService: ObserverService,
-        textFileEditorService: TextFileEditorService
+        textFileEditorService: TextFileEditorService,
+        editingLock: EditingLockService
     ) {
         this.rpi = rpi;
         this.programService = programService;
@@ -43,6 +46,7 @@ export class FileManagerService {
         this.fileService = fileService;
         this.observerService = observerService;
         this.textFileEditorService = textFileEditorService;
+        this.editingLock = editingLock;
     }
 
     onFolderButtonClicked = async () => {
@@ -75,6 +79,9 @@ export class FileManagerService {
     };
 
     onCreateFolder = (name: string, parentPath: string) => {
+        if (this.editingLock.rejectEdit()) {
+            return;
+        }
         const normalized = normalizeFileTreeNodeName(name);
         if (!normalized) {
             this.repository.toast(
@@ -90,6 +97,9 @@ export class FileManagerService {
     };
 
     onCreateFile = async () => {
+        if (this.editingLock.rejectEdit()) {
+            return;
+        }
         if (this.repository.projectViewModelRepository.projectIsReadonly()) {
             return;
         }
@@ -194,6 +204,9 @@ export class FileManagerService {
     };
 
     onUploadFiles = async (files: File[], folderPrefix?: string | null) => {
+        if (this.editingLock.rejectEdit()) {
+            return;
+        }
         this.repository.settingsViewModelRepository.setIsFileDraggedToFileManager(
             false
         );
@@ -299,6 +312,9 @@ export class FileManagerService {
         parent: string;
         newId?: string;
     }) => {
+        if (this.editingLock.rejectEdit()) {
+            return;
+        }
         if (ev.file.type === 'folder') {
             const folderPath = ev.newId
                 ? svarIdToPath(ev.newId)
@@ -313,12 +329,18 @@ export class FileManagerService {
     };
 
     onSvarDeleteFiles = async (ids: string[]) => {
+        if (this.editingLock.rejectEdit()) {
+            return;
+        }
         for (const id of ids) {
             await this.onDeleteFile(svarIdToPath(id));
         }
     };
 
     onSvarRenameFile = async (id: string, name: string) => {
+        if (this.editingLock.rejectEdit()) {
+            return;
+        }
         const oldPath = svarIdToPath(id);
         const parentPath = oldPath.includes('/')
             ? oldPath.slice(0, oldPath.lastIndexOf('/'))
@@ -329,6 +351,9 @@ export class FileManagerService {
 
     /** TODO(3) move file → folder. Вариант A (без folder API, текущий): цикл renameFileRequest. */
     onSvarMoveFiles = async (ids: string[], targetId: string) => {
+        if (this.editingLock.rejectEdit()) {
+            return;
+        }
         const targetPrefix = svarIdToPath(targetId);
         for (const id of ids) {
             const oldPath = svarIdToPath(id);
@@ -411,6 +436,9 @@ export class FileManagerService {
     };
 
     onRenameFolder = async (oldPath: string, newPath: string) => {
+        if (this.editingLock.rejectEdit()) {
+            return;
+        }
         if (!oldPath || oldPath === newPath) {
             return;
         }
@@ -496,6 +524,9 @@ export class FileManagerService {
     };
 
     onDeleteFolder = async (folderPath: string) => {
+        if (this.editingLock.rejectEdit()) {
+            return;
+        }
         if (!folderPath) {
             return;
         }
@@ -544,6 +575,9 @@ export class FileManagerService {
     };
 
     onDeleteFile = async (fileName: string) => {
+        if (this.editingLock.rejectEdit()) {
+            return;
+        }
         const project = this.repository.projectViewModelRepository.project();
         if (!project) {
             return;
@@ -575,6 +609,9 @@ export class FileManagerService {
     };
 
     onConfirmDeleteFiles = async () => {
+        if (this.editingLock.rejectEdit()) {
+            return;
+        }
         const files =
             this.repository.settingsViewModelRepository.filesToDelete();
         if (!files?.length) {
@@ -687,6 +724,9 @@ export class FileManagerService {
     };
 
     onFileNameChanged = async (oldName: string, newName: string) => {
+        if (this.editingLock.rejectEdit()) {
+            return;
+        }
         this.repository.settingsViewModelRepository.setEditModeForFilename(
             false
         );

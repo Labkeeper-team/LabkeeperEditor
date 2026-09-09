@@ -133,7 +133,6 @@ export const en: Translations = {
     viewer: {
         no_pdf: 'Click the "Run" button to display the PDF file.',
         pdf_loading: 'Loading PDF…',
-        gpt_prompt_button: 'GPT',
         mode: {
             label: 'Project type',
             markdown: 'markdown',
@@ -166,10 +165,79 @@ export const en: Translations = {
         language: 'Language',
         change_language_to: 'Switch language to {language}',
     },
+    agent_chat: {
+        tab_label: 'AI agent',
+        pdf_tab_label: 'PDF visualization',
+        placeholder: 'Enter your promt',
+        send: 'Send',
+        disclaimer: 'AI may make mistakes. Double-check all generated code.',
+        result: 'Result',
+        error: 'Error',
+        notice: 'Note',
+        buy_tokens: 'Proceed to purchase tokens',
+        clear_history: 'Clear history',
+        history_loading: 'Loading history',
+        history_error: 'Could not load the history',
+        history_clear_error: 'Could not clear the history. Please try again',
+        run_blocked: 'Agent is running',
+        context_size: 'Context Size',
+        max_iterations: 'Max Iterations',
+        context_size_hint:
+            'How many tokens the agent may spend on a single model call. A larger context gives a better answer and costs more',
+        max_iterations_hint:
+            'How many steps the agent takes before it stops. More steps handle harder tasks and cost more',
+        editing_locked:
+            'The project cannot be edited while the agent is running',
+        event: {
+            model_call: 'Calling the model',
+            add_segment: 'A new segment has been added №{segment}',
+            add_lines_to_segment:
+                'Changes have been made to segment №{segment}',
+            delete_lines_from_segment: 'Deleted lines from segment №{segment}',
+            add_file: 'A new file has been added',
+            add_lines_to_file: 'Changes have been made to',
+            delete_lines_from_file: 'Deleted lines from',
+            add_segment_plain: 'Added a segment',
+            add_lines_to_segment_plain: 'Changed a segment',
+            delete_lines_from_segment_plain: 'Deleted lines from a segment',
+            add_file_plain: 'Added a file',
+            add_lines_to_file_plain: 'Changed a file',
+            delete_lines_from_file_plain: 'Deleted lines from a file',
+            list_workspace: 'Reading the project structure',
+            read_segment: 'Reading a segment',
+            read_segments: 'Reading segments',
+            search_segments: 'Searching segments',
+            read_file: 'Reading a file',
+            done: 'Finishing up',
+        },
+        stop: {
+            ContextOverflow:
+                'The task did not fit into the context. Shorten the request or raise the context size',
+            IterationLimit:
+                'The agent ran out of steps. What it managed to change is already in the project. Try raising the iteration limit or splitting the task',
+            Timeout:
+                'The server stopped the agent on time, but it managed to write a result. The changes are already in the project',
+            UnauthorizedLimitExceeded:
+                'You have reached the limit for unregistered users. Sign in to continue',
+            PaymentRequired:
+                'You have reached the limit on using the assistant.',
+            Locked: 'The agent is already running in another tab, or the project is being changed. Wait for it to finish and try again',
+            UnknownError: 'Something went wrong. Please try again',
+            timeout:
+                'The agent did not respond within three minutes. Please try again',
+            disconnected:
+                'The connection to the agent was lost. Please try again',
+            connect_failed:
+                'Could not connect to the agent. Check your network and try again',
+            save_failed:
+                'Could not save the project before the run. The agent would work on an outdated version, so the run was cancelled',
+        },
+    },
     mobile_view: {
         files: 'Files',
         editor: 'Editor',
         pdf: 'PDF',
+        chat: 'AI agent',
     },
     tokens_page: {
         title: 'Top up your token balance',
@@ -452,16 +520,8 @@ export const en: Translations = {
     },
 
     prompt_modal: {
-        title: 'Chat GPT prompt',
-        description:
-            'AI will process your request and add a new code segment in the right place in the project.',
-        placeholder: 'Enter prompt',
-        submit: 'Send',
-        sending: 'Sending...',
         errors: {
-            bad_request: 'Invalid request. Please check your input.',
             payment_required: 'You need to top up your token balance.',
-            unknownError: 'An unexpected error occurred',
         },
     },
 

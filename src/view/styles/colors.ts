@@ -14,6 +14,7 @@ export const colors = {
     gray60: '#F1F5FF',
     red10: '#6F1919',
     red20: '#FDD2D2',
+    red30: '#BB3D3D',
 
     errorLine: '#747F94',
     disabledInputType: '#BFC8DE',

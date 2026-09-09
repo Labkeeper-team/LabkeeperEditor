@@ -8,6 +8,7 @@ import { ViewModelRepository } from '../repository';
 import { IdeService } from '../domain/IdeService.ts';
 import { LoaderService } from '../domain/LoaderService.ts';
 import { TextFileEditorService } from './TextFileEditorService.ts';
+import { EditingLockService } from '../domain/EditingLockService.ts';
 import {
     groupHunks,
     hunksForFile,
@@ -23,7 +24,8 @@ export class HunkService {
         private ideService: IdeService,
         private loaderService: LoaderService,
         private observerService: ObserverService,
-        private textFileEditorService: TextFileEditorService
+        private textFileEditorService: TextFileEditorService,
+        private editingLock: EditingLockService
     ) {}
 
     shouldShowHunks = (): boolean => {
@@ -116,6 +118,9 @@ export class HunkService {
     }
 
     acceptGroup = async (hunkIds: string[]): Promise<void> => {
+        if (this.editingLock.rejectEdit()) {
+            return;
+        }
         if (hunkIds.length === 0) {
             return;
         }
@@ -142,6 +147,9 @@ export class HunkService {
     };
 
     revertGroup = async (hunkIds: string[]): Promise<void> => {
+        if (this.editingLock.rejectEdit()) {
+            return;
+        }
         if (hunkIds.length === 0 || !this.canRevertHunks()) {
             return;
         }
@@ -161,6 +169,9 @@ export class HunkService {
     };
 
     acceptAll = async (): Promise<void> => {
+        if (this.editingLock.rejectEdit()) {
+            return;
+        }
         const hunks = this.repository.ideViewModelRepository.hunks();
         const ids = hunks.map((h) => h.id);
         await this.acceptGroup(ids);
@@ -188,6 +199,9 @@ export class HunkService {
     };
 
     revertAll = async (): Promise<void> => {
+        if (this.editingLock.rejectEdit()) {
+            return;
+        }
         if (!this.canRevertHunks()) {
             return;
         }

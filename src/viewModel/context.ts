@@ -23,11 +23,16 @@ import { ResetService } from './domain/ResetService.ts';
 import { SearchService } from './domain/SearchService.ts';
 import { HunkService } from './operation/HunkService.ts';
 import { Controller } from '../controller/index.ts';
+import { AgentSocket } from '../model/rpi/agentSocket.ts';
+import { AgentChatService } from './operation/AgentChatService.ts';
+import { AgentEventService } from './domain/AgentEventService.ts';
+import { EditingLockService } from './domain/EditingLockService.ts';
 
 export function setupContext(
     rpi: Rpi,
     repository: ViewModelRepository,
-    observerService: ObserverService
+    observerService: ObserverService,
+    agentSocket: AgentSocket
 ) {
     /*
     DOMAIN
@@ -47,6 +52,9 @@ export function setupContext(
         resetService
     );
     const searchService: SearchService = new SearchService();
+    const editingLockService: EditingLockService = new EditingLockService(
+        repository
+    );
     const loaderService: LoaderService = new LoaderService(
         rpi,
         repository,
@@ -90,14 +98,21 @@ export function setupContext(
         observerService
     );
     const textFileEditorService: TextFileEditorService =
-        new TextFileEditorService(repository, rpi, ideService, observerService);
+        new TextFileEditorService(
+            repository,
+            rpi,
+            ideService,
+            observerService,
+            editingLockService
+        );
     const hunkService = new HunkService(
         repository,
         rpi,
         ideService,
         loaderService,
         observerService,
-        textFileEditorService
+        textFileEditorService,
+        editingLockService
     );
     textFileEditorService.setHunkService(hunkService);
     const fileManagerService: FileManagerService = new FileManagerService(
@@ -108,7 +123,8 @@ export function setupContext(
         ideService,
         fileService,
         observerService,
-        textFileEditorService
+        textFileEditorService,
+        editingLockService
     );
     const programEditorService: ProgramEditorService = new ProgramEditorService(
         repository,
@@ -118,7 +134,8 @@ export function setupContext(
         ideService,
         observerService,
         fileService,
-        textFileEditorService
+        textFileEditorService,
+        editingLockService
     );
     programEditorService.setHunkService(hunkService);
     const projectPageService: ProjectPageService = new ProjectPageService(
@@ -132,10 +149,27 @@ export function setupContext(
         resetService,
         textFileEditorService,
         searchService,
-        hunkService
+        hunkService,
+        editingLockService
     );
     startupService.setHunkService(hunkService);
     compilationService.setHunkService(hunkService);
+    const agentChatService: AgentChatService = new AgentChatService(
+        repository,
+        rpi,
+        agentSocket,
+        ideService,
+        loaderService,
+        hunkService,
+        textFileEditorService,
+        programEditorService,
+        tokenPageService,
+        observerService,
+        editingLockService,
+        new AgentEventService()
+    );
+    startupService.setAgentChatService(agentChatService);
+    resetService.setBeforeProjectReset(agentChatService.closeSession);
     const projectsPageService: ProjectsPageService = new ProjectsPageService(
         repository,
         rpi,
@@ -159,7 +193,8 @@ export function setupContext(
         tokenPageService,
         startupService,
         observerService,
-        hunkService
+        hunkService,
+        agentChatService
     );
 
     return {
@@ -172,6 +207,7 @@ export function setupContext(
         /*
         OPERATION
          */
+        agentChatService,
         startupService,
         authService,
         fileManagerService,
@@ -187,5 +223,7 @@ export function setupContext(
         fileService,
         programService,
         searchService,
+        editingLockService,
+        resetService,
     };
 }

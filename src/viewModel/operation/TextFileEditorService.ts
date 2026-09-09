@@ -2,6 +2,7 @@ import { Hunk } from '../../model/domain.ts';
 import { ViewModelRepository } from '../repository';
 import { Rpi } from '../../model/rpi';
 import { IdeService } from '../domain/IdeService.ts';
+import { EditingLockService } from '../domain/EditingLockService.ts';
 import {
     Events,
     ObserverService,
@@ -25,6 +26,7 @@ export class TextFileEditorService {
     rpi: Rpi;
     ideService: IdeService;
     observerService: ObserverService;
+    editingLock: EditingLockService;
     private hunkService: import('./HunkService.ts').HunkService | null = null;
     private saveTimeout: ReturnType<typeof setTimeout> | null = null;
     private pendingSaveContent: string | null = null;
@@ -37,12 +39,14 @@ export class TextFileEditorService {
         repository: ViewModelRepository,
         rpi: Rpi,
         ideService: IdeService,
-        observerService: ObserverService
+        observerService: ObserverService,
+        editingLock: EditingLockService
     ) {
         this.repository = repository;
         this.rpi = rpi;
         this.ideService = ideService;
         this.observerService = observerService;
+        this.editingLock = editingLock;
     }
 
     setHunkService = (hunkService: import('./HunkService.ts').HunkService) => {
@@ -87,7 +91,10 @@ export class TextFileEditorService {
                     clearTimeout(this.saveTimeout);
                     this.saveTimeout = null;
                 }
-                if (this.hasUnsavedTextFile() || this.savePromise) {
+                if (
+                    this.canFlush() &&
+                    (this.hasUnsavedTextFile() || this.savePromise)
+                ) {
                     const saved = await this.flushSave();
                     if (!saved) {
                         return;
@@ -209,6 +216,9 @@ export class TextFileEditorService {
     };
 
     onTextFileContentChanged = (content: string) => {
+        if (this.editingLock.rejectEdit()) {
+            return;
+        }
         const activeFile =
             this.repository.ideViewModelRepository.activeTextFile();
         if (activeFile && this.hunkService) {
@@ -229,7 +239,24 @@ export class TextFileEditorService {
     };
 
     onTextFileSaveTimeout = async () => {
+        // сюда приходит Ctrl+S, поэтому отказ объясняем, а не молчим
+        if (this.editingLock.rejectEdit()) {
+            return;
+        }
         await this.flushSave();
+    };
+
+    /**
+     * Дописать висящее и снять таймер автосохранения. Зовётся перед запуском
+     * агента: обычный путь сохранения к этому моменту уже заблокирован, а
+     * оставленный таймер выстрелил бы в середине прогона.
+     */
+    flushAndStopAutosave = async (): Promise<boolean> => {
+        if (this.saveTimeout) {
+            clearTimeout(this.saveTimeout);
+            this.saveTimeout = null;
+        }
+        return this.flushSave();
     };
 
     onTextFileEditorClosed = async (): Promise<boolean> => {
@@ -237,7 +264,10 @@ export class TextFileEditorService {
             clearTimeout(this.saveTimeout);
             this.saveTimeout = null;
         }
-        if (this.hasUnsavedTextFile() || this.savePromise) {
+        if (
+            this.canFlush() &&
+            (this.hasUnsavedTextFile() || this.savePromise)
+        ) {
             const saved = await this.flushSave();
             if (!saved) {
                 return false;
@@ -328,6 +358,9 @@ export class TextFileEditorService {
             );
         }
     };
+
+    /** Под замком сервер правок не примет, а дописывать всё равно нечего. */
+    private canFlush = (): boolean => !this.editingLock.isLocked();
 
     private hasUnsavedTextFile = (): boolean => {
         if (this.pendingSaveContent != null) {

@@ -22,6 +22,7 @@ import { UndoRedoCursorHint } from '../../model/service/ProgramService.ts';
 import { getIdeSegmentEditorView } from '../../view/pages/project/editor/ide/segments/ideSegmentEditorView';
 import { EditorNavigationTarget } from '../repository';
 import { TextFileEditorService } from './TextFileEditorService.ts';
+import { EditingLockService } from '../domain/EditingLockService.ts';
 import {
     projectFilePathsMatch,
     resolveProjectFileName,
@@ -37,6 +38,7 @@ export class ProgramEditorService {
     observerService: ObserverService;
     fileService: FileService;
     textFileEditorService: TextFileEditorService;
+    editingLock: EditingLockService;
     private hunkService: import('./HunkService.ts').HunkService | null = null;
 
     constructor(
@@ -47,7 +49,8 @@ export class ProgramEditorService {
         ideService: IdeService,
         observerService: ObserverService,
         fileService: FileService,
-        textFileEditorService: TextFileEditorService
+        textFileEditorService: TextFileEditorService,
+        editingLock: EditingLockService
     ) {
         this.rpi = rpi;
         this.programService = programService;
@@ -57,6 +60,7 @@ export class ProgramEditorService {
         this.observerService = observerService;
         this.fileService = fileService;
         this.textFileEditorService = textFileEditorService;
+        this.editingLock = editingLock;
     }
 
     setHunkService = (hunkService: import('./HunkService.ts').HunkService) => {
@@ -68,6 +72,9 @@ export class ProgramEditorService {
         segmentIndex: number,
         cursorPosition: number
     ) => {
+        if (this.editingLock.rejectEdit()) {
+            return;
+        }
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const thisCopy = this;
         let itemIndex = 0;
@@ -232,6 +239,9 @@ export class ProgramEditorService {
     };
 
     onPrevVersionButtonClicked = async () => {
+        if (this.editingLock.rejectEdit()) {
+            return;
+        }
         const canUndo = this.programService.canUndo();
         const cursorHint = this.programService.undo();
         if (cursorHint) {
@@ -261,6 +271,9 @@ export class ProgramEditorService {
     };
 
     onNextVersionButtonClicked = async () => {
+        if (this.editingLock.rejectEdit()) {
+            return;
+        }
         const canRedo = this.programService.canRedo();
         const cursorHint = this.programService.redo();
         if (cursorHint) {
@@ -357,6 +370,9 @@ export class ProgramEditorService {
     };
 
     onRoundStrategySet = async (strategy: ProgramRoundStrategy) => {
+        if (this.editingLock.rejectEdit()) {
+            return;
+        }
         this.programService.changeRoundStrategy(strategy);
         this.repository.ideViewModelRepository.markProgramChanged();
         this.ideService.onProgramUpdated();
@@ -364,6 +380,10 @@ export class ProgramEditorService {
     };
 
     onProgramSaveTimeout = async () => {
+        // висящий таймер не должен выстрелить в середине работы агента
+        if (this.editingLock.isLocked()) {
+            return;
+        }
         await this.loaderService.segmentEditorSaveProgram();
     };
 
@@ -371,6 +391,9 @@ export class ProgramEditorService {
         direction: 'up' | 'down',
         segmentIndex: number
     ): Promise<void> => {
+        if (this.editingLock.rejectEdit()) {
+            return;
+        }
         this.observerService.onEvent(Events.EVENT_MOVE_SEGMENT);
         this.programService.moveSegment(segmentIndex, direction);
         this.repository.ideViewModelRepository.markProgramChanged();
@@ -383,6 +406,9 @@ export class ProgramEditorService {
         parameterName: string,
         segmentIndex: number
     ) => {
+        if (this.editingLock.rejectEdit()) {
+            return;
+        }
         this.programService.changeSegmentVisibility(
             visible,
             parameterName,
@@ -394,6 +420,9 @@ export class ProgramEditorService {
     };
 
     deleteSegment = async (segmentIndex: number) => {
+        if (this.editingLock.rejectEdit()) {
+            return;
+        }
         this.hunkService?.acceptAllHunksInBackground();
         const filesBefore = this.ideService.calculateFilesToDelete(
             this.programService.getCurrentProgram()
@@ -418,6 +447,9 @@ export class ProgramEditorService {
         segmentType: SegmentType,
         after: number
     ) => {
+        if (this.editingLock.rejectEdit()) {
+            return;
+        }
         this.hunkService?.acceptAllHunksInBackground();
         // TODO observer service call
         this.programService.addSegmentAfterIndex(segmentType, after);
@@ -431,6 +463,9 @@ export class ProgramEditorService {
         text: string,
         placement: 'start' | 'end'
     ) => {
+        if (this.editingLock.rejectEdit()) {
+            return;
+        }
         if (placement === 'start') {
             await this.onSegmentAddedViaDivider('latex', -1);
             await this.onSegmentTextEdited(0, text);
@@ -488,6 +523,10 @@ export class ProgramEditorService {
         segmentText: string,
         cursorHead?: number
     ) => {
+        // редактор при блокировке readOnly, сюда правка дойти не должна
+        if (this.editingLock.isLocked()) {
+            return;
+        }
         const programBefore = this.programService.getCurrentProgram();
         const segmentId = resolveSegmentId(
             programBefore.segments,
@@ -594,7 +633,8 @@ export class ProgramEditorService {
 
     private navigateToProjectFile = async (
         requestedFile: string,
-        line: number
+        line: number,
+        focus: boolean = true
     ): Promise<boolean> => {
         const files = this.repository.projectViewModelRepository.files();
         const fileName = resolveProjectFileName(files, requestedFile);
@@ -617,13 +657,15 @@ export class ProgramEditorService {
             segmentIndex: -1,
             line,
             file: fileName,
+            focus,
         });
         return true;
     };
 
     private navigateToSegmentLine = async (
         segmentId: number,
-        line: number
+        line: number,
+        focus: boolean = true
     ): Promise<boolean> => {
         const program =
             this.repository.projectViewModelRepository.currentProgram();
@@ -650,6 +692,7 @@ export class ProgramEditorService {
         this.repository.ideViewModelRepository.setEditorNavigationTarget({
             segmentIndex,
             line,
+            focus,
         });
         return true;
     };
@@ -765,6 +808,25 @@ export class ProgramEditorService {
         );
     };
 
+    /**
+     * Скролл к изменению агента. focus не трогаем: фокус должен остаться в поле промпта.
+     */
+    navigateToAgentChange = async (target: {
+        segmentIndex: number;
+        line: number;
+        file?: string;
+    }): Promise<boolean> => {
+        if (target.file) {
+            return this.navigateToProjectFile(target.file, target.line, false);
+        }
+        // id сегмента всегда равен позиции в списке (см. withSegmentIds)
+        return this.navigateToSegmentLine(
+            target.segmentIndex + 1,
+            target.line,
+            false
+        );
+    };
+
     /** Клик по ошибке: скролл к строке сегмента или открытие файла. */
     onCompileErrorClicked = async (error: CompileErrorResult) => {
         const { line, segmentId, latexFile } = error.payload;
@@ -784,6 +846,9 @@ export class ProgramEditorService {
     };
 
     onAddSegmentClicked = (type: SegmentType) => {
+        if (this.editingLock.rejectEdit()) {
+            return;
+        }
         this.hunkService?.acceptAllHunksInBackground();
         switch (type) {
             case 'md':

@@ -25,10 +25,9 @@ export const URLS = {
     setTitle: `${uri}/api/${version}/public/project/{id}/title`,
     setVisibility: `${uri}/api/${version}/public/project/{id}/visibility`,
     setType: `${uri}/api/${version}/public/project/{id}/type`,
-    projectPrompt: `${uri}/api/${version}/public/project/{id}/prompt`,
-    unauthorizedPrompt: `${uri}/api/${version}/public/prompt`,
     listHunks: `${uri}/api/${version}/public/project/{id}/hunk`,
     deleteHunk: `${uri}/api/${version}/public/project/{id}/hunk/{hunkId}`,
+    agentHistory: `${uri}/api/${version}/public/project/{id}/history`,
 
     filesGetList: `${uri}/api/${version}/public/project/{id}/file/list`,
     uploadFile: `${uri}/api/${version}/public/project/{id}/file/upload`,
@@ -52,6 +51,18 @@ export const URLS = {
     YandexOidcLogin: `${uri}/api/${version}/sec/oauth2/authorization/yandex`,
     Logout: `/api/${version}/sec/logout`,
 };
+
+export const WS_URLS = {
+    projectAgent: `/api/${version}/ws/project/{id}`,
+    unauthorizedAgent: `/api/${version}/ws/prompt`,
+};
+
+/**
+ * Все URL в проекте относительные, куки сессии ездят за счёт общего origin.
+ * Конструктору WebSocket этого мало, ему нужна явная схема.
+ */
+export const wsUrl = (path: string): string =>
+    `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}${path}`;
 
 type SecretsShape = {
     yandexCaptchaSiteKey: string;
