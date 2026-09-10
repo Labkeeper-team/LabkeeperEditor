@@ -754,6 +754,9 @@ test('rename-project-in-editor-via-enter', async ({ page }) => {
 });
 
 test('hunk-accept-smoke-test', async ({ page }) => {
+    // общая панель откатов живёт только на настольной ширине, а профили
+    // кроссбраузерного прогона включают телефоны
+    await page.setViewportSize({ width: 1280, height: 900 });
     const routeSetup = new RouteSetup(page);
     const programWithSegment: Program = {
         segments: [

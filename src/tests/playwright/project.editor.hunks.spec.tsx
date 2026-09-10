@@ -45,8 +45,12 @@ async function openProjectWithHunks(
         hunks: Hunk[];
         files?: { fileName: string; url: string }[];
         fileContents?: { urlPath: string; content: string }[];
+        mobile?: boolean;
     }
 ) {
+    if (options.mobile) {
+        await page.setViewportSize({ width: 480, height: 900 });
+    }
     const routeSetup = new RouteSetup(page);
     await routeSetup.setupGetUserInfoRequest();
     await routeSetup.setupGetProjectRequest(200, 'default', options.program);
@@ -66,6 +70,11 @@ async function openProjectWithHunks(
     await page.goto(`/project/${uuid}`);
     await page.waitForLoadState('domcontentloaded');
     await expect(page).toHaveURL(`/project/${uuid}`);
+    if (options.mobile) {
+        // на мобильном общей панели нет, ждём сам редактор
+        await page.locator('.cm-content').first().waitFor({ state: 'visible' });
+        return;
+    }
     await expect(
         page.getByRole('button', { name: 'Accept all' })
     ).toBeVisible();
@@ -389,4 +398,39 @@ test('hunk-delete-lines-from-file', async ({ page }) => {
     await page.getByText('notes.txt').click();
     await expect(page.locator('.cm-hunk-deleted-line')).toHaveCount(3);
     await expectFullPageHunkSnapshot(page, 'hunk-delete-lines-from-file');
+});
+
+test('hunk-global-bar-is-hidden-on-mobile', async ({ page }) => {
+    await openProjectWithHunks(page, {
+        program: programOf(mdSegment(1, 'existing line\nadded line')),
+        hunks: [
+            {
+                id: 'hunk-add-line',
+                type: 'addLinesToSegment',
+                segmentId: 1,
+                startLine: 2,
+                endLine: 2,
+                text: 'added line',
+            },
+        ],
+        mobile: true,
+    });
+
+    // само изменение и кнопки у него на месте, общей панели быть не должно
+    await expect(page.locator('.cm-hunk-added-line')).toBeVisible();
+    await expect(page.locator('.cm-hunk-btn--accept').first()).toBeVisible();
+    await expect(page.locator('.hunk-global-bar')).toHaveCount(0);
+});
+
+test('new-segment-hunk-keeps-its-buttons-on-mobile', async ({ page }) => {
+    await openProjectWithHunks(page, {
+        program: programOf(mdSegment(1, 'existing segment'), mdSegment(2, '')),
+        hunks: [{ id: 'hunk-add-segment', type: 'addSegment', segmentId: 2 }],
+        mobile: true,
+    });
+
+    // у нового сегмента кнопки свои, общая панель для него не нужна
+    await expect(page.locator('.segment-hunk-block--new')).toBeVisible();
+    await expect(page.locator('.segment-hunk-btn--accept')).toBeVisible();
+    await expect(page.locator('.hunk-global-bar')).toHaveCount(0);
 });
