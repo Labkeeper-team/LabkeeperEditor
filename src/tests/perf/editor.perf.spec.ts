@@ -234,3 +234,52 @@ test('perf-typing-in-a-long-file', async ({ page }) => {
     );
     expect(measurement.p95Ms).toBeLessThan(1000);
 });
+
+/**
+ * Открытие проекта не должно занимать главный поток. Словари орфографии
+ * весят три с половиной мегабайта, и их сборка держала поток около шести
+ * секунд при замедлении процессора вчетверо, причём независимо от числа
+ * сегментов: хоть один, хоть сотня.
+ */
+test('perf-opening-a-project-does-not-block-the-main-thread', async ({
+    page,
+}) => {
+    await page.addInitScript(() => {
+        window.__perfLongTasks = [];
+        new PerformanceObserver((list) => {
+            for (const entry of list.getEntries()) {
+                window.__perfLongTasks.push(entry.duration);
+            }
+        }).observe({ entryTypes: ['longtask'] });
+    });
+
+    await openProject(
+        page,
+        programOf([mdSegment(1, 'текст с ошшибкой и english speling')])
+    );
+    await page.locator('.cm-content').first().waitFor({ state: 'visible' });
+    // ждём именно подчёркивания: без них зелёный замер значил бы только то,
+    // что словари не собрались вовсе, а не то, что сборка никому не мешала
+    await expect(page.locator('.cm-lintRange-error')).toHaveCount(2, {
+        timeout: 60_000,
+    });
+    // и ещё немного, чтобы поймать длинную задачу, если она придёт следом
+    await page.waitForTimeout(3_000);
+
+    const longTasks = await page.evaluate(() => window.__perfLongTasks);
+    const measurement = {
+        label: LABEL,
+        scenario: 'open-project',
+        longTasks: longTasks.length,
+        longTaskMaxMs: Math.round(Math.max(0, ...longTasks)),
+    };
+    appendFileSync(REPORT_PATH, `${JSON.stringify(measurement)}\n`);
+    console.info(JSON.stringify(measurement));
+
+    // без этой строки пустая выборка дала бы ноль и замер прошёл бы,
+    // ничего не измерив: длинные задачи при загрузке есть всегда
+    expect(measurement.longTasks).toBeGreaterThan(0);
+    // порог с запасом: отрисовка одного сегмента укладывается в полсекунды,
+    // а сборка словарей на главном потоке давала около шести тысяч
+    expect(measurement.longTaskMaxMs).toBeLessThan(1500);
+});
