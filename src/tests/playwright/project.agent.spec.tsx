@@ -445,3 +445,270 @@ test('mobile-chat-tab-is-last', async ({ page }) => {
     await options.last().click();
     await expect(page.locator('.agent-chat')).toBeVisible();
 });
+
+const LEAVE_CONFIRM = 'The agent is still running. Leave the page anyway?';
+
+async function openMyProjects(page: Page) {
+    await page.locator('.header-menu-select .select-header').click();
+    await page
+        .getByRole('listitem')
+        .filter({ hasText: /^My projects$/ })
+        .click();
+}
+
+test('agent-run-warns-before-closing-the-tab', async ({ page }) => {
+    await openChat(page, {
+        frames: [toolCall('read_segment')],
+        program: RUNNABLE_PROGRAM,
+    });
+    await submitPrompt(page);
+    await expect(page.locator('.agent-chat__event')).toHaveCount(1);
+
+    // тип забираем наружу: упавший expect внутри обработчика оставил бы
+    // панель висеть и тест умер бы по таймауту вместо внятного сообщения
+    const dialogs: string[] = [];
+    page.once('dialog', async (dialog) => {
+        dialogs.push(dialog.type());
+        await dialog.dismiss();
+    });
+    await page.evaluate(() => window.location.reload());
+
+    await expect.poll(() => dialogs).toEqual(['beforeunload']);
+    await expect(page.locator('.agent-chat__event')).toHaveCount(1);
+});
+
+test('unauthorized-agent-run-warns-before-closing-the-tab', async ({
+    page,
+}) => {
+    // у гостя несохранённых изменений не бывает по определению селектора,
+    // так что панель тут держится только на прогоне
+    await openChat(page, {
+        frames: [toolCall('read_segment')],
+        program: RUNNABLE_PROGRAM,
+        authenticated: false,
+    });
+    await submitPrompt(page);
+    await expect(page.locator('.agent-chat__event')).toHaveCount(1);
+
+    const dialogs: string[] = [];
+    page.once('dialog', async (dialog) => {
+        dialogs.push(dialog.type());
+        await dialog.dismiss();
+    });
+    await page.evaluate(() => window.location.reload());
+
+    await expect.poll(() => dialogs).toEqual(['beforeunload']);
+    await expect(page.locator('.agent-chat__event')).toHaveCount(1);
+});
+
+test('agent-run-confirms-navigation-inside-the-app', async ({ page }) => {
+    await openChat(page, {
+        frames: [toolCall('read_segment')],
+        program: RUNNABLE_PROGRAM,
+    });
+    await submitPrompt(page);
+    await expect(page.locator('.agent-chat__event')).toHaveCount(1);
+
+    const messages: string[] = [];
+    let leave = false;
+    page.on('dialog', async (dialog) => {
+        messages.push(dialog.message());
+        await (leave ? dialog.accept() : dialog.dismiss());
+    });
+
+    await openMyProjects(page);
+    await expect.poll(() => messages).toEqual([LEAVE_CONFIRM]);
+    // отказ оставляет не только адрес, но и саму страницу нетронутой
+    await expect(page).toHaveURL(`/project/${uuid}`);
+    await expect(page.locator('.cm-content').first()).toBeVisible();
+    await expect(page.locator('.agent-chat__event')).toHaveCount(1);
+
+    leave = true;
+    await openMyProjects(page);
+    await expect(page).toHaveURL('/projects');
+    // ровно по одному вопросу на нажатие, лишних окон нет
+    expect(messages).toEqual([LEAVE_CONFIRM, LEAVE_CONFIRM]);
+});
+
+test('finished-agent-does-not-block-navigation', async ({ page }) => {
+    await openChat(page, {
+        frames: [finished('Done')],
+        program: RUNNABLE_PROGRAM,
+    });
+    await submitPrompt(page);
+    await expect(page.locator('.agent-chat__response-text')).toHaveText(
+        'готово'
+    );
+
+    const dialogs: string[] = [];
+    page.on('dialog', async (dialog) => {
+        dialogs.push(dialog.type());
+        await dialog.accept();
+    });
+
+    // без перезагрузки: она стёрла бы состояние чата и проверять было бы нечего
+    await openMyProjects(page);
+
+    await expect(page).toHaveURL('/projects');
+    expect(dialogs).toEqual([]);
+});
+
+test('finished-agent-does-not-warn-before-closing-the-tab', async ({
+    page,
+}) => {
+    await openChat(page, {
+        frames: [finished('Done')],
+        program: RUNNABLE_PROGRAM,
+    });
+    await submitPrompt(page);
+    await expect(page.locator('.agent-chat__response-text')).toHaveText(
+        'готово'
+    );
+
+    const dialogs: string[] = [];
+    page.on('dialog', async (dialog) => {
+        dialogs.push(dialog.type());
+        await dialog.accept();
+    });
+
+    await page.reload();
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page.locator('.cm-content').first()).toBeVisible();
+
+    expect(dialogs).toEqual([]);
+});
+
+test('agent-run-confirms-the-back-button', async ({ page }) => {
+    await openChat(page, {
+        frames: [toolCall('read_segment')],
+        program: RUNNABLE_PROGRAM,
+    });
+    await submitPrompt(page);
+    await expect(page.locator('.agent-chat__event')).toHaveCount(1);
+
+    const messages: string[] = [];
+    let leave = false;
+    page.on('dialog', async (dialog) => {
+        messages.push(dialog.message());
+        await (leave ? dialog.accept() : dialog.dismiss());
+    });
+
+    const back = page.locator('button.image-button.outline.rotate').first();
+    await back.click();
+
+    // отказ не должен ничего сбросить: уход отсюда чистит проект до перехода
+    await expect.poll(() => messages).toEqual([LEAVE_CONFIRM]);
+    await expect(page).toHaveURL(`/project/${uuid}`);
+    await expect(page.locator('.cm-content').first()).toBeVisible();
+    await expect(page.locator('.agent-chat__event')).toHaveCount(1);
+
+    leave = true;
+    await back.click();
+
+    await expect(page).toHaveURL('/projects');
+    // вопрос ровно один на нажатие: к переходу агент уже погашен
+    expect(messages).toEqual([LEAVE_CONFIRM, LEAVE_CONFIRM]);
+});
+
+test('agent-run-confirms-browser-history-navigation', async ({ page }) => {
+    await openChat(page, {
+        frames: [toolCall('read_segment')],
+        program: RUNNABLE_PROGRAM,
+    });
+    // нужна запись позади проекта, иначе «назад» уводит с сайта совсем,
+    // а это уже другой рубеж и другая панель
+    await openMyProjects(page);
+    await expect(page).toHaveURL('/projects');
+    await page.goBack();
+    await expect(page).toHaveURL(`/project/${uuid}`);
+
+    await page.getByRole('tab', { name: 'AI agent' }).click();
+    await submitPrompt(page);
+    await expect(page.locator('.agent-chat__event')).toHaveCount(1);
+
+    const messages: string[] = [];
+    let leave = false;
+    page.on('dialog', async (dialog) => {
+        messages.push(dialog.message());
+        await (leave ? dialog.accept() : dialog.dismiss());
+    });
+    await page.goForward();
+
+    await expect.poll(() => messages).toEqual([LEAVE_CONFIRM]);
+    // отказ не должен рассинхронить адрес со страницей
+    await expect(page).toHaveURL(`/project/${uuid}`);
+    await expect(page.locator('.agent-chat__event')).toHaveCount(1);
+
+    // а согласие должно уводить с первого раза, а не обещать и оставлять на месте
+    leave = true;
+    await page.goForward();
+    await expect(page).toHaveURL('/projects');
+    expect(messages).toEqual([LEAVE_CONFIRM, LEAVE_CONFIRM]);
+});
+
+test('history-entry-with-the-same-address-does-not-ask', async ({ page }) => {
+    await openChat(page, {
+        frames: [toolCall('read_segment')],
+        program: RUNNABLE_PROGRAM,
+    });
+    await submitPrompt(page);
+    await expect(page.locator('.agent-chat__event')).toHaveCount(1);
+
+    // приложение кладёт адрес проекта в историю дважды, поэтому первое «назад»
+    // ведёт на него же. Спрашивать про уход оттуда, откуда не уходят, нельзя:
+    // человек соглашается и остаётся на месте
+    const dialogs: string[] = [];
+    page.on('dialog', async (dialog) => {
+        dialogs.push(dialog.type());
+        await dialog.accept();
+    });
+    await page.goBack();
+
+    await expect(page).toHaveURL(`/project/${uuid}`);
+    await expect(page.locator('.agent-chat__event')).toHaveCount(1);
+    expect(dialogs).toEqual([]);
+});
+
+test.describe('русская локаль', () => {
+    test.use({ locale: 'ru-RU' });
+
+    test('leave-confirm-comes-from-the-dictionary', async ({ page }) => {
+        const routeSetup = new RouteSetup(page);
+        await routeSetup.setupGetUserInfoRequest();
+        await routeSetup.setupGetProjectRequest(
+            200,
+            'default',
+            RUNNABLE_PROGRAM
+        );
+        await routeSetup.setupGetAllProjectsRequest();
+        await routeSetup.setupSaveProgramRequest();
+        await routeSetup.setupListFilesRequest(200, 'emptyFiles');
+        await routeSetup.setupAgentHistoryRequest([]);
+        await routeSetup.setupAgentSocket([toolCall('read_segment')]);
+
+        await page.goto(`/project/${uuid}`);
+        await page.waitForLoadState('domcontentloaded');
+        await page.getByRole('tab', { name: 'Агент' }).click();
+        await page
+            .getByPlaceholder('Опишите, что сделать с проектом')
+            .fill('сделай таблицу');
+        await page.getByRole('button', { name: 'Отправить' }).click();
+        await expect(page.locator('.agent-chat__event')).toHaveCount(1);
+
+        const messages: string[] = [];
+        page.on('dialog', async (dialog) => {
+            messages.push(dialog.message());
+            await dialog.dismiss();
+        });
+        await page.locator('.header-menu-select .select-header').click();
+        await page
+            .getByRole('listitem')
+            .filter({ hasText: /^Мои проекты$/ })
+            .click();
+
+        await expect
+            .poll(() => messages)
+            .toEqual(['Агент ещё работает. Точно уйти со страницы?']);
+        await expect(page).toHaveURL(`/project/${uuid}`);
+    });
+});
