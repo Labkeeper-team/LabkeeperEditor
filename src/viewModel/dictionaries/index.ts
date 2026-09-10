@@ -179,6 +179,7 @@ export interface Translations {
         context_size_hint: string;
         max_iterations_hint: string;
         editing_locked: string;
+        leave_confirm: string;
         event: {
             model_call: string;
             add_segment: string;

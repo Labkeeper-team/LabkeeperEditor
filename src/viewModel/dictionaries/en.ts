@@ -188,6 +188,7 @@ export const en: Translations = {
             'How many steps the agent takes before it stops. More steps handle harder tasks and cost more',
         editing_locked:
             'The project cannot be edited while the agent is running',
+        leave_confirm: 'The agent is still running. Leave the page anyway?',
         event: {
             model_call: 'Calling the model',
             add_segment: 'A new segment has been added №{segment}',

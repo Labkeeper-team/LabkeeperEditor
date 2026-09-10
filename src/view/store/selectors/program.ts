@@ -105,10 +105,19 @@ export const useIsProjectReadonly = createSelector(
     (s) => s
 );
 /** Пока агент работает, сервер не принимает изменения проекта, правки блокируем */
+const agentIsRunning = (requestState: StorageState['chat']['requestState']) =>
+    requestState === 'connecting' || requestState === 'running';
 export const useIsAgentRunning = createSelector(
     (state: StorageState) => state.chat.requestState,
-    (state) => state === 'connecting' || state === 'running'
+    agentIsRunning
 );
+/**
+ * То же условие, но читается прямо в момент вопроса, а не на отрисовке.
+ * Нужно блокировщику переходов: приложение гасит агента прямо перед своим же
+ * переходом, и значение с прошлой отрисовки к этому моменту уже врёт.
+ */
+export const readIsAgentRunning = (state: StorageState) =>
+    agentIsRunning(state.chat.requestState);
 export const useHasUnsavedChanges = createSelector(
     [
         (state: StorageState) => state.ide,
