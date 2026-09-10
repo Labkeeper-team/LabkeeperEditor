@@ -4,6 +4,7 @@ import classNames from 'classnames';
 import { AppDispatch, StorageState } from '../../store';
 import { useDictionary } from '../../store/selectors/translations';
 import { useIsProjectReadonly } from '../../store/selectors/program.ts';
+import { useIsMobile } from '../../hooks/useMobile';
 import { controller } from '../../../main.tsx';
 import {
     selectGroupedHunkCount,
@@ -28,8 +29,11 @@ export const HunkGlobalButtons = memo(() => {
     const changeCount = useSelector(selectGroupedHunkCount);
     const showGlobalBar = useSelector(selectShouldShowGlobalHunkBar);
     const [collapsed, setCollapsed] = useState(hunkGlobalBarCollapsed);
+    const isMobile = useIsMobile();
 
-    if (isReadonly || !showGlobalBar) {
+    // на мобильном откат и приём всех изменений по ТЗ не показываем,
+    // отдельные пометки у каждого изменения остаются
+    if (isMobile || isReadonly || !showGlobalBar) {
         return null;
     }
 
