@@ -1,20 +1,24 @@
 import './style.scss';
 import classNames from 'classnames';
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { Editor } from './editor';
 import { Viewer } from './viewer';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, useStore } from 'react-redux';
 import { FileManager } from './fileManager';
 import { AppDispatch, StorageState } from '../../store';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { controller } from '../../../main.tsx';
 import { DeleteFilesModal } from './modals/delete-files';
 import { useLeavePageConfirmation } from '../../hooks/useLeavePageConfirmation';
+import { useLeaveRouteConfirmation } from '../../hooks/useLeaveRouteConfirmation';
 import {
+    readIsAgentRunning,
     useCurrentProject,
     useHasUnsavedChanges,
+    useIsAgentRunning,
     useMobileView,
 } from '../../store/selectors/program';
+import { useDictionary } from '../../store/selectors/translations';
 import { useIsMobile } from '../../hooks/useMobile';
 import { setMobileView, setViewerTab } from '../../store/slices/settings';
 import { refreshCodeMirrorLayout } from '../../utils/refreshCodeMirrorLayout';
@@ -29,6 +33,8 @@ export const ProjectPage = () => {
         (state: StorageState) => state.ide.activeTextFile
     );
     const hasUnsavedChanges = useSelector(useHasUnsavedChanges);
+    const isAgentRunning = useSelector(useIsAgentRunning);
+    const dictionary = useSelector(useDictionary);
     const pdfUpdated = useSelector(
         (state: StorageState) => state.ide.pdfUpdated
     );
@@ -40,8 +46,20 @@ export const ProjectPage = () => {
     const prevPdfUpdatedRef = useRef(pdfUpdated);
     const initialViewProjectIdRef = useRef<string | null>(null);
     const initialPdfViewAppliedRef = useRef(false);
+    const store = useStore<StorageState>();
+    const isAgentRunningNow = useCallback(
+        () => readIsAgentRunning(store.getState()),
+        [store]
+    );
 
-    useLeavePageConfirmation(hasUnsavedChanges);
+    // прогон агента идёт и без авторизации, поэтому условия складываются
+    useLeavePageConfirmation(hasUnsavedChanges || isAgentRunning);
+    // несохранённые изменения сюда не берём: автосохранение висит секунду,
+    // и вопрос на каждый переход был бы издевательством
+    useLeaveRouteConfirmation(
+        isAgentRunningNow,
+        dictionary.agent_chat.leave_confirm
+    );
 
     // уход со страницы проекта гасит сокет агента: слушать чужую ленту незачем
     useEffect(
