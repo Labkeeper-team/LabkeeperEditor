@@ -1,4 +1,7 @@
-import { AGENT_STOP_REASONS } from '../../model/rpi/agentSocket.ts';
+import {
+    AGENT_STOP_REASONS,
+    AGENT_TIMEOUT_MS,
+} from '../../model/rpi/agentSocket.ts';
 import { ru } from '../../viewModel/dictionaries/ru.ts';
 import { en } from '../../viewModel/dictionaries/en.ts';
 import { AgentToolName } from '../../model/rpi/agentSocket.ts';
@@ -78,5 +81,24 @@ test.each(DICTIONARIES)(
         for (const key of ['add_segment', 'add_lines_to_segment']) {
             expect(events[key]).toContain('{segment}');
         }
+    }
+);
+
+/** Срок прогона назван в тексте словами, здесь сверяем, что они не разъехались */
+const TIMEOUT_WORDS: Record<number, Record<string, string>> = {
+    10: { ru: 'десять минут', en: 'ten minutes' },
+};
+
+test.each(DICTIONARIES)(
+    'timeout-text-names-the-real-timeout-in-%s',
+    (name, dictionary) => {
+        // требование заказчика: на фронте не меньше десяти минут
+        expect(AGENT_TIMEOUT_MS).toBeGreaterThanOrEqual(10 * 60 * 1000);
+        const minutes = AGENT_TIMEOUT_MS / 60_000;
+        const words = TIMEOUT_WORDS[minutes]?.[name];
+        // срок поменяли, а слова для него не завели
+        expect(words).toBeDefined();
+        const stop = dictionary.agent_chat.stop as Record<string, string>;
+        expect(stop.timeout).toContain(words);
     }
 );

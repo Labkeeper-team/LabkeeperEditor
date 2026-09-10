@@ -225,7 +225,7 @@ export const en: Translations = {
             Locked: 'The agent is already running in another tab, or the project is being changed. Wait for it to finish and try again',
             UnknownError: 'Something went wrong. Please try again',
             timeout:
-                'The agent did not respond within three minutes. Please try again',
+                'The agent did not finish within ten minutes. Please try again',
             disconnected:
                 'The connection to the agent was lost. Please try again',
             connect_failed:
