@@ -32,6 +32,8 @@ const ERROR_STOP_REASONS: AgentStopReason[] = [
     'PaymentRequired',
     'Locked',
     'UnauthorizedLimitExceeded',
+    // запрос отклонён до запуска, применять нечего
+    'PromptTooLong',
     'UnknownError',
 ];
 
@@ -40,6 +42,8 @@ const PARTIAL_STOP_REASONS: AgentStopReason[] = [
     'IterationLimit',
     'ContextOverflow',
     'Timeout',
+    // отказ пришёл на одном шаге, а сделанное до него уже в проекте
+    'QuotaExceeded',
 ];
 
 export class AgentChatService {
@@ -51,6 +55,8 @@ export class AgentChatService {
      * по устаревшему номеру и молча выходит вместо записи в чужую ленту.
      */
     private runToken = 0;
+    /** Текст последнего запроса: слишком длинный вернём в поле, чтобы его сократили */
+    private lastPrompt = '';
 
     constructor(
         private repository: ViewModelRepository,
@@ -229,6 +235,7 @@ export class AgentChatService {
             hasProject: Boolean(project),
         });
         chat.setRequestState('connecting');
+        this.lastPrompt = prompt;
         chat.setInput('');
         chat.appendMessage({
             kind: 'request',
@@ -441,6 +448,10 @@ export class AgentChatService {
 
         if (isError) {
             chat.appendMessage({ kind: 'error', reason: event.stopReason });
+            // сократить можно только то, что видно: иначе длинный текст пришлось бы набирать заново
+            if (event.stopReason === 'PromptTooLong' && !chat.input()) {
+                chat.setInput(this.lastPrompt);
+            }
             chat.setRequestState('error');
             this.reportStopReason(event.stopReason);
             return;

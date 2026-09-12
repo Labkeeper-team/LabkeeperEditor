@@ -190,6 +190,7 @@ test.each([
     ['PaymentRequired'],
     ['Locked'],
     ['UnauthorizedLimitExceeded'],
+    ['PromptTooLong'],
     ['UnknownError'],
 ] as const)('agent-stop-reason-%s-shows-error', async (stopReason) => {
     const ctx = setup();
@@ -206,31 +207,31 @@ test.each([
     expect(ctx.repository.chatViewModelRepository.requestState()).toBe('error');
 });
 
-test.each([['IterationLimit'], ['ContextOverflow'], ['Timeout']] as const)(
-    'agent-stop-reason-%s-keeps-the-answer',
-    async (stopReason) => {
-        const ctx = setup();
-        ctx.repository.chatViewModelRepository.setInput('привет');
+test.each([
+    ['IterationLimit'],
+    ['ContextOverflow'],
+    ['Timeout'],
+    ['QuotaExceeded'],
+] as const)('agent-stop-reason-%s-keeps-the-answer', async (stopReason) => {
+    const ctx = setup();
+    ctx.repository.chatViewModelRepository.setInput('привет');
 
-        await ctx.agentChatService.onPromptSubmit();
-        await emit(ctx, {
-            kind: 'finished',
-            message: 'успел частично',
-            stopReason,
-        });
+    await ctx.agentChatService.onPromptSubmit();
+    await emit(ctx, {
+        kind: 'finished',
+        message: 'успел частично',
+        stopReason,
+    });
 
-        const kinds = ctx.repository.chatViewModelRepository
-            .messages()
-            .map((m) => m.kind);
-        // и ответ, и пояснение почему агент не доработал: пояснение не ошибка
-        expect(kinds).toContain('response');
-        expect(kinds).toContain('notice');
-        expect(kinds).not.toContain('error');
-        expect(ctx.repository.chatViewModelRepository.requestState()).toBe(
-            'ok'
-        );
-    }
-);
+    const kinds = ctx.repository.chatViewModelRepository
+        .messages()
+        .map((m) => m.kind);
+    // и ответ, и пояснение почему агент не доработал: пояснение не ошибка
+    expect(kinds).toContain('response');
+    expect(kinds).toContain('notice');
+    expect(kinds).not.toContain('error');
+    expect(ctx.repository.chatViewModelRepository.requestState()).toBe('ok');
+});
 
 test('agent-null-message-does-not-add-empty-response', async () => {
     const ctx = setup();
@@ -584,6 +585,87 @@ test('agent-events-append-to-transcript-in-order', async () => {
             )
     ).toEqual(['request', 'model_call', 'read_segment', 'response']);
 });
+
+test('prompt-too-long-returns-the-text-to-the-field', async () => {
+    const ctx = setup();
+    ctx.repository.chatViewModelRepository.setInput('очень длинный запрос');
+    await ctx.agentChatService.onPromptSubmit();
+    expect(ctx.repository.chatViewModelRepository.input()).toBe('');
+
+    await emit(ctx, {
+        kind: 'finished',
+        message: null,
+        stopReason: 'PromptTooLong',
+    });
+
+    // сокращать текст человеку удобнее там, где он его писал
+    expect(ctx.repository.chatViewModelRepository.input()).toBe(
+        'очень длинный запрос'
+    );
+});
+
+test('prompt-too-long-for-a-guest-does-not-replace-program', async () => {
+    const ctx = setup(false);
+    ctx.repository.projectViewModelRepository.setCurrentProgram({
+        segments: [{ type: 'md', parameters: {}, text: 'ORIGINAL' }],
+        parameters: { roundStrategy: 'noRound' },
+    });
+    ctx.repository.chatViewModelRepository.setInput('сделай');
+    await ctx.agentChatService.onPromptSubmit();
+
+    await emit(ctx, {
+        kind: 'finished',
+        message: null,
+        stopReason: 'PromptTooLong',
+        program: {
+            segments: [{ type: 'md', parameters: {}, text: 'LLM GENERATED' }],
+            parameters: { roundStrategy: 'noRound' },
+        },
+        hunks: [],
+    });
+
+    const program = ctx.repository.projectViewModelRepository.currentProgram();
+    expect(program.segments[0].text).toBe('ORIGINAL');
+});
+
+test('quota-exceeded-for-a-guest-keeps-what-was-done', async () => {
+    const ctx = setup(false);
+    ctx.repository.projectViewModelRepository.setCurrentProgram({
+        segments: [{ type: 'md', parameters: {}, text: 'ORIGINAL' }],
+        parameters: { roundStrategy: 'noRound' },
+    });
+    ctx.repository.chatViewModelRepository.setInput('сделай');
+    await ctx.agentChatService.onPromptSubmit();
+
+    await emit(ctx, {
+        kind: 'finished',
+        message: null,
+        stopReason: 'QuotaExceeded',
+        program: {
+            segments: [{ type: 'md', parameters: {}, text: 'ДО ЛИМИТА' }],
+            parameters: { roundStrategy: 'noRound' },
+        },
+        hunks: [],
+    });
+
+    // упор в лимит на одном шаге не отменяет шаги до него
+    const program = ctx.repository.projectViewModelRepository.currentProgram();
+    expect(program.segments[0].text).toBe('ДО ЛИМИТА');
+});
+
+test.each([['PromptTooLong'], ['QuotaExceeded']] as const)(
+    'stop-reason-%s-is-not-reported-as-a-failure',
+    async (stopReason) => {
+        const ctx = setup();
+        ctx.repository.chatViewModelRepository.setInput('сделай таблицу');
+        await ctx.agentChatService.onPromptSubmit();
+
+        await emit(ctx, { kind: 'finished', message: null, stopReason });
+
+        // это ограничения, о которых сказали человеку, а не сбой для разбора
+        expect(Sentry.captureException).not.toHaveBeenCalled();
+    }
+);
 
 test('stop-reason-payment-required-reports-payment-event', async () => {
     const ctx = setup();

@@ -8,6 +8,7 @@ import {
     AgentSocket,
     AgentStopReason,
     AgentToolName,
+    AGENT_STOP_REASONS,
     AGENT_TIMEOUT_MS,
 } from '../../model/rpi/agentSocket.ts';
 import { Hunk } from '../../model/domain.ts';
@@ -25,6 +26,25 @@ type ServerFrame = {
     program?: Program;
     hunks?: Hunk[];
 };
+
+/**
+ * Причина, которой фронт не знает, считается ошибкой. Иначе новая причина с
+ * сервера молча прошла бы как успех, а гостю применилась бы программа
+ */
+function toStopReason(value: unknown): AgentStopReason {
+    if (AGENT_STOP_REASONS.includes(value as AgentStopReason)) {
+        return value as AgentStopReason;
+    }
+    if (value != null) {
+        logBreadcrumb(
+            'agent',
+            'unknown stop reason',
+            { stopReason: String(value) },
+            'warning'
+        );
+    }
+    return 'UnknownError';
+}
 
 /** Превращает кадр сервера в событие домена. Неизвестный тип отбрасывается. */
 function toEvent(frame: ServerFrame): AgentEvent | null {
@@ -44,7 +64,7 @@ function toEvent(frame: ServerFrame): AgentEvent | null {
             return {
                 kind: 'finished',
                 message: frame.message ?? null,
-                stopReason: frame.stopReason ?? 'UnknownError',
+                stopReason: toStopReason(frame.stopReason),
                 program: frame.program,
                 hunks: frame.hunks,
             };

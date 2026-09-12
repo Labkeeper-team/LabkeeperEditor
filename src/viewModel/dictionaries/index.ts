@@ -208,6 +208,8 @@ export interface Translations {
             UnauthorizedLimitExceeded: string;
             PaymentRequired: string;
             Locked: string;
+            PromptTooLong: string;
+            QuotaExceeded: string;
             UnknownError: string;
             timeout: string;
             disconnected: string;
