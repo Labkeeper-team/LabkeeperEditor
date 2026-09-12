@@ -36,9 +36,10 @@ async function openChat(page: Page, options: Options = {}) {
     await routeSetup.setupSaveProgramRequest();
     await routeSetup.setupListFilesRequest(200, 'emptyFiles');
     await routeSetup.setupAgentHistoryRequest([]);
-    const consentCalls = await routeSetup.setupCrossBorderConsentRequest(
-        options.consentStatus ?? 200
-    );
+    const consentCalls =
+        await routeSetup.setupCrossBorderDataTransferPolicyRequest(
+            options.consentStatus ?? 200
+        );
     const sent = await routeSetup.setupAgentSocket(options.frames ?? []);
 
     await page.goto(`/project/${uuid}`);

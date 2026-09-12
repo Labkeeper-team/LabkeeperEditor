@@ -186,14 +186,14 @@ function startupWithConsent(serverAccepted: boolean) {
             email: 'a@gmail.com',
             id: 1,
             privacyPolicyAccepted: true,
-            crossBorderConsentAccepted: serverAccepted,
+            crossBorderDataTransferPolicyAccepted: serverAccepted,
             tokenBalance: 0,
         },
         isOk: true,
         isUnauth: false,
         isForbidden: false,
     });
-    ctx.rpi.acceptCrossBorderConsentRequest = jest
+    ctx.rpi.acceptCrossBorderDataTransferPolicyRequest = jest
         .fn()
         .mockResolvedValue(okEmpty);
     ctx.repository.setLocation(`/project/${PROJECT_ID}`);
@@ -208,7 +208,9 @@ test('consent-given-before-login-is-sent-after-login', async () => {
 
     await ctx.startupService.onAppStartup();
 
-    expect(ctx.rpi.acceptCrossBorderConsentRequest).toHaveBeenCalledTimes(1);
+    expect(
+        ctx.rpi.acceptCrossBorderDataTransferPolicyRequest
+    ).toHaveBeenCalledTimes(1);
 });
 
 test('consent-already-on-the-server-is-not-sent-again', async () => {
@@ -219,7 +221,9 @@ test('consent-already-on-the-server-is-not-sent-again', async () => {
 
     await ctx.startupService.onAppStartup();
 
-    expect(ctx.rpi.acceptCrossBorderConsentRequest).not.toHaveBeenCalled();
+    expect(
+        ctx.rpi.acceptCrossBorderDataTransferPolicyRequest
+    ).not.toHaveBeenCalled();
 });
 
 test('consent-is-not-invented-for-a-user-who-never-gave-it', async () => {
@@ -227,5 +231,7 @@ test('consent-is-not-invented-for-a-user-who-never-gave-it', async () => {
 
     await ctx.startupService.onAppStartup();
 
-    expect(ctx.rpi.acceptCrossBorderConsentRequest).not.toHaveBeenCalled();
+    expect(
+        ctx.rpi.acceptCrossBorderDataTransferPolicyRequest
+    ).not.toHaveBeenCalled();
 });

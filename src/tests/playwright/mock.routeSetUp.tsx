@@ -57,7 +57,7 @@ export class RouteSetup {
         id: number = defaultId,
         tokenBalance: number = 0,
         privacyPolicyAccepted: boolean = isAuthenticated,
-        crossBorderConsentAccepted: boolean = true
+        crossBorderDataTransferPolicyAccepted: boolean = true
     ) {
         await this.page.route(
             `**/api/${version}/public/user-info**`,
@@ -70,7 +70,8 @@ export class RouteSetup {
                         email: email,
                         id: id,
                         privacyPolicyAccepted: privacyPolicyAccepted,
-                        crossBorderConsentAccepted: crossBorderConsentAccepted,
+                        crossBorderDataTransferPolicyAccepted:
+                            crossBorderDataTransferPolicyAccepted,
                         tokenBalance: tokenBalance,
                     }),
                 });
@@ -302,10 +303,10 @@ export class RouteSetup {
     }
 
     /** Ручка приёма согласия на трансграничную передачу */
-    async setupCrossBorderConsentRequest(status: number = 200) {
+    async setupCrossBorderDataTransferPolicyRequest(status: number = 200) {
         const calls: string[] = [];
         await this.page.route(
-            `**/api/${version}/public/cross-border-consent/accept**`,
+            `**/api/${version}/public/cross-border-data-transfer-policy/accept**`,
             async (route) => {
                 calls.push(route.request().method());
                 await route.fulfill({

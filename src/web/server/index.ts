@@ -495,11 +495,11 @@ export class WebRpi implements Rpi {
         );
     }
 
-    async acceptCrossBorderConsentRequest(): Promise<RequestResult> {
+    async acceptCrossBorderDataTransferPolicyRequest(): Promise<RequestResult> {
         return this.requestWrapper(
-            'acceptCrossBorderConsentRequest',
+            'acceptCrossBorderDataTransferPolicyRequest',
             [200, 401],
-            () => axios.post(URLS.CrossBorderConsentAcceptance)
+            () => axios.post(URLS.CrossBorderDataTransferPolicyAcceptance)
         );
     }
 

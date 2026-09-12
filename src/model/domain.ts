@@ -34,7 +34,7 @@ export interface UserInfo {
     isAuthenticated: boolean;
     privacyPolicyAccepted: boolean;
     /** Согласие на трансграничную передачу данных в DeepSeek, без него агент не запускается */
-    crossBorderConsentAccepted: boolean;
+    crossBorderDataTransferPolicyAccepted: boolean;
     tokenBalance: number;
 }
 

@@ -36,7 +36,7 @@ function setup(authenticated = true) {
         email: 'a@gmail.com',
         id: USER_ID,
         privacyPolicyAccepted: true,
-        crossBorderConsentAccepted: true,
+        crossBorderDataTransferPolicyAccepted: true,
         tokenBalance: 10,
     });
     ctx.repository.projectViewModelRepository.setProject({
@@ -803,10 +803,10 @@ function setupWithoutConsent(authenticated = true) {
         email: 'a@gmail.com',
         id: USER_ID,
         privacyPolicyAccepted: true,
-        crossBorderConsentAccepted: false,
+        crossBorderDataTransferPolicyAccepted: false,
         tokenBalance: 10,
     });
-    ctx.rpi.acceptCrossBorderConsentRequest = jest
+    ctx.rpi.acceptCrossBorderDataTransferPolicyRequest = jest
         .fn()
         .mockResolvedValue(okEmpty());
     return ctx;
@@ -835,7 +835,9 @@ test('cross-border-consent-accept-sends-the-same-request', async () => {
     await ctx.agentChatService.onCrossBorderConsentAccepted();
 
     expect(consentModalShown(ctx)).toBe(false);
-    expect(ctx.rpi.acceptCrossBorderConsentRequest).toHaveBeenCalledTimes(1);
+    expect(
+        ctx.rpi.acceptCrossBorderDataTransferPolicyRequest
+    ).toHaveBeenCalledTimes(1);
     expect(ctx.agentSocketState.started?.prompt).toBe('сделай таблицу');
 });
 
@@ -875,7 +877,9 @@ test('cross-border-consent-of-a-guest-goes-to-local-storage-only', async () => {
     await ctx.agentChatService.onCrossBorderConsentAccepted();
 
     // гостю сервер согласие записать некуда, пока он не вошёл
-    expect(ctx.rpi.acceptCrossBorderConsentRequest).not.toHaveBeenCalled();
+    expect(
+        ctx.rpi.acceptCrossBorderDataTransferPolicyRequest
+    ).not.toHaveBeenCalled();
     expect(
         ctx.repository.persistenceViewModelRepository.crossBorderConsentAcceptedLocally()
     ).toBe(true);
@@ -889,7 +893,7 @@ test('cross-border-consent-accepted-on-the-server-is-not-asked-again', async () 
         email: 'a@gmail.com',
         id: USER_ID,
         privacyPolicyAccepted: true,
-        crossBorderConsentAccepted: true,
+        crossBorderDataTransferPolicyAccepted: true,
         tokenBalance: 10,
     });
     ctx.repository.chatViewModelRepository.setInput('сделай таблицу');
@@ -902,13 +906,15 @@ test('cross-border-consent-accepted-on-the-server-is-not-asked-again', async () 
 
 test('cross-border-consent-survives-a-failed-save', async () => {
     const ctx = setupWithoutConsent();
-    ctx.rpi.acceptCrossBorderConsentRequest = jest.fn().mockResolvedValue({
-        code: 500,
-        body: undefined,
-        isOk: false,
-        isUnauth: false,
-        isForbidden: false,
-    });
+    ctx.rpi.acceptCrossBorderDataTransferPolicyRequest = jest
+        .fn()
+        .mockResolvedValue({
+            code: 500,
+            body: undefined,
+            isOk: false,
+            isUnauth: false,
+            isForbidden: false,
+        });
     ctx.repository.chatViewModelRepository.setInput('сделай таблицу');
     await ctx.agentChatService.onPromptSubmit();
 

@@ -23,7 +23,7 @@ function setup() {
         email: 'a@gmail.com',
         id: USER_ID,
         privacyPolicyAccepted: true,
-        crossBorderConsentAccepted: true,
+        crossBorderDataTransferPolicyAccepted: true,
         tokenBalance: 10,
     });
     ctx.repository.projectViewModelRepository.setProject({

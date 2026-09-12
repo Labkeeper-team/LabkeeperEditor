@@ -487,8 +487,8 @@ export const createViewModelStateFromStore = (
             id: () => store.getState().user.id,
             isAuthenticated: () => store.getState().user.isAuthenticated,
             tokenBalance: () => store.getState().user.tokenBalance,
-            crossBorderConsentAccepted: () =>
-                store.getState().user.crossBorderConsentAccepted,
+            crossBorderDataTransferPolicyAccepted: () =>
+                store.getState().user.crossBorderDataTransferPolicyAccepted,
 
             setUserInfo: (userInfo) => store.dispatch(setUser(userInfo)),
         },

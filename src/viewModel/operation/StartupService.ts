@@ -214,7 +214,7 @@ export class StartupService {
             isAuthenticated:
                 this.repository.userViewModelRepository.isAuthenticated(),
             privacyPolicyAccepted: false,
-            crossBorderConsentAccepted: false,
+            crossBorderDataTransferPolicyAccepted: false,
             tokenBalance:
                 this.repository.userViewModelRepository.tokenBalance(),
         };
@@ -231,7 +231,7 @@ export class StartupService {
             this.repository.persistenceViewModelRepository.crossBorderConsentAcceptedLocally();
         if (
             !userInfo.isAuthenticated ||
-            userInfo.crossBorderConsentAccepted ||
+            userInfo.crossBorderDataTransferPolicyAccepted ||
             !acceptedLocally
         ) {
             return;

@@ -278,7 +278,7 @@ export const userInitialState: UserInfo = {
     email: '',
     id: 0,
     privacyPolicyAccepted: false,
-    crossBorderConsentAccepted: false,
+    crossBorderDataTransferPolicyAccepted: false,
     tokenBalance: 0,
 };
 

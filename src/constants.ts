@@ -38,7 +38,7 @@ export const URLS = {
 
     UserInfo: `${uri}/api/${version}/public/user-info`,
     PrivacyPolicyAcceptance: `${uri}/api/${version}/public/privacy-policy/accept`,
-    CrossBorderConsentAcceptance: `${uri}/api/${version}/public/cross-border-consent/accept`,
+    CrossBorderDataTransferPolicyAcceptance: `${uri}/api/${version}/public/cross-border-data-transfer-policy/accept`,
     S3File: `https://files.labkeeper.io/`,
     Email: `${uri}/api/${version}/public/email`,
     Code: `${uri}/api/${version}/public/code`,

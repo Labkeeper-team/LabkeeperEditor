@@ -47,8 +47,8 @@ MockViewModelRepositoryState {
       },
     ],
   },
-  "crossBorderConsentAccepted": false,
   "crossBorderConsentAcceptedLocally": false,
+  "crossBorderDataTransferPolicyAccepted": false,
   "currentEmail": null,
   "currentFolderPath": "",
   "currentProgram": {
@@ -207,8 +207,8 @@ MockViewModelRepositoryState {
       },
     ],
   },
-  "crossBorderConsentAccepted": false,
   "crossBorderConsentAcceptedLocally": false,
+  "crossBorderDataTransferPolicyAccepted": false,
   "currentEmail": null,
   "currentFolderPath": "",
   "currentProgram": {

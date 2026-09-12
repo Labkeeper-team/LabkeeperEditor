@@ -220,7 +220,7 @@ class MockViewModelRepositoryState {
     id: number = -1;
     isAuthenticated: boolean = false;
     tokenBalance: number = 0;
-    crossBorderConsentAccepted: boolean = false;
+    crossBorderDataTransferPolicyAccepted: boolean = false;
 
     loginRequest: LoginRequestState = 'unknown';
     codeCheckRequest: CodeRequestState = 'unknown';
@@ -590,16 +590,16 @@ export const mockViewModelState = (): MockViewModelRepository => {
             id: () => mockViewModelState.id,
             isAuthenticated: () => mockViewModelState.isAuthenticated,
             tokenBalance: () => mockViewModelState.tokenBalance,
-            crossBorderConsentAccepted: () =>
-                mockViewModelState.crossBorderConsentAccepted,
+            crossBorderDataTransferPolicyAccepted: () =>
+                mockViewModelState.crossBorderDataTransferPolicyAccepted,
 
             setUserInfo: (userInfo) => {
                 mockViewModelState.email = userInfo.email;
                 mockViewModelState.isAuthenticated = userInfo.isAuthenticated;
                 mockViewModelState.id = userInfo.id;
                 mockViewModelState.tokenBalance = userInfo.tokenBalance ?? 0;
-                mockViewModelState.crossBorderConsentAccepted =
-                    userInfo.crossBorderConsentAccepted;
+                mockViewModelState.crossBorderDataTransferPolicyAccepted =
+                    userInfo.crossBorderDataTransferPolicyAccepted;
             },
         },
 
@@ -793,7 +793,7 @@ export interface UserViewModelRepository {
     id: () => number;
     isAuthenticated: () => boolean;
     tokenBalance: () => number;
-    crossBorderConsentAccepted: () => boolean;
+    crossBorderDataTransferPolicyAccepted: () => boolean;
 
     setUserInfo: (userInfo: UserInfo) => void;
 }

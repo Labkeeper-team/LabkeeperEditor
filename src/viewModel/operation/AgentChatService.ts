@@ -156,9 +156,12 @@ export class AgentChatService {
      * сервере, у гостя серверу записать его некуда, поэтому отметка в локальном
      * хранилище считается наравне: один раз согласился, второй раз не спрашиваем
      */
-    private crossBorderConsentAccepted = (): boolean => {
+    private crossBorderConsentGiven = (): boolean => {
         const user = this.repository.userViewModelRepository;
-        if (user.isAuthenticated() && user.crossBorderConsentAccepted()) {
+        if (
+            user.isAuthenticated() &&
+            user.crossBorderDataTransferPolicyAccepted()
+        ) {
             return true;
         }
         return this.repository.persistenceViewModelRepository.crossBorderConsentAcceptedLocally();
@@ -195,7 +198,8 @@ export class AgentChatService {
      * из-за неудачной записи не за что
      */
     sendCrossBorderConsent = async (): Promise<void> => {
-        const response = await this.rpi.acceptCrossBorderConsentRequest();
+        const response =
+            await this.rpi.acceptCrossBorderDataTransferPolicyRequest();
         if (!response.isOk) {
             logBreadcrumb(
                 'agent',
@@ -221,7 +225,7 @@ export class AgentChatService {
         }
         // до согласия запрос никуда не идёт: ни поле не чистим, ни ленту не трогаем,
         // чтобы после принятия отправить ровно то же самое
-        if (!this.crossBorderConsentAccepted()) {
+        if (!this.crossBorderConsentGiven()) {
             this.repository.settingsViewModelRepository.setShowCrossBorderConsentModal(
                 true
             );
