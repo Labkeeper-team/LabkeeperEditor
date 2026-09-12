@@ -27,13 +27,48 @@ import {
     BillingPurchasesListResponse,
     BillingPricingResponse,
 } from '../../model/rpi';
+import * as Sentry from '@sentry/react';
 
-async function requestWrapper<T>(
+function reportUnexpectedRpiStatus(
+    method: keyof Rpi,
+    expectedCodes: readonly number[],
+    result: { code: number; body: unknown }
+): void {
+    if (expectedCodes.includes(result.code)) {
+        return;
+    }
+    Sentry.captureException(
+        new Error(`Unexpected RPI status ${result.code} from ${method}`),
+        {
+            fingerprint: [
+                'rpi-unexpected-status',
+                String(method),
+                String(result.code),
+            ],
+            tags: {
+                'rpi.method': String(method),
+                'rpi.status': String(result.code),
+            },
+            extra: {
+                method,
+                code: result.code,
+                expectedCodes: [...expectedCodes],
+                body: result.body,
+            },
+        }
+    );
+}
+
+async function requestWrapper<T extends object>(
+    method: keyof Rpi,
+    expectedCodes: readonly number[],
     request: () => Promise<AxiosResponse>
 ): Promise<RequestResult<T>> {
+    let result: RequestResult<T>;
+    let hasHttpStatus = true;
     try {
         const response = await request();
-        return {
+        result = {
             code: response.status,
             body: response.data,
             isOk: response.status < 300,
@@ -42,14 +77,20 @@ async function requestWrapper<T>(
         };
     } catch (error: unknown) {
         const axiosError = error as AxiosError;
-        return {
-            code: axiosError?.response?.status || 500,
+        const status = axiosError?.response?.status;
+        hasHttpStatus = status != null;
+        result = {
+            code: status || 500,
             body: axiosError?.response?.data as T,
             isOk: false,
-            isUnauth: axiosError?.response?.status === 401,
-            isForbidden: axiosError?.response?.status === 403,
+            isUnauth: status === 401,
+            isForbidden: status === 403,
         };
     }
+    if (hasHttpStatus) {
+        reportUnexpectedRpiStatus(method, expectedCodes, result);
+    }
+    return result;
 }
 
 function withIds(program: Program): Program {
@@ -61,7 +102,7 @@ export class WebRpi implements Rpi {
         projectId: string,
         type: ProjectType
     ): Promise<RequestResult> {
-        return requestWrapper(async () =>
+        return requestWrapper('setProjectTypeRequest', [200, 401], async () =>
             axios.post(
                 `${URLS.setType.replace('{id}', projectId)}?type=${type}`
             )
@@ -70,15 +111,19 @@ export class WebRpi implements Rpi {
     pdfCompilationRequest(
         program: Program
     ): Promise<RequestResult<CompilationResponse>> {
-        return requestWrapper(async () =>
-            axios.post(URLS.compilePdf, withIds(program))
+        return requestWrapper(
+            'pdfCompilationRequest',
+            [200, 203, 401, 403, 402, 423, 425],
+            async () => axios.post(URLS.compilePdf, withIds(program))
         );
     }
     async compilationRequest(
         program: Program
     ): Promise<RequestResult<CompileSuccessResult | CompileErrorResultList>> {
-        return requestWrapper(async () =>
-            axios.post(URLS.compile, withIds(program))
+        return requestWrapper(
+            'compilationRequest',
+            [200, 203, 401, 403, 402, 425],
+            async () => axios.post(URLS.compile, withIds(program))
         );
     }
 
@@ -86,7 +131,7 @@ export class WebRpi implements Rpi {
         subject: string,
         body: string
     ): Promise<RequestResult> {
-        return requestWrapper(async () =>
+        return requestWrapper('contactFormRequest', [200, 401], async () =>
             axios.post(URLS.Contact, null, {
                 params: {
                     subject: subject,
@@ -99,16 +144,22 @@ export class WebRpi implements Rpi {
     async compileProjectRequest(
         projectId: string
     ): Promise<RequestResult<CompilationResponse>> {
-        return requestWrapper(async () =>
-            axios.post(URLS.compileProject.replace('{id}', projectId))
+        return requestWrapper(
+            'compileProjectRequest',
+            [200, 203, 401, 403, 402, 425],
+            async () =>
+                axios.post(URLS.compileProject.replace('{id}', projectId))
         );
     }
 
     async compileProjectPdfRequest(
         projectId: string
     ): Promise<RequestResult<CompileSuccessPdfResponse>> {
-        return requestWrapper(async () =>
-            axios.post(URLS.compileProjectPdf.replace('{id}', projectId))
+        return requestWrapper(
+            'compileProjectPdfRequest',
+            [200, 203, 401, 403, 402, 423, 425],
+            async () =>
+                axios.post(URLS.compileProjectPdf.replace('{id}', projectId))
         );
     }
 
@@ -116,11 +167,14 @@ export class WebRpi implements Rpi {
         projectId: string,
         position: ProgramDocumentPosition
     ): Promise<RequestResult<PdfPosition>> {
-        return requestWrapper(async () =>
-            axios.post(
-                URLS.navigationDocToPdf.replace('{id}', projectId),
-                position
-            )
+        return requestWrapper(
+            'navigationDocToPdfRequest',
+            [200, 401, 423],
+            async () =>
+                axios.post(
+                    URLS.navigationDocToPdf.replace('{id}', projectId),
+                    position
+                )
         );
     }
 
@@ -128,11 +182,14 @@ export class WebRpi implements Rpi {
         projectId: string,
         position: PdfPosition
     ): Promise<RequestResult<ProgramDocumentPosition>> {
-        return requestWrapper(async () =>
-            axios.post(
-                URLS.navigationPdfToDoc.replace('{id}', projectId),
-                position
-            )
+        return requestWrapper(
+            'navigationPdfToDocRequest',
+            [200, 401, 423],
+            async () =>
+                axios.post(
+                    URLS.navigationPdfToDoc.replace('{id}', projectId),
+                    position
+                )
         );
     }
 
@@ -143,20 +200,23 @@ export class WebRpi implements Rpi {
     ): Promise<RequestResult<UploadFileResponse>> {
         const uploadName =
             name.includes('/') && !name.startsWith('/') ? `/${name}` : name;
-        return requestWrapper(async () =>
-            axios.put(
-                `${URLS.uploadFile.replace('{id}', projectId)}`,
-                formData,
-                {
-                    headers: {
-                        'Content-Type': 'multipart/form-data',
-                        Accept: '*/*',
-                    },
-                    params: {
-                        name: uploadName,
-                    },
-                }
-            )
+        return requestWrapper(
+            'uploadFileRequest',
+            [200, 400, 409, 413, 401, 403],
+            async () =>
+                axios.put(
+                    `${URLS.uploadFile.replace('{id}', projectId)}`,
+                    formData,
+                    {
+                        headers: {
+                            'Content-Type': 'multipart/form-data',
+                            Accept: '*/*',
+                        },
+                        params: {
+                            name: uploadName,
+                        },
+                    }
+                )
         );
     }
 
@@ -164,7 +224,7 @@ export class WebRpi implements Rpi {
         name: string,
         projectId: string
     ): Promise<RequestResult> {
-        return requestWrapper(async () =>
+        return requestWrapper('deleteFileRequest', [200, 401, 404], async () =>
             axios.delete(
                 `${URLS.deleteFile.replace('{id}', projectId)}?name=${name}`
             )
@@ -174,7 +234,7 @@ export class WebRpi implements Rpi {
     async listFilesRequest(
         projectId: string
     ): Promise<RequestResult<ListFilesResponse>> {
-        return requestWrapper(async () =>
+        return requestWrapper('listFilesRequest', [200, 401, 403], async () =>
             axios.get(`${URLS.filesGetList.replace('{id}', projectId)}`)
         );
     }
@@ -183,7 +243,7 @@ export class WebRpi implements Rpi {
         projectId: string,
         title: string
     ): Promise<RequestResult> {
-        return requestWrapper(async () =>
+        return requestWrapper('setTitleRequest', [200, 401], async () =>
             axios.post(
                 `${URLS.setTitle.replace('{id}', projectId)}?name=${title}`
             )
@@ -195,24 +255,29 @@ export class WebRpi implements Rpi {
         program: Program,
         projectType: ProjectType
     ): Promise<RequestResult<RichProject>> {
-        return requestWrapper(async () =>
-            axios.post(
-                `${URLS.getDefaultProject}?type=${projectType}`,
-                withIds(program),
-                {
-                    headers: {
-                        'Accept-Language': lang || 'en',
-                    },
-                }
-            )
+        return requestWrapper(
+            'getDefaultProjectRequest',
+            [200, 401],
+            async () =>
+                axios.post(
+                    `${URLS.getDefaultProject}?type=${projectType}`,
+                    withIds(program),
+                    {
+                        headers: {
+                            'Accept-Language': lang || 'en',
+                        },
+                    }
+                )
         );
     }
 
     async getProjectRequest(
         projectId: string
     ): Promise<RequestResult<RichProject>> {
-        return requestWrapper(async () =>
-            axios.get(URLS.getProject.replace('{id}', projectId))
+        return requestWrapper(
+            'getProjectRequest',
+            [200, 401, 403, 404],
+            async () => axios.get(URLS.getProject.replace('{id}', projectId))
         );
     }
 
@@ -221,10 +286,13 @@ export class WebRpi implements Rpi {
         newName: string,
         projectId: string
     ): Promise<RequestResult> {
-        return requestWrapper(async () =>
-            axios.post(
-                `${URLS.renameFile.replace('{id}', projectId)}?old=${oldName}&new=${newName}`
-            )
+        return requestWrapper(
+            'renameFileRequest',
+            [200, 400, 401, 417],
+            async () =>
+                axios.post(
+                    `${URLS.renameFile.replace('{id}', projectId)}?old=${oldName}&new=${newName}`
+                )
         );
     }
 
@@ -235,10 +303,13 @@ export class WebRpi implements Rpi {
     ): Promise<RequestResult> {
         const oldParam = oldPath.startsWith('/') ? oldPath : `/${oldPath}`;
         const newParam = newPath.startsWith('/') ? newPath : `/${newPath}`;
-        return requestWrapper(async () =>
-            axios.post(
-                `${URLS.renameFolder.replace('{id}', projectId)}?old=${encodeURIComponent(oldParam)}&new=${encodeURIComponent(newParam)}`
-            )
+        return requestWrapper(
+            'renameFolderRequest',
+            [200, 400, 401],
+            async () =>
+                axios.post(
+                    `${URLS.renameFolder.replace('{id}', projectId)}?old=${encodeURIComponent(oldParam)}&new=${encodeURIComponent(newParam)}`
+                )
         );
     }
 
@@ -249,7 +320,7 @@ export class WebRpi implements Rpi {
         const pathParam = folderPath.startsWith('/')
             ? folderPath
             : `/${folderPath}`;
-        return requestWrapper(async () =>
+        return requestWrapper('deleteFolderRequest', [200, 401], async () =>
             axios.delete(
                 `${URLS.deleteFolder.replace('{id}', projectId)}?path=${encodeURIComponent(pathParam)}`
             )
@@ -259,7 +330,9 @@ export class WebRpi implements Rpi {
     async getAllProjectsRequest(): Promise<
         RequestResult<ListProjectsResponse>
     > {
-        return requestWrapper(async () => axios.get(URLS.getAllProjects));
+        return requestWrapper('getAllProjectsRequest', [200, 401], async () =>
+            axios.get(URLS.getAllProjects)
+        );
     }
 
     async createProjectRequest(
@@ -267,24 +340,30 @@ export class WebRpi implements Rpi {
         program: Program,
         projectType: ProjectType
     ): Promise<RequestResult<Project>> {
-        return requestWrapper(async () =>
-            axios.put(
-                `${URLS.createProject}?name=${projectName}&type=${projectType}`,
-                withIds(program)
-            )
+        return requestWrapper(
+            'createProjectRequest',
+            [200, 401, 417],
+            async () =>
+                axios.put(
+                    `${URLS.createProject}?name=${projectName}&type=${projectType}`,
+                    withIds(program)
+                )
         );
     }
 
     async cloneProjectRequest(
         projectId: string
     ): Promise<RequestResult<Project>> {
-        return requestWrapper(async () =>
-            axios.post(`${URLS.cloneProject.replace('{id}', projectId)}`)
+        return requestWrapper(
+            'cloneProjectRequest',
+            [200, 401, 417],
+            async () =>
+                axios.post(`${URLS.cloneProject.replace('{id}', projectId)}`)
         );
     }
 
     async deleteProjectRequest(projectId: string): Promise<RequestResult> {
-        return requestWrapper(async () =>
+        return requestWrapper('deleteProjectRequest', [200, 401], async () =>
             axios.delete(URLS.deleteProject.replace('{id}', projectId))
         );
     }
@@ -293,7 +372,7 @@ export class WebRpi implements Rpi {
         projectId: string,
         program: Program
     ): Promise<RequestResult> {
-        return requestWrapper(async () =>
+        return requestWrapper('saveProgramRequest', [200, 401], async () =>
             axios.post(
                 URLS.setProgram.replace('{id}', projectId),
                 withIds(program)
@@ -305,10 +384,13 @@ export class WebRpi implements Rpi {
         projectId: string,
         visibility: boolean
     ): Promise<RequestResult> {
-        return requestWrapper(async () =>
-            axios.post(
-                `${URLS.setVisibility.replace('{id}', projectId)}?public=${visibility}`
-            )
+        return requestWrapper(
+            'setProjectVisibilityRequest',
+            [200, 401],
+            async () =>
+                axios.post(
+                    `${URLS.setVisibility.replace('{id}', projectId)}?public=${visibility}`
+                )
         );
     }
 
@@ -318,11 +400,14 @@ export class WebRpi implements Rpi {
         lang: string,
         captcha: string
     ): Promise<RequestResult> {
-        return requestWrapper(() =>
-            axios.post(URLS.Email, null, {
-                params: { email, registration, captcha },
-                headers: { 'Accept-Language': lang || 'en' },
-            })
+        return requestWrapper(
+            'sendEmailWithCodeRequest',
+            [200, 400, 404, 409],
+            () =>
+                axios.post(URLS.Email, null, {
+                    params: { email, registration, captcha },
+                    headers: { 'Accept-Language': lang || 'en' },
+                })
         );
     }
 
@@ -330,7 +415,7 @@ export class WebRpi implements Rpi {
         email: string,
         code: string
     ): Promise<RequestResult<CodeValidationResponse>> {
-        return requestWrapper(() =>
+        return requestWrapper('checkCodeRequest', [200, 400], () =>
             axios.post<CodeValidationResponse>(URLS.Code, null, {
                 params: { email, code },
             })
@@ -343,7 +428,7 @@ export class WebRpi implements Rpi {
         password: string,
         registration: boolean
     ): Promise<RequestResult> {
-        return requestWrapper(() =>
+        return requestWrapper('setPasswordRequest', [200, 400, 404, 409], () =>
             axios.post(URLS.Password, null, {
                 params: { email, code, password, registration },
             })
@@ -351,23 +436,29 @@ export class WebRpi implements Rpi {
     }
 
     async getUserInfoRequest(): Promise<RequestResult<UserInfo>> {
-        return requestWrapper(() => axios.get(URLS.UserInfo));
+        return requestWrapper('getUserInfoRequest', [200], () =>
+            axios.get(URLS.UserInfo)
+        );
     }
 
     async acceptPrivacyPolicyRequest(): Promise<RequestResult> {
-        return requestWrapper(() => axios.post(URLS.PrivacyPolicyAcceptance));
+        return requestWrapper('acceptPrivacyPolicyRequest', [200, 401], () =>
+            axios.post(URLS.PrivacyPolicyAcceptance)
+        );
     }
 
     async getBillingPricingRequest(): Promise<
         RequestResult<BillingPricingResponse>
     > {
-        return requestWrapper(() => axios.get(URLS.billingPricing));
+        return requestWrapper('getBillingPricingRequest', [200], () =>
+            axios.get(URLS.billingPricing)
+        );
     }
 
     async createBillingPurchaseRequest(
         tokenPriceId: string
     ): Promise<RequestResult<BillingPurchaseResponse>> {
-        return requestWrapper(() =>
+        return requestWrapper('createBillingPurchaseRequest', [200, 401], () =>
             axios.post(URLS.billingPurchases, null, {
                 params: {
                     tokenPriceId,
@@ -382,7 +473,7 @@ export class WebRpi implements Rpi {
         size?: number;
         status?: BillingPurchaseResponse['status'];
     }): Promise<RequestResult<BillingPurchasesListResponse>> {
-        return requestWrapper(() =>
+        return requestWrapper('listBillingPurchasesRequest', [200, 401], () =>
             axios.get(URLS.billingPurchases, {
                 params: {
                     page: params?.page ?? 0,
@@ -394,7 +485,9 @@ export class WebRpi implements Rpi {
     }
 
     async getS3FileRequest(path: string): Promise<RequestResult> {
-        return requestWrapper(() => axios.get(URLS.S3File + path));
+        return requestWrapper('getS3FileRequest', [200], () =>
+            axios.get(URLS.S3File + path)
+        );
     }
 
     async formLoginRequest(
@@ -406,14 +499,16 @@ export class WebRpi implements Rpi {
         params.append('username', userName);
         params.append('password', password);
         params.append('captcha', captcha);
-        return requestWrapper(() => axios.post(URLS.FormLogin, params));
+        return requestWrapper('formLoginRequest', [200, 401], () =>
+            axios.post(URLS.FormLogin, params)
+        );
     }
 
     async oauthCodeRequest(
         code: string,
         state: string
     ): Promise<RequestResult> {
-        return requestWrapper(() =>
+        return requestWrapper('oauthCodeRequest', [200, 400, 401], () =>
             axios.get(URLS.OauthCode + '/provider', {
                 params: {
                     code: code,
@@ -424,13 +519,15 @@ export class WebRpi implements Rpi {
     }
 
     async logoutRequest(): Promise<RequestResult> {
-        return requestWrapper(() => axios.post(URLS.Logout));
+        return requestWrapper('logoutRequest', [200, 401], () =>
+            axios.post(URLS.Logout)
+        );
     }
 
     async listHunksRequest(
         projectId: string
     ): Promise<RequestResult<HunkListResponse>> {
-        return requestWrapper(() =>
+        return requestWrapper('listHunksRequest', [200, 401, 403], () =>
             axios.get(URLS.listHunks.replace('{id}', projectId))
         );
     }
@@ -440,7 +537,7 @@ export class WebRpi implements Rpi {
         hunkId: string,
         revert: boolean
     ): Promise<RequestResult> {
-        return requestWrapper(() =>
+        return requestWrapper('deleteHunkRequest', [200, 401], () =>
             axios.delete(
                 URLS.deleteHunk
                     .replace('{id}', projectId)
@@ -453,13 +550,13 @@ export class WebRpi implements Rpi {
     async getAgentHistoryRequest(
         projectId: string
     ): Promise<RequestResult<AgentHistoryResponse>> {
-        return requestWrapper(() =>
+        return requestWrapper('getAgentHistoryRequest', [200, 401], () =>
             axios.get(URLS.agentHistory.replace('{id}', projectId))
         );
     }
 
     async clearAgentHistoryRequest(projectId: string): Promise<RequestResult> {
-        return requestWrapper(() =>
+        return requestWrapper('clearAgentHistoryRequest', [200, 401], () =>
             axios.delete(URLS.agentHistory.replace('{id}', projectId))
         );
     }

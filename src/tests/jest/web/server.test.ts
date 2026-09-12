@@ -1,4 +1,6 @@
 import axios from 'axios';
+import * as Sentry from '@sentry/react';
+import { WebRpi } from '../../../web/server';
 
 jest.mock('../../../constants.ts', () => ({
     URLS: {
@@ -8,7 +10,9 @@ jest.mock('../../../constants.ts', () => ({
     },
 }));
 
-import { WebRpi } from '../../../web/server';
+jest.mock('@sentry/react', () => ({
+    captureException: jest.fn(),
+}));
 
 jest.mock('axios', () => ({
     __esModule: true,
@@ -20,6 +24,10 @@ jest.mock('axios', () => ({
 }));
 
 describe('WebRpi', () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
+
     test('renameFileRequest passes old and new file names as-is', async () => {
         const postMock = axios.post as jest.Mock;
         postMock.mockResolvedValue({
@@ -65,6 +73,80 @@ describe('WebRpi', () => {
         expect(getMock).toHaveBeenCalledWith('/api/v4/public/billing/pricing');
         expect(result.body).toEqual(pricing);
         expect(result.isOk).toBe(true);
+        expect(Sentry.captureException).not.toHaveBeenCalled();
+    });
+
+    test('does not report an expected error status to Sentry', async () => {
+        const getMock = axios.get as jest.Mock;
+        getMock.mockRejectedValue({
+            response: { status: 401, data: {} },
+        });
+        const rpi = new WebRpi();
+
+        const result = await rpi.getAgentHistoryRequest('project-id');
+
+        expect(result.code).toBe(401);
+        expect(result.isUnauth).toBe(true);
+        expect(Sentry.captureException).not.toHaveBeenCalled();
+    });
+
+    test('reports an unexpected status to Sentry and still returns the result', async () => {
+        const getMock = axios.get as jest.Mock;
+        getMock.mockRejectedValue({
+            response: { status: 500, data: { message: 'boom' } },
+        });
+        const rpi = new WebRpi();
+
+        const result = await rpi.getBillingPricingRequest();
+
+        expect(result.code).toBe(500);
+        expect(result.isOk).toBe(false);
+        expect(result.body).toEqual({ message: 'boom' });
+        expect(Sentry.captureException).toHaveBeenCalledTimes(1);
+        const [error, context] = (Sentry.captureException as jest.Mock).mock
+            .calls[0];
+        expect(error).toBeInstanceOf(Error);
+        expect(error.message).toBe(
+            'Unexpected RPI status 500 from getBillingPricingRequest'
+        );
+        expect(context.tags['rpi.method']).toBe('getBillingPricingRequest');
+        expect(context.tags['rpi.status']).toBe('500');
+        expect(context.extra.expectedCodes).toEqual([200]);
+        expect(context.fingerprint).toEqual([
+            'rpi-unexpected-status',
+            'getBillingPricingRequest',
+            '500',
+        ]);
+    });
+
+    test('reports an unexpected success-path status to Sentry', async () => {
+        const getMock = axios.get as jest.Mock;
+        getMock.mockResolvedValue({
+            status: 201,
+            data: {},
+        });
+        const rpi = new WebRpi();
+
+        const result = await rpi.getBillingPricingRequest();
+
+        expect(result.code).toBe(201);
+        expect(result.isOk).toBe(true);
+        expect(Sentry.captureException).toHaveBeenCalledTimes(1);
+        expect(
+            (Sentry.captureException as jest.Mock).mock.calls[0][0].message
+        ).toBe('Unexpected RPI status 201 from getBillingPricingRequest');
+    });
+
+    test('does not report a network error without an HTTP status to Sentry', async () => {
+        const getMock = axios.get as jest.Mock;
+        getMock.mockRejectedValue(new Error('Network Error'));
+        const rpi = new WebRpi();
+
+        const result = await rpi.getBillingPricingRequest();
+
+        expect(result.code).toBe(500);
+        expect(result.isOk).toBe(false);
+        expect(Sentry.captureException).not.toHaveBeenCalled();
     });
 
     test('getAgentHistoryRequest asks the history of the given project', async () => {
