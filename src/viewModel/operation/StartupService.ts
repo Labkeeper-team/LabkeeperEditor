@@ -14,6 +14,7 @@ import { TokenPageService } from './TokenPageService.ts';
 import { ResetService } from '../domain/ResetService.ts';
 import { HunkService } from './HunkService.ts';
 import type { AgentChatService } from './AgentChatService.ts';
+import { logBreadcrumb } from '../utils/logBreadcrumb.ts';
 
 const qrPagePattern = /\/qr\/v\d+/i;
 const projectPagePattern = /\/project\/\S+/i;
@@ -62,9 +63,6 @@ export class StartupService {
         const response = await this.rpi.oauthCodeRequest(code, state);
 
         if (!response.isOk) {
-            this.observerService.onEvent(
-                Events.EVENT_RPI_UNKNOWN_STARTUP_OAUTH_CODE
-            );
             this.repository.authViewModelRepository.setCurrentView('login');
             this.repository.authViewModelRepository.setLoginRequest(
                 'oauth_error'
@@ -85,15 +83,16 @@ export class StartupService {
         open?: OpenParams
     ): Promise<void> => {
         void open;
+        logBreadcrumb('startup', 'onAppStartup', {
+            location: this.repository.location(),
+            hasCaptcha: Boolean(captcha),
+        });
         await this.loadBillingPricing();
 
         const result: RequestResult<UserInfo> =
             await this.rpi.getUserInfoRequest();
 
         if (!result.isOk) {
-            this.observerService.onEvent(
-                Events.EVENT_RPI_UNKNOWN_STARTUP_GET_USER_INFO
-            );
             this.repository.toast(
                 this.repository.dictionary.filemanager.errors.noNetwork,
                 'error'
@@ -197,10 +196,6 @@ export class StartupService {
             );
             return;
         }
-
-        this.observerService.onEvent(
-            Events.EVENT_RPI_UNKNOWN_STARTUP_GET_BILLING_PRICING
-        );
         this.repository.billingViewModelRepository.setPricingRequestState(
             'error'
         );
@@ -349,9 +344,6 @@ export class StartupService {
             return;
         }
         if (!result.isOk) {
-            this.observerService.onEvent(
-                Events.EVENT_RPI_UNKNOWN_STARTUP_GET_PROJECT
-            );
             this.repository.ideViewModelRepository.setGetProjectRequestState(
                 'error'
             );
@@ -416,10 +408,6 @@ export class StartupService {
                     'error'
                 );
                 this.ideService.resetEditor();
-            } else if (!result.isOk) {
-                this.observerService.onEvent(
-                    Events.EVENT_RPI_UNKNOWN_STARTUP_GET_DEFAULT_PROJECT
-                );
             }
         } else {
             if (open === 'latex') {

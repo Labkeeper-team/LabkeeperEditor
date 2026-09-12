@@ -13,6 +13,7 @@ import {
 import { Hunk } from '../../model/domain.ts';
 import { wsUrl, WS_URLS } from '../../constants.ts';
 import { withSegmentIds } from '../../viewModel/utils/segmentId.ts';
+import { logBreadcrumb } from '../../viewModel/utils/logBreadcrumb.ts';
 
 type ServerFrame = {
     type?: string;
@@ -84,6 +85,15 @@ function openSession(
         if (reason) {
             cancelled = true;
         }
+        logBreadcrumb(
+            'agent',
+            reason ? `closed ${reason}` : cancelled ? 'cancelled' : 'finished',
+            {
+                reason: reason ?? (cancelled ? 'cancelled' : 'finished'),
+                opened,
+            },
+            reason && reason !== 'timeout' ? 'warning' : 'info'
+        );
         clearTimeout(timer);
         if (socket) {
             socket.onopen = null;
@@ -103,11 +113,13 @@ function openSession(
     }
 
     try {
+        logBreadcrumb('agent', 'connect', { url });
         socket = new WebSocket(url);
     } catch {
         clearTimeout(timer);
         settled = true;
         cancelled = true;
+        logBreadcrumb('agent', 'connect_failed', { url }, 'error');
         // отложенно: вызывающий ещё не получил сессию, и сброс session
         // внутри onClosed был бы тут же перезатёрт присваиванием
         queueMicrotask(() => handlers.onClosed('connect_failed'));
@@ -116,6 +128,7 @@ function openSession(
 
     socket.onopen = () => {
         opened = true;
+        logBreadcrumb('agent', 'open', { url });
         socket.send(JSON.stringify(startFrame));
     };
 
@@ -130,12 +143,26 @@ function openSession(
         try {
             frame = JSON.parse(String(raw.data));
         } catch {
+            logBreadcrumb('agent', 'bad frame', undefined, 'warning');
             return;
         }
         const event = toEvent(frame);
         if (!event) {
+            logBreadcrumb(
+                'agent',
+                `ignored frame ${String(frame.type ?? 'unknown')}`,
+                { type: frame.type },
+                'debug'
+            );
             return;
         }
+        logBreadcrumb('agent', `event ${event.kind}`, {
+            kind: event.kind,
+            ...(event.kind === 'toolCall' ? { toolName: event.toolName } : {}),
+            ...(event.kind === 'finished'
+                ? { stopReason: event.stopReason }
+                : {}),
+        });
         if (event.kind === 'finished') {
             // по ТЗ соединение живёт ровно один запрос: гасим его сами, не ждём сервер
             settle();

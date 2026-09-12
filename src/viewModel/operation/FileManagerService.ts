@@ -5,10 +5,6 @@ import { LoaderService } from '../domain/LoaderService.ts';
 import { IdeService } from '../domain/IdeService.ts';
 import { FileService } from '../domain/FileService.ts';
 import {
-    Events,
-    ObserverService,
-} from '../../model/service/ObserverService.ts';
-import {
     joinFolderPath,
     normalizeFileTreeNodeName,
     svarIdToPath,
@@ -23,7 +19,6 @@ export class FileManagerService {
     loaderService: LoaderService;
     ideService: IdeService;
     fileService: FileService;
-    observerService: ObserverService;
     textFileEditorService: TextFileEditorService;
     editingLock: EditingLockService;
 
@@ -34,7 +29,6 @@ export class FileManagerService {
         loaderService: LoaderService,
         ideService: IdeService,
         fileService: FileService,
-        observerService: ObserverService,
         textFileEditorService: TextFileEditorService,
         editingLock: EditingLockService
     ) {
@@ -44,7 +38,6 @@ export class FileManagerService {
         this.ideService = ideService;
         this.repository = repository;
         this.fileService = fileService;
-        this.observerService = observerService;
         this.textFileEditorService = textFileEditorService;
         this.editingLock = editingLock;
     }
@@ -193,9 +186,6 @@ export class FileManagerService {
                     this.repository.dictionary.filemanager.errors.upload_failed,
                     'error'
                 );
-                this.observerService.onEvent(
-                    Events.EVENT_RPI_UNKNOWN_FILE_MANAGER_UPLOAD
-                );
             }
         } catch (error) {
             this.restoreFilesReadyState();
@@ -290,9 +280,6 @@ export class FileManagerService {
                         this.repository.dictionary.filemanager.errors
                             .upload_failed,
                         'error'
-                    );
-                    this.observerService.onEvent(
-                        Events.EVENT_RPI_UNKNOWN_FILE_MANAGER_UPLOAD
                     );
                 }
             }
@@ -517,9 +504,6 @@ export class FileManagerService {
                     .rename_folder_failed,
                 'error'
             );
-            this.observerService.onEvent(
-                Events.EVENT_RPI_UNKNOWN_FILE_MANAGER_RENAME
-            );
         }
     };
 
@@ -564,9 +548,6 @@ export class FileManagerService {
             await this.loaderService.loadFiles(project.projectId);
         } else {
             this.restoreFilesReadyState();
-            this.observerService.onEvent(
-                Events.EVENT_RPI_UNKNOWN_FILE_MANAGER_DELETE
-            );
         }
     };
 
@@ -602,9 +583,6 @@ export class FileManagerService {
             await this.loaderService.loadFiles(project.projectId);
         } else if (!result.isUnauth) {
             this.restoreFilesReadyState();
-            this.observerService.onEvent(
-                Events.EVENT_RPI_UNKNOWN_FILE_MANAGER_DELETE
-            );
         }
     };
 
@@ -654,11 +632,8 @@ export class FileManagerService {
                 );
                 this.restoreFilesReadyState();
                 return;
-            } else if (!result.isOk) {
-                this.observerService.onEvent(
-                    Events.EVENT_RPI_UNKNOWN_FILE_MANAGER_DELETE
-                );
-            } else {
+            }
+            if (result.isOk) {
                 this.textFileEditorService.onOpenFileDeleted(file.fileName);
             }
         }
@@ -716,9 +691,6 @@ export class FileManagerService {
                 this.repository.dictionary.filemanager.errors
                     .rename_file_failed,
                 'error'
-            );
-            this.observerService.onEvent(
-                Events.EVENT_RPI_UNKNOWN_FILE_MANAGER_RENAME
             );
         }
     };

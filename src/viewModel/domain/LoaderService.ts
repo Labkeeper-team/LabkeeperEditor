@@ -3,17 +3,12 @@ import { ViewModelRepository } from '../repository';
 import { Rpi } from '../../model/rpi';
 import { IdeService } from './IdeService.ts';
 import { ProgramService } from '../../model/service/ProgramService.ts';
-import {
-    Events,
-    ObserverService,
-} from '../../model/service/ObserverService.ts';
 
 export class LoaderService {
     rpi: Rpi;
     repository: ViewModelRepository;
     ideService: IdeService;
     programService: ProgramService;
-    observerService: ObserverService;
     private saveProgramPromise: Promise<void> | null = null;
     private saveProgramRequested = false;
 
@@ -21,14 +16,12 @@ export class LoaderService {
         rpi: Rpi,
         repository: ViewModelRepository,
         ideService: IdeService,
-        programService: ProgramService,
-        observerService: ObserverService
+        programService: ProgramService
     ) {
         this.rpi = rpi;
         this.repository = repository;
         this.ideService = ideService;
         this.programService = programService;
-        this.observerService = observerService;
     }
 
     loadFiles = async (projectId: string) => {
@@ -55,9 +48,6 @@ export class LoaderService {
                 'forbidden'
             );
         } else {
-            this.observerService.onEvent(
-                Events.EVENT_RPI_UNKNOWN_LOADER_LIST_FILES
-            );
             this.repository.ideViewModelRepository.setGetFilesRequestState(
                 'error'
             );
@@ -123,9 +113,6 @@ export class LoaderService {
                 this.ideService.resetEditor();
             }
             if (!result.isOk) {
-                this.observerService.onEvent(
-                    Events.EVENT_RPI_UNKNOWN_LOADER_SAVE_PROGRAM
-                );
                 this.repository.ideViewModelRepository.setSaveProjectRequestState(
                     'error'
                 );
@@ -157,9 +144,6 @@ export class LoaderService {
                 'unauth'
             );
         } else {
-            this.observerService.onEvent(
-                Events.EVENT_RPI_UNKNOWN_LOADER_GET_ALL_PROJECTS
-            );
             this.repository.ideViewModelRepository.setGetProjectsRequestState(
                 'error'
             );

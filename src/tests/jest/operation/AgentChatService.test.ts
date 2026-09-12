@@ -10,6 +10,16 @@ import { AgentEvent } from '../../../model/rpi/agentSocket.ts';
 import { Hunk } from '../../../model/domain.ts';
 import { Events } from '../../../model/service/ObserverService.ts';
 import { MockViewModelRepository } from '../../../viewModel/repository';
+import * as Sentry from '@sentry/react';
+
+jest.mock('@sentry/react', () => ({
+    captureException: jest.fn(),
+    addBreadcrumb: jest.fn(),
+}));
+
+beforeEach(() => {
+    jest.mocked(Sentry.captureException).mockClear();
+});
 
 const okResult = <T>(body: T) => ({
     code: 200,
@@ -232,6 +242,8 @@ test('agent-null-message-does-not-add-empty-response', async () => {
 
 test('agent-connection-drop-unlocks-and-reports', async () => {
     const ctx = setup();
+    const events: string[] = [];
+    ctx.observerService.onEvent = (event: string) => events.push(event);
     ctx.repository.chatViewModelRepository.setInput('привет');
 
     await ctx.agentChatService.onPromptSubmit();
@@ -243,10 +255,14 @@ test('agent-connection-drop-unlocks-and-reports', async () => {
         reason: 'disconnected',
     });
     expect(ctx.agentChatService.isRunning()).toBe(false);
+    expect(events).toContain(Events.EVENT_RPI_UNKNOWN);
+    expect(Sentry.captureException).toHaveBeenCalled();
 });
 
 test('agent-timeout-unlocks-and-reports', async () => {
     const ctx = setup();
+    const events: string[] = [];
+    ctx.observerService.onEvent = (event: string) => events.push(event);
     ctx.repository.chatViewModelRepository.setInput('привет');
 
     await ctx.agentChatService.onPromptSubmit();
@@ -257,6 +273,8 @@ test('agent-timeout-unlocks-and-reports', async () => {
         kind: 'error',
         reason: 'timeout',
     });
+    expect(events).toContain(Events.EVENT_AGENT_TIMEOUT);
+    expect(Sentry.captureException).toHaveBeenCalled();
 });
 
 test('double-submit-starts-one-run', async () => {
@@ -576,6 +594,23 @@ test('stop-reason-payment-required-reports-payment-event', async () => {
     });
 
     expect(events).toContain(Events.EVENT_PAYMENT_REQUIRED);
+});
+
+test('stop-reason-locked-reports-unknown-rpi-event', async () => {
+    const ctx = setup();
+    const events: string[] = [];
+    ctx.observerService.onEvent = (event: string) => events.push(event);
+    ctx.repository.chatViewModelRepository.setInput('сделай таблицу');
+    await ctx.agentChatService.onPromptSubmit();
+
+    await emit(ctx, {
+        kind: 'finished',
+        message: null,
+        stopReason: 'Locked',
+    });
+
+    expect(events).toContain(Events.EVENT_RPI_UNKNOWN);
+    expect(Sentry.captureException).toHaveBeenCalled();
 });
 
 test('tool-call-reloads-the-program-for-a-segment-hunk', async () => {

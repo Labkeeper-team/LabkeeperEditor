@@ -3,10 +3,7 @@ import { ViewModelRepository } from '../repository';
 import { Rpi } from '../../model/rpi';
 import { IdeService } from '../domain/IdeService.ts';
 import { EditingLockService } from '../domain/EditingLockService.ts';
-import {
-    Events,
-    ObserverService,
-} from '../../model/service/ObserverService.ts';
+import { ObserverService } from '../../model/service/ObserverService.ts';
 import {
     isImageFilePath,
     isTextFilePath,
@@ -15,6 +12,8 @@ import {
     applyFileHunksToContent,
     getFileContentFromHunks,
 } from '../utils/hunkGrouping.ts';
+import { reportUnexpectedError } from '../utils/reportUnexpectedError.ts';
+import { logBreadcrumb } from '../utils/logBreadcrumb.ts';
 
 type OpenTextFileOptions = {
     silent?: boolean;
@@ -139,8 +138,15 @@ export class TextFileEditorService {
         }
 
         try {
+            logBreadcrumb('file', `load ${fileName}`, { fileName });
             const response = await fetch(file.url, { cache: 'no-store' });
             if (!response.ok) {
+                logBreadcrumb(
+                    'file',
+                    `load failed ${fileName}`,
+                    { fileName, status: response.status },
+                    'warning'
+                );
                 throw new Error(`file-load-${response.status}`);
             }
             const content = await response.text();
@@ -187,6 +193,11 @@ export class TextFileEditorService {
         this.repository.toast(
             this.repository.dictionary.filemanager.errors.internalError,
             'error'
+        );
+        reportUnexpectedError(
+            this.observerService,
+            'textFile.load',
+            new Error('Failed to load project text file')
         );
     };
 
@@ -460,9 +471,6 @@ export class TextFileEditorService {
                 savingRevision
             );
         } else {
-            this.observerService.onEvent(
-                Events.EVENT_RPI_UNKNOWN_FILE_MANAGER_UPLOAD
-            );
             this.repository.ideViewModelRepository.setSaveTextFileRequestState(
                 'error'
             );

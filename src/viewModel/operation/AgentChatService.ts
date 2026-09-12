@@ -21,6 +21,11 @@ import { HunkService } from './HunkService.ts';
 import { TextFileEditorService } from './TextFileEditorService.ts';
 import { ProgramEditorService } from './ProgramEditorService.ts';
 import { TokenPageService } from './TokenPageService.ts';
+import {
+    reportToSentry,
+    reportUnexpectedError,
+} from '../utils/reportUnexpectedError.ts';
+import { logBreadcrumb } from '../utils/logBreadcrumb.ts';
 
 /** Причины, при которых показываем ошибку, а не ответ. */
 const ERROR_STOP_REASONS: AgentStopReason[] = [
@@ -156,6 +161,10 @@ export class AgentChatService {
 
         // слот занимается до первого await, иначе второе нажатие проскочит проверку
         const token = ++this.runToken;
+        logBreadcrumb('agent', 'prompt submit', {
+            authenticated,
+            hasProject: Boolean(project),
+        });
         chat.setRequestState('connecting');
         chat.setInput('');
         chat.appendMessage({
@@ -171,6 +180,7 @@ export class AgentChatService {
         }
         if (!saved) {
             // агент работает с тем, что лежит на сервере, а там осталась прошлая версия
+            logBreadcrumb('agent', 'save_failed', undefined, 'warning');
             chat.appendMessage({ kind: 'error', reason: 'save_failed' });
             chat.setRequestState('error');
             return;
@@ -265,8 +275,12 @@ export class AgentChatService {
             await this.handleAgentEvent(token, event);
         } catch (error) {
             // иначе отказ внутри обработки оставит чат навсегда в состоянии загрузки
-            console.error(error);
-            this.onAgentClosed(token, 'closed');
+            reportUnexpectedError(
+                this.observerService,
+                'agent.event_handler',
+                error
+            );
+            this.onAgentClosed(token, 'closed', true);
         }
     };
 
@@ -411,6 +425,7 @@ export class AgentChatService {
     };
 
     private reportStopReason = (reason: AgentStopReason): void => {
+        logBreadcrumb('agent', `stop ${reason}`, { reason });
         if (reason === 'PaymentRequired') {
             this.observerService.onEvent(Events.EVENT_PAYMENT_REQUIRED);
             return;
@@ -419,27 +434,48 @@ export class AgentChatService {
             this.repository.authViewModelRepository.setCurrentView('login');
             return;
         }
-        if (reason === 'UnknownError') {
-            this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN_AGENT);
+        if (reason === 'UnknownError' || reason === 'Locked') {
+            reportUnexpectedError(
+                this.observerService,
+                `agent.stop.${reason}`,
+                new Error(`Agent stop reason ${reason}`)
+            );
         }
     };
 
     private onAgentClosed = (
         token: number,
-        reason: AgentClosedReason
+        reason: AgentClosedReason,
+        alreadyReported = false
     ): void => {
         if (token !== this.runToken) {
             return;
         }
         const chat = this.repository.chatViewModelRepository;
         this.session = null;
+        logBreadcrumb(
+            'agent',
+            `chat closed ${reason}`,
+            { reason, alreadyReported },
+            reason === 'timeout' ? 'warning' : 'error'
+        );
         chat.appendMessage({
             kind: 'error',
             reason: reason === 'closed' ? 'disconnected' : reason,
         });
         chat.setRequestState('error');
+        if (alreadyReported) {
+            return;
+        }
         if (reason === 'timeout') {
             this.observerService.onEvent(Events.EVENT_AGENT_TIMEOUT);
+            reportToSentry('agent.timeout', new Error('Agent socket timeout'));
+            return;
         }
+        reportUnexpectedError(
+            this.observerService,
+            `agent.${reason === 'closed' ? 'disconnected' : reason}`,
+            new Error(`Agent socket ${reason}`)
+        );
     };
 }
