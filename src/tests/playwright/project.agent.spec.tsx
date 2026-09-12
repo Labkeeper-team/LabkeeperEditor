@@ -42,6 +42,8 @@ async function openChat(
     const routeSetup = new RouteSetup(page);
     const authenticated = options.authenticated ?? true;
     await routeSetup.setupGetUserInfoRequest(authenticated);
+    // согласие на передачу данных проверяется отдельной спекой, здесь оно дано
+    await routeSetup.acceptCrossBorderConsentLocally();
     await routeSetup.setupGetProjectRequest(200, 'default', options.program);
     await routeSetup.setupGetAllProjectsRequest();
     await routeSetup.setupSaveProgramRequest();

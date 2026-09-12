@@ -16,6 +16,8 @@ export const userSlice = createSlice({
             state.isAuthenticated = payload.isAuthenticated;
             state.id = payload.id;
             state.privacyPolicyAccepted = payload.privacyPolicyAccepted;
+            state.crossBorderConsentAccepted =
+                payload.crossBorderConsentAccepted;
             state.tokenBalance = payload.tokenBalance ?? 0;
         },
     },

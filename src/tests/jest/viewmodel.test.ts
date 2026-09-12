@@ -80,6 +80,7 @@ function createDefaultUserInfo(
             email: 'a@gmail.com',
             id: 1,
             privacyPolicyAccepted: isAuthenticated,
+            crossBorderConsentAccepted: true,
             tokenBalance,
         },
         isOk: true,
@@ -498,6 +499,7 @@ test('back-button-resets-forbidden-project-error-for-unauthorized-user', async (
         email: '',
         id: 0,
         privacyPolicyAccepted: false,
+        crossBorderConsentAccepted: true,
         tokenBalance: 0,
     });
     repository.ideViewModelRepository.setGetProjectRequestState('forbidden');
@@ -801,6 +803,7 @@ test('segments-move-with-result-test', async () => {
             email: 'a@gmail.com',
             id: 1,
             privacyPolicyAccepted: false,
+            crossBorderConsentAccepted: true,
             tokenBalance: 0,
         },
         isOk: true,
@@ -910,6 +913,7 @@ test('hint-erase-other-segments-test', async () => {
             email: 'a@gmail.com',
             id: 1,
             privacyPolicyAccepted: false,
+            crossBorderConsentAccepted: true,
             tokenBalance: 0,
         },
         isOk: true,

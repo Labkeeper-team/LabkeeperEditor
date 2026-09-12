@@ -106,6 +106,7 @@ export class StartupService {
         this.repository.settingsViewModelRepository.setShowPrivacyPolicyAcceptanceModal(
             userInfo.isAuthenticated && userInfo.privacyPolicyAccepted === false
         );
+        await this.syncCrossBorderConsent(userInfo);
 
         this.observerService.setUserState(States.USER_ID, String(userInfo.id));
         this.observerService.setUserState(
@@ -213,10 +214,29 @@ export class StartupService {
             isAuthenticated:
                 this.repository.userViewModelRepository.isAuthenticated(),
             privacyPolicyAccepted: false,
+            crossBorderConsentAccepted: false,
             tokenBalance:
                 this.repository.userViewModelRepository.tokenBalance(),
         };
         await this.openDefaultProject(userInfo);
+    };
+
+    /**
+     * Согласие на трансграничную передачу человек мог дать ещё гостем, тогда
+     * оно осталось только в браузере. Досылаем его сразу после входа, иначе
+     * плашка выскочит второй раз уже под своим аккаунтом
+     */
+    private syncCrossBorderConsent = async (userInfo: UserInfo) => {
+        const acceptedLocally =
+            this.repository.persistenceViewModelRepository.crossBorderConsentAcceptedLocally();
+        if (
+            !userInfo.isAuthenticated ||
+            userInfo.crossBorderConsentAccepted ||
+            !acceptedLocally
+        ) {
+            return;
+        }
+        await this.agentChatService?.sendCrossBorderConsent();
     };
 
     private cutOfLastSlash(location: string): string {

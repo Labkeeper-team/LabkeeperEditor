@@ -36,6 +36,7 @@ function setup(authenticated = true) {
         email: 'a@gmail.com',
         id: USER_ID,
         privacyPolicyAccepted: true,
+        crossBorderConsentAccepted: true,
         tokenBalance: 10,
     });
     ctx.repository.projectViewModelRepository.setProject({
@@ -48,6 +49,10 @@ function setup(authenticated = true) {
         program: { segments: [], parameters: { roundStrategy: 'noRound' } },
     });
     ctx.repository.projectViewModelRepository.setReadOnly(false);
+    // согласие на трансграничную передачу уже дано, иначе до отправки не дойдёт
+    ctx.repository.persistenceViewModelRepository.setCrossBorderConsentAcceptedLocally(
+        true
+    );
     ctx.rpi.getAgentHistoryRequest = jest
         .fn()
         .mockResolvedValue(okResult({ history: [] }));
@@ -687,4 +692,149 @@ test('unauthorized-agent-stores-hunks', async () => {
     });
 
     expect(ctx.repository.ideViewModelRepository.hunks()).toEqual([hunk]);
+});
+
+/**
+ * Согласие на трансграничную передачу данных в DeepSeek.
+ * Пока оно не дано, запрос не должен уходить ни у вошедшего, ни у гостя
+ */
+
+const okEmpty = () => ({
+    code: 200,
+    body: undefined,
+    isOk: true,
+    isUnauth: false,
+    isForbidden: false,
+});
+
+const consentModalShown = (ctx: ReturnType<typeof setup>) =>
+    (ctx.repository as MockViewModelRepository).mockState()
+        .showCrossBorderConsentModal;
+
+function setupWithoutConsent(authenticated = true) {
+    const ctx = setup(authenticated);
+    ctx.repository.persistenceViewModelRepository.setCrossBorderConsentAcceptedLocally(
+        false
+    );
+    ctx.repository.userViewModelRepository.setUserInfo({
+        isAuthenticated: authenticated,
+        email: 'a@gmail.com',
+        id: USER_ID,
+        privacyPolicyAccepted: true,
+        crossBorderConsentAccepted: false,
+        tokenBalance: 10,
+    });
+    ctx.rpi.acceptCrossBorderConsentRequest = jest
+        .fn()
+        .mockResolvedValue(okEmpty());
+    return ctx;
+}
+
+test('cross-border-consent-blocks-the-request', async () => {
+    const ctx = setupWithoutConsent();
+    ctx.repository.chatViewModelRepository.setInput('сделай таблицу');
+
+    await ctx.agentChatService.onPromptSubmit();
+
+    expect(consentModalShown(ctx)).toBe(true);
+    expect(ctx.agentSocketState.startCalls).toBe(0);
+    // текст остаётся в поле, иначе после согласия отправлять будет нечего
+    expect(ctx.repository.chatViewModelRepository.input()).toBe(
+        'сделай таблицу'
+    );
+    expect(ctx.repository.chatViewModelRepository.messages()).toHaveLength(0);
+});
+
+test('cross-border-consent-accept-sends-the-same-request', async () => {
+    const ctx = setupWithoutConsent();
+    ctx.repository.chatViewModelRepository.setInput('сделай таблицу');
+    await ctx.agentChatService.onPromptSubmit();
+
+    await ctx.agentChatService.onCrossBorderConsentAccepted();
+
+    expect(consentModalShown(ctx)).toBe(false);
+    expect(ctx.rpi.acceptCrossBorderConsentRequest).toHaveBeenCalledTimes(1);
+    expect(ctx.agentSocketState.started?.prompt).toBe('сделай таблицу');
+});
+
+test('cross-border-consent-dismiss-keeps-the-prompt', async () => {
+    const ctx = setupWithoutConsent();
+    ctx.repository.chatViewModelRepository.setInput('сделай таблицу');
+    await ctx.agentChatService.onPromptSubmit();
+
+    ctx.agentChatService.onCrossBorderConsentDismissed();
+
+    expect(consentModalShown(ctx)).toBe(false);
+    expect(ctx.agentSocketState.startCalls).toBe(0);
+    expect(ctx.repository.chatViewModelRepository.input()).toBe(
+        'сделай таблицу'
+    );
+});
+
+test('cross-border-consent-is-asked-only-once', async () => {
+    const ctx = setupWithoutConsent();
+    ctx.repository.chatViewModelRepository.setInput('первый');
+    await ctx.agentChatService.onPromptSubmit();
+    await ctx.agentChatService.onCrossBorderConsentAccepted();
+    ctx.agentSocketState.handlers?.onClosed('closed');
+
+    ctx.repository.chatViewModelRepository.setInput('второй');
+    await ctx.agentChatService.onPromptSubmit();
+
+    expect(consentModalShown(ctx)).toBe(false);
+    expect(ctx.agentSocketState.started?.prompt).toBe('второй');
+});
+
+test('cross-border-consent-of-a-guest-goes-to-local-storage-only', async () => {
+    const ctx = setupWithoutConsent(false);
+    ctx.repository.chatViewModelRepository.setInput('сделай таблицу');
+    await ctx.agentChatService.onPromptSubmit();
+
+    await ctx.agentChatService.onCrossBorderConsentAccepted();
+
+    // гостю сервер согласие записать некуда, пока он не вошёл
+    expect(ctx.rpi.acceptCrossBorderConsentRequest).not.toHaveBeenCalled();
+    expect(
+        ctx.repository.persistenceViewModelRepository.crossBorderConsentAcceptedLocally()
+    ).toBe(true);
+    expect(ctx.agentSocketState.program).not.toBeNull();
+});
+
+test('cross-border-consent-accepted-on-the-server-is-not-asked-again', async () => {
+    const ctx = setupWithoutConsent();
+    ctx.repository.userViewModelRepository.setUserInfo({
+        isAuthenticated: true,
+        email: 'a@gmail.com',
+        id: USER_ID,
+        privacyPolicyAccepted: true,
+        crossBorderConsentAccepted: true,
+        tokenBalance: 10,
+    });
+    ctx.repository.chatViewModelRepository.setInput('сделай таблицу');
+
+    await ctx.agentChatService.onPromptSubmit();
+
+    expect(consentModalShown(ctx)).toBe(false);
+    expect(ctx.agentSocketState.started?.prompt).toBe('сделай таблицу');
+});
+
+test('cross-border-consent-survives-a-failed-save', async () => {
+    const ctx = setupWithoutConsent();
+    ctx.rpi.acceptCrossBorderConsentRequest = jest.fn().mockResolvedValue({
+        code: 500,
+        body: undefined,
+        isOk: false,
+        isUnauth: false,
+        isForbidden: false,
+    });
+    ctx.repository.chatViewModelRepository.setInput('сделай таблицу');
+    await ctx.agentChatService.onPromptSubmit();
+
+    await ctx.agentChatService.onCrossBorderConsentAccepted();
+
+    // сервер не записал, но человек согласился: запрос уходит, вопрос не повторяем
+    expect(ctx.agentSocketState.started?.prompt).toBe('сделай таблицу');
+    expect(
+        ctx.repository.persistenceViewModelRepository.crossBorderConsentAcceptedLocally()
+    ).toBe(true);
 });

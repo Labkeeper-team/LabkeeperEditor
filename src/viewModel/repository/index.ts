@@ -212,6 +212,7 @@ class MockViewModelRepositoryState {
     filesToDelete: LabkeeperFile[] = [];
     captchaBypassToken: string | undefined = undefined;
     showPrivacyPolicyAcceptanceModal = false;
+    showCrossBorderConsentModal = false;
     currentFolderPath = '';
     ephemeralFolders: string[] = [];
 
@@ -219,6 +220,7 @@ class MockViewModelRepositoryState {
     id: number = -1;
     isAuthenticated: boolean = false;
     tokenBalance: number = 0;
+    crossBorderConsentAccepted: boolean = false;
 
     loginRequest: LoginRequestState = 'unknown';
     codeCheckRequest: CodeRequestState = 'unknown';
@@ -232,6 +234,7 @@ class MockViewModelRepositoryState {
     pendingHunkIds: string[] = [];
     agentMaxTokens: number = AGENT_TOKEN_OPTIONS[0];
     agentIterations: number = AGENT_ITERATION_OPTIONS[0];
+    crossBorderConsentAcceptedLocally: boolean = false;
     chatMessages: ChatMessage[] = [];
     chatNextMessageId: number = 1;
     chatRequestState: AgentRequestState = 'idle';
@@ -441,8 +444,12 @@ export const mockViewModelState = (): MockViewModelRepository => {
                 mockViewModelState.lastOpenedProjectUuid,
             agentMaxTokens: () => mockViewModelState.agentMaxTokens,
             agentIterations: () => mockViewModelState.agentIterations,
+            crossBorderConsentAcceptedLocally: () =>
+                mockViewModelState.crossBorderConsentAcceptedLocally,
             setAgentMaxTokens: (v) => (mockViewModelState.agentMaxTokens = v),
             setAgentIterations: (v) => (mockViewModelState.agentIterations = v),
+            setCrossBorderConsentAcceptedLocally: (v) =>
+                (mockViewModelState.crossBorderConsentAcceptedLocally = v),
             setLastOpenedProjectUuid: (uuid) =>
                 (mockViewModelState.lastOpenedProjectUuid = uuid),
             setInstructionExpanded: (v) =>
@@ -544,6 +551,8 @@ export const mockViewModelState = (): MockViewModelRepository => {
 
             setShowPrivacyPolicyAcceptanceModal: (v) =>
                 (mockViewModelState.showPrivacyPolicyAcceptanceModal = v),
+            setShowCrossBorderConsentModal: (v) =>
+                (mockViewModelState.showCrossBorderConsentModal = v),
             setCaptchaBypassToken: (token) =>
                 (mockViewModelState.captchaBypassToken = token),
             setShowSearch: (v: boolean) => (mockViewModelState.showSearch = v),
@@ -581,12 +590,16 @@ export const mockViewModelState = (): MockViewModelRepository => {
             id: () => mockViewModelState.id,
             isAuthenticated: () => mockViewModelState.isAuthenticated,
             tokenBalance: () => mockViewModelState.tokenBalance,
+            crossBorderConsentAccepted: () =>
+                mockViewModelState.crossBorderConsentAccepted,
 
             setUserInfo: (userInfo) => {
                 mockViewModelState.email = userInfo.email;
                 mockViewModelState.isAuthenticated = userInfo.isAuthenticated;
                 mockViewModelState.id = userInfo.id;
                 mockViewModelState.tokenBalance = userInfo.tokenBalance ?? 0;
+                mockViewModelState.crossBorderConsentAccepted =
+                    userInfo.crossBorderConsentAccepted;
             },
         },
 
@@ -718,6 +731,7 @@ export interface SettingsViewModelRepository {
     ephemeralFolders: () => string[];
 
     setShowPrivacyPolicyAcceptanceModal: (v: boolean) => void;
+    setShowCrossBorderConsentModal: (v: boolean) => void;
     setCaptchaBypassToken: (token?: string) => void;
     setTourVisibility: (visible: boolean) => void;
     setEditModeForFilename: (edit: boolean) => void;
@@ -779,6 +793,7 @@ export interface UserViewModelRepository {
     id: () => number;
     isAuthenticated: () => boolean;
     tokenBalance: () => number;
+    crossBorderConsentAccepted: () => boolean;
 
     setUserInfo: (userInfo: UserInfo) => void;
 }
@@ -806,7 +821,9 @@ export interface PersistenceViewModelRepository {
     lastOpenedProjectUuid: () => string | undefined;
     agentMaxTokens: () => number;
     agentIterations: () => number;
+    crossBorderConsentAcceptedLocally: () => boolean;
 
+    setCrossBorderConsentAcceptedLocally: (value: boolean) => void;
     setAgentMaxTokens: (value: number) => void;
     setAgentIterations: (value: number) => void;
     setLastOpenedProjectUuid: (uuid: string | undefined) => void;

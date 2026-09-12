@@ -145,6 +145,61 @@ export class AgentChatService {
         chat.setHistoryRequestState('ok');
     };
 
+    /**
+     * Согласие на трансграничную передачу. У вошедшего источник истины на
+     * сервере, у гостя серверу записать его некуда, поэтому отметка в локальном
+     * хранилище считается наравне: один раз согласился, второй раз не спрашиваем
+     */
+    private crossBorderConsentAccepted = (): boolean => {
+        const user = this.repository.userViewModelRepository;
+        if (user.isAuthenticated() && user.crossBorderConsentAccepted()) {
+            return true;
+        }
+        return this.repository.persistenceViewModelRepository.crossBorderConsentAcceptedLocally();
+    };
+
+    /**
+     * Человек отметил согласие в плашке. Запрос, из-за которого её показали,
+     * уходит сам: текст всё это время лежал в поле ввода нетронутым
+     */
+    onCrossBorderConsentAccepted = async (): Promise<void> => {
+        this.repository.persistenceViewModelRepository.setCrossBorderConsentAcceptedLocally(
+            true
+        );
+        this.repository.settingsViewModelRepository.setShowCrossBorderConsentModal(
+            false
+        );
+
+        if (this.repository.userViewModelRepository.isAuthenticated()) {
+            await this.sendCrossBorderConsent();
+        }
+
+        await this.onPromptSubmit();
+    };
+
+    onCrossBorderConsentDismissed = (): void => {
+        this.repository.settingsViewModelRepository.setShowCrossBorderConsentModal(
+            false
+        );
+    };
+
+    /**
+     * Отправляет согласие на сервер. Не доехало — молчим: локальная отметка
+     * осталась, досылка повторится при следующем запуске, и держать человека
+     * из-за неудачной записи не за что
+     */
+    sendCrossBorderConsent = async (): Promise<void> => {
+        const response = await this.rpi.acceptCrossBorderConsentRequest();
+        if (!response.isOk) {
+            logBreadcrumb(
+                'agent',
+                'cross_border_consent_not_saved',
+                { code: response.code },
+                'warning'
+            );
+        }
+    };
+
     onPromptSubmit = async (): Promise<void> => {
         const chat = this.repository.chatViewModelRepository;
         const prompt = chat.input().trim();
@@ -156,6 +211,14 @@ export class AgentChatService {
             this.repository.userViewModelRepository.isAuthenticated();
         // авторизованному без проекта отправлять некуда, до ленты дело не доводим
         if (authenticated && !project) {
+            return;
+        }
+        // до согласия запрос никуда не идёт: ни поле не чистим, ни ленту не трогаем,
+        // чтобы после принятия отправить ровно то же самое
+        if (!this.crossBorderConsentAccepted()) {
+            this.repository.settingsViewModelRepository.setShowCrossBorderConsentModal(
+                true
+            );
             return;
         }
 

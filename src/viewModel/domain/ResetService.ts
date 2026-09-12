@@ -85,6 +85,7 @@ export class ResetService {
             email: '',
             id: -1,
             privacyPolicyAccepted: false,
+            crossBorderConsentAccepted: false,
             tokenBalance: 0,
         });
     }

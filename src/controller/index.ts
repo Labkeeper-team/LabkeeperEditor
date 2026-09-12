@@ -896,6 +896,24 @@ export class Controller {
         }
     );
 
+    onCrossBorderConsentAcceptedRequest = createAsyncThunk(
+        'onCrossBorderConsentAccepted',
+        async () => {
+            await this.wrapper('onCrossBorderConsentAccepted', () =>
+                this.agentChatService.onCrossBorderConsentAccepted()
+            );
+        }
+    );
+
+    onCrossBorderConsentDismissedRequest = createAsyncThunk(
+        'onCrossBorderConsentDismissed',
+        async () => {
+            await this.wrapper('onCrossBorderConsentDismissed', async () =>
+                this.agentChatService.onCrossBorderConsentDismissed()
+            );
+        }
+    );
+
     onAgentMaxTokensChangedRequest = createAsyncThunk(
         'onAgentMaxTokensChanged',
         async ({ value }: { value: number }) => {

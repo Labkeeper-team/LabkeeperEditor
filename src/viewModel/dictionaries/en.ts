@@ -498,6 +498,15 @@ export const en: Translations = {
         accept: 'Accept',
         error: 'Failed to save privacy policy acceptance. Please try again',
     },
+    cross_border_consent_modal: {
+        title: 'Data transfer to DeepSeek',
+        consent_prefix: 'I consent to the ',
+        consent_link: 'cross-border transfer',
+        consent_suffix:
+            ' of the data I enter to the DeepSeek service for processing my request and generating a response',
+        accept: 'Continue',
+        cancel: 'Cancel',
+    },
     wiki: 'wiki',
     readonly_public_project: 'readonly public project',
     clone: 'Clone',

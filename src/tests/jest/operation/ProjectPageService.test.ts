@@ -38,6 +38,7 @@ test('run-button-saves-active-text-file-before-latex-project-compilation', async
         id: USER_ID,
         isAuthenticated: true,
         privacyPolicyAccepted: true,
+        crossBorderConsentAccepted: true,
         tokenBalance: 0,
     });
     repository.projectViewModelRepository.setProject(project);
@@ -76,6 +77,7 @@ test('run-button-saves-active-text-file-before-latex-project-compilation', async
             id: USER_ID,
             isAuthenticated: true,
             privacyPolicyAccepted: true,
+            crossBorderConsentAccepted: true,
             tokenBalance: 0,
         },
         isOk: true,

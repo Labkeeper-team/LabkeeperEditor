@@ -47,6 +47,8 @@ MockViewModelRepositoryState {
       },
     ],
   },
+  "crossBorderConsentAccepted": false,
+  "crossBorderConsentAcceptedLocally": false,
   "currentEmail": null,
   "currentFolderPath": "",
   "currentProgram": {
@@ -140,6 +142,7 @@ MockViewModelRepositoryState {
   "searchCurrentMatch": null,
   "searchInput": "",
   "searchNoMatch": false,
+  "showCrossBorderConsentModal": false,
   "showFileManager": false,
   "showPrivacyPolicyAcceptanceModal": false,
   "showSearch": false,
@@ -204,6 +207,8 @@ MockViewModelRepositoryState {
       },
     ],
   },
+  "crossBorderConsentAccepted": false,
+  "crossBorderConsentAcceptedLocally": false,
   "currentEmail": null,
   "currentFolderPath": "",
   "currentProgram": {
@@ -313,6 +318,7 @@ MockViewModelRepositoryState {
   "searchCurrentMatch": null,
   "searchInput": "",
   "searchNoMatch": false,
+  "showCrossBorderConsentModal": false,
   "showFileManager": false,
   "showPrivacyPolicyAcceptanceModal": false,
   "showSearch": false,

@@ -452,6 +452,14 @@ export interface Translations {
         accept: string;
         error: string;
     };
+    cross_border_consent_modal: {
+        title: string;
+        consent_prefix: string;
+        consent_link: string;
+        consent_suffix: string;
+        accept: string;
+        cancel: string;
+    };
     wiki: string;
     readonly_public_project: string;
     clone: string;

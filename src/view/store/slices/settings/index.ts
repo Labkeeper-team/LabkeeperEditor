@@ -60,6 +60,12 @@ export const settingsSlice = createSlice({
         ) => {
             state.showPrivacyPolicyAcceptanceModal = payload;
         },
+        setShowCrossBorderConsentModal: (
+            state,
+            { payload }: PayloadAction<boolean>
+        ) => {
+            state.showCrossBorderConsentModal = payload;
+        },
         setCaptchaBypassToken: (
             state,
             { payload }: PayloadAction<string | undefined>
@@ -97,6 +103,7 @@ export const {
     setShowShareModal,
     setShowContactModal,
     setShowPrivacyPolicyAcceptanceModal,
+    setShowCrossBorderConsentModal,
     setFilesToDelete,
     setCaptchaBypassToken,
     setCurrentFolderPath,

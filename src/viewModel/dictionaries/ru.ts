@@ -510,6 +510,15 @@ export const ru: Translations = {
         accept: 'Принять',
         error: 'Не удалось сохранить принятие политики. Попробуйте ещё раз',
     },
+    cross_border_consent_modal: {
+        title: 'Передача данных в DeepSeek',
+        consent_prefix: 'Я даю ',
+        consent_link: 'согласие на трансграничную передачу',
+        consent_suffix:
+            ' вводимых мной данных в сервис DeepSeek для обработки запроса и генерации ответа',
+        accept: 'Продолжить',
+        cancel: 'Отмена',
+    },
     wiki: 'wiki',
     readonly_public_project: 'Публичный проект, доступный только для чтения',
     clone: 'Клонировать',
