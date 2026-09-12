@@ -276,7 +276,7 @@ test('agent-stop-reason-QuotaExceeded-keeps-the-answer', async ({ page }) => {
         'добавил два сегмента'
     );
     await expect(page.locator('.agent-chat__notice-text')).toContainText(
-        'The agent hit a project limit'
+        'it tried to create a file larger than allowed'
     );
     await expect(page.locator('.agent-chat__error-text')).toHaveCount(0);
 });

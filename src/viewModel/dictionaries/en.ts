@@ -226,7 +226,7 @@ export const en: Translations = {
             PromptTooLong:
                 'The request is too long. Shorten it and send it again',
             QuotaExceeded:
-                'The agent hit a project limit: a file came out larger than allowed, or there would be more segments than allowed. What it managed to change before that is already in the project',
+                'The agent was stopped: it tried to create a file larger than allowed or to add more segments than allowed. What it managed to change before that is already in the project',
             UnknownError: 'Something went wrong. Please try again',
             timeout:
                 'The agent did not finish within ten minutes. Please try again',
