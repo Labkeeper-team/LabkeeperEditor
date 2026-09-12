@@ -113,9 +113,7 @@ export class TokenPageService {
                     !result.body.privacyPolicyAccepted
             );
         } else {
-            this.observerService.onEvent(
-                Events.EVENT_RPI_UNKNOWN_REFRESH_USER_INFO
-            );
+            this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
         }
     };
 }

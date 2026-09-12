@@ -420,7 +420,7 @@ export class AgentChatService {
             return;
         }
         if (reason === 'UnknownError') {
-            this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN_AGENT);
+            this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
         }
     };
 

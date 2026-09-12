@@ -193,9 +193,7 @@ export class FileManagerService {
                     this.repository.dictionary.filemanager.errors.upload_failed,
                     'error'
                 );
-                this.observerService.onEvent(
-                    Events.EVENT_RPI_UNKNOWN_FILE_MANAGER_UPLOAD
-                );
+                this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
             }
         } catch (error) {
             this.restoreFilesReadyState();
@@ -291,9 +289,7 @@ export class FileManagerService {
                             .upload_failed,
                         'error'
                     );
-                    this.observerService.onEvent(
-                        Events.EVENT_RPI_UNKNOWN_FILE_MANAGER_UPLOAD
-                    );
+                    this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
                 }
             }
             if (isResultOk) {
@@ -517,9 +513,7 @@ export class FileManagerService {
                     .rename_folder_failed,
                 'error'
             );
-            this.observerService.onEvent(
-                Events.EVENT_RPI_UNKNOWN_FILE_MANAGER_RENAME
-            );
+            this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
         }
     };
 
@@ -564,9 +558,7 @@ export class FileManagerService {
             await this.loaderService.loadFiles(project.projectId);
         } else {
             this.restoreFilesReadyState();
-            this.observerService.onEvent(
-                Events.EVENT_RPI_UNKNOWN_FILE_MANAGER_DELETE
-            );
+            this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
         }
     };
 
@@ -602,9 +594,7 @@ export class FileManagerService {
             await this.loaderService.loadFiles(project.projectId);
         } else if (!result.isUnauth) {
             this.restoreFilesReadyState();
-            this.observerService.onEvent(
-                Events.EVENT_RPI_UNKNOWN_FILE_MANAGER_DELETE
-            );
+            this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
         }
     };
 
@@ -655,9 +645,7 @@ export class FileManagerService {
                 this.restoreFilesReadyState();
                 return;
             } else if (!result.isOk) {
-                this.observerService.onEvent(
-                    Events.EVENT_RPI_UNKNOWN_FILE_MANAGER_DELETE
-                );
+                this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
             } else {
                 this.textFileEditorService.onOpenFileDeleted(file.fileName);
             }
@@ -717,9 +705,7 @@ export class FileManagerService {
                     .rename_file_failed,
                 'error'
             );
-            this.observerService.onEvent(
-                Events.EVENT_RPI_UNKNOWN_FILE_MANAGER_RENAME
-            );
+            this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
         }
     };
 

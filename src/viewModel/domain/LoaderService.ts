@@ -55,9 +55,7 @@ export class LoaderService {
                 'forbidden'
             );
         } else {
-            this.observerService.onEvent(
-                Events.EVENT_RPI_UNKNOWN_LOADER_LIST_FILES
-            );
+            this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
             this.repository.ideViewModelRepository.setGetFilesRequestState(
                 'error'
             );
@@ -123,9 +121,7 @@ export class LoaderService {
                 this.ideService.resetEditor();
             }
             if (!result.isOk) {
-                this.observerService.onEvent(
-                    Events.EVENT_RPI_UNKNOWN_LOADER_SAVE_PROGRAM
-                );
+                this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
                 this.repository.ideViewModelRepository.setSaveProjectRequestState(
                     'error'
                 );
@@ -157,9 +153,7 @@ export class LoaderService {
                 'unauth'
             );
         } else {
-            this.observerService.onEvent(
-                Events.EVENT_RPI_UNKNOWN_LOADER_GET_ALL_PROJECTS
-            );
+            this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
             this.repository.ideViewModelRepository.setGetProjectsRequestState(
                 'error'
             );

@@ -73,9 +73,7 @@ export class CompilationService {
                     result.body.privacyPolicyAccepted === false
             );
         } else {
-            this.observerService.onEvent(
-                Events.EVENT_RPI_UNKNOWN_REFRESH_USER_INFO
-            );
+            this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
         }
     };
 
@@ -197,7 +195,7 @@ export class CompilationService {
             );
             this.repository.authViewModelRepository.setCurrentView('login');
         } else {
-            this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN_COMPILATION);
+            this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
             this.repository.toast(
                 this.repository.dictionary.filemanager.errors.internalError,
                 'error'

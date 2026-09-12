@@ -66,7 +66,7 @@ export class AuthService {
                 'bad_credentials'
             );
         } else {
-            this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN_AUTH_LOGIN);
+            this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
             this.repository.authViewModelRepository.setLoginRequest(
                 'unknownError'
             );
@@ -156,9 +156,7 @@ export class AuthService {
                 'validationError'
             );
         } else {
-            this.observerService.onEvent(
-                Events.EVENT_RPI_UNKNOWN_AUTH_SEND_EMAIL_WITH_CODE
-            );
+            this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
             this.repository.authViewModelRepository.setEmailRequest(
                 'unknownError'
             );
@@ -190,9 +188,7 @@ export class AuthService {
                 'validationError'
             );
         } else {
-            this.observerService.onEvent(
-                Events.EVENT_RPI_UNKNOWN_AUTH_SET_PASSWORD
-            );
+            this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
             this.repository.authViewModelRepository.setPasswordRequest(
                 'unknownError'
             );
@@ -213,9 +209,7 @@ export class AuthService {
             this.repository.authViewModelRepository.setCurrentView('password');
         } else {
             if (result.code !== 400 && result.code !== 200) {
-                this.observerService.onEvent(
-                    Events.EVENT_RPI_UNKNOWN_AUTH_CHECK_CODE
-                );
+                this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
             }
             this.repository.authViewModelRepository.setCodeCheckRequest(
                 'invalid'

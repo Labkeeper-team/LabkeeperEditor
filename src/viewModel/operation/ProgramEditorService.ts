@@ -225,7 +225,7 @@ export class ProgramEditorService {
                         thisCopy.ideService.resetEditor();
                     } else {
                         thisCopy.observerService.onEvent(
-                            Events.EVENT_RPI_UNKNOWN_PROGRAM_EDITOR_UPLOAD
+                            Events.EVENT_RPI_UNKNOWN
                         );
                         thisCopy.repository.ideViewModelRepository.setGetFilesRequestState(
                             'error'
@@ -740,9 +740,7 @@ export class ProgramEditorService {
             return;
         }
         if (!result.isOk || !result.body) {
-            this.observerService.onEvent(
-                Events.EVENT_RPI_UNKNOWN_PROGRAM_EDITOR_SYNC_EDITOR_TO_PDF
-            );
+            this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
             this.repository.toast(
                 this.repository.dictionary.synctex.errors.failed,
                 'error'
@@ -783,9 +781,7 @@ export class ProgramEditorService {
             return;
         }
         if (!result.isOk || !result.body) {
-            this.observerService.onEvent(
-                Events.EVENT_RPI_UNKNOWN_PROGRAM_EDITOR_SYNC_PDF_TO_EDITOR
-            );
+            this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
             this.repository.toast(
                 this.repository.dictionary.synctex.errors.failed,
                 'error'

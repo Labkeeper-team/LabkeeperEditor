@@ -68,9 +68,7 @@ export class ProjectPageService {
                 'success'
             );
         } else {
-            this.observerService.onEvent(
-                Events.EVENT_RPI_UNKNOWN_PROJECT_PAGE_CONTACT_FORM
-            );
+            this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
             this.repository.toast(
                 this.repository.dictionary.contact_error,
                 'error'
@@ -310,9 +308,7 @@ export class ProjectPageService {
             return;
         }
         if (!result.isOk) {
-            this.observerService.onEvent(
-                Events.EVENT_RPI_UNKNOWN_PROJECT_PAGE_SET_TITLE
-            );
+            this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
             failCallback();
             return;
         }
@@ -359,9 +355,7 @@ export class ProjectPageService {
             });
             this.repository.projectViewModelRepository.setReadOnly(false);
         } else if (!result.isUnauth) {
-            this.observerService.onEvent(
-                Events.EVENT_RPI_UNKNOWN_PROJECT_PAGE_SET_VISIBILITY
-            );
+            this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
         }
     };
 
@@ -400,9 +394,7 @@ export class ProjectPageService {
                     'error'
                 );
             } else {
-                this.observerService.onEvent(
-                    Events.EVENT_RPI_UNKNOWN_PROJECT_PAGE_CLONE
-                );
+                this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
                 this.repository.toast(
                     this.repository.dictionary.filemanager.errors.internalError,
                     'error'
@@ -476,9 +468,7 @@ export class ProjectPageService {
             });
             this.repository.projectViewModelRepository.setReadOnly(false);
         } else if (!result.isUnauth) {
-            this.observerService.onEvent(
-                Events.EVENT_RPI_UNKNOWN_PROJECT_PAGE_SET_TYPE
-            );
+            this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
         }
     };
 }

@@ -56,9 +56,7 @@ export class ProjectsPageService {
                 );
                 this.ideService.resetEditor();
             } else if (!result2.isOk) {
-                this.observerService.onEvent(
-                    Events.EVENT_RPI_UNKNOWN_PROJECTS_GET_ALL_PROJECTS
-                );
+                this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
             }
         }
         if (result1.isUnauth) {
@@ -68,9 +66,7 @@ export class ProjectsPageService {
             );
             this.ideService.resetEditor();
         } else if (!result1.isOk) {
-            this.observerService.onEvent(
-                Events.EVENT_RPI_UNKNOWN_PROJECTS_DELETE_PROJECT
-            );
+            this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
         }
     };
 
@@ -127,9 +123,7 @@ export class ProjectsPageService {
             okCallback();
         } else {
             if (result.code !== 417 && !result.isUnauth) {
-                this.observerService.onEvent(
-                    Events.EVENT_RPI_UNKNOWN_PROJECTS_CREATE_PROJECT
-                );
+                this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
             }
             const message =
                 result.code === 417

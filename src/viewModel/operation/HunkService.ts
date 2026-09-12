@@ -61,7 +61,7 @@ export class HunkService {
         } else if (result.isUnauth) {
             this.repository.ideViewModelRepository.setHunks([]);
         } else if (!result.isForbidden) {
-            this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN_LIST_HUNKS);
+            this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
         }
     };
 

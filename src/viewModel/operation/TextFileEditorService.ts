@@ -460,9 +460,7 @@ export class TextFileEditorService {
                 savingRevision
             );
         } else {
-            this.observerService.onEvent(
-                Events.EVENT_RPI_UNKNOWN_FILE_MANAGER_UPLOAD
-            );
+            this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
             this.repository.ideViewModelRepository.setSaveTextFileRequestState(
                 'error'
             );
