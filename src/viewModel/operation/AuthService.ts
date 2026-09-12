@@ -3,30 +3,23 @@ import { ViewModelRepository } from '../repository';
 import { Rpi } from '../../model/rpi';
 import { IdeService } from '../domain/IdeService.ts';
 import { StartupService } from './StartupService.ts';
-import {
-    Events,
-    ObserverService,
-} from '../../model/service/ObserverService.ts';
 
 export class AuthService {
     repository: ViewModelRepository;
     rpi: Rpi;
     ideService: IdeService;
     startupService: StartupService;
-    observerService: ObserverService;
 
     constructor(
         repository: ViewModelRepository,
         rpi: Rpi,
         ideService: IdeService,
-        startupService: StartupService,
-        observerService: ObserverService
+        startupService: StartupService
     ) {
         this.rpi = rpi;
         this.ideService = ideService;
         this.repository = repository;
         this.startupService = startupService;
-        this.observerService = observerService;
     }
 
     onFormLoginClicked = async (
@@ -66,7 +59,6 @@ export class AuthService {
                 'bad_credentials'
             );
         } else {
-            this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
             this.repository.authViewModelRepository.setLoginRequest(
                 'unknownError'
             );
@@ -156,7 +148,6 @@ export class AuthService {
                 'validationError'
             );
         } else {
-            this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
             this.repository.authViewModelRepository.setEmailRequest(
                 'unknownError'
             );
@@ -188,7 +179,6 @@ export class AuthService {
                 'validationError'
             );
         } else {
-            this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
             this.repository.authViewModelRepository.setPasswordRequest(
                 'unknownError'
             );
@@ -208,9 +198,6 @@ export class AuthService {
             this.repository.authViewModelRepository.setLastVerifiedCode(code);
             this.repository.authViewModelRepository.setCurrentView('password');
         } else {
-            if (result.code !== 400 && result.code !== 200) {
-                this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
-            }
             this.repository.authViewModelRepository.setCodeCheckRequest(
                 'invalid'
             );

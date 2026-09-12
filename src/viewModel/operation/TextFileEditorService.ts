@@ -3,10 +3,7 @@ import { ViewModelRepository } from '../repository';
 import { Rpi } from '../../model/rpi';
 import { IdeService } from '../domain/IdeService.ts';
 import { EditingLockService } from '../domain/EditingLockService.ts';
-import {
-    Events,
-    ObserverService,
-} from '../../model/service/ObserverService.ts';
+import { ObserverService } from '../../model/service/ObserverService.ts';
 import {
     isImageFilePath,
     isTextFilePath,
@@ -15,6 +12,7 @@ import {
     applyFileHunksToContent,
     getFileContentFromHunks,
 } from '../utils/hunkGrouping.ts';
+import { reportUnexpectedError } from '../utils/reportUnexpectedError.ts';
 
 type OpenTextFileOptions = {
     silent?: boolean;
@@ -187,6 +185,11 @@ export class TextFileEditorService {
         this.repository.toast(
             this.repository.dictionary.filemanager.errors.internalError,
             'error'
+        );
+        reportUnexpectedError(
+            this.observerService,
+            'textFile.load',
+            new Error('Failed to load project text file')
         );
     };
 
@@ -460,7 +463,6 @@ export class TextFileEditorService {
                 savingRevision
             );
         } else {
-            this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
             this.repository.ideViewModelRepository.setSaveTextFileRequestState(
                 'error'
             );

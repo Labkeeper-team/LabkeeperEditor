@@ -21,12 +21,17 @@ export const PayPage = () => {
         window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
     }, []);
 
+    const onWidgetFailed = useCallback(() => {
+        setHasWidgetError(true);
+        void dispatch(controller.onPaymentWidgetFailedRequest());
+    }, [dispatch]);
+
     const yoomoneyWidgetConfig = useMemo(
         () =>
             paymentWidgetToken
                 ? {
                       confirmation_token: paymentWidgetToken,
-                      error_callback: () => setHasWidgetError(true),
+                      error_callback: () => onWidgetFailed(),
                       customization: {
                           modal: false,
                           colors: {
@@ -36,7 +41,7 @@ export const PayPage = () => {
                       },
                   }
                 : null,
-        [paymentWidgetToken]
+        [paymentWidgetToken, onWidgetFailed]
     );
 
     const onPaymentComplete = useCallback(async () => {
@@ -55,7 +60,7 @@ export const PayPage = () => {
                                 key={paymentWidgetToken}
                                 config={yoomoneyWidgetConfig}
                                 onComplete={onPaymentComplete}
-                                onFail={() => setHasWidgetError(true)}
+                                onFail={onWidgetFailed}
                             />
                         </div>
                     ) : null}

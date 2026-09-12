@@ -11,10 +11,12 @@ import { MetrikaService } from './web/yandex';
 import { WebRpi } from './web/server';
 import { WebAgentSocket } from './web/server/agentSocket.ts';
 
+const observerService = new MetrikaService();
+
 export const { controller } = setupContext(
-    new WebRpi(),
+    new WebRpi(observerService),
     createViewModelStateFromStore(store),
-    new MetrikaService(),
+    observerService,
     new WebAgentSocket()
 );
 

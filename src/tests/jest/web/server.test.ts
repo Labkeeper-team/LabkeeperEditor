@@ -1,6 +1,15 @@
 import axios from 'axios';
 import * as Sentry from '@sentry/react';
+import { Events } from '../../../model/service/ObserverService.ts';
 import { WebRpi } from '../../../web/server';
+
+const createRpi = () => {
+    const observerService = {
+        onEvent: jest.fn(),
+        setUserState: jest.fn(),
+    };
+    return { rpi: new WebRpi(observerService), observerService };
+};
 
 jest.mock('../../../constants.ts', () => ({
     URLS: {
@@ -34,7 +43,7 @@ describe('WebRpi', () => {
             status: 200,
             data: {},
         });
-        const rpi = new WebRpi();
+        const { rpi } = createRpi();
 
         await rpi.renameFileRequest(
             'note.txt',
@@ -66,7 +75,7 @@ describe('WebRpi', () => {
             status: 200,
             data: pricing,
         });
-        const rpi = new WebRpi();
+        const { rpi, observerService } = createRpi();
 
         const result = await rpi.getBillingPricingRequest();
 
@@ -74,34 +83,39 @@ describe('WebRpi', () => {
         expect(result.body).toEqual(pricing);
         expect(result.isOk).toBe(true);
         expect(Sentry.captureException).not.toHaveBeenCalled();
+        expect(observerService.onEvent).not.toHaveBeenCalled();
     });
 
-    test('does not report an expected error status to Sentry', async () => {
+    test('does not report an expected error status to Sentry or Metrika', async () => {
         const getMock = axios.get as jest.Mock;
         getMock.mockRejectedValue({
             response: { status: 401, data: {} },
         });
-        const rpi = new WebRpi();
+        const { rpi, observerService } = createRpi();
 
         const result = await rpi.getAgentHistoryRequest('project-id');
 
         expect(result.code).toBe(401);
         expect(result.isUnauth).toBe(true);
         expect(Sentry.captureException).not.toHaveBeenCalled();
+        expect(observerService.onEvent).not.toHaveBeenCalled();
     });
 
-    test('reports an unexpected status to Sentry and still returns the result', async () => {
+    test('reports an unexpected status to Sentry and Metrika and still returns the result', async () => {
         const getMock = axios.get as jest.Mock;
         getMock.mockRejectedValue({
             response: { status: 500, data: { message: 'boom' } },
         });
-        const rpi = new WebRpi();
+        const { rpi, observerService } = createRpi();
 
         const result = await rpi.getBillingPricingRequest();
 
         expect(result.code).toBe(500);
         expect(result.isOk).toBe(false);
         expect(result.body).toEqual({ message: 'boom' });
+        expect(observerService.onEvent).toHaveBeenCalledWith(
+            Events.EVENT_RPI_UNKNOWN
+        );
         expect(Sentry.captureException).toHaveBeenCalledTimes(1);
         const [error, context] = (Sentry.captureException as jest.Mock).mock
             .calls[0];
@@ -119,34 +133,38 @@ describe('WebRpi', () => {
         ]);
     });
 
-    test('reports an unexpected success-path status to Sentry', async () => {
+    test('reports an unexpected success-path status to Sentry and Metrika', async () => {
         const getMock = axios.get as jest.Mock;
         getMock.mockResolvedValue({
             status: 201,
             data: {},
         });
-        const rpi = new WebRpi();
+        const { rpi, observerService } = createRpi();
 
         const result = await rpi.getBillingPricingRequest();
 
         expect(result.code).toBe(201);
         expect(result.isOk).toBe(true);
+        expect(observerService.onEvent).toHaveBeenCalledWith(
+            Events.EVENT_RPI_UNKNOWN
+        );
         expect(Sentry.captureException).toHaveBeenCalledTimes(1);
         expect(
             (Sentry.captureException as jest.Mock).mock.calls[0][0].message
         ).toBe('Unexpected RPI status 201 from getBillingPricingRequest');
     });
 
-    test('does not report a network error without an HTTP status to Sentry', async () => {
+    test('does not report a network error without an HTTP status to Sentry or Metrika', async () => {
         const getMock = axios.get as jest.Mock;
         getMock.mockRejectedValue(new Error('Network Error'));
-        const rpi = new WebRpi();
+        const { rpi, observerService } = createRpi();
 
         const result = await rpi.getBillingPricingRequest();
 
         expect(result.code).toBe(500);
         expect(result.isOk).toBe(false);
         expect(Sentry.captureException).not.toHaveBeenCalled();
+        expect(observerService.onEvent).not.toHaveBeenCalled();
     });
 
     test('getAgentHistoryRequest asks the history of the given project', async () => {
@@ -160,7 +178,7 @@ describe('WebRpi', () => {
             },
         ];
         getMock.mockResolvedValue({ status: 200, data: { history } });
-        const rpi = new WebRpi();
+        const { rpi } = createRpi();
 
         const result = await rpi.getAgentHistoryRequest('project-id');
 
@@ -174,7 +192,7 @@ describe('WebRpi', () => {
     test('clearAgentHistoryRequest deletes the history of the given project', async () => {
         const deleteMock = axios.delete as jest.Mock;
         deleteMock.mockResolvedValue({ status: 200, data: {} });
-        const rpi = new WebRpi();
+        const { rpi } = createRpi();
 
         const result = await rpi.clearAgentHistoryRequest('project-id');
 

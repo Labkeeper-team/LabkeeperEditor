@@ -137,6 +137,11 @@ export class Controller {
         async () => this.tokenPageService.onPaymentStatusChanged()
     );
 
+    onPaymentWidgetFailedRequest = createAsyncThunk(
+        'onPaymentWidgetFailed',
+        async () => this.tokenPageService.onPaymentWidgetFailed()
+    );
+
     onAuthClosedRequest = createAsyncThunk('onAuthClosed', async () => {
         await this.wrapper('onAuthClosed', () =>
             this.authService.onAuthClosed()

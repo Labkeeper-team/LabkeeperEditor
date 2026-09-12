@@ -21,6 +21,10 @@ import { HunkService } from './HunkService.ts';
 import { TextFileEditorService } from './TextFileEditorService.ts';
 import { ProgramEditorService } from './ProgramEditorService.ts';
 import { TokenPageService } from './TokenPageService.ts';
+import {
+    reportToSentry,
+    reportUnexpectedError,
+} from '../utils/reportUnexpectedError.ts';
 
 /** Причины, при которых показываем ошибку, а не ответ. */
 const ERROR_STOP_REASONS: AgentStopReason[] = [
@@ -265,8 +269,12 @@ export class AgentChatService {
             await this.handleAgentEvent(token, event);
         } catch (error) {
             // иначе отказ внутри обработки оставит чат навсегда в состоянии загрузки
-            console.error(error);
-            this.onAgentClosed(token, 'closed');
+            reportUnexpectedError(
+                this.observerService,
+                'agent.event_handler',
+                error
+            );
+            this.onAgentClosed(token, 'closed', true);
         }
     };
 
@@ -419,14 +427,19 @@ export class AgentChatService {
             this.repository.authViewModelRepository.setCurrentView('login');
             return;
         }
-        if (reason === 'UnknownError') {
-            this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
+        if (reason === 'UnknownError' || reason === 'Locked') {
+            reportUnexpectedError(
+                this.observerService,
+                `agent.stop.${reason}`,
+                new Error(`Agent stop reason ${reason}`)
+            );
         }
     };
 
     private onAgentClosed = (
         token: number,
-        reason: AgentClosedReason
+        reason: AgentClosedReason,
+        alreadyReported = false
     ): void => {
         if (token !== this.runToken) {
             return;
@@ -438,8 +451,18 @@ export class AgentChatService {
             reason: reason === 'closed' ? 'disconnected' : reason,
         });
         chat.setRequestState('error');
+        if (alreadyReported) {
+            return;
+        }
         if (reason === 'timeout') {
             this.observerService.onEvent(Events.EVENT_AGENT_TIMEOUT);
+            reportToSentry('agent.timeout', new Error('Agent socket timeout'));
+            return;
         }
+        reportUnexpectedError(
+            this.observerService,
+            `agent.${reason === 'closed' ? 'disconnected' : reason}`,
+            new Error(`Agent socket ${reason}`)
+        );
     };
 }

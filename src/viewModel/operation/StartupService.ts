@@ -62,7 +62,6 @@ export class StartupService {
         const response = await this.rpi.oauthCodeRequest(code, state);
 
         if (!response.isOk) {
-            this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
             this.repository.authViewModelRepository.setCurrentView('login');
             this.repository.authViewModelRepository.setLoginRequest(
                 'oauth_error'
@@ -89,7 +88,6 @@ export class StartupService {
             await this.rpi.getUserInfoRequest();
 
         if (!result.isOk) {
-            this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
             this.repository.toast(
                 this.repository.dictionary.filemanager.errors.noNetwork,
                 'error'
@@ -193,8 +191,6 @@ export class StartupService {
             );
             return;
         }
-
-        this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
         this.repository.billingViewModelRepository.setPricingRequestState(
             'error'
         );
@@ -343,7 +339,6 @@ export class StartupService {
             return;
         }
         if (!result.isOk) {
-            this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
             this.repository.ideViewModelRepository.setGetProjectRequestState(
                 'error'
             );
@@ -408,8 +403,6 @@ export class StartupService {
                     'error'
                 );
                 this.ideService.resetEditor();
-            } else if (!result.isOk) {
-                this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
             }
         } else {
             if (open === 'latex') {

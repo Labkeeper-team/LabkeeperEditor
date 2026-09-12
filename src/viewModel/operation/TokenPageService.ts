@@ -5,6 +5,7 @@ import {
 } from '../../model/service/ObserverService.ts';
 import { ViewModelRepository } from '../repository';
 import { Routes } from '../routes.ts';
+import { reportUnexpectedError } from '../utils/reportUnexpectedError.ts';
 
 export class TokenPageService {
     rpi: Rpi;
@@ -54,6 +55,11 @@ export class TokenPageService {
                 this.repository.setLocation(Routes.Pay);
                 return;
             }
+            reportUnexpectedError(
+                this.observerService,
+                'billing.purchase_missing_token',
+                new Error('Billing purchase succeeded without widget token')
+            );
         }
 
         this.repository.billingViewModelRepository.setPurchaseRequestState(
@@ -100,6 +106,14 @@ export class TokenPageService {
         this.repository.setLocation(Routes.Tokens);
     };
 
+    onPaymentWidgetFailed = (): void => {
+        reportUnexpectedError(
+            this.observerService,
+            'billing.widget',
+            new Error('YooKassa widget failed')
+        );
+    };
+
     refreshUserInfo = async () => {
         if (!this.repository.userViewModelRepository.isAuthenticated()) {
             return;
@@ -112,8 +126,6 @@ export class TokenPageService {
                 result.body.isAuthenticated &&
                     !result.body.privacyPolicyAccepted
             );
-        } else {
-            this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
         }
     };
 }

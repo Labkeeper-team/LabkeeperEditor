@@ -1,9 +1,5 @@
 import { Hunk } from '../../model/domain.ts';
 import { Rpi } from '../../model/rpi';
-import {
-    Events,
-    ObserverService,
-} from '../../model/service/ObserverService.ts';
 import { ViewModelRepository } from '../repository';
 import { IdeService } from '../domain/IdeService.ts';
 import { LoaderService } from '../domain/LoaderService.ts';
@@ -23,7 +19,6 @@ export class HunkService {
         private rpi: Rpi,
         private ideService: IdeService,
         private loaderService: LoaderService,
-        private observerService: ObserverService,
         private textFileEditorService: TextFileEditorService,
         private editingLock: EditingLockService
     ) {}
@@ -60,8 +55,6 @@ export class HunkService {
             );
         } else if (result.isUnauth) {
             this.repository.ideViewModelRepository.setHunks([]);
-        } else if (!result.isForbidden) {
-            this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
         }
     };
 
@@ -80,6 +73,14 @@ export class HunkService {
             this.repository.projectViewModelRepository.project()?.projectId ??
             null
         );
+    };
+
+    private deleteHunkOnServer = async (
+        projectId: string,
+        hunkId: string,
+        revert: boolean
+    ) => {
+        return this.rpi.deleteHunkRequest(projectId, hunkId, revert);
     };
 
     private markPending = (ids: string[]): void => {
@@ -137,7 +138,7 @@ export class HunkService {
             }
             await Promise.all(
                 hunkIds.map((id) =>
-                    this.rpi.deleteHunkRequest(projectId, id, false)
+                    this.deleteHunkOnServer(projectId, id, false)
                 )
             );
             await this.refreshAfterAccept();
@@ -160,7 +161,7 @@ export class HunkService {
                 return;
             }
             for (const id of hunkIds) {
-                await this.rpi.deleteHunkRequest(projectId, id, true);
+                await this.deleteHunkOnServer(projectId, id, true);
             }
             await this.refreshAfterRevert();
         } finally {
@@ -193,7 +194,7 @@ export class HunkService {
             return;
         }
         await Promise.all(
-            ids.map((id) => this.rpi.deleteHunkRequest(projectId, id, false))
+            ids.map((id) => this.deleteHunkOnServer(projectId, id, false))
         );
         await this.loadHunks();
     };
@@ -214,7 +215,7 @@ export class HunkService {
                 return;
             }
             for (const id of ids) {
-                await this.rpi.deleteHunkRequest(projectId, id, true);
+                await this.deleteHunkOnServer(projectId, id, true);
             }
             await this.refreshAfterRevert();
         } finally {
@@ -250,7 +251,7 @@ export class HunkService {
             try {
                 await Promise.all(
                     hunkIds.map((id) =>
-                        this.rpi.deleteHunkRequest(projectId, id, false)
+                        this.deleteHunkOnServer(projectId, id, false)
                     )
                 );
                 await this.loadHunks();

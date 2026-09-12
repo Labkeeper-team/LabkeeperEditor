@@ -68,7 +68,6 @@ export class ProjectPageService {
                 'success'
             );
         } else {
-            this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
             this.repository.toast(
                 this.repository.dictionary.contact_error,
                 'error'
@@ -308,7 +307,6 @@ export class ProjectPageService {
             return;
         }
         if (!result.isOk) {
-            this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
             failCallback();
             return;
         }
@@ -354,8 +352,6 @@ export class ProjectPageService {
                 isPublic: visible,
             });
             this.repository.projectViewModelRepository.setReadOnly(false);
-        } else if (!result.isUnauth) {
-            this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
         }
     };
 
@@ -394,7 +390,6 @@ export class ProjectPageService {
                     'error'
                 );
             } else {
-                this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
                 this.repository.toast(
                     this.repository.dictionary.filemanager.errors.internalError,
                     'error'
@@ -467,8 +462,6 @@ export class ProjectPageService {
                 projectType: type,
             });
             this.repository.projectViewModelRepository.setReadOnly(false);
-        } else if (!result.isUnauth) {
-            this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
         }
     };
 }

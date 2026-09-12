@@ -59,8 +59,7 @@ export function setupContext(
         rpi,
         repository,
         ideService,
-        programService,
-        observerService
+        programService
     );
     const fileService: FileService = new FileService(repository);
     const compilationService: CompilationService = new CompilationService(
@@ -94,8 +93,7 @@ export function setupContext(
         repository,
         rpi,
         ideService,
-        startupService,
-        observerService
+        startupService
     );
     const textFileEditorService: TextFileEditorService =
         new TextFileEditorService(
@@ -110,7 +108,6 @@ export function setupContext(
         rpi,
         ideService,
         loaderService,
-        observerService,
         textFileEditorService,
         editingLockService
     );
@@ -122,7 +119,6 @@ export function setupContext(
         loaderService,
         ideService,
         fileService,
-        observerService,
         textFileEditorService,
         editingLockService
     );
