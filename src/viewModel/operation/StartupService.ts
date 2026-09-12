@@ -14,6 +14,7 @@ import { TokenPageService } from './TokenPageService.ts';
 import { ResetService } from '../domain/ResetService.ts';
 import { HunkService } from './HunkService.ts';
 import type { AgentChatService } from './AgentChatService.ts';
+import { logBreadcrumb } from '../utils/logBreadcrumb.ts';
 
 const qrPagePattern = /\/qr\/v\d+/i;
 const projectPagePattern = /\/project\/\S+/i;
@@ -82,6 +83,10 @@ export class StartupService {
         open?: OpenParams
     ): Promise<void> => {
         void open;
+        logBreadcrumb('startup', 'onAppStartup', {
+            location: this.repository.location(),
+            hasCaptcha: Boolean(captcha),
+        });
         await this.loadBillingPricing();
 
         const result: RequestResult<UserInfo> =

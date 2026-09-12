@@ -14,6 +14,7 @@ import * as Sentry from '@sentry/react';
 
 jest.mock('@sentry/react', () => ({
     captureException: jest.fn(),
+    addBreadcrumb: jest.fn(),
 }));
 
 beforeEach(() => {

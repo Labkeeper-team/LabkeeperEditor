@@ -13,6 +13,7 @@ import {
     getFileContentFromHunks,
 } from '../utils/hunkGrouping.ts';
 import { reportUnexpectedError } from '../utils/reportUnexpectedError.ts';
+import { logBreadcrumb } from '../utils/logBreadcrumb.ts';
 
 type OpenTextFileOptions = {
     silent?: boolean;
@@ -137,8 +138,15 @@ export class TextFileEditorService {
         }
 
         try {
+            logBreadcrumb('file', `load ${fileName}`, { fileName });
             const response = await fetch(file.url, { cache: 'no-store' });
             if (!response.ok) {
+                logBreadcrumb(
+                    'file',
+                    `load failed ${fileName}`,
+                    { fileName, status: response.status },
+                    'warning'
+                );
                 throw new Error(`file-load-${response.status}`);
             }
             const content = await response.text();

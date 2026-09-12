@@ -21,6 +21,7 @@ jest.mock('../../../constants.ts', () => ({
 
 jest.mock('@sentry/react', () => ({
     captureException: jest.fn(),
+    addBreadcrumb: jest.fn(),
 }));
 
 jest.mock('axios', () => ({
@@ -84,6 +85,19 @@ describe('WebRpi', () => {
         expect(result.isOk).toBe(true);
         expect(Sentry.captureException).not.toHaveBeenCalled();
         expect(observerService.onEvent).not.toHaveBeenCalled();
+        expect(Sentry.addBreadcrumb).toHaveBeenCalledWith(
+            expect.objectContaining({
+                category: 'rpi',
+                message: 'start getBillingPricingRequest',
+            })
+        );
+        expect(Sentry.addBreadcrumb).toHaveBeenCalledWith(
+            expect.objectContaining({
+                category: 'rpi',
+                message: 'getBillingPricingRequest 200',
+                level: 'info',
+            })
+        );
     });
 
     test('does not report an expected error status to Sentry or Metrika', async () => {
@@ -115,6 +129,13 @@ describe('WebRpi', () => {
         expect(result.body).toEqual({ message: 'boom' });
         expect(observerService.onEvent).toHaveBeenCalledWith(
             Events.EVENT_RPI_UNKNOWN
+        );
+        expect(Sentry.addBreadcrumb).toHaveBeenCalledWith(
+            expect.objectContaining({
+                category: 'rpi',
+                message: 'getBillingPricingRequest 500',
+                level: 'warning',
+            })
         );
         expect(Sentry.captureException).toHaveBeenCalledTimes(1);
         const [error, context] = (Sentry.captureException as jest.Mock).mock
@@ -148,6 +169,13 @@ describe('WebRpi', () => {
         expect(observerService.onEvent).toHaveBeenCalledWith(
             Events.EVENT_RPI_UNKNOWN
         );
+        expect(Sentry.addBreadcrumb).toHaveBeenCalledWith(
+            expect.objectContaining({
+                category: 'rpi',
+                message: 'getBillingPricingRequest 201',
+                level: 'warning',
+            })
+        );
         expect(Sentry.captureException).toHaveBeenCalledTimes(1);
         expect(
             (Sentry.captureException as jest.Mock).mock.calls[0][0].message
@@ -165,6 +193,13 @@ describe('WebRpi', () => {
         expect(result.isOk).toBe(false);
         expect(Sentry.captureException).not.toHaveBeenCalled();
         expect(observerService.onEvent).not.toHaveBeenCalled();
+        expect(Sentry.addBreadcrumb).toHaveBeenCalledWith(
+            expect.objectContaining({
+                category: 'rpi',
+                message: 'getBillingPricingRequest network-error',
+                level: 'warning',
+            })
+        );
     });
 
     test('getAgentHistoryRequest asks the history of the given project', async () => {

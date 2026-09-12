@@ -25,6 +25,7 @@ import {
     reportToSentry,
     reportUnexpectedError,
 } from '../utils/reportUnexpectedError.ts';
+import { logBreadcrumb } from '../utils/logBreadcrumb.ts';
 
 /** Причины, при которых показываем ошибку, а не ответ. */
 const ERROR_STOP_REASONS: AgentStopReason[] = [
@@ -160,6 +161,10 @@ export class AgentChatService {
 
         // слот занимается до первого await, иначе второе нажатие проскочит проверку
         const token = ++this.runToken;
+        logBreadcrumb('agent', 'prompt submit', {
+            authenticated,
+            hasProject: Boolean(project),
+        });
         chat.setRequestState('connecting');
         chat.setInput('');
         chat.appendMessage({
@@ -175,6 +180,7 @@ export class AgentChatService {
         }
         if (!saved) {
             // агент работает с тем, что лежит на сервере, а там осталась прошлая версия
+            logBreadcrumb('agent', 'save_failed', undefined, 'warning');
             chat.appendMessage({ kind: 'error', reason: 'save_failed' });
             chat.setRequestState('error');
             return;
@@ -419,6 +425,7 @@ export class AgentChatService {
     };
 
     private reportStopReason = (reason: AgentStopReason): void => {
+        logBreadcrumb('agent', `stop ${reason}`, { reason });
         if (reason === 'PaymentRequired') {
             this.observerService.onEvent(Events.EVENT_PAYMENT_REQUIRED);
             return;
@@ -446,6 +453,12 @@ export class AgentChatService {
         }
         const chat = this.repository.chatViewModelRepository;
         this.session = null;
+        logBreadcrumb(
+            'agent',
+            `chat closed ${reason}`,
+            { reason, alreadyReported },
+            reason === 'timeout' ? 'warning' : 'error'
+        );
         chat.appendMessage({
             kind: 'error',
             reason: reason === 'closed' ? 'disconnected' : reason,

@@ -3,8 +3,22 @@ import {
     Events,
     ObserverService,
 } from '../../model/service/ObserverService.ts';
+import { logBreadcrumb } from './logBreadcrumb.ts';
 
 export function reportToSentry(context: string, cause?: unknown): void {
+    logBreadcrumb(
+        'error',
+        context,
+        {
+            cause:
+                cause instanceof Error
+                    ? cause.message
+                    : cause == null
+                      ? undefined
+                      : String(cause),
+        },
+        'error'
+    );
     Sentry.captureException(
         cause instanceof Error ? cause : new Error(context),
         {

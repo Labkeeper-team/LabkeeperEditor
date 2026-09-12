@@ -11,19 +11,10 @@ import { MetrikaService } from './web/yandex';
 import { WebRpi } from './web/server';
 import { WebAgentSocket } from './web/server/agentSocket.ts';
 
-const observerService = new MetrikaService();
-
-export const { controller } = setupContext(
-    new WebRpi(observerService),
-    createViewModelStateFromStore(store),
-    observerService,
-    new WebAgentSocket()
-);
-
 Sentry.init({
     dsn: Secrets.sentryDsn,
     sendDefaultPii: true,
-    integrations: [],
+    maxBreadcrumbs: 100,
     beforeSend(event) {
         if (window?.location?.host?.includes('localhost')) {
             console.log('Error event is dropped due to dev hostname');
@@ -32,6 +23,15 @@ Sentry.init({
         return event;
     },
 });
+
+const observerService = new MetrikaService();
+
+export const { controller } = setupContext(
+    new WebRpi(observerService),
+    createViewModelStateFromStore(store),
+    observerService,
+    new WebAgentSocket()
+);
 
 createRoot(document.getElementById('root')!, {
     onRecoverableError: Sentry.reactErrorHandler(),

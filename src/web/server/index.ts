@@ -32,6 +32,7 @@ import {
     Events,
     ObserverService,
 } from '../../model/service/ObserverService.ts';
+import { logBreadcrumb } from '../../viewModel/utils/logBreadcrumb.ts';
 
 function withIds(program: Program): Program {
     return withSegmentIds(program);
@@ -76,6 +77,7 @@ export class WebRpi implements Rpi {
         expectedCodes: readonly number[],
         request: () => Promise<AxiosResponse>
     ): Promise<RequestResult<T>> {
+        logBreadcrumb('rpi', `start ${String(method)}`, { method });
         let result: RequestResult<T>;
         let hasHttpStatus = true;
         try {
@@ -99,6 +101,23 @@ export class WebRpi implements Rpi {
                 isForbidden: status === 403,
             };
         }
+        const expected = hasHttpStatus && expectedCodes.includes(result.code);
+        logBreadcrumb(
+            'rpi',
+            hasHttpStatus
+                ? `${String(method)} ${result.code}`
+                : `${String(method)} network-error`,
+            {
+                method,
+                code: result.code,
+                isOk: result.isOk,
+                isUnauth: result.isUnauth,
+                isForbidden: result.isForbidden,
+                hasHttpStatus,
+                expected,
+            },
+            hasHttpStatus && expected ? 'info' : 'warning'
+        );
         if (hasHttpStatus) {
             this.reportUnexpectedRpiStatus(method, expectedCodes, result);
         }

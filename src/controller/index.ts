@@ -19,6 +19,7 @@ import { StartupService } from '../viewModel/operation/StartupService.ts';
 import { TokenPageService } from '../viewModel/operation/TokenPageService.ts';
 import { HunkService } from '../viewModel/operation/HunkService.ts';
 import { AgentChatService } from '../viewModel/operation/AgentChatService.ts';
+import { logBreadcrumb } from '../viewModel/utils/logBreadcrumb.ts';
 
 export class Controller {
     authService: AuthService;
@@ -957,11 +958,20 @@ export class Controller {
         name: string,
         method: () => T | Promise<T>
     ): Promise<void> => {
+        logBreadcrumb('operation', name);
         try {
             await method();
-            console.info(`Invoking system operation [${name}]`);
         } catch (error) {
             this.observerService.onEvent(Events.FRONTEND_ERROR);
+            logBreadcrumb(
+                'operation',
+                `${name} failed`,
+                {
+                    error:
+                        error instanceof Error ? error.message : String(error),
+                },
+                'error'
+            );
             console.error(error);
             Sentry.captureException(error);
         }

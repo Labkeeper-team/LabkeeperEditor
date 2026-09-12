@@ -19,6 +19,7 @@ import { ProgramService } from '../../model/service/ProgramService.ts';
 import { LoaderService } from './LoaderService.ts';
 import { IdeService } from './IdeService.ts';
 import { HunkService } from '../operation/HunkService.ts';
+import { logBreadcrumb } from '../utils/logBreadcrumb.ts';
 
 export class CompilationService {
     repository: ViewModelRepository;
@@ -87,6 +88,10 @@ export class CompilationService {
         this.repository.settingsViewModelRepository.setIsCompiling(true);
 
         const mode = this.repository.projectViewModelRepository.mode();
+        logBreadcrumb('compile', `start ${mode}`, {
+            mode,
+            hasProject: Boolean(projectId),
+        });
 
         let result:
             | RequestResult<CompilationResponse>
@@ -107,6 +112,11 @@ export class CompilationService {
         await this.refreshUserInfo();
 
         this.repository.settingsViewModelRepository.setIsCompiling(false);
+        logBreadcrumb('compile', `${mode} ${result.code}`, {
+            mode,
+            code: result.code,
+            isOk: result.isOk,
+        });
 
         if (result.code === 401 || result.code === 403) {
             this.repository.toast(
