@@ -33,6 +33,18 @@ import {
     ObserverService,
 } from '../../model/service/ObserverService.ts';
 import { logBreadcrumb } from '../../viewModel/utils/logBreadcrumb.ts';
+import {
+    getOpenPanelSessionId,
+    OPENPANEL_SESSION_HEADER,
+} from '../openpanel/session.ts';
+
+axios.interceptors.request.use((config) => {
+    const sessionId = getOpenPanelSessionId();
+    if (sessionId) {
+        config.headers[OPENPANEL_SESSION_HEADER] = sessionId;
+    }
+    return config;
+});
 
 function withIds(program: Program): Program {
     return withSegmentIds(program);
