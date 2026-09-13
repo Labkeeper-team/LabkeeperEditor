@@ -60,6 +60,7 @@ interface SettingsState {
     showShareModal: boolean;
     showContactModal: boolean;
     showPrivacyPolicyAcceptanceModal: boolean;
+    showCrossBorderConsentModal: boolean;
     filesToDelete: LabkeeperFile[];
     captchaBypassToken: string | undefined;
     currentFolderPath: string;
@@ -147,6 +148,11 @@ interface PersistenceState {
     /** Настройки агента переживают перезагрузку, история чата — нет */
     agentMaxTokens: number;
     agentIterations: number;
+    /**
+     * Согласие на трансграничную передачу, данное до входа в аккаунт.
+     * После входа уезжает на сервер, чтобы не спрашивать второй раз
+     */
+    crossBorderConsentAcceptedLocally: boolean;
 }
 
 export interface ChatState {
@@ -210,6 +216,7 @@ export const persistenceInitialState: PersistenceState = {
     lastOpenedProjectUuid: undefined,
     agentMaxTokens: AGENT_TOKEN_OPTIONS[0],
     agentIterations: AGENT_ITERATION_OPTIONS[0],
+    crossBorderConsentAcceptedLocally: false,
 };
 
 export const chatInitialState: ChatState = {
@@ -257,6 +264,7 @@ export const settingsInitialState: SettingsState = {
     showShareModal: false,
     showContactModal: false,
     showPrivacyPolicyAcceptanceModal: false,
+    showCrossBorderConsentModal: false,
     filesToDelete: [],
     captchaBypassToken: undefined,
     currentFolderPath: '',
@@ -270,6 +278,7 @@ export const userInitialState: UserInfo = {
     email: '',
     id: 0,
     privacyPolicyAccepted: false,
+    crossBorderDataTransferPolicyAccepted: false,
     tokenBalance: 0,
 };
 

@@ -32,6 +32,8 @@ const ERROR_STOP_REASONS: AgentStopReason[] = [
     'PaymentRequired',
     'Locked',
     'UnauthorizedLimitExceeded',
+    // запрос отклонён до запуска, применять нечего
+    'PromptTooLong',
     'UnknownError',
 ];
 
@@ -40,6 +42,8 @@ const PARTIAL_STOP_REASONS: AgentStopReason[] = [
     'IterationLimit',
     'ContextOverflow',
     'Timeout',
+    // отказ пришёл на одном шаге, а сделанное до него уже в проекте
+    'QuotaExceeded',
 ];
 
 export class AgentChatService {
@@ -51,6 +55,8 @@ export class AgentChatService {
      * по устаревшему номеру и молча выходит вместо записи в чужую ленту.
      */
     private runToken = 0;
+    /** Текст последнего запроса: слишком длинный вернём в поле, чтобы его сократили */
+    private lastPrompt = '';
 
     constructor(
         private repository: ViewModelRepository,
@@ -145,6 +151,65 @@ export class AgentChatService {
         chat.setHistoryRequestState('ok');
     };
 
+    /**
+     * Согласие на трансграничную передачу. У вошедшего источник истины на
+     * сервере, у гостя серверу записать его некуда, поэтому отметка в локальном
+     * хранилище считается наравне: один раз согласился, второй раз не спрашиваем
+     */
+    private crossBorderConsentGiven = (): boolean => {
+        const user = this.repository.userViewModelRepository;
+        if (
+            user.isAuthenticated() &&
+            user.crossBorderDataTransferPolicyAccepted()
+        ) {
+            return true;
+        }
+        return this.repository.persistenceViewModelRepository.crossBorderConsentAcceptedLocally();
+    };
+
+    /**
+     * Человек отметил согласие в плашке. Запрос, из-за которого её показали,
+     * уходит сам: текст всё это время лежал в поле ввода нетронутым
+     */
+    onCrossBorderConsentAccepted = async (): Promise<void> => {
+        this.repository.persistenceViewModelRepository.setCrossBorderConsentAcceptedLocally(
+            true
+        );
+        this.repository.settingsViewModelRepository.setShowCrossBorderConsentModal(
+            false
+        );
+
+        if (this.repository.userViewModelRepository.isAuthenticated()) {
+            await this.sendCrossBorderConsent();
+        }
+
+        await this.onPromptSubmit();
+    };
+
+    onCrossBorderConsentDismissed = (): void => {
+        this.repository.settingsViewModelRepository.setShowCrossBorderConsentModal(
+            false
+        );
+    };
+
+    /**
+     * Отправляет согласие на сервер. Не доехало — молчим: локальная отметка
+     * осталась, досылка повторится при следующем запуске, и держать человека
+     * из-за неудачной записи не за что
+     */
+    sendCrossBorderConsent = async (): Promise<void> => {
+        const response =
+            await this.rpi.acceptCrossBorderDataTransferPolicyRequest();
+        if (!response.isOk) {
+            logBreadcrumb(
+                'agent',
+                'cross_border_consent_not_saved',
+                { code: response.code },
+                'warning'
+            );
+        }
+    };
+
     onPromptSubmit = async (): Promise<void> => {
         const chat = this.repository.chatViewModelRepository;
         const prompt = chat.input().trim();
@@ -158,6 +223,14 @@ export class AgentChatService {
         if (authenticated && !project) {
             return;
         }
+        // до согласия запрос никуда не идёт: ни поле не чистим, ни ленту не трогаем,
+        // чтобы после принятия отправить ровно то же самое
+        if (!this.crossBorderConsentGiven()) {
+            this.repository.settingsViewModelRepository.setShowCrossBorderConsentModal(
+                true
+            );
+            return;
+        }
 
         // слот занимается до первого await, иначе второе нажатие проскочит проверку
         const token = ++this.runToken;
@@ -166,6 +239,7 @@ export class AgentChatService {
             hasProject: Boolean(project),
         });
         chat.setRequestState('connecting');
+        this.lastPrompt = prompt;
         chat.setInput('');
         chat.appendMessage({
             kind: 'request',
@@ -378,6 +452,10 @@ export class AgentChatService {
 
         if (isError) {
             chat.appendMessage({ kind: 'error', reason: event.stopReason });
+            // сократить можно только то, что видно: иначе длинный текст пришлось бы набирать заново
+            if (event.stopReason === 'PromptTooLong' && !chat.input()) {
+                chat.setInput(this.lastPrompt);
+            }
             chat.setRequestState('error');
             this.reportStopReason(event.stopReason);
             return;

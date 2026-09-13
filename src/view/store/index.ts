@@ -68,6 +68,7 @@ import {
     setLastOpenedProjectUuid,
     setAgentMaxTokens,
     setAgentIterations,
+    setCrossBorderConsentAcceptedLocally,
     setLastProgram,
 } from './slices/persistence';
 import {
@@ -118,6 +119,7 @@ import {
     setIsFileDraggedToFileManager,
     setShoFileManager,
     setShowPrivacyPolicyAcceptanceModal,
+    setShowCrossBorderConsentModal,
     setShowSearch,
     setTourVisibility,
     setCurrentFolderPath,
@@ -342,7 +344,11 @@ export const createViewModelStateFromStore = (
                 store.getState().persistence.lastOpenedProjectUuid,
             agentMaxTokens: () => store.getState().persistence.agentMaxTokens,
             agentIterations: () => store.getState().persistence.agentIterations,
+            crossBorderConsentAcceptedLocally: () =>
+                store.getState().persistence.crossBorderConsentAcceptedLocally,
 
+            setCrossBorderConsentAcceptedLocally: (value) =>
+                store.dispatch(setCrossBorderConsentAcceptedLocally(value)),
             setAgentMaxTokens: (value) =>
                 store.dispatch(setAgentMaxTokens(value)),
             setAgentIterations: (value) =>
@@ -444,6 +450,8 @@ export const createViewModelStateFromStore = (
 
             setShowPrivacyPolicyAcceptanceModal: (v) =>
                 store.dispatch(setShowPrivacyPolicyAcceptanceModal(v)),
+            setShowCrossBorderConsentModal: (v) =>
+                store.dispatch(setShowCrossBorderConsentModal(v)),
             setCaptchaBypassToken: (token) =>
                 store.dispatch(setCaptchaBypassToken(token)),
             setShowSearch: (show: boolean) =>
@@ -479,6 +487,8 @@ export const createViewModelStateFromStore = (
             id: () => store.getState().user.id,
             isAuthenticated: () => store.getState().user.isAuthenticated,
             tokenBalance: () => store.getState().user.tokenBalance,
+            crossBorderDataTransferPolicyAccepted: () =>
+                store.getState().user.crossBorderDataTransferPolicyAccepted,
 
             setUserInfo: (userInfo) => store.dispatch(setUser(userInfo)),
         },

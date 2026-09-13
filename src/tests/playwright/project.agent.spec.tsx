@@ -42,6 +42,8 @@ async function openChat(
     const routeSetup = new RouteSetup(page);
     const authenticated = options.authenticated ?? true;
     await routeSetup.setupGetUserInfoRequest(authenticated);
+    // согласие на передачу данных проверяется отдельной спекой, здесь оно дано
+    await routeSetup.acceptCrossBorderConsentLocally();
     await routeSetup.setupGetProjectRequest(200, 'default', options.program);
     await routeSetup.setupGetAllProjectsRequest();
     await routeSetup.setupSaveProgramRequest();
@@ -248,6 +250,35 @@ test('agent-stop-reason-UnauthorizedLimitExceeded-shows-text', async ({
     );
     // по ТЗ тут же показываем окно входа
     await expect(page.locator('.auth-modal')).toBeVisible();
+});
+
+test('agent-stop-reason-PromptTooLong-returns-the-prompt', async ({ page }) => {
+    await openChat(page, { frames: [finished('PromptTooLong', null)] });
+    await submitPrompt(page, 'очень длинный запрос');
+
+    await expect(page.locator('.agent-chat__error-text')).toHaveText(
+        'The request is too long. Shorten it and send it again'
+    );
+    // текст вернулся в поле, сокращать его не придётся по памяти
+    await expect(page.getByPlaceholder('Enter your promt')).toHaveValue(
+        'очень длинный запрос'
+    );
+    await expect(page.getByPlaceholder('Enter your promt')).toBeEditable();
+});
+
+test('agent-stop-reason-QuotaExceeded-keeps-the-answer', async ({ page }) => {
+    await openChat(page, {
+        frames: [finished('QuotaExceeded', 'добавил два сегмента')],
+    });
+    await submitPrompt(page);
+
+    await expect(page.locator('.agent-chat__response-text')).toHaveText(
+        'добавил два сегмента'
+    );
+    await expect(page.locator('.agent-chat__notice-text')).toContainText(
+        'it tried to create a file larger than allowed'
+    );
+    await expect(page.locator('.agent-chat__error-text')).toHaveCount(0);
 });
 
 test('chat-column-does-not-break-on-a-narrow-window', async ({ page }) => {

@@ -208,6 +208,8 @@ export interface Translations {
             UnauthorizedLimitExceeded: string;
             PaymentRequired: string;
             Locked: string;
+            PromptTooLong: string;
+            QuotaExceeded: string;
             UnknownError: string;
             timeout: string;
             disconnected: string;
@@ -451,6 +453,14 @@ export interface Translations {
         description_suffix: string;
         accept: string;
         error: string;
+    };
+    cross_border_consent_modal: {
+        title: string;
+        consent_prefix: string;
+        consent_link: string;
+        consent_suffix: string;
+        accept: string;
+        cancel: string;
     };
     wiki: string;
     readonly_public_project: string;

@@ -341,6 +341,50 @@ test('unauthorized-final-event-carries-the-program-and-closes-the-socket', async
     expect(socket.closeCodes).toEqual([1000]);
 });
 
+test('unknown-stop-reason-becomes-an-error-not-a-success', async () => {
+    const handlers = makeHandlers();
+    new WebAgentSocket().startAgent('project-42', PARAMS, handlers);
+    const socket = lastSocket();
+    socket.fireOpen();
+
+    // сервер добавил причину, о которой фронт ещё не знает
+    socket.fireMessage({
+        type: 'agentFinished',
+        message: null,
+        stopReason: 'SomethingNew',
+    });
+    await flush();
+
+    expect(handlers.onEvent).toHaveBeenCalledWith({
+        kind: 'finished',
+        message: null,
+        stopReason: 'UnknownError',
+    });
+});
+
+test.each([['PromptTooLong'], ['QuotaExceeded']])(
+    'known-stop-reason-%s-passes-through-as-is',
+    async (stopReason) => {
+        const handlers = makeHandlers();
+        new WebAgentSocket().startAgent('project-42', PARAMS, handlers);
+        const socket = lastSocket();
+        socket.fireOpen();
+
+        socket.fireMessage({
+            type: 'agentFinished',
+            message: null,
+            stopReason,
+        });
+        await flush();
+
+        expect(handlers.onEvent).toHaveBeenCalledWith({
+            kind: 'finished',
+            message: null,
+            stopReason,
+        });
+    }
+);
+
 test('silence-past-the-deadline-gives-timeout-and-a-closed-socket', async () => {
     const handlers = makeHandlers();
     new WebAgentSocket().startAgent('project-42', PARAMS, handlers);

@@ -56,7 +56,8 @@ export class RouteSetup {
         email: string = defaultEmail,
         id: number = defaultId,
         tokenBalance: number = 0,
-        privacyPolicyAccepted: boolean = isAuthenticated
+        privacyPolicyAccepted: boolean = isAuthenticated,
+        crossBorderDataTransferPolicyAccepted: boolean = true
     ) {
         await this.page.route(
             `**/api/${version}/public/user-info**`,
@@ -69,6 +70,8 @@ export class RouteSetup {
                         email: email,
                         id: id,
                         privacyPolicyAccepted: privacyPolicyAccepted,
+                        crossBorderDataTransferPolicyAccepted:
+                            crossBorderDataTransferPolicyAccepted,
                         tokenBalance: tokenBalance,
                     }),
                 });
@@ -281,6 +284,39 @@ export class RouteSetup {
             }
         );
         return received;
+    }
+
+    /**
+     * Отмечает согласие на трансграничную передачу так, как его кладёт само
+     * приложение: срезом redux-persist. Иначе плашка перехватит первый запрос
+     */
+    async acceptCrossBorderConsentLocally() {
+        await this.page.addInitScript(() => {
+            window.localStorage.setItem(
+                'persist:PERSISTENCE',
+                JSON.stringify({
+                    crossBorderConsentAcceptedLocally: 'true',
+                    _persist: '{"version":-1,"rehydrated":true}',
+                })
+            );
+        });
+    }
+
+    /** Ручка приёма согласия на трансграничную передачу */
+    async setupCrossBorderDataTransferPolicyRequest(status: number = 200) {
+        const calls: string[] = [];
+        await this.page.route(
+            `**/api/${version}/public/cross-border-data-transfer-policy/accept**`,
+            async (route) => {
+                calls.push(route.request().method());
+                await route.fulfill({
+                    status: status,
+                    contentType: contentType,
+                    body: '{}',
+                });
+            }
+        );
+        return calls;
     }
 
     async setupSetProjectTypeRequest() {

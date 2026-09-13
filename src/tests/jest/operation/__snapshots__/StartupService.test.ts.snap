@@ -37,6 +37,8 @@ MockViewModelRepositoryState {
   "compileSuccessResult": {
     "segments": [],
   },
+  "crossBorderConsentAcceptedLocally": false,
+  "crossBorderDataTransferPolicyAccepted": false,
   "currentEmail": null,
   "currentFolderPath": "",
   "currentProgram": {
@@ -96,6 +98,7 @@ MockViewModelRepositoryState {
   "searchCurrentMatch": null,
   "searchInput": "",
   "searchNoMatch": false,
+  "showCrossBorderConsentModal": false,
   "showFileManager": false,
   "showPrivacyPolicyAcceptanceModal": false,
   "showSearch": false,

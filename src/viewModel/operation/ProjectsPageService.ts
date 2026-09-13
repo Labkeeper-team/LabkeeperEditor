@@ -136,6 +136,7 @@ export class ProjectsPageService {
                 id: this.repository.userViewModelRepository.id(),
                 email: this.repository.userViewModelRepository.email(),
                 privacyPolicyAccepted: false,
+                crossBorderDataTransferPolicyAccepted: false,
                 tokenBalance:
                     this.repository.userViewModelRepository.tokenBalance(),
             },

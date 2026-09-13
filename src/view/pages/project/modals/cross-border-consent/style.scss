@@ -1,0 +1,69 @@
+@use '../../../../styles/colors' as *;
+
+.cross-border-consent-modal {
+    padding: 24px;
+    max-width: 480px;
+    box-sizing: border-box;
+
+    @media screen and (max-width: 767px) {
+        padding: 20px 16px;
+        max-width: 100%;
+    }
+}
+
+.cross-border-consent-modal__title {
+    font-weight: 600;
+    margin-bottom: 12px;
+    // на узком экране крестик стоит поверх шапки, заголовок под него не лезет
+    @media screen and (max-width: 767px) {
+        padding-right: 40px;
+    }
+}
+
+.cross-border-consent-modal__consent-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 0;
+    color: $gray-20;
+    font-size: 15px;
+    line-height: 22px;
+    cursor: pointer;
+
+    input {
+        margin-top: 4px;
+        accent-color: $blue-10;
+        // сафари на айфоне ужимает чекбокс до нуля в flex-строке
+        flex: none;
+        width: 16px;
+        height: 16px;
+    }
+}
+
+.cross-border-consent-modal__consent-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.cross-border-consent-modal__consent-link {
+    color: $blue-10;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+
+    &:hover {
+        opacity: 0.92;
+    }
+}
+
+.cross-border-consent-modal__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 20px;
+
+    // кнопки в столбик, когда рядом они уже не помещаются
+    @media screen and (max-width: 380px) {
+        flex-direction: column-reverse;
+        align-items: stretch;
+    }
+}

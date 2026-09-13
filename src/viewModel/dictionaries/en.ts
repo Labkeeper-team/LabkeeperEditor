@@ -223,6 +223,10 @@ export const en: Translations = {
             PaymentRequired:
                 'You have reached the limit on using the assistant.',
             Locked: 'The agent is already running in another tab, or the project is being changed. Wait for it to finish and try again',
+            PromptTooLong:
+                'The request is too long. Shorten it and send it again',
+            QuotaExceeded:
+                'The agent was stopped: it tried to create a file larger than allowed or to add more segments than allowed. What it managed to change before that is already in the project',
             UnknownError: 'Something went wrong. Please try again',
             timeout:
                 'The agent did not finish within ten minutes. Please try again',
@@ -497,6 +501,15 @@ export const en: Translations = {
         description_suffix: '.',
         accept: 'Accept',
         error: 'Failed to save privacy policy acceptance. Please try again',
+    },
+    cross_border_consent_modal: {
+        title: 'Data transfer to DeepSeek',
+        consent_prefix: 'I consent to the ',
+        consent_link: 'cross-border transfer',
+        consent_suffix:
+            ' of the data I enter to the DeepSeek service for processing my request and generating a response',
+        accept: 'Continue',
+        cancel: 'Cancel',
     },
     wiki: 'wiki',
     readonly_public_project: 'readonly public project',

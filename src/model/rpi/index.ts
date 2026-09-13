@@ -231,6 +231,8 @@ export interface Rpi {
 
     acceptPrivacyPolicyRequest(): Promise<RequestResult>;
 
+    acceptCrossBorderDataTransferPolicyRequest(): Promise<RequestResult>;
+
     getS3FileRequest(path: string): Promise<RequestResult>;
 
     formLoginRequest(
@@ -335,6 +337,9 @@ export const mockRpi = (): Rpi => {
             throw new Error('Not implemented');
         },
         acceptPrivacyPolicyRequest: () => {
+            throw new Error('Not implemented');
+        },
+        acceptCrossBorderDataTransferPolicyRequest: () => {
             throw new Error('Not implemented');
         },
         getBillingPricingRequest: () =>

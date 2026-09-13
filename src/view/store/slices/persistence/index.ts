@@ -32,6 +32,12 @@ export const persistenceSlice = createSlice({
         setAgentIterations(state, { payload }: PayloadAction<number>) {
             state.agentIterations = payload;
         },
+        setCrossBorderConsentAcceptedLocally(
+            state,
+            { payload }: PayloadAction<boolean>
+        ) {
+            state.crossBorderConsentAcceptedLocally = payload;
+        },
     },
 });
 export const {
@@ -42,4 +48,5 @@ export const {
     setLastOpenedProjectUuid,
     setAgentMaxTokens,
     setAgentIterations,
+    setCrossBorderConsentAcceptedLocally,
 } = persistenceSlice.actions;

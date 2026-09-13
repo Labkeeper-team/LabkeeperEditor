@@ -162,3 +162,76 @@ test('authenticated-project-default-replaces-with-project-id', async () => {
         { replace: true }
     );
 });
+
+/**
+ * Согласие на трансграничную передачу, данное до входа, лежит только в браузере.
+ * После входа оно должно уехать на сервер само, иначе плашка выскочит второй раз
+ */
+
+const okEmpty = {
+    code: 200,
+    body: undefined,
+    isOk: true,
+    isUnauth: false,
+    isForbidden: false,
+};
+
+function startupWithConsent(serverAccepted: boolean) {
+    const ctx = mockContext();
+    mockAuthenticatedStartup(ctx.rpi);
+    ctx.rpi.getUserInfoRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        body: {
+            isAuthenticated: true,
+            email: 'a@gmail.com',
+            id: 1,
+            privacyPolicyAccepted: true,
+            crossBorderDataTransferPolicyAccepted: serverAccepted,
+            tokenBalance: 0,
+        },
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+    });
+    ctx.rpi.acceptCrossBorderDataTransferPolicyRequest = jest
+        .fn()
+        .mockResolvedValue(okEmpty);
+    ctx.repository.setLocation(`/project/${PROJECT_ID}`);
+    return ctx;
+}
+
+test('consent-given-before-login-is-sent-after-login', async () => {
+    const ctx = startupWithConsent(false);
+    ctx.repository.persistenceViewModelRepository.setCrossBorderConsentAcceptedLocally(
+        true
+    );
+
+    await ctx.startupService.onAppStartup();
+
+    expect(
+        ctx.rpi.acceptCrossBorderDataTransferPolicyRequest
+    ).toHaveBeenCalledTimes(1);
+});
+
+test('consent-already-on-the-server-is-not-sent-again', async () => {
+    const ctx = startupWithConsent(true);
+    ctx.repository.persistenceViewModelRepository.setCrossBorderConsentAcceptedLocally(
+        true
+    );
+
+    await ctx.startupService.onAppStartup();
+
+    expect(
+        ctx.rpi.acceptCrossBorderDataTransferPolicyRequest
+    ).not.toHaveBeenCalled();
+});
+
+test('consent-is-not-invented-for-a-user-who-never-gave-it', async () => {
+    const ctx = startupWithConsent(false);
+
+    await ctx.startupService.onAppStartup();
+
+    expect(
+        ctx.rpi.acceptCrossBorderDataTransferPolicyRequest
+    ).not.toHaveBeenCalled();
+});

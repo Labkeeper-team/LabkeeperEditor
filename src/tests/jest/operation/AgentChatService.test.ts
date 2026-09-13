@@ -36,6 +36,7 @@ function setup(authenticated = true) {
         email: 'a@gmail.com',
         id: USER_ID,
         privacyPolicyAccepted: true,
+        crossBorderDataTransferPolicyAccepted: true,
         tokenBalance: 10,
     });
     ctx.repository.projectViewModelRepository.setProject({
@@ -48,6 +49,10 @@ function setup(authenticated = true) {
         program: { segments: [], parameters: { roundStrategy: 'noRound' } },
     });
     ctx.repository.projectViewModelRepository.setReadOnly(false);
+    // согласие на трансграничную передачу уже дано, иначе до отправки не дойдёт
+    ctx.repository.persistenceViewModelRepository.setCrossBorderConsentAcceptedLocally(
+        true
+    );
     ctx.rpi.getAgentHistoryRequest = jest
         .fn()
         .mockResolvedValue(okResult({ history: [] }));
@@ -185,6 +190,7 @@ test.each([
     ['PaymentRequired'],
     ['Locked'],
     ['UnauthorizedLimitExceeded'],
+    ['PromptTooLong'],
     ['UnknownError'],
 ] as const)('agent-stop-reason-%s-shows-error', async (stopReason) => {
     const ctx = setup();
@@ -201,31 +207,31 @@ test.each([
     expect(ctx.repository.chatViewModelRepository.requestState()).toBe('error');
 });
 
-test.each([['IterationLimit'], ['ContextOverflow'], ['Timeout']] as const)(
-    'agent-stop-reason-%s-keeps-the-answer',
-    async (stopReason) => {
-        const ctx = setup();
-        ctx.repository.chatViewModelRepository.setInput('привет');
+test.each([
+    ['IterationLimit'],
+    ['ContextOverflow'],
+    ['Timeout'],
+    ['QuotaExceeded'],
+] as const)('agent-stop-reason-%s-keeps-the-answer', async (stopReason) => {
+    const ctx = setup();
+    ctx.repository.chatViewModelRepository.setInput('привет');
 
-        await ctx.agentChatService.onPromptSubmit();
-        await emit(ctx, {
-            kind: 'finished',
-            message: 'успел частично',
-            stopReason,
-        });
+    await ctx.agentChatService.onPromptSubmit();
+    await emit(ctx, {
+        kind: 'finished',
+        message: 'успел частично',
+        stopReason,
+    });
 
-        const kinds = ctx.repository.chatViewModelRepository
-            .messages()
-            .map((m) => m.kind);
-        // и ответ, и пояснение почему агент не доработал: пояснение не ошибка
-        expect(kinds).toContain('response');
-        expect(kinds).toContain('notice');
-        expect(kinds).not.toContain('error');
-        expect(ctx.repository.chatViewModelRepository.requestState()).toBe(
-            'ok'
-        );
-    }
-);
+    const kinds = ctx.repository.chatViewModelRepository
+        .messages()
+        .map((m) => m.kind);
+    // и ответ, и пояснение почему агент не доработал: пояснение не ошибка
+    expect(kinds).toContain('response');
+    expect(kinds).toContain('notice');
+    expect(kinds).not.toContain('error');
+    expect(ctx.repository.chatViewModelRepository.requestState()).toBe('ok');
+});
 
 test('agent-null-message-does-not-add-empty-response', async () => {
     const ctx = setup();
@@ -580,6 +586,87 @@ test('agent-events-append-to-transcript-in-order', async () => {
     ).toEqual(['request', 'model_call', 'read_segment', 'response']);
 });
 
+test('prompt-too-long-returns-the-text-to-the-field', async () => {
+    const ctx = setup();
+    ctx.repository.chatViewModelRepository.setInput('очень длинный запрос');
+    await ctx.agentChatService.onPromptSubmit();
+    expect(ctx.repository.chatViewModelRepository.input()).toBe('');
+
+    await emit(ctx, {
+        kind: 'finished',
+        message: null,
+        stopReason: 'PromptTooLong',
+    });
+
+    // сокращать текст человеку удобнее там, где он его писал
+    expect(ctx.repository.chatViewModelRepository.input()).toBe(
+        'очень длинный запрос'
+    );
+});
+
+test('prompt-too-long-for-a-guest-does-not-replace-program', async () => {
+    const ctx = setup(false);
+    ctx.repository.projectViewModelRepository.setCurrentProgram({
+        segments: [{ type: 'md', parameters: {}, text: 'ORIGINAL' }],
+        parameters: { roundStrategy: 'noRound' },
+    });
+    ctx.repository.chatViewModelRepository.setInput('сделай');
+    await ctx.agentChatService.onPromptSubmit();
+
+    await emit(ctx, {
+        kind: 'finished',
+        message: null,
+        stopReason: 'PromptTooLong',
+        program: {
+            segments: [{ type: 'md', parameters: {}, text: 'LLM GENERATED' }],
+            parameters: { roundStrategy: 'noRound' },
+        },
+        hunks: [],
+    });
+
+    const program = ctx.repository.projectViewModelRepository.currentProgram();
+    expect(program.segments[0].text).toBe('ORIGINAL');
+});
+
+test('quota-exceeded-for-a-guest-keeps-what-was-done', async () => {
+    const ctx = setup(false);
+    ctx.repository.projectViewModelRepository.setCurrentProgram({
+        segments: [{ type: 'md', parameters: {}, text: 'ORIGINAL' }],
+        parameters: { roundStrategy: 'noRound' },
+    });
+    ctx.repository.chatViewModelRepository.setInput('сделай');
+    await ctx.agentChatService.onPromptSubmit();
+
+    await emit(ctx, {
+        kind: 'finished',
+        message: null,
+        stopReason: 'QuotaExceeded',
+        program: {
+            segments: [{ type: 'md', parameters: {}, text: 'ДО ЛИМИТА' }],
+            parameters: { roundStrategy: 'noRound' },
+        },
+        hunks: [],
+    });
+
+    // упор в лимит на одном шаге не отменяет шаги до него
+    const program = ctx.repository.projectViewModelRepository.currentProgram();
+    expect(program.segments[0].text).toBe('ДО ЛИМИТА');
+});
+
+test.each([['PromptTooLong'], ['QuotaExceeded']] as const)(
+    'stop-reason-%s-is-not-reported-as-a-failure',
+    async (stopReason) => {
+        const ctx = setup();
+        ctx.repository.chatViewModelRepository.setInput('сделай таблицу');
+        await ctx.agentChatService.onPromptSubmit();
+
+        await emit(ctx, { kind: 'finished', message: null, stopReason });
+
+        // это ограничения, о которых сказали человеку, а не сбой для разбора
+        expect(Sentry.captureException).not.toHaveBeenCalled();
+    }
+);
+
 test('stop-reason-payment-required-reports-payment-event', async () => {
     const ctx = setup();
     const events: string[] = [];
@@ -687,4 +774,155 @@ test('unauthorized-agent-stores-hunks', async () => {
     });
 
     expect(ctx.repository.ideViewModelRepository.hunks()).toEqual([hunk]);
+});
+
+/**
+ * Согласие на трансграничную передачу данных в DeepSeek.
+ * Пока оно не дано, запрос не должен уходить ни у вошедшего, ни у гостя
+ */
+
+const okEmpty = () => ({
+    code: 200,
+    body: undefined,
+    isOk: true,
+    isUnauth: false,
+    isForbidden: false,
+});
+
+const consentModalShown = (ctx: ReturnType<typeof setup>) =>
+    (ctx.repository as MockViewModelRepository).mockState()
+        .showCrossBorderConsentModal;
+
+function setupWithoutConsent(authenticated = true) {
+    const ctx = setup(authenticated);
+    ctx.repository.persistenceViewModelRepository.setCrossBorderConsentAcceptedLocally(
+        false
+    );
+    ctx.repository.userViewModelRepository.setUserInfo({
+        isAuthenticated: authenticated,
+        email: 'a@gmail.com',
+        id: USER_ID,
+        privacyPolicyAccepted: true,
+        crossBorderDataTransferPolicyAccepted: false,
+        tokenBalance: 10,
+    });
+    ctx.rpi.acceptCrossBorderDataTransferPolicyRequest = jest
+        .fn()
+        .mockResolvedValue(okEmpty());
+    return ctx;
+}
+
+test('cross-border-consent-blocks-the-request', async () => {
+    const ctx = setupWithoutConsent();
+    ctx.repository.chatViewModelRepository.setInput('сделай таблицу');
+
+    await ctx.agentChatService.onPromptSubmit();
+
+    expect(consentModalShown(ctx)).toBe(true);
+    expect(ctx.agentSocketState.startCalls).toBe(0);
+    // текст остаётся в поле, иначе после согласия отправлять будет нечего
+    expect(ctx.repository.chatViewModelRepository.input()).toBe(
+        'сделай таблицу'
+    );
+    expect(ctx.repository.chatViewModelRepository.messages()).toHaveLength(0);
+});
+
+test('cross-border-consent-accept-sends-the-same-request', async () => {
+    const ctx = setupWithoutConsent();
+    ctx.repository.chatViewModelRepository.setInput('сделай таблицу');
+    await ctx.agentChatService.onPromptSubmit();
+
+    await ctx.agentChatService.onCrossBorderConsentAccepted();
+
+    expect(consentModalShown(ctx)).toBe(false);
+    expect(
+        ctx.rpi.acceptCrossBorderDataTransferPolicyRequest
+    ).toHaveBeenCalledTimes(1);
+    expect(ctx.agentSocketState.started?.prompt).toBe('сделай таблицу');
+});
+
+test('cross-border-consent-dismiss-keeps-the-prompt', async () => {
+    const ctx = setupWithoutConsent();
+    ctx.repository.chatViewModelRepository.setInput('сделай таблицу');
+    await ctx.agentChatService.onPromptSubmit();
+
+    ctx.agentChatService.onCrossBorderConsentDismissed();
+
+    expect(consentModalShown(ctx)).toBe(false);
+    expect(ctx.agentSocketState.startCalls).toBe(0);
+    expect(ctx.repository.chatViewModelRepository.input()).toBe(
+        'сделай таблицу'
+    );
+});
+
+test('cross-border-consent-is-asked-only-once', async () => {
+    const ctx = setupWithoutConsent();
+    ctx.repository.chatViewModelRepository.setInput('первый');
+    await ctx.agentChatService.onPromptSubmit();
+    await ctx.agentChatService.onCrossBorderConsentAccepted();
+    ctx.agentSocketState.handlers?.onClosed('closed');
+
+    ctx.repository.chatViewModelRepository.setInput('второй');
+    await ctx.agentChatService.onPromptSubmit();
+
+    expect(consentModalShown(ctx)).toBe(false);
+    expect(ctx.agentSocketState.started?.prompt).toBe('второй');
+});
+
+test('cross-border-consent-of-a-guest-goes-to-local-storage-only', async () => {
+    const ctx = setupWithoutConsent(false);
+    ctx.repository.chatViewModelRepository.setInput('сделай таблицу');
+    await ctx.agentChatService.onPromptSubmit();
+
+    await ctx.agentChatService.onCrossBorderConsentAccepted();
+
+    // гостю сервер согласие записать некуда, пока он не вошёл
+    expect(
+        ctx.rpi.acceptCrossBorderDataTransferPolicyRequest
+    ).not.toHaveBeenCalled();
+    expect(
+        ctx.repository.persistenceViewModelRepository.crossBorderConsentAcceptedLocally()
+    ).toBe(true);
+    expect(ctx.agentSocketState.program).not.toBeNull();
+});
+
+test('cross-border-consent-accepted-on-the-server-is-not-asked-again', async () => {
+    const ctx = setupWithoutConsent();
+    ctx.repository.userViewModelRepository.setUserInfo({
+        isAuthenticated: true,
+        email: 'a@gmail.com',
+        id: USER_ID,
+        privacyPolicyAccepted: true,
+        crossBorderDataTransferPolicyAccepted: true,
+        tokenBalance: 10,
+    });
+    ctx.repository.chatViewModelRepository.setInput('сделай таблицу');
+
+    await ctx.agentChatService.onPromptSubmit();
+
+    expect(consentModalShown(ctx)).toBe(false);
+    expect(ctx.agentSocketState.started?.prompt).toBe('сделай таблицу');
+});
+
+test('cross-border-consent-survives-a-failed-save', async () => {
+    const ctx = setupWithoutConsent();
+    ctx.rpi.acceptCrossBorderDataTransferPolicyRequest = jest
+        .fn()
+        .mockResolvedValue({
+            code: 500,
+            body: undefined,
+            isOk: false,
+            isUnauth: false,
+            isForbidden: false,
+        });
+    ctx.repository.chatViewModelRepository.setInput('сделай таблицу');
+    await ctx.agentChatService.onPromptSubmit();
+
+    await ctx.agentChatService.onCrossBorderConsentAccepted();
+
+    // сервер не записал, но человек согласился: запрос уходит, вопрос не повторяем
+    expect(ctx.agentSocketState.started?.prompt).toBe('сделай таблицу');
+    expect(
+        ctx.repository.persistenceViewModelRepository.crossBorderConsentAcceptedLocally()
+    ).toBe(true);
 });

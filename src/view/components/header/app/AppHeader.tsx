@@ -29,6 +29,7 @@ import { useIsMobile } from '../../../hooks/useMobile';
 
 import '../style.scss';
 import { PrivacyPolicyAcceptanceModal } from '../../../pages/project/modals/privacy-policy-acceptance';
+import { CrossBorderConsentModal } from '../../../pages/project/modals/cross-border-consent';
 
 const languageOptions = [
     { label: 'English', value: 'en' },
@@ -124,6 +125,7 @@ export const AppHeader = () => {
             <ShareModal />
             <ContactModal />
             <PrivacyPolicyAcceptanceModal />
+            <CrossBorderConsentModal />
         </>
     );
 };

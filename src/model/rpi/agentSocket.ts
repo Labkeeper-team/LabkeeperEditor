@@ -21,6 +21,10 @@ export type AgentStopReason =
     | 'UnauthorizedLimitExceeded'
     | 'PaymentRequired'
     | 'Locked'
+    /** Текст запроса длиннее допустимого, прогона не было */
+    | 'PromptTooLong'
+    /** Агент попытался превысить лимит файла или сегментов, его остановили, сделанное сохранено */
+    | 'QuotaExceeded'
     | 'UnknownError';
 
 export const AGENT_STOP_REASONS: AgentStopReason[] = [
@@ -31,6 +35,8 @@ export const AGENT_STOP_REASONS: AgentStopReason[] = [
     'UnauthorizedLimitExceeded',
     'PaymentRequired',
     'Locked',
+    'PromptTooLong',
+    'QuotaExceeded',
     'UnknownError',
 ];
 

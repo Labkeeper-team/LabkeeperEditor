@@ -37,6 +37,7 @@ test('project-create-replaces-stale-editor-program-with-created-project-program'
         id: USER_ID,
         isAuthenticated: true,
         privacyPolicyAccepted: true,
+        crossBorderDataTransferPolicyAccepted: true,
         tokenBalance: 0,
     });
     programService.setNewProgram(staleProgram);

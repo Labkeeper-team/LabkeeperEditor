@@ -47,6 +47,7 @@ function setOwnAuthenticatedProject(
         id: USER_ID,
         isAuthenticated: true,
         privacyPolicyAccepted: true,
+        crossBorderDataTransferPolicyAccepted: true,
         tokenBalance: 0,
     });
     repository.projectViewModelRepository.setProject(project);
@@ -84,6 +85,7 @@ test('incognito accept removes hunks locally without DELETE', async () => {
         id: 0,
         isAuthenticated: false,
         privacyPolicyAccepted: false,
+        crossBorderDataTransferPolicyAccepted: true,
         tokenBalance: 0,
     });
     repository.ideViewModelRepository.setHunks([sampleHunk]);
