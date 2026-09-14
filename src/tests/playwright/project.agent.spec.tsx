@@ -1,6 +1,10 @@
 import { expect, test, type Page } from '@playwright/test';
 import { RouteSetup } from './mock.routeSetUp.tsx';
-import { AgentHistoryEntry, Program } from '../../model/domain.ts';
+import {
+    AgentHistoryEntry,
+    CompileErrorResult,
+    Program,
+} from '../../model/domain.ts';
 
 const uuid = '2cd18704-6c3f-48cb-96f1-9a923930f8cb';
 
@@ -429,6 +433,93 @@ test('unauthorized-agent-sends-program-with-segment-ids', async ({ page }) => {
     };
     expect(frame.type).toBe('startAgentUnauthorized');
     expect(frame.program.segments.map((segment) => segment.id)).toEqual([1, 2]);
+});
+
+const NO_SUCH_VARIABLE = {
+    code: 301,
+    payload: { segmentId: 1, line: 0, position: 4, variable: 'x' },
+} as unknown as CompileErrorResult;
+
+/** Проект с ошибкой компиляции: Run отдаёт ошибку, чат ещё не открыт */
+async function openWithCompileError(page: Page) {
+    const routeSetup = new RouteSetup(page);
+    await routeSetup.setupGetUserInfoRequest();
+    await routeSetup.acceptCrossBorderConsentLocally();
+    await routeSetup.setupGetProjectRequest(200, 'default', RUNNABLE_PROGRAM);
+    await routeSetup.setupGetAllProjectsRequest();
+    await routeSetup.setupSaveProgramRequest();
+    await routeSetup.setupListFilesRequest(200, 'emptyFiles');
+    await routeSetup.setupAgentHistoryRequest([]);
+    await routeSetup.setupAgentSocket([]);
+    await routeSetup.setupCompilationRequest(203, 'errorBody', [
+        NO_SUCH_VARIABLE,
+    ]);
+
+    await page.goto(`/project/${uuid}`);
+    await page.waitForLoadState('domcontentloaded');
+}
+
+const sendErrorsButton = (page: Page) =>
+    page.getByRole('button', { name: 'Send to agent' });
+
+test('compile-errors-go-to-the-agent-prompt', async ({ page }) => {
+    await openWithCompileError(page);
+    await expect(sendErrorsButton(page)).toHaveCount(0);
+    await page.getByRole('button', { name: /Run/i }).click();
+    await expect(sendErrorsButton(page)).toBeVisible();
+    const expandedPanel = page.locator('.problem-list-container-expanded');
+    const expandedBefore = await expandedPanel.count();
+
+    await sendErrorsButton(page).click();
+
+    // чат был закрыт, кнопка его открывает
+    await expect(page.locator('.agent-chat')).toBeVisible();
+    await expect(page.getByPlaceholder('Enter your promt')).toHaveValue(
+        'Fix the compilation errors:\n- Segment №1, line 1.4: No such variable x'
+    );
+    // кнопка живёт в заголовке панели, но сворачивать панель не должна
+    await expect(expandedPanel).toHaveCount(expandedBefore);
+});
+
+test('compile-errors-do-not-overwrite-a-typed-prompt', async ({ page }) => {
+    await openWithCompileError(page);
+    await page.getByRole('tab', { name: 'AI agent' }).click();
+    await page.getByPlaceholder('Enter your promt').fill('мой запрос');
+    await page.getByRole('button', { name: /Run/i }).click();
+
+    await sendErrorsButton(page).click();
+
+    await expect(page.locator('div.Toastify__toast').first()).toContainText(
+        'The agent prompt already has text'
+    );
+    await expect(page.getByPlaceholder('Enter your promt')).toHaveValue(
+        'мой запрос'
+    );
+});
+
+test.describe('compile errors on a phone', () => {
+    test.use({ viewport: { width: 390, height: 844 } });
+
+    test('compile-errors-open-the-agent-screen', async ({ page }) => {
+        await openWithCompileError(page);
+        await page.getByRole('button', { name: /Run/i }).click();
+        // после компиляции телефон показывает результат, панель ошибок в редакторе
+        await page.locator('.mobile-view-switcher-bar__toggle').click();
+        await page.getByRole('option', { name: 'Editor' }).click();
+
+        await sendErrorsButton(page).click();
+
+        await expect(page.locator('.agent-chat')).toBeVisible();
+        await expect(page.getByPlaceholder('Enter your promt')).toHaveValue(
+            /No such variable x/
+        );
+        const overflow = await page.evaluate(
+            () =>
+                document.documentElement.scrollWidth -
+                document.documentElement.clientWidth
+        );
+        expect(overflow).toBeLessThanOrEqual(0);
+    });
 });
 
 test('compilation-switches-viewer-back-to-pdf', async ({ page }) => {
