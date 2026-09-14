@@ -30,3 +30,20 @@
         }
     }
 }
+
+.problem-viewer-send-to-agent {
+    padding: 0 10px;
+    height: 20px;
+    border: none;
+    border-radius: 10px;
+    background: $blue-10;
+    color: $white;
+    font-size: 12px;
+    line-height: 20px;
+    white-space: nowrap;
+    cursor: pointer;
+
+    &:hover {
+        background: $button-action-blue;
+    }
+}

@@ -26,6 +26,7 @@ import {
     reportUnexpectedError,
 } from '../utils/reportUnexpectedError.ts';
 import { logBreadcrumb } from '../utils/logBreadcrumb.ts';
+import { compileErrorsPrompt } from '../utils/compileErrors.ts';
 
 /** Причины, при которых показываем ошибку, а не ответ. */
 const ERROR_STOP_REASONS: AgentStopReason[] = [
@@ -208,6 +209,39 @@ export class AgentChatService {
                 'warning'
             );
         }
+    };
+
+    /**
+     * Кнопка в панели ошибок. Только подставляет текст и открывает чат,
+     * отправляет человек сам: так он видит, что уйдёт агенту
+     */
+    onSendErrorsToAgent = (): void => {
+        const errors =
+            this.repository.projectViewModelRepository.compileErrorResult()
+                ?.errors;
+        // у чужого проекта чата нет, кнопку там не показываем
+        if (
+            !errors?.length ||
+            this.repository.projectViewModelRepository.projectIsReadonly()
+        ) {
+            return;
+        }
+        const chat = this.repository.chatViewModelRepository;
+        const dictionary = this.repository.dictionary.agent_chat;
+        if (this.isRunning()) {
+            this.repository.toast(dictionary.errors_agent_running, 'info');
+            return;
+        }
+        // чужой недописанный запрос не затираем
+        if (chat.input().trim()) {
+            this.repository.toast(dictionary.errors_prompt_busy, 'info');
+            return;
+        }
+        chat.setInput(compileErrorsPrompt(errors, this.repository.dictionary));
+        const settings = this.repository.settingsViewModelRepository;
+        settings.setViewerTab('chat');
+        // на телефоне чат это отдельный экран
+        settings.setMobileView('chat');
     };
 
     onPromptSubmit = async (): Promise<void> => {

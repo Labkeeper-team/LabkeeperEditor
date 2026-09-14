@@ -10,6 +10,12 @@
     height: 26px;
     background: $gray-50;
     padding: 0px 18px 0px 18px;
+    gap: 8px;
+    .sector-header-actions {
+        display: flex;
+        align-items: center;
+        margin-left: auto;
+    }
     .expnad-container {
         display: flex;
         justify-content: center;

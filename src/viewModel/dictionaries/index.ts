@@ -180,6 +180,10 @@ export interface Translations {
         max_iterations_hint: string;
         editing_locked: string;
         leave_confirm: string;
+        send_errors: string;
+        errors_prompt: string;
+        errors_prompt_busy: string;
+        errors_agent_running: string;
         event: {
             model_call: string;
             add_segment: string;

@@ -8,6 +8,7 @@ import { ExpandIcon } from '../../../../../icons';
 import './style.scss';
 import { useSelector } from 'react-redux';
 import { useDictionary } from '../../../../../store/selectors/translations';
+import { describeErrorGroup } from '../../../../../../viewModel/utils/compileErrors.ts';
 
 export const ErrorGroupedItem = (props: {
     segmentId: number | null;
@@ -16,11 +17,7 @@ export const ErrorGroupedItem = (props: {
 }) => {
     const [expanded, setExpanded] = useState(true);
     const dictionary = useSelector(useDictionary);
-    const groupTitle = props.latexFile
-        ? `${dictionary.error_common.file} ${props.latexFile}`
-        : props.segmentId === null
-          ? dictionary.error_common.common_errors
-          : `${dictionary.error_common.segment} №${props.segmentId}`;
+    const groupTitle = describeErrorGroup(props, dictionary);
 
     return (
         <div>

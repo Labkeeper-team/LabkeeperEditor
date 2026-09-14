@@ -21,6 +21,14 @@ export const SectorHeader = (props: SectorHeaderProps) => {
             ) : (
                 props.title
             )}
+            {props.actions ? (
+                <div
+                    className="sector-header-actions"
+                    onClick={(event) => event.stopPropagation()}
+                >
+                    {props.actions}
+                </div>
+            ) : null}
             <div
                 className={classNames('expnad-container', {
                     expanded: props.expanded,
