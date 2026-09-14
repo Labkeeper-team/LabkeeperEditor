@@ -12,7 +12,7 @@ import {
     ObserverService,
     States,
 } from '../../model/service/ObserverService.ts';
-import { ViewModelRepository } from '../repository';
+import { EditorNavigationTarget, ViewModelRepository } from '../repository';
 import { IdeService } from '../domain/IdeService.ts';
 import { LoaderService } from '../domain/LoaderService.ts';
 import { AgentEventService } from '../domain/AgentEventService.ts';
@@ -55,6 +55,8 @@ export class AgentChatService {
      * по устаревшему номеру и молча выходит вместо записи в чужую ленту.
      */
     private runToken = 0;
+    /** Последнее место, которое агент правил в текущем прогоне */
+    private lastChange: EditorNavigationTarget | undefined;
     /** Текст последнего запроса: слишком длинный вернём в поле, чтобы его сократили */
     private lastPrompt = '';
 
@@ -234,6 +236,7 @@ export class AgentChatService {
 
         // слот занимается до первого await, иначе второе нажатие проскочит проверку
         const token = ++this.runToken;
+        this.lastChange = undefined;
         logBreadcrumb('agent', 'prompt submit', {
             authenticated,
             hasProject: Boolean(project),
@@ -427,10 +430,26 @@ export class AgentChatService {
             }
         }
 
+        this.lastChange =
+            this.events.lastNavigationTarget(fresh) ?? this.lastChange;
         const target = this.events.firstNavigationTarget(fresh);
         if (target) {
             await this.programEditorService.navigateToAgentChange(target);
         }
+    };
+
+    /** На телефоне чат и редактор разные экраны: после прогона ведём туда, где агент правил последним */
+    onAgentFinishedOnPhone = async (): Promise<void> => {
+        const target = this.lastChange;
+        // без правок и после ошибки человеку нужен чат: там ответ или текст ошибки
+        if (
+            !target ||
+            this.repository.chatViewModelRepository.requestState() !== 'ok'
+        ) {
+            return;
+        }
+        this.repository.settingsViewModelRepository.setMobileView('editor');
+        await this.programEditorService.navigateToAgentChange(target);
     };
 
     private onFinished = (
@@ -479,6 +498,7 @@ export class AgentChatService {
         // у неавторизованного откат делается только через undo, поэтому replaceProgram
         this.ideService.replaceProgram(program);
         this.hunkService.setHunksFromPrompt(hunks);
+        this.lastChange = this.events.lastNavigationTarget(hunks);
         const target = this.events.firstNavigationTarget(hunks);
         if (target) {
             void this.programEditorService.navigateToAgentChange(target);
