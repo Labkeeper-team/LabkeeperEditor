@@ -6,6 +6,11 @@ import { createGuestSessionId, setSessionId } from '../session.ts';
 
 const SESSION_TIMEOUT_MS = 2000;
 
+function anonymousDisplayName(): string {
+    const suffix = crypto.getRandomValues(new Uint32Array(1))[0] % 1_000_000;
+    return `anonymous${String(suffix).padStart(6, '0')}`;
+}
+
 export class OpenPanelService implements ObserverService {
     private op: OpenPanel | undefined;
     private started = false;
@@ -19,7 +24,7 @@ export class OpenPanelService implements ObserverService {
             return;
         }
         if (userId) {
-            await this.identify(userId, email);
+            await this.identify(userId, { email });
         }
     }
 
@@ -64,24 +69,33 @@ export class OpenPanelService implements ObserverService {
             }
             this.started = true;
             if (userId) {
-                await this.identify(userId, email);
+                await this.identify(userId, { email });
+            } else {
+                await this.identify(profileId, {
+                    firstName: anonymousDisplayName(),
+                    adoptSession: false,
+                });
             }
         } catch (error) {
             logBreadcrumb('openpanel', 'session start failed', { error });
         }
     }
 
-    private async identify(profileId: string, email?: string) {
+    private async identify(
+        profileId: string,
+        options?: { email?: string; firstName?: string; adoptSession?: boolean }
+    ) {
         if (!this.op) {
             return;
         }
         const payload = {
             profileId,
-            ...(email ? { email } : {}),
+            ...(options?.email ? { email: options.email } : {}),
+            ...(options?.firstName ? { firstName: options.firstName } : {}),
         };
         try {
             const result = await Promise.resolve(this.op.identify(payload));
-            if (result?.sessionId) {
+            if (options?.adoptSession !== false && result?.sessionId) {
                 setSessionId(result.sessionId);
             }
         } catch (error) {
