@@ -1,12 +1,9 @@
 import { OpenPanel } from '@openpanel/web';
 import { Secrets } from '../../constants.ts';
-import {
-    ObserverService,
-    States,
-    mockObserver,
-} from '../../model/service/ObserverService.ts';
 import { logBreadcrumb } from '../../viewModel/utils/logBreadcrumb.ts';
 import { setSessionId } from '../session.ts';
+
+const SESSION_TIMEOUT_MS = 2000;
 
 function configuredSecret(value: string | undefined): string {
     if (!value || value.startsWith('IO_LABKEEPER_FRONTEND_')) {
@@ -15,78 +12,48 @@ function configuredSecret(value: string | undefined): string {
     return value.trim();
 }
 
-export function createOpenPanelService(): ObserverService {
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+    return new Promise((resolve, reject) => {
+        const timer = window.setTimeout(() => {
+            reject(new Error(`OpenPanel session timed out after ${ms}ms`));
+        }, ms);
+        promise.then(
+            (value) => {
+                window.clearTimeout(timer);
+                resolve(value);
+            },
+            (error) => {
+                window.clearTimeout(timer);
+                reject(error);
+            }
+        );
+    });
+}
+
+export async function startOpenPanelSession() {
     const clientId = configuredSecret(Secrets.openpanelClientId);
     const apiUrl = configuredSecret(Secrets.openpanelApiUrl);
     if (!clientId || !apiUrl) {
-        return mockObserver();
+        return;
     }
-    return new OpenPanelService(clientId, apiUrl);
-}
-
-export async function startOpenPanelSession(observer: ObserverService) {
-    if (observer instanceof OpenPanelService) {
-        await observer.startSession();
-    }
-}
-
-class OpenPanelService implements ObserverService {
-    private readonly op: OpenPanel;
-
-    constructor(clientId: string, apiUrl: string) {
-        this.op = new OpenPanel({
-            clientId,
-            apiUrl,
-            trackScreenViews: false,
-            trackOutgoingLinks: true,
-        });
-    }
-
-    async startSession() {
-        try {
-            const result = await this.op.track('screen_view', {
+    const op = new OpenPanel({
+        clientId,
+        apiUrl,
+        trackScreenViews: false,
+        trackOutgoingLinks: false,
+    });
+    try {
+        const result = await withTimeout(
+            op.track('screen_view', {
                 __path: window.location.pathname,
                 __title: document.title,
-            });
-            this.publishSession(result);
-        } catch (error) {
-            logBreadcrumb('openpanel', 'session start failed', { error });
-        }
-    }
-
-    onEvent(event: string) {
-        void Promise.resolve(this.op.track(event))
-            .then((result) => this.publishSession(result))
-            .catch((error) => {
-                logBreadcrumb('openpanel', 'track failed', { event, error });
-            });
-    }
-
-    setUserState(name: string, value: string) {
-        if (name === States.USER_ID) {
-            void Promise.resolve(this.op.identify({ profileId: value }))
-                .then((result) => this.publishSession(result))
-                .catch((error) => {
-                    logBreadcrumb('openpanel', 'identify failed', { error });
-                });
-            return;
-        }
-        if (!this.op.profileId) {
-            return;
-        }
-        void Promise.resolve(
-            this.op.identify({
-                profileId: this.op.profileId,
-                properties: { [name]: value },
-            })
-        ).catch((error) => {
-            logBreadcrumb('openpanel', 'identify failed', { name, error });
-        });
-    }
-
-    private publishSession(result?: { sessionId?: string } | void | null) {
-        if (result && result.sessionId) {
+            }),
+            SESSION_TIMEOUT_MS
+        );
+        if (result?.sessionId) {
             setSessionId(result.sessionId);
         }
+    } catch (error) {
+        logBreadcrumb('openpanel', 'session start failed', { error });
     }
 }
