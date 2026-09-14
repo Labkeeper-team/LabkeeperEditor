@@ -41,17 +41,25 @@ https://github.com/Labkeeper-team/TypeThree/issues/199
  */
 
 export interface ObserverService {
+    init: (userId?: string, email?: string) => void | Promise<void>;
     onEvent: (event: string) => void;
     setUserState: (name: string, value: string) => void;
 }
 
 export const mockObserver = (): ObserverService => ({
+    init: () => {},
     onEvent: () => {},
     setUserState: () => {},
 });
 
 export class CompositeObserver implements ObserverService {
     constructor(private readonly observers: ObserverService[]) {}
+
+    async init(userId?: string, email?: string) {
+        await Promise.all(
+            this.observers.map((observer) => observer.init(userId, email))
+        );
+    }
 
     onEvent(event: string) {
         this.observers.forEach((observer) => observer.onEvent(event));

@@ -1,9 +1,94 @@
 import { OpenPanel } from '@openpanel/web';
 import { Secrets } from '../../constants.ts';
+import { ObserverService } from '../../model/service/ObserverService.ts';
 import { logBreadcrumb } from '../../viewModel/utils/logBreadcrumb.ts';
-import { setSessionId } from '../session.ts';
+import { createGuestSessionId, setSessionId } from '../session.ts';
 
 const SESSION_TIMEOUT_MS = 2000;
+
+export class OpenPanelService implements ObserverService {
+    private op: OpenPanel | undefined;
+    private started = false;
+
+    async init(userId?: string, email?: string) {
+        if (!this.ensureClient()) {
+            return;
+        }
+        if (!this.started) {
+            await this.startSession(userId, email);
+            return;
+        }
+        if (userId) {
+            await this.identify(userId, email);
+        }
+    }
+
+    onEvent() {}
+
+    setUserState() {}
+
+    private ensureClient(): boolean {
+        if (this.op) {
+            return true;
+        }
+        const clientId = configuredSecret(Secrets.openpanelClientId);
+        const apiUrl = configuredSecret(Secrets.openpanelApiUrl);
+        if (!clientId || !apiUrl) {
+            return false;
+        }
+        this.op = new OpenPanel({
+            clientId,
+            apiUrl,
+            trackScreenViews: false,
+            trackOutgoingLinks: false,
+        });
+        return true;
+    }
+
+    private async startSession(userId?: string, email?: string) {
+        if (!this.op) {
+            return;
+        }
+        try {
+            const profileId = userId ?? createGuestSessionId();
+            const result = await withTimeout(
+                this.op.track('screen_view', {
+                    __path: window.location.pathname,
+                    __title: document.title,
+                    profileId,
+                }),
+                SESSION_TIMEOUT_MS
+            );
+            if (userId && result?.sessionId) {
+                setSessionId(result.sessionId);
+            }
+            this.started = true;
+            if (userId) {
+                await this.identify(userId, email);
+            }
+        } catch (error) {
+            logBreadcrumb('openpanel', 'session start failed', { error });
+        }
+    }
+
+    private async identify(profileId: string, email?: string) {
+        if (!this.op) {
+            return;
+        }
+        const payload = {
+            profileId,
+            ...(email ? { email } : {}),
+        };
+        try {
+            const result = await Promise.resolve(this.op.identify(payload));
+            if (result?.sessionId) {
+                setSessionId(result.sessionId);
+            }
+        } catch (error) {
+            logBreadcrumb('openpanel', 'identify failed', { error });
+        }
+    }
+}
 
 function configuredSecret(value: string | undefined): string {
     if (!value || value.startsWith('IO_LABKEEPER_FRONTEND_')) {
@@ -28,32 +113,4 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
             }
         );
     });
-}
-
-export async function startOpenPanelSession() {
-    const clientId = configuredSecret(Secrets.openpanelClientId);
-    const apiUrl = configuredSecret(Secrets.openpanelApiUrl);
-    if (!clientId || !apiUrl) {
-        return;
-    }
-    const op = new OpenPanel({
-        clientId,
-        apiUrl,
-        trackScreenViews: false,
-        trackOutgoingLinks: false,
-    });
-    try {
-        const result = await withTimeout(
-            op.track('screen_view', {
-                __path: window.location.pathname,
-                __title: document.title,
-            }),
-            SESSION_TIMEOUT_MS
-        );
-        if (result?.sessionId) {
-            setSessionId(result.sessionId);
-        }
-    } catch (error) {
-        logBreadcrumb('openpanel', 'session start failed', { error });
-    }
 }
