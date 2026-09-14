@@ -33,13 +33,10 @@ import {
     ObserverService,
 } from '../../model/service/ObserverService.ts';
 import { logBreadcrumb } from '../../viewModel/utils/logBreadcrumb.ts';
-import {
-    getOpenPanelSessionId,
-    OPENPANEL_SESSION_HEADER,
-} from '../openpanel/session.ts';
+import { getSessionId, LABKEEPER_SESSION_HEADER } from '../session.ts';
 
 axios.interceptors.request.use((config) => {
-    config.headers[OPENPANEL_SESSION_HEADER] = getOpenPanelSessionId();
+    config.headers[LABKEEPER_SESSION_HEADER] = getSessionId();
     return config;
 });
 

@@ -13,7 +13,7 @@ import {
 } from '../../model/rpi/agentSocket.ts';
 import { Hunk } from '../../model/domain.ts';
 import { wsUrl, WS_URLS } from '../../constants.ts';
-import { withOpenPanelSessionQuery } from '../openpanel/session.ts';
+import { withSessionQuery } from '../session.ts';
 import { withSegmentIds } from '../../viewModel/utils/segmentId.ts';
 import { logBreadcrumb } from '../../viewModel/utils/logBreadcrumb.ts';
 
@@ -211,7 +211,7 @@ export class WebAgentSocket implements AgentSocket {
         handlers: AgentHandlers
     ): AgentSession {
         return openSession(
-            withOpenPanelSessionQuery(
+            withSessionQuery(
                 wsUrl(WS_URLS.projectAgent.replace('{id}', projectId))
             ),
             { type: 'startAgent', ...params },
@@ -225,7 +225,7 @@ export class WebAgentSocket implements AgentSocket {
         handlers: AgentHandlers
     ): AgentSession {
         return openSession(
-            withOpenPanelSessionQuery(wsUrl(WS_URLS.unauthorizedAgent)),
+            withSessionQuery(wsUrl(WS_URLS.unauthorizedAgent)),
             {
                 type: 'startAgentUnauthorized',
                 ...params,

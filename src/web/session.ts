@@ -1,7 +1,7 @@
-export const OPENPANEL_SESSION_HEADER = 'X-OpenPanel-Session-Id';
-const STORAGE_KEY = 'labkeeper.openpanel.sessionId';
+export const LABKEEPER_SESSION_HEADER = 'X-Labkeeper-Session-Id';
+const STORAGE_KEY = 'labkeeper.sessionId';
 
-export function getOpenPanelSessionId(): string {
+export function getSessionId(): string {
     if (typeof window === 'undefined') {
         return crypto.randomUUID();
     }
@@ -14,8 +14,8 @@ export function getOpenPanelSessionId(): string {
     return created;
 }
 
-export function withOpenPanelSessionQuery(url: string): string {
-    const sessionId = getOpenPanelSessionId();
+export function withSessionQuery(url: string): string {
+    const sessionId = getSessionId();
     const separator = url.includes('?') ? '&' : '?';
     return `${url}${separator}sessionId=${encodeURIComponent(sessionId)}`;
 }
