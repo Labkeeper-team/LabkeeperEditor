@@ -7,7 +7,7 @@ import {
     USER_ID,
 } from '../common.ts';
 import { AgentEvent } from '../../../model/rpi/agentSocket.ts';
-import { Hunk } from '../../../model/domain.ts';
+import { Hunk, Program } from '../../../model/domain.ts';
 import { Events } from '../../../model/service/ObserverService.ts';
 import { MockViewModelRepository } from '../../../viewModel/repository';
 import * as Sentry from '@sentry/react';
@@ -726,6 +726,166 @@ test('tool-call-reloads-the-program-for-a-segment-hunk', async () => {
     // сегментный hunk перезагружает программу, файлы при этом не трогаем
     expect(ctx.rpi.getProjectRequest).toHaveBeenCalled();
     expect(ctx.rpi.listFilesRequest).not.toHaveBeenCalled();
+});
+
+/**
+ * На телефоне чат и редактор это разные экраны. После прогона агента телефон
+ * открывает редактор там, где агент правил последним
+ */
+
+const threeSegments = {
+    segments: [
+        {
+            id: 1,
+            type: 'md',
+            text: 'a\nb\nc\nd\ne\nf\ng',
+            parameters: { visible: true },
+        },
+        { id: 2, type: 'md', text: 'a\nb\nc', parameters: { visible: true } },
+        {
+            id: 3,
+            type: 'md',
+            text: 'a\nb\nc\nd\ne',
+            parameters: { visible: true },
+        },
+    ],
+    parameters: { roundStrategy: 'noRound' as const },
+} as Program;
+
+const segmentHunk = (
+    id: string,
+    segmentId: number,
+    startLine: number
+): Hunk => ({
+    id,
+    type: 'addLinesToSegment',
+    segmentId,
+    startLine,
+    endLine: startLine,
+});
+
+function phoneSetup(authenticated = true) {
+    const ctx = setup(authenticated);
+    ctx.repository.projectViewModelRepository.setCurrentProgram(threeSegments);
+    ctx.rpi.getProjectRequest = jest
+        .fn()
+        .mockResolvedValue(okResult({ program: threeSegments }));
+    ctx.repository.settingsViewModelRepository.setMobileView = jest.fn();
+    return ctx;
+}
+
+const openedEditorAt = (ctx: ReturnType<typeof phoneSetup>) => ({
+    view: (
+        ctx.repository.settingsViewModelRepository.setMobileView as jest.Mock
+    ).mock.calls,
+    target: ctx.repository.ideViewModelRepository.editorNavigationTarget(),
+});
+
+test('finished-run-on-a-phone-opens-the-last-change', async () => {
+    const ctx = phoneSetup();
+    ctx.rpi.listHunksRequest = jest
+        .fn()
+        .mockResolvedValueOnce(okResult({ hunks: [segmentHunk('a', 2, 1)] }))
+        .mockResolvedValueOnce(
+            okResult({
+                hunks: [
+                    segmentHunk('a', 2, 1),
+                    segmentHunk('b', 3, 4),
+                    segmentHunk('c', 1, 7),
+                ],
+            })
+        );
+    ctx.repository.chatViewModelRepository.setInput('сделай');
+    await ctx.agentChatService.onPromptSubmit();
+    await emit(ctx, { kind: 'toolCall', toolName: 'add_lines_to_segment' });
+    await emit(ctx, { kind: 'toolCall', toolName: 'add_lines_to_segment' });
+    await emit(ctx, {
+        kind: 'finished',
+        message: 'готово',
+        stopReason: 'Done',
+    });
+
+    await ctx.agentChatService.onAgentFinishedOnPhone();
+
+    // последняя правка это сегмент 1, а не первая из последней пачки
+    expect(openedEditorAt(ctx)).toEqual({
+        view: [['editor']],
+        target: { segmentIndex: 0, line: 7, focus: false },
+    });
+});
+
+test('finished-guest-run-on-a-phone-opens-the-last-change', async () => {
+    const ctx = phoneSetup(false);
+    ctx.repository.chatViewModelRepository.setInput('сделай');
+    await ctx.agentChatService.onPromptSubmit();
+    await emit(ctx, {
+        kind: 'finished',
+        message: 'готово',
+        stopReason: 'Done',
+        program: threeSegments,
+        hunks: [segmentHunk('a', 1, 2), segmentHunk('b', 3, 5)],
+    });
+
+    await ctx.agentChatService.onAgentFinishedOnPhone();
+
+    expect(openedEditorAt(ctx)).toEqual({
+        view: [['editor']],
+        target: { segmentIndex: 2, line: 5, focus: false },
+    });
+});
+
+test('finished-run-without-changes-on-a-phone-stays-in-chat', async () => {
+    const ctx = phoneSetup();
+    ctx.repository.chatViewModelRepository.setInput('что тут написано');
+    await ctx.agentChatService.onPromptSubmit();
+    await emit(ctx, { kind: 'finished', message: 'ответ', stopReason: 'Done' });
+
+    await ctx.agentChatService.onAgentFinishedOnPhone();
+
+    // агент только ответил, человек читает ответ, уводить его некуда
+    expect(openedEditorAt(ctx).view).toEqual([]);
+});
+
+test('failed-run-on-a-phone-stays-in-chat', async () => {
+    const ctx = phoneSetup();
+    ctx.rpi.listHunksRequest = jest
+        .fn()
+        .mockResolvedValue(okResult({ hunks: [segmentHunk('a', 2, 1)] }));
+    ctx.repository.chatViewModelRepository.setInput('сделай');
+    await ctx.agentChatService.onPromptSubmit();
+    await emit(ctx, { kind: 'toolCall', toolName: 'add_lines_to_segment' });
+    await emit(ctx, {
+        kind: 'finished',
+        message: null,
+        stopReason: 'UnknownError',
+    });
+
+    await ctx.agentChatService.onAgentFinishedOnPhone();
+
+    // ошибка написана в чате, её надо прочитать там
+    expect(openedEditorAt(ctx).view).toEqual([]);
+});
+
+test('next-run-forgets-the-previous-change', async () => {
+    const ctx = phoneSetup();
+    ctx.rpi.listHunksRequest = jest
+        .fn()
+        .mockResolvedValue(okResult({ hunks: [segmentHunk('a', 2, 1)] }));
+    ctx.repository.chatViewModelRepository.setInput('сделай');
+    await ctx.agentChatService.onPromptSubmit();
+    await emit(ctx, { kind: 'toolCall', toolName: 'add_lines_to_segment' });
+    await emit(ctx, {
+        kind: 'finished',
+        message: 'готово',
+        stopReason: 'Done',
+    });
+
+    ctx.repository.chatViewModelRepository.setInput('а что получилось');
+    await ctx.agentChatService.onPromptSubmit();
+    await emit(ctx, { kind: 'finished', message: 'ответ', stopReason: 'Done' });
+    await ctx.agentChatService.onAgentFinishedOnPhone();
+
+    expect(openedEditorAt(ctx).view).toEqual([]);
 });
 
 test('history-load-failure-shows-empty-state', async () => {
