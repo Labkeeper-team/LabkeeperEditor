@@ -39,10 +39,7 @@ import {
 } from '../openpanel/session.ts';
 
 axios.interceptors.request.use((config) => {
-    const sessionId = getOpenPanelSessionId();
-    if (sessionId) {
-        config.headers[OPENPANEL_SESSION_HEADER] = sessionId;
-    }
+    config.headers[OPENPANEL_SESSION_HEADER] = getOpenPanelSessionId();
     return config;
 });
 

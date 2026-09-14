@@ -8,7 +8,6 @@ import { Secrets } from './constants.ts';
 import { createViewModelStateFromStore, store } from './view/store';
 import { setupContext } from './viewModel/context.ts';
 import { MetrikaService } from './web/yandex';
-import { createOpenPanelService } from './web/openpanel';
 import { CompositeObserver } from './model/service/ObserverService.ts';
 import { WebRpi } from './web/server';
 import { WebAgentSocket } from './web/server/agentSocket.ts';
@@ -26,10 +25,7 @@ Sentry.init({
     },
 });
 
-const observerService = new CompositeObserver([
-    new MetrikaService(),
-    createOpenPanelService(),
-]);
+const observerService = new CompositeObserver([new MetrikaService()]);
 
 export const { controller } = setupContext(
     new WebRpi(observerService),

@@ -26,7 +26,6 @@
     "dependencies": {
         "@codemirror/lint": "^6.9.7",
         "@estruyf/github-actions-reporter": "^1.12.0",
-        "@openpanel/web": "^1.4.1",
         "@reduxjs/toolkit": "2.12.0",
         "@sentry/react": "^10.73.0",
         "@uiw/codemirror-extensions-events": "^4.25.11",
