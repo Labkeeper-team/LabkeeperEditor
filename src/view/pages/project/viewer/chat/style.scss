@@ -91,8 +91,81 @@
     font-size: 14px;
     line-height: 18px;
     color: $gray-10;
-    white-space: pre-wrap;
     word-break: break-word;
+
+    // разметка ответа агента: плотнее, чем в результате, это колонка чата
+    > :first-child {
+        margin-top: 0;
+    }
+    > :last-child {
+        margin-bottom: 0;
+    }
+    p,
+    ul,
+    ol,
+    pre,
+    table,
+    blockquote {
+        margin: 0 0 8px;
+    }
+    ul,
+    ol {
+        padding-left: 20px;
+    }
+    li + li {
+        margin-top: 2px;
+    }
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        margin: 12px 0 6px;
+        font-size: 14px;
+        line-height: 18px;
+        font-weight: 600;
+    }
+    a {
+        color: $blue-10;
+    }
+    code {
+        padding: 1px 4px;
+        border-radius: 4px;
+        background: $gray-60;
+        font-size: 13px;
+    }
+    pre {
+        padding: 8px;
+        border-radius: 6px;
+        background: $gray-60;
+        overflow-x: auto;
+
+        code {
+            padding: 0;
+            background: none;
+        }
+    }
+    // широкая таблица прокручивается сама, а не распирает колонку
+    table {
+        display: block;
+        max-width: 100%;
+        overflow-x: auto;
+        border-collapse: collapse;
+    }
+    th,
+    td {
+        padding: 4px 8px;
+        border: 1px solid $gray-50;
+        text-align: left;
+        // слова в ячейке не рвём, узкой колонке хватает прокрутки таблицы
+        word-break: normal;
+    }
+    blockquote {
+        padding-left: 10px;
+        border-left: 3px solid $gray-50;
+        color: $gray-20;
+    }
 }
 
 .agent-chat__notice-label {

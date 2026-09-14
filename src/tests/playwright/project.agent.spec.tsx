@@ -327,6 +327,102 @@ test('agent-history-loads-into-chat', async ({ page }) => {
     );
 });
 
+test('agent-response-renders-markdown', async ({ page }) => {
+    const answer = [
+        'Сделал **таблицу** и добавил `код`:',
+        '',
+        '- первый пункт',
+        '- второй пункт',
+        '',
+        '| a | b |',
+        '| - | - |',
+        '| 1 | 2 |',
+        '',
+        '```',
+        'x = 1',
+        '```',
+        '',
+        '[документация](https://labkeeper.io/wiki)',
+    ].join('\n');
+    await openChat(page, { frames: [finished('Done', answer)] });
+    await submitPrompt(page);
+
+    const response = page.locator('.agent-chat__response-text');
+    await expect(response.locator('strong')).toHaveText('таблицу');
+    await expect(response.locator('li')).toHaveText([
+        'первый пункт',
+        'второй пункт',
+    ]);
+    await expect(response.locator('table td')).toHaveText(['1', '2']);
+    await expect(response.locator('pre code')).toHaveText('x = 1');
+    // ссылка из ответа не должна уводить со страницы с несохранённой работой
+    const link = response.getByRole('link', { name: 'документация' });
+    await expect(link).toHaveAttribute('href', 'https://labkeeper.io/wiki');
+    await expect(link).toHaveAttribute('target', '_blank');
+    await expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+});
+
+test('agent-response-keeps-raw-html-and-images-inert', async ({ page }) => {
+    const answer = [
+        'сырой <b>html</b> <img src="x" onerror="window.__agentXss = 1">',
+        '',
+        '![пиксель](https://example.com/pixel.png)',
+        '',
+        '[опасно](javascript:window.__agentXss=2)',
+    ].join('\n');
+    await openChat(page, { frames: [finished('Done', answer)] });
+    await submitPrompt(page);
+
+    const response = page.locator('.agent-chat__response-text');
+    await expect(response).toContainText('пиксель');
+    // текст агента можно подтолкнуть через содержимое проекта: ни разметки,
+    // ни картинок, которые браузер сам сходит загрузить
+    await expect(response.locator('b')).toHaveCount(0);
+    // но и не выбрасываем: агент мог писать про сам тег
+    await expect(response).toContainText('<b>html</b>');
+    await expect(response.locator('img')).toHaveCount(0);
+    await expect(
+        response.getByRole('link', { name: 'пиксель' })
+    ).toHaveAttribute('href', 'https://example.com/pixel.png');
+    await expect(
+        response.getByRole('link', { name: 'опасно' })
+    ).not.toHaveAttribute('href', /javascript:/);
+    expect(
+        await page.evaluate(
+            () => (window as { __agentXss?: number }).__agentXss
+        )
+    ).toBeUndefined();
+});
+
+test('agent-response-does-not-break-formulas', async ({ page }) => {
+    await openChat(page, {
+        frames: [finished('Done', 'Площадь равна $a*b*c$ квадратных единиц')],
+    });
+    await submitPrompt(page);
+
+    const response = page.locator('.agent-chat__response-text');
+    // звёздочки внутри формулы не должны превратиться в курсив
+    await expect(response.locator('em')).toHaveCount(0);
+    await expect(response).toContainText('a*b*c');
+});
+
+test('agent-history-response-renders-markdown', async ({ page }) => {
+    await openChat(page, {
+        history: [
+            {
+                id: '1',
+                request: 'что сделал',
+                response: 'Добавил **два** сегмента',
+                createdAt: '2026-09-08T10:00:00Z',
+            },
+        ],
+    });
+
+    await expect(page.locator('.agent-chat__response-text strong')).toHaveText(
+        'два'
+    );
+});
+
 test('agent-history-clear-empties-chat', async ({ page }) => {
     await openChat(page, {
         history: [
