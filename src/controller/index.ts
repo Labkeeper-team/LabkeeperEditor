@@ -959,6 +959,15 @@ export class Controller {
         }
     );
 
+    onAgentFinishedOnPhoneRequest = createAsyncThunk(
+        'onAgentFinishedOnPhone',
+        async () => {
+            await this.wrapper('onAgentFinishedOnPhone', () =>
+                this.agentChatService.onAgentFinishedOnPhone()
+            );
+        }
+    );
+
     onAgentChangeClickedRequest = createAsyncThunk(
         'onAgentChangeClicked',
         async ({
