@@ -36,7 +36,10 @@ import { logBreadcrumb } from '../../viewModel/utils/logBreadcrumb.ts';
 import { getSessionId, LABKEEPER_SESSION_HEADER } from '../session.ts';
 
 axios.interceptors.request.use((config) => {
-    config.headers[LABKEEPER_SESSION_HEADER] = getSessionId();
+    const sessionId = getSessionId();
+    if (sessionId) {
+        config.headers[LABKEEPER_SESSION_HEADER] = sessionId;
+    }
     return config;
 });
 

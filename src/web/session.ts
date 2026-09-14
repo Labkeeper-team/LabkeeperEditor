@@ -1,21 +1,22 @@
 export const LABKEEPER_SESSION_HEADER = 'X-Labkeeper-Session-Id';
-const STORAGE_KEY = 'labkeeper.sessionId';
 
-export function getSessionId(): string {
-    if (typeof window === 'undefined') {
-        return crypto.randomUUID();
+let sessionId: string | undefined;
+
+export function getSessionId(): string | undefined {
+    return sessionId;
+}
+
+export function setSessionId(next: string | undefined) {
+    if (!next) {
+        return;
     }
-    const existing = window.sessionStorage.getItem(STORAGE_KEY);
-    if (existing) {
-        return existing;
-    }
-    const created = crypto.randomUUID();
-    window.sessionStorage.setItem(STORAGE_KEY, created);
-    return created;
+    sessionId = next;
 }
 
 export function withSessionQuery(url: string): string {
-    const sessionId = getSessionId();
+    if (!sessionId) {
+        return url;
+    }
     const separator = url.includes('?') ? '&' : '?';
     return `${url}${separator}sessionId=${encodeURIComponent(sessionId)}`;
 }
