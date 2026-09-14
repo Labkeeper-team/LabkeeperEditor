@@ -22,6 +22,7 @@ const config: Config = {
         '^remark-math$': '<rootDir>/src/tests/jest/__mocks__/emptyMock.ts',
         '^remark-gfm$': '<rootDir>/src/tests/jest/__mocks__/emptyMock.ts',
         '^nanoid$': '<rootDir>/src/tests/jest/__mocks__/nanoid.ts',
+        '^@openpanel/web$': '<rootDir>/src/tests/jest/__mocks__/emptyMock.ts',
     },
 };
 

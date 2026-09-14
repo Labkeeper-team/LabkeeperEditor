@@ -49,3 +49,17 @@ export const mockObserver = (): ObserverService => ({
     onEvent: () => {},
     setUserState: () => {},
 });
+
+export class CompositeObserver implements ObserverService {
+    constructor(private readonly observers: ObserverService[]) {}
+
+    onEvent(event: string) {
+        this.observers.forEach((observer) => observer.onEvent(event));
+    }
+
+    setUserState(name: string, value: string) {
+        this.observers.forEach((observer) =>
+            observer.setUserState(name, value)
+        );
+    }
+}

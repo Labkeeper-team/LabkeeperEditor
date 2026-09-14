@@ -15,15 +15,40 @@ function resolvedSecret(
     return trimmed;
 }
 
+function isLocalhost(): boolean {
+    return (
+        typeof window !== 'undefined' &&
+        window.location.hostname === 'localhost'
+    );
+}
+
 export function getOpenPanelUrl(): string | undefined {
-    return resolvedSecret(Secrets.openPanelUrl, OPENPANEL_URL_PLACEHOLDER);
+    const resolved = resolvedSecret(
+        Secrets.openPanelUrl,
+        OPENPANEL_URL_PLACEHOLDER
+    );
+    if (resolved) {
+        return resolved;
+    }
+    return isLocalhost() ? 'http://localhost:4401' : undefined;
 }
 
 export function getOpenPanelClientId(): string | undefined {
-    return resolvedSecret(
+    const resolved = resolvedSecret(
         Secrets.openPanelClientId,
         OPENPANEL_CLIENT_ID_PLACEHOLDER
     );
+    if (resolved) {
+        return resolved;
+    }
+    const configuredUrl = resolvedSecret(
+        Secrets.openPanelUrl,
+        OPENPANEL_URL_PLACEHOLDER
+    );
+    if (!configuredUrl && isLocalhost()) {
+        return '00000000-0000-0000-0000-000000000003';
+    }
+    return undefined;
 }
 
 declare global {
