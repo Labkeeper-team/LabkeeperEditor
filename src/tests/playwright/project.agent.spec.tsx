@@ -346,6 +346,57 @@ test('agent-history-clear-empties-chat', async ({ page }) => {
     await expect(page.locator('.agent-chat__disclaimer')).toBeVisible();
 });
 
+/** Свой проект без открытия вкладки руками: что показано сразу при входе */
+async function openProjectAsIs(page: Page, neverCompiled: boolean) {
+    const routeSetup = new RouteSetup(page);
+    await routeSetup.setupGetUserInfoRequest();
+    if (neverCompiled) {
+        routeSetup.setupNeverCompiledProject();
+    }
+    await routeSetup.setupGetProjectRequest(200, 'default', RUNNABLE_PROGRAM);
+    await routeSetup.setupGetAllProjectsRequest();
+    await routeSetup.setupSaveProgramRequest();
+    await routeSetup.setupListFilesRequest(200, 'emptyFiles');
+    await routeSetup.setupAgentHistoryRequest([]);
+    await routeSetup.setupAgentSocket([]);
+
+    await page.goto(`/project/${uuid}`);
+    await page.waitForLoadState('domcontentloaded');
+    await page.locator('.cm-content').first().waitFor({ state: 'attached' });
+}
+
+test('never-compiled-project-opens-on-the-agent', async ({ page }) => {
+    await openProjectAsIs(page, true);
+
+    // справа смотреть нечего, поэтому сразу агент
+    await expect(page.locator('.agent-chat')).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'AI agent' })).toHaveAttribute(
+        'aria-selected',
+        'true'
+    );
+});
+
+test('compiled-project-opens-on-the-result', async ({ page }) => {
+    await openProjectAsIs(page, false);
+
+    await expect(page.locator('.result-container')).toBeVisible();
+    await expect(page.locator('.agent-chat')).toHaveCount(0);
+});
+
+test.describe('project entry on a phone', () => {
+    test.use({ viewport: { width: 390, height: 844 } });
+
+    test('never-compiled-project-opens-the-agent-screen', async ({ page }) => {
+        await openProjectAsIs(page, true);
+
+        await expect(page.locator('.agent-chat')).toBeVisible();
+        // переключатель экранов подписан тем, что открыто
+        await expect(
+            page.locator('.mobile-view-switcher-bar__label')
+        ).toHaveText('AI agent');
+    });
+});
+
 test('agent-tab-is-hidden-on-a-foreign-project', async ({ page }) => {
     const routeSetup = new RouteSetup(page);
     await routeSetup.setupGetUserInfoRequest();

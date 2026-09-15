@@ -48,7 +48,21 @@ const isExpectedUploadFileName = (fileName: string | null) => {
 };
 
 export class RouteSetup {
+    /** Свой проект по умолчанию уже собирали: экран при входе проверяется отдельно */
+    private neverCompiled = false;
+
     constructor(private page: Page) {}
+
+    /** Проект без lastProgramResult, как у ни разу не собранного: он открывается на агенте */
+    setupNeverCompiledProject() {
+        this.neverCompiled = true;
+    }
+
+    private compiledState() {
+        return this.neverCompiled
+            ? {}
+            : { lastProgramResult: { segments: [] } };
+    }
 
     // Перехватываем запрос user-info
     async setupGetUserInfoRequest(
@@ -94,6 +108,7 @@ export class RouteSetup {
                 isPublic: false,
                 program: programOverride,
                 projectType: 'markdown',
+                ...this.compiledState(),
             };
         }
         if (typeBody == 'withTwoSegmentsBibaAndAEqualTen') {
@@ -141,6 +156,7 @@ export class RouteSetup {
                     },
                 },
                 projectType: 'markdown',
+                ...this.compiledState(),
             };
         } else if (typeBody == 'empty') {
             return {};

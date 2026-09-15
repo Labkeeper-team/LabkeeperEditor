@@ -243,6 +243,26 @@ export class StartupService {
         await this.agentChatService?.sendCrossBorderConsent();
     };
 
+    // несобранный проект открываем на агенте: у latex нет pdf, у остальных нет lastProgramResult
+    private showAgentIfNeverCompiled = (project?: RichProject) => {
+        const projectRepository = this.repository.projectViewModelRepository;
+        // у чужого проекта чата нет
+        if (projectRepository.projectIsReadonly()) {
+            return;
+        }
+        const compiled =
+            projectRepository.mode() === 'latex'
+                ? Boolean(projectRepository.pdfUri())
+                : project?.lastProgramResult != null;
+        if (compiled) {
+            return;
+        }
+        const settings = this.repository.settingsViewModelRepository;
+        settings.setViewerTab('chat');
+        // на телефоне агент это отдельный экран
+        settings.setMobileView('chat');
+    };
+
     private cutOfLastSlash(location: string): string {
         if (location === '/' || location === '') {
             return '/';
@@ -365,6 +385,7 @@ export class StartupService {
             } else {
                 this.hunkService?.clearHunks();
             }
+            this.showAgentIfNeverCompiled(project);
             return;
         }
         if (!result.isOk) {
@@ -423,6 +444,7 @@ export class StartupService {
                 } else {
                     this.hunkService?.clearHunks();
                 }
+                this.showAgentIfNeverCompiled(project);
             }
             if (result.isUnauth) {
                 this.setEditorLocation(Routes.ProjectDefault);
@@ -448,6 +470,7 @@ export class StartupService {
             this.programService.setNewProgram(
                 this.repository.persistenceViewModelRepository.lastProgram()
             );
+            this.showAgentIfNeverCompiled();
         }
         if (open === 'ai') {
             // ссылка ?open=ai разошлась до появления чата, ведём её на ближайший по смыслу экран
