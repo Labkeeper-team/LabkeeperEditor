@@ -13,6 +13,8 @@ import { CompositeObserver } from './model/service/ObserverService.ts';
 import { WebRpi } from './web/server';
 import { WebAgentSocket } from './web/server/agentSocket.ts';
 
+const openPanelService = new OpenPanelService();
+
 Sentry.init({
     dsn: Secrets.sentryDsn,
     sendDefaultPii: true,
@@ -22,13 +24,14 @@ Sentry.init({
             console.log('Error event is dropped due to dev hostname');
             return null;
         }
+        openPanelService.trackSentryEvent(event);
         return event;
     },
 });
 
 const observerService = new CompositeObserver([
     new MetrikaService(),
-    new OpenPanelService(),
+    openPanelService,
 ]);
 
 export const { controller } = setupContext(

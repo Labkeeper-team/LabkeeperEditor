@@ -1,10 +1,13 @@
 import { OpenPanel } from '@openpanel/web';
+import type { Event as SentryEvent } from '@sentry/react';
 import { Secrets } from '../../constants.ts';
 import { ObserverService } from '../../model/service/ObserverService.ts';
 import { logBreadcrumb } from '../../viewModel/utils/logBreadcrumb.ts';
+import { sentryIssueSearchUrl } from '../sentry/sentryUrl.ts';
 import { createGuestSessionId, setSessionId } from '../session.ts';
 
 const SESSION_TIMEOUT_MS = 2000;
+const EDITOR_EVENT_PREFIX = '[E] ';
 
 function anonymousDisplayName(): string {
     const suffix = crypto.getRandomValues(new Uint32Array(1))[0] % 1_000_000;
@@ -32,6 +35,33 @@ export class OpenPanelService implements ObserverService {
 
     setUserState() {}
 
+    trackSentryEvent(event: SentryEvent) {
+        if (!this.ensureClient() || !this.op) {
+            return;
+        }
+        const eventId = event.event_id?.trim();
+        if (!eventId) {
+            return;
+        }
+        void Promise.resolve(
+            this.track('Error reported to sentry', {
+                event_id: eventId,
+                sentry_url: sentryIssueSearchUrl(Secrets.sentryDsn, eventId),
+                level: event.level,
+                message: event.message || event.exception?.values?.[0]?.value,
+            })
+        ).catch((error) => {
+            logBreadcrumb('openpanel', 'sentry track failed', { error });
+        });
+    }
+
+    private track(name: string, properties?: Record<string, unknown>) {
+        if (!this.op) {
+            return Promise.resolve(undefined);
+        }
+        return this.op.track(`${EDITOR_EVENT_PREFIX}${name}`, properties);
+    }
+
     private ensureClient(): boolean {
         if (this.op) {
             return true;
@@ -57,7 +87,7 @@ export class OpenPanelService implements ObserverService {
         try {
             const profileId = userId ?? createGuestSessionId();
             const result = await withTimeout(
-                this.op.track('screen_view', {
+                this.track('screen_view', {
                     __path: window.location.pathname,
                     __title: document.title,
                     profileId,
