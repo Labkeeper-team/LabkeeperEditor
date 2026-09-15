@@ -33,6 +33,15 @@ import {
     ObserverService,
 } from '../../model/service/ObserverService.ts';
 import { logBreadcrumb } from '../../viewModel/utils/logBreadcrumb.ts';
+import { getSessionId, LABKEEPER_SESSION_HEADER } from '../session.ts';
+
+axios.interceptors.request.use((config) => {
+    const sessionId = getSessionId();
+    if (sessionId) {
+        config.headers[LABKEEPER_SESSION_HEADER] = sessionId;
+    }
+    return config;
+});
 
 function withIds(program: Program): Program {
     return withSegmentIds(program);

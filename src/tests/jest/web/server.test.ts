@@ -5,6 +5,7 @@ import { WebRpi } from '../../../web/server';
 
 const createRpi = () => {
     const observerService = {
+        init: jest.fn(),
         onEvent: jest.fn(),
         setUserState: jest.fn(),
     };
@@ -30,6 +31,10 @@ jest.mock('axios', () => ({
         post: jest.fn(),
         get: jest.fn(),
         delete: jest.fn(),
+        interceptors: {
+            request: { use: jest.fn() },
+            response: { use: jest.fn() },
+        },
     },
 }));
 

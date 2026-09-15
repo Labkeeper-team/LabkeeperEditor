@@ -3,6 +3,8 @@ import { Secrets } from '../../constants.ts';
 import { logBreadcrumb } from '../../viewModel/utils/logBreadcrumb.ts';
 
 export class MetrikaService implements ObserverService {
+    init() {}
+
     onEvent(event: string) {
         logBreadcrumb('metrika', event);
         this.metrika('reachGoal', event);
