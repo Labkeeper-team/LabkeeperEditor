@@ -5,6 +5,7 @@ import { WebRpi } from '../../../web/server';
 
 const createRpi = () => {
     const observerService = {
+        init: jest.fn(),
         onEvent: jest.fn(),
         setUserState: jest.fn(),
     };

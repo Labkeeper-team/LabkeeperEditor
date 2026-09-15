@@ -87,7 +87,7 @@ export class OpenPanelService implements ObserverService {
         try {
             const profileId = userId ?? createGuestSessionId();
             const result = await withTimeout(
-                this.track('screen_view', {
+                this.track('Session started', {
                     __path: window.location.pathname,
                     __title: document.title,
                     profileId,
