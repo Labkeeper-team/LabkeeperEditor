@@ -495,7 +495,10 @@ export const createViewModelStateFromStore = (
 
         setLocation: (url: string, options?: SetLocationOptions) =>
             appRouter.navigate(url, { replace: options?.replace }),
-        dictionary: dictionary[store.getState().persistence.language],
+        // язык восстанавливается из хранилища и меняется уже после создания репозитория
+        get dictionary() {
+            return dictionary[store.getState().persistence.language];
+        },
         toast: (message: string, type: TypeOptions) => {
             toast(message, { type });
         },
