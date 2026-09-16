@@ -612,6 +612,106 @@ test('finished-run-on-a-desktop-does-not-move-the-editor', async ({ page }) => {
     await expect(page.locator('.agent-chat')).toBeVisible();
 });
 
+test('repeated-edit-of-one-segment-reaches-the-editor', async ({ page }) => {
+    const added = (endLine: number, text: string) => ({
+        id: 'same',
+        type: 'addLinesToSegment',
+        segmentId: 1,
+        startLine: 2,
+        endLine,
+        text,
+    });
+    // вторую строку сервер дописывает в тот же hunk и id не меняет
+    const server = [
+        { text: 'первая', hunks: [] },
+        { text: 'первая\nвторая', hunks: [added(2, 'вторая')] },
+        {
+            text: 'первая\nвторая\nтретья',
+            hunks: [added(3, 'вторая\nтретья')],
+        },
+    ];
+    let step = 0;
+    const saved: Program[] = [];
+    const routeSetup = new RouteSetup(page);
+    await routeSetup.setupGetUserInfoRequest();
+    await routeSetup.acceptCrossBorderConsentLocally();
+    await routeSetup.setupGetAllProjectsRequest();
+    await routeSetup.setupSaveProgramRequest(200, 'empty', (route) =>
+        saved.push(route.request().postDataJSON())
+    );
+    await routeSetup.setupListFilesRequest(200, 'emptyFiles');
+    await routeSetup.setupAgentHistoryRequest([]);
+    const sent = await routeSetup.setupAgentSocket([
+        toolCall('add_lines_to_segment'),
+        toolCall('add_lines_to_segment'),
+        finished('Done'),
+    ]);
+    await page.route(`**/public/project/${uuid}/hunk`, async (route) => {
+        if (route.request().method() !== 'GET') {
+            await route.continue();
+            return;
+        }
+        // каждый вызов агента продвигает сервер на шаг
+        if (sent.length) {
+            step = Math.min(step + 1, server.length - 1);
+        }
+        await route.fulfill({ json: { hunks: server[step].hunks } });
+    });
+    await page.route(`**/public/project/${uuid}/get**`, (route) =>
+        route.fulfill({
+            json: {
+                projectId: uuid,
+                userId: 1,
+                title: 'Default Project',
+                lastModified: '2026-09-16T10:00:00Z',
+                isPublic: false,
+                projectType: 'markdown',
+                program: {
+                    segments: [
+                        {
+                            id: 1,
+                            type: 'md',
+                            text: server[step].text,
+                            parameters: { visible: true },
+                        },
+                    ],
+                    parameters: { roundStrategy: 'noRound' },
+                },
+                lastProgramResult: { segments: [] },
+            },
+        })
+    );
+
+    await page.goto(`/project/${uuid}`);
+    await page.waitForLoadState('domcontentloaded');
+    await page.getByRole('tab', { name: 'AI agent' }).click();
+    await submitPrompt(page, 'добавь две строки');
+    await expect(page.locator('.agent-chat__response-text')).toHaveText(
+        'готово'
+    );
+
+    await expect(segment(page, 0).locator('.cm-line')).toHaveText([
+        'первая',
+        'вторая',
+        'третья',
+    ]);
+    await expect(segment(page, 0).locator('.cm-hunk-added-line')).toHaveCount(
+        2
+    );
+    await expect(page.locator('.agent-chat__event-label')).toHaveText([
+        'Changes have been made to segment №1',
+        'Changes have been made to segment №1',
+    ]);
+
+    // следующий запрос сперва сохраняет программу, старый текст затёр бы правку агента
+    const savesBefore = saved.length;
+    await submitPrompt(page, 'проверь');
+    await expect.poll(() => saved.length).toBeGreaterThan(savesBefore);
+    expect(saved.map((program) => program.segments[0].text)).not.toContain(
+        'первая\nвторая'
+    );
+});
+
 test('mobile-chat-tab-is-last', async ({ page }) => {
     await page.setViewportSize({ width: 480, height: 900 });
     const routeSetup = new RouteSetup(page);
