@@ -555,6 +555,15 @@ export class Controller {
         }
     );
 
+    onSendErrorsToAgentRequest = createAsyncThunk(
+        'onSendErrorsToAgent',
+        async () => {
+            await this.wrapper('onSendErrorsToAgent', async () =>
+                this.agentChatService.onSendErrorsToAgent()
+            );
+        }
+    );
+
     onExpandErrorsClickedRequest = createAsyncThunk(
         'onExpandErrorsClickedRequest',
         async () => {

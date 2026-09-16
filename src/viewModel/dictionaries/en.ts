@@ -189,6 +189,12 @@ export const en: Translations = {
         editing_locked:
             'The project cannot be edited while the agent is running',
         leave_confirm: 'The agent is still running. Leave the page anyway?',
+        send_errors: 'Send to agent',
+        errors_prompt: 'Fix the compilation errors:',
+        errors_prompt_busy:
+            'The agent prompt already has text. Send or clear it, then send the errors again',
+        errors_agent_running:
+            'The agent is still running. Wait for it to finish and send the errors again',
         event: {
             model_call: 'Calling the model',
             add_segment: 'A new segment has been added №{segment}',

@@ -1494,3 +1494,99 @@ test('cross-border-consent-survives-a-failed-save', async () => {
         ctx.repository.persistenceViewModelRepository.crossBorderConsentAcceptedLocally()
     ).toBe(true);
 });
+
+/**
+ * Кнопка «отправить ошибки агенту» в панели ошибок: текст ошибок встаёт в поле
+ * запроса, а чат открывается, если был закрыт
+ */
+
+const withCompileErrors = (ctx: ReturnType<typeof setup>) => {
+    ctx.repository.projectViewModelRepository.setCompileErrorResult({
+        errors: [
+            {
+                code: 301,
+                payload: {
+                    segmentId: 2,
+                    line: 0,
+                    position: 2,
+                    variable: 'x',
+                },
+            } as never,
+        ],
+    });
+    ctx.repository.settingsViewModelRepository.setViewerTab = jest.fn();
+    ctx.repository.settingsViewModelRepository.setMobileView = jest.fn();
+    return ctx;
+};
+
+const toasts = (ctx: ReturnType<typeof setup>) =>
+    (ctx.repository as MockViewModelRepository).mockState().toasts;
+
+test('send-errors-puts-them-into-an-empty-prompt-and-opens-the-chat', () => {
+    const ctx = withCompileErrors(setup());
+
+    ctx.agentChatService.onSendErrorsToAgent();
+
+    expect(ctx.repository.chatViewModelRepository.input()).toBe(
+        'Fix the compilation errors:\n- Segment №2, line 1.2: No such variable x'
+    );
+    expect(
+        ctx.repository.settingsViewModelRepository.setViewerTab
+    ).toHaveBeenCalledWith('chat');
+    // на телефоне чат это отдельный экран, его тоже надо открыть
+    expect(
+        ctx.repository.settingsViewModelRepository.setMobileView
+    ).toHaveBeenCalledWith('chat');
+    // только подставляем текст, отправляет человек сам
+    expect(ctx.agentSocketState.startCalls).toBe(0);
+});
+
+test('send-errors-does-not-touch-a-prompt-with-text', () => {
+    const ctx = withCompileErrors(setup());
+    ctx.repository.chatViewModelRepository.setInput('мой запрос');
+
+    ctx.agentChatService.onSendErrorsToAgent();
+
+    expect(ctx.repository.chatViewModelRepository.input()).toBe('мой запрос');
+    expect(toasts(ctx)).toHaveLength(1);
+    expect(
+        ctx.repository.settingsViewModelRepository.setViewerTab
+    ).not.toHaveBeenCalled();
+});
+
+test('send-errors-waits-for-a-running-agent', async () => {
+    const ctx = withCompileErrors(setup());
+    ctx.repository.chatViewModelRepository.setInput('сделай таблицу');
+    await ctx.agentChatService.onPromptSubmit();
+
+    ctx.agentChatService.onSendErrorsToAgent();
+
+    // поле пустое, но заблокировано: текст ошибок поверх идущего прогона не кладём
+    expect(ctx.repository.chatViewModelRepository.input()).toBe('');
+    expect(toasts(ctx)).toHaveLength(1);
+});
+
+test('send-errors-without-errors-does-nothing', () => {
+    const ctx = setup();
+    ctx.repository.settingsViewModelRepository.setViewerTab = jest.fn();
+
+    ctx.agentChatService.onSendErrorsToAgent();
+
+    expect(ctx.repository.chatViewModelRepository.input()).toBe('');
+    expect(
+        ctx.repository.settingsViewModelRepository.setViewerTab
+    ).not.toHaveBeenCalled();
+});
+
+test('send-errors-on-a-foreign-project-does-nothing', () => {
+    const ctx = withCompileErrors(setup());
+    ctx.repository.projectViewModelRepository.setReadOnly(true);
+
+    ctx.agentChatService.onSendErrorsToAgent();
+
+    // у чужого проекта чата нет, открывать нечего
+    expect(ctx.repository.chatViewModelRepository.input()).toBe('');
+    expect(
+        ctx.repository.settingsViewModelRepository.setViewerTab
+    ).not.toHaveBeenCalled();
+});
