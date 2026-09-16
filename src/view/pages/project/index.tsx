@@ -44,6 +44,7 @@ export const ProjectPage = () => {
         (state: StorageState) => state.ide.getProjectRequestState
     );
     const prevPdfUpdatedRef = useRef(pdfUpdated);
+    const wasAgentRunningRef = useRef(isAgentRunning);
     const initialViewProjectIdRef = useRef<string | null>(null);
     const initialPdfViewAppliedRef = useRef(false);
     const store = useStore<StorageState>();
@@ -76,6 +77,15 @@ export const ProjectPage = () => {
 
         refreshCodeMirrorLayout();
     }, [isMobile, mobileView]);
+
+    // на телефоне редактор скрыт за чатом: после прогона агента открываем его на последней правке
+    useEffect(() => {
+        const finished = wasAgentRunningRef.current && !isAgentRunning;
+        wasAgentRunningRef.current = isAgentRunning;
+        if (finished && isMobile) {
+            dispatch(controller.onAgentFinishedOnPhoneRequest());
+        }
+    }, [dispatch, isAgentRunning, isMobile]);
 
     // После компиляции (PDF или MD) — показать результат
     useEffect(() => {

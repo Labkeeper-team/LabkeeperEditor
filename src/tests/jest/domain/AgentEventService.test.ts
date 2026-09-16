@@ -325,6 +325,24 @@ test('first-navigation-target-is-absent-when-there-is-nowhere-to-jump', () => {
     expect(service.firstNavigationTarget([])).toBeUndefined();
 });
 
+test('last-navigation-target-is-the-last-place-changed', () => {
+    const service = new AgentEventService();
+    const fresh = [
+        hunkOf('addLinesToSegment', { id: 'a', segmentId: 2, startLine: 3 }),
+        hunkOf('addLinesToFile', { id: 'b', fileName: 'a.tex', startLine: 5 }),
+        // удаление некуда показать, оно не должно перебить прошлую цель
+        hunkOf('deleteLinesFromSegment', { id: 'c', segmentId: 1 }),
+    ];
+
+    expect(service.lastNavigationTarget(fresh)).toEqual({
+        segmentIndex: -1,
+        line: 5,
+        file: 'a.tex',
+        focus: false,
+    });
+    expect(service.lastNavigationTarget([])).toBeUndefined();
+});
+
 test.each([
     ['addSegment'],
     ['addLinesToSegment'],

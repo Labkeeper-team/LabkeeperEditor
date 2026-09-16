@@ -505,6 +505,113 @@ test('compilation-switches-viewer-back-to-pdf', async ({ page }) => {
     await expect(page.locator('.result-container')).toBeVisible();
 });
 
+const THREE_SEGMENTS: Program = {
+    segments: [1, 2, 3].map((id) => ({
+        id,
+        type: 'md',
+        text: `сегмент ${id}\nвторая строка\nтретья строка`,
+        parameters: { visible: true },
+    })),
+    parameters: { roundStrategy: 'noRound' },
+};
+
+/** Агент правит два сегмента: первый и третий, третий последним */
+const CHANGES = [
+    {
+        id: 'h1',
+        type: 'addLinesToSegment',
+        segmentId: 1,
+        startLine: 1,
+        endLine: 1,
+    },
+    {
+        id: 'h3',
+        type: 'addLinesToSegment',
+        segmentId: 3,
+        startLine: 2,
+        endLine: 2,
+    },
+];
+
+async function runAgent(page: Page, frames: Frame[], changes: object[]) {
+    const routeSetup = new RouteSetup(page);
+    await routeSetup.setupGetUserInfoRequest();
+    await routeSetup.acceptCrossBorderConsentLocally();
+    await routeSetup.setupGetProjectRequest(200, 'default', THREE_SEGMENTS);
+    await routeSetup.setupGetAllProjectsRequest();
+    await routeSetup.setupSaveProgramRequest();
+    await routeSetup.setupListFilesRequest(200, 'emptyFiles');
+    await routeSetup.setupAgentHistoryRequest([]);
+    const sent = await routeSetup.setupAgentSocket(frames);
+    // до запуска агента правок нет, после старта они появляются
+    await page.route(`**/public/project/${uuid}/hunk`, async (route) => {
+        if (route.request().method() !== 'GET') {
+            await route.continue();
+            return;
+        }
+        await route.fulfill({ json: { hunks: sent.length ? changes : [] } });
+    });
+
+    await page.goto(`/project/${uuid}`);
+    await page.waitForLoadState('domcontentloaded');
+    const switcher = page.locator('.mobile-view-switcher-bar__toggle');
+    if (await switcher.isVisible()) {
+        await switcher.click();
+        await page.getByRole('option', { name: 'AI agent' }).click();
+    } else {
+        await page.getByRole('tab', { name: 'AI agent' }).click();
+    }
+    await submitPrompt(page);
+}
+
+const segment = (page: Page, index: number) =>
+    page.locator('.segment-editor-container').nth(index);
+
+test.describe('agent run on a phone', () => {
+    test.use({ viewport: { width: 390, height: 844 } });
+
+    test('finished-run-opens-the-last-change', async ({ page }) => {
+        await runAgent(
+            page,
+            [toolCall('add_lines_to_segment'), finished('Done')],
+            CHANGES
+        );
+
+        // чат и редактор тут разные экраны, после прогона открываем редактор
+        await expect(
+            page.locator('.mobile-view-switcher-bar__label')
+        ).toHaveText('Editor');
+        await expect(segment(page, 2)).toHaveClass(/is-active/);
+        await expect(segment(page, 2)).toBeInViewport();
+    });
+
+    test('answer-without-changes-stays-in-the-chat', async ({ page }) => {
+        await runAgent(page, [finished('Done', 'тут три сегмента')], []);
+
+        await expect(page.locator('.agent-chat__response-text')).toHaveText(
+            'тут три сегмента'
+        );
+        await expect(
+            page.locator('.mobile-view-switcher-bar__label')
+        ).toHaveText('AI agent');
+    });
+});
+
+test('finished-run-on-a-desktop-does-not-move-the-editor', async ({ page }) => {
+    await runAgent(
+        page,
+        [toolCall('add_lines_to_segment'), finished('Done')],
+        CHANGES
+    );
+    await expect(page.locator('.agent-chat__response-text')).toHaveText(
+        'готово'
+    );
+
+    // на десктопе редактор виден и так, и уже стоит на правке с шага агента
+    await expect(segment(page, 0)).toHaveClass(/is-active/);
+    await expect(page.locator('.agent-chat')).toBeVisible();
+});
+
 test('mobile-chat-tab-is-last', async ({ page }) => {
     await page.setViewportSize({ width: 480, height: 900 });
     const routeSetup = new RouteSetup(page);

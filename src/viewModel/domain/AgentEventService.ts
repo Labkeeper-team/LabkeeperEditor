@@ -123,6 +123,11 @@ export class AgentEventService {
         return undefined;
     }
 
+    /** Последняя цель среди свежих hunks: туда агент правил позже всего */
+    lastNavigationTarget(fresh: Hunk[]): EventMessage['target'] {
+        return this.firstNavigationTarget([...fresh].reverse());
+    }
+
     /** Нужно ли перезагружать программу и файлы после этой пачки hunks. */
     reloadScope(fresh: Hunk[]): { program: boolean; files: boolean } {
         let program = false;
