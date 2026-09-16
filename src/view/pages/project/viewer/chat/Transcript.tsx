@@ -7,6 +7,7 @@ import { ChatMessage } from '../../../../../viewModel/repository';
 import { AgentHistoryEntry } from '../../../../../model/domain.ts';
 import { Routes } from '../../../../../viewModel/routes.ts';
 import { useNavigate } from 'react-router-dom';
+import { AgentMarkdown } from './AgentMarkdown';
 
 /** Насколько близко к низу считаем, что пользователь «внизу» и можно доскроллить */
 const STICK_TO_BOTTOM_PX = 40;
@@ -44,7 +45,9 @@ const ResponseBlock = ({ text }: { text: string }) => {
             <div className="agent-chat__response-label">
                 {dictionary.agent_chat.result}
             </div>
-            <div className="agent-chat__response-text">{text}</div>
+            <div className="agent-chat__response-text">
+                <AgentMarkdown text={text} />
+            </div>
         </div>
     );
 };
@@ -198,6 +201,21 @@ export const Transcript = () => {
         }
         node.scrollTop = node.scrollHeight;
     }, [messages, history]);
+
+    // MathJax набирает формулы уже после докрутки, и ответ подрастает снизу
+    useEffect(() => {
+        const node = containerRef.current;
+        if (!node) {
+            return;
+        }
+        const observer = new MutationObserver(() => {
+            if (stickToBottom.current) {
+                node.scrollTop = node.scrollHeight;
+            }
+        });
+        observer.observe(node, { childList: true, subtree: true });
+        return () => observer.disconnect();
+    }, []);
 
     const isRunning =
         requestState === 'running' || requestState === 'connecting';
