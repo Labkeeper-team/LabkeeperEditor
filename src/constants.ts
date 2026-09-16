@@ -69,6 +69,8 @@ type SecretsShape = {
     yandexCaptchaSiteKey: string;
     sentryDsn: string;
     yandexMetrikaKey: string;
+    openpanelClientId: string;
+    openpanelApiUrl: string;
 };
 
 declare global {
@@ -81,6 +83,8 @@ const DEFAULT_SECRETS: SecretsShape = {
     yandexCaptchaSiteKey: '',
     sentryDsn: '',
     yandexMetrikaKey: '',
+    openpanelClientId: '',
+    openpanelApiUrl: '',
 };
 
 export const Secrets: SecretsShape = {

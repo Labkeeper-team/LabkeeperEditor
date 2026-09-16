@@ -113,6 +113,10 @@ export class StartupService {
             States.STATE_ONLINE,
             String(userInfo.isAuthenticated)
         );
+        await this.observerService.init(
+            userInfo.isAuthenticated ? String(userInfo.id) : undefined,
+            userInfo.isAuthenticated ? userInfo.email : undefined
+        );
         this.repository.settingsViewModelRepository.setCaptchaBypassToken(
             captcha
         );
