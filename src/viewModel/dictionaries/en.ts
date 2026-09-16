@@ -236,6 +236,8 @@ export const en: Translations = {
                 'Could not connect to the agent. Check your network and try again',
             save_failed:
                 'Could not save the project before the run. The agent would work on an outdated version, so the run was cancelled',
+            sync_failed:
+                'Could not check the project against the server after the previous run. The run was cancelled so that the agent changes are not overwritten, reload the page and try again',
         },
     },
     mobile_view: {

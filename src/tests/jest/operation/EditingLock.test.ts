@@ -42,6 +42,12 @@ function setup() {
     ctx.rpi.listFilesRequest = jest
         .fn()
         .mockResolvedValue(okResult({ files: [] }));
+    // после обрыва сервис сверяет программу с сервером
+    ctx.rpi.getProjectRequest = jest.fn().mockResolvedValue(
+        okResult({
+            program: { segments: [], parameters: { roundStrategy: 'noRound' } },
+        })
+    );
     mockSaveProgramRequest(ctx.rpi);
     return ctx;
 }
@@ -109,6 +115,8 @@ test('editing-unlocks-after-connection-drop', async () => {
     const ctx = setup();
     await startAgent(ctx);
     ctx.agentSocketState.handlers?.onClosed('closed');
+    // замок снимается, когда программа сверена с сервером
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
     ctx.programEditorService.onAddSegmentClicked('md');
 

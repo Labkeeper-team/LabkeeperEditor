@@ -18,6 +18,7 @@ import {
     resolveControlsLine,
 } from '../../../../viewModel/utils/hunkGrouping.ts';
 import { colors } from '../../../styles/colors';
+import type { Hunk } from '../../../../model/domain.ts';
 
 export type HunkEditorAction = 'accept' | 'revert';
 
@@ -598,6 +599,10 @@ export function dispatchHunkGroups(
 
 const lastHunkDispatchByView = new WeakMap<EditorView, string>();
 
+// id мало: повторную правку того же места сервер дописывает в прежний hunk
+const hunkSignature = (hunk: Hunk) =>
+    `${hunk.id}@${hunk.startLine}-${hunk.endLine}:${hunk.text ?? ''}`;
+
 function serializeHunkDispatchPayload(
     groups: HunkGroupView[],
     pendingHunkIds: string[],
@@ -607,7 +612,7 @@ function serializeHunkDispatchPayload(
     const groupKey = groups
         .map(
             (group) =>
-                `${group.key}:${group.hunks.map((hunk) => hunk.id).join(',')}:${group.acceptLabel}`
+                `${group.key}:${group.hunks.map(hunkSignature).join(',')}:${group.acceptLabel}`
         )
         .join('|');
     const pendingKey = [...pendingHunkIds].sort().join(',');

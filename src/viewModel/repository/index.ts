@@ -111,7 +111,9 @@ export type AgentErrorReason =
     | 'disconnected'
     | 'connect_failed'
     /** Проект не удалось сохранить перед запуском, агент работал бы со старой версией */
-    | 'save_failed';
+    | 'save_failed'
+    /** Программу не удалось сверить с сервером, в редакторе может быть текст до правки агента */
+    | 'sync_failed';
 export type BillingPurchaseRequestState = 'idle' | 'loading' | 'ok' | 'error';
 
 export type PendingSegmentEditorCursor = {
