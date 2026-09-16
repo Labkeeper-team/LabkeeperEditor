@@ -47,6 +47,13 @@ export class HunkService {
             return;
         }
         const result = await this.rpi.listHunksRequest(project.projectId);
+        // пока hunks ехали, могли открыть другой проект, чужие ему ни к чему
+        if (
+            this.repository.projectViewModelRepository.project()?.projectId !==
+            project.projectId
+        ) {
+            return;
+        }
         if (result.isOk) {
             const nextHunks = result.body.hunks ?? [];
             this.repository.ideViewModelRepository.setHunks(nextHunks);

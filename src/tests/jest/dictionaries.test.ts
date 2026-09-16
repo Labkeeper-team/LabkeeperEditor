@@ -17,6 +17,7 @@ const EXTRA_STOP_KEYS = [
     'disconnected',
     'connect_failed',
     'save_failed',
+    'sync_failed',
 ];
 
 const TOOL_NAMES: AgentToolName[] = [

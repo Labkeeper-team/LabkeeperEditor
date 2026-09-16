@@ -36,14 +36,14 @@ function hunkOf(type: HunkType, rest: Partial<Hunk> = {}): Hunk {
     return { id: 'h', type, ...rest };
 }
 
-test('new-hunks-keeps-only-unknown-ones-in-original-order', () => {
+test('changed-hunks-keep-new-ones-in-original-order', () => {
     const service = new AgentEventService();
     const known1 = hunkOf('addSegment', { id: 'k1' });
     const known2 = hunkOf('addFile', { id: 'k2' });
     const fresh1 = hunkOf('addLinesToFile', { id: 'f1' });
     const fresh2 = hunkOf('addLinesToSegment', { id: 'f2' });
 
-    const fresh = service.newHunks(
+    const fresh = service.changedHunks(
         [known1, known2],
         [known2, fresh1, known1, fresh2]
     );
@@ -51,22 +51,109 @@ test('new-hunks-keeps-only-unknown-ones-in-original-order', () => {
     expect(fresh).toEqual([fresh1, fresh2]);
 });
 
-test('new-hunks-returns-everything-when-nothing-is-known', () => {
+test('changed-hunks-return-everything-when-nothing-is-known', () => {
     const service = new AgentEventService();
     const next = [
         hunkOf('addSegment', { id: 'a' }),
         hunkOf('addFile', { id: 'b' }),
     ];
 
-    expect(service.newHunks([], next)).toEqual(next);
+    expect(service.changedHunks([], next)).toEqual(next);
 });
 
-test('new-hunks-on-empty-next-is-empty', () => {
+test('changed-hunks-on-empty-next-are-empty', () => {
     const service = new AgentEventService();
 
-    expect(service.newHunks([hunkOf('addSegment', { id: 'a' })], [])).toEqual(
-        []
-    );
+    expect(
+        service.changedHunks([hunkOf('addSegment', { id: 'a' })], [])
+    ).toEqual([]);
+});
+
+// сервер дописывает повторную правку того же места в прежний hunk, id не меняется
+test('changed-hunks-include-a-known-hunk-that-grew', () => {
+    const service = new AgentEventService();
+    const before = hunkOf('addLinesToSegment', {
+        id: 'a',
+        segmentId: 1,
+        startLine: 2,
+        endLine: 2,
+        text: 'Вторая строка',
+    });
+    const after = { ...before, endLine: 3, text: 'Вторая строка\nТретья' };
+
+    expect(service.changedHunks([before], [after])).toEqual([after]);
+});
+
+// по спеке у добавленных строк текста может и не быть
+test('changed-hunks-include-a-known-hunk-that-grew-without-text', () => {
+    const service = new AgentEventService();
+    const before = hunkOf('addLinesToSegment', {
+        id: 'a',
+        segmentId: 1,
+        startLine: 2,
+        endLine: 2,
+    });
+    const after = { ...before, endLine: 3 };
+
+    expect(service.changedHunks([before], [after])).toEqual([after]);
+});
+
+test('changed-hunks-include-a-known-hunk-whose-text-changed', () => {
+    const service = new AgentEventService();
+    const before = hunkOf('addLinesToFile', {
+        id: 'a',
+        fileName: 'a.tex',
+        startLine: 1,
+        endLine: 1,
+        text: 'A',
+    });
+    const after = { ...before, text: 'B' };
+
+    expect(service.changedHunks([before], [after])).toEqual([after]);
+});
+
+test.each([
+    [
+        'type',
+        hunkOf('addLinesToSegment', { id: 'a', segmentId: 1, text: 'x' }),
+        hunkOf('deleteLinesFromSegment', { id: 'a', segmentId: 1, text: 'x' }),
+    ],
+    [
+        'segment',
+        hunkOf('addLinesToSegment', { id: 'a', segmentId: 1, text: 'x' }),
+        hunkOf('addLinesToSegment', { id: 'a', segmentId: 2, text: 'x' }),
+    ],
+    [
+        'file',
+        hunkOf('addLinesToFile', { id: 'a', fileName: 'a.tex', text: 'x' }),
+        hunkOf('addLinesToFile', { id: 'a', fileName: 'b.tex', text: 'x' }),
+    ],
+])('changed-hunks-include-a-known-hunk-with-another-%s', (_, before, after) => {
+    const service = new AgentEventService();
+
+    expect(service.changedHunks([before], [after])).toEqual([after]);
+});
+
+test('changed-hunks-skip-a-known-hunk-that-only-moved', () => {
+    const service = new AgentEventService();
+    const before = hunkOf('addLinesToSegment', {
+        id: 'a',
+        segmentId: 1,
+        startLine: 2,
+        endLine: 3,
+        text: 'x\ny',
+    });
+    const deleted = hunkOf('deleteLinesFromSegment', {
+        id: 'b',
+        segmentId: 1,
+        startLine: 1,
+        endLine: 1,
+        text: 'первая',
+    });
+    // строку выше удалили: прежний hunk лишь сдвинулся, его никто не правил
+    const moved = { ...before, startLine: 1, endLine: 2 };
+
+    expect(service.changedHunks([before], [moved, deleted])).toEqual([deleted]);
 });
 
 test.each(READ_TOOLS.map((tool) => [tool] as const))(
@@ -343,6 +430,53 @@ test('last-navigation-target-is-the-last-place-changed', () => {
     expect(service.lastNavigationTarget([])).toBeUndefined();
 });
 
+// инструмент, которого фронт ещё не знает: судить можно только по hunks
+const UNKNOWN_TOOL = 'rename_segment' as AgentToolName;
+
+test.each([
+    ['add_segment'],
+    ['add_lines_to_segment'],
+    ['delete_lines_from_segment'],
+] as const)(
+    'reload-scope-of-%s-asks-for-the-program-even-without-hunk-changes',
+    (tool) => {
+        const service = new AgentEventService();
+
+        expect(service.reloadScope(tool, [])).toEqual({
+            program: true,
+            files: false,
+        });
+    }
+);
+
+test.each([
+    ['add_file'],
+    ['add_lines_to_file'],
+    ['delete_lines_from_file'],
+] as const)(
+    'reload-scope-of-%s-asks-for-the-files-even-without-hunk-changes',
+    (tool) => {
+        const service = new AgentEventService();
+
+        expect(service.reloadScope(tool, [])).toEqual({
+            program: false,
+            files: true,
+        });
+    }
+);
+
+test.each(READ_TOOLS.map((tool) => [tool]))(
+    'reload-scope-of-%s-asks-for-nothing',
+    (tool) => {
+        const service = new AgentEventService();
+
+        expect(service.reloadScope(tool, [])).toEqual({
+            program: false,
+            files: false,
+        });
+    }
+);
+
 test.each([
     ['addSegment'],
     ['addLinesToSegment'],
@@ -350,7 +484,9 @@ test.each([
 ] as const)('reload-scope-of-%s-asks-for-the-program-only', (type) => {
     const service = new AgentEventService();
 
-    expect(service.reloadScope([hunkOf(type, { segmentId: 1 })])).toEqual({
+    expect(
+        service.reloadScope(UNKNOWN_TOOL, [hunkOf(type, { segmentId: 1 })])
+    ).toEqual({
         program: true,
         files: false,
     });
@@ -362,7 +498,9 @@ test.each([['addFile'], ['addLinesToFile'], ['deleteLinesFromFile']] as const)(
         const service = new AgentEventService();
 
         expect(
-            service.reloadScope([hunkOf(type, { fileName: 'a.tex' })])
+            service.reloadScope(UNKNOWN_TOOL, [
+                hunkOf(type, { fileName: 'a.tex' }),
+            ])
         ).toEqual({ program: false, files: true });
     }
 );
@@ -371,17 +509,20 @@ test('reload-scope-of-a-mixed-batch-asks-for-both', () => {
     const service = new AgentEventService();
 
     expect(
-        service.reloadScope([
+        service.reloadScope(UNKNOWN_TOOL, [
             hunkOf('deleteLinesFromSegment', { id: 'a', segmentId: 1 }),
             hunkOf('addFile', { id: 'b', fileName: 'a.tex' }),
         ])
     ).toEqual({ program: true, files: true });
 });
 
-test('reload-scope-of-an-empty-batch-asks-for-nothing', () => {
+test('reload-scope-of-an-unknown-tool-without-hunks-asks-for-nothing', () => {
     const service = new AgentEventService();
 
-    expect(service.reloadScope([])).toEqual({ program: false, files: false });
+    expect(service.reloadScope(UNKNOWN_TOOL, [])).toEqual({
+        program: false,
+        files: false,
+    });
 });
 
 test('describe-model-call-uses-the-model-call-key', () => {

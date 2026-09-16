@@ -215,6 +215,7 @@ export interface Translations {
             disconnected: string;
             connect_failed: string;
             save_failed: string;
+            sync_failed: string;
         };
     };
     mobile_view: {

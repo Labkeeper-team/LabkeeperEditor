@@ -24,6 +24,31 @@ const HUNK_LABELS = {
     deleteLinesFromFile: 'delete_lines_from_file',
 } as const;
 
+const SEGMENT_TOOLS = new Set<AgentToolName>([
+    'add_segment',
+    'add_lines_to_segment',
+    'delete_lines_from_segment',
+]);
+
+const FILE_TOOLS = new Set<AgentToolName>([
+    'add_file',
+    'add_lines_to_file',
+    'delete_lines_from_file',
+]);
+
+const lineSpan = (hunk: Hunk) =>
+    hunk.startLine == null
+        ? null
+        : (hunk.endLine ?? hunk.startLine) - hunk.startLine;
+
+/** Та же ли это правка. Сдвиг из-за правки выше не в счёт: сам hunk никто не трогал */
+const isSameChange = (a: Hunk, b: Hunk) =>
+    a.type === b.type &&
+    a.segmentId === b.segmentId &&
+    a.fileName === b.fileName &&
+    a.text === b.text &&
+    lineSpan(a) === lineSpan(b);
+
 /** Типы, к которым осмысленно скроллить: удалённых строк на месте уже нет. */
 const NAVIGABLE_HUNK_TYPES = new Set([
     'addSegment',
@@ -49,10 +74,16 @@ function formatLines(hunk: Hunk): string | undefined {
 }
 
 export class AgentEventService {
-    /** Новые hunks относительно уже известных, в исходном порядке. */
-    newHunks(previous: Hunk[], next: Hunk[]): Hunk[] {
-        const known = new Set(previous.map((hunk) => hunk.id));
-        return next.filter((hunk) => !known.has(hunk.id));
+    /**
+     * Hunks, которые вызов добавил или поменял, в исходном порядке. Повторную
+     * правку того же места сервер дописывает в прежний hunk с тем же id
+     */
+    changedHunks(previous: Hunk[], next: Hunk[]): Hunk[] {
+        const known = new Map(previous.map((hunk) => [hunk.id, hunk]));
+        return next.filter((hunk) => {
+            const before = known.get(hunk.id);
+            return !before || !isSameChange(before, hunk);
+        });
     }
 
     /**
@@ -128,10 +159,16 @@ export class AgentEventService {
         return this.firstNavigationTarget([...fresh].reverse());
     }
 
-    /** Нужно ли перезагружать программу и файлы после этой пачки hunks. */
-    reloadScope(fresh: Hunk[]): { program: boolean; files: boolean } {
-        let program = false;
-        let files = false;
+    /**
+     * Что перечитать после вызова. Пишущий инструмент меняет проект, даже если
+     * hunks не поменялись: агент мог убрать то, что сам добавил
+     */
+    reloadScope(
+        toolName: AgentToolName,
+        fresh: Hunk[]
+    ): { program: boolean; files: boolean } {
+        let program = SEGMENT_TOOLS.has(toolName);
+        let files = FILE_TOOLS.has(toolName);
         for (const hunk of fresh) {
             if (
                 hunk.type === 'addSegment' ||

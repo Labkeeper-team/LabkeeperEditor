@@ -65,6 +65,33 @@ test('loadHunks loads hunks for own authenticated project', async () => {
     expect(repository.ideViewModelRepository.hunks()).toEqual([sampleHunk]);
 });
 
+test('loadHunks drops the answer for a project that was left', async () => {
+    const { hunkService, rpi, repository } = mockContext();
+    setOwnAuthenticatedProject(repository);
+    let answer: (value: unknown) => void = () => {};
+    rpi.listHunksRequest = jest
+        .fn()
+        .mockReturnValue(new Promise((resolve) => (answer = resolve)));
+
+    const loading = hunkService.loadHunks();
+    // пока hunks ехали, человек открыл другой проект
+    const project = repository.projectViewModelRepository.project()!;
+    repository.projectViewModelRepository.setProject({
+        ...project,
+        projectId: 'another',
+    });
+    answer({
+        code: 200,
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+        body: { hunks: [sampleHunk] },
+    });
+    await loading;
+
+    expect(repository.ideViewModelRepository.hunks()).toEqual([]);
+});
+
 test('loadHunks clears hunks for readonly project without API call', async () => {
     const { hunkService, rpi, repository } = mockContext();
     setOwnAuthenticatedProject(repository);

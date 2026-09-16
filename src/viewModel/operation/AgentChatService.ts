@@ -57,6 +57,8 @@ export class AgentChatService {
     private runToken = 0;
     /** Последнее место, которое агент правил в текущем прогоне */
     private lastChange: EditorNavigationTarget | undefined;
+    /** Перечитать программу не вышло или сокет оборвался: в редакторе может быть старая программа */
+    private programMayBeStale = false;
     /** Текст последнего запроса: слишком длинный вернём в поле, чтобы его сократили */
     private lastPrompt = '';
 
@@ -250,9 +252,17 @@ export class AgentChatService {
             createdAt: new Date().toISOString(),
         });
 
-        const saved = await this.flushPendingSaves();
+        // старую программу нельзя сохранять перед запуском: она затрёт правку прошлого прогона
+        const synced = await this.resyncProgram(token);
+        const saved = synced && (await this.flushPendingSaves());
         // за время сохранения могли уйти со страницы или открыть другой проект
         if (token !== this.runToken) {
+            return;
+        }
+        if (!synced) {
+            logBreadcrumb('agent', 'sync_failed', undefined, 'warning');
+            chat.appendMessage({ kind: 'error', reason: 'sync_failed' });
+            chat.setRequestState('error');
             return;
         }
         if (!saved) {
@@ -276,7 +286,7 @@ export class AgentChatService {
         const handlers = {
             onEvent: (event: AgentEvent) => this.onAgentEvent(token, event),
             onClosed: (reason: AgentClosedReason) =>
-                this.onAgentClosed(token, reason),
+                void this.onAgentClosed(token, reason),
         };
 
         if (authenticated && project) {
@@ -307,6 +317,8 @@ export class AgentChatService {
     /** Соединение живёт, пока открыт проект. Закрываем при смене проекта и уходе. */
     closeSession = (): void => {
         this.runToken += 1;
+        // программа другого проекта загрузится заново
+        this.programMayBeStale = false;
         this.session?.close();
         this.session = null;
         if (this.isRunning()) {
@@ -357,7 +369,7 @@ export class AgentChatService {
                 'agent.event_handler',
                 error
             );
-            this.onAgentClosed(token, 'closed', true);
+            await this.onAgentClosed(token, 'closed', true);
         }
     };
 
@@ -388,7 +400,7 @@ export class AgentChatService {
             return;
         }
 
-        this.onFinished(event);
+        await this.onFinished(token, event);
     };
 
     private onToolCall = async (
@@ -405,22 +417,25 @@ export class AgentChatService {
             return;
         }
 
+        // под замком ревизия стоит, а после обрыва замок снимается раньше, чем доедет ответ
+        const revision =
+            this.repository.ideViewModelRepository.programChangeRevision();
         await this.hunkService.loadHunks();
         // hunks ехали из сети, за это время проект мог смениться
         if (token !== this.runToken) {
             return;
         }
         const hunks = this.repository.ideViewModelRepository.hunks();
-        const fresh = this.events.newHunks(this.knownHunks, hunks);
+        const fresh = this.events.changedHunks(this.knownHunks, hunks);
         this.knownHunks = hunks;
 
         for (const draft of this.events.describeToolCall(toolName, fresh)) {
             chat.appendMessage(draft);
         }
 
-        const scope = this.events.reloadScope(fresh);
+        const scope = this.events.reloadScope(toolName, fresh);
         if (scope.program) {
-            await this.reloadProgram();
+            await this.reloadProgram(token, revision);
         }
         if (scope.files) {
             const project =
@@ -428,6 +443,10 @@ export class AgentChatService {
             if (project) {
                 await this.loaderService.loadFiles(project.projectId);
             }
+        }
+        // пока ехали программа и файлы, человек мог уйти в другой проект
+        if (token !== this.runToken) {
+            return;
         }
 
         this.lastChange =
@@ -452,9 +471,10 @@ export class AgentChatService {
         await this.programEditorService.navigateToAgentChange(target);
     };
 
-    private onFinished = (
+    private onFinished = async (
+        token: number,
         event: Extract<AgentEvent, { kind: 'finished' }>
-    ): void => {
+    ): Promise<void> => {
         const chat = this.repository.chatViewModelRepository;
         this.session = null;
         this.observerService.setUserState(
@@ -467,6 +487,11 @@ export class AgentChatService {
         // при UnauthorizedLimitExceeded прогона не было, и подменять программу нечем
         if (event.program && !isError) {
             this.applyUnauthorizedResult(event.program, event.hunks ?? []);
+        }
+        // замок снимаем после сверки, иначе правка человека ляжет на старую программу
+        await this.resyncProgram(token);
+        if (token !== this.runToken) {
+            return;
         }
 
         if (isError) {
@@ -505,21 +530,59 @@ export class AgentChatService {
         }
     };
 
-    private reloadProgram = async (): Promise<void> => {
+    /**
+     * true, если программа перечитана. editedAfter: ревизия, после которой
+     * правки человека важнее ответа сервера
+     */
+    private reloadProgram = async (
+        token: number,
+        editedAfter?: number
+    ): Promise<boolean> => {
         const project = this.repository.projectViewModelRepository.project();
         if (!project) {
-            return;
+            return false;
         }
         const result = await this.rpi.getProjectRequest(project.projectId);
+        // ответ по проекту, из которого уже ушли, в открытый проект не пишем
+        if (token !== this.runToken) {
+            return false;
+        }
         if (!result.isOk) {
-            return;
+            this.programMayBeStale = true;
+            return false;
+        }
+        if (
+            editedAfter !== undefined &&
+            editedAfter !==
+                this.repository.ideViewModelRepository.programChangeRevision()
+        ) {
+            return false;
         }
         // setNewProgram, а не replaceProgram: двадцать итераций дадут двадцать точек отмены
         this.ideService.setNewProgram(
             result.body.program,
             result.body.lastProgramResult
         );
+        this.programMayBeStale = false;
         await this.textFileEditorService.reloadActiveTextFileIfOpen();
+        return true;
+    };
+
+    /** false, если программа может расходиться с сервером. Зовётся под замком */
+    private resyncProgram = async (token: number): Promise<boolean> => {
+        if (!this.programMayBeStale) {
+            return true;
+        }
+        let synced = false;
+        try {
+            synced = await this.reloadProgram(token);
+            if (synced) {
+                await this.hunkService.loadHunks();
+            }
+        } catch (error) {
+            reportUnexpectedError(this.observerService, 'agent.resync', error);
+        }
+        return synced;
     };
 
     private reportStopReason = (reason: AgentStopReason): void => {
@@ -541,15 +604,14 @@ export class AgentChatService {
         }
     };
 
-    private onAgentClosed = (
+    private onAgentClosed = async (
         token: number,
         reason: AgentClosedReason,
         alreadyReported = false
-    ): void => {
+    ): Promise<void> => {
         if (token !== this.runToken) {
             return;
         }
-        const chat = this.repository.chatViewModelRepository;
         this.session = null;
         logBreadcrumb(
             'agent',
@@ -557,14 +619,29 @@ export class AgentChatService {
             { reason, alreadyReported },
             reason === 'timeout' ? 'warning' : 'error'
         );
+        if (!alreadyReported) {
+            this.reportClosed(reason);
+        }
+        // после обрыва очередь событий выбрасывается, и правка агента могла остаться в ней
+        if (
+            reason !== 'connect_failed' &&
+            this.repository.userViewModelRepository.isAuthenticated()
+        ) {
+            this.programMayBeStale = true;
+        }
+        await this.resyncProgram(token);
+        if (token !== this.runToken) {
+            return;
+        }
+        const chat = this.repository.chatViewModelRepository;
         chat.appendMessage({
             kind: 'error',
             reason: reason === 'closed' ? 'disconnected' : reason,
         });
         chat.setRequestState('error');
-        if (alreadyReported) {
-            return;
-        }
+    };
+
+    private reportClosed = (reason: AgentClosedReason): void => {
         if (reason === 'timeout') {
             this.observerService.onEvent(Events.EVENT_AGENT_TIMEOUT);
             reportToSentry('agent.timeout', new Error('Agent socket timeout'));

@@ -62,6 +62,12 @@ function setup(authenticated = true) {
     ctx.rpi.listFilesRequest = jest
         .fn()
         .mockResolvedValue(okResult({ files: [] }));
+    // после обрыва сервис сверяет программу с сервером
+    ctx.rpi.getProjectRequest = jest.fn().mockResolvedValue(
+        okResult({
+            program: { segments: [], parameters: { roundStrategy: 'noRound' } },
+        })
+    );
     // по ТЗ перед стартом агента всё висящее дописывается на сервер
     mockSaveProgramRequest(ctx.rpi);
     return ctx;
@@ -254,6 +260,7 @@ test('agent-connection-drop-unlocks-and-reports', async () => {
 
     await ctx.agentChatService.onPromptSubmit();
     ctx.agentSocketState.handlers?.onClosed('closed');
+    await settled();
 
     const messages = ctx.repository.chatViewModelRepository.messages();
     expect(messages[messages.length - 1]).toMatchObject({
@@ -273,6 +280,7 @@ test('agent-timeout-unlocks-and-reports', async () => {
 
     await ctx.agentChatService.onPromptSubmit();
     ctx.agentSocketState.handlers?.onClosed('timeout');
+    await settled();
 
     const messages = ctx.repository.chatViewModelRepository.messages();
     expect(messages[messages.length - 1]).toMatchObject({
@@ -729,6 +737,405 @@ test('tool-call-reloads-the-program-for-a-segment-hunk', async () => {
 });
 
 /**
+ * Повторную правку того же места сервер дописывает в прежний hunk и id не
+ * меняет, поэтому новых hunks после неё нет, а текст на сервере уже другой
+ */
+
+const oneSegment = (text: string): Program => ({
+    segments: [{ id: 1, type: 'md', text, parameters: { visible: true } }],
+    parameters: { roundStrategy: 'noRound' },
+});
+
+const addedLines = (endLine: number, text: string): Hunk => ({
+    id: 'same',
+    type: 'addLinesToSegment',
+    segmentId: 1,
+    startLine: 2,
+    endLine,
+    text,
+});
+
+function answerInTurn(hunks: Hunk[][], texts: string[]) {
+    return {
+        hunks: hunks.reduce(
+            (mock, list) =>
+                mock.mockResolvedValueOnce(okResult({ hunks: list })),
+            jest.fn()
+        ),
+        project: texts.reduce(
+            (mock, text) =>
+                mock.mockResolvedValueOnce(
+                    okResult({ program: oneSegment(text) })
+                ),
+            jest.fn()
+        ),
+    };
+}
+
+const segmentText = (ctx: ReturnType<typeof setup>) =>
+    ctx.repository.projectViewModelRepository.currentProgram().segments[0]
+        ?.text;
+
+const events = (ctx: ReturnType<typeof setup>) =>
+    ctx.repository.chatViewModelRepository
+        .messages()
+        .filter((message) => message.kind === 'event');
+
+test('tool-call-reloads-the-program-when-the-same-hunk-grows', async () => {
+    const ctx = setup();
+    ctx.repository.chatViewModelRepository.setInput('добавь две строки');
+    await ctx.agentChatService.onPromptSubmit();
+    const server = answerInTurn(
+        [[addedLines(2, 'X')], [addedLines(3, 'X\nY')]],
+        ['a\nX', 'a\nX\nY']
+    );
+    ctx.rpi.listHunksRequest = server.hunks;
+    ctx.rpi.getProjectRequest = server.project;
+
+    await emit(ctx, { kind: 'toolCall', toolName: 'add_lines_to_segment' });
+    await emit(ctx, { kind: 'toolCall', toolName: 'add_lines_to_segment' });
+
+    expect(segmentText(ctx)).toBe('a\nX\nY');
+    // вторая строка ленты тоже знает, где правка
+    expect(events(ctx)[1]).toMatchObject({
+        labelKey: 'add_lines_to_segment',
+        segmentId: 1,
+        lines: '#L2-3',
+    });
+});
+
+test('tool-call-reloads-the-program-when-the-agent-removes-its-own-lines', async () => {
+    const ctx = setup();
+    ctx.repository.chatViewModelRepository.setInput('добавь и убери строку');
+    await ctx.agentChatService.onPromptSubmit();
+    // удалив всё, что добавил, агент убирает и сам hunk
+    const server = answerInTurn([[addedLines(2, 'X')], []], ['a\nX', 'a']);
+    ctx.rpi.listHunksRequest = server.hunks;
+    ctx.rpi.getProjectRequest = server.project;
+
+    await emit(ctx, { kind: 'toolCall', toolName: 'add_lines_to_segment' });
+    await emit(ctx, {
+        kind: 'toolCall',
+        toolName: 'delete_lines_from_segment',
+    });
+
+    expect(segmentText(ctx)).toBe('a');
+    expect(events(ctx)[1]).toMatchObject({
+        labelKey: 'delete_lines_from_segment_plain',
+    });
+});
+
+test('tool-call-reloads-the-program-for-a-hunk-left-from-a-previous-run', async () => {
+    const ctx = setup();
+    ctx.repository.ideViewModelRepository.setHunks([addedLines(2, 'X')]);
+    ctx.repository.chatViewModelRepository.setInput('добавь ещё строку');
+    await ctx.agentChatService.onPromptSubmit();
+    const server = answerInTurn([[addedLines(3, 'X\nY')]], ['a\nX\nY']);
+    ctx.rpi.listHunksRequest = server.hunks;
+    ctx.rpi.getProjectRequest = server.project;
+
+    await emit(ctx, { kind: 'toolCall', toolName: 'add_lines_to_segment' });
+
+    expect(segmentText(ctx)).toBe('a\nX\nY');
+    expect(events(ctx)[0]).toMatchObject({ segmentId: 1, lines: '#L2-3' });
+});
+
+test('tool-call-reloads-the-files-when-the-same-file-hunk-grows', async () => {
+    const ctx = setup();
+    ctx.repository.chatViewModelRepository.setInput('допиши файл');
+    await ctx.agentChatService.onPromptSubmit();
+    const fileLines = (endLine: number, text: string): Hunk => ({
+        id: 'same',
+        type: 'addLinesToFile',
+        fileName: 'notes.txt',
+        startLine: 1,
+        endLine,
+        text,
+    });
+    ctx.rpi.listHunksRequest = answerInTurn(
+        [[fileLines(1, 'A')], [fileLines(2, 'A\nB')]],
+        []
+    ).hunks;
+    ctx.rpi.getProjectRequest = jest.fn();
+
+    await emit(ctx, { kind: 'toolCall', toolName: 'add_lines_to_file' });
+    await emit(ctx, { kind: 'toolCall', toolName: 'add_lines_to_file' });
+
+    expect(ctx.rpi.listFilesRequest).toHaveBeenCalledTimes(2);
+    expect(ctx.rpi.getProjectRequest).not.toHaveBeenCalled();
+});
+
+/**
+ * Не вышло перечитать или сокет оборвался: редактор мог разойтись с сервером,
+ * и следующее сохранение записало бы старый текст поверх правки агента
+ */
+
+const failedResult = {
+    code: 502,
+    body: undefined,
+    isOk: false,
+    isUnauth: false,
+    isForbidden: false,
+};
+
+const settled = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+function pending<T>() {
+    let resolve: (value: T) => void = () => {};
+    const promise = new Promise<T>((done) => (resolve = done));
+    return { promise, resolve };
+}
+
+async function submitAndFailReload(ctx: ReturnType<typeof setup>) {
+    ctx.repository.chatViewModelRepository.setInput('добавь строку');
+    await ctx.agentChatService.onPromptSubmit();
+    ctx.rpi.listHunksRequest = jest
+        .fn()
+        .mockResolvedValue(okResult({ hunks: [addedLines(2, 'X')] }));
+    ctx.rpi.getProjectRequest = jest.fn().mockResolvedValue(failedResult);
+    await emit(ctx, { kind: 'toolCall', toolName: 'add_lines_to_segment' });
+}
+
+const savedTexts = (ctx: ReturnType<typeof setup>) =>
+    (ctx.rpi.saveProgramRequest as jest.Mock).mock.calls.map(
+        ([, program]) => (program as Program).segments[0]?.text
+    );
+
+test('failed-reload-is-retried-when-the-run-ends', async () => {
+    const ctx = setup();
+    await submitAndFailReload(ctx);
+    ctx.rpi.getProjectRequest = jest
+        .fn()
+        .mockResolvedValue(okResult({ program: oneSegment('a\nX') }));
+
+    await emit(ctx, {
+        kind: 'finished',
+        message: 'готово',
+        stopReason: 'Done',
+    });
+
+    expect(segmentText(ctx)).toBe('a\nX');
+});
+
+test('successful-resync-is-not-repeated-by-the-next-request', async () => {
+    const ctx = setup();
+    await submitAndFailReload(ctx);
+    ctx.rpi.getProjectRequest = jest
+        .fn()
+        .mockResolvedValue(okResult({ program: oneSegment('a\nX') }));
+    await emit(ctx, {
+        kind: 'finished',
+        message: 'готово',
+        stopReason: 'Done',
+    });
+    (ctx.rpi.getProjectRequest as jest.Mock).mockClear();
+
+    ctx.repository.chatViewModelRepository.setInput('ещё');
+    await ctx.agentChatService.onPromptSubmit();
+
+    expect(ctx.rpi.getProjectRequest).not.toHaveBeenCalled();
+});
+
+test('failed-reload-is-retried-when-the-run-ends-with-an-error', async () => {
+    const ctx = setup();
+    await submitAndFailReload(ctx);
+    ctx.rpi.getProjectRequest = jest
+        .fn()
+        .mockResolvedValue(okResult({ program: oneSegment('a\nX') }));
+
+    await emit(ctx, {
+        kind: 'finished',
+        message: null,
+        stopReason: 'UnknownError',
+    });
+
+    expect(segmentText(ctx)).toBe('a\nX');
+});
+
+test('run-stays-locked-until-the-program-is-resynced', async () => {
+    const ctx = setup();
+    await submitAndFailReload(ctx);
+    const server = pending<unknown>();
+    ctx.rpi.getProjectRequest = jest.fn().mockReturnValue(server.promise);
+
+    const finished = emit(ctx, {
+        kind: 'finished',
+        message: 'готово',
+        stopReason: 'Done',
+    });
+    await settled();
+
+    // пока старая программа в редакторе, человек не должен её править
+    expect(ctx.agentChatService.isRunning()).toBe(true);
+    server.resolve(okResult({ program: oneSegment('a\nX') }));
+    await finished;
+    expect(ctx.agentChatService.isRunning()).toBe(false);
+});
+
+test('dropped-connection-resyncs-the-program-before-unlocking', async () => {
+    const ctx = setup();
+    ctx.repository.chatViewModelRepository.setInput('добавь строку');
+    await ctx.agentChatService.onPromptSubmit();
+    const server = pending<unknown>();
+    ctx.rpi.getProjectRequest = jest.fn().mockReturnValue(server.promise);
+
+    // события после обрыва выбрасываются, и правка агента могла остаться в очереди
+    ctx.agentSocketState.handlers?.onClosed('closed');
+    await settled();
+    expect(ctx.agentChatService.isRunning()).toBe(true);
+
+    server.resolve(okResult({ program: oneSegment('a\nX') }));
+    await settled();
+    expect(segmentText(ctx)).toBe('a\nX');
+    expect(ctx.agentChatService.isRunning()).toBe(false);
+});
+
+test('connection-that-never-opened-does-not-resync', async () => {
+    const ctx = setup();
+    ctx.repository.chatViewModelRepository.setInput('добавь строку');
+    await ctx.agentChatService.onPromptSubmit();
+    ctx.rpi.getProjectRequest = jest.fn();
+
+    ctx.agentSocketState.handlers?.onClosed('connect_failed');
+    await settled();
+
+    expect(ctx.rpi.getProjectRequest).not.toHaveBeenCalled();
+});
+
+test('guest-connection-drop-does-not-resync', async () => {
+    const ctx = setup(false);
+    ctx.repository.chatViewModelRepository.setInput('добавь строку');
+    await ctx.agentChatService.onPromptSubmit();
+    ctx.rpi.getProjectRequest = jest.fn();
+
+    ctx.agentSocketState.handlers?.onClosed('closed');
+    await settled();
+
+    expect(ctx.rpi.getProjectRequest).not.toHaveBeenCalled();
+});
+
+test('next-request-resyncs-before-saving', async () => {
+    const ctx = setup();
+    await submitAndFailReload(ctx);
+    // и в конце прогона сверить не вышло
+    await emit(ctx, {
+        kind: 'finished',
+        message: 'готово',
+        stopReason: 'Done',
+    });
+    ctx.rpi.getProjectRequest = jest
+        .fn()
+        .mockResolvedValue(okResult({ program: oneSegment('a\nX') }));
+    (ctx.rpi.saveProgramRequest as jest.Mock).mockClear();
+
+    ctx.repository.chatViewModelRepository.setInput('ещё');
+    await ctx.agentChatService.onPromptSubmit();
+
+    expect(savedTexts(ctx)).toEqual(['a\nX']);
+});
+
+test('next-request-does-not-start-over-a-stale-program', async () => {
+    const ctx = setup();
+    await submitAndFailReload(ctx);
+    await emit(ctx, {
+        kind: 'finished',
+        message: 'готово',
+        stopReason: 'Done',
+    });
+    (ctx.rpi.saveProgramRequest as jest.Mock).mockClear();
+    ctx.agentSocketState.started = null;
+
+    ctx.repository.chatViewModelRepository.setInput('ещё');
+    await ctx.agentChatService.onPromptSubmit();
+
+    expect(ctx.rpi.saveProgramRequest).not.toHaveBeenCalled();
+    expect(ctx.agentSocketState.started).toBeNull();
+    const messages = ctx.repository.chatViewModelRepository.messages();
+    // своя причина: дело не в сохранении, а в том, что программа не сверена
+    expect(messages[messages.length - 1]).toMatchObject({
+        kind: 'error',
+        reason: 'sync_failed',
+    });
+});
+
+test('project-change-forgets-a-stale-program', async () => {
+    const ctx = setup();
+    await submitAndFailReload(ctx);
+    await emit(ctx, {
+        kind: 'finished',
+        message: 'готово',
+        stopReason: 'Done',
+    });
+
+    ctx.agentChatService.onProjectChanged();
+    ctx.rpi.getProjectRequest = jest.fn();
+    ctx.repository.chatViewModelRepository.setInput('в новом проекте');
+    await ctx.agentChatService.onPromptSubmit();
+
+    expect(ctx.rpi.getProjectRequest).not.toHaveBeenCalled();
+    expect(ctx.agentSocketState.started).toMatchObject({
+        prompt: 'в новом проекте',
+    });
+});
+
+test('late-reload-after-a-drop-keeps-what-the-user-typed', async () => {
+    const ctx = setup();
+    ctx.repository.chatViewModelRepository.setInput('добавь строку');
+    await ctx.agentChatService.onPromptSubmit();
+    ctx.rpi.listHunksRequest = answerInTurn([[addedLines(2, 'X')]], []).hunks;
+    const late = pending<unknown>();
+    ctx.rpi.getProjectRequest = jest
+        .fn()
+        .mockReturnValueOnce(late.promise)
+        .mockResolvedValueOnce(okResult({ program: oneSegment('a\nX') }));
+
+    const toolCall = emit(ctx, {
+        kind: 'toolCall',
+        toolName: 'add_lines_to_segment',
+    });
+    await settled();
+    ctx.agentSocketState.handlers?.onClosed('closed');
+    await settled();
+    // сверка прошла, замок снят, и человек начал печатать
+    ctx.repository.projectViewModelRepository.setCurrentProgram(
+        oneSegment('мой текст')
+    );
+    ctx.repository.ideViewModelRepository.markProgramChanged();
+    late.resolve(okResult({ program: oneSegment('a\nX') }));
+    await toolCall;
+
+    expect(segmentText(ctx)).toBe('мой текст');
+});
+
+test('reload-answer-for-a-left-project-is-dropped', async () => {
+    const ctx = setup();
+    ctx.repository.chatViewModelRepository.setInput('добавь строку');
+    await ctx.agentChatService.onPromptSubmit();
+    ctx.rpi.listHunksRequest = answerInTurn([[addedLines(2, 'X')]], []).hunks;
+    const server = pending<unknown>();
+    ctx.rpi.getProjectRequest = jest.fn().mockReturnValue(server.promise);
+
+    const toolCall = emit(ctx, {
+        kind: 'toolCall',
+        toolName: 'add_lines_to_segment',
+    });
+    await settled();
+    // человек ушёл в другой проект, пока ехала программа прошлого
+    ctx.agentChatService.onProjectChanged();
+    ctx.repository.projectViewModelRepository.setCurrentProgram(
+        oneSegment('проект B')
+    );
+    server.resolve(okResult({ program: oneSegment('проект A') }));
+    await toolCall;
+    await settled();
+
+    expect(segmentText(ctx)).toBe('проект B');
+    expect(
+        ctx.repository.ideViewModelRepository.editorNavigationTarget()
+    ).toBeFalsy();
+});
+
+/**
  * На телефоне чат и редактор это разные экраны. После прогона агента телефон
  * открывает редактор там, где агент правил последним
  */
@@ -1021,6 +1428,7 @@ test('cross-border-consent-is-asked-only-once', async () => {
     await ctx.agentChatService.onPromptSubmit();
     await ctx.agentChatService.onCrossBorderConsentAccepted();
     ctx.agentSocketState.handlers?.onClosed('closed');
+    await settled();
 
     ctx.repository.chatViewModelRepository.setInput('второй');
     await ctx.agentChatService.onPromptSubmit();
