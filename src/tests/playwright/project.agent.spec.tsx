@@ -522,6 +522,29 @@ test.describe('compile errors on a phone', () => {
     });
 });
 
+test.describe('compile errors in a russian browser', () => {
+    test.use({ locale: 'ru-RU' });
+
+    test('compile-errors-follow-the-chosen-language', async ({ page }) => {
+        await openWithCompileError(page);
+        // браузер русский, английский выбран в шапке уже после загрузки
+        await page
+            .locator('.labkeeper_header__language .select-header')
+            .click();
+        await page
+            .getByRole('listitem')
+            .filter({ hasText: /^English$/ })
+            .click();
+        await page.getByRole('button', { name: /Run/i }).click();
+
+        await sendErrorsButton(page).click();
+
+        await expect(page.getByPlaceholder('Enter your promt')).toHaveValue(
+            'Fix the compilation errors:\n- Segment №1, line 1.4: No such variable x'
+        );
+    });
+});
+
 test('compilation-switches-viewer-back-to-pdf', async ({ page }) => {
     const routeSetup = new RouteSetup(page);
     await routeSetup.setupGetUserInfoRequest();
