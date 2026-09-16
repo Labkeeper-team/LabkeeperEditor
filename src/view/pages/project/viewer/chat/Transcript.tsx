@@ -202,6 +202,21 @@ export const Transcript = () => {
         node.scrollTop = node.scrollHeight;
     }, [messages, history]);
 
+    // MathJax набирает формулы уже после докрутки, и ответ подрастает снизу
+    useEffect(() => {
+        const node = containerRef.current;
+        if (!node) {
+            return;
+        }
+        const observer = new MutationObserver(() => {
+            if (stickToBottom.current) {
+                node.scrollTop = node.scrollHeight;
+            }
+        });
+        observer.observe(node, { childList: true, subtree: true });
+        return () => observer.disconnect();
+    }, []);
+
     const isRunning =
         requestState === 'running' || requestState === 'connecting';
     const lastIndex = messages.length - 1;

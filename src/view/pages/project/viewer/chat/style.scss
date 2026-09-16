@@ -92,6 +92,9 @@
     line-height: 18px;
     color: $gray-10;
     word-break: break-word;
+    // длинная строчная формула прокручивается, а \raise в формуле агента не вылезет на соседние сообщения
+    overflow-x: auto;
+    overflow-y: hidden;
 
     // разметка ответа агента: плотнее, чем в результате, это колонка чата
     > :first-child {
@@ -165,6 +168,15 @@
         padding-left: 10px;
         border-left: 3px solid $gray-50;
         color: $gray-20;
+    }
+    // длинная формула прокручивается сама, как таблица
+    .agent-chat__math-block {
+        margin: 0 0 8px;
+        overflow-x: auto;
+        overflow-y: hidden;
+    }
+    mjx-container[display='true'] {
+        margin: 4px 0;
     }
 }
 
