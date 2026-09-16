@@ -240,7 +240,7 @@ export class WebRpi implements Rpi {
             name.includes('/') && !name.startsWith('/') ? `/${name}` : name;
         return this.requestWrapper(
             'uploadFileRequest',
-            [200, 400, 409, 413, 401, 403],
+            [200, 201, 423, 400, 409, 413, 401, 403],
             async () =>
                 axios.put(
                     `${URLS.uploadFile.replace('{id}', projectId)}`,
@@ -391,7 +391,7 @@ export class WebRpi implements Rpi {
     ): Promise<RequestResult<Project>> {
         return this.requestWrapper(
             'createProjectRequest',
-            [200, 401, 417],
+            [200, 201, 401, 417],
             async () =>
                 axios.put(
                     `${URLS.createProject}?name=${projectName}&type=${projectType}`,
@@ -424,11 +424,14 @@ export class WebRpi implements Rpi {
         projectId: string,
         program: Program
     ): Promise<RequestResult> {
-        return this.requestWrapper('saveProgramRequest', [200, 401], async () =>
-            axios.post(
-                URLS.setProgram.replace('{id}', projectId),
-                withIds(program)
-            )
+        return this.requestWrapper(
+            'saveProgramRequest',
+            [200, 423, 401],
+            async () =>
+                axios.post(
+                    URLS.setProgram.replace('{id}', projectId),
+                    withIds(program)
+                )
         );
     }
 
