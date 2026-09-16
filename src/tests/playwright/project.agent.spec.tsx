@@ -37,6 +37,7 @@ async function openChat(
         history?: AgentHistoryEntry[];
         authenticated?: boolean;
         program?: Program;
+        historyDelayMs?: number;
     } = {}
 ) {
     const routeSetup = new RouteSetup(page);
@@ -49,6 +50,14 @@ async function openChat(
     await routeSetup.setupSaveProgramRequest();
     await routeSetup.setupListFilesRequest(200, 'emptyFiles');
     await routeSetup.setupAgentHistoryRequest(options.history ?? []);
+    if (options.historyDelayMs) {
+        await page.route(`**/public/project/${uuid}/history`, async (route) => {
+            await new Promise((done) =>
+                setTimeout(done, options.historyDelayMs)
+            );
+            await route.fallback();
+        });
+    }
     const sent = await routeSetup.setupAgentSocket(options.frames ?? [], {
         dropConnection: options.dropConnection,
     });
@@ -404,6 +413,190 @@ test('agent-response-does-not-break-formulas', async ({ page }) => {
     // звёздочки внутри формулы не должны превратиться в курсив
     await expect(response.locator('em')).toHaveCount(0);
     await expect(response).toContainText('a*b*c');
+});
+
+// MathJax кладёт копию формулы для экранных дикторов внутрь самой формулы
+const FORMULA = 'mjx-container:not(mjx-assistive-mml *)';
+
+// MathJax тяжёлый, и на медленной машине грузится дольше обычного ожидания
+const MATHJAX_LOAD = { timeout: 15000 };
+
+test('agent-response-renders-formulas', async ({ page }) => {
+    const answer = [
+        'Строчная $E = mc^2$ и ещё \\( a^2 \\)',
+        '',
+        '\\[',
+        '\\lim_{x \\to 0} \\frac{\\sin x}{x} = 1',
+        '\\]',
+        '',
+        '```latex',
+        '\\[ x \\]',
+        '```',
+    ].join('\n');
+    await openChat(page, { frames: [finished('Done', answer)] });
+    await submitPrompt(page);
+
+    const response = page.locator('.agent-chat__response-text');
+    await expect(response.locator(FORMULA)).toHaveCount(3, MATHJAX_LOAD);
+    await expect(response.locator(`${FORMULA}[display="true"]`)).toHaveCount(1);
+    // DeepSeek пишет \[ \], и markdown раньше съедал слеши, оставляя голые скобки
+    await expect(response).not.toContainText('\\lim');
+    // формула-блок стоит без серой подложки кода, а код остаётся кодом
+    await expect(response.locator('pre mjx-container')).toHaveCount(0);
+    await expect(response.locator('pre code')).toHaveText('\\[ x \\]');
+});
+
+test('answer-without-formulas-does-not-load-mathjax', async ({ page }) => {
+    const mathJaxRequests: string[] = [];
+    page.on('request', (request) => {
+        if (request.url().includes('/mathjax/')) {
+            mathJaxRequests.push(request.url());
+        }
+    });
+    await openChat(page, { frames: [finished('Done', 'Добавил **таблицу**')] });
+    await submitPrompt(page);
+
+    await expect(page.locator('.agent-chat__response-text strong')).toHaveText(
+        'таблицу'
+    );
+    expect(mathJaxRequests).toEqual([]);
+});
+
+test('agent-formulas-cannot-leave-the-answer', async ({ page }) => {
+    const outside: string[] = [];
+    page.on('request', (request) => {
+        if (request.url().includes('attacker.example')) {
+            outside.push(request.url());
+        }
+    });
+    const answer = [
+        '$\\href{javascript:window.__agentXss=3}{x}$',
+        '',
+        '$\\style{cursor:url(https://attacker.example/c.png),auto}{y}$',
+        '',
+        '$\\def\\cdot{+}$ и потом $a \\cdot b$',
+        '',
+        '$\\raise{-30em}{\\rule{80em}{80em}}$',
+        '',
+        '$$',
+        '\\newcommand{\\R}{\\mathbb{R}}',
+        '$$',
+    ].join('\n');
+    await openChat(page, { frames: [finished('Done', answer)] });
+    await submitPrompt(page);
+
+    const response = page.locator('.agent-chat__response-text');
+    await expect(response.locator(FORMULA)).toHaveCount(2, MATHJAX_LOAD);
+    // ссылки, стили и определения агента остаются текстом
+    await expect(response.locator('code')).toHaveText([
+        '\\href{javascript:window.__agentXss=3}{x}',
+        '\\style{cursor:url(https://attacker.example/c.png),auto}{y}',
+        '\\def\\cdot{+}',
+        '\\newcommand{\\R}{\\mathbb{R}}',
+    ]);
+    // отклонённая формула-блок остаётся блоком кода
+    await expect(response.locator('pre code')).toHaveText(
+        '\\newcommand{\\R}{\\mathbb{R}}'
+    );
+    // точка осталась точкой: определение из ответа не попало в общий MathJax
+    await expect(response.locator('mjx-c.mjx-c22C5').first()).toBeAttached();
+    // огромная формула не вылезает из ответа на карточку запроса над ним
+    const covered = await page
+        .locator('.agent-chat__request-text')
+        .evaluate((node) => {
+            node.scrollIntoView({ block: 'center' });
+            const box = node.getBoundingClientRect();
+            const top = document.elementFromPoint(
+                box.left + box.width / 2,
+                box.top + box.height / 2
+            );
+            return !node.contains(top);
+        });
+    expect(covered).toBe(false);
+    expect(outside).toEqual([]);
+    expect(
+        await page.evaluate(
+            () => (window as { __agentXss?: number }).__agentXss
+        )
+    ).toBeUndefined();
+});
+
+test('answer-with-a-math-fence-does-not-break-the-page', async ({ page }) => {
+    await openChat(page, {
+        frames: [finished('Done', 'Ответ:\n\n```math\nx^2\n```')],
+    });
+    await submitPrompt(page);
+
+    const response = page.locator('.agent-chat__response-text');
+    await expect(response.locator('pre code')).toHaveText('x^2');
+    await expect(page.locator('.agent-chat')).toBeVisible();
+});
+
+const FILLER_HISTORY = Array.from({ length: 12 }, (_, index) => ({
+    id: String(index),
+    request: `вопрос ${index}`,
+    response: `ответ ${index}`,
+    createdAt: '2026-09-08T10:00:00Z',
+}));
+
+const TALL_FORMULA =
+    '\\[\n\\begin{pmatrix} 1 \\\\ 2 \\\\ 3 \\\\ 4 \\\\ 5 \\\\ 6 \\end{pmatrix}\n\\]';
+
+const TALL_ANSWER = {
+    id: 'last',
+    request: 'матрица',
+    response: `${TALL_FORMULA}\n\n${TALL_FORMULA}\n\n${TALL_FORMULA}`,
+    createdAt: '2026-09-08T10:00:00Z',
+};
+
+const distanceToBottom = (page: Page) =>
+    page
+        .locator('.agent-chat__transcript')
+        .evaluate(
+            (node) => node.scrollHeight - node.scrollTop - node.clientHeight
+        );
+
+test('history-stays-at-the-end-after-formulas-render', async ({ page }) => {
+    // пока история едет, лента показывает заглушку загрузки, а потом другой элемент
+    await openChat(page, {
+        history: [...FILLER_HISTORY, TALL_ANSWER],
+        historyDelayMs: 1000,
+    });
+
+    const transcript = page.locator('.agent-chat__transcript');
+    await expect(transcript.locator(FORMULA)).toHaveCount(3, MATHJAX_LOAD);
+    // формулы набираются уже после того, как лента докрутилась вниз
+    await expect.poll(() => distanceToBottom(page)).toBeLessThanOrEqual(1);
+});
+
+test('chat-keeps-following-after-history-is-cleared', async ({ page }) => {
+    const frames = Array.from({ length: 90 }, () => toolCall('read_segment'));
+    await openChat(page, { history: FILLER_HISTORY, frames });
+    await expect(page.locator('.agent-chat__pair')).toHaveCount(12);
+    await expect.poll(() => distanceToBottom(page)).toBeLessThanOrEqual(1);
+
+    // лента сжимается, и браузер сам сдвигает прокрутку вверх
+    await page.getByRole('button', { name: 'Clear history' }).click();
+    await expect(page.locator('.agent-chat__pair')).toHaveCount(0);
+    await submitPrompt(page);
+
+    await expect(page.locator('.agent-chat__event')).toHaveCount(90);
+    await expect.poll(() => distanceToBottom(page)).toBeLessThanOrEqual(1);
+});
+
+test('wide inline formula can be scrolled', async ({ page }) => {
+    const answer = `Сумма $${'a_1 + '.repeat(60)}b$ получилась длинной`;
+    await openChat(page, { frames: [finished('Done', answer)] });
+    await submitPrompt(page);
+
+    const response = page.locator('.agent-chat__response-text');
+    await expect(response.locator(FORMULA)).toHaveCount(1, MATHJAX_LOAD);
+    const scrolled = await response.evaluate((node) => {
+        node.scrollLeft = node.scrollWidth;
+        return node.scrollLeft;
+    });
+    // конец формулы не обрезан, до него можно докрутить
+    expect(scrolled).toBeGreaterThan(0);
 });
 
 test('agent-history-response-renders-markdown', async ({ page }) => {
