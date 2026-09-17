@@ -15,6 +15,9 @@ export const settingsSlice = createSlice({
         setIsCompiling: (state, { payload }: PayloadAction<boolean>) => {
             state.isCompiling = payload;
         },
+        setIsPdfRendering: (state, { payload }: PayloadAction<boolean>) => {
+            state.isPdfRendering = payload;
+        },
         setEditModeForProjectTitle: (
             state,
             { payload }: PayloadAction<boolean>
@@ -94,6 +97,7 @@ export const settingsSlice = createSlice({
 export const {
     setEditModeForProjectTitle,
     setIsCompiling,
+    setIsPdfRendering,
     setEditModeForFilename,
     setShowSearch,
     setExpandProblemViewer,

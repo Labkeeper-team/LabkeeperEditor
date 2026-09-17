@@ -21,6 +21,9 @@ export const RunButton = ({ enableHotkey = false }: RunButtonProps) => {
     const isAutocompleteLoading = useSelector(
         (state: StorageState) => state.settings.isCompiling
     );
+    const isPdfRendering = useSelector(
+        (state: StorageState) => state.settings.isPdfRendering
+    );
     const program = useSelector(useCurrentProgram);
     const dictionary = useSelector(useDictionary);
     const isLatexMode = useSelector(
@@ -28,10 +31,13 @@ export const RunButton = ({ enableHotkey = false }: RunButtonProps) => {
     );
     const isAgentRunning = useSelector(useIsAgentRunning);
 
+    const waitingForPdf = isLatexMode && isPdfRendering;
+
     const disabled = useMemo(
         () =>
             !program.segments.length ||
             isAutocompleteLoading ||
+            waitingForPdf ||
             (!program.segments.find(
                 (s) => s.type === 'computational' || s.type === 'latex'
             ) &&
@@ -42,13 +48,14 @@ export const RunButton = ({ enableHotkey = false }: RunButtonProps) => {
             isLatexMode,
             flag,
             isAutocompleteLoading,
+            waitingForPdf,
             program.segments,
             isAgentRunning,
         ]
     );
 
     const title = useMemo(() => {
-        if (isAutocompleteLoading || flag) {
+        if (isAutocompleteLoading || waitingForPdf || flag) {
             return `${dictionary.loading}...`;
         }
         if (isAgentRunning) {
@@ -60,6 +67,7 @@ export const RunButton = ({ enableHotkey = false }: RunButtonProps) => {
         return !disabled ? dictionary.run : dictionary.no_comp_segment;
     }, [
         isAutocompleteLoading,
+        waitingForPdf,
         flag,
         program.segments.length,
         disabled,

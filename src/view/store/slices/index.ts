@@ -57,6 +57,7 @@ interface SettingsState {
     editModeForFilename: boolean;
     isFileDraggedToManager: boolean;
     isCompiling: boolean;
+    isPdfRendering: boolean;
     showShareModal: boolean;
     showContactModal: boolean;
     showPrivacyPolicyAcceptanceModal: boolean;
@@ -261,6 +262,7 @@ export const settingsInitialState: SettingsState = {
     expandProblemViewer: false,
     isFileDraggedToManager: false,
     isCompiling: false,
+    isPdfRendering: false,
     showShareModal: false,
     showContactModal: false,
     showPrivacyPolicyAcceptanceModal: false,

@@ -66,6 +66,7 @@ MockViewModelRepositoryState {
   "isAuthenticated": false,
   "isAutocompleteLoading": false,
   "isFileDraggedToManager": false,
+  "isPdfRendering": false,
   "isRegistration": false,
   "language": "ru",
   "lastOpenedProjectUuid": undefined,

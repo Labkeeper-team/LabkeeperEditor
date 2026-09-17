@@ -96,21 +96,40 @@ export class CompilationService {
         let result:
             | RequestResult<CompilationResponse>
             | RequestResult<PdfCompilationResponse>;
-        if (projectId) {
-            if (mode === 'latex') {
-                result = await this.rpi.compileProjectPdfRequest(projectId);
+        try {
+            if (projectId) {
+                if (mode === 'latex') {
+                    result = await this.rpi.compileProjectPdfRequest(projectId);
+                } else {
+                    result = await this.rpi.compileProjectRequest(projectId);
+                }
             } else {
-                result = await this.rpi.compileProjectRequest(projectId);
+                if (mode === 'latex') {
+                    result = await this.rpi.pdfCompilationRequest(program);
+                } else {
+                    result = await this.rpi.compilationRequest(program);
+                }
             }
-        } else {
-            if (mode === 'latex') {
-                result = await this.rpi.pdfCompilationRequest(program);
-            } else {
-                result = await this.rpi.compilationRequest(program);
-            }
+            await this.refreshUserInfo();
+        } catch (error) {
+            this.repository.settingsViewModelRepository.setIsCompiling(false);
+            this.repository.settingsViewModelRepository.setIsPdfRendering(
+                false
+            );
+            throw error;
         }
-        await this.refreshUserInfo();
 
+        const unfinishedPdfUri =
+            result.code === 203
+                ? (result.body as CompileErrorResultList).unfinishedPdfUri
+                : undefined;
+        if (mode === 'latex' && (result.code === 200 || unfinishedPdfUri)) {
+            this.repository.settingsViewModelRepository.setIsPdfRendering(true);
+        } else if (mode === 'latex') {
+            this.repository.settingsViewModelRepository.setIsPdfRendering(
+                false
+            );
+        }
         this.repository.settingsViewModelRepository.setIsCompiling(false);
         logBreadcrumb('compile', `${mode} ${result.code}`, {
             mode,
