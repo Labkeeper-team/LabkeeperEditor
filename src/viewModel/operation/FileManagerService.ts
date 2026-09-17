@@ -11,6 +11,11 @@ import {
 } from '../../view/pages/project/fileManager/svarFileTreeAdapter.ts';
 import { TextFileEditorService } from './TextFileEditorService.ts';
 import { EditingLockService } from '../domain/EditingLockService.ts';
+import {
+    Events,
+    ObserverService,
+} from '../../model/service/ObserverService.ts';
+import { fileExtension, trackEvent } from '../utils/observerContext.ts';
 
 export class FileManagerService {
     repository: ViewModelRepository;
@@ -21,6 +26,7 @@ export class FileManagerService {
     fileService: FileService;
     textFileEditorService: TextFileEditorService;
     editingLock: EditingLockService;
+    observerService: ObserverService;
 
     constructor(
         repository: ViewModelRepository,
@@ -30,7 +36,8 @@ export class FileManagerService {
         ideService: IdeService,
         fileService: FileService,
         textFileEditorService: TextFileEditorService,
-        editingLock: EditingLockService
+        editingLock: EditingLockService,
+        observerService: ObserverService
     ) {
         this.rpi = rpi;
         this.programService = programService;
@@ -40,6 +47,11 @@ export class FileManagerService {
         this.fileService = fileService;
         this.textFileEditorService = textFileEditorService;
         this.editingLock = editingLock;
+        this.observerService = observerService;
+    }
+
+    private track(event: string, properties?: Record<string, unknown>) {
+        trackEvent(this.observerService, this.repository, event, properties);
     }
 
     onFolderButtonClicked = async () => {
@@ -51,14 +63,21 @@ export class FileManagerService {
             this.repository.settingsViewModelRepository.setShowFileManager(
                 true
             );
+            this.track(Events.EVENT_FILE_MANAGER_OPENED, {
+                source: 'header',
+            });
             await this.loaderService.loadFiles(project.projectId);
         } else {
+            this.track(Events.EVENT_AUTH_MODAL_OPENED, {
+                source: 'file_manager',
+            });
             this.repository.authViewModelRepository.setCurrentView('login');
         }
     };
 
     onCrossButtonInFileManagerClicked = () => {
         this.repository.settingsViewModelRepository.setShowFileManager(false);
+        this.track(Events.EVENT_FILE_MANAGER_CLOSED);
     };
 
     onCurrentFolderPathChanged = (path: string) => {
@@ -87,6 +106,7 @@ export class FileManagerService {
             ? `${parentPath}/${normalized}`
             : normalized;
         this.onEphemeralFolderCreated(folderPath);
+        this.track(Events.EVENT_FOLDER_CREATED);
     };
 
     onCreateFile = async () => {
@@ -163,6 +183,9 @@ export class FileManagerService {
                 return;
             }
             if (result.isOk) {
+                this.track(Events.EVENT_FILE_CREATED, {
+                    ext: fileExtension(fileName),
+                });
                 await this.loaderService.loadFiles(project.projectId);
                 this.repository.ideViewModelRepository.setActiveImageFile(null);
                 this.repository.ideViewModelRepository.setActiveTextFile(
@@ -193,7 +216,11 @@ export class FileManagerService {
         }
     };
 
-    onUploadFiles = async (files: File[], folderPrefix?: string | null) => {
+    onUploadFiles = async (
+        files: File[],
+        folderPrefix?: string | null,
+        method: 'picker' | 'drop' = 'picker'
+    ) => {
         if (this.editingLock.rejectEdit()) {
             return;
         }
@@ -284,6 +311,11 @@ export class FileManagerService {
                 }
             }
             if (isResultOk) {
+                this.track(Events.EVENT_FILE_UPLOADED, {
+                    file_count: files.length,
+                    method,
+                    ...(prefix ? { folder: prefix } : {}),
+                });
                 await this.loaderService.loadFiles(project.projectId);
             } else {
                 this.restoreFilesReadyState();
@@ -311,7 +343,7 @@ export class FileManagerService {
         }
         if (ev.file.file) {
             const folderPrefix = svarIdToPath(ev.parent);
-            await this.onUploadFiles([ev.file.file], folderPrefix);
+            await this.onUploadFiles([ev.file.file], folderPrefix, 'picker');
         }
     };
 
@@ -352,6 +384,7 @@ export class FileManagerService {
                 await this.renameFilePath(oldPath, newPath);
             }
         }
+        this.track(Events.EVENT_FILES_MOVED, { count: ids.length });
     };
 
     // TODO(3) onMoveFile(oldPath, targetFolder):
@@ -455,6 +488,7 @@ export class FileManagerService {
 
         if (!this.folderHasFiles(oldPath)) {
             this.remapCurrentFolderAfterRename(oldPath, normalizedNewPath);
+            this.track(Events.EVENT_FOLDER_RENAMED);
             return;
         }
 
@@ -481,6 +515,7 @@ export class FileManagerService {
             return;
         }
         if (result.isOk) {
+            this.track(Events.EVENT_FOLDER_RENAMED);
             this.programService.replaceAllInProgram(
                 `${oldPath}/`,
                 `${normalizedNewPath}/`
@@ -518,6 +553,7 @@ export class FileManagerService {
         if (!this.folderHasFiles(folderPath)) {
             this.pruneEphemeralFolders(folderPath);
             this.remapCurrentFolderAfterDelete(folderPath);
+            this.track(Events.EVENT_FOLDER_DELETED, { count: 1 });
             return;
         }
 
@@ -543,6 +579,7 @@ export class FileManagerService {
             return;
         }
         if (result.isOk) {
+            this.track(Events.EVENT_FOLDER_DELETED, { count: 1 });
             this.pruneEphemeralFolders(folderPath);
             this.remapCurrentFolderAfterDelete(folderPath);
             await this.loaderService.loadFiles(project.projectId);
@@ -579,6 +616,10 @@ export class FileManagerService {
             this.restoreFilesReadyState();
         }
         if (result.isOk) {
+            this.track(Events.EVENT_FILE_DELETED, {
+                count: 1,
+                ext: fileExtension(fileName),
+            });
             this.textFileEditorService.onOpenFileDeleted(fileName);
             await this.loaderService.loadFiles(project.projectId);
         } else if (!result.isUnauth) {
@@ -637,6 +678,7 @@ export class FileManagerService {
                 this.textFileEditorService.onOpenFileDeleted(file.fileName);
             }
         }
+        this.track(Events.EVENT_FILE_DELETED, { count: files.length });
         await this.loaderService.loadFiles(project.projectId);
         this.repository.settingsViewModelRepository.setFilesToDelete([]);
     };
@@ -667,6 +709,9 @@ export class FileManagerService {
             this.restoreFilesReadyState();
         }
         if (result.isOk) {
+            this.track(Events.EVENT_FILE_RENAMED, {
+                ext: fileExtension(newName),
+            });
             this.programService.replaceAllInProgram(oldName, newName);
             await this.textFileEditorService.onOpenFilePathChanged(
                 oldName,

@@ -27,6 +27,7 @@ import {
 } from '../utils/reportUnexpectedError.ts';
 import { logBreadcrumb } from '../utils/logBreadcrumb.ts';
 import { compileErrorsPrompt } from '../utils/compileErrors.ts';
+import { trackEvent } from '../utils/observerContext.ts';
 
 /** Причины, при которых показываем ошибку, а не ответ. */
 const ERROR_STOP_REASONS: AgentStopReason[] = [
@@ -78,6 +79,21 @@ export class AgentChatService {
         private events: AgentEventService = new AgentEventService()
     ) {}
 
+    private track(event: string, properties?: Record<string, unknown>) {
+        trackEvent(this.observerService, this.repository, event, properties);
+    }
+
+    private agentSettings() {
+        return {
+            max_tokens:
+                this.repository.persistenceViewModelRepository.agentMaxTokens(),
+            iterations:
+                this.repository.persistenceViewModelRepository.agentIterations(),
+            authorized:
+                this.repository.userViewModelRepository.isAuthenticated(),
+        };
+    }
+
     isRunning = (): boolean => {
         const state = this.repository.chatViewModelRepository.requestState();
         return state === 'connecting' || state === 'running';
@@ -85,6 +101,7 @@ export class AgentChatService {
 
     /** Пользователь попробовал что-то поменять, пока агент работает. */
     onBlockedEditAttempt = (): void => {
+        this.track(Events.EVENT_EDIT_BLOCKED, { action: 'edit' });
         this.editingLock.rejectEdit();
     };
 
@@ -94,12 +111,20 @@ export class AgentChatService {
 
     onMaxTokensChanged = (value: number): void => {
         this.repository.persistenceViewModelRepository.setAgentMaxTokens(value);
+        this.track(Events.EVENT_AGENT_SETTINGS_CHANGED, {
+            setting: 'max_tokens',
+            value,
+        });
     };
 
     onIterationsChanged = (value: number): void => {
         this.repository.persistenceViewModelRepository.setAgentIterations(
             value
         );
+        this.track(Events.EVENT_AGENT_SETTINGS_CHANGED, {
+            setting: 'iterations',
+            value,
+        });
     };
 
     /** Вкладка открыта: у авторизованного один раз подтягиваем историю. */
@@ -151,6 +176,7 @@ export class AgentChatService {
             );
             return;
         }
+        this.track(Events.EVENT_CHAT_HISTORY_CLEARED);
         chat.setHistory([]);
         chat.setMessages([]);
         chat.setHistoryRequestState('ok');
@@ -184,14 +210,16 @@ export class AgentChatService {
             false
         );
 
+        this.track(Events.EVENT_CROSS_BORDER_CONSENT_ACCEPTED);
         if (this.repository.userViewModelRepository.isAuthenticated()) {
             await this.sendCrossBorderConsent();
         }
 
-        await this.onPromptSubmit();
+        await this.onPromptSubmit('consent_resume');
     };
 
     onCrossBorderConsentDismissed = (): void => {
+        this.track(Events.EVENT_CROSS_BORDER_CONSENT_DISMISSED);
         this.repository.settingsViewModelRepository.setShowCrossBorderConsentModal(
             false
         );
@@ -241,6 +269,9 @@ export class AgentChatService {
             this.repository.toast(dictionary.errors_prompt_busy, 'info');
             return;
         }
+        this.track(Events.EVENT_SEND_ERRORS_TO_AGENT, {
+            error_count: errors.length,
+        });
         chat.setInput(compileErrorsPrompt(errors, this.repository.dictionary));
         const settings = this.repository.settingsViewModelRepository;
         settings.setViewerTab('chat');
@@ -248,7 +279,9 @@ export class AgentChatService {
         settings.setMobileView('chat');
     };
 
-    onPromptSubmit = async (): Promise<void> => {
+    onPromptSubmit = async (
+        source: 'chat' | 'consent_resume' = 'chat'
+    ): Promise<void> => {
         const chat = this.repository.chatViewModelRepository;
         const prompt = chat.input().trim();
         if (!prompt || this.isRunning()) {
@@ -264,6 +297,7 @@ export class AgentChatService {
         // до согласия запрос никуда не идёт: ни поле не чистим, ни ленту не трогаем,
         // чтобы после принятия отправить ровно то же самое
         if (!this.crossBorderConsentGiven()) {
+            this.track(Events.EVENT_CROSS_BORDER_CONSENT_SHOWN);
             this.repository.settingsViewModelRepository.setShowCrossBorderConsentModal(
                 true
             );
@@ -273,6 +307,11 @@ export class AgentChatService {
         // слот занимается до первого await, иначе второе нажатие проскочит проверку
         const token = ++this.runToken;
         this.lastChange = undefined;
+        this.track(Events.EVENT_AGENT_PROMPT_SUBMITTED, {
+            ...this.agentSettings(),
+            prompt_length: prompt.length,
+            source,
+        });
         logBreadcrumb('agent', 'prompt submit', {
             authenticated,
             hasProject: Boolean(project),
@@ -295,6 +334,7 @@ export class AgentChatService {
         }
         if (!synced) {
             logBreadcrumb('agent', 'sync_failed', undefined, 'warning');
+            this.track(Events.EVENT_AGENT_FAILED, { reason: 'sync_failed' });
             chat.appendMessage({ kind: 'error', reason: 'sync_failed' });
             chat.setRequestState('error');
             return;
@@ -302,13 +342,14 @@ export class AgentChatService {
         if (!saved) {
             // агент работает с тем, что лежит на сервере, а там осталась прошлая версия
             logBreadcrumb('agent', 'save_failed', undefined, 'warning');
+            this.track(Events.EVENT_AGENT_FAILED, { reason: 'save_failed' });
             chat.appendMessage({ kind: 'error', reason: 'save_failed' });
             chat.setRequestState('error');
             return;
         }
 
         this.knownHunks = this.repository.ideViewModelRepository.hunks();
-        this.observerService.onEvent(Events.EVENT_AGENT_STARTED);
+        this.track(Events.EVENT_AGENT_STARTED, this.agentSettings());
 
         const params = {
             prompt,
@@ -547,7 +588,11 @@ export class AgentChatService {
             chat.appendMessage({ kind: 'notice', reason: event.stopReason });
         }
         chat.setRequestState('ok');
-        this.observerService.onEvent(Events.EVENT_AGENT_FINISHED);
+        this.track(Events.EVENT_AGENT_FINISHED, {
+            ...this.agentSettings(),
+            stop_reason: event.stopReason,
+            hunk_count: event.hunks?.length ?? this.knownHunks.length,
+        });
     };
 
     private applyUnauthorizedResult = (
@@ -621,11 +666,15 @@ export class AgentChatService {
 
     private reportStopReason = (reason: AgentStopReason): void => {
         logBreadcrumb('agent', `stop ${reason}`, { reason });
+        this.track(Events.EVENT_AGENT_FAILED, { reason });
         if (reason === 'PaymentRequired') {
-            this.observerService.onEvent(Events.EVENT_PAYMENT_REQUIRED);
+            this.track(Events.EVENT_PAYMENT_REQUIRED, { source: 'agent' });
             return;
         }
         if (reason === 'UnauthorizedLimitExceeded') {
+            this.track(Events.EVENT_AUTH_MODAL_OPENED, {
+                source: 'agent_limit',
+            });
             this.repository.authViewModelRepository.setCurrentView('login');
             return;
         }
@@ -677,10 +726,11 @@ export class AgentChatService {
 
     private reportClosed = (reason: AgentClosedReason): void => {
         if (reason === 'timeout') {
-            this.observerService.onEvent(Events.EVENT_AGENT_TIMEOUT);
+            this.track(Events.EVENT_AGENT_TIMEOUT);
             reportToSentry('agent.timeout', new Error('Agent socket timeout'));
             return;
         }
+        this.track(Events.EVENT_AGENT_FAILED, { reason });
         reportUnexpectedError(
             this.observerService,
             `agent.${reason === 'closed' ? 'disconnected' : reason}`,

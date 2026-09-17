@@ -69,4 +69,24 @@ describe('OpenPanelService', () => {
 
         expect(track).not.toHaveBeenCalled();
     });
+
+    test('onEvent maps the catalog key to an [E] name and forwards properties', () => {
+        const service = new OpenPanelService();
+
+        service.onEvent('start_run', { trigger: 'hotkey', segment_count: 3 });
+
+        expect(OpenPanel).toHaveBeenCalled();
+        expect(track).toHaveBeenCalledWith('[E] Run clicked', {
+            trigger: 'hotkey',
+            segment_count: 3,
+        });
+    });
+
+    test('onEvent keeps an unknown key as-is under the [E] prefix', () => {
+        const service = new OpenPanelService();
+
+        service.onEvent('custom_key', { ok: true });
+
+        expect(track).toHaveBeenCalledWith('[E] custom_key', { ok: true });
+    });
 });

@@ -20,6 +20,7 @@ import {
 } from '../../store/selectors/translations';
 import { AppDispatch, StorageState } from '../../store';
 import { controller } from '../../../main.tsx';
+import { Events } from '../../../model/service/ObserverService.ts';
 import { useIsMobile } from '../../hooks/useMobile';
 import { Select } from '../../components/select';
 
@@ -56,8 +57,11 @@ export const ProjectsPage = () => {
     }, [lang]);
 
     const onAddProjectClick = useCallback(() => {
+        controller.trackUiEvent(Events.EVENT_CREATE_PROJECT_CLICKED, {
+            projects_count: projects.length,
+        });
         setShowAddModal(true);
-    }, [setShowAddModal]);
+    }, [projects.length]);
 
     const onClickDeleteProject = useCallback(
         (e: React.MouseEvent<HTMLElement, unknown>, project: ProjectShort) => {

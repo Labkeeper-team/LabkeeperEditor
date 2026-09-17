@@ -1,0 +1,34 @@
+import { OpenPanel } from '@openpanel/web';
+import { OpenPanelService } from '../../../web/openpanel';
+
+const track = jest.fn().mockResolvedValue(undefined);
+
+jest.mock('@openpanel/web', () => ({
+    OpenPanel: jest.fn(() => ({
+        track,
+        identify: jest.fn(),
+    })),
+}));
+
+jest.mock('../../../constants.ts', () => ({
+    Secrets: {
+        openpanelClientId: 'IO_LABKEEPER_FRONTEND_OPENPANEL_CLIENT_ID',
+        openpanelApiUrl: '',
+        sentryDsn: '',
+    },
+}));
+
+jest.mock('../../../viewModel/utils/logBreadcrumb.ts', () => ({
+    logBreadcrumb: jest.fn(),
+}));
+
+describe('OpenPanelService without credentials', () => {
+    test('onEvent is a no-op when the client is not configured', () => {
+        const service = new OpenPanelService();
+
+        service.onEvent('start_run', { trigger: 'button' });
+
+        expect(OpenPanel).not.toHaveBeenCalled();
+        expect(track).not.toHaveBeenCalled();
+    });
+});

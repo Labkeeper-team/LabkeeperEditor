@@ -76,6 +76,7 @@ type SecretsShape = {
 declare global {
     interface Window {
         __SECRETS__?: Partial<SecretsShape>;
+        ym?: (counter: string, method: string, value: string) => void;
     }
 }
 

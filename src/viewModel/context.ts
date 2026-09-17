@@ -93,7 +93,8 @@ export function setupContext(
         repository,
         rpi,
         ideService,
-        startupService
+        startupService,
+        observerService
     );
     const textFileEditorService: TextFileEditorService =
         new TextFileEditorService(
@@ -109,7 +110,8 @@ export function setupContext(
         ideService,
         loaderService,
         textFileEditorService,
-        editingLockService
+        editingLockService,
+        observerService
     );
     textFileEditorService.setHunkService(hunkService);
     const fileManagerService: FileManagerService = new FileManagerService(
@@ -120,7 +122,8 @@ export function setupContext(
         ideService,
         fileService,
         textFileEditorService,
-        editingLockService
+        editingLockService,
+        observerService
     );
     const programEditorService: ProgramEditorService = new ProgramEditorService(
         repository,

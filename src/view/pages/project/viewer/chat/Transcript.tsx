@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, StorageState } from '../../../../store';
 import { useDictionary } from '../../../../store/selectors/translations';
 import { controller } from '../../../../../main.tsx';
+import { Events } from '../../../../../model/service/ObserverService.ts';
 import { ChatMessage } from '../../../../../viewModel/repository';
 import { AgentHistoryEntry } from '../../../../../model/domain.ts';
 import { Routes } from '../../../../../viewModel/routes.ts';
@@ -72,7 +73,12 @@ const ErrorBlock = ({
                 <button
                     type="button"
                     className="agent-chat__buy-tokens"
-                    onClick={() => navigate(Routes.Tokens)}
+                    onClick={() => {
+                        controller.trackUiEvent(
+                            Events.EVENT_BUY_TOKENS_FROM_CHAT
+                        );
+                        navigate(Routes.Tokens);
+                    }}
                 >
                     {dictionary.agent_chat.buy_tokens}
                 </button>
