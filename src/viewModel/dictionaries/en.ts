@@ -168,7 +168,7 @@ export const en: Translations = {
     agent_chat: {
         tab_label: 'AI agent',
         pdf_tab_label: 'PDF visualization',
-        placeholder: 'Enter your promt',
+        placeholder: 'Enter your prompt',
         send: 'Send',
         disclaimer: 'AI may make mistakes. Double-check all generated code.',
         result: 'Result',
