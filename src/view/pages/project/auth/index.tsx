@@ -369,6 +369,9 @@ const EmailView = () => {
     const language = useSelector(
         (state: StorageState) => state.persistence.language
     );
+    const showCaptcha = useSelector(
+        (state: StorageState) => state.settings.captchaBypassToken === undefined
+    );
 
     const isLoading = status === 'loading';
     const normalizedEmail = normalizeEmail(email);
@@ -512,7 +515,7 @@ const EmailView = () => {
                         </span>
                     </label>
                 )}
-                {Secrets.yandexCaptchaSiteKey && (
+                {Secrets.yandexCaptchaSiteKey && showCaptcha && (
                     <SmartCaptcha
                         key={captchaInstanceKey}
                         language={language}
@@ -533,7 +536,7 @@ const EmailView = () => {
                     onPress={handleSubmit}
                     disabled={
                         status === 'loading' ||
-                        !token ||
+                        (!token && showCaptcha) ||
                         !isValidEmail(normalizedEmail) ||
                         (isRegistration && !agreementAccepted)
                     }
