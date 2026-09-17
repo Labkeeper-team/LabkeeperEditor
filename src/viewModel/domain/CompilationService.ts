@@ -20,6 +20,7 @@ import { LoaderService } from './LoaderService.ts';
 import { IdeService } from './IdeService.ts';
 import { HunkService } from '../operation/HunkService.ts';
 import { logBreadcrumb } from '../utils/logBreadcrumb.ts';
+import { trackEvent } from '../utils/observerContext.ts';
 
 export class CompilationService {
     repository: ViewModelRepository;
@@ -49,6 +50,10 @@ export class CompilationService {
     setHunkService = (hunkService: HunkService) => {
         this.hunkService = hunkService;
     };
+
+    private track(event: string, properties?: Record<string, unknown>) {
+        trackEvent(this.observerService, this.repository, event, properties);
+    }
 
     private refreshProjectFiles = async (projectId: string) => {
         if (!this.repository.userViewModelRepository.isAuthenticated()) {
@@ -138,6 +143,11 @@ export class CompilationService {
         });
 
         if (result.code === 401 || result.code === 403) {
+            this.track(Events.EVENT_COMPILE_FAILED, {
+                mode,
+                http_code: result.code,
+                error_count: 0,
+            });
             this.repository.toast(
                 this.repository.dictionary.filemanager.errors.sessionExpired,
                 'error'
@@ -164,6 +174,11 @@ export class CompilationService {
             this.repository.projectViewModelRepository.setCompileErrorResult({
                 errors: [],
             });
+            this.track(Events.EVENT_COMPILE_SUCCEEDED, {
+                mode,
+                http_code: 200,
+                error_count: 0,
+            });
             if (projectId) {
                 await this.refreshProjectFiles(projectId);
             }
@@ -175,13 +190,22 @@ export class CompilationService {
             this.repository.settingsViewModelRepository.setExpandProblemViewer(
                 true
             );
-            compileResult.errors.map((error) => {
-                if (error.code === 308) {
-                    this.repository.authViewModelRepository.setCurrentView(
-                        'login'
-                    );
-                }
+            this.track(Events.EVENT_COMPILE_FAILED, {
+                mode,
+                http_code: 203,
+                error_count: compileResult.errors.length,
             });
+            if (
+                compileResult.errors.some(
+                    (error) =>
+                        error.code === CompileError.FILE_USAGE_NOT_ALLOWED
+                )
+            ) {
+                this.track(Events.EVENT_AUTH_MODAL_OPENED, {
+                    source: 'compile',
+                });
+                this.repository.authViewModelRepository.setCurrentView('login');
+            }
             if (compileResult.unfinishedPdfUri) {
                 this.repository.projectViewModelRepository.setPdfUri(
                     compileResult.unfinishedPdfUri
@@ -198,8 +222,13 @@ export class CompilationService {
                 this.repository.dictionary.prompt_modal.errors.payment_required,
                 'error'
             );
-            this.observerService.onEvent(Events.EVENT_PAYMENT_REQUIRED);
+            this.track(Events.EVENT_PAYMENT_REQUIRED, { source: 'compile' });
         } else if (mode === 'latex' && result.code === 423) {
+            this.track(Events.EVENT_COMPILE_FAILED, {
+                mode,
+                http_code: 423,
+                error_count: 0,
+            });
             this.repository.toast(
                 this.repository.dictionary.synctex.errors.locked,
                 'error'
@@ -220,14 +249,25 @@ export class CompilationService {
             this.repository.settingsViewModelRepository.setExpandProblemViewer(
                 true
             );
+            this.track(Events.EVENT_COMPILE_FAILED, {
+                mode,
+                http_code: 425,
+                error_count: 1,
+            });
+            this.track(Events.EVENT_AUTH_MODAL_OPENED, { source: 'compile' });
             this.repository.authViewModelRepository.setCurrentView('login');
         } else {
             this.repository.toast(
                 this.repository.dictionary.filemanager.errors.internalError,
                 'error'
             );
-            this.observerService.onEvent(Events.EVENT_ERROR);
-            this.observerService.onEvent(Events.FRONTEND_ERROR);
+            this.track(Events.EVENT_COMPILE_FAILED, {
+                mode,
+                http_code: result.code,
+                error_count: 0,
+            });
+            this.track(Events.EVENT_ERROR);
+            this.track(Events.FRONTEND_ERROR, { source: 'compile' });
         }
     };
 }

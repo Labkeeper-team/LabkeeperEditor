@@ -133,7 +133,11 @@ describe('WebRpi', () => {
         expect(result.isOk).toBe(false);
         expect(result.body).toEqual({ message: 'boom' });
         expect(observerService.onEvent).toHaveBeenCalledWith(
-            Events.EVENT_RPI_UNKNOWN
+            Events.EVENT_RPI_UNKNOWN,
+            expect.objectContaining({
+                source: 'rpi',
+                operation: 'getBillingPricingRequest',
+            })
         );
         expect(Sentry.addBreadcrumb).toHaveBeenCalledWith(
             expect.objectContaining({
@@ -172,7 +176,11 @@ describe('WebRpi', () => {
         expect(result.code).toBe(201);
         expect(result.isOk).toBe(true);
         expect(observerService.onEvent).toHaveBeenCalledWith(
-            Events.EVENT_RPI_UNKNOWN
+            Events.EVENT_RPI_UNKNOWN,
+            expect.objectContaining({
+                source: 'rpi',
+                operation: 'getBillingPricingRequest',
+            })
         );
         expect(Sentry.addBreadcrumb).toHaveBeenCalledWith(
             expect.objectContaining({

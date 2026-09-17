@@ -3,7 +3,11 @@ import { ViewModelRepository } from '../repository';
 import { Rpi } from '../../model/rpi';
 import { IdeService } from '../domain/IdeService.ts';
 import { EditingLockService } from '../domain/EditingLockService.ts';
-import { ObserverService } from '../../model/service/ObserverService.ts';
+import {
+    Events,
+    ObserverService,
+} from '../../model/service/ObserverService.ts';
+import { fileExtension, trackEvent } from '../utils/observerContext.ts';
 import {
     isImageFilePath,
     isTextFilePath,
@@ -48,6 +52,10 @@ export class TextFileEditorService {
         this.editingLock = editingLock;
     }
 
+    private track(event: string, properties?: Record<string, unknown>) {
+        trackEvent(this.observerService, this.repository, event, properties);
+    }
+
     setHunkService = (hunkService: import('./HunkService.ts').HunkService) => {
         this.hunkService = hunkService;
     };
@@ -72,6 +80,12 @@ export class TextFileEditorService {
     ) => {
         if (!isTextFilePath(fileName)) {
             return;
+        }
+        if (!options?.silent) {
+            this.track(Events.EVENT_FILE_OPENED, {
+                kind: 'text',
+                ext: fileExtension(fileName),
+            });
         }
         const file = this.repository.projectViewModelRepository
             .files()
@@ -219,6 +233,10 @@ export class TextFileEditorService {
             }
         }
 
+        this.track(Events.EVENT_FILE_OPENED, {
+            kind: 'image',
+            ext: fileExtension(fileName),
+        });
         this.repository.ideViewModelRepository.setActiveImageFile(fileName);
     };
 

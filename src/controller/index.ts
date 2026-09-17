@@ -20,6 +20,7 @@ import { TokenPageService } from '../viewModel/operation/TokenPageService.ts';
 import { HunkService } from '../viewModel/operation/HunkService.ts';
 import { AgentChatService } from '../viewModel/operation/AgentChatService.ts';
 import { logBreadcrumb } from '../viewModel/utils/logBreadcrumb.ts';
+import { trackEvent } from '../viewModel/utils/observerContext.ts';
 
 export class Controller {
     authService: AuthService;
@@ -115,12 +116,24 @@ export class Controller {
 
     onAuthButtonClickedRequest = createAsyncThunk(
         'onAuthButtonClicked',
-        async () => {
+        async (source?: string) => {
             await this.wrapper('onAuthButtonClicked', () =>
-                this.authService.onAuthButtonClicked()
+                this.authService.onAuthButtonClicked(source)
             );
         }
     );
+
+    trackUiEvent = (
+        event: string,
+        properties?: Record<string, unknown>
+    ): void => {
+        trackEvent(
+            this.observerService,
+            this.projectPageService.repository,
+            event,
+            properties
+        );
+    };
 
     onBillingPurchaseCreateRequest = createAsyncThunk(
         'onBillingPurchaseCreate',
@@ -143,11 +156,14 @@ export class Controller {
         async () => this.tokenPageService.onPaymentWidgetFailed()
     );
 
-    onAuthClosedRequest = createAsyncThunk('onAuthClosed', async () => {
-        await this.wrapper('onAuthClosed', () =>
-            this.authService.onAuthClosed()
-        );
-    });
+    onAuthClosedRequest = createAsyncThunk(
+        'onAuthClosed',
+        async (interrupted?: boolean) => {
+            await this.wrapper('onAuthClosed', () =>
+                this.authService.onAuthClosed(interrupted ?? false)
+            );
+        }
+    );
 
     onRegistrationButtonClickedRequest = createAsyncThunk(
         'onRegistrationButtonClicked',
@@ -214,9 +230,9 @@ export class Controller {
 
     onPrintButtonPressedRequest = createAsyncThunk(
         'onPrintButtonPressedRequest',
-        async () => {
+        async (method?: 'print' | 'download') => {
             await this.wrapper('onPrintButtonPressedRequest', () =>
-                this.projectPageService.onPrintButtonPressed()
+                this.projectPageService.onPrintButtonPressed(method ?? 'print')
             );
         }
     );
@@ -231,14 +247,16 @@ export class Controller {
     );
 
     onUndefinedError = () => {
-        this.observerService.onEvent(Events.FRONTEND_ERROR);
+        this.observerService.onEvent(Events.FRONTEND_ERROR, {
+            source: 'boundary',
+        });
     };
 
     onRunButtonPressedRequest = createAsyncThunk(
         'onRunButtonPressed',
-        async () => {
+        async (trigger?: 'button' | 'hotkey') => {
             await this.wrapper('onRunButtonPressed', () =>
-                this.projectPageService.onRunButtonClicked()
+                this.projectPageService.onRunButtonClicked(trigger ?? 'button')
             );
         }
     );
@@ -587,12 +605,18 @@ export class Controller {
         async ({
             files,
             folderPrefix,
+            method,
         }: {
             files: File[];
             folderPrefix?: string;
+            method?: 'picker' | 'drop';
         }) => {
             await this.wrapper('onUploadFilesRequest', () =>
-                this.fileManagerService.onUploadFiles(files, folderPrefix)
+                this.fileManagerService.onUploadFiles(
+                    files,
+                    folderPrefix,
+                    method
+                )
             );
         }
     );
@@ -998,7 +1022,10 @@ export class Controller {
         try {
             await method();
         } catch (error) {
-            this.observerService.onEvent(Events.FRONTEND_ERROR);
+            this.observerService.onEvent(Events.FRONTEND_ERROR, {
+                source: 'wrapper',
+                operation: name,
+            });
             logBreadcrumb(
                 'operation',
                 `${name} failed`,

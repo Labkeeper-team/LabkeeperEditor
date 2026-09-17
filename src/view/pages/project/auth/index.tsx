@@ -812,9 +812,9 @@ export const AuthModal = () => {
     const showCloseConfirmation =
         closeConfirmationRequested && authProcessStarted;
 
-    const closeAuth = () => {
+    const closeAuth = (interrupted = false) => {
         setCloseConfirmationRequested(false);
-        dispatch(controller.onAuthClosedRequest());
+        dispatch(controller.onAuthClosedRequest(interrupted));
     };
 
     const requestClose = () => {
@@ -905,7 +905,7 @@ export const AuthModal = () => {
                     />
                     <Button
                         classname="full-width"
-                        onPress={closeAuth}
+                        onPress={() => closeAuth(true)}
                         title={
                             dictionary.authorization.closeConfirmation.interrupt
                         }

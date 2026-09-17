@@ -40,6 +40,9 @@ export function reportUnexpectedError(
     context: string,
     cause?: unknown
 ): void {
-    observer.onEvent(Events.EVENT_RPI_UNKNOWN);
+    observer.onEvent(Events.EVENT_RPI_UNKNOWN, {
+        source: 'rpi',
+        operation: context,
+    });
     reportToSentry(context, cause);
 }

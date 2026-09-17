@@ -288,6 +288,7 @@ test('agent-timeout-unlocks-and-reports', async () => {
         reason: 'timeout',
     });
     expect(events).toContain(Events.EVENT_AGENT_TIMEOUT);
+    expect(events).toContain(Events.EVENT_AGENT_STARTED);
     expect(Sentry.captureException).toHaveBeenCalled();
 });
 
@@ -661,6 +662,25 @@ test('quota-exceeded-for-a-guest-keeps-what-was-done', async () => {
     expect(program.segments[0].text).toBe('ДО ЛИМИТА');
 });
 
+test('stop-reason-prompt-too-long-tracks-agent-failed', async () => {
+    const ctx = setup();
+    const onEvent = jest.spyOn(ctx.observerService, 'onEvent');
+    ctx.repository.chatViewModelRepository.setInput('сделай таблицу');
+    await ctx.agentChatService.onPromptSubmit();
+
+    await emit(ctx, {
+        kind: 'finished',
+        message: null,
+        stopReason: 'PromptTooLong',
+    });
+
+    expect(onEvent).toHaveBeenCalledWith(
+        Events.EVENT_AGENT_FAILED,
+        expect.objectContaining({ reason: 'PromptTooLong' })
+    );
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+});
+
 test.each([['PromptTooLong'], ['QuotaExceeded']] as const)(
     'stop-reason-%s-is-not-reported-as-a-failure',
     async (stopReason) => {
@@ -689,6 +709,7 @@ test('stop-reason-payment-required-reports-payment-event', async () => {
     });
 
     expect(events).toContain(Events.EVENT_PAYMENT_REQUIRED);
+    expect(events).toContain(Events.EVENT_AGENT_FAILED);
 });
 
 test('stop-reason-locked-reports-unknown-rpi-event', async () => {

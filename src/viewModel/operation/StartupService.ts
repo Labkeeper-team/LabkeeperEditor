@@ -15,6 +15,7 @@ import { ResetService } from '../domain/ResetService.ts';
 import { HunkService } from './HunkService.ts';
 import type { AgentChatService } from './AgentChatService.ts';
 import { logBreadcrumb } from '../utils/logBreadcrumb.ts';
+import { trackEvent } from '../utils/observerContext.ts';
 
 const qrPagePattern = /\/qr\/v\d+/i;
 const projectPagePattern = /\/project\/\S+/i;
@@ -51,6 +52,10 @@ export class StartupService {
         this.resetService = resetService;
     }
 
+    private track(event: string, properties?: Record<string, unknown>) {
+        trackEvent(this.observerService, this.repository, event, properties);
+    }
+
     setAgentChatService = (agentChatService: AgentChatService) => {
         this.agentChatService = agentChatService;
     };
@@ -63,10 +68,16 @@ export class StartupService {
         const response = await this.rpi.oauthCodeRequest(code, state);
 
         if (!response.isOk) {
+            this.track(Events.EVENT_LOGIN_FAILED, {
+                method: 'oauth',
+                reason: 'oauth_error',
+            });
             this.repository.authViewModelRepository.setCurrentView('login');
             this.repository.authViewModelRepository.setLoginRequest(
                 'oauth_error'
             );
+        } else {
+            this.track(Events.EVENT_LOGIN_SUCCEEDED, { method: 'oauth' });
         }
 
         await this.onAppStartup();
@@ -74,7 +85,7 @@ export class StartupService {
 
     onQrPageEnter = (version: string) => {
         if (version === 'v1') {
-            this.observerService.onEvent(Events.EVENT_QR_V1);
+            this.track(Events.EVENT_QR_V1);
         }
     };
 
@@ -212,6 +223,9 @@ export class StartupService {
      * Call this instead of `navigate(Routes.ProjectDefault)` from the SPA.
      */
     openEditorAfterSpaNavigation = async (): Promise<void> => {
+        this.track(Events.EVENT_EDITOR_OPENED_FROM_MARKETING, {
+            source: 'marketing_header',
+        });
         const userInfo: UserInfo = {
             email: this.repository.userViewModelRepository.email(),
             id: this.repository.userViewModelRepository.id(),

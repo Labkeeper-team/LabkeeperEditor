@@ -30,7 +30,10 @@ test('onTextFileOpened does not put 404 body into the editor', async () => {
         repository.dictionary.filemanager.errors.internalError,
         'error'
     );
-    expect(onEvent).toHaveBeenCalledWith(Events.EVENT_RPI_UNKNOWN);
+    expect(onEvent).toHaveBeenCalledWith(
+        Events.EVENT_RPI_UNKNOWN,
+        expect.objectContaining({ source: 'rpi' })
+    );
 });
 
 test('reload of an open file does not switch the editor to loading', async () => {
