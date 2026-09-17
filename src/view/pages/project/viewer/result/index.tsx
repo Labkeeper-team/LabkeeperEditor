@@ -51,6 +51,7 @@ export const Result = () => {
             if (!pdfUri) {
                 return;
             }
+            dispatch(controller.onPrintButtonPressedRequest('download'));
             fetch(pdfUri)
                 .then((res) => res.blob())
                 .then((blob) => {
@@ -61,7 +62,7 @@ export const Result = () => {
                 });
             return;
         }
-        dispatch(controller.onPrintButtonPressedRequest());
+        dispatch(controller.onPrintButtonPressedRequest('print'));
         const isMobile =
             /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(
                 navigator.userAgent

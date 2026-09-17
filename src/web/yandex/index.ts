@@ -1,11 +1,23 @@
-import { ObserverService } from '../../model/service/ObserverService.ts';
+import {
+    METRIKA_EVENTS,
+    ObserverService,
+} from '../../model/service/ObserverService.ts';
 import { Secrets } from '../../constants.ts';
 import { logBreadcrumb } from '../../viewModel/utils/logBreadcrumb.ts';
+
+declare global {
+    interface Window {
+        ym?: (counter: string, method: string, value: string) => void;
+    }
+}
 
 export class MetrikaService implements ObserverService {
     init() {}
 
     onEvent(event: string) {
+        if (!METRIKA_EVENTS.has(event)) {
+            return;
+        }
         logBreadcrumb('metrika', event);
         this.metrika('reachGoal', event);
     }

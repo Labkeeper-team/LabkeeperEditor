@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { controller } from '../../../main.tsx';
+import { Events } from '../../../model/service/ObserverService.ts';
 import { AppDispatch } from '../../store';
 import { useBillingPricing, useUser } from '../../store/selectors/program';
 import {
@@ -158,8 +159,13 @@ export const TokensPage = () => {
     );
 
     const onPackageClick = (tokenPackage: TokenPackage) => {
+        controller.trackUiEvent(Events.EVENT_TOKEN_PACKAGE_SELECTED, {
+            token_price_id: tokenPackage.tokenPriceId,
+            amount: tokenPackage.amount,
+            price: tokenPackage.price,
+        });
         if (!isAuthenticated) {
-            dispatch(controller.onAuthButtonClickedRequest());
+            dispatch(controller.onAuthButtonClickedRequest('tokens'));
             return;
         }
 

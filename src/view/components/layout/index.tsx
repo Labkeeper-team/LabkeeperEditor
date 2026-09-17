@@ -15,6 +15,7 @@ import {
     useIsProjectReadonly,
 } from '../../store/selectors/program';
 import { controller } from '../../../main.tsx';
+import { Events } from '../../../model/service/ObserverService.ts';
 import classNames from 'classnames';
 import { VIEWPORT_RESCALE_EVENT } from '../../hooks/viewportScale';
 
@@ -106,6 +107,12 @@ export const BaseLayout = () => {
 
     useLayoutEffect(() => {
         window.dispatchEvent(new Event(VIEWPORT_RESCALE_EVENT));
+    }, [location.pathname]);
+
+    useEffect(() => {
+        controller.trackUiEvent(Events.EVENT_PAGE_VIEWED, {
+            path: location.pathname,
+        });
     }, [location.pathname]);
 
     return (

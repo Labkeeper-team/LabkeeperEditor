@@ -7,6 +7,7 @@ import { colors } from '../../../styles/colors';
 import { useDictionary } from '../../../store/selectors/translations';
 import { AppDispatch } from '../../../store';
 import { controller } from '../../../../main.tsx';
+import { Events } from '../../../../model/service/ObserverService.ts';
 
 export const DeleteProjectModal = (props: {
     onClose: () => void;
@@ -41,7 +42,12 @@ export const DeleteProjectModal = (props: {
             />
             <Button
                 classname="delete-project-modal-button"
-                onPress={props.onClose}
+                onPress={() => {
+                    controller.trackUiEvent(
+                        Events.EVENT_PROJECT_DELETE_CANCELLED
+                    );
+                    props.onClose();
+                }}
                 title={dictionary.no}
                 color="gray"
                 rounded

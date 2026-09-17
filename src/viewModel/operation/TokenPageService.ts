@@ -6,11 +6,13 @@ import {
 import { ViewModelRepository } from '../repository';
 import { Routes } from '../routes.ts';
 import { reportUnexpectedError } from '../utils/reportUnexpectedError.ts';
+import { trackEvent } from '../utils/observerContext.ts';
 
 export class TokenPageService {
     rpi: Rpi;
     repository: ViewModelRepository;
     observerService: ObserverService;
+    private lastTokenPriceId?: string;
 
     constructor(
         rpi: Rpi,
@@ -20,6 +22,10 @@ export class TokenPageService {
         this.rpi = rpi;
         this.repository = repository;
         this.observerService = observerService;
+    }
+
+    private track(event: string, properties?: Record<string, unknown>) {
+        trackEvent(this.observerService, this.repository, event, properties);
     }
 
     resetBillingPurchaseFlow = () => {
@@ -32,6 +38,7 @@ export class TokenPageService {
     };
 
     onBillingPurchaseCreate = async (tokenPriceId: string): Promise<void> => {
+        this.lastTokenPriceId = tokenPriceId;
         this.repository.billingViewModelRepository.setPaymentWidgetToken(
             undefined
         );
@@ -51,7 +58,9 @@ export class TokenPageService {
                 this.repository.billingViewModelRepository.setPurchaseRequestState(
                     'ok'
                 );
-                this.observerService.onEvent(Events.EVENT_PAYMENT_STARTED);
+                this.track(Events.EVENT_PAYMENT_STARTED, {
+                    token_price_id: tokenPriceId,
+                });
                 this.repository.setLocation(Routes.Pay);
                 return;
             }
@@ -95,7 +104,12 @@ export class TokenPageService {
     };
 
     onPaymentStatusChanged = async () => {
-        this.observerService.onEvent(Events.EVENT_PAYMENT_SUCCESS);
+        this.track(Events.EVENT_PAYMENT_SUCCESS, {
+            ...(this.lastTokenPriceId
+                ? { token_price_id: this.lastTokenPriceId }
+                : {}),
+        });
+        this.lastTokenPriceId = undefined;
         await this.refreshUserInfo();
         this.repository.billingViewModelRepository.setPaymentWidgetToken(
             undefined
@@ -107,6 +121,7 @@ export class TokenPageService {
     };
 
     onPaymentWidgetFailed = (): void => {
+        this.track(Events.EVENT_PAYMENT_WIDGET_FAILED);
         reportUnexpectedError(
             this.observerService,
             'billing.widget',

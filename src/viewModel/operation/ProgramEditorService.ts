@@ -28,6 +28,7 @@ import {
     resolveProjectFileName,
 } from '../utils/projectFilePath.ts';
 import { resolveSegmentId } from '../utils/segmentId.ts';
+import { segmentCreateEvent, trackEvent } from '../utils/observerContext.ts';
 
 export class ProgramEditorService {
     repository: ViewModelRepository;
@@ -67,6 +68,21 @@ export class ProgramEditorService {
         this.hunkService = hunkService;
     };
 
+    private track(event: string, properties?: Record<string, unknown>) {
+        trackEvent(this.observerService, this.repository, event, properties);
+    }
+
+    private trackSegmentAdded(
+        type: SegmentType,
+        source: string,
+        event: string = segmentCreateEvent(type)
+    ) {
+        this.track(event, {
+            segment_type: type,
+            source,
+        });
+    }
+
     onAddedFilesToSegmentEditor = async (
         items: DataTransferItemList,
         segmentIndex: number,
@@ -74,6 +90,14 @@ export class ProgramEditorService {
     ) => {
         if (this.editingLock.rejectEdit()) {
             return;
+        }
+        const fileCount = Array.from(items).filter(
+            (item) => item.kind === 'file'
+        ).length;
+        if (fileCount > 0) {
+            this.track(Events.EVENT_FILES_DROPPED_INTO_SEGMENT, {
+                file_count: fileCount,
+            });
         }
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const thisCopy = this;
@@ -370,6 +394,7 @@ export class ProgramEditorService {
         if (this.editingLock.rejectEdit()) {
             return;
         }
+        this.track(Events.EVENT_ROUND_STRATEGY_CHANGED, { strategy });
         this.programService.changeRoundStrategy(strategy);
         this.repository.ideViewModelRepository.markProgramChanged();
         this.ideService.onProgramUpdated();
@@ -391,7 +416,10 @@ export class ProgramEditorService {
         if (this.editingLock.rejectEdit()) {
             return;
         }
-        this.observerService.onEvent(Events.EVENT_MOVE_SEGMENT);
+        this.track(Events.EVENT_MOVE_SEGMENT, {
+            direction,
+            from_index: segmentIndex,
+        });
         this.programService.moveSegment(segmentIndex, direction);
         this.repository.ideViewModelRepository.markProgramChanged();
         this.ideService.onProgramUpdated();
@@ -406,6 +434,11 @@ export class ProgramEditorService {
         if (this.editingLock.rejectEdit()) {
             return;
         }
+        this.track(Events.EVENT_SEGMENT_VISIBILITY_CHANGED, {
+            parameter: parameterName,
+            visible,
+            segment_index: segmentIndex,
+        });
         this.programService.changeSegmentVisibility(
             visible,
             parameterName,
@@ -421,6 +454,13 @@ export class ProgramEditorService {
             return;
         }
         this.hunkService?.acceptAllHunksInBackground();
+        const segmentType =
+            this.programService.getCurrentProgram().segments[segmentIndex]
+                ?.type;
+        this.track(Events.EVENT_SEGMENT_DELETED, {
+            segment_type: segmentType,
+            segment_index: segmentIndex,
+        });
         const filesBefore = this.ideService.calculateFilesToDelete(
             this.programService.getCurrentProgram()
         );
@@ -442,13 +482,18 @@ export class ProgramEditorService {
 
     onSegmentAddedViaDivider = async (
         segmentType: SegmentType,
-        after: number
+        after: number,
+        source: string = 'divider'
     ) => {
         if (this.editingLock.rejectEdit()) {
             return;
         }
         this.hunkService?.acceptAllHunksInBackground();
-        // TODO observer service call
+        this.trackSegmentAdded(
+            segmentType,
+            source,
+            Events.EVENT_INSERT_SEGMENT_BETWEEN
+        );
         this.programService.addSegmentAfterIndex(segmentType, after);
         this.repository.ideViewModelRepository.markProgramChanged();
         this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(after + 1);
@@ -464,12 +509,12 @@ export class ProgramEditorService {
             return;
         }
         if (placement === 'start') {
-            await this.onSegmentAddedViaDivider('latex', -1);
+            await this.onSegmentAddedViaDivider('latex', -1, 'latex_boundary');
             await this.onSegmentTextEdited(0, text);
             return;
         }
 
-        this.onAddSegmentClicked('latex');
+        this.onAddSegmentClicked('latex', 'latex_boundary');
         const targetSegmentIndex =
             this.programService.getCurrentProgram().segments.length - 1;
         if (targetSegmentIndex < 0) {
@@ -695,6 +740,7 @@ export class ProgramEditorService {
     };
 
     onSyncEditorToPdf = async () => {
+        this.track(Events.EVENT_SYNC_TO_PDF, { direction: 'toPdf' });
         if (!this.canUseSynctexNavigation()) {
             return;
         }
@@ -749,6 +795,7 @@ export class ProgramEditorService {
     };
 
     onSyncPdfToEditor = async () => {
+        this.track(Events.EVENT_SYNC_TO_EDITOR, { direction: 'toEditor' });
         if (!this.canUseSynctexNavigation()) {
             return;
         }
@@ -807,6 +854,10 @@ export class ProgramEditorService {
         line: number;
         file?: string;
     }): Promise<boolean> => {
+        this.track(Events.EVENT_AGENT_CHANGE_CLICKED, {
+            has_file: Boolean(target.file),
+            segment_index: target.segmentIndex,
+        });
         if (target.file) {
             return this.navigateToProjectFile(target.file, target.line, false);
         }
@@ -821,6 +872,11 @@ export class ProgramEditorService {
     /** Клик по ошибке: скролл к строке сегмента или открытие файла. */
     onCompileErrorClicked = async (error: CompileErrorResult) => {
         const { line, segmentId, latexFile } = error.payload;
+        this.track(Events.EVENT_COMPILE_ERROR_CLICKED, {
+            error_code: error.code,
+            has_file: Boolean(latexFile),
+            has_segment: segmentId != null,
+        });
         if (Number.isNaN(+line)) {
             return;
         }
@@ -836,27 +892,12 @@ export class ProgramEditorService {
         await this.navigateToSegmentLine(segmentId, line + 1);
     };
 
-    onAddSegmentClicked = (type: SegmentType) => {
+    onAddSegmentClicked = (type: SegmentType, source: string = 'add_block') => {
         if (this.editingLock.rejectEdit()) {
             return;
         }
         this.hunkService?.acceptAllHunksInBackground();
-        switch (type) {
-            case 'md':
-                this.observerService.onEvent(Events.EVENT_CREATE_MD_SEGMENT);
-                break;
-            case 'asciimath':
-                this.observerService.onEvent(
-                    Events.EVENT_CREATE_ASCIIMATH_SEGMENT
-                );
-                break;
-            case 'latex':
-                this.observerService.onEvent(Events.EVENT_CREATE_LATEX_SEGMENT);
-                break;
-            case 'computational':
-                this.observerService.onEvent(Events.EVENT_CREATE_COMP_SEGMENT);
-                break;
-        }
+        this.trackSegmentAdded(type, source);
         this.programService.addSegmentToLastPosition(type);
         this.repository.ideViewModelRepository.markProgramChanged();
         this.repository.ideViewModelRepository.setActiveSegmentIndex(

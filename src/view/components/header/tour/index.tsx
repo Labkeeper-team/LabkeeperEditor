@@ -4,6 +4,8 @@ import { Typography } from '../../typography';
 
 import './style.scss';
 import { setTourVisibility } from '../../../store/slices/settings';
+import { controller } from '../../../../main.tsx';
+import { Events } from '../../../../model/service/ObserverService.ts';
 import { useDictionary } from '../../../store/selectors/translations';
 import { useUser } from '../../../store/selectors/program';
 import classNames from 'classnames';
@@ -14,6 +16,7 @@ export const InterfaceTour = () => {
     const { isAuthenticated } = useSelector(useUser);
 
     const onClick = () => {
+        controller.trackUiEvent(Events.EVENT_TOUR_STARTED);
         dispatch(setTourVisibility(true));
     };
 

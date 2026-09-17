@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { matchPath, useLocation, useNavigate } from 'react-router-dom';
 
 import { controller } from '../../../../main.tsx';
+import { Events } from '../../../../model/service/ObserverService.ts';
 import { Routes } from '../../../../viewModel/routes.ts';
 import { WikiLinks } from '../../../../viewModel/wiki.ts';
 import { Select } from '../../select';
@@ -29,6 +30,7 @@ import { LogoutConfirmModal } from '../logout-confirm-modal';
 
 type HeaderMenuItem = {
     title: string;
+    item: string;
     onClick: () => void;
     separatorAfter?: boolean;
 };
@@ -65,15 +67,17 @@ export const HeaderMenu = () => {
     }, [openExternal]);
 
     const openContactModal = useCallback(() => {
+        controller.trackUiEvent(Events.EVENT_CONTACT_MODAL_OPENED);
         dispatch(setShowContactModal(true));
     }, [dispatch]);
 
     const openShareModal = useCallback(() => {
+        controller.trackUiEvent(Events.EVENT_SHARE_MODAL_OPENED);
         dispatch(setShowShareModal(true));
     }, [dispatch]);
 
     const openAuthModal = useCallback(() => {
-        dispatch(controller.onAuthButtonClickedRequest());
+        dispatch(controller.onAuthButtonClickedRequest('menu'));
     }, [dispatch]);
 
     const openLandingAnchor = useCallback(
@@ -99,13 +103,21 @@ export const HeaderMenu = () => {
                 '{language}',
                 alternateLanguage.label
             ),
-            onClick: () => dispatch(setLanguage(alternateLanguage.value)),
+            item: 'language',
+            onClick: () => {
+                controller.trackUiEvent(Events.EVENT_LANGUAGE_CHANGED, {
+                    from: language,
+                    to: alternateLanguage.value,
+                });
+                dispatch(setLanguage(alternateLanguage.value));
+            },
         };
     }, [
         alternateLanguage,
         dictionary.header_menu.change_language_to,
         dispatch,
         isMobile,
+        language,
     ]);
 
     const withMobileLanguageItem = useCallback(
@@ -119,28 +131,34 @@ export const HeaderMenu = () => {
             withMobileLanguageItem([
                 {
                     title: dictionary.header_menu.examples,
+                    item: 'examples',
                     onClick: () => openExternal(EXAMPLES_URL),
                 },
                 {
                     title: dictionary.header_menu.tokens,
+                    item: 'tokens',
                     onClick: () => navigate(Routes.Tokens),
                 },
                 {
                     title: dictionary.wiki,
+                    item: 'wiki',
                     onClick: openWiki,
                 },
                 {
                     title: dictionary.header_menu.about,
+                    item: 'about',
                     onClick: () => openExternal(ABOUT_URL),
                 },
                 {
                     title: dictionary.header_menu.contact_us,
+                    item: 'contact',
                     onClick: openContactModal,
                 },
                 ...(isEditorPage
                     ? [
                           {
                               title: dictionary.interface_tour.label,
+                              item: 'tour',
                               onClick: () => dispatch(setTourVisibility(true)),
                           },
                       ]
@@ -165,6 +183,7 @@ export const HeaderMenu = () => {
                     ? [
                           {
                               title: dictionary.header_menu.my_projects,
+                              item: 'projects',
                               onClick: () => navigate(Routes.Projects),
                           },
                       ]
@@ -173,12 +192,14 @@ export const HeaderMenu = () => {
                     ? [
                           {
                               title: dictionary.header_menu.share,
+                              item: 'share',
                               onClick: openShareModal,
                           },
                       ]
                     : []),
                 {
                     title: dictionary.header_menu.top_up_balance,
+                    item: 'tokens',
                     onClick: () => navigate(Routes.Tokens),
                     separatorAfter: true,
                 },
@@ -186,29 +207,35 @@ export const HeaderMenu = () => {
                     ? [
                           {
                               title: dictionary.interface_tour.label,
+                              item: 'tour',
                               onClick: () => dispatch(setTourVisibility(true)),
                           },
                       ]
                     : []),
                 {
                     title: dictionary.header_menu.contact_us,
+                    item: 'contact',
                     onClick: openContactModal,
                 },
                 {
                     title: dictionary.wiki,
+                    item: 'wiki',
                     onClick: openWiki,
                 },
                 {
                     title: dictionary.header_menu.about,
+                    item: 'about',
                     onClick: () => openExternal(ABOUT_URL),
                 },
                 {
                     title: dictionary.header_menu.examples,
+                    item: 'examples',
                     onClick: () => openExternal(EXAMPLES_URL),
                     separatorAfter: true,
                 },
                 {
                     title: dictionary.header_menu.logout,
+                    item: 'logout',
                     onClick: () => setShowLogoutModal(true),
                 },
             ]),
@@ -233,26 +260,32 @@ export const HeaderMenu = () => {
             withMobileLanguageItem([
                 {
                     title: dictionary.tokens_page.navigation.advantages,
+                    item: 'advantages',
                     onClick: () => openLandingAnchor('advantages'),
                 },
                 {
                     title: dictionary.tokens_page.navigation.features,
+                    item: 'features',
                     onClick: () => openLandingAnchor('features'),
                 },
                 {
                     title: dictionary.tokens_page.navigation.for_whom,
+                    item: 'for_whom',
                     onClick: () => openLandingAnchor('for-whom'),
                 },
                 {
                     title: dictionary.tokens_page.navigation.examples,
+                    item: 'examples',
                     onClick: () => openLandingAnchor('examples'),
                 },
                 {
                     title: dictionary.tokens_page.navigation.tokens,
+                    item: 'tokens',
                     onClick: () => navigate(Routes.Tokens),
                 },
                 {
                     title: dictionary.tokens_page.navigation.about,
+                    item: 'about',
                     onClick: () => openExternal(ABOUT_URL),
                     separatorAfter: true,
                 },
@@ -260,17 +293,20 @@ export const HeaderMenu = () => {
                     ? [
                           {
                               title: dictionary.tokens_page.navigation.logout,
+                              item: 'logout',
                               onClick: () => setShowLogoutModal(true),
                           },
                       ]
                     : [
                           {
                               title: dictionary.tokens_page.navigation.login,
+                              item: 'login',
                               onClick: openAuthModal,
                           },
                       ]),
                 {
                     title: dictionary.tokens_page.navigation.editor,
+                    item: 'editor',
                     onClick: () =>
                         dispatch(
                             controller.onOpenEditorAfterSpaNavigationRequest()
@@ -280,6 +316,7 @@ export const HeaderMenu = () => {
                     ? [
                           {
                               title: dictionary.tokens_page.navigation.projects,
+                              item: 'projects',
                               onClick: () => navigate(Routes.Projects),
                           },
                       ]
@@ -346,7 +383,22 @@ export const HeaderMenu = () => {
     ]);
 
     const onMenuItemChange = (value: string | number) => {
-        items[Number(value)]?.onClick();
+        const item = items[Number(value)];
+        if (!item) {
+            return;
+        }
+        controller.trackUiEvent(Events.EVENT_MENU_ITEM_CLICKED, {
+            item: item.item,
+        });
+        if (item.item === 'tour') {
+            controller.trackUiEvent(Events.EVENT_TOUR_STARTED);
+        }
+        if (item.item === 'tokens') {
+            controller.trackUiEvent(Events.EVENT_TOKENS_TOPUP_CLICKED, {
+                source: 'menu',
+            });
+        }
+        item.onClick();
     };
 
     const confirmLogout = () => {

@@ -1,10 +1,17 @@
 import { Project } from '../../../model/domain.ts';
 import { RequestResult } from '../../../model/rpi';
+import { Events } from '../../../model/service/ObserverService.ts';
 import { mockContext, USER_EMAIL, USER_ID } from '../common.ts';
 
 test('project-create-replaces-stale-editor-program-with-created-project-program', async () => {
-    const { programService, projectsPageService, repository, rpi } =
-        mockContext();
+    const {
+        programService,
+        projectsPageService,
+        repository,
+        rpi,
+        observerService,
+    } = mockContext();
+    const onEvent = jest.spyOn(observerService, 'onEvent');
     const staleProgram = {
         segments: [
             {
@@ -78,5 +85,12 @@ test('project-create-replaces-stale-editor-program-with-created-project-program'
     ).toStrictEqual([]);
     expect(repository.projectViewModelRepository.project()?.projectId).toBe(
         emptyLatexProject.projectId
+    );
+    expect(onEvent).toHaveBeenCalledWith(
+        Events.EVENT_CREATE_PROJECT,
+        expect.objectContaining({
+            project_id: emptyLatexProject.projectId,
+            project_type: 'latex',
+        })
     );
 });

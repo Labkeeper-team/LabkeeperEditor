@@ -14,6 +14,7 @@ import {
 import { InMemoryProgramRepository } from '../../../model/repository/ProgramRepository.ts';
 import { ProgramService } from '../../../model/service/ProgramService.ts';
 import { getIdeSegmentEditorView } from '../../../view/pages/project/editor/ide/segments/ideSegmentEditorView.ts';
+import { Events } from '../../../model/service/ObserverService.ts';
 
 jest.mock(
     '../../../view/pages/project/editor/ide/segments/ideSegmentEditorView.ts',
@@ -509,4 +510,34 @@ test('canUndo/canRedo корректны после серии операций'
     svc.clearHistory();
     expect(svc.canUndo()).toBe(false);
     expect(svc.canRedo()).toBe(false);
+});
+
+test('divider-inserts-segment-and-tracks-openpanel-event', async () => {
+    const { programEditorService, programService, observerService } =
+        mockContext();
+    const onEvent = jest.spyOn(observerService, 'onEvent');
+    programService.setNewProgram({
+        segments: [
+            {
+                type: 'md',
+                text: 'first',
+                parameters: { visible: true },
+            },
+        ],
+        parameters: { roundStrategy: 'noRound' },
+    });
+
+    await programEditorService.onSegmentAddedViaDivider('computational', 0);
+
+    expect(programService.getCurrentProgram().segments).toHaveLength(2);
+    expect(programService.getCurrentProgram().segments[1].type).toBe(
+        'computational'
+    );
+    expect(onEvent).toHaveBeenCalledWith(
+        Events.EVENT_INSERT_SEGMENT_BETWEEN,
+        expect.objectContaining({
+            segment_type: 'computational',
+            source: 'divider',
+        })
+    );
 });

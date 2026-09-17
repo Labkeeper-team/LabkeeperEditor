@@ -12,6 +12,7 @@ import { AppDispatch } from '../../../store';
 import { setMobileView, setViewerTab } from '../../../store/slices/settings';
 import { MobileView } from '../../../store/slices';
 import { controller } from '../../../../main.tsx';
+import { Events } from '../../../../model/service/ObserverService.ts';
 import { useIsMobile } from '../../../hooks/useMobile';
 
 import './style.scss';
@@ -62,6 +63,13 @@ export const MobileViewSwitcher = () => {
     const currentView = views.find((view) => view.id === mobileView);
 
     const onSelectView = (id: MobileView) => {
+        if (id !== mobileView) {
+            controller.trackUiEvent(Events.EVENT_MOBILE_VIEW_CHANGED, {
+                from: mobileView,
+                to: id,
+                is_mobile: true,
+            });
+        }
         if (id === 'files') {
             dispatch(controller.onFolderButtonClickedRequest());
         }

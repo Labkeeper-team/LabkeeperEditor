@@ -10,6 +10,7 @@ import {
     ObserverService,
 } from '../../model/service/ObserverService.ts';
 import { ResetService } from '../domain/ResetService.ts';
+import { trackEvent } from '../utils/observerContext.ts';
 
 export class ProjectsPageService {
     repository: ViewModelRepository;
@@ -38,9 +39,14 @@ export class ProjectsPageService {
         this.resetService = resetService;
     }
 
+    private track(event: string, properties?: Record<string, unknown>) {
+        trackEvent(this.observerService, this.repository, event, properties);
+    }
+
     onDeleteProject = async (projectId: string, okCallback: () => void) => {
         const result1 = await this.rpi.deleteProjectRequest(projectId);
         if (result1.isOk) {
+            this.track(Events.EVENT_PROJECT_DELETED, { project_id: projectId });
             okCallback();
             const result2 = await this.rpi.getAllProjectsRequest();
             if (result2.isOk) {
@@ -74,6 +80,9 @@ export class ProjectsPageService {
     ) => {
         const projectNameToSend = projectName.trim();
         if (!projectNameToSend) {
+            this.track(Events.EVENT_PROJECT_CREATE_FAILED, {
+                reason: 'empty_name',
+            });
             errorCallback(
                 this.repository.dictionary.create_modal.error.empty_name
             );
@@ -100,7 +109,10 @@ export class ProjectsPageService {
             this.ideService.resetEditor();
         }
         if (result.isOk) {
-            this.observerService.onEvent(Events.EVENT_CREATE_PROJECT);
+            this.track(Events.EVENT_CREATE_PROJECT, {
+                project_id: result.body.projectId,
+                project_type: projectType,
+            });
             this.repository.setLocation(
                 Routes.Project.replace(':id', result.body.projectId + '')
             );
@@ -118,6 +130,12 @@ export class ProjectsPageService {
             );
             okCallback();
         } else {
+            this.track(Events.EVENT_PROJECT_CREATE_FAILED, {
+                reason:
+                    result.code === 417
+                        ? 'too_many_projects'
+                        : String(result.code),
+            });
             const message =
                 result.code === 417
                     ? this.repository.dictionary.create_modal.error
@@ -128,6 +146,10 @@ export class ProjectsPageService {
     };
 
     onRowClickedInProjectsList = async (projectId: string) => {
+        this.track(Events.EVENT_PROJECT_OPENED, {
+            project_id: projectId,
+            source: 'list',
+        });
         this.repository.setLocation(Routes.Project.replace(':id', projectId));
         await this.startupService.openProjectById(
             {
