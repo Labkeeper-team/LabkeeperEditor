@@ -103,6 +103,8 @@ const SEGMENT_CM_SPELLCHECK_OFF = EditorView.contentAttributes.of({
 
 const setDecorationsEffect = StateEffect.define<DecorationSet>();
 
+const NO_SEGMENTS: Segment[] = [];
+
 const decorationsField = StateField.define<DecorationSet>({
     create() {
         return Decoration.none;
@@ -143,11 +145,8 @@ export const SegmentEditor = memo(
             (state: StorageState) =>
                 state.project.currentProgram?.segments[props.index]
         ) as (Segment & { id?: number }) | undefined;
-        const segments = useSelector(
-            (state: StorageState) =>
-                state.project.currentProgram?.segments ?? []
-        );
-        const segmentId = resolveSegmentId(segments, props.index);
+        // resolveSegmentId список не читает, id это позиция, а подписка на весь список перерисовывала бы все редакторы на каждое нажатие
+        const segmentId = resolveSegmentId(NO_SEGMENTS, props.index);
         const ref = useRef<HTMLDivElement>(null);
         const editor = useRef<ReactCodeMirrorRef | undefined>();
         const getEditorView = useCallback(
