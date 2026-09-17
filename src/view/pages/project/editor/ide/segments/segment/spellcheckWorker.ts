@@ -40,28 +40,39 @@ const cyrillicWordRe = /[\u0400-\u04FFЁё]+(?:-[\u0400-\u04FFЁё]+)*/g;
 const utf8 = new TextDecoder('utf-8');
 
 async function fetchAsUtf8(url: string): Promise<string> {
-    const buf = await fetch(url).then((r) => r.arrayBuffer());
-    return utf8.decode(buf);
+    const response = await fetch(url);
+    // вместо пропавшего файла сервер может отдать index.html, и nspell молча собрал бы словарь из разметки
+    if (!response.ok) {
+        throw new Error(`dictionary ${url} returned ${response.status}`);
+    }
+    return utf8.decode(await response.arrayBuffer());
 }
 
-let spellPromise: Promise<{ en: NSpell; ru: NSpell }> | null = null;
+type Language = 'en' | 'ru';
 
-function loadSpellers(): Promise<{ en: NSpell; ru: NSpell }> {
-    if (!spellPromise) {
-        spellPromise = (async () => {
-            const [enAff, enDic, ruAff, ruDic] = await Promise.all([
-                fetchAsUtf8(enAffUrl),
-                fetchAsUtf8(enDicUrl),
-                fetchAsUtf8(ruAffUrl),
-                fetchAsUtf8(ruDicUrl),
-            ]);
-            return {
-                en: nspell(enAff, enDic),
-                ru: nspell(ruAff, ruDic),
-            };
-        })();
+const dictionaryUrls: Record<Language, { aff: string; dic: string }> = {
+    en: { aff: enAffUrl, dic: enDicUrl },
+    ru: { aff: ruAffUrl, dic: ruDicUrl },
+};
+
+const latinLetterRe = /[A-Za-z]/;
+const cyrillicLetterRe = /[\u0400-\u04FFЁё]/;
+
+const spellers = new Map<Language, Promise<NSpell>>();
+
+/** Русский словарь собирается секунды процессорного времени, поэтому словарь берём, только когда в тексте есть его буквы */
+function loadSpeller(language: Language): Promise<NSpell> {
+    let speller = spellers.get(language);
+    if (!speller) {
+        const { aff, dic } = dictionaryUrls[language];
+        speller = Promise.all([fetchAsUtf8(aff), fetchAsUtf8(dic)]).then(
+            ([affText, dicText]) => nspell(affText, dicText)
+        );
+        spellers.set(language, speller);
+        // словарь теперь качается в любой момент работы, и разовый сбой сети не должен выключать его до перезагрузки
+        speller.catch(() => spellers.delete(language));
     }
-    return spellPromise;
+    return speller;
 }
 
 function isWordOk(spell: NSpell, word: string): boolean {
@@ -84,8 +95,8 @@ function isWordOk(spell: NSpell, word: string): boolean {
 
 function collectRanges(
     text: string,
-    en: NSpell,
-    ru: NSpell
+    en: NSpell | undefined,
+    ru: NSpell | undefined
 ): SpellcheckRange[] {
     const out: SpellcheckRange[] = [];
 
@@ -99,15 +110,19 @@ function collectRanges(
         out.push({ from, to: from + word.length });
     };
 
-    latinWordRe.lastIndex = 0;
     let m: RegExpExecArray | null;
-    while ((m = latinWordRe.exec(text)) !== null) {
-        pushIfBad(m[0], m.index, en);
+    if (en) {
+        latinWordRe.lastIndex = 0;
+        while ((m = latinWordRe.exec(text)) !== null) {
+            pushIfBad(m[0], m.index, en);
+        }
     }
 
-    cyrillicWordRe.lastIndex = 0;
-    while ((m = cyrillicWordRe.exec(text)) !== null) {
-        pushIfBad(m[0], m.index, ru);
+    if (ru) {
+        cyrillicWordRe.lastIndex = 0;
+        while ((m = cyrillicWordRe.exec(text)) !== null) {
+            pushIfBad(m[0], m.index, ru);
+        }
     }
 
     out.sort((a, b) => a.from - b.from);
@@ -183,11 +198,18 @@ function prepare(mode: SpellcheckMode, text: string): string {
 
 scope.addEventListener('message', (event) => {
     const { id, mode, text } = event.data;
-    loadSpellers()
-        .then(({ en, ru }) => {
+    const prepared = prepare(mode, text);
+    // сбой одного словаря не должен снимать подчёркивания другого языка
+    const optionalSpeller = (language: Language) =>
+        loadSpeller(language).catch(() => undefined);
+    Promise.all([
+        latinLetterRe.test(prepared) ? optionalSpeller('en') : undefined,
+        cyrillicLetterRe.test(prepared) ? optionalSpeller('ru') : undefined,
+    ])
+        .then(([en, ru]) => {
             scope.postMessage({
                 id,
-                ranges: collectRanges(prepare(mode, text), en, ru),
+                ranges: collectRanges(prepared, en, ru),
             });
         })
         .catch(() => {
