@@ -277,6 +277,12 @@ export class StartupService {
         settings.setMobileView('chat');
     };
 
+    // ждать файлов стоит только latex без pdf, иначе телефон успевает показать редактор и уводит с него
+    private pdfMayComeWithFiles = (userInfo: UserInfo): boolean =>
+        userInfo.isAuthenticated &&
+        this.repository.projectViewModelRepository.mode() === 'latex' &&
+        !this.repository.projectViewModelRepository.pdfUri();
+
     private cutOfLastSlash(location: string): string {
         if (location === '/' || location === '') {
             return '/';
@@ -379,6 +385,10 @@ export class StartupService {
             this.repository.ideViewModelRepository.setGetProjectRequestState(
                 'ok'
             );
+            const agentWaitsForFiles = this.pdfMayComeWithFiles(userInfo);
+            if (!agentWaitsForFiles) {
+                this.showAgentIfNeverCompiled(project);
+            }
             if (userInfo.isAuthenticated) {
                 await this.loader.loadFiles(project.projectId);
                 const pdfFile = this.repository.projectViewModelRepository
@@ -399,7 +409,9 @@ export class StartupService {
             } else {
                 this.hunkService?.clearHunks();
             }
-            this.showAgentIfNeverCompiled(project);
+            if (agentWaitsForFiles) {
+                this.showAgentIfNeverCompiled(project);
+            }
             return;
         }
         if (!result.isOk) {
@@ -448,6 +460,8 @@ export class StartupService {
                 this.setEditorLocation(
                     Routes.Project.replace(':id', project.projectId)
                 );
+                // у проекта по умолчанию pdf из файлов не берётся, поэтому решаем до их загрузки
+                this.showAgentIfNeverCompiled(project);
                 if (userInfo.isAuthenticated) {
                     await this.loader.loadFiles(project.projectId);
                 }
@@ -458,7 +472,6 @@ export class StartupService {
                 } else {
                     this.hunkService?.clearHunks();
                 }
-                this.showAgentIfNeverCompiled(project);
             }
             if (result.isUnauth) {
                 this.setEditorLocation(Routes.ProjectDefault);
