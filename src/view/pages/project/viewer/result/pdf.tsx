@@ -260,7 +260,6 @@ export const PdfResultViewer = () => {
                 if (containerWidth <= 0) {
                     waitingForWidthRef.current = true;
                     setIsPdfDocumentLoading(false);
-                    finishPdfRendering();
                     return;
                 }
                 waitingForWidthRef.current = false;
@@ -456,13 +455,22 @@ export const PdfResultViewer = () => {
         });
         observer.observe(container);
         return () => observer.disconnect();
-        // контейнер существует только когда есть что показывать
-    }, [pdfUri, isPdfLoadingError]);
+    }, [pdfUri]);
 
     const showHelpText = !pdfUri || isPdfLoadingError;
     const showPdfLoading = Boolean(
         pdfUri && !isPdfLoadingError && isPdfDocumentLoading
     );
+    const overlayStyle = {
+        position: 'absolute' as const,
+        inset: 0,
+        zIndex: 1,
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        pointerEvents: 'auto' as const,
+        touchAction: 'none' as const,
+    };
     return (
         <div
             style={{
@@ -475,48 +483,29 @@ export const PdfResultViewer = () => {
             }}
         >
             {showHelpText ? (
-                <div
-                    style={{
-                        display: 'flex',
-                        flex: 1,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        height: '100%',
-                        width: '100%',
-                    }}
-                >
+                <div style={overlayStyle}>
                     <Typography text={dictionary.viewer.no_pdf} />
                 </div>
+            ) : null}
+            {showPdfLoading ? (
+                <div style={overlayStyle}>
+                    <Typography text={dictionary.viewer.pdf_loading} />
+                </div>
+            ) : null}
+            {pdfUri ? (
+                <div
+                    ref={containerRef}
+                    onClick={handlePdfClick}
+                    style={{
+                        overflow: 'auto',
+                        height: '100%',
+                        width: '100%',
+                        flex: 1,
+                        minHeight: 0,
+                    }}
+                />
             ) : (
-                <>
-                    {showPdfLoading ? (
-                        <div
-                            style={{
-                                position: 'absolute',
-                                inset: 0,
-                                zIndex: 1,
-                                display: 'flex',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                pointerEvents: 'auto',
-                                touchAction: 'none',
-                            }}
-                        >
-                            <Typography text={dictionary.viewer.pdf_loading} />
-                        </div>
-                    ) : null}
-                    <div
-                        ref={containerRef}
-                        onClick={handlePdfClick}
-                        style={{
-                            overflow: 'auto',
-                            height: '100%',
-                            width: '100%',
-                            flex: 1,
-                            minHeight: 0,
-                        }}
-                    />
-                </>
+                <div style={{ flex: 1 }} />
             )}
         </div>
     );
