@@ -235,9 +235,21 @@ export const PdfResultViewer = () => {
             dispatch(setPdfClickPosition(null));
             try {
                 const dpr = window.devicePixelRatio || 1;
-                const pdf = await pdfjs.getDocument({
-                    url: pdfUri,
-                }).promise;
+                // URI после перекомпиляции часто тот же (main.pdf / result.pdf) —
+                // без no-store браузер может отдать закэшированный файл.
+                const response = await fetch(pdfUri, { cache: 'no-store' });
+                if (!response.ok) {
+                    throw new Error(
+                        `PDF fetch failed with status ${response.status}`
+                    );
+                }
+                const data = await response.arrayBuffer();
+                if (cancelled) {
+                    setIsPdfDocumentLoading(false);
+                    finishPdfRendering();
+                    return;
+                }
+                const pdf = await pdfjs.getDocument({ data }).promise;
                 if (cancelled) {
                     setIsPdfDocumentLoading(false);
                     finishPdfRendering();
@@ -256,10 +268,15 @@ export const PdfResultViewer = () => {
                 const containerWidth =
                     (container.clientWidth ?? 0) - scrollbarWidth;
 
-                // на скрытой вкладке ширина нулевая, масштаб вышел бы отрицательным
+                // на скрытой вкладке ширина нулевая, масштаб вышел бы отрицательным.
+                // Документ уже скачан, сервер разблокирован — снимаем флаг, иначе
+                // Run останется в «Loading...», пока пользователь сам не откроет PDF.
+                // Когда колонку покажут, ResizeObserver → widthEpoch → новый проход
+                // снова выставит флаг на время реальной отрисовки.
                 if (containerWidth <= 0) {
                     waitingForWidthRef.current = true;
                     setIsPdfDocumentLoading(false);
+                    finishPdfRendering();
                     return;
                 }
                 waitingForWidthRef.current = false;
