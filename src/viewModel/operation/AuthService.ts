@@ -165,11 +165,14 @@ export class AuthService {
     onEmailSendButtonClicked = async (email: string, captcha: string) => {
         this.repository.authViewModelRepository.setCurrentEmail(null);
         this.repository.authViewModelRepository.setEmailRequest('loading');
+        // как и при входе: с токеном обхода виджета капчи на экране нет
+        const captchaBypassToken =
+            this.repository.settingsViewModelRepository.captchaBypassToken();
         const result = await this.rpi.sendEmailWithCodeRequest(
             email,
             this.repository.authViewModelRepository.isRegistration(),
             this.repository.persistenceViewModelRepository.language(),
-            captcha
+            captchaBypassToken ?? captcha
         );
 
         const flow = this.authFlow();

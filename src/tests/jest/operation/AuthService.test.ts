@@ -78,3 +78,27 @@ test('form-login-failed-tracks-bad-credentials', async () => {
         })
     );
 });
+
+test('registration-email-sends-the-captcha-bypass-token', async () => {
+    const { authService, repository, rpi } = mockContext();
+    repository.settingsViewModelRepository.setCaptchaBypassToken('bypass');
+    repository.authViewModelRepository.setIsRegistration(true);
+    rpi.sendEmailWithCodeRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        body: {},
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+    });
+
+    // виджета капчи при токене обхода нет, поэтому из формы приходит пустая строка
+    await authService.onEmailSendButtonClicked('a@gmail.com', '');
+
+    expect(rpi.sendEmailWithCodeRequest).toHaveBeenCalledWith(
+        'a@gmail.com',
+        true,
+        expect.any(String),
+        'bypass'
+    );
+    expect(repository.authViewModelRepository.currentView()).toBe('code');
+});
