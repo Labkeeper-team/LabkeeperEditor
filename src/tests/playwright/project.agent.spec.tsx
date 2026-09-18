@@ -73,7 +73,7 @@ async function openChat(
 }
 
 async function submitPrompt(page: Page, text = 'сделай таблицу') {
-    await page.getByPlaceholder('Enter your promt').fill(text);
+    await page.getByPlaceholder('Enter your prompt').fill(text);
     await page.getByRole('button', { name: 'Send' }).click();
 }
 
@@ -273,10 +273,10 @@ test('agent-stop-reason-PromptTooLong-returns-the-prompt', async ({ page }) => {
         'The request is too long. Shorten it and send it again'
     );
     // текст вернулся в поле, сокращать его не придётся по памяти
-    await expect(page.getByPlaceholder('Enter your promt')).toHaveValue(
+    await expect(page.getByPlaceholder('Enter your prompt')).toHaveValue(
         'очень длинный запрос'
     );
-    await expect(page.getByPlaceholder('Enter your promt')).toBeEditable();
+    await expect(page.getByPlaceholder('Enter your prompt')).toBeEditable();
 });
 
 test('agent-stop-reason-QuotaExceeded-keeps-the-answer', async ({ page }) => {
@@ -814,7 +814,7 @@ test('compile-errors-go-to-the-agent-prompt', async ({ page }) => {
 
     // чат был закрыт, кнопка его открывает
     await expect(page.locator('.agent-chat')).toBeVisible();
-    await expect(page.getByPlaceholder('Enter your promt')).toHaveValue(
+    await expect(page.getByPlaceholder('Enter your prompt')).toHaveValue(
         'Fix the compilation errors:\n- Segment №1, line 1.4: No such variable x'
     );
     // кнопка живёт в заголовке панели, но сворачивать панель не должна
@@ -824,7 +824,7 @@ test('compile-errors-go-to-the-agent-prompt', async ({ page }) => {
 test('compile-errors-do-not-overwrite-a-typed-prompt', async ({ page }) => {
     await openWithCompileError(page);
     await page.getByRole('tab', { name: 'AI agent' }).click();
-    await page.getByPlaceholder('Enter your promt').fill('мой запрос');
+    await page.getByPlaceholder('Enter your prompt').fill('мой запрос');
     await page.getByRole('button', { name: /Run/i }).click();
 
     await sendErrorsButton(page).click();
@@ -832,7 +832,7 @@ test('compile-errors-do-not-overwrite-a-typed-prompt', async ({ page }) => {
     await expect(page.locator('div.Toastify__toast').first()).toContainText(
         'The agent prompt already has text'
     );
-    await expect(page.getByPlaceholder('Enter your promt')).toHaveValue(
+    await expect(page.getByPlaceholder('Enter your prompt')).toHaveValue(
         'мой запрос'
     );
 });
@@ -850,7 +850,7 @@ test.describe('compile errors on a phone', () => {
         await sendErrorsButton(page).click();
 
         await expect(page.locator('.agent-chat')).toBeVisible();
-        await expect(page.getByPlaceholder('Enter your promt')).toHaveValue(
+        await expect(page.getByPlaceholder('Enter your prompt')).toHaveValue(
             /No such variable x/
         );
         const overflow = await page.evaluate(
@@ -879,7 +879,7 @@ test.describe('compile errors in a russian browser', () => {
 
         await sendErrorsButton(page).click();
 
-        await expect(page.getByPlaceholder('Enter your promt')).toHaveValue(
+        await expect(page.getByPlaceholder('Enter your prompt')).toHaveValue(
             'Fix the compilation errors:\n- Segment №1, line 1.4: No such variable x'
         );
     });
