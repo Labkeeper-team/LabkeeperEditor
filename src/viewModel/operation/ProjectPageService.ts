@@ -428,6 +428,13 @@ export class ProjectPageService {
         if (this.editingLock.rejectEdit()) {
             return;
         }
+        if (
+            this.repository.settingsViewModelRepository.isAutocompleteLoading() ||
+            (this.repository.projectViewModelRepository.mode() === 'latex' &&
+                this.repository.settingsViewModelRepository.isPdfRendering())
+        ) {
+            return;
+        }
         try {
             this.repository.settingsViewModelRepository.setIsCompiling(true);
             if (this.repository.ideViewModelRepository.activeTextFile()) {

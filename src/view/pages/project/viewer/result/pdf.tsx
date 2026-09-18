@@ -10,6 +10,7 @@ import {
     setPdfClickPosition,
     setPdfNavigationTarget,
 } from '../../../../store/slices/ide';
+import { setIsPdfRendering } from '../../../../store/slices/settings';
 
 import './style.scss';
 import 'pdfjs-dist/legacy/web/pdf_viewer.css';
@@ -35,6 +36,9 @@ export const PdfResultViewer = () => {
     const pdfNavigationTarget = useSelector(
         (state: StorageState) => state.ide.pdfNavigationTarget
     );
+    const pdfUpdated = useSelector(
+        (state: StorageState) => state.ide.pdfUpdated
+    );
 
     const containerRef = useRef<HTMLDivElement>(null);
     const pdfRef = useRef<pdfjs.PDFDocumentProxy | null>(null);
@@ -46,9 +50,12 @@ export const PdfResultViewer = () => {
 
     /** Колонка была скрыта в момент отрисовки, ждём, когда её покажут */
     const waitingForWidthRef = useRef(false);
+    /** Чтобы отменённый loadPdf не снял флаг уже нового прохода */
+    const pdfRenderingGenerationRef = useRef(0);
     const [widthEpoch, setWidthEpoch] = useState(0);
     const [isPdfLoadingError, setIsPdfLoadingError] = useState<boolean>(false);
-    const [isPdfRendering, setIsPdfRendering] = useState<boolean>(false);
+    const [isPdfDocumentLoading, setIsPdfDocumentLoading] =
+        useState<boolean>(false);
     const [pageElements, setPageElements] = useState<HTMLDivElement[]>([]);
     const pageElementsRef = useRef<HTMLDivElement[]>([]);
 
@@ -122,7 +129,7 @@ export const PdfResultViewer = () => {
 
     /** Скролл после ответа API; повтор при появлении страниц PDF. */
     useEffect(() => {
-        if (!pdfNavigationTarget || isPdfRendering) {
+        if (!pdfNavigationTarget || isPdfDocumentLoading) {
             return;
         }
         void (async () => {
@@ -136,7 +143,7 @@ export const PdfResultViewer = () => {
         scrollToPdfPosition,
         dispatch,
         pageElements.length,
-        isPdfRendering,
+        isPdfDocumentLoading,
     ]);
 
     const handlePdfClick = useCallback(
@@ -209,28 +216,51 @@ export const PdfResultViewer = () => {
         isRestoringRef.current = true;
 
         const loadPdf = async () => {
+            const generation = ++pdfRenderingGenerationRef.current;
+            const finishPdfRendering = () => {
+                if (pdfRenderingGenerationRef.current === generation) {
+                    dispatch(setIsPdfRendering(false));
+                }
+            };
+
             if (!pdfUri) {
-                setIsPdfRendering(false);
+                setIsPdfDocumentLoading(false);
                 setIsPdfLoadingError(false);
+                finishPdfRendering();
                 return;
             }
-            setIsPdfRendering(true);
+            setIsPdfDocumentLoading(true);
             setIsPdfLoadingError(false);
+            dispatch(setIsPdfRendering(true));
             dispatch(setPdfClickPosition(null));
             try {
                 const dpr = window.devicePixelRatio || 1;
-                const pdf = await pdfjs.getDocument({
-                    url: pdfUri,
-                }).promise;
+                // URI после перекомпиляции часто тот же (main.pdf / result.pdf) —
+                // без no-store браузер может отдать закэшированный файл.
+                const response = await fetch(pdfUri, { cache: 'no-store' });
+                if (!response.ok) {
+                    throw new Error(
+                        `PDF fetch failed with status ${response.status}`
+                    );
+                }
+                const data = await response.arrayBuffer();
                 if (cancelled) {
-                    setIsPdfRendering(false);
+                    setIsPdfDocumentLoading(false);
+                    finishPdfRendering();
+                    return;
+                }
+                const pdf = await pdfjs.getDocument({ data }).promise;
+                if (cancelled) {
+                    setIsPdfDocumentLoading(false);
+                    finishPdfRendering();
                     return;
                 }
 
                 const container = containerRef.current;
                 if (!container) {
-                    setIsPdfRendering(false);
+                    setIsPdfDocumentLoading(false);
                     setIsPdfLoadingError(true);
+                    finishPdfRendering();
                     return;
                 }
 
@@ -238,10 +268,15 @@ export const PdfResultViewer = () => {
                 const containerWidth =
                     (container.clientWidth ?? 0) - scrollbarWidth;
 
-                // на скрытой вкладке ширина нулевая, масштаб вышел бы отрицательным
+                // на скрытой вкладке ширина нулевая, масштаб вышел бы отрицательным.
+                // Документ уже скачан, сервер разблокирован — снимаем флаг, иначе
+                // Run останется в «Loading...», пока пользователь сам не откроет PDF.
+                // Когда колонку покажут, ResizeObserver → widthEpoch → новый проход
+                // снова выставит флаг на время реальной отрисовки.
                 if (containerWidth <= 0) {
                     waitingForWidthRef.current = true;
-                    setIsPdfRendering(false);
+                    setIsPdfDocumentLoading(false);
+                    finishPdfRendering();
                     return;
                 }
                 waitingForWidthRef.current = false;
@@ -274,7 +309,8 @@ export const PdfResultViewer = () => {
                     const page = await pdf.getPage(i);
                     if (cancelled) {
                         container.style.visibility = '';
-                        setIsPdfRendering(false);
+                        setIsPdfDocumentLoading(false);
+                        finishPdfRendering();
                         return;
                     }
 
@@ -306,7 +342,8 @@ export const PdfResultViewer = () => {
                 } of slots) {
                     if (cancelled) {
                         container.style.visibility = '';
-                        setIsPdfRendering(false);
+                        setIsPdfDocumentLoading(false);
+                        finishPdfRendering();
                         return;
                     }
 
@@ -344,7 +381,8 @@ export const PdfResultViewer = () => {
 
                 if (cancelled) {
                     container.style.visibility = '';
-                    setIsPdfRendering(false);
+                    setIsPdfDocumentLoading(false);
+                    finishPdfRendering();
                     return;
                 }
 
@@ -360,15 +398,22 @@ export const PdfResultViewer = () => {
                 setPageElements(pages);
 
                 const finishRestore = () => {
-                    if (cancelled) return;
+                    if (cancelled) {
+                        finishPdfRendering();
+                        return;
+                    }
                     isRestoringRef.current = false;
-                    setIsPdfRendering(false);
+                    setIsPdfDocumentLoading(false);
+                    finishPdfRendering();
                 };
 
                 if (hideUntilScrolled) {
                     requestAnimationFrame(() => {
                         requestAnimationFrame(() => {
-                            if (cancelled || !containerRef.current) return;
+                            if (cancelled || !containerRef.current) {
+                                finishPdfRendering();
+                                return;
+                            }
                             containerRef.current.style.visibility = '';
                             finishRestore();
                         });
@@ -382,8 +427,9 @@ export const PdfResultViewer = () => {
                     containerRef.current.style.visibility = '';
                 }
                 isRestoringRef.current = false;
-                setIsPdfRendering(false);
+                setIsPdfDocumentLoading(false);
                 setIsPdfLoadingError(true);
+                finishPdfRendering();
             }
         };
 
@@ -401,9 +447,16 @@ export const PdfResultViewer = () => {
         return () => {
             window.removeEventListener('resize', onResize);
             cancelled = true;
-            setIsPdfRendering(false);
+            pdfRenderingGenerationRef.current += 1;
+            setIsPdfDocumentLoading(false);
         };
-    }, [pdfUri, dispatch, widthEpoch]);
+    }, [pdfUri, pdfUpdated, dispatch, widthEpoch]);
+
+    useEffect(() => {
+        return () => {
+            dispatch(setIsPdfRendering(false));
+        };
+    }, [dispatch]);
 
     // колонку показали обратно: пересобираем страницы под настоящую ширину
     useEffect(() => {
@@ -419,13 +472,22 @@ export const PdfResultViewer = () => {
         });
         observer.observe(container);
         return () => observer.disconnect();
-        // контейнер существует только когда есть что показывать
-    }, [pdfUri, isPdfLoadingError]);
+    }, [pdfUri]);
 
     const showHelpText = !pdfUri || isPdfLoadingError;
     const showPdfLoading = Boolean(
-        pdfUri && !isPdfLoadingError && isPdfRendering
+        pdfUri && !isPdfLoadingError && isPdfDocumentLoading
     );
+    const overlayStyle = {
+        position: 'absolute' as const,
+        inset: 0,
+        zIndex: 1,
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        pointerEvents: 'auto' as const,
+        touchAction: 'none' as const,
+    };
     return (
         <div
             style={{
@@ -438,48 +500,29 @@ export const PdfResultViewer = () => {
             }}
         >
             {showHelpText ? (
-                <div
-                    style={{
-                        display: 'flex',
-                        flex: 1,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        height: '100%',
-                        width: '100%',
-                    }}
-                >
+                <div style={overlayStyle}>
                     <Typography text={dictionary.viewer.no_pdf} />
                 </div>
+            ) : null}
+            {showPdfLoading ? (
+                <div style={overlayStyle}>
+                    <Typography text={dictionary.viewer.pdf_loading} />
+                </div>
+            ) : null}
+            {pdfUri ? (
+                <div
+                    ref={containerRef}
+                    onClick={handlePdfClick}
+                    style={{
+                        overflow: 'auto',
+                        height: '100%',
+                        width: '100%',
+                        flex: 1,
+                        minHeight: 0,
+                    }}
+                />
             ) : (
-                <>
-                    {showPdfLoading ? (
-                        <div
-                            style={{
-                                position: 'absolute',
-                                inset: 0,
-                                zIndex: 1,
-                                display: 'flex',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                pointerEvents: 'auto',
-                                touchAction: 'none',
-                            }}
-                        >
-                            <Typography text={dictionary.viewer.pdf_loading} />
-                        </div>
-                    ) : null}
-                    <div
-                        ref={containerRef}
-                        onClick={handlePdfClick}
-                        style={{
-                            overflow: 'auto',
-                            height: '100%',
-                            width: '100%',
-                            flex: 1,
-                            minHeight: 0,
-                        }}
-                    />
-                </>
+                <div style={{ flex: 1 }} />
             )}
         </div>
     );

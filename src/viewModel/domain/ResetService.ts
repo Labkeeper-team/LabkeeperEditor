@@ -76,6 +76,7 @@ export class ResetService {
         this.repository.settingsViewModelRepository.setShowFileManager(false);
         this.repository.settingsViewModelRepository.setTourVisibility(false);
         this.repository.settingsViewModelRepository.setIsCompiling(false);
+        this.repository.settingsViewModelRepository.setIsPdfRendering(false);
         this.repository.settingsViewModelRepository.setShowSearch(false);
         this.repository.settingsViewModelRepository.setFilesToDelete([]);
 
@@ -142,6 +143,7 @@ export class ResetService {
         });
         this.repository.projectViewModelRepository.setPdfUri(undefined);
         this.repository.projectViewModelRepository.setProjectType('latex');
+        this.repository.settingsViewModelRepository.setIsPdfRendering(false);
     }
 
     /** Смещения совпадения привязаны к сегментам открытого проекта, при смене сбрасываем */

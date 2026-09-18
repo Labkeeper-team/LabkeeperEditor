@@ -358,6 +358,9 @@ export class StartupService {
             ) {
                 this.resetService.resetFileManagerProjectState();
                 this.agentChatService?.onProjectChanged();
+                this.repository.settingsViewModelRepository.setIsPdfRendering(
+                    false
+                );
                 this.repository.projectViewModelRepository.setPdfUri(undefined);
                 this.repository.ideViewModelRepository.setPdfUpdated(0);
             }
@@ -440,6 +443,9 @@ export class StartupService {
                 ) {
                     this.resetService.resetFileManagerProjectState();
                     this.agentChatService?.onProjectChanged();
+                    this.repository.settingsViewModelRepository.setIsPdfRendering(
+                        false
+                    );
                 }
                 this.repository.projectViewModelRepository.setProject(project);
                 this.repository.projectViewModelRepository.setProjectType(

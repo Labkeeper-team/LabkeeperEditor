@@ -116,6 +116,7 @@ import {
     setExpandProblemViewer,
     setFilesToDelete,
     setIsCompiling,
+    setIsPdfRendering,
     setIsFileDraggedToFileManager,
     setShoFileManager,
     setShowPrivacyPolicyAcceptanceModal,
@@ -400,8 +401,10 @@ export const createViewModelStateFromStore = (
                 store.dispatch(setFiles(files)),
             setCurrentProgram: (program) =>
                 store.dispatch(setCurrentProgram(program)),
-            setProjectType: (mode: ProjectType) =>
-                store.dispatch(setProjectMode(mode)),
+            setProjectType: (mode: ProjectType) => {
+                store.dispatch(setProjectMode(mode));
+                store.dispatch(setIsPdfRendering(false));
+            },
             setPdfUri: (uri?: string) => store.dispatch(setPdfUri(uri)),
         },
         projectsViewModelRepository: {
@@ -429,6 +432,7 @@ export const createViewModelStateFromStore = (
         },
         settingsViewModelRepository: {
             isAutocompleteLoading: () => store.getState().settings.isCompiling,
+            isPdfRendering: () => store.getState().settings.isPdfRendering,
             editModeForFilename: () =>
                 store.getState().settings.editModeForFilename,
             editModeForProjectTitle: () =>
@@ -468,6 +472,8 @@ export const createViewModelStateFromStore = (
                 store.dispatch(setEditModeForProjectTitle(edit)),
             setIsCompiling: (value: boolean) =>
                 store.dispatch(setIsCompiling(value)),
+            setIsPdfRendering: (value: boolean) =>
+                store.dispatch(setIsPdfRendering(value)),
             setIsFileDraggedToFileManager: (edit: boolean) =>
                 store.dispatch(setIsFileDraggedToFileManager(edit)),
             setFilesToDelete: (files: LabkeeperFile[]) =>

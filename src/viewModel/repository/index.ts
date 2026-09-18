@@ -203,6 +203,7 @@ class MockViewModelRepositoryState {
 
     pdfUpdated: number = 0;
     isAutocompleteLoading = false;
+    isPdfRendering = false;
     editModeForFilename = false;
     editModeForProjectTitle = false;
     expandProblemViewer = false;
@@ -477,7 +478,10 @@ export const mockViewModelState = (): MockViewModelRepository => {
             pdfUri: () => mockViewModelState.pdfUri,
 
             setPdfUri: (uri) => (mockViewModelState.pdfUri = uri),
-            setProjectType: (mode) => (mockViewModelState.mode = mode),
+            setProjectType: (mode) => {
+                mockViewModelState.mode = mode;
+                mockViewModelState.isPdfRendering = false;
+            },
             setInputSegmentText: (index, text) => {
                 mockViewModelState.currentProgram.segments[index].text = text;
             },
@@ -536,6 +540,7 @@ export const mockViewModelState = (): MockViewModelRepository => {
         settingsViewModelRepository: {
             isAutocompleteLoading: () =>
                 mockViewModelState.isAutocompleteLoading,
+            isPdfRendering: () => mockViewModelState.isPdfRendering,
             editModeForFilename: () => mockViewModelState.editModeForFilename,
             editModeForProjectTitle: () =>
                 mockViewModelState.editModeForProjectTitle,
@@ -570,6 +575,8 @@ export const mockViewModelState = (): MockViewModelRepository => {
                 (mockViewModelState.editModeForProjectTitle = v),
             setIsCompiling: (v: boolean) =>
                 (mockViewModelState.isAutocompleteLoading = v),
+            setIsPdfRendering: (v: boolean) =>
+                (mockViewModelState.isPdfRendering = v),
             setIsFileDraggedToFileManager: (v: boolean) =>
                 (mockViewModelState.isFileDraggedToManager = v),
             setFilesToDelete: (v: LabkeeperFile[]) =>
@@ -726,6 +733,7 @@ export interface SettingsViewModelRepository {
     editModeForFilename: () => boolean;
     isFileDraggedToManager: () => boolean;
     isAutocompleteLoading: () => boolean;
+    isPdfRendering: () => boolean;
     showShareModal: () => boolean;
     captchaBypassToken: () => string | undefined;
     filesToDelete: () => LabkeeperFile[];
@@ -742,6 +750,7 @@ export interface SettingsViewModelRepository {
     setExpandProblemViewer: (expandProblemViewer: boolean) => void;
     setShowFileManager: (showFileManager: boolean) => void;
     setIsCompiling: (value: boolean) => void;
+    setIsPdfRendering: (value: boolean) => void;
     setIsFileDraggedToFileManager: (value: boolean) => void;
     setFilesToDelete: (files: LabkeeperFile[]) => void;
     setCurrentFolderPath: (path: string) => void;

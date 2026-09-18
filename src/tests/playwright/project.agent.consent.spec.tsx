@@ -60,7 +60,7 @@ async function openAgentTab(page: Page, agentLabel: string) {
 }
 
 async function submitPrompt(page: Page, text = 'сделай таблицу') {
-    await page.getByPlaceholder('Enter your promt').fill(text);
+    await page.getByPlaceholder('Enter your prompt').fill(text);
     await page.getByRole('button', { name: 'Send' }).click();
 }
 
@@ -76,7 +76,7 @@ test('consent-modal-blocks-the-first-prompt', async ({ page }) => {
     await expect(modal(page)).toBeVisible();
     expect(sent).toHaveLength(0);
     // текст остаётся на месте, иначе человек потеряет написанное
-    await expect(page.getByPlaceholder('Enter your promt')).toHaveValue(
+    await expect(page.getByPlaceholder('Enter your prompt')).toHaveValue(
         'сделай таблицу'
     );
 });
@@ -144,7 +144,7 @@ test('consent-dismissed-keeps-the-prompt-unsent', async ({ page }) => {
 
     await expect(modal(page)).toBeHidden();
     expect(sent).toHaveLength(0);
-    await expect(page.getByPlaceholder('Enter your promt')).toHaveValue(
+    await expect(page.getByPlaceholder('Enter your prompt')).toHaveValue(
         'сделай таблицу'
     );
 });
