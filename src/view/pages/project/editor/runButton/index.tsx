@@ -67,21 +67,24 @@ export const RunButton = ({ enableHotkey = false }: RunButtonProps) => {
         isAgentRunning,
     ]);
 
-    const run = useCallback(() => {
-        // сюда приходит и горячая клавиша, поэтому объясняем, почему ничего не произошло
-        if (isAgentRunning) {
-            dispatch(controller.onBlockedEditAttemptRequest());
-            return;
-        }
-        if (disabled) {
-            return;
-        }
-        setFlag(true);
-        setTimeout(() => {
-            setFlag(false);
-        }, 1000);
-        dispatch(controller.onRunButtonPressedRequest());
-    }, [dispatch, disabled, isAgentRunning]);
+    const run = useCallback(
+        (trigger: 'button' | 'hotkey' = 'button') => {
+            // сюда приходит и горячая клавиша, поэтому объясняем, почему ничего не произошло
+            if (isAgentRunning) {
+                dispatch(controller.onBlockedEditAttemptRequest());
+                return;
+            }
+            if (disabled) {
+                return;
+            }
+            setFlag(true);
+            setTimeout(() => {
+                setFlag(false);
+            }, 1000);
+            dispatch(controller.onRunButtonPressedRequest(trigger));
+        },
+        [dispatch, disabled, isAgentRunning]
+    );
 
     useEffect(() => {
         if (!enableHotkey) {
@@ -94,7 +97,7 @@ export const RunButton = ({ enableHotkey = false }: RunButtonProps) => {
             if (!isModifierPressed || !isS) return;
 
             event.preventDefault();
-            run();
+            run('hotkey');
         };
 
         window.addEventListener('keydown', onKeyDown);

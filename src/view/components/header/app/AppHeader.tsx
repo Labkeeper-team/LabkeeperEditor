@@ -22,6 +22,7 @@ import { ShareModal } from '../share/modal';
 import { AppDispatch } from '../../../store';
 import { HeaderMenu } from '../menu';
 import { controller } from '../../../../main.tsx';
+import { Events } from '../../../../model/service/ObserverService.ts';
 import { ContactModal } from '../contact/modal';
 import { Routes } from '../../../../viewModel/routes.ts';
 import { MobileViewSwitcher } from '../mobileViewSwitcher';
@@ -50,11 +51,16 @@ export const AppHeader = () => {
     const showMobileViewSwitcher = isProjectPage && isMobile;
 
     const onLanguageChange = (lang: unknown) => {
-        dispatch(setLanguage(lang as Language));
+        const next = lang as Language;
+        controller.trackUiEvent(Events.EVENT_LANGUAGE_CHANGED, {
+            from: language,
+            to: next,
+        });
+        dispatch(setLanguage(next));
     };
 
     const onLoginClick = () => {
-        dispatch(controller.onAuthButtonClickedRequest());
+        dispatch(controller.onAuthButtonClickedRequest('header'));
     };
 
     return (
@@ -95,7 +101,13 @@ export const AppHeader = () => {
                                 <button
                                     className="header-tokens__add"
                                     type="button"
-                                    onClick={() => navigate(Routes.Tokens)}
+                                    onClick={() => {
+                                        controller.trackUiEvent(
+                                            Events.EVENT_TOKENS_TOPUP_CLICKED,
+                                            { source: 'header' }
+                                        );
+                                        navigate(Routes.Tokens);
+                                    }}
                                     aria-label={
                                         dictionary.header_menu.top_up_balance
                                     }

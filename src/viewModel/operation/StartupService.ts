@@ -15,6 +15,7 @@ import { ResetService } from '../domain/ResetService.ts';
 import { HunkService } from './HunkService.ts';
 import type { AgentChatService } from './AgentChatService.ts';
 import { logBreadcrumb } from '../utils/logBreadcrumb.ts';
+import { trackEvent } from '../utils/observerContext.ts';
 
 const qrPagePattern = /\/qr\/v\d+/i;
 const projectPagePattern = /\/project\/\S+/i;
@@ -51,6 +52,10 @@ export class StartupService {
         this.resetService = resetService;
     }
 
+    private track(event: string, properties?: Record<string, unknown>) {
+        trackEvent(this.observerService, this.repository, event, properties);
+    }
+
     setAgentChatService = (agentChatService: AgentChatService) => {
         this.agentChatService = agentChatService;
     };
@@ -63,10 +68,16 @@ export class StartupService {
         const response = await this.rpi.oauthCodeRequest(code, state);
 
         if (!response.isOk) {
+            this.track(Events.EVENT_LOGIN_FAILED, {
+                method: 'oauth',
+                reason: 'oauth_error',
+            });
             this.repository.authViewModelRepository.setCurrentView('login');
             this.repository.authViewModelRepository.setLoginRequest(
                 'oauth_error'
             );
+        } else {
+            this.track(Events.EVENT_LOGIN_SUCCEEDED, { method: 'oauth' });
         }
 
         await this.onAppStartup();
@@ -74,7 +85,7 @@ export class StartupService {
 
     onQrPageEnter = (version: string) => {
         if (version === 'v1') {
-            this.observerService.onEvent(Events.EVENT_QR_V1);
+            this.track(Events.EVENT_QR_V1);
         }
     };
 
@@ -212,6 +223,9 @@ export class StartupService {
      * Call this instead of `navigate(Routes.ProjectDefault)` from the SPA.
      */
     openEditorAfterSpaNavigation = async (): Promise<void> => {
+        this.track(Events.EVENT_EDITOR_OPENED_FROM_MARKETING, {
+            source: 'marketing_header',
+        });
         const userInfo: UserInfo = {
             email: this.repository.userViewModelRepository.email(),
             id: this.repository.userViewModelRepository.id(),
@@ -262,6 +276,12 @@ export class StartupService {
         // на телефоне агент это отдельный экран
         settings.setMobileView('chat');
     };
+
+    // ждать файлов стоит только latex без pdf, иначе телефон успевает показать редактор и уводит с него
+    private pdfMayComeWithFiles = (userInfo: UserInfo): boolean =>
+        userInfo.isAuthenticated &&
+        this.repository.projectViewModelRepository.mode() === 'latex' &&
+        !this.repository.projectViewModelRepository.pdfUri();
 
     private cutOfLastSlash(location: string): string {
         if (location === '/' || location === '') {
@@ -365,6 +385,10 @@ export class StartupService {
             this.repository.ideViewModelRepository.setGetProjectRequestState(
                 'ok'
             );
+            const agentWaitsForFiles = this.pdfMayComeWithFiles(userInfo);
+            if (!agentWaitsForFiles) {
+                this.showAgentIfNeverCompiled(project);
+            }
             if (userInfo.isAuthenticated) {
                 await this.loader.loadFiles(project.projectId);
                 const pdfFile = this.repository.projectViewModelRepository
@@ -385,7 +409,9 @@ export class StartupService {
             } else {
                 this.hunkService?.clearHunks();
             }
-            this.showAgentIfNeverCompiled(project);
+            if (agentWaitsForFiles) {
+                this.showAgentIfNeverCompiled(project);
+            }
             return;
         }
         if (!result.isOk) {
@@ -434,6 +460,8 @@ export class StartupService {
                 this.setEditorLocation(
                     Routes.Project.replace(':id', project.projectId)
                 );
+                // у проекта по умолчанию pdf из файлов не берётся, поэтому решаем до их загрузки
+                this.showAgentIfNeverCompiled(project);
                 if (userInfo.isAuthenticated) {
                     await this.loader.loadFiles(project.projectId);
                 }
@@ -444,7 +472,6 @@ export class StartupService {
                 } else {
                     this.hunkService?.clearHunks();
                 }
-                this.showAgentIfNeverCompiled(project);
             }
             if (result.isUnauth) {
                 this.setEditorLocation(Routes.ProjectDefault);

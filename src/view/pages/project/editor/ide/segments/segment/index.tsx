@@ -1,12 +1,13 @@
 import CodeMirror, {
     Decoration,
     EditorView,
+    ExternalChange,
     ReactCodeMirrorRef,
     StateEffect,
     StateField,
     Range,
 } from '@uiw/react-codemirror';
-import { EditorSelection, type Extension } from '@codemirror/state';
+import { Annotation, EditorSelection, type Extension } from '@codemirror/state';
 import { langs } from '@uiw/codemirror-extensions-langs';
 import { content, dom } from '@uiw/codemirror-extensions-events';
 import { DecorationSet, lineNumbers, type ViewUpdate } from '@codemirror/view';
@@ -19,7 +20,7 @@ import {
     useRef,
     useState,
 } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, useStore } from 'react-redux';
 
 import { CompileErrorResult } from '../../../../../../../model/domain';
 import { resolveSegmentId } from '../../../../../../../viewModel/utils/segmentId.ts';
@@ -104,6 +105,9 @@ const SEGMENT_CM_SPELLCHECK_OFF = EditorView.contentAttributes.of({
 const setDecorationsEffect = StateEffect.define<DecorationSet>();
 
 const NO_SEGMENTS: Segment[] = [];
+
+// своя поправка тоже идёт с ExternalChange, и без метки защита отвечала бы сама себе
+const staleValueRestored = Annotation.define<boolean>();
 
 const decorationsField = StateField.define<DecorationSet>({
     create() {
@@ -664,8 +668,8 @@ export const SegmentEditor = memo(
          * мы только что отправили в onChange) — это наш собственный текст, вернувшийся через
          * Redux; восстанавливаем позицию курсора из lastCursorPosRef.
          *
-         * Аннотация External в @uiw — приватная, поэтому детектируем паттерн «одна транзакция,
-         * полная замена документа от 0 до prevLen» (External всегда диспатчит именно так).
+         * Детектируем паттерн «одна транзакция, полная замена документа от 0 до prevLen»: так
+         * заменяет документ и @uiw, и эффект синхронизации сегмента, а ExternalChange есть только у первого.
          */
         const externalValueListener = useMemo(
             () =>
@@ -716,6 +720,55 @@ export const SegmentEditor = memo(
                     }
                 }),
             []
+        );
+
+        const store = useStore<StorageState>();
+
+        // @uiw откладывает замену документа на время набора и вставляет устаревший value, если сегменты успели сдвинуться
+        const staleExternalValueGuard = useMemo(
+            () =>
+                EditorView.updateListener.of((update) => {
+                    const isExternal = update.transactions.some(
+                        (tr) =>
+                            tr.annotation(ExternalChange) &&
+                            !tr.annotation(staleValueRestored)
+                    );
+                    if (!update.docChanged || !isExternal) {
+                        return;
+                    }
+                    const shownText = update.state.doc.toString();
+                    // правим после остальных слушателей этого обновления, чтобы не менять документ посреди их работы
+                    queueMicrotask(() => {
+                        const view = update.view;
+                        const storedText =
+                            store.getState().project.currentProgram?.segments[
+                                segmentIdxForPendingRef.current
+                            ]?.text;
+                        const docText = view.state.doc.toString();
+                        if (storedText === undefined || docText !== shownText) {
+                            return;
+                        }
+                        // CodeMirror хранит переводы строк как \n, иначе текст с \r\n не совпадёт никогда
+                        const expectedText = view.state
+                            .toText(storedText)
+                            .toString();
+                        if (expectedText === docText) {
+                            return;
+                        }
+                        view.dispatch({
+                            changes: {
+                                from: 0,
+                                to: docText.length,
+                                insert: expectedText,
+                            },
+                            annotations: [
+                                ExternalChange.of(true),
+                                staleValueRestored.of(true),
+                            ],
+                        });
+                    });
+                }),
+            [store]
         );
 
         const languageExtension = useMemo(() => {
@@ -788,6 +841,7 @@ export const SegmentEditor = memo(
                 pendingUndoRedoCursorListener,
                 cursorPersistenceListener,
                 externalValueListener,
+                staleExternalValueGuard,
                 EditorView.lineWrapping,
                 lineNumbersExtension,
                 segmentSpellLint,
@@ -805,6 +859,7 @@ export const SegmentEditor = memo(
             pendingUndoRedoCursorListener,
             cursorPersistenceListener,
             externalValueListener,
+            staleExternalValueGuard,
             lineNumbersExtension,
             segmentSpellLint,
             latexSpellLint,

@@ -17,6 +17,8 @@ import { colors } from '../../../styles/colors';
 import { useDictionary } from '../../../store/selectors/translations';
 import { AppDispatch, StorageState } from '../../../store';
 import { controller } from '../../../../main.tsx';
+import { Events } from '../../../../model/service/ObserverService.ts';
+import { fileExtension } from '../../../../viewModel/utils/observerContext.ts';
 import { useIsMobile } from '../../../hooks/useMobile';
 import {
     buildFileTree,
@@ -43,7 +45,13 @@ const SystemFileRow = (props: { file: LabkeeperFile }) => {
     return (
         <div
             className="tree-row tree-row-file tree-row-readonly"
-            onClick={() => window.open(props.file.url, '_blank')}
+            onClick={() => {
+                controller.trackUiEvent(Events.EVENT_FILE_OPENED, {
+                    kind: 'external',
+                    ext: fileExtension(props.file.fileName),
+                });
+                window.open(props.file.url, '_blank');
+            }}
         >
             <span className="tree-toggle-placeholder" />
             <FileIcon className="tree-file-icon" />
@@ -613,6 +621,7 @@ export const FileTreeView = (props: {
                     controller.onUploadFilesRequest({
                         files: Array.from(event.target.files),
                         folderPrefix: currentFolderPath || undefined,
+                        method: 'picker',
                     })
                 );
                 event.target.value = '';
@@ -696,6 +705,7 @@ export const FileTreeView = (props: {
                 controller.onUploadFilesRequest({
                     files: Array.from(fileList),
                     folderPrefix: path,
+                    method: 'drop',
                 })
             );
             setDropTargetPath(null);
@@ -729,6 +739,10 @@ export const FileTreeView = (props: {
                 return;
             }
             if (node.file?.url) {
+                controller.trackUiEvent(Events.EVENT_FILE_OPENED, {
+                    kind: 'external',
+                    ext: fileExtension(fileName),
+                });
                 window.open(node.file.url, '_blank');
             }
         },

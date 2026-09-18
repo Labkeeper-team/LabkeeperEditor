@@ -10,6 +10,11 @@ import {
     hunksForFile,
     hunksForSegment,
 } from '../utils/hunkGrouping.ts';
+import {
+    Events,
+    ObserverService,
+} from '../../model/service/ObserverService.ts';
+import { trackEvent } from '../utils/observerContext.ts';
 
 export class HunkService {
     private acceptInFlight = false;
@@ -20,8 +25,13 @@ export class HunkService {
         private ideService: IdeService,
         private loaderService: LoaderService,
         private textFileEditorService: TextFileEditorService,
-        private editingLock: EditingLockService
+        private editingLock: EditingLockService,
+        private observerService: ObserverService
     ) {}
+
+    private track(event: string, properties?: Record<string, unknown>) {
+        trackEvent(this.observerService, this.repository, event, properties);
+    }
 
     shouldShowHunks = (): boolean => {
         if (this.repository.projectViewModelRepository.projectIsReadonly()) {
@@ -125,7 +135,10 @@ export class HunkService {
         await this.loadHunks();
     }
 
-    acceptGroup = async (hunkIds: string[]): Promise<void> => {
+    acceptGroup = async (
+        hunkIds: string[],
+        options?: { skipObserver?: boolean }
+    ): Promise<void> => {
         if (this.editingLock.rejectEdit()) {
             return;
         }
@@ -133,6 +146,12 @@ export class HunkService {
             return;
         }
         this.markPending(hunkIds);
+        if (!options?.skipObserver) {
+            this.track(Events.EVENT_HUNK_ACCEPTED, {
+                scope: 'group',
+                hunk_count: hunkIds.length,
+            });
+        }
         try {
             if (!this.repository.userViewModelRepository.isAuthenticated()) {
                 await Promise.resolve();
@@ -162,6 +181,10 @@ export class HunkService {
             return;
         }
         this.markPending(hunkIds);
+        this.track(Events.EVENT_HUNK_REVERTED, {
+            scope: 'group',
+            hunk_count: hunkIds.length,
+        });
         try {
             const projectId = this.getProjectId();
             if (!projectId) {
@@ -182,7 +205,10 @@ export class HunkService {
         }
         const hunks = this.repository.ideViewModelRepository.hunks();
         const ids = hunks.map((h) => h.id);
-        await this.acceptGroup(ids);
+        this.track(Events.EVENT_HUNKS_ACCEPTED_ALL, {
+            hunk_count: ids.length,
+        });
+        await this.acceptGroup(ids, { skipObserver: true });
     };
 
     acceptAllForHistoryChange = async (): Promise<void> => {
@@ -215,6 +241,9 @@ export class HunkService {
         }
         const hunks = this.repository.ideViewModelRepository.hunks();
         const ids = hunks.map((h) => h.id);
+        this.track(Events.EVENT_HUNKS_REVERTED_ALL, {
+            hunk_count: ids.length,
+        });
         this.markPending(ids);
         try {
             const projectId = this.getProjectId();

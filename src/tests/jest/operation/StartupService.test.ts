@@ -378,3 +378,74 @@ test('default-project-never-compiled-opens-the-agent', async () => {
 
     openedTheAgent(ctx);
 });
+
+function holdFiles(ctx: ReturnType<typeof openProject>) {
+    let answerFiles: (files: []) => void = () => {};
+    ctx.rpi.listFilesRequest = jest.fn(
+        () =>
+            new Promise((resolve) => {
+                answerFiles = (files) =>
+                    resolve({
+                        code: 200,
+                        isOk: true,
+                        isUnauth: false,
+                        isForbidden: false,
+                        body: { files },
+                    });
+            })
+    );
+    return async () => {
+        for (let tick = 0; tick < 50; tick += 1) {
+            if ((ctx.rpi.listFilesRequest as jest.Mock).mock.calls.length) {
+                break;
+            }
+            await new Promise((resolve) => setTimeout(resolve, 0));
+        }
+        expect(ctx.rpi.listFilesRequest).toHaveBeenCalled();
+        return () => answerFiles([]);
+    };
+}
+
+test('never-compiled-project-opens-the-agent-before-files-load', async () => {
+    const ctx = openProject({ lastProgramResult: undefined });
+    const filesRequested = holdFiles(ctx);
+
+    const startup = ctx.startupService.onAppStartup();
+    const releaseFiles = await filesRequested();
+
+    // иначе телефон успевает показать редактор, и экран уезжает на агента из-под рук
+    openedTheAgent(ctx);
+
+    releaseFiles();
+    await startup;
+});
+
+test('default-latex-project-opens-the-agent-before-files-load', async () => {
+    // у проекта по умолчанию pdf из файлов не берётся, ждать их незачем
+    const ctx = openProject();
+    ctx.rpi.getDefaultProjectRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+        body: {
+            projectId: PROJECT_ID,
+            userId: USER_ID,
+            title: 'проект',
+            lastModified: '2026-09-15T10:00:00Z',
+            isPublic: false,
+            program: { segments: [], parameters: { roundStrategy: 'noRound' } },
+            projectType: 'latex',
+        },
+    });
+    ctx.repository.setLocation(Routes.ProjectDefault);
+    const filesRequested = holdFiles(ctx);
+
+    const startup = ctx.startupService.onAppStartup();
+    const releaseFiles = await filesRequested();
+
+    openedTheAgent(ctx);
+
+    releaseFiles();
+    await startup;
+});

@@ -1,7 +1,11 @@
 import { OpenPanel } from '@openpanel/web';
 import type { Event as SentryEvent } from '@sentry/react';
 import { Secrets } from '../../constants.ts';
-import { ObserverService } from '../../model/service/ObserverService.ts';
+import {
+    OPENPANEL_EVENT_NAMES,
+    ObserverEventProperties,
+    ObserverService,
+} from '../../model/service/ObserverService.ts';
 import { logBreadcrumb } from '../../viewModel/utils/logBreadcrumb.ts';
 import { sentryIssueSearchUrl } from '../sentry/sentryUrl.ts';
 import { createGuestSessionId, setSessionId } from '../session.ts';
@@ -31,7 +35,15 @@ export class OpenPanelService implements ObserverService {
         }
     }
 
-    onEvent() {}
+    onEvent(event: string, properties?: ObserverEventProperties) {
+        if (!this.ensureClient() || !this.op) {
+            return;
+        }
+        const name = OPENPANEL_EVENT_NAMES[event] ?? event;
+        void Promise.resolve(this.track(name, properties)).catch((error) => {
+            logBreadcrumb('openpanel', 'event track failed', { error, event });
+        });
+    }
 
     setUserState() {}
 

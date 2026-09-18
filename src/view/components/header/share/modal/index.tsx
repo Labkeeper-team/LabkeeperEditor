@@ -10,6 +10,7 @@ import { AppDispatch, StorageState } from '../../../../store';
 import { toast } from 'react-toastify';
 import { useDictionary } from '../../../../store/selectors/translations';
 import { controller } from '../../../../../main.tsx';
+import { Events } from '../../../../../model/service/ObserverService.ts';
 import { colors } from '../../../../styles/colors';
 
 export const ShareModal = () => {
@@ -75,6 +76,10 @@ export const ShareModal = () => {
                                 navigator.clipboard
                                     .writeText(window.location.href)
                                     .then(() => {
+                                        controller.trackUiEvent(
+                                            Events.EVENT_SHARE_LINK_COPIED,
+                                            { ok: true }
+                                        );
                                         toast(
                                             dictionary.share_modal.link_copied,
                                             {
@@ -83,6 +88,10 @@ export const ShareModal = () => {
                                         );
                                     })
                                     .catch(() => {
+                                        controller.trackUiEvent(
+                                            Events.EVENT_SHARE_LINK_COPIED,
+                                            { ok: false }
+                                        );
                                         toast(
                                             dictionary.share_modal.copy_error,
                                             { type: 'error' }

@@ -16,6 +16,7 @@ import { TextFileEditorService } from './TextFileEditorService.ts';
 import { SearchService } from '../domain/SearchService.ts';
 import { HunkService } from './HunkService.ts';
 import { EditingLockService } from '../domain/EditingLockService.ts';
+import { segmentCreateEvent, trackEvent } from '../utils/observerContext.ts';
 
 export class ProjectPageService {
     repository: ViewModelRepository;
@@ -59,7 +60,15 @@ export class ProjectPageService {
         this.editingLock = editingLock;
     }
 
+    private track(event: string, properties?: Record<string, unknown>) {
+        trackEvent(this.observerService, this.repository, event, properties);
+    }
+
     onContactUsFormSubmitted = async (subject: string, body: string) => {
+        this.track(Events.EVENT_CONTACT_FORM_SUBMITTED, {
+            subject_length: subject.length,
+            body_length: body.length,
+        });
         const response = await this.rpi.contactFormRequest(subject, body);
 
         if (response.isOk) {
@@ -87,12 +96,14 @@ export class ProjectPageService {
             return;
         }
 
+        this.track(Events.EVENT_PRIVACY_POLICY_ACCEPTED);
         this.repository.settingsViewModelRepository.setShowPrivacyPolicyAcceptanceModal(
             false
         );
     };
 
     onBackButtonClicked = async () => {
+        this.track(Events.EVENT_BACK_TO_PROJECTS);
         this.resetService.resetProject();
         this.repository.projectViewModelRepository.setReadOnly(false);
         if (this.repository.userViewModelRepository.isAuthenticated()) {
@@ -185,6 +196,7 @@ export class ProjectPageService {
             (_s, index) => index === prevActiveIndex
         );
 
+        let createdSegment = false;
         if (!activeSegment) {
             this.programService.addSegmentToLastPosition(item.segmentType);
             this.programService.changeSegmentTextByPositionIndex(
@@ -193,27 +205,30 @@ export class ProjectPageService {
                     this.repository.persistenceViewModelRepository.language()
                 ]
             );
+            createdSegment = true;
+        } else if (activeSegment.type === item.segmentType) {
+            const newActiveSegment = { ...activeSegment };
+            const text = `${newActiveSegment.text}\n\n${item.text[this.repository.persistenceViewModelRepository.language()]}`;
+            this.programService.changeSegmentTextByPositionIndex(
+                prevActiveIndex,
+                text
+            );
         } else {
-            if (activeSegment.type === item.segmentType) {
-                const newActiveSegment = { ...activeSegment };
-                const text = `${newActiveSegment.text}\n\n${item.text[this.repository.persistenceViewModelRepository.language()]}`;
-                this.programService.changeSegmentTextByPositionIndex(
-                    prevActiveIndex,
-                    text
-                );
-            } else {
-                const place = prevActiveIndex >= 1 ? prevActiveIndex - 1 : 0;
-                this.programService.addSegmentAfterIndex(
-                    item.segmentType,
-                    place
-                );
-                this.programService.changeSegmentTextByPositionIndex(
-                    place + 1,
-                    item.text[
-                        this.repository.persistenceViewModelRepository.language()
-                    ]
-                );
-            }
+            const place = prevActiveIndex >= 1 ? prevActiveIndex - 1 : 0;
+            this.programService.addSegmentAfterIndex(item.segmentType, place);
+            this.programService.changeSegmentTextByPositionIndex(
+                place + 1,
+                item.text[
+                    this.repository.persistenceViewModelRepository.language()
+                ]
+            );
+            createdSegment = true;
+        }
+        if (createdSegment) {
+            this.track(segmentCreateEvent(item.segmentType), {
+                segment_type: item.segmentType,
+                source: 'help',
+            });
         }
         this.repository.ideViewModelRepository.markProgramChanged();
         this.ideService.onProgramUpdated();
@@ -225,8 +240,11 @@ export class ProjectPageService {
         );
     };
 
-    onPrintButtonPressed = (): void => {
-        this.observerService.onEvent(Events.EVENT_PRINT);
+    onPrintButtonPressed = (method: 'print' | 'download' = 'print'): void => {
+        this.track(Events.EVENT_PRINT, {
+            mode: this.repository.projectViewModelRepository.mode(),
+            method,
+        });
         this.repository.ideViewModelRepository.setActiveSegmentIndex(-1);
     };
 
@@ -320,6 +338,7 @@ export class ProjectPageService {
                 });
                 this.repository.projectViewModelRepository.setReadOnly(false);
             }
+            this.track(Events.EVENT_PROJECT_TITLE_CHANGED);
             okCallback();
         }
 
@@ -347,6 +366,7 @@ export class ProjectPageService {
         }
 
         if (result.isOk) {
+            this.track(Events.EVENT_PROJECT_VISIBILITY_CHANGED, { visible });
             this.repository.projectViewModelRepository.setProject({
                 ...project,
                 isPublic: visible,
@@ -362,6 +382,7 @@ export class ProjectPageService {
         }
 
         if (!this.repository.userViewModelRepository.isAuthenticated()) {
+            this.track(Events.EVENT_AUTH_MODAL_OPENED, { source: 'clone' });
             this.repository.authViewModelRepository.setCurrentView('login');
             return;
         }
@@ -370,6 +391,9 @@ export class ProjectPageService {
         const result = await this.rpi.cloneProjectRequest(project.projectId);
 
         if (result.isOk) {
+            this.track(Events.EVENT_PROJECT_CLONED, {
+                source_project_id: project.projectId,
+            });
             this.repository.ideViewModelRepository.setCloneRequestState('ok');
             this.repository.setLocation(
                 Routes.Project.replace(':id', result.body.projectId)
@@ -398,7 +422,9 @@ export class ProjectPageService {
         }
     };
 
-    onRunButtonClicked = async (): Promise<void> => {
+    onRunButtonClicked = async (
+        trigger: 'button' | 'hotkey' = 'button'
+    ): Promise<void> => {
         if (this.editingLock.rejectEdit()) {
             return;
         }
@@ -419,7 +445,14 @@ export class ProjectPageService {
             ) {
                 await this.loaderService.segmentEditorSaveProgram();
             }
-            this.observerService.onEvent(Events.EVENT_RUN);
+            const files = this.repository.projectViewModelRepository.files();
+            this.track(Events.EVENT_RUN, {
+                trigger,
+                segment_count: lastProgram?.segments.length ?? 0,
+                has_tex_file: files.some((file) =>
+                    file.fileName.toLowerCase().endsWith('.tex')
+                ),
+            });
             await this.compilationService.runCompilation();
         } finally {
             setTimeout(
@@ -436,6 +469,8 @@ export class ProjectPageService {
         if (this.editingLock.rejectEdit()) {
             return;
         }
+        const from = this.repository.projectViewModelRepository.mode();
+        this.track(Events.EVENT_PROJECT_MODE_CHANGED, { from, to: type });
         this.repository.projectViewModelRepository.setProjectType(type);
 
         const project = this.repository.projectViewModelRepository.project();

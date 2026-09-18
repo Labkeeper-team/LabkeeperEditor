@@ -58,7 +58,10 @@ export class WebRpi implements Rpi {
         if (expectedCodes.includes(result.code)) {
             return;
         }
-        this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN);
+        this.observerService.onEvent(Events.EVENT_RPI_UNKNOWN, {
+            source: 'rpi',
+            operation: method,
+        });
         Sentry.captureException(
             new Error(`Unexpected RPI status ${result.code} from ${method}`),
             {

@@ -4,6 +4,7 @@ import { AppDispatch, StorageState } from '../../../store';
 import { useDictionary } from '../../../store/selectors/translations';
 import { setViewerTab } from '../../../store/slices/settings';
 import { controller } from '../../../../main.tsx';
+import { Events } from '../../../../model/service/ObserverService.ts';
 import { ViewerTab } from '../../../store/slices';
 import { useIsProjectReadonly } from '../../../store/selectors/program';
 
@@ -51,7 +52,18 @@ export const ViewerTabs = () => {
                     className={classNames('viewer-tabs__tab', {
                         'viewer-tabs__tab--active': viewerTab === tab.id,
                     })}
-                    onClick={() => dispatch(setViewerTab(tab.id))}
+                    onClick={() => {
+                        if (viewerTab !== tab.id) {
+                            controller.trackUiEvent(
+                                Events.EVENT_VIEWER_TAB_CHANGED,
+                                {
+                                    from: viewerTab,
+                                    to: tab.id,
+                                }
+                            );
+                        }
+                        dispatch(setViewerTab(tab.id));
+                    }}
                 >
                     {tab.label}
                 </button>

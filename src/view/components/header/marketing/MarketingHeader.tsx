@@ -14,6 +14,7 @@ import { AuthModal } from '../../../pages/project/auth';
 import { ShareModal } from '../share/modal';
 import { ContactModal } from '../contact/modal';
 import { controller } from '../../../../main.tsx';
+import { Events } from '../../../../model/service/ObserverService.ts';
 import { Language } from '../../../../viewModel/dictionaries';
 import { Routes } from '../../../../viewModel/routes.ts';
 import { LogoutConfirmModal } from '../logout-confirm-modal';
@@ -31,7 +32,7 @@ export const MarketingHeader = () => {
     const [showLogoutModal, setShowLogoutModal] = useState(false);
 
     const onLoginClick = () => {
-        dispatch(controller.onAuthButtonClickedRequest());
+        dispatch(controller.onAuthButtonClickedRequest('header'));
     };
 
     const confirmLogout = () => {
@@ -58,6 +59,10 @@ export const MarketingHeader = () => {
     };
 
     const onLanguageSelect = (lang: Language) => {
+        controller.trackUiEvent(Events.EVENT_LANGUAGE_CHANGED, {
+            from: language,
+            to: lang,
+        });
         dispatch(setLanguage(lang));
     };
 
