@@ -7,8 +7,12 @@ services:
         container_name: labkeeper-backend-proxy
         ports:
             - '80:80'
+        environment:
+            NGINX_ENVSUBST_OUTPUT_DIR: /etc/nginx
+            YANDEX_CAPTCHA_SITE_KEY: ysc1_hGTLsqtwdF4rdRDCezgRRJNM9St2o0vBCZOC97qMd63bcd7e
+            BACKEND_HOST: labkeeper.io
         volumes:
-            - ./nginx.conf:/etc/nginx/nginx.conf:ro
+            - ./nginx.conf.template:/etc/nginx/templates/nginx.conf.template:ro
         restart: unless-stopped
         extra_hosts:
             - 'host.docker.internal:host-gateway'

@@ -4,7 +4,7 @@
 
 # Labkeeper
 
-**Online LaTeX editor with a built-in scientific calculator**
+**Online LaTeX editor with a built-in scientific calculator and LLM-agent**
 
 Write and compile LaTeX in the browser, mix in calculations and plots, and export the result to PDF.
 
@@ -74,23 +74,19 @@ The UI talks to the Labkeeper backend over `/api`. For local work against the re
     ```bash
     npm i
     ```
-2. In file ```index.html``` change line ```IO_LABKEEPER_FRONTEND_YANDEX_CAPTCHA_SITE_KEY``` to ```ysc1_hGTLsqtwdF4rdRDCezgRRJNM9St2o0vBCZOC97qMd63bcd7e``` (this is public ym site key)
-
-3. Start the Nginx reverse proxy (API → release backend, app → Vite):
+2. Start the Nginx reverse proxy (API → backend stand, app → Vite). It also injects the public Yandex SmartCaptcha site key into `index.html`. The stand is `labkeeper.io` by default, or e.g. `preprod.labkeeper.io`:
 
     ```bash
     docker compose -f scripts/local/nginx/docker-compose.yml up
     ```
 
-4. Start the Vite dev server from the repo root:
+3. Start the Vite dev server from the repo root:
 
     ```bash
     npm run dev
     ```
 
-5. Open [http://localhost](http://localhost). The app from this repo is served on port 80 through Nginx and can talk to the release server.
-
-Do not commit local-only tweaks in `index.html`.
+4. Open [http://localhost](http://localhost). The app from this repo is served on port 80 through Nginx and can talk to the release server.
 
 ## Scripts
 
