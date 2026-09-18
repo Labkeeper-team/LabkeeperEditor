@@ -70,3 +70,52 @@ test('spellcheck-skips-latex-commands-math-and-comments', async ({ page }) => {
     // команда, формула и комментарий замаскированы, ошибка остаётся одна
     expect(await marks.allInnerTexts()).toEqual(['ошшибка']);
 });
+
+async function recordDictionaryDownloads(page: Page): Promise<string[]> {
+    const dictionaries: string[] = [];
+    // словари качает воркер, поэтому слушаем весь контекст, а не страницу
+    page.context().on('request', (request) => {
+        const url = new URL(request.url());
+        // в dev-сборке по тому же пути ходит и сам импорт ?url, он словарь не качает
+        if (
+            /\/dictionary-(en|ru)\//.test(url.pathname) &&
+            !url.searchParams.has('import')
+        ) {
+            dictionaries.push(url.pathname);
+        }
+    });
+    return dictionaries;
+}
+
+test('spellcheck-loads-only-the-dictionary-the-text-needs', async ({
+    page,
+}) => {
+    const dictionaries = await recordDictionaryDownloads(page);
+    await openWith(page, segmentOf('md', 'hello speling'));
+
+    await expect(page.locator('.cm-lintRange-error')).toHaveCount(1, {
+        timeout: SPELLCHECK_TIMEOUT_MS,
+    });
+
+    // русский словарь собирается секунды процессорного времени, латинице он не нужен
+    expect(dictionaries.some((url) => url.includes('/dictionary-en/'))).toBe(
+        true
+    );
+    expect(dictionaries.some((url) => url.includes('/dictionary-ru/'))).toBe(
+        false
+    );
+});
+
+test('spellcheck-picks-dictionaries-after-masking-latex', async ({ page }) => {
+    const dictionaries = await recordDictionaryDownloads(page);
+    await openWith(page, segmentOf('latex', 'hello speling % комментарий'));
+
+    await expect(page.locator('.cm-lintRange-error')).toHaveCount(1, {
+        timeout: SPELLCHECK_TIMEOUT_MS,
+    });
+
+    // кириллица только в комментарии, который не проверяется, так что русский словарь не нужен
+    expect(dictionaries.some((url) => url.includes('/dictionary-ru/'))).toBe(
+        false
+    );
+});
