@@ -158,6 +158,7 @@ export interface Translations {
         share: string;
         language: string;
         change_language_to: string;
+        github: string;
     };
     agent_chat: {
         tab_label: string;

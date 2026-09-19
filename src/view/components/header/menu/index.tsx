@@ -6,6 +6,7 @@ import { controller } from '../../../../main.tsx';
 import { Events } from '../../../../model/service/ObserverService.ts';
 import { Routes } from '../../../../viewModel/routes.ts';
 import { WikiLinks } from '../../../../viewModel/wiki.ts';
+import { ExternalLinks } from '../../../../viewModel/externalLinks.ts';
 import { Select } from '../../select';
 import { SelectItem } from '../../select/model.ts';
 import {
@@ -144,6 +145,16 @@ export const HeaderMenu = () => {
                     item: 'wiki',
                     onClick: openWiki,
                 },
+                // на настольной ширине та же ссылка уже висит иконкой в шапке
+                ...(isMobile
+                    ? [
+                          {
+                              title: dictionary.header_menu.github,
+                              item: 'github',
+                              onClick: () => openExternal(ExternalLinks.github),
+                          },
+                      ]
+                    : []),
                 {
                     title: dictionary.header_menu.about,
                     item: 'about',
@@ -168,6 +179,7 @@ export const HeaderMenu = () => {
             dictionary,
             dispatch,
             isEditorPage,
+            isMobile,
             navigate,
             openContactModal,
             openExternal,
@@ -222,6 +234,16 @@ export const HeaderMenu = () => {
                     item: 'wiki',
                     onClick: openWiki,
                 },
+                // на настольной ширине та же ссылка уже висит иконкой в шапке
+                ...(isMobile
+                    ? [
+                          {
+                              title: dictionary.header_menu.github,
+                              item: 'github',
+                              onClick: () => openExternal(ExternalLinks.github),
+                          },
+                      ]
+                    : []),
                 {
                     title: dictionary.header_menu.about,
                     item: 'about',
@@ -395,6 +417,11 @@ export const HeaderMenu = () => {
         }
         if (item.item === 'tokens') {
             controller.trackUiEvent(Events.EVENT_TOKENS_TOPUP_CLICKED, {
+                source: 'menu',
+            });
+        }
+        if (item.item === 'github') {
+            controller.trackUiEvent(Events.EVENT_GITHUB_CLICKED, {
                 source: 'menu',
             });
         }
