@@ -1,6 +1,6 @@
 import { Hunk } from '../../model/domain.ts';
 import { AgentToolName } from '../../model/rpi/agentSocket.ts';
-import { ChatMessage } from '../repository';
+import { AgentChangeSummary, ChatMessage } from '../repository';
 
 type EventMessage = Extract<ChatMessage, { kind: 'event' }>;
 export type AgentEventDraft = Omit<EventMessage, 'id'>;
@@ -48,6 +48,9 @@ const isSameChange = (a: Hunk, b: Hunk) =>
     a.fileName === b.fileName &&
     a.text === b.text &&
     lineSpan(a) === lineSpan(b);
+
+/** Сколько мест перечисляем в итоге прерывания: остальное человек найдёт в самой ленте */
+const CHANGE_SUMMARY_LIMIT = 5;
 
 /** Типы, к которым осмысленно скроллить: удалённых строк на месте уже нет. */
 const NAVIGABLE_HUNK_TYPES = new Set([
@@ -116,6 +119,38 @@ export class AgentEventService {
             lines: formatLines(hunk),
             target: this.navigationTarget(hunk),
         };
+    }
+
+    /**
+     * Короткий список мест, которые агент успел поправить: по строке на цель,
+     * в порядке первого появления. Счётчиков правок в строках нет, иначе
+     * понадобились бы склонения на двух языках, а лента и так перечисляет каждую
+     */
+    describeChanges(
+        hunks: Hunk[],
+        limit: number = CHANGE_SUMMARY_LIMIT
+    ): AgentChangeSummary[] {
+        const targets = new Map<string, AgentChangeSummary>();
+        for (const hunk of hunks) {
+            if (hunk.segmentId != null) {
+                targets.set(`segment:${hunk.segmentId}`, {
+                    labelKey: 'segment',
+                    segmentId: hunk.segmentId,
+                });
+            } else if (hunk.fileName) {
+                targets.set(`file:${hunk.fileName}`, {
+                    labelKey: 'file',
+                    file: hunk.fileName,
+                });
+            } else {
+                // место назвать нечем, но умолчать о правке нельзя: список бы соврал
+                targets.set('other', { labelKey: 'other' });
+            }
+        }
+        const list = [...targets.values()];
+        return list.length > limit
+            ? [...list.slice(0, limit), { labelKey: 'more' }]
+            : list;
     }
 
     describeModelCall(): AgentEventDraft {

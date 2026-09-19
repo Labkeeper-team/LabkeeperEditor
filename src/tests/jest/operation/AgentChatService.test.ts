@@ -101,6 +101,69 @@ test('agent-start-sends-prompt-and-settings', async () => {
     );
 });
 
+test('agent-settings-max-tokens-offers-login-to-a-guest', () => {
+    const ctx = setup(false);
+    const onEvent = jest.spyOn(ctx.observerService, 'onEvent');
+
+    ctx.agentChatService.onMaxTokensChanged(30000);
+
+    expect(ctx.repository.authViewModelRepository.currentView()).toBe('login');
+    // значение осталось прежним, иначе гость поменял бы настройку в обход входа
+    expect(ctx.repository.persistenceViewModelRepository.agentMaxTokens()).toBe(
+        10000
+    );
+    // по источнику в аналитике видно, какая кнопка привела человека в окно входа
+    expect(onEvent).toHaveBeenCalledWith(
+        Events.EVENT_AUTH_MODAL_OPENED,
+        expect.objectContaining({ source: 'agent_settings' })
+    );
+    expect(onEvent).not.toHaveBeenCalledWith(
+        Events.EVENT_AGENT_SETTINGS_CHANGED,
+        expect.anything()
+    );
+});
+
+test('agent-settings-iterations-offers-login-to-a-guest', () => {
+    const ctx = setup(false);
+    const onEvent = jest.spyOn(ctx.observerService, 'onEvent');
+
+    ctx.agentChatService.onIterationsChanged(12);
+
+    expect(ctx.repository.authViewModelRepository.currentView()).toBe('login');
+    expect(
+        ctx.repository.persistenceViewModelRepository.agentIterations()
+    ).toBe(5);
+    expect(onEvent).toHaveBeenCalledWith(
+        Events.EVENT_AUTH_MODAL_OPENED,
+        expect.objectContaining({ source: 'agent_settings' })
+    );
+    expect(onEvent).not.toHaveBeenCalledWith(
+        Events.EVENT_AGENT_SETTINGS_CHANGED,
+        expect.anything()
+    );
+});
+
+test('agent-settings-stay-editable-for-an-authorized-user', () => {
+    const ctx = setup();
+    const onEvent = jest.spyOn(ctx.observerService, 'onEvent');
+
+    ctx.agentChatService.onMaxTokensChanged(30000);
+    ctx.agentChatService.onIterationsChanged(12);
+
+    expect(ctx.repository.persistenceViewModelRepository.agentMaxTokens()).toBe(
+        30000
+    );
+    expect(
+        ctx.repository.persistenceViewModelRepository.agentIterations()
+    ).toBe(12);
+    // окно входа авторизованному не показываем, проверка не должна быть шире гостя
+    expect(ctx.repository.authViewModelRepository.currentView()).toBe('closed');
+    expect(onEvent).not.toHaveBeenCalledWith(
+        Events.EVENT_AUTH_MODAL_OPENED,
+        expect.anything()
+    );
+});
+
 test('agent-tool-call-describes-fresh-hunk', async () => {
     const ctx = setup();
     const hunk: Hunk = {
@@ -342,6 +405,82 @@ test('unauthorized-limit-exceeded-does-not-replace-program', async () => {
     const program = ctx.repository.projectViewModelRepository.currentProgram();
     expect(program.segments[0].text).toBe('ORIGINAL');
     expect(ctx.repository.authViewModelRepository.currentView()).toBe('login');
+});
+
+/**
+ * Лимит для незарегистрированных вошедшему приходить не должен, а если сервер
+ * его всё-таки прислал, окном входа делу не поможешь: человек уже вошёл
+ */
+test('unauthorized-limit-does-not-open-login-for-an-authorized-user', async () => {
+    const ctx = setup();
+    ctx.repository.chatViewModelRepository.setInput('сделай');
+
+    await ctx.agentChatService.onPromptSubmit();
+    await emit(ctx, {
+        kind: 'finished',
+        message: null,
+        stopReason: 'UnauthorizedLimitExceeded',
+    });
+
+    expect(ctx.repository.authViewModelRepository.currentView()).toBe('closed');
+    // молчать тут нельзя: нарушение контракта иначе не видно ниоткуда
+    expect(Sentry.captureException).toHaveBeenCalled();
+});
+
+test('unauthorized-limit-does-not-report-a-guest', async () => {
+    const ctx = setup(false);
+    ctx.repository.chatViewModelRepository.setInput('сделай');
+
+    await ctx.agentChatService.onPromptSubmit();
+    await emit(ctx, {
+        kind: 'finished',
+        message: null,
+        stopReason: 'UnauthorizedLimitExceeded',
+    });
+
+    // гостевой лимит это штатный отказ, в Sentry ему делать нечего
+    expect(ctx.repository.authViewModelRepository.currentView()).toBe('login');
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+});
+
+/**
+ * Под ошибкой гостю предлагают войти, а вход открывает проект заново и чистит
+ * ленту. Запрос переживает это только в поле ввода, туда его и возвращаем
+ */
+test('agent-error-returns-the-prompt-to-a-guest', async () => {
+    const ctx = setup(false);
+    ctx.repository.chatViewModelRepository.setInput('сделай таблицу');
+
+    await ctx.agentChatService.onPromptSubmit();
+    await emit(ctx, {
+        kind: 'finished',
+        message: null,
+        stopReason: 'UnknownError',
+    });
+
+    expect(ctx.repository.chatViewModelRepository.input()).toBe(
+        'сделай таблицу'
+    );
+    // вход чистит ленту, и набранное должно остаться в поле после этого тоже
+    ctx.agentChatService.onProjectChanged();
+    expect(ctx.repository.chatViewModelRepository.input()).toBe(
+        'сделай таблицу'
+    );
+});
+
+test('agent-error-leaves-the-field-empty-for-an-authorized-user', async () => {
+    const ctx = setup();
+    ctx.repository.chatViewModelRepository.setInput('сделай таблицу');
+
+    await ctx.agentChatService.onPromptSubmit();
+    await emit(ctx, {
+        kind: 'finished',
+        message: null,
+        stopReason: 'UnknownError',
+    });
+
+    // вошедшему возвращать нечего: лента никуда не денется, запрос виден в ней
+    expect(ctx.repository.chatViewModelRepository.input()).toBe('');
 });
 
 test('project-change-closes-session-and-clears-chat', async () => {
@@ -1610,4 +1749,309 @@ test('send-errors-on-a-foreign-project-does-nothing', () => {
     expect(
         ctx.repository.settingsViewModelRepository.setViewerTab
     ).not.toHaveBeenCalled();
+});
+
+/** Прогон, который уже идёт: сессия открыта, замок правок стоит */
+async function runningAgent(
+    ctx: ReturnType<typeof setup>,
+    prompt = 'сделай таблицу'
+) {
+    ctx.repository.chatViewModelRepository.setInput(prompt);
+    await ctx.agentChatService.onPromptSubmit();
+}
+
+const lastMessage = (ctx: ReturnType<typeof setup>) => {
+    const list = ctx.repository.chatViewModelRepository.messages();
+    return list[list.length - 1];
+};
+
+test('abort-closes-the-socket-and-unlocks-the-project', async () => {
+    const ctx = setup();
+    await runningAgent(ctx);
+    expect(ctx.editingLockService.isLocked()).toBe(true);
+
+    await ctx.agentChatService.onAbortClicked();
+
+    // что close даёт код 1000, снимает таймер и не зовёт onClosed, уже доказано
+    // в web/agentSocket.test.ts: close-stops-the-socket-and-the-timer-without-on-closed
+    expect(ctx.agentSocketState.closeCalls).toBe(1);
+    expect(ctx.repository.chatViewModelRepository.requestState()).toBe('idle');
+    expect(ctx.editingLockService.isLocked()).toBe(false);
+    // закрытие по своей воле обработчик разрыва не зовёт, ошибке взяться неоткуда
+    expect(
+        ctx.repository.chatViewModelRepository
+            .messages()
+            .some((message) => message.kind === 'error')
+    ).toBe(false);
+    expect(lastMessage(ctx)).toMatchObject({
+        kind: 'notice',
+        reason: 'aborted_nothing',
+    });
+});
+
+test('abort-lists-the-places-the-agent-changed', async () => {
+    const ctx = setup();
+    await runningAgent(ctx);
+    ctx.rpi.listHunksRequest = jest.fn().mockResolvedValue(
+        okResult({
+            hunks: [
+                segmentHunk('h1', 3, 1),
+                { id: 'h2', type: 'deleteLinesFromSegment', segmentId: 3 },
+                { id: 'h3', type: 'addLinesToFile', fileName: 'main.tex' },
+            ],
+        })
+    );
+    await emit(ctx, { kind: 'toolCall', toolName: 'add_lines_to_segment' });
+
+    await ctx.agentChatService.onAbortClicked();
+
+    // список считается от снимка на старте прогона, а не от последнего toolCall
+    expect(lastMessage(ctx)).toMatchObject({
+        kind: 'notice',
+        reason: 'aborted',
+        changes: [
+            { labelKey: 'segment', segmentId: 3 },
+            { labelKey: 'file', file: 'main.tex' },
+        ],
+    });
+});
+
+test('abort-picks-up-what-the-last-tool-call-changed', async () => {
+    const ctx = setup();
+    await runningAgent(ctx);
+    // на toolCall список ещё пуст, правка доезжает только к прерыванию
+    ctx.rpi.listHunksRequest = jest
+        .fn()
+        .mockResolvedValueOnce(okResult({ hunks: [] }))
+        .mockResolvedValue(okResult({ hunks: [segmentHunk('h1', 7, 1)] }));
+    await emit(ctx, { kind: 'toolCall', toolName: 'add_lines_to_segment' });
+
+    await ctx.agentChatService.onAbortClicked();
+
+    expect(lastMessage(ctx)).toMatchObject({
+        reason: 'aborted',
+        changes: [{ labelKey: 'segment', segmentId: 7 }],
+    });
+});
+
+test('abort-of-a-guest-run-says-the-result-is-lost', async () => {
+    const ctx = setup(false);
+    await runningAgent(ctx);
+    ctx.rpi.listHunksRequest = jest.fn();
+    ctx.rpi.getProjectRequest = jest.fn();
+
+    await ctx.agentChatService.onAbortClicked();
+
+    expect(lastMessage(ctx)).toMatchObject({
+        kind: 'notice',
+        reason: 'aborted_guest',
+    });
+    // у гостя правки приезжают в финале, тянуть с сервера нечего
+    expect(ctx.rpi.listHunksRequest).not.toHaveBeenCalled();
+    expect(ctx.rpi.getProjectRequest).not.toHaveBeenCalled();
+});
+
+test.each([['getProjectRequest'], ['listHunksRequest']] as const)(
+    'abort-does-not-invent-a-list-when-%s-fails',
+    async (request) => {
+        const ctx = setup();
+        await runningAgent(ctx);
+        ctx.repository.ideViewModelRepository.setHunks([
+            segmentHunk('h1', 3, 1),
+        ]);
+        ctx.rpi[request] = jest.fn().mockResolvedValue(failedResult);
+
+        await ctx.agentChatService.onAbortClicked();
+
+        expect(lastMessage(ctx)).toMatchObject({
+            kind: 'notice',
+            reason: 'aborted_unsynced',
+        });
+        expect(ctx.repository.chatViewModelRepository.requestState()).toBe(
+            'idle'
+        );
+    }
+);
+
+test('abort-keeps-the-answer-that-already-arrived', async () => {
+    const ctx = setup();
+    await submitAndFailReload(ctx);
+    const server = pending<unknown>();
+    ctx.rpi.getProjectRequest = jest.fn().mockReturnValue(server.promise);
+
+    const finishing = emit(ctx, {
+        kind: 'finished',
+        message: 'ответ модели',
+        stopReason: 'Done',
+    });
+    await settled();
+    // финал уже разбирается, а состояние ещё 'running' и кнопка прерывания на экране
+    await ctx.agentChatService.onAbortClicked();
+    server.resolve(okResult({ program: oneSegment('a\nX') }));
+    await finishing;
+
+    expect(ctx.agentSocketState.closeCalls).toBe(0);
+    expect(lastMessage(ctx)).toMatchObject({
+        kind: 'response',
+        text: 'ответ модели',
+    });
+    expect(ctx.repository.chatViewModelRepository.requestState()).toBe('ok');
+});
+
+test('events-and-a-drop-after-abort-do-not-reach-the-chat', async () => {
+    const ctx = setup();
+    await runningAgent(ctx);
+    const handlers = ctx.agentSocketState.handlers;
+
+    await ctx.agentChatService.onAbortClicked();
+    const shown = ctx.repository.chatViewModelRepository.messages().length;
+    await handlers?.onEvent({
+        kind: 'finished',
+        message: 'опоздавший ответ',
+        stopReason: 'Done',
+    });
+    handlers?.onClosed('closed');
+    await settled();
+
+    expect(ctx.repository.chatViewModelRepository.messages()).toHaveLength(
+        shown
+    );
+    expect(ctx.repository.chatViewModelRepository.requestState()).toBe('idle');
+});
+
+test('abort-does-not-revert-what-the-agent-already-applied', async () => {
+    const ctx = setup();
+    ctx.rpi.deleteHunkRequest = jest.fn();
+    await runningAgent(ctx);
+    ctx.rpi.listHunksRequest = jest
+        .fn()
+        .mockResolvedValue(okResult({ hunks: [segmentHunk('h1', 3, 1)] }));
+    await emit(ctx, { kind: 'toolCall', toolName: 'add_lines_to_segment' });
+
+    await ctx.agentChatService.onAbortClicked();
+
+    // прерывание останавливает агента, а не отменяет сделанное им
+    expect(ctx.repository.ideViewModelRepository.hunks()).toHaveLength(1);
+    expect(ctx.rpi.deleteHunkRequest).not.toHaveBeenCalled();
+});
+
+test('abort-before-the-run-starts-does-not-touch-the-project', async () => {
+    const ctx = setup();
+    let releaseSave: () => void = () => {};
+    ctx.rpi.saveProgramRequest = jest.fn().mockReturnValue(
+        new Promise((resolve) => {
+            releaseSave = () => resolve(okResult({}));
+        })
+    );
+    ctx.repository.chatViewModelRepository.setInput('сделай таблицу');
+    const submit = ctx.agentChatService.onPromptSubmit();
+    await settled();
+    ctx.rpi.getProjectRequest = jest.fn();
+
+    await ctx.agentChatService.onAbortClicked();
+    releaseSave();
+    await submit;
+
+    expect(ctx.agentSocketState.started).toBeNull();
+    // сессии ещё не было: ответ сервера затёр бы то, что человек не успел сохранить
+    expect(ctx.rpi.getProjectRequest).not.toHaveBeenCalled();
+    expect(lastMessage(ctx)).toMatchObject({
+        kind: 'notice',
+        reason: 'aborted_nothing',
+    });
+    expect(ctx.repository.chatViewModelRepository.requestState()).toBe('idle');
+});
+
+test('abort-clicked-twice-writes-one-notice-with-the-list', async () => {
+    const ctx = setup();
+    const onEvent = jest.spyOn(ctx.observerService, 'onEvent');
+    await runningAgent(ctx);
+    ctx.rpi.listHunksRequest = jest
+        .fn()
+        .mockResolvedValue(okResult({ hunks: [segmentHunk('h1', 3, 1)] }));
+    await emit(ctx, { kind: 'toolCall', toolName: 'add_lines_to_segment' });
+    const server = pending<unknown>();
+    ctx.rpi.getProjectRequest = jest.fn().mockReturnValue(server.promise);
+
+    const first = ctx.agentChatService.onAbortClicked();
+    await settled();
+    // досинхронизация ещё идёт, состояние 'running' и кнопка прерывания на экране
+    await ctx.agentChatService.onAbortClicked();
+    server.resolve(okResult({ program: emptyProgram }));
+    await first;
+
+    expect(lastMessage(ctx)).toMatchObject({
+        kind: 'notice',
+        reason: 'aborted',
+        changes: [{ labelKey: 'segment', segmentId: 3 }],
+    });
+    expect(
+        ctx.repository.chatViewModelRepository
+            .messages()
+            .filter((message) => message.kind === 'notice')
+    ).toHaveLength(1);
+    expect(
+        onEvent.mock.calls.filter(
+            ([name]) => name === Events.EVENT_AGENT_ABORTED
+        )
+    ).toHaveLength(1);
+});
+
+test('abort-during-a-drop-leaves-the-disconnect-error', async () => {
+    const ctx = setup();
+    await runningAgent(ctx);
+    const server = pending<unknown>();
+    ctx.rpi.getProjectRequest = jest.fn().mockReturnValue(server.promise);
+
+    ctx.agentSocketState.handlers?.onClosed('closed');
+    await settled();
+    // обрыв уже разбирается, состояние ещё 'running' и кнопка прерывания на экране
+    await ctx.agentChatService.onAbortClicked();
+    server.resolve(okResult({ program: emptyProgram }));
+    await settled();
+
+    expect(lastMessage(ctx)).toMatchObject({
+        kind: 'error',
+        reason: 'disconnected',
+    });
+    expect(ctx.repository.chatViewModelRepository.requestState()).toBe('error');
+    // прогон кончился сам, закрывать уже нечего
+    expect(ctx.agentSocketState.closeCalls).toBe(0);
+});
+
+test('a-failed-hunk-reload-on-abort-makes-the-next-run-resync', async () => {
+    const ctx = setup();
+    await runningAgent(ctx);
+    // правка ушла на сервер, а список на клиент не доехал ни на вызове, ни на прерывании
+    ctx.rpi.listHunksRequest = jest.fn().mockResolvedValue(failedResult);
+    await emit(ctx, { kind: 'toolCall', toolName: 'add_lines_to_segment' });
+
+    await ctx.agentChatService.onAbortClicked();
+
+    expect(lastMessage(ctx)).toMatchObject({
+        kind: 'notice',
+        reason: 'aborted_unsynced',
+    });
+    ctx.rpi.getProjectRequest = jest
+        .fn()
+        .mockResolvedValue(okResult({ program: emptyProgram }));
+    ctx.rpi.listHunksRequest = jest
+        .fn()
+        .mockResolvedValue(okResult({ hunks: [segmentHunk('h1', 3, 1)] }));
+
+    await runningAgent(ctx, 'ещё раз');
+
+    // прошлый список остался неизвестным, поэтому второй прогон обязан свериться до старта
+    expect(ctx.rpi.getProjectRequest).toHaveBeenCalled();
+    expect(ctx.rpi.listHunksRequest).toHaveBeenCalled();
+    ctx.rpi.listHunksRequest = jest.fn().mockResolvedValue(
+        okResult({
+            hunks: [segmentHunk('h1', 3, 1), segmentHunk('h2', 5, 1)],
+        })
+    );
+    const shown = events(ctx).length;
+    await emit(ctx, { kind: 'toolCall', toolName: 'add_lines_to_segment' });
+
+    // в ленте второго прогона только его собственная правка
+    expect(events(ctx)).toHaveLength(shown + 1);
 });

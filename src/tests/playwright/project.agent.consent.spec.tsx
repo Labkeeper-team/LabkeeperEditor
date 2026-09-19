@@ -59,8 +59,27 @@ async function openAgentTab(page: Page, agentLabel: string) {
     await page.getByRole('tab', { name: agentLabel }).click();
 }
 
+const promptField = (page: Page) => page.getByPlaceholder('Enter your promt');
+
+/**
+ * У CodeMirror нет value: текст поля собирается из строк contenteditable.
+ * Строки виртуализированы, в DOM лежит только видимая часть документа,
+ * поэтому длинный промпт целиком отсюда не прочитать: для него нужен toContain
+ */
+const visiblePromptText = (page: Page) =>
+    promptField(page).evaluate((node) => {
+        const copy = node.cloneNode(true) as HTMLElement;
+        // подсказка пустого поля живёт виджетом внутри строки, но значением не является
+        copy.querySelectorAll('.cm-placeholder').forEach((hint) =>
+            hint.remove()
+        );
+        return Array.from(copy.querySelectorAll('.cm-line'))
+            .map((line) => line.textContent)
+            .join('\n');
+    });
+
 async function submitPrompt(page: Page, text = 'сделай таблицу') {
-    await page.getByPlaceholder('Enter your promt').fill(text);
+    await promptField(page).fill(text);
     await page.getByRole('button', { name: 'Send' }).click();
 }
 
@@ -76,9 +95,7 @@ test('consent-modal-blocks-the-first-prompt', async ({ page }) => {
     await expect(modal(page)).toBeVisible();
     expect(sent).toHaveLength(0);
     // текст остаётся на месте, иначе человек потеряет написанное
-    await expect(page.getByPlaceholder('Enter your promt')).toHaveValue(
-        'сделай таблицу'
-    );
+    await expect.poll(() => visiblePromptText(page)).toBe('сделай таблицу');
 });
 
 test('consent-modal-shows-the-text-and-the-document-link', async ({ page }) => {
@@ -144,9 +161,7 @@ test('consent-dismissed-keeps-the-prompt-unsent', async ({ page }) => {
 
     await expect(modal(page)).toBeHidden();
     expect(sent).toHaveLength(0);
-    await expect(page.getByPlaceholder('Enter your promt')).toHaveValue(
-        'сделай таблицу'
-    );
+    await expect.poll(() => visiblePromptText(page)).toBe('сделай таблицу');
 });
 
 test('consent-stored-on-the-server-is-not-asked-again', async ({ page }) => {

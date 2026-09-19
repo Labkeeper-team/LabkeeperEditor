@@ -71,6 +71,7 @@ export const Events = {
 
     EVENT_AGENT_PROMPT_SUBMITTED: 'agent_prompt_submitted',
     EVENT_AGENT_FAILED: 'agent_failed',
+    EVENT_AGENT_ABORTED: 'agent_aborted',
     EVENT_AGENT_SETTINGS_CHANGED: 'agent_settings_changed',
     EVENT_CHAT_HISTORY_CLEARED: 'chat_history_cleared',
     EVENT_AGENT_CHANGE_CLICKED: 'agent_change_clicked',
@@ -193,6 +194,7 @@ export const OPENPANEL_EVENT_NAMES: Record<string, string> = {
     [Events.EVENT_FILES_MOVED]: 'Files moved',
     [Events.EVENT_AGENT_PROMPT_SUBMITTED]: 'Agent prompt submitted',
     [Events.EVENT_AGENT_FAILED]: 'Agent failed',
+    [Events.EVENT_AGENT_ABORTED]: 'Agent aborted',
     [Events.EVENT_AGENT_SETTINGS_CHANGED]: 'Agent settings changed',
     [Events.EVENT_CHAT_HISTORY_CLEARED]: 'Chat history cleared',
     [Events.EVENT_AGENT_CHANGE_CLICKED]: 'Agent change clicked',

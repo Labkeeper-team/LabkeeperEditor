@@ -164,11 +164,15 @@ export interface Translations {
         pdf_tab_label: string;
         placeholder: string;
         send: string;
+        abort: string;
         disclaimer: string;
         result: string;
         error: string;
         notice: string;
         buy_tokens: string;
+        guest_login_hint: string;
+        guest_login_hint_limit: string;
+        guest_login_action: string;
         clear_history: string;
         history_loading: string;
         history_error: string;
@@ -205,6 +209,12 @@ export interface Translations {
             read_file: string;
             done: string;
         };
+        change: {
+            segment: string;
+            file: string;
+            other: string;
+            more: string;
+        };
         stop: {
             ContextOverflow: string;
             IterationLimit: string;
@@ -220,6 +230,10 @@ export interface Translations {
             connect_failed: string;
             save_failed: string;
             sync_failed: string;
+            aborted: string;
+            aborted_nothing: string;
+            aborted_guest: string;
+            aborted_unsynced: string;
         };
     };
     mobile_view: {

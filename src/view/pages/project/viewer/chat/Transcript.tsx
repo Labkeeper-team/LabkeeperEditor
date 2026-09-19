@@ -4,8 +4,12 @@ import { AppDispatch, StorageState } from '../../../../store';
 import { useDictionary } from '../../../../store/selectors/translations';
 import { controller } from '../../../../../main.tsx';
 import { Events } from '../../../../../model/service/ObserverService.ts';
-import { ChatMessage } from '../../../../../viewModel/repository';
+import {
+    AgentChangeSummary,
+    ChatMessage,
+} from '../../../../../viewModel/repository';
 import { AgentHistoryEntry } from '../../../../../model/domain.ts';
+import { AGENT_STOP_REASONS } from '../../../../../model/rpi/agentSocket.ts';
 import { Routes } from '../../../../../viewModel/routes.ts';
 import { useNavigate } from 'react-router-dom';
 import { AgentMarkdown } from './AgentMarkdown';
@@ -58,9 +62,23 @@ const ErrorBlock = ({
 }: {
     reason: Extract<ChatMessage, { kind: 'error' }>['reason'];
 }) => {
+    const dispatch = useDispatch<AppDispatch>();
     const dictionary = useSelector(useDictionary);
+    const isAuthenticated = useSelector(
+        (state: StorageState) => state.user.isAuthenticated
+    );
     const navigate = useNavigate();
     const stop = dictionary.agent_chat.stop as Record<string, string>;
+    // вход меняет дело только там, где отказал сам агент: под обрывом связи и
+    // неудачей сохранения он ничего не снимает и выглядел бы разводом на регистрацию
+    const offerLogin =
+        !isAuthenticated && (AGENT_STOP_REASONS as string[]).includes(reason);
+    // вход снимает только лимит для незарегистрированных: под остальными отказами
+    // тот же запрос упрётся в то же самое и после входа, обещать это нельзя
+    const loginHint =
+        reason === 'UnauthorizedLimitExceeded'
+            ? dictionary.agent_chat.guest_login_hint_limit
+            : dictionary.agent_chat.guest_login_hint;
     return (
         <div className="agent-chat__error">
             <div className="agent-chat__error-label">
@@ -69,7 +87,8 @@ const ErrorBlock = ({
             <div className="agent-chat__error-text">
                 {stop[reason] ?? stop.UnknownError}
             </div>
-            {reason === 'PaymentRequired' && (
+            {/* гостю баланс пополнять некуда: покупка всё равно начинается со входа */}
+            {reason === 'PaymentRequired' && isAuthenticated && (
                 <button
                     type="button"
                     className="agent-chat__buy-tokens"
@@ -83,17 +102,47 @@ const ErrorBlock = ({
                     {dictionary.agent_chat.buy_tokens}
                 </button>
             )}
+            {offerLogin && (
+                <>
+                    <div className="agent-chat__login-hint">{loginHint}</div>
+                    <button
+                        type="button"
+                        className="agent-chat__login"
+                        onClick={() =>
+                            dispatch(
+                                controller.onAuthButtonClickedRequest(
+                                    'agent_error'
+                                )
+                            )
+                        }
+                    >
+                        {dictionary.agent_chat.guest_login_action}
+                    </button>
+                </>
+            )}
         </div>
     );
 };
 
+/** Строка списка собирается здесь: лента хранит ключи, а язык меняется на ходу */
+const changeText = (
+    texts: Record<string, string>,
+    change: AgentChangeSummary
+): string =>
+    (texts[change.labelKey] ?? change.labelKey)
+        .replace('{segment}', String(change.segmentId ?? ''))
+        .replace('{file}', change.file ?? '');
+
 const NoticeBlock = ({
     reason,
+    changes,
 }: {
     reason: Extract<ChatMessage, { kind: 'notice' }>['reason'];
+    changes?: AgentChangeSummary[];
 }) => {
     const dictionary = useSelector(useDictionary);
     const stop = dictionary.agent_chat.stop as Record<string, string>;
+    const texts = dictionary.agent_chat.change as Record<string, string>;
     return (
         <div className="agent-chat__notice">
             <div className="agent-chat__notice-label">
@@ -102,6 +151,17 @@ const NoticeBlock = ({
             <div className="agent-chat__notice-text">
                 {stop[reason] ?? stop.UnknownError}
             </div>
+            {changes && changes.length > 0 && (
+                <ul className="agent-chat__notice-changes">
+                    {changes.map((change) => (
+                        <li
+                            key={`${change.labelKey}:${change.segmentId ?? change.file ?? ''}`}
+                        >
+                            {changeText(texts, change)}
+                        </li>
+                    ))}
+                </ul>
+            )}
         </div>
     );
 };
@@ -301,6 +361,7 @@ export const Transcript = () => {
                             <NoticeBlock
                                 key={message.id}
                                 reason={message.reason}
+                                changes={message.changes}
                             />
                         );
                     case 'event':
