@@ -808,6 +808,10 @@ test('agent-stop-reason-UnauthorizedLimitExceeded-shows-text', async ({
     await expect(authModal(page)).toBeVisible();
     // призыв войти ровно один: из текста ошибки он ушёл, в ленте одна кнопка
     await expect(loginOffer(page)).toHaveCount(1);
+    // снятие лимита обещаем только здесь: под этой причиной вход правда помогает
+    await expect(page.locator('.agent-chat__login-hint')).toContainText(
+        'Logging in removes that limit'
+    );
 });
 
 test('guest-agent-error-offers-login', async ({ page }) => {
@@ -819,7 +823,7 @@ test('guest-agent-error-offers-login', async ({ page }) => {
         'Something went wrong. Please try again'
     );
     await expect(page.locator('.agent-chat__login-hint')).toContainText(
-        'the agent runs under the limit for unregistered users'
+        'With an account the agent has its own token balance'
     );
     // запрос ждёт в поле: вход откроет проект заново и от ленты ничего не оставит
     await expect(page.getByPlaceholder('Enter your promt')).toHaveValue(
@@ -829,6 +833,24 @@ test('guest-agent-error-offers-login', async ({ page }) => {
     await loginOffer(page).click();
 
     await expect(authModal(page)).toBeVisible();
+});
+
+test('guest-agent-prompt-too-long-does-not-promise-a-lifted-limit', async ({
+    page,
+}) => {
+    await openGuestChat(page, { frames: [finished('PromptTooLong', null)] });
+
+    await submitPrompt(page, 'очень длинный запрос');
+
+    await expect(page.locator('.agent-chat__error-text')).toHaveText(
+        'The request is too long. Shorten it and send it again'
+    );
+    // сокращать придётся и после входа, обещать снятие лимита тут нельзя
+    const hint = page.locator('.agent-chat__login-hint');
+    await expect(hint).not.toContainText('removes that limit');
+    await expect(hint).not.toContainText('limit for unregistered users');
+    // сама кнопка остаётся: войти гостю всё равно есть зачем
+    await expect(loginOffer(page)).toHaveCount(1);
 });
 
 test('agent-error-does-not-offer-login-to-an-authorized-user', async ({
@@ -842,6 +864,20 @@ test('agent-error-does-not-offer-login-to-an-authorized-user', async ({
         'Something went wrong. Please try again'
     );
     await expect(loginOffer(page)).toHaveCount(0);
+});
+
+test('guest-agent-payment-required-offers-login-not-tokens', async ({
+    page,
+}) => {
+    await openGuestChat(page, { frames: [finished('PaymentRequired', null)] });
+
+    await submitPrompt(page);
+
+    // гостю пополнять нечего: его покупка всё равно начинается со входа
+    await expect(
+        page.getByRole('button', { name: 'Proceed to purchase tokens' })
+    ).toHaveCount(0);
+    await expect(loginOffer(page)).toHaveCount(1);
 });
 
 test('guest-agent-drop-does-not-offer-login', async ({ page }) => {
@@ -875,12 +911,10 @@ test('guest-agent-error-offer-fits-a-phone', async ({ page }) => {
     await submitPrompt(page);
 
     await expect(loginOffer(page)).toBeVisible();
-    // на телефоне чат отдельный экран, и лента не должна распирать его вширь
-    const overflow = await page.evaluate(
-        () =>
-            document.documentElement.scrollWidth -
-            document.documentElement.clientWidth
-    );
+    // лента скроллится внутри себя, поэтому меряем её, а не документ
+    const overflow = await page
+        .locator('.agent-chat__transcript')
+        .evaluate((node) => node.scrollWidth - node.clientWidth);
     expect(overflow).toBeLessThanOrEqual(0);
 });
 
