@@ -103,8 +103,7 @@ test('agent-start-sends-prompt-and-settings', async () => {
 
 test('agent-settings-max-tokens-offers-login-to-a-guest', () => {
     const ctx = setup(false);
-    const events: string[] = [];
-    ctx.observerService.onEvent = (event: string) => events.push(event);
+    const onEvent = jest.spyOn(ctx.observerService, 'onEvent');
 
     ctx.agentChatService.onMaxTokensChanged(30000);
 
@@ -113,14 +112,20 @@ test('agent-settings-max-tokens-offers-login-to-a-guest', () => {
     expect(ctx.repository.persistenceViewModelRepository.agentMaxTokens()).toBe(
         10000
     );
-    expect(events).toContain(Events.EVENT_AUTH_MODAL_OPENED);
-    expect(events).not.toContain(Events.EVENT_AGENT_SETTINGS_CHANGED);
+    // по источнику в аналитике видно, какая кнопка привела человека в окно входа
+    expect(onEvent).toHaveBeenCalledWith(
+        Events.EVENT_AUTH_MODAL_OPENED,
+        expect.objectContaining({ source: 'agent_settings' })
+    );
+    expect(onEvent).not.toHaveBeenCalledWith(
+        Events.EVENT_AGENT_SETTINGS_CHANGED,
+        expect.anything()
+    );
 });
 
 test('agent-settings-iterations-offers-login-to-a-guest', () => {
     const ctx = setup(false);
-    const events: string[] = [];
-    ctx.observerService.onEvent = (event: string) => events.push(event);
+    const onEvent = jest.spyOn(ctx.observerService, 'onEvent');
 
     ctx.agentChatService.onIterationsChanged(12);
 
@@ -128,14 +133,19 @@ test('agent-settings-iterations-offers-login-to-a-guest', () => {
     expect(
         ctx.repository.persistenceViewModelRepository.agentIterations()
     ).toBe(5);
-    expect(events).toContain(Events.EVENT_AUTH_MODAL_OPENED);
-    expect(events).not.toContain(Events.EVENT_AGENT_SETTINGS_CHANGED);
+    expect(onEvent).toHaveBeenCalledWith(
+        Events.EVENT_AUTH_MODAL_OPENED,
+        expect.objectContaining({ source: 'agent_settings' })
+    );
+    expect(onEvent).not.toHaveBeenCalledWith(
+        Events.EVENT_AGENT_SETTINGS_CHANGED,
+        expect.anything()
+    );
 });
 
 test('agent-settings-stay-editable-for-an-authorized-user', () => {
     const ctx = setup();
-    const events: string[] = [];
-    ctx.observerService.onEvent = (event: string) => events.push(event);
+    const onEvent = jest.spyOn(ctx.observerService, 'onEvent');
 
     ctx.agentChatService.onMaxTokensChanged(30000);
     ctx.agentChatService.onIterationsChanged(12);
@@ -148,7 +158,10 @@ test('agent-settings-stay-editable-for-an-authorized-user', () => {
     ).toBe(12);
     // окно входа авторизованному не показываем, проверка не должна быть шире гостя
     expect(ctx.repository.authViewModelRepository.currentView()).toBe('closed');
-    expect(events).not.toContain(Events.EVENT_AUTH_MODAL_OPENED);
+    expect(onEvent).not.toHaveBeenCalledWith(
+        Events.EVENT_AUTH_MODAL_OPENED,
+        expect.anything()
+    );
 });
 
 test('agent-tool-call-describes-fresh-hunk', async () => {
