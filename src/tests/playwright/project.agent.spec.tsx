@@ -718,6 +718,60 @@ test('agent-history-clear-hidden-for-unauthorized', async ({ page }) => {
     ).toHaveCount(0);
 });
 
+test('agent-settings-offer-login-to-a-guest', async ({ page }) => {
+    await openChat(page, { authenticated: false });
+
+    await page
+        .getByRole('group', { name: 'Context Size' })
+        .getByRole('button', { name: '30k' })
+        .click();
+
+    await expect(page.locator('.auth-modal')).toBeVisible();
+    // кнопка кликабельна, но значение не переключилось: задизейбленная клик бы не пропустила
+    await expect(
+        page
+            .getByRole('group', { name: 'Context Size' })
+            .getByRole('button', { name: '10k' })
+    ).toHaveAttribute('aria-pressed', 'true');
+
+    await page.getByRole('button', { name: 'Close' }).click();
+    await expect(page.locator('.auth-modal')).toBeHidden();
+
+    await page
+        .getByRole('group', { name: 'Max Iterations' })
+        .getByRole('button', { name: '12' })
+        .click();
+
+    await expect(page.locator('.auth-modal')).toBeVisible();
+    await expect(
+        page
+            .getByRole('group', { name: 'Max Iterations' })
+            .getByRole('button', { name: '5' })
+    ).toHaveAttribute('aria-pressed', 'true');
+});
+
+test('guest-agent-run-survives-a-swallowed-settings-click', async ({
+    page,
+}) => {
+    const sent = await openChat(page, { authenticated: false });
+
+    await page
+        .getByRole('group', { name: 'Max Iterations' })
+        .getByRole('button', { name: '12' })
+        .click();
+    await expect(page.locator('.auth-modal')).toBeVisible();
+    await page.getByRole('button', { name: 'Close' }).click();
+    await expect(page.locator('.auth-modal')).toBeHidden();
+
+    await submitPrompt(page, 'поправь введение');
+
+    await expect.poll(() => sent.length).toBe(1);
+    const frame = sent[0] as { type: string; numberIterations: number };
+    // отправка гостю осталась, а настройка ушла прежняя, потому что клик по ней проглочен
+    expect(frame.type).toBe('startAgentUnauthorized');
+    expect(frame.numberIterations).toBe(5);
+});
+
 test('unauthorized-agent-applies-returned-program', async ({ page }) => {
     await openChat(page, {
         authenticated: false,
