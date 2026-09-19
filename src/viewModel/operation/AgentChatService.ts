@@ -596,8 +596,12 @@ export class AgentChatService {
 
         if (isError) {
             chat.appendMessage({ kind: 'error', reason: event.stopReason });
-            // сократить можно только то, что видно: иначе длинный текст пришлось бы набирать заново
-            if (event.stopReason === 'PromptTooLong' && !chat.input()) {
+            // длинный запрос возвращаем, чтобы было что сокращать, а гостю возвращаем любой:
+            // под ошибкой ему предлагают войти, а вход оставляет от ленты только поле ввода
+            const returnPrompt =
+                event.stopReason === 'PromptTooLong' ||
+                !this.repository.userViewModelRepository.isAuthenticated();
+            if (returnPrompt && !chat.input()) {
                 chat.setInput(this.lastPrompt);
             }
             chat.setRequestState('error');
@@ -697,10 +701,8 @@ export class AgentChatService {
             return;
         }
         if (reason === 'UnauthorizedLimitExceeded') {
-            this.track(Events.EVENT_AUTH_MODAL_OPENED, {
-                source: 'agent_limit',
-            });
-            this.repository.authViewModelRepository.setCurrentView('login');
+            // вошедшему окно входа не поможет: лимит для незарегистрированных не про него
+            this.openLoginIfGuest('agent_limit');
             return;
         }
         if (reason === 'UnknownError' || reason === 'Locked') {

@@ -243,28 +243,6 @@ test('agent-stop-reason-Done-shows-text', async ({ page }) => {
     await expect(page.locator('.agent-chat__notice-text')).toHaveCount(0);
 });
 
-test('agent-stop-reason-UnauthorizedLimitExceeded-shows-text', async ({
-    page,
-}) => {
-    await openChat(page, {
-        authenticated: false,
-        frames: [
-            {
-                type: 'agentFinishedUnauthorized',
-                message: null,
-                stopReason: 'UnauthorizedLimitExceeded',
-            },
-        ],
-    });
-    await submitPrompt(page);
-
-    await expect(page.locator('.agent-chat__error-text')).toHaveText(
-        'You have reached the limit for unregistered users. Sign in to continue'
-    );
-    // по ТЗ тут же показываем окно входа
-    await expect(page.locator('.auth-modal')).toBeVisible();
-});
-
 test('agent-stop-reason-PromptTooLong-returns-the-prompt', async ({ page }) => {
     await openChat(page, { frames: [finished('PromptTooLong', null)] });
     await submitPrompt(page, 'очень длинный запрос');
@@ -723,12 +701,17 @@ test('agent-history-clear-hidden-for-unauthorized', async ({ page }) => {
  * ссылке открывается на чтение, а у readonly чата нет вовсе. Своего проекта у
  * гостя ещё нет, поэтому ни ручки проекта, ни истории здесь не нужны
  */
-async function openGuestChat(page: Page) {
+async function openGuestChat(
+    page: Page,
+    options: { frames?: Frame[]; dropConnection?: boolean } = {}
+) {
     const routeSetup = new RouteSetup(page);
     await routeSetup.setupGetUserInfoRequest(false);
     // согласие на передачу данных проверяется отдельной спекой, здесь оно дано
     await routeSetup.acceptCrossBorderConsentLocally();
-    const sent = await routeSetup.setupAgentSocket([]);
+    const sent = await routeSetup.setupAgentSocket(options.frames ?? [], {
+        dropConnection: options.dropConnection,
+    });
 
     await page.goto('/');
     await expect(page).toHaveURL('/project/default');
@@ -799,6 +782,106 @@ test('guest-agent-run-survives-a-swallowed-settings-click', async ({
     // отправка гостю осталась, а настройка ушла прежняя, потому что клик по ней проглочен
     expect(frame.type).toBe('startAgentUnauthorized');
     expect(frame.numberIterations).toBe(5);
+});
+
+const loginOffer = (page: Page) =>
+    page.locator('.agent-chat__error .agent-chat__login');
+
+test('agent-stop-reason-UnauthorizedLimitExceeded-shows-text', async ({
+    page,
+}) => {
+    await openGuestChat(page, {
+        frames: [
+            {
+                type: 'agentFinishedUnauthorized',
+                message: null,
+                stopReason: 'UnauthorizedLimitExceeded',
+            },
+        ],
+    });
+    await submitPrompt(page);
+
+    await expect(page.locator('.agent-chat__error-text')).toHaveText(
+        'You have reached the limit for unregistered users'
+    );
+    // по ТЗ тут же показываем окно входа
+    await expect(authModal(page)).toBeVisible();
+    // призыв войти ровно один: из текста ошибки он ушёл, в ленте одна кнопка
+    await expect(loginOffer(page)).toHaveCount(1);
+});
+
+test('guest-agent-error-offers-login', async ({ page }) => {
+    await openGuestChat(page, { frames: [finished('UnknownError', null)] });
+
+    await submitPrompt(page, 'поправь введение');
+
+    await expect(page.locator('.agent-chat__error-text')).toHaveText(
+        'Something went wrong. Please try again'
+    );
+    await expect(page.locator('.agent-chat__login-hint')).toContainText(
+        'the agent runs under the limit for unregistered users'
+    );
+    // запрос ждёт в поле: вход откроет проект заново и от ленты ничего не оставит
+    await expect(page.getByPlaceholder('Enter your promt')).toHaveValue(
+        'поправь введение'
+    );
+
+    await loginOffer(page).click();
+
+    await expect(authModal(page)).toBeVisible();
+});
+
+test('agent-error-does-not-offer-login-to-an-authorized-user', async ({
+    page,
+}) => {
+    await openChat(page, { frames: [finished('UnknownError', null)] });
+
+    await submitPrompt(page);
+
+    await expect(page.locator('.agent-chat__error-text')).toHaveText(
+        'Something went wrong. Please try again'
+    );
+    await expect(loginOffer(page)).toHaveCount(0);
+});
+
+test('guest-agent-drop-does-not-offer-login', async ({ page }) => {
+    await openGuestChat(page, { dropConnection: true });
+
+    await submitPrompt(page);
+
+    await expect(page.locator('.agent-chat__error-text')).toHaveText(
+        'The connection to the agent was lost. Please try again'
+    );
+    // обрыв связи вход не чинит, предлагать его тут незачем
+    await expect(loginOffer(page)).toHaveCount(0);
+});
+
+test('guest-agent-notice-does-not-offer-login', async ({ page }) => {
+    await openGuestChat(page, { frames: [finished('IterationLimit')] });
+
+    await submitPrompt(page);
+
+    await expect(page.locator('.agent-chat__notice-text')).toContainText(
+        'The agent ran out of steps'
+    );
+    // лимит итераций после входа остаётся тот же, звать в аккаунт незачем
+    await expect(page.locator('.agent-chat__login')).toHaveCount(0);
+});
+
+test('guest-agent-error-offer-fits-a-phone', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openGuestChat(page, { frames: [finished('UnknownError', null)] });
+
+    await submitPrompt(page);
+
+    await expect(loginOffer(page)).toBeVisible();
+    // на телефоне чат отдельный экран, и лента не должна распирать его вширь
+    const overflow = await page.evaluate(
+        () =>
+            document.documentElement.scrollWidth -
+            document.documentElement.clientWidth
+    );
+    expect(overflow).toBeLessThanOrEqual(0);
 });
 
 test('unauthorized-agent-applies-returned-program', async ({ page }) => {

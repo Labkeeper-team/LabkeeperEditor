@@ -407,6 +407,64 @@ test('unauthorized-limit-exceeded-does-not-replace-program', async () => {
     expect(ctx.repository.authViewModelRepository.currentView()).toBe('login');
 });
 
+/**
+ * Лимит для незарегистрированных вошедшему приходить не должен, а если сервер
+ * его всё-таки прислал, окном входа делу не поможешь: человек уже вошёл
+ */
+test('unauthorized-limit-does-not-open-login-for-an-authorized-user', async () => {
+    const ctx = setup();
+    ctx.repository.chatViewModelRepository.setInput('сделай');
+
+    await ctx.agentChatService.onPromptSubmit();
+    await emit(ctx, {
+        kind: 'finished',
+        message: null,
+        stopReason: 'UnauthorizedLimitExceeded',
+    });
+
+    expect(ctx.repository.authViewModelRepository.currentView()).toBe('closed');
+});
+
+/**
+ * Под ошибкой гостю предлагают войти, а вход открывает проект заново и чистит
+ * ленту. Запрос переживает это только в поле ввода, туда его и возвращаем
+ */
+test('agent-error-returns-the-prompt-to-a-guest', async () => {
+    const ctx = setup(false);
+    ctx.repository.chatViewModelRepository.setInput('сделай таблицу');
+
+    await ctx.agentChatService.onPromptSubmit();
+    await emit(ctx, {
+        kind: 'finished',
+        message: null,
+        stopReason: 'UnknownError',
+    });
+
+    expect(ctx.repository.chatViewModelRepository.input()).toBe(
+        'сделай таблицу'
+    );
+    // вход чистит ленту, и набранное должно остаться в поле после этого тоже
+    ctx.agentChatService.onProjectChanged();
+    expect(ctx.repository.chatViewModelRepository.input()).toBe(
+        'сделай таблицу'
+    );
+});
+
+test('agent-error-leaves-the-field-empty-for-an-authorized-user', async () => {
+    const ctx = setup();
+    ctx.repository.chatViewModelRepository.setInput('сделай таблицу');
+
+    await ctx.agentChatService.onPromptSubmit();
+    await emit(ctx, {
+        kind: 'finished',
+        message: null,
+        stopReason: 'UnknownError',
+    });
+
+    // вошедшему возвращать нечего: лента никуда не денется, запрос виден в ней
+    expect(ctx.repository.chatViewModelRepository.input()).toBe('');
+});
+
 test('project-change-closes-session-and-clears-chat', async () => {
     const ctx = setup();
     ctx.repository.chatViewModelRepository.setInput('привет');
