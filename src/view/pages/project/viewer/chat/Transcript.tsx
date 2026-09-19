@@ -70,6 +70,12 @@ const ErrorBlock = ({
     // неудачей сохранения он ничего не снимает и выглядел бы разводом на регистрацию
     const offerLogin =
         !isAuthenticated && (AGENT_STOP_REASONS as string[]).includes(reason);
+    // вход снимает только лимит для незарегистрированных: под остальными отказами
+    // тот же запрос упрётся в то же самое и после входа, обещать это нельзя
+    const loginHint =
+        reason === 'UnauthorizedLimitExceeded'
+            ? dictionary.agent_chat.guest_login_hint_limit
+            : dictionary.agent_chat.guest_login_hint;
     return (
         <div className="agent-chat__error">
             <div className="agent-chat__error-label">
@@ -95,9 +101,7 @@ const ErrorBlock = ({
             )}
             {offerLogin && (
                 <>
-                    <div className="agent-chat__login-hint">
-                        {dictionary.agent_chat.guest_login_hint}
-                    </div>
+                    <div className="agent-chat__login-hint">{loginHint}</div>
                     <button
                         type="button"
                         className="agent-chat__login"

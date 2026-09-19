@@ -701,8 +701,15 @@ export class AgentChatService {
             return;
         }
         if (reason === 'UnauthorizedLimitExceeded') {
-            // вошедшему окно входа не поможет: лимит для незарегистрированных не про него
-            this.openLoginIfGuest('agent_limit');
+            // вошедшему окно входа не поможет, а раз лимит для незарегистрированных
+            // ему всё-таки прислали, контракт нарушен и это надо увидеть
+            if (this.openLoginIfGuest('agent_limit')) {
+                reportUnexpectedError(
+                    this.observerService,
+                    `agent.stop.${reason}`,
+                    new Error(`Agent stop reason ${reason} for authorized user`)
+                );
+            }
             return;
         }
         if (reason === 'UnknownError' || reason === 'Locked') {

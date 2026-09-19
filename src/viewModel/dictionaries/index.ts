@@ -170,6 +170,7 @@ export interface Translations {
         notice: string;
         buy_tokens: string;
         guest_login_hint: string;
+        guest_login_hint_limit: string;
         guest_login_action: string;
         clear_history: string;
         history_loading: string;
