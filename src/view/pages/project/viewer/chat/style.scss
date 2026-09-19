@@ -318,23 +318,45 @@
 }
 
 .agent-chat__input {
-    border: none;
-    resize: none;
-    outline: none;
-    // без явного фона браузер красит выключенное поле серым, и на время работы
-    // агента посреди чата появляется серый прямоугольник
-    background: transparent;
-    min-height: 56px;
-    font-family: inherit;
-    font-size: 14px;
-    line-height: 18px;
-    color: $gray-10;
+    .cm-editor {
+        // без явного фона браузер красит выключенное поле серым, и на время работы
+        // агента посреди чата появляется серый прямоугольник
+        background: transparent;
+        // столько же занимала textarea: 56px содержимого и 4px внутренних отступов
+        min-height: 60px;
+        // CM6 растёт под текст: без потолка длинный запрос выдавил бы кнопки из панели
+        max-height: 168px;
 
-    &::placeholder {
-        color: $gray-30;
+        &.cm-focused {
+            outline: none;
+        }
     }
 
-    &:disabled {
+    .cm-scroller {
+        font-family: inherit;
+        line-height: 18px;
+        overflow-y: auto;
+    }
+
+    .cm-content {
+        // те же 2px сверху и снизу, что браузер давал textarea
+        padding: 2px 0;
+        font-size: 14px;
+        line-height: 18px;
+        color: $gray-10;
+        caret-color: $gray-10;
+
+        // пока агент работает, поле только на чтение; у textarea это делал :disabled
+        &[aria-readonly='true'] {
+            color: $gray-30;
+        }
+    }
+
+    .cm-line {
+        padding: 0;
+    }
+
+    .cm-placeholder {
         color: $gray-30;
     }
 }

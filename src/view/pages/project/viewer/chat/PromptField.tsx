@@ -1,5 +1,6 @@
-import { KeyboardEvent } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import CodeMirror from '@uiw/react-codemirror';
 import { AppDispatch, StorageState } from '../../../../store';
 import { useDictionary } from '../../../../store/selectors/translations';
 import { controller } from '../../../../../main.tsx';
@@ -8,6 +9,7 @@ import {
     AGENT_TOKEN_OPTIONS,
 } from '../../../../../model/rpi/agentSocket.ts';
 import { SegmentedControl } from '../../../../components/segmentedControl';
+import { promptEditorExtensions } from './promptEditorExtensions.ts';
 
 const formatTokens = (value: number): string =>
     value >= 1000 ? `${Math.round(value / 1000)}k` : String(value);
@@ -30,36 +32,37 @@ export const PromptField = () => {
         requestState === 'running' || requestState === 'connecting';
     const canSubmit = input.trim().length > 0 && !isRunning;
 
-    const submit = () => {
-        if (!canSubmit) {
-            return;
-        }
+    // пустой запрос и работающего агента отсекают выключенная кнопка и сама команда Enter
+    const submit = useCallback(() => {
         dispatch(controller.onAgentPromptSubmitRequest());
-    };
+    }, [dispatch]);
 
-    const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
-        // Enter отправляет, Shift+Enter переносит строку
-        if (event.key === 'Enter' && !event.shiftKey) {
-            event.preventDefault();
-            submit();
-        }
-    };
+    const placeholder = dictionary.agent_chat.placeholder;
+    // стабильная ссылка: иначе @uiw пересобирает расширения на каждый символ
+    const extensions = useMemo(
+        () => promptEditorExtensions({ label: placeholder, onSubmit: submit }),
+        [placeholder, submit]
+    );
+
+    const onChange = useCallback(
+        (text: string) => {
+            dispatch(controller.onAgentPromptChangedRequest({ text }));
+        },
+        [dispatch]
+    );
 
     return (
         <div className="agent-chat__field">
-            <textarea
+            <CodeMirror
                 className="agent-chat__input"
-                placeholder={dictionary.agent_chat.placeholder}
+                placeholder={placeholder}
                 value={input}
                 readOnly={isRunning}
-                onKeyDown={onKeyDown}
-                onChange={(event) =>
-                    dispatch(
-                        controller.onAgentPromptChangedRequest({
-                            text: event.target.value,
-                        })
-                    )
-                }
+                onChange={onChange}
+                extensions={extensions}
+                basicSetup={false}
+                // иначе Tab перестанет уводить фокус из поля
+                indentWithTab={false}
             />
             <div className="agent-chat__controls">
                 <div className="agent-chat__setting">
