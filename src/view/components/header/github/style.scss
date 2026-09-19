@@ -1,0 +1,27 @@
+@use '../../../styles/colors' as *;
+
+.github-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    // без этого строчная ссылка тянет вниз базовую линию и сбивает выравнивание шапки
+    line-height: 0;
+    color: $gray-30;
+    border-radius: 4px;
+    transition: color 0.2s ease;
+
+    svg {
+        width: 24px;
+        height: 24px;
+    }
+
+    &:hover,
+    &:active {
+        color: $gray-40;
+    }
+
+    &:focus-visible {
+        outline: 2px solid $blue-20;
+        outline-offset: 2px;
+    }
+}

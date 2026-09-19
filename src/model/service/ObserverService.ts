@@ -98,6 +98,7 @@ export const Events = {
 
     EVENT_LANGUAGE_CHANGED: 'language_changed',
     EVENT_MENU_ITEM_CLICKED: 'menu_item_clicked',
+    EVENT_GITHUB_CLICKED: 'github_clicked',
     EVENT_TOUR_STARTED: 'tour_started',
     EVENT_CONTACT_MODAL_OPENED: 'contact_modal_opened',
     EVENT_CONTACT_FORM_SUBMITTED: 'contact_form_submitted',
@@ -219,6 +220,7 @@ export const OPENPANEL_EVENT_NAMES: Record<string, string> = {
     [Events.EVENT_TOKENS_TOPUP_CLICKED]: 'Tokens top-up clicked',
     [Events.EVENT_LANGUAGE_CHANGED]: 'Language changed',
     [Events.EVENT_MENU_ITEM_CLICKED]: 'Menu item clicked',
+    [Events.EVENT_GITHUB_CLICKED]: 'GitHub clicked',
     [Events.EVENT_TOUR_STARTED]: 'Tour started',
     [Events.EVENT_CONTACT_MODAL_OPENED]: 'Contact modal opened',
     [Events.EVENT_CONTACT_FORM_SUBMITTED]: 'Contact form submitted',

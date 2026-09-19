@@ -171,6 +171,7 @@ export const ru: Translations = {
         share: 'Поделиться',
         language: 'Язык',
         change_language_to: 'Поменять язык на «{language}»',
+        github: 'GitHub',
     },
     agent_chat: {
         tab_label: 'Агент',
