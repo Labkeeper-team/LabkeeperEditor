@@ -247,6 +247,63 @@ export class RouteSetup {
         );
     }
 
+    // ханки с состоянием: DELETE убирает ханк, и следующий GET его уже не отдаёт
+    async setupHunkRequestsWithState(
+        hunks: Hunk[] = [],
+        options?: { deleteDelayMs?: number }
+    ) {
+        const state = [...hunks];
+        const deleted: string[] = [];
+        let inFlight = 0;
+        let maxInFlight = 0;
+        await this.page.route(
+            `**/api/${version}/public/project/${uuid}/hunk`,
+            async (route) => {
+                if (route.request().method() !== 'GET') {
+                    await route.continue();
+                    return;
+                }
+                await route.fulfill({
+                    status: 200,
+                    contentType: contentType,
+                    body: JSON.stringify({ hunks: state }),
+                });
+            }
+        );
+        await this.page.route(
+            `**/api/${version}/public/project/${uuid}/hunk/*`,
+            async (route) => {
+                if (route.request().method() !== 'DELETE') {
+                    await route.continue();
+                    return;
+                }
+                const url = route.request().url();
+                const hunkId = url.split('/hunk/')[1]?.split('?')[0] ?? '';
+                inFlight += 1;
+                maxInFlight = Math.max(maxInFlight, inFlight);
+                // задержка нужна, чтобы одновременные удаления успели наложиться
+                await new Promise((resolve) =>
+                    setTimeout(resolve, options?.deleteDelayMs ?? 0)
+                );
+                const index = state.findIndex((hunk) => hunk.id === hunkId);
+                if (index >= 0) {
+                    state.splice(index, 1);
+                }
+                deleted.push(hunkId);
+                inFlight -= 1;
+                await route.fulfill({
+                    status: 200,
+                    contentType: contentType,
+                    body: JSON.stringify({}),
+                });
+            }
+        );
+        return {
+            deleted: () => [...deleted],
+            maxInFlight: () => maxInFlight,
+        };
+    }
+
     /**
      * История чата с агентом. Мок с состоянием: DELETE чистит список,
      * следующий GET уже отдаёт пустую историю, как это делает сервер.

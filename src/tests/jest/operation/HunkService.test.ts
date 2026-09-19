@@ -10,6 +10,8 @@ import {
     USER_EMAIL,
     USER_ID,
 } from '../common.ts';
+import { en } from '../../../viewModel/dictionaries/en.ts';
+import { MockViewModelRepository } from '../../../viewModel/repository';
 
 const sampleHunk: Hunk = {
     id: 'h1',
@@ -19,6 +21,38 @@ const sampleHunk: Hunk = {
     endLine: 1,
     text: 'AI generated line',
 };
+
+const threeHunks: Hunk[] = [
+    sampleHunk,
+    { ...sampleHunk, id: 'h2', segmentId: 2 },
+    { ...sampleHunk, id: 'h3', segmentId: 3 },
+];
+
+const deleteResult = (code: number) => ({
+    code,
+    body: {},
+    isOk: code < 300,
+    isUnauth: code === 401,
+    isForbidden: code === 403,
+});
+
+const hunkListResult = (hunks: Hunk[]) => ({
+    code: 200,
+    body: { hunks },
+    isOk: true,
+    isUnauth: false,
+    isForbidden: false,
+});
+
+// фоновый приём никто не ждёт, поэтому даём ему несколько кругов на завершение
+const settle = async () => {
+    for (let i = 0; i < 5; i += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+    }
+};
+
+const toasts = (repository: ReturnType<typeof mockContext>['repository']) =>
+    (repository as MockViewModelRepository).mockState().toasts;
 
 function setOwnAuthenticatedProject(
     repository: ReturnType<typeof mockContext>['repository']
@@ -221,4 +255,328 @@ test('undo clears remaining hunks and persists the pre-prompt program', async ()
         false
     );
     expect(rpi.saveProgramRequest).toHaveBeenCalledWith(PROJECT_ID, original);
+});
+
+test('acceptGroup deletes hunks one by one', async () => {
+    const { hunkService, rpi, repository } = mockContext();
+    setOwnAuthenticatedProject(repository);
+    repository.ideViewModelRepository.setHunks(threeHunks);
+    mockListHunksRequestWithHunks(rpi, []);
+    const order: string[] = [];
+    let inFlight = 0;
+    let maxInFlight = 0;
+    rpi.deleteHunkRequest = jest.fn(
+        async (_projectId: string, hunkId: string) => {
+            inFlight += 1;
+            maxInFlight = Math.max(maxInFlight, inFlight);
+            order.push(`start ${hunkId}`);
+            await new Promise((resolve) => setTimeout(resolve, 0));
+            order.push(`end ${hunkId}`);
+            inFlight -= 1;
+            return deleteResult(200);
+        }
+    );
+
+    await hunkService.acceptGroup(['h1', 'h2', 'h3']);
+
+    expect(maxInFlight).toBe(1);
+    expect(order).toEqual([
+        'start h1',
+        'end h1',
+        'start h2',
+        'end h2',
+        'start h3',
+        'end h3',
+    ]);
+});
+
+test('acceptAll clears the list on a server that rewrites it whole', async () => {
+    const { hunkService, rpi, repository } = mockContext();
+    setOwnAuthenticatedProject(repository);
+    repository.ideViewModelRepository.setHunks(threeHunks);
+    let serverHunks = [...threeHunks];
+    // худший случай: мок переписывает список целиком, и одновременные удаления затирают друг друга
+    rpi.deleteHunkRequest = jest.fn(
+        async (_projectId: string, hunkId: string) => {
+            const snapshot = serverHunks;
+            await new Promise((resolve) => setTimeout(resolve, 0));
+            serverHunks = snapshot.filter((h) => h.id !== hunkId);
+            return deleteResult(200);
+        }
+    );
+    rpi.listHunksRequest = jest.fn(async () => hunkListResult(serverHunks));
+
+    await hunkService.acceptAll();
+
+    expect(repository.ideViewModelRepository.hunks()).toEqual([]);
+});
+
+test('failed DELETE keeps the hunk and is reported', async () => {
+    const { hunkService, rpi, repository } = mockContext();
+    setOwnAuthenticatedProject(repository);
+    repository.ideViewModelRepository.setHunks(threeHunks);
+    rpi.deleteHunkRequest = jest.fn(
+        async (_projectId: string, hunkId: string) =>
+            deleteResult(hunkId === 'h2' ? 500 : 200)
+    );
+    // сервер оставил у себя то, что удалить не вышло
+    rpi.listHunksRequest = jest.fn(async () => hunkListResult([threeHunks[1]]));
+
+    await hunkService.acceptAll();
+
+    expect(repository.ideViewModelRepository.hunks()).toEqual([threeHunks[1]]);
+    expect(toasts(repository)).toEqual([
+        { message: en.hunks.errors.accept_failed, type: 'error' },
+    ]);
+});
+
+test('DELETE with 404 counts as an accepted hunk', async () => {
+    const { hunkService, rpi, repository } = mockContext();
+    setOwnAuthenticatedProject(repository);
+    repository.ideViewModelRepository.setHunks(threeHunks);
+    mockListHunksRequestWithHunks(rpi, []);
+    rpi.deleteHunkRequest = jest.fn(
+        async (_projectId: string, hunkId: string) =>
+            deleteResult(hunkId === 'h2' ? 404 : 200)
+    );
+
+    await hunkService.acceptAll();
+
+    expect(repository.ideViewModelRepository.hunks()).toEqual([]);
+    expect(toasts(repository)).toEqual([]);
+});
+
+test('acceptHunksInBackground does not lose the second batch', async () => {
+    const { hunkService, rpi, repository } = mockContext();
+    setOwnAuthenticatedProject(repository);
+    repository.ideViewModelRepository.setHunks([threeHunks[0], threeHunks[1]]);
+    mockListHunksRequestWithHunks(rpi, []);
+    const deleted: string[] = [];
+    let releaseFirst: () => void = () => {};
+    rpi.deleteHunkRequest = jest.fn(
+        async (_projectId: string, hunkId: string) => {
+            deleted.push(hunkId);
+            if (hunkId === 'h1') {
+                await new Promise<void>((resolve) => (releaseFirst = resolve));
+            }
+            return deleteResult(200);
+        }
+    );
+
+    hunkService.acceptHunksInBackground(['h1']);
+    // вторая пачка приходит, пока первая ещё в отправке
+    hunkService.acceptHunksInBackground(['h2']);
+    // общая очередь удалений отдаёт первый DELETE следующим тактом, поэтому ждём его
+    await settle();
+    releaseFirst();
+    await settle();
+
+    expect(deleted).toEqual(['h1', 'h2']);
+    expect(repository.ideViewModelRepository.hunks()).toEqual([]);
+});
+
+test('background accept does not run in parallel with an explicit accept', async () => {
+    const { hunkService, rpi, repository } = mockContext();
+    setOwnAuthenticatedProject(repository);
+    repository.ideViewModelRepository.setHunks(threeHunks);
+    mockListHunksRequestWithHunks(rpi, []);
+    const deleted: string[] = [];
+    let inFlight = 0;
+    let maxInFlight = 0;
+    let releaseFirst: () => void = () => {};
+    rpi.deleteHunkRequest = jest.fn(
+        async (_projectId: string, hunkId: string) => {
+            deleted.push(hunkId);
+            inFlight += 1;
+            maxInFlight = Math.max(maxInFlight, inFlight);
+            if (hunkId === 'h1') {
+                await new Promise<void>((resolve) => (releaseFirst = resolve));
+            }
+            inFlight -= 1;
+            return deleteResult(200);
+        }
+    );
+
+    const accepting = hunkService.acceptGroup(['h1', 'h3']);
+    await settle();
+    // человек печатает в сегменте 2, пока приём держит h1, и запускает фоновый приём
+    hunkService.acceptHunksForSegment(2);
+    releaseFirst();
+    await accepting;
+    await settle();
+
+    expect(maxInFlight).toBe(1);
+    expect(deleted).toEqual(['h1', 'h3', 'h2']);
+});
+
+test('background accept skips hunks that the running accept already took', async () => {
+    const { hunkService, rpi, repository } = mockContext();
+    setOwnAuthenticatedProject(repository);
+    repository.ideViewModelRepository.setHunks(threeHunks);
+    mockListHunksRequestWithHunks(rpi, []);
+    const deleted: string[] = [];
+    let releaseFirst: () => void = () => {};
+    rpi.deleteHunkRequest = jest.fn(
+        async (_projectId: string, hunkId: string) => {
+            deleted.push(hunkId);
+            if (hunkId === 'h1') {
+                await new Promise<void>((resolve) => (releaseFirst = resolve));
+            }
+            return deleteResult(200);
+        }
+    );
+
+    const accepting = hunkService.acceptAll();
+    await settle();
+    hunkService.acceptHunksForSegment(2);
+    releaseFirst();
+    await accepting;
+    await settle();
+
+    // h2 уже в работе у «Принять все», второй DELETE по нему был бы лишним
+    expect(deleted).toEqual(['h1', 'h2', 'h3']);
+});
+
+test('background accept does not undo a running revertAll', async () => {
+    const { hunkService, rpi, repository } = mockContext();
+    setOwnAuthenticatedProject(repository);
+    repository.ideViewModelRepository.setHunks(threeHunks);
+    mockGetProjectRequestWithDefaultProject(rpi);
+    mockListFilesRequestWithDefaultFile(rpi);
+    mockListHunksRequestWithHunks(rpi, []);
+    let releaseFirst: () => void = () => {};
+    const deleteMock = jest.fn(async (_projectId: string, hunkId: string) => {
+        if (hunkId === 'h1') {
+            await new Promise<void>((resolve) => (releaseFirst = resolve));
+        }
+        return deleteResult(200);
+    });
+    rpi.deleteHunkRequest = deleteMock;
+
+    const reverting = hunkService.revertAll();
+    await settle();
+    hunkService.acceptHunksForSegment(2);
+    releaseFirst();
+    await reverting;
+    await settle();
+
+    // приём с revert=false отменил бы откат, который человек уже запросил
+    expect(deleteMock.mock.calls).toEqual([
+        [PROJECT_ID, 'h1', true],
+        [PROJECT_ID, 'h2', true],
+        [PROJECT_ID, 'h3', true],
+    ]);
+});
+
+test('failed DELETE in revertGroup keeps the hunk and is reported', async () => {
+    const { hunkService, rpi, repository } = mockContext();
+    setOwnAuthenticatedProject(repository);
+    repository.ideViewModelRepository.setHunks(threeHunks);
+    mockGetProjectRequestWithDefaultProject(rpi);
+    mockListFilesRequestWithDefaultFile(rpi);
+    rpi.deleteHunkRequest = jest.fn(
+        async (_projectId: string, hunkId: string) =>
+            deleteResult(hunkId === 'h2' ? 500 : 200)
+    );
+    // сервер оставил у себя то, что откатить не вышло
+    rpi.listHunksRequest = jest.fn(async () => hunkListResult([threeHunks[1]]));
+
+    await hunkService.revertGroup(['h1', 'h2', 'h3']);
+
+    expect(repository.ideViewModelRepository.hunks()).toEqual([threeHunks[1]]);
+    expect(toasts(repository)).toEqual([
+        { message: en.hunks.errors.revert_failed, type: 'error' },
+    ]);
+});
+
+test('failed DELETE in revertAll keeps the hunk and is reported', async () => {
+    const { hunkService, rpi, repository } = mockContext();
+    setOwnAuthenticatedProject(repository);
+    repository.ideViewModelRepository.setHunks(threeHunks);
+    mockGetProjectRequestWithDefaultProject(rpi);
+    mockListFilesRequestWithDefaultFile(rpi);
+    rpi.deleteHunkRequest = jest.fn(
+        async (_projectId: string, hunkId: string) =>
+            deleteResult(hunkId === 'h2' ? 500 : 200)
+    );
+    rpi.listHunksRequest = jest.fn(async () => hunkListResult([threeHunks[1]]));
+
+    await hunkService.revertAll();
+
+    expect(repository.ideViewModelRepository.hunks()).toEqual([threeHunks[1]]);
+    expect(toasts(repository)).toEqual([
+        { message: en.hunks.errors.revert_failed, type: 'error' },
+    ]);
+});
+
+test('failed DELETE on a history change is reported', async () => {
+    const { hunkService, rpi, repository } = mockContext();
+    setOwnAuthenticatedProject(repository);
+    repository.ideViewModelRepository.setHunks(threeHunks);
+    rpi.deleteHunkRequest = jest.fn(
+        async (_projectId: string, hunkId: string) =>
+            deleteResult(hunkId === 'h2' ? 500 : 200)
+    );
+    rpi.listHunksRequest = jest.fn(async () => hunkListResult([threeHunks[1]]));
+
+    await hunkService.acceptAllForHistoryChange();
+
+    expect(repository.ideViewModelRepository.hunks()).toEqual([threeHunks[1]]);
+    expect(toasts(repository)).toEqual([
+        { message: en.hunks.errors.accept_failed, type: 'error' },
+    ]);
+});
+
+test('failed DELETE in background accept is reported', async () => {
+    const { hunkService, rpi, repository } = mockContext();
+    setOwnAuthenticatedProject(repository);
+    repository.ideViewModelRepository.setHunks(threeHunks);
+    rpi.deleteHunkRequest = jest.fn(
+        async (_projectId: string, hunkId: string) =>
+            deleteResult(hunkId === 'h2' ? 500 : 200)
+    );
+    rpi.listHunksRequest = jest.fn(async () => hunkListResult([threeHunks[1]]));
+
+    hunkService.acceptHunksInBackground(['h1', 'h2', 'h3']);
+    await settle();
+
+    expect(toasts(repository)).toEqual([
+        { message: en.hunks.errors.accept_failed, type: 'error' },
+    ]);
+});
+
+test('401 on DELETE reports an expired session and resets the editor', async () => {
+    const { hunkService, rpi, repository, resetService } = mockContext();
+    setOwnAuthenticatedProject(repository);
+    repository.ideViewModelRepository.setHunks(threeHunks);
+    mockListHunksRequestWithHunks(rpi, []);
+    const resetAll = jest.spyOn(resetService, 'resetAll');
+    rpi.deleteHunkRequest = jest.fn(async () => deleteResult(401));
+
+    await hunkService.acceptAll();
+
+    // повтор истёкшую сессию не лечит, поэтому и предлагать его нечестно
+    expect(toasts(repository)).toEqual([
+        { message: en.filemanager.errors.sessionExpired, type: 'error' },
+    ]);
+    expect(resetAll).toHaveBeenCalled();
+    // после первого 401 остальные запросы пачки вернут то же самое
+    expect(rpi.deleteHunkRequest).toHaveBeenCalledTimes(1);
+});
+
+test('403 on DELETE reports lost access instead of a retry', async () => {
+    const { hunkService, rpi, repository } = mockContext();
+    setOwnAuthenticatedProject(repository);
+    repository.ideViewModelRepository.setHunks(threeHunks);
+    rpi.deleteHunkRequest = jest.fn(
+        async (_projectId: string, hunkId: string) =>
+            deleteResult(hunkId === 'h2' ? 403 : 200)
+    );
+    rpi.listHunksRequest = jest.fn(async () => hunkListResult([threeHunks[1]]));
+
+    await hunkService.acceptAll();
+
+    expect(toasts(repository)).toEqual([
+        { message: en.filemanager.errors.notEnoughRights, type: 'error' },
+    ]);
 });

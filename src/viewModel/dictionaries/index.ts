@@ -505,6 +505,10 @@ export interface Translations {
         new: string;
         collapse_bar: string;
         expand_bar: string;
+        errors: {
+            accept_failed: string;
+            revert_failed: string;
+        };
     };
 
     contact_ok: string;

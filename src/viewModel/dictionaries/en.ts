@@ -557,6 +557,10 @@ export const en: Translations = {
         new: 'new',
         collapse_bar: 'Collapse changes bar',
         expand_bar: 'Expand changes bar',
+        errors: {
+            accept_failed: 'Some changes could not be accepted, try again',
+            revert_failed: 'Some changes could not be reverted, try again',
+        },
     },
 
     contact_ok: 'We have received your feedback',

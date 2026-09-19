@@ -16,8 +16,20 @@ import {
 } from '../../model/service/ObserverService.ts';
 import { trackEvent } from '../utils/observerContext.ts';
 
+/** Чем кончилась пачка DELETE. Отказы разведены: лечатся они по-разному. */
+interface DeleteOutcome {
+    failed: number;
+    unauth: boolean;
+    forbidden: boolean;
+}
+
 export class HunkService {
     private acceptInFlight = false;
+    // id, накопленные фоновым приёмом, пока шла предыдущая отправка
+    private backgroundAcceptQueue: string[] = [];
+    // общая очередь удалений: пути приёма и отката друг о друге не знают,
+    // а набор текста запускает приём поверх любого из них
+    private deleteChain: Promise<void> = Promise.resolve();
 
     constructor(
         private repository: ViewModelRepository,
@@ -100,6 +112,94 @@ export class HunkService {
         return this.rpi.deleteHunkRequest(projectId, hunkId, revert);
     };
 
+    // единственная дверь к DELETE: очередь одна на сервис, иначе соседние
+    // пути шлют запросы одновременно и удаляют один ханк дважды
+    private deleteHunksOneByOne = (
+        projectId: string,
+        hunkIds: string[],
+        revert: boolean
+    ): Promise<DeleteOutcome> => {
+        const run = () => this.sendDeletes(projectId, hunkIds, revert);
+        // ждём цепочку обоими концами: отказ соседа не должен её порвать
+        const outcome = this.deleteChain.then(run, run);
+        this.deleteChain = outcome.then(
+            () => undefined,
+            () => undefined
+        );
+        return outcome;
+    };
+
+    // 404 значит, что ханка на сервере уже нет, для нас это такой же успех
+    private sendDeletes = async (
+        projectId: string,
+        hunkIds: string[],
+        revert: boolean
+    ): Promise<DeleteOutcome> => {
+        const outcome: DeleteOutcome = {
+            failed: 0,
+            unauth: false,
+            forbidden: false,
+        };
+        for (const id of hunkIds) {
+            const result = await this.deleteHunkOnServer(projectId, id, revert);
+            if (result.isOk || result.code === 404) {
+                continue;
+            }
+            if (result.isUnauth) {
+                // сессии нет, остальные запросы пачки вернут то же самое
+                outcome.unauth = true;
+                break;
+            }
+            if (result.isForbidden) {
+                outcome.forbidden = true;
+                continue;
+            }
+            outcome.failed += 1;
+        }
+        return outcome;
+    };
+
+    // истёкшую сессию и потерю доступа повтор не лечит, поэтому говорим о них
+    // отдельно и так же, как соседние сервисы
+    private reportDeleteOutcome = (
+        outcome: DeleteOutcome,
+        failureMessage: string
+    ): void => {
+        if (outcome.unauth) {
+            this.repository.toast(
+                this.repository.dictionary.filemanager.errors.sessionExpired,
+                'error'
+            );
+            this.ideService.resetEditor();
+            return;
+        }
+        if (outcome.forbidden) {
+            this.repository.toast(
+                this.repository.dictionary.filemanager.errors.notEnoughRights,
+                'error'
+            );
+            return;
+        }
+        if (outcome.failed === 0) {
+            return;
+        }
+        this.repository.toast(failureMessage, 'error');
+    };
+
+    private reportAcceptFailure = (outcome: DeleteOutcome): void => {
+        this.reportDeleteOutcome(
+            outcome,
+            this.repository.dictionary.hunks.errors.accept_failed
+        );
+    };
+
+    private reportRevertFailure = (outcome: DeleteOutcome): void => {
+        this.reportDeleteOutcome(
+            outcome,
+            this.repository.dictionary.hunks.errors.revert_failed
+        );
+    };
+
     private markPending = (ids: string[]): void => {
         const current = this.repository.ideViewModelRepository.pendingHunkIds();
         this.repository.ideViewModelRepository.setPendingHunkIds([
@@ -162,12 +262,14 @@ export class HunkService {
             if (!projectId) {
                 return;
             }
-            await Promise.all(
-                hunkIds.map((id) =>
-                    this.deleteHunkOnServer(projectId, id, false)
-                )
+            // шлём по одному, как и откат, и смотрим на ответ каждого запроса
+            const outcome = await this.deleteHunksOneByOne(
+                projectId,
+                hunkIds,
+                false
             );
             await this.refreshAfterAccept();
+            this.reportAcceptFailure(outcome);
         } finally {
             this.unmarkPending(hunkIds);
         }
@@ -190,10 +292,13 @@ export class HunkService {
             if (!projectId) {
                 return;
             }
-            for (const id of hunkIds) {
-                await this.deleteHunkOnServer(projectId, id, true);
-            }
+            const outcome = await this.deleteHunksOneByOne(
+                projectId,
+                hunkIds,
+                true
+            );
             await this.refreshAfterRevert();
+            this.reportRevertFailure(outcome);
         } finally {
             this.unmarkPending(hunkIds);
         }
@@ -226,10 +331,9 @@ export class HunkService {
         if (!projectId) {
             return;
         }
-        await Promise.all(
-            ids.map((id) => this.deleteHunkOnServer(projectId, id, false))
-        );
+        const outcome = await this.deleteHunksOneByOne(projectId, ids, false);
         await this.loadHunks();
+        this.reportAcceptFailure(outcome);
     };
 
     revertAll = async (): Promise<void> => {
@@ -250,10 +354,13 @@ export class HunkService {
             if (!projectId) {
                 return;
             }
-            for (const id of ids) {
-                await this.deleteHunkOnServer(projectId, id, true);
-            }
+            const outcome = await this.deleteHunksOneByOne(
+                projectId,
+                ids,
+                true
+            );
             await this.refreshAfterRevert();
+            this.reportRevertFailure(outcome);
         } finally {
             this.unmarkPending(ids);
         }
@@ -268,10 +375,7 @@ export class HunkService {
     };
 
     acceptHunksInBackground = (hunkIds: string[]): void => {
-        if (hunkIds.length === 0 || this.acceptInFlight) {
-            if (hunkIds.length > 0) {
-                this.removeHunksLocally(hunkIds);
-            }
+        if (hunkIds.length === 0) {
             return;
         }
         this.removeHunksLocally(hunkIds);
@@ -282,19 +386,51 @@ export class HunkService {
         if (!projectId) {
             return;
         }
+        // эти id уже удаляет явный приём или откат: второй DELETE ушёл бы
+        // впустую, а поверх отката ещё и отменил бы его
+        const busy = new Set([
+            ...this.repository.ideViewModelRepository.pendingHunkIds(),
+            ...this.backgroundAcceptQueue,
+        ]);
+        const fresh = hunkIds.filter((id) => !busy.has(id));
+        if (fresh.length === 0) {
+            return;
+        }
+        // при занятой отправке ханки нельзя бросать: с экрана убраны, а на сервере нет
+        this.backgroundAcceptQueue.push(...fresh);
+        if (this.acceptInFlight) {
+            return;
+        }
         this.acceptInFlight = true;
-        void (async () => {
-            try {
-                await Promise.all(
-                    hunkIds.map((id) =>
-                        this.deleteHunkOnServer(projectId, id, false)
-                    )
+        void this.drainBackgroundAccept(projectId);
+    };
+
+    private drainBackgroundAccept = async (
+        projectId: string
+    ): Promise<void> => {
+        try {
+            const total: DeleteOutcome = {
+                failed: 0,
+                unauth: false,
+                forbidden: false,
+            };
+            while (this.backgroundAcceptQueue.length > 0) {
+                const batch = this.backgroundAcceptQueue.splice(0);
+                const outcome = await this.deleteHunksOneByOne(
+                    projectId,
+                    batch,
+                    false
                 );
+                total.failed += outcome.failed;
+                total.unauth = total.unauth || outcome.unauth;
+                total.forbidden = total.forbidden || outcome.forbidden;
+                // перечитываем внутри круга: пока список ехал, могла прийти новая пачка
                 await this.loadHunks();
-            } finally {
-                this.acceptInFlight = false;
             }
-        })();
+            this.reportAcceptFailure(total);
+        } finally {
+            this.acceptInFlight = false;
+        }
     };
 
     acceptAllHunksInBackground = (): void => {
