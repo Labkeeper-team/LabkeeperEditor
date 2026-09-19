@@ -929,6 +929,12 @@ export class Controller {
         }
     );
 
+    onAgentAbortRequest = createAsyncThunk('onAgentAbort', async () => {
+        await this.wrapper('onAgentAbort', () =>
+            this.agentChatService.onAbortClicked()
+        );
+    });
+
     onCrossBorderConsentAcceptedRequest = createAsyncThunk(
         'onCrossBorderConsentAccepted',
         async () => {

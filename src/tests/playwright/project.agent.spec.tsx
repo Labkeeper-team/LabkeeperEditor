@@ -42,6 +42,7 @@ async function openChat(
         authenticated?: boolean;
         program?: Program;
         historyDelayMs?: number;
+        closes?: number[];
     } = {}
 ) {
     const routeSetup = new RouteSetup(page);
@@ -64,6 +65,7 @@ async function openChat(
     }
     const sent = await routeSetup.setupAgentSocket(options.frames ?? [], {
         dropConnection: options.dropConnection,
+        closes: options.closes,
     });
 
     await page.goto(`/project/${uuid}`);
@@ -703,7 +705,11 @@ test('agent-history-clear-hidden-for-unauthorized', async ({ page }) => {
  */
 async function openGuestChat(
     page: Page,
-    options: { frames?: Frame[]; dropConnection?: boolean } = {}
+    options: {
+        frames?: Frame[];
+        dropConnection?: boolean;
+        closes?: number[];
+    } = {}
 ) {
     const routeSetup = new RouteSetup(page);
     await routeSetup.setupGetUserInfoRequest(false);
@@ -711,6 +717,7 @@ async function openGuestChat(
     await routeSetup.acceptCrossBorderConsentLocally();
     const sent = await routeSetup.setupAgentSocket(options.frames ?? [], {
         dropConnection: options.dropConnection,
+        closes: options.closes,
     });
 
     await page.goto('/');
@@ -1603,4 +1610,78 @@ test.describe('русская локаль', () => {
             .toEqual(['Агент ещё работает. Точно уйти со страницы?']);
         await expect(page).toHaveURL(`/project/${uuid}`);
     });
+});
+
+const stopButton = (page: Page) =>
+    page.getByRole('button', { name: 'Stop', exact: true });
+
+const sendButton = (page: Page) =>
+    page.getByRole('button', { name: 'Send', exact: true });
+
+test('agent-abort-button-stands-in-for-send-while-running', async ({
+    page,
+}) => {
+    await openChat(page, { frames: [toolCall('read_segment')] });
+    await expect(stopButton(page)).toHaveCount(0);
+
+    await submitPrompt(page);
+
+    await expect(page.locator('.agent-chat__event')).toHaveCount(1);
+    await expect(stopButton(page)).toBeVisible();
+    // кнопка одна и та же, иначе на телефоне раскладка поедет
+    await expect(sendButton(page)).toHaveCount(0);
+});
+
+test('agent-abort-closes-the-socket-and-shows-what-changed', async ({
+    page,
+}) => {
+    const closes: number[] = [];
+    await openChat(page, {
+        frames: [toolCall('add_lines_to_segment')],
+        closes,
+    });
+    await submitPrompt(page);
+    await expect(page.locator('.agent-chat__event')).toHaveCount(1);
+    // правка последнего инструмента доезжает до сервера только к прерыванию
+    await new RouteSetup(page).setupListHunksRequest([
+        {
+            id: 'h1',
+            type: 'addLinesToSegment',
+            segmentId: 3,
+            startLine: 1,
+            endLine: 2,
+        },
+    ]);
+
+    await stopButton(page).click();
+
+    await expect(page.locator('.agent-chat__notice-text')).toContainText(
+        'The run was stopped'
+    );
+    await expect(page.locator('.agent-chat__notice-changes li')).toHaveText([
+        'Segment №3',
+    ]);
+    await expect.poll(() => closes).toEqual([1000]);
+    // прогон окончен: поле снова набирается, а кнопка отправки вернулась
+    await expect(page.getByPlaceholder('Enter your promt')).toBeEditable();
+    await expect(sendButton(page)).toBeVisible();
+});
+
+test('agent-abort-of-a-guest-run-says-the-result-is-lost', async ({ page }) => {
+    const closes: number[] = [];
+    await openGuestChat(page, {
+        frames: [toolCall('add_lines_to_segment')],
+        closes,
+    });
+    await submitPrompt(page);
+    await expect(page.locator('.agent-chat__event')).toHaveCount(1);
+
+    await stopButton(page).click();
+
+    await expect(page.locator('.agent-chat__notice-text')).toContainText(
+        'the result is lost entirely'
+    );
+    // у гостя правок в ленте нет, перечислять нечего
+    await expect(page.locator('.agent-chat__notice-changes')).toHaveCount(0);
+    await expect.poll(() => closes).toEqual([1000]);
 });
