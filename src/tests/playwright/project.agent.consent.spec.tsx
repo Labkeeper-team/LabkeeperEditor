@@ -61,8 +61,12 @@ async function openAgentTab(page: Page, agentLabel: string) {
 
 const promptField = (page: Page) => page.getByPlaceholder('Enter your promt');
 
-/** У CodeMirror нет value: текст поля собирается из строк contenteditable */
-const promptText = (page: Page) =>
+/**
+ * У CodeMirror нет value: текст поля собирается из строк contenteditable.
+ * Строки виртуализированы, в DOM лежит только видимая часть документа,
+ * поэтому длинный промпт целиком отсюда не прочитать: для него нужен toContain
+ */
+const visiblePromptText = (page: Page) =>
     promptField(page).evaluate((node) => {
         const copy = node.cloneNode(true) as HTMLElement;
         // подсказка пустого поля живёт виджетом внутри строки, но значением не является
@@ -91,7 +95,7 @@ test('consent-modal-blocks-the-first-prompt', async ({ page }) => {
     await expect(modal(page)).toBeVisible();
     expect(sent).toHaveLength(0);
     // текст остаётся на месте, иначе человек потеряет написанное
-    await expect.poll(() => promptText(page)).toBe('сделай таблицу');
+    await expect.poll(() => visiblePromptText(page)).toBe('сделай таблицу');
 });
 
 test('consent-modal-shows-the-text-and-the-document-link', async ({ page }) => {
@@ -157,7 +161,7 @@ test('consent-dismissed-keeps-the-prompt-unsent', async ({ page }) => {
 
     await expect(modal(page)).toBeHidden();
     expect(sent).toHaveLength(0);
-    await expect.poll(() => promptText(page)).toBe('сделай таблицу');
+    await expect.poll(() => visiblePromptText(page)).toBe('сделай таблицу');
 });
 
 test('consent-stored-on-the-server-is-not-asked-again', async ({ page }) => {

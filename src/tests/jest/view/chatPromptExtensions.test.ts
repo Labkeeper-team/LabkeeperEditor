@@ -64,6 +64,15 @@ const undoKey: KeyboardEventInit = {
     ctrlKey: true,
 };
 
+// повтор шапка слушает двумя сочетаниями сразу, поле обязано перехватывать оба
+const redoKeys: [string, KeyboardEventInit][] = [
+    ['Ctrl+Y', { key: 'y', code: 'KeyY', keyCode: 89, ctrlKey: true }],
+    [
+        'Ctrl+Shift+Z',
+        { key: 'Z', code: 'KeyZ', keyCode: 90, ctrlKey: true, shiftKey: true },
+    ],
+];
+
 test('отмена в поле чата откатывает поле и не уходит к откату проекта', () => {
     const view = promptView();
     type(view, 'привет мир');
@@ -74,6 +83,22 @@ test('отмена в поле чата откатывает поле и не у
     // глобальный mod+z редактора слушает document, туда событие дойти не должно
     expect(escaped).toHaveLength(0);
 });
+
+test.each(redoKeys)(
+    'повтор по %s возвращает текст и не уходит к повтору проекта',
+    (_name, redoKey) => {
+        const view = promptView();
+        type(view, 'привет мир');
+        press(view, undoKey);
+        expect(view.state.doc.toString()).toBe('');
+
+        press(view, redoKey);
+
+        expect(view.state.doc.toString()).toBe('привет мир');
+        // глобальный ctrl+y и mod+shift+z слушают document, туда события дойти не должны
+        expect(escaped).toHaveLength(0);
+    }
+);
 
 test('отмена не всплывает и при пустой истории', () => {
     const view = promptView();

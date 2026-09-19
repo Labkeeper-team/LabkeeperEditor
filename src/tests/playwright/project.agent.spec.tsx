@@ -76,8 +76,12 @@ async function openChat(
 
 const promptField = (page: Page) => page.getByPlaceholder('Enter your promt');
 
-/** У CodeMirror нет value: текст поля собирается из строк contenteditable */
-const promptText = (page: Page) =>
+/**
+ * У CodeMirror нет value: текст поля собирается из строк contenteditable.
+ * Строки виртуализированы, в DOM лежит только видимая часть документа,
+ * поэтому длинный промпт целиком отсюда не прочитать: для него нужен toContain
+ */
+const visiblePromptText = (page: Page) =>
     promptField(page).evaluate((node) => {
         const copy = node.cloneNode(true) as HTMLElement;
         // подсказка пустого поля живёт виджетом внутри строки, но значением не является
@@ -281,15 +285,37 @@ test('agent-prompt-undo-stays-in-the-chat', async ({ page }) => {
 
     await promptField(page).click();
     await page.keyboard.type('привет мир');
-    await expect.poll(() => promptText(page)).toBe('привет мир');
+    await expect.poll(() => visiblePromptText(page)).toBe('привет мир');
     await countUndoOnDocument(page);
 
     await promptField(page).press('ControlOrMeta+z');
 
     // откат остался в поле чата: программа не тронута, а событие не ушло наверх
     await expect(segment).toHaveText('a = 10 + 5');
-    await expect.poll(() => promptText(page)).toBe('');
+    await expect.poll(() => visiblePromptText(page)).toBe('');
     expect(await undoOnDocumentHits(page)).toBe(0);
+});
+
+test('agent-prompt-undo-does-not-bring-back-a-sent-prompt', async ({
+    page,
+}) => {
+    await openChat(page, { frames: [finished('Done')] });
+
+    await promptField(page).click();
+    await page.keyboard.type('сделай таблицу');
+    await page.keyboard.press('Enter');
+
+    await expect(page.locator('.agent-chat__request-text')).toHaveText(
+        'сделай таблицу'
+    );
+    await expect.poll(() => visiblePromptText(page)).toBe('');
+    // прогон кончился, поле снова редактируемое, и отмена в нём снова работает
+    await expect(promptField(page)).toBeEditable();
+
+    await promptField(page).press('ControlOrMeta+z');
+
+    // очистку после отправки писали снаружи, в историю поля она не попала
+    await expect.poll(() => visiblePromptText(page)).toBe('');
 });
 
 test('agent-prompt-enter-sends-and-shift-enter-adds-a-line', async ({
@@ -304,7 +330,7 @@ test('agent-prompt-enter-sends-and-shift-enter-adds-a-line', async ({
 
     expect(sent).toHaveLength(0);
     await expect
-        .poll(() => promptText(page))
+        .poll(() => visiblePromptText(page))
         .toBe('первая строка\nвторая строка');
 
     await page.keyboard.press('Enter');
@@ -313,7 +339,7 @@ test('agent-prompt-enter-sends-and-shift-enter-adds-a-line', async ({
         'первая строка\nвторая строка'
     );
     // очистку после отправки @uiw откладывает, пока человек печатает
-    await expect.poll(() => promptText(page)).toBe('');
+    await expect.poll(() => visiblePromptText(page)).toBe('');
 });
 
 test('agent-stop-reason-Done-shows-text', async ({ page }) => {
@@ -335,7 +361,9 @@ test('agent-stop-reason-PromptTooLong-returns-the-prompt', async ({ page }) => {
         'The request is too long. Shorten it and send it again'
     );
     // текст вернулся в поле, сокращать его не придётся по памяти
-    await expect.poll(() => promptText(page)).toBe('очень длинный запрос');
+    await expect
+        .poll(() => visiblePromptText(page))
+        .toBe('очень длинный запрос');
     await expect(promptField(page)).toBeEditable();
 });
 
@@ -913,7 +941,7 @@ test('guest-agent-error-offers-login', async ({ page }) => {
         'With an account the agent has its own token balance'
     );
     // запрос ждёт в поле: вход откроет проект заново и от ленты ничего не оставит
-    await expect.poll(() => promptText(page)).toBe('поправь введение');
+    await expect.poll(() => visiblePromptText(page)).toBe('поправь введение');
 
     await loginOffer(page).click();
 
@@ -1100,7 +1128,7 @@ test('compile-errors-go-to-the-agent-prompt', async ({ page }) => {
     // чат был закрыт, кнопка его открывает
     await expect(page.locator('.agent-chat')).toBeVisible();
     await expect
-        .poll(() => promptText(page))
+        .poll(() => visiblePromptText(page))
         .toBe(
             'Fix the compilation errors:\n- Segment №1, line 1.4: No such variable x'
         );
@@ -1119,7 +1147,7 @@ test('compile-errors-do-not-overwrite-a-typed-prompt', async ({ page }) => {
     await expect(page.locator('div.Toastify__toast').first()).toContainText(
         'The agent prompt already has text'
     );
-    await expect.poll(() => promptText(page)).toBe('мой запрос');
+    await expect.poll(() => visiblePromptText(page)).toBe('мой запрос');
 });
 
 test.describe('compile errors on a phone', () => {
@@ -1135,7 +1163,15 @@ test.describe('compile errors on a phone', () => {
         await sendErrorsButton(page).click();
 
         await expect(page.locator('.agent-chat')).toBeVisible();
-        await expect.poll(() => promptText(page)).toMatch(/No such variable x/);
+        await expect
+            .poll(() => visiblePromptText(page))
+            .toMatch(/No such variable x/);
+        // ниже 16px айфон зумит страницу при фокусе на поле
+        await expect(
+            promptField(page).evaluate(
+                (node) => getComputedStyle(node).fontSize
+            )
+        ).resolves.toBe('16px');
         const overflow = await page.evaluate(
             () =>
                 document.documentElement.scrollWidth -
@@ -1163,7 +1199,7 @@ test.describe('compile errors in a russian browser', () => {
         await sendErrorsButton(page).click();
 
         await expect
-            .poll(() => promptText(page))
+            .poll(() => visiblePromptText(page))
             .toBe(
                 'Fix the compilation errors:\n- Segment №1, line 1.4: No such variable x'
             );
