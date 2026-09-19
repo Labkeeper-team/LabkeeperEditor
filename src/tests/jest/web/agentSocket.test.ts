@@ -175,6 +175,32 @@ test('unauthorized-channel-has-no-project-id', () => {
     expect(lastSocket().url).toBe('ws://localhost/api/v4/ws/prompt');
 });
 
+// свежие копии модулей: sessionId модульный, и без изоляции он утёк бы в соседние случаи
+test('both-channels-carry-the-session-id', async () => {
+    await jest.isolateModulesAsync(async () => {
+        const { adoptAnalyticsSessionId } =
+            await import('../../../web/session.ts');
+        const { WebAgentSocket: IsolatedSocket } =
+            await import('../../../web/server/agentSocket.ts');
+        adoptAnalyticsSessionId('s-1');
+
+        new IsolatedSocket().startAgent('project-42', PARAMS, makeHandlers());
+
+        expect(lastSocket().url).toBe(
+            'ws://localhost/api/v4/ws/project/project-42?sessionId=s-1'
+        );
+
+        new IsolatedSocket().startAgentUnauthorized(
+            { ...PARAMS, program: PROGRAM },
+            makeHandlers()
+        );
+
+        expect(lastSocket().url).toBe(
+            'ws://localhost/api/v4/ws/prompt?sessionId=s-1'
+        );
+    });
+});
+
 test('start-frame-is-sent-only-after-the-socket-opens', () => {
     new WebAgentSocket().startAgent('project-42', PARAMS, makeHandlers());
     const socket = lastSocket();

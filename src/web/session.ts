@@ -1,3 +1,5 @@
+import { logBreadcrumb } from '../viewModel/utils/logBreadcrumb.ts';
+
 export const LABKEEPER_SESSION_HEADER = 'X-Labkeeper-Session-Id';
 
 export function sessionIdAsProfileId(sessionId: string): string {
@@ -17,11 +19,34 @@ export function createGuestSessionId(): string {
     return sessionId;
 }
 
-export function setSessionId(next: string | undefined) {
+// значение живёт до конца вкладки: подмена посреди работы разрывает цепочку запросов
+// на бэкенде, и до этого её не было видно ни в одном логе
+export function adoptAnalyticsSessionId(next: string | undefined) {
     if (!next) {
         return;
     }
+    if (sessionId) {
+        if (sessionId !== next) {
+            logBreadcrumb(
+                'session',
+                'session id replacement ignored',
+                { previous: sessionId, next },
+                'warning'
+            );
+        }
+        return;
+    }
     sessionId = next;
+}
+
+// единственное исключение из правила одного присвоения: иначе вкладка до закрытия
+// ходила бы с идентификатором вышедшего пользователя
+export function resetSessionIdOnLogout(): string {
+    logBreadcrumb('session', 'session id reset on logout', {
+        previous: sessionId,
+    });
+    sessionId = undefined;
+    return createGuestSessionId();
 }
 
 export function withSessionQuery(url: string): string {

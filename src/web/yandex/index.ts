@@ -14,6 +14,8 @@ declare global {
 export class MetrikaService implements ObserverService {
     init() {}
 
+    onLogout() {}
+
     onEvent(event: string) {
         if (!METRIKA_EVENTS.has(event)) {
             return;
