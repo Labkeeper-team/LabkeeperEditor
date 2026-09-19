@@ -74,8 +74,23 @@ async function openChat(
     return sent;
 }
 
+const promptField = (page: Page) => page.getByPlaceholder('Enter your promt');
+
+/** У CodeMirror нет value: текст поля собирается из строк contenteditable */
+const promptText = (page: Page) =>
+    promptField(page).evaluate((node) => {
+        const copy = node.cloneNode(true) as HTMLElement;
+        // подсказка пустого поля живёт виджетом внутри строки, но значением не является
+        copy.querySelectorAll('.cm-placeholder').forEach((hint) =>
+            hint.remove()
+        );
+        return Array.from(copy.querySelectorAll('.cm-line'))
+            .map((line) => line.textContent)
+            .join('\n');
+    });
+
 async function submitPrompt(page: Page, text = 'сделай таблицу') {
-    await page.getByPlaceholder('Enter your promt').fill(text);
+    await promptField(page).fill(text);
     await page.getByRole('button', { name: 'Send' }).click();
 }
 
@@ -234,6 +249,73 @@ for (const [stopReason, text] of PARTIAL_STOP_REASONS) {
     });
 }
 
+/**
+ * Откат программы висит на document, и «событие туда не дошло» проверяется там же:
+ * у Desktop Chrome платформа и user-agent расходятся, поэтому хоткей и CodeMirror
+ * ждут разных модификаторов, и по тексту сегмента всплытие не увидеть
+ */
+const countUndoOnDocument = (page: Page) =>
+    page.evaluate(() => {
+        const counter = { hits: 0 };
+        Object.assign(window, { undoOnDocument: counter });
+        document.addEventListener('keydown', (event) => {
+            if (event.key.toLowerCase() === 'z') {
+                counter.hits += 1;
+            }
+        });
+    });
+
+const undoOnDocumentHits = (page: Page) =>
+    page.evaluate(
+        () =>
+            (window as unknown as { undoOnDocument: { hits: number } })
+                .undoOnDocument.hits
+    );
+
+test('agent-prompt-undo-stays-in-the-chat', async ({ page }) => {
+    await openChat(page, { program: RUNNABLE_PROGRAM });
+    const segment = page.locator('#ide-segment-0 .cm-content');
+    await segment.click();
+    await page.keyboard.type(' + 5');
+    await expect(segment).toHaveText('a = 10 + 5');
+
+    await promptField(page).click();
+    await page.keyboard.type('привет мир');
+    await expect.poll(() => promptText(page)).toBe('привет мир');
+    await countUndoOnDocument(page);
+
+    await promptField(page).press('ControlOrMeta+z');
+
+    // откат остался в поле чата: программа не тронута, а событие не ушло наверх
+    await expect(segment).toHaveText('a = 10 + 5');
+    await expect.poll(() => promptText(page)).toBe('');
+    expect(await undoOnDocumentHits(page)).toBe(0);
+});
+
+test('agent-prompt-enter-sends-and-shift-enter-adds-a-line', async ({
+    page,
+}) => {
+    const sent = await openChat(page, { frames: [finished('Done')] });
+
+    await promptField(page).click();
+    await page.keyboard.type('первая строка');
+    await page.keyboard.press('Shift+Enter');
+    await page.keyboard.type('вторая строка');
+
+    expect(sent).toHaveLength(0);
+    await expect
+        .poll(() => promptText(page))
+        .toBe('первая строка\nвторая строка');
+
+    await page.keyboard.press('Enter');
+
+    await expect(page.locator('.agent-chat__request-text')).toHaveText(
+        'первая строка\nвторая строка'
+    );
+    // очистку после отправки @uiw откладывает, пока человек печатает
+    await expect.poll(() => promptText(page)).toBe('');
+});
+
 test('agent-stop-reason-Done-shows-text', async ({ page }) => {
     await openChat(page, { frames: [finished('Done')] });
     await submitPrompt(page);
@@ -253,10 +335,8 @@ test('agent-stop-reason-PromptTooLong-returns-the-prompt', async ({ page }) => {
         'The request is too long. Shorten it and send it again'
     );
     // текст вернулся в поле, сокращать его не придётся по памяти
-    await expect(page.getByPlaceholder('Enter your promt')).toHaveValue(
-        'очень длинный запрос'
-    );
-    await expect(page.getByPlaceholder('Enter your promt')).toBeEditable();
+    await expect.poll(() => promptText(page)).toBe('очень длинный запрос');
+    await expect(promptField(page)).toBeEditable();
 });
 
 test('agent-stop-reason-QuotaExceeded-keeps-the-answer', async ({ page }) => {
@@ -833,9 +913,7 @@ test('guest-agent-error-offers-login', async ({ page }) => {
         'With an account the agent has its own token balance'
     );
     // запрос ждёт в поле: вход откроет проект заново и от ленты ничего не оставит
-    await expect(page.getByPlaceholder('Enter your promt')).toHaveValue(
-        'поправь введение'
-    );
+    await expect.poll(() => promptText(page)).toBe('поправь введение');
 
     await loginOffer(page).click();
 
@@ -1021,9 +1099,11 @@ test('compile-errors-go-to-the-agent-prompt', async ({ page }) => {
 
     // чат был закрыт, кнопка его открывает
     await expect(page.locator('.agent-chat')).toBeVisible();
-    await expect(page.getByPlaceholder('Enter your promt')).toHaveValue(
-        'Fix the compilation errors:\n- Segment №1, line 1.4: No such variable x'
-    );
+    await expect
+        .poll(() => promptText(page))
+        .toBe(
+            'Fix the compilation errors:\n- Segment №1, line 1.4: No such variable x'
+        );
     // кнопка живёт в заголовке панели, но сворачивать панель не должна
     await expect(expandedPanel).toHaveCount(expandedBefore);
 });
@@ -1031,7 +1111,7 @@ test('compile-errors-go-to-the-agent-prompt', async ({ page }) => {
 test('compile-errors-do-not-overwrite-a-typed-prompt', async ({ page }) => {
     await openWithCompileError(page);
     await page.getByRole('tab', { name: 'AI agent' }).click();
-    await page.getByPlaceholder('Enter your promt').fill('мой запрос');
+    await promptField(page).fill('мой запрос');
     await page.getByRole('button', { name: /Run/i }).click();
 
     await sendErrorsButton(page).click();
@@ -1039,9 +1119,7 @@ test('compile-errors-do-not-overwrite-a-typed-prompt', async ({ page }) => {
     await expect(page.locator('div.Toastify__toast').first()).toContainText(
         'The agent prompt already has text'
     );
-    await expect(page.getByPlaceholder('Enter your promt')).toHaveValue(
-        'мой запрос'
-    );
+    await expect.poll(() => promptText(page)).toBe('мой запрос');
 });
 
 test.describe('compile errors on a phone', () => {
@@ -1057,9 +1135,7 @@ test.describe('compile errors on a phone', () => {
         await sendErrorsButton(page).click();
 
         await expect(page.locator('.agent-chat')).toBeVisible();
-        await expect(page.getByPlaceholder('Enter your promt')).toHaveValue(
-            /No such variable x/
-        );
+        await expect.poll(() => promptText(page)).toMatch(/No such variable x/);
         const overflow = await page.evaluate(
             () =>
                 document.documentElement.scrollWidth -
@@ -1086,9 +1162,11 @@ test.describe('compile errors in a russian browser', () => {
 
         await sendErrorsButton(page).click();
 
-        await expect(page.getByPlaceholder('Enter your promt')).toHaveValue(
-            'Fix the compilation errors:\n- Segment №1, line 1.4: No such variable x'
-        );
+        await expect
+            .poll(() => promptText(page))
+            .toBe(
+                'Fix the compilation errors:\n- Segment №1, line 1.4: No such variable x'
+            );
     });
 });
 
@@ -1663,7 +1741,7 @@ test('agent-abort-closes-the-socket-and-shows-what-changed', async ({
     ]);
     await expect.poll(() => closes).toEqual([1000]);
     // прогон окончен: поле снова набирается, а кнопка отправки вернулась
-    await expect(page.getByPlaceholder('Enter your promt')).toBeEditable();
+    await expect(promptField(page)).toBeEditable();
     await expect(sendButton(page)).toBeVisible();
 });
 
