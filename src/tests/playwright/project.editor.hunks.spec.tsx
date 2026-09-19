@@ -467,3 +467,34 @@ test('hunk-accept-all-deletes-every-hunk', async ({ page }) => {
     expect(hunkServer.maxInFlight()).toBe(1);
     expect(hunkServer.deleted()).toEqual(['hunk-1', 'hunk-2', 'hunk-3']);
 });
+
+test('hunk-accept-all-survives-typing', async ({ page }) => {
+    const hunkServer = await openProjectWithHunks(page, {
+        program: programOf(
+            mdSegment(1, 'first\nadded one'),
+            mdSegment(2, 'second\nadded two'),
+            mdSegment(3, 'third\nadded three')
+        ),
+        hunks: ['one', 'two', 'three'].map((word, index) => ({
+            id: `hunk-${index + 1}`,
+            type: 'addLinesToSegment' as const,
+            segmentId: index + 1,
+            startLine: 2,
+            endLine: 2,
+            text: `added ${word}`,
+        })),
+        deleteDelayMs: 150,
+    });
+    await expect(page.locator('.cm-hunk-added-line')).toHaveCount(3);
+
+    await page.getByRole('button', { name: 'Accept all' }).click();
+    // редактор во время приёма не заблокирован, и набор текста не должен слать свои удаления
+    const editor = page.locator('.cm-content').nth(2);
+    await editor.click();
+    await editor.pressSequentially('typed');
+
+    await expect(page.locator('.hunk-global-bar')).toHaveCount(0);
+    await expect(page.locator('.cm-hunk-added-line')).toHaveCount(0);
+    expect(hunkServer.maxInFlight()).toBe(1);
+    expect(hunkServer.deleted()).toEqual(['hunk-1', 'hunk-2', 'hunk-3']);
+});
