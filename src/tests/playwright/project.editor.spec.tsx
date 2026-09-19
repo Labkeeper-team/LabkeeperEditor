@@ -1706,9 +1706,13 @@ test('github-link-moves-to-menu-on-mobile', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await openProjectForHeaderTests(page);
 
+    // меню рисует та же шапка, что и иконку: дождались меню, значит иконки нет, а не «ещё нет»
+    const menuTrigger = page.locator('.header-menu-select .select-header');
+    await expect(menuTrigger).toBeVisible();
+
     await expect(page.locator('.github-link')).toHaveCount(0);
 
-    await page.locator('.header-menu-select .select-header').click();
+    await menuTrigger.click();
     await expect(
         page.getByRole('listitem').filter({ hasText: /^GitHub$/ })
     ).toBeVisible();
