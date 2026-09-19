@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '../../button';
 import { HeaderLogo } from '../logo';
 import { ShareButton } from '../share';
+import { GithubLink } from '../github';
 import { Back } from '../back';
 import {
     useIsProjectReadonly,
@@ -82,6 +83,8 @@ export const AppHeader = () => {
                                 />
                             </div>
                         ) : null}
+                        {/* на телефоне ссылка уезжает в меню: место в шапке нужно названию проекта */}
+                        {!isMobile ? <GithubLink /> : null}
                     </div>
                     <div className="labkeeper_header__center">
                         <ProjectTitle isMobile={isMobile} />

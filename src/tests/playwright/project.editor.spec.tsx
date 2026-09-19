@@ -1,6 +1,7 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 import { RouteSetup } from './mock.routeSetUp.tsx';
 import { Program } from '../../model/domain.ts';
+import { ExternalLinks } from '../../viewModel/externalLinks.ts';
 
 const uuid = '2cd18704-6c3f-48cb-96f1-9a923930f8cb';
 
@@ -1661,5 +1662,58 @@ test('oauth2-code-offline-provider', async ({ page }) => {
     // Проверяем, что показана ошибка OAuth
     await expect(
         page.getByText('Error while authenticating via third party provider')
+    ).toBeVisible();
+});
+
+/** Открывает проект по умолчанию: тестам про шапку хватает пустого */
+async function openProjectForHeaderTests(page: Page) {
+    const routeSetup = new RouteSetup(page);
+    await routeSetup.setupGetUserInfoRequest();
+    await routeSetup.setupGetDefaultProjectRequest();
+    await routeSetup.setupGetProjectRequest();
+    await routeSetup.setupListFilesRequest();
+
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page).toHaveURL(`/project/${uuid}`);
+}
+
+/*
+Тест на ссылку в шапке: адрес репозитория, новая вкладка и видимая заливка иконки
+ */
+test('github-link-in-header', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await openProjectForHeaderTests(page);
+
+    const link = page.getByRole('link', { name: 'GitHub' });
+    await expect(link).toBeVisible();
+    await expect(link).toHaveAttribute('href', ExternalLinks.github);
+    await expect(link).toHaveAttribute('target', '_blank');
+    await expect(link).toHaveAttribute('rel', /noopener/);
+
+    // заливка идёт от currentColor: с зашитым в svg тёмным цветом иконки на шапке не видно
+    const fill = await link
+        .locator('svg path')
+        .evaluate((node) => getComputedStyle(node).fill);
+    const color = await link.evaluate((node) => getComputedStyle(node).color);
+    expect(fill).toBe(color);
+});
+
+/*
+Тест на телефонную ширину: иконка уступает место названию проекта, ссылка уходит в меню
+ */
+test('github-link-moves-to-menu-on-mobile', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openProjectForHeaderTests(page);
+
+    // меню рисует та же шапка, что и иконку: дождались меню, значит иконки нет, а не «ещё нет»
+    const menuTrigger = page.locator('.header-menu-select .select-header');
+    await expect(menuTrigger).toBeVisible();
+
+    await expect(page.locator('.github-link')).toHaveCount(0);
+
+    await menuTrigger.click();
+    await expect(
+        page.getByRole('listitem').filter({ hasText: /^GitHub$/ })
     ).toBeVisible();
 });

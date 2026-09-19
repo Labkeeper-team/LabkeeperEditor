@@ -164,6 +164,7 @@ export const en: Translations = {
         share: 'Share',
         language: 'Language',
         change_language_to: 'Switch language to {language}',
+        github: 'GitHub',
     },
     agent_chat: {
         tab_label: 'AI agent',
