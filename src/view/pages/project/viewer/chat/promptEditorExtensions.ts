@@ -26,22 +26,20 @@ export type PromptEditorOptions = {
  * слушает document и включён для contenteditable, поэтому событие гасим здесь.
  * preventDefault нужен не ради браузера: без него событие уходит наверх, когда
  * undo вернул false, то есть при пустой истории и на время работы агента.
+ * Повтор шапка слушает как ctrl+y и mod+shift+z сразу, без оглядки на систему,
+ * а CodeMirror берёт из биндинга одно имя на систему, поэтому оба сочетания
+ * заданы отдельными key: иначе на Windows мимо поля пролетал бы Ctrl+Shift+Z,
+ * а на macOS Ctrl+Y.
  */
 const PROMPT_HISTORY_KEYMAP: KeyBinding[] = [
     { key: 'Mod-z', run: undo, preventDefault: true, stopPropagation: true },
     {
-        key: 'Mod-y',
-        mac: 'Mod-Shift-z',
+        key: 'Mod-Shift-z',
         run: redo,
         preventDefault: true,
         stopPropagation: true,
     },
-    {
-        linux: 'Ctrl-Shift-z',
-        run: redo,
-        preventDefault: true,
-        stopPropagation: true,
-    },
+    { key: 'Ctrl-y', run: redo, preventDefault: true, stopPropagation: true },
 ];
 
 /**
