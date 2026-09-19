@@ -1,4 +1,5 @@
 import {
+    DEFAULT_INSTANT,
     matchRepositorySnapshot,
     mockAuthenticatedStartup,
     mockContext,
@@ -163,6 +164,30 @@ test('authenticated-project-default-replaces-with-project-id', async () => {
         Routes.Project.replace(':id', PROJECT_ID),
         { replace: true }
     );
+});
+
+/**
+ * Гость набирает запрос до входа, а вход открывает его проект заново и чистит
+ * ленту. Набранный текст это работа человека, смена проекта его не касается
+ */
+test('login-on-the-default-page-keeps-the-prompt-a-guest-typed', async () => {
+    const ctx = mockContext();
+    mockAuthenticatedStartup(ctx.rpi);
+    ctx.repository.setLocation(Routes.ProjectDefault);
+    ctx.repository.chatViewModelRepository.setInput('поправь введение');
+    ctx.repository.chatViewModelRepository.appendMessage({
+        kind: 'request',
+        text: 'прошлый запрос гостя',
+        createdAt: DEFAULT_INSTANT.toISOString(),
+    });
+
+    await ctx.startupService.onAppStartup();
+
+    expect(ctx.repository.chatViewModelRepository.input()).toBe(
+        'поправь введение'
+    );
+    // лента при этом действительно очищена, то есть текст пережил именно сброс
+    expect(ctx.repository.chatViewModelRepository.messages()).toHaveLength(0);
 });
 
 /**
