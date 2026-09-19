@@ -247,12 +247,15 @@ export interface ObserverService {
     init: (userId?: string, email?: string) => void | Promise<void>;
     onEvent: (event: string, properties?: ObserverEventProperties) => void;
     setUserState: (name: string, value: string) => void;
+    // сессию заводит аналитика, значит она же и обязана закрыть её при выходе
+    onLogout: () => void;
 }
 
 export const mockObserver = (): ObserverService => ({
     init: () => {},
     onEvent: () => {},
     setUserState: () => {},
+    onLogout: () => {},
 });
 
 export class CompositeObserver implements ObserverService {
@@ -274,5 +277,9 @@ export class CompositeObserver implements ObserverService {
         this.observers.forEach((observer) =>
             observer.setUserState(name, value)
         );
+    }
+
+    onLogout() {
+        this.observers.forEach((observer) => observer.onLogout());
     }
 }

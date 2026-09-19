@@ -102,3 +102,40 @@ test('registration-email-sends-the-captcha-bypass-token', async () => {
     );
     expect(repository.authViewModelRepository.currentView()).toBe('code');
 });
+
+test('logout-tells-analytics-to-drop-the-session', async () => {
+    const { authService, observerService, rpi } = mockContext();
+    const onLogout = jest.spyOn(observerService, 'onLogout');
+    const onEvent = jest.spyOn(observerService, 'onEvent');
+    rpi.logoutRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        body: {},
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+    });
+
+    await authService.onLogoutButtonClicked();
+
+    expect(onEvent).toHaveBeenCalledWith(
+        Events.EVENT_LOGOUT_CONFIRMED,
+        expect.anything()
+    );
+    expect(onLogout).toHaveBeenCalledTimes(1);
+});
+
+test('a-failed-logout-keeps-the-session-id', async () => {
+    const { authService, observerService, rpi } = mockContext();
+    const onLogout = jest.spyOn(observerService, 'onLogout');
+    rpi.logoutRequest = jest.fn().mockResolvedValue({
+        code: 500,
+        body: {},
+        isOk: false,
+        isUnauth: false,
+        isForbidden: false,
+    });
+
+    await authService.onLogoutButtonClicked();
+
+    expect(onLogout).not.toHaveBeenCalled();
+});

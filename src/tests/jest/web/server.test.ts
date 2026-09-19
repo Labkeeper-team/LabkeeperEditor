@@ -2,12 +2,17 @@ import axios from 'axios';
 import * as Sentry from '@sentry/react';
 import { Events } from '../../../model/service/ObserverService.ts';
 import { WebRpi } from '../../../web/server';
+import {
+    adoptAnalyticsSessionId,
+    LABKEEPER_SESSION_HEADER,
+} from '../../../web/session.ts';
 
 const createRpi = () => {
     const observerService = {
         init: jest.fn(),
         onEvent: jest.fn(),
         setUserState: jest.fn(),
+        onLogout: jest.fn(),
     };
     return { rpi: new WebRpi(observerService), observerService };
 };
@@ -37,6 +42,12 @@ jest.mock('axios', () => ({
         },
     },
 }));
+
+// перехватчик регистрируется один раз при импорте модуля, а beforeEach чистит mock.calls
+const attachSessionHeader = (axios.interceptors.request.use as jest.Mock).mock
+    .calls[0][0] as (config: { headers: Record<string, string> }) => {
+    headers: Record<string, string>;
+};
 
 describe('WebRpi', () => {
     beforeEach(() => {
@@ -248,5 +259,22 @@ describe('WebRpi', () => {
             '/api/v4/public/project/project-id/history'
         );
         expect(result.isOk).toBe(true);
+    });
+
+    // последним в файле: sessionId лежит в модульной переменной и живёт до конца прогона
+    test('session header appears only after the session id is known', () => {
+        expect(
+            attachSessionHeader({ headers: {} }).headers[
+                LABKEEPER_SESSION_HEADER
+            ]
+        ).toBeUndefined();
+
+        adoptAnalyticsSessionId('s-1');
+
+        expect(
+            attachSessionHeader({ headers: {} }).headers[
+                LABKEEPER_SESSION_HEADER
+            ]
+        ).toBe('s-1');
     });
 });

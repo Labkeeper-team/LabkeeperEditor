@@ -1,5 +1,6 @@
 import { OpenPanel } from '@openpanel/web';
 import { OpenPanelService } from '../../../web/openpanel';
+import { getSessionId } from '../../../web/session.ts';
 
 const track = jest.fn().mockResolvedValue(undefined);
 
@@ -30,5 +31,14 @@ describe('OpenPanelService without credentials', () => {
 
         expect(OpenPanel).not.toHaveBeenCalled();
         expect(track).not.toHaveBeenCalled();
+    });
+
+    // на стенде без ключей заголовка сессии нет и у гостя: init выходит до выдачи id
+    test('a guest gets no session id when the keys are missing', async () => {
+        const service = new OpenPanelService();
+
+        await service.init();
+
+        expect(getSessionId()).toBeUndefined();
     });
 });

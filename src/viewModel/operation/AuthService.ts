@@ -106,6 +106,8 @@ export class AuthService {
 
         if (response.isOk) {
             this.track(Events.EVENT_LOGOUT_CONFIRMED);
+            // событие ещё от имени вышедшего, дальше вкладка становится гостевой
+            this.observerService.onLogout();
             const pathname = this.normalizeLocationPath(
                 this.repository.location()
             );
