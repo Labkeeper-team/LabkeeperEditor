@@ -206,7 +206,15 @@
     color: $gray-10;
 }
 
-.agent-chat__buy-tokens {
+.agent-chat__login-hint {
+    margin-top: 8px;
+    font-size: 13px;
+    line-height: 17px;
+    color: $gray-20;
+}
+
+.agent-chat__buy-tokens,
+.agent-chat__login {
     margin-top: 8px;
     border: none;
     background: $blue-10;
