@@ -13,7 +13,7 @@ import {
 } from '../../model/rpi/agentSocket.ts';
 import { Hunk } from '../../model/domain.ts';
 import { wsUrl, WS_URLS } from '../../constants.ts';
-import { withSessionQuery } from '../session.ts';
+import { getSessionId, withSessionQuery } from '../session.ts';
 import { withSegmentIds } from '../../viewModel/utils/segmentId.ts';
 import { logBreadcrumb } from '../../viewModel/utils/logBreadcrumb.ts';
 
@@ -202,6 +202,14 @@ function openSession(
     };
 }
 
+// адрес собирается один раз при создании сокета: пришедший позже sessionId в него уже не подложить
+function socketUrlWithSession(url: string): string {
+    if (!getSessionId()) {
+        logBreadcrumb('agent', 'socket without session id', { url }, 'warning');
+    }
+    return withSessionQuery(url);
+}
+
 export class WebAgentSocket implements AgentSocket {
     constructor(private timeoutMs: number = AGENT_TIMEOUT_MS) {}
 
@@ -211,7 +219,7 @@ export class WebAgentSocket implements AgentSocket {
         handlers: AgentHandlers
     ): AgentSession {
         return openSession(
-            withSessionQuery(
+            socketUrlWithSession(
                 wsUrl(WS_URLS.projectAgent.replace('{id}', projectId))
             ),
             { type: 'startAgent', ...params },
@@ -225,7 +233,7 @@ export class WebAgentSocket implements AgentSocket {
         handlers: AgentHandlers
     ): AgentSession {
         return openSession(
-            withSessionQuery(wsUrl(WS_URLS.unauthorizedAgent)),
+            socketUrlWithSession(wsUrl(WS_URLS.unauthorizedAgent)),
             {
                 type: 'startAgentUnauthorized',
                 ...params,

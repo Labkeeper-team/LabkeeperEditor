@@ -15,6 +15,7 @@ import { ResetService } from '../domain/ResetService.ts';
 import { HunkService } from './HunkService.ts';
 import type { AgentChatService } from './AgentChatService.ts';
 import { logBreadcrumb } from '../utils/logBreadcrumb.ts';
+import { reportToSentry } from '../utils/reportUnexpectedError.ts';
 import { trackEvent } from '../utils/observerContext.ts';
 
 const qrPagePattern = /\/qr\/v\d+/i;
@@ -124,10 +125,13 @@ export class StartupService {
             States.STATE_ONLINE,
             String(userInfo.isAuthenticated)
         );
-        await this.observerService.init(
-            userInfo.isAuthenticated ? String(userInfo.id) : undefined,
-            userInfo.isAuthenticated ? userInfo.email : undefined
-        );
+        // аналитику не ждём: её сеть стояла ровно между «узнали пользователя» и открытием проекта
+        void Promise.resolve(
+            this.observerService.init(
+                userInfo.isAuthenticated ? String(userInfo.id) : undefined,
+                userInfo.isAuthenticated ? userInfo.email : undefined
+            )
+        ).catch((error) => reportToSentry('startup.observerInit', error));
         this.repository.settingsViewModelRepository.setCaptchaBypassToken(
             captcha
         );
