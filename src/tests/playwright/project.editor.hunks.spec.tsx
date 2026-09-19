@@ -46,6 +46,7 @@ async function openProjectWithHunks(
         files?: { fileName: string; url: string }[];
         fileContents?: { urlPath: string; content: string }[];
         mobile?: boolean;
+        deleteDelayMs?: number;
     }
 ) {
     if (options.mobile) {
@@ -64,8 +65,10 @@ async function openProjectWithHunks(
     for (const file of options.fileContents ?? []) {
         await routeSetup.setupStaticFileContent(file.urlPath, file.content);
     }
-    await routeSetup.setupListHunksRequest(options.hunks);
-    await routeSetup.setupDeleteHunkRequest();
+    const hunkServer = await routeSetup.setupHunkRequestsWithState(
+        options.hunks,
+        { deleteDelayMs: options.deleteDelayMs }
+    );
 
     await page.goto(`/project/${uuid}`);
     await page.waitForLoadState('domcontentloaded');
@@ -73,11 +76,12 @@ async function openProjectWithHunks(
     if (options.mobile) {
         // на мобильном общей панели нет, ждём сам редактор
         await page.locator('.cm-content').first().waitFor({ state: 'visible' });
-        return;
+        return hunkServer;
     }
     await expect(
         page.getByRole('button', { name: 'Accept all' })
     ).toBeVisible();
+    return hunkServer;
 }
 
 async function expectFullPageHunkSnapshot(page: Page, name: string) {
@@ -433,4 +437,33 @@ test('new-segment-hunk-keeps-its-buttons-on-mobile', async ({ page }) => {
     await expect(page.locator('.segment-hunk-block--new')).toBeVisible();
     await expect(page.locator('.segment-hunk-btn--accept')).toBeVisible();
     await expect(page.locator('.hunk-global-bar')).toHaveCount(0);
+});
+
+test('hunk-accept-all-deletes-every-hunk', async ({ page }) => {
+    const hunkServer = await openProjectWithHunks(page, {
+        program: programOf(
+            mdSegment(1, 'first\nadded one'),
+            mdSegment(2, 'second\nadded two'),
+            mdSegment(3, 'third\nadded three')
+        ),
+        hunks: ['one', 'two', 'three'].map((word, index) => ({
+            id: `hunk-${index + 1}`,
+            type: 'addLinesToSegment' as const,
+            segmentId: index + 1,
+            startLine: 2,
+            endLine: 2,
+            text: `added ${word}`,
+        })),
+        deleteDelayMs: 50,
+    });
+    await expect(page.locator('.cm-hunk-added-line')).toHaveCount(3);
+    await expect(page.getByText('Total 3 changes')).toBeVisible();
+
+    await page.getByRole('button', { name: 'Accept all' }).click();
+
+    await expect(page.locator('.hunk-global-bar')).toHaveCount(0);
+    await expect(page.locator('.cm-hunk-added-line')).toHaveCount(0);
+    // приём идёт по одному, одновременных удалений на сервере быть не должно
+    expect(hunkServer.maxInFlight()).toBe(1);
+    expect(hunkServer.deleted()).toEqual(['hunk-1', 'hunk-2', 'hunk-3']);
 });

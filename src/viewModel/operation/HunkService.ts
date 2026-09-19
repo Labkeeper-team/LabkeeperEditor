@@ -18,6 +18,8 @@ import { trackEvent } from '../utils/observerContext.ts';
 
 export class HunkService {
     private acceptInFlight = false;
+    // id, накопленные фоновым приёмом, пока шла предыдущая отправка
+    private backgroundAcceptQueue: string[] = [];
 
     constructor(
         private repository: ViewModelRepository,
@@ -100,6 +102,42 @@ export class HunkService {
         return this.rpi.deleteHunkRequest(projectId, hunkId, revert);
     };
 
+    // 404 значит, что ханка на сервере уже нет, для нас это такой же успех
+    private deleteHunksOneByOne = async (
+        projectId: string,
+        hunkIds: string[],
+        revert: boolean
+    ): Promise<number> => {
+        let failed = 0;
+        for (const id of hunkIds) {
+            const result = await this.deleteHunkOnServer(projectId, id, revert);
+            if (!result.isOk && result.code !== 404) {
+                failed += 1;
+            }
+        }
+        return failed;
+    };
+
+    private reportAcceptFailure = (failed: number): void => {
+        if (failed === 0) {
+            return;
+        }
+        this.repository.toast(
+            this.repository.dictionary.hunks.errors.accept_failed,
+            'error'
+        );
+    };
+
+    private reportRevertFailure = (failed: number): void => {
+        if (failed === 0) {
+            return;
+        }
+        this.repository.toast(
+            this.repository.dictionary.hunks.errors.revert_failed,
+            'error'
+        );
+    };
+
     private markPending = (ids: string[]): void => {
         const current = this.repository.ideViewModelRepository.pendingHunkIds();
         this.repository.ideViewModelRepository.setPendingHunkIds([
@@ -162,12 +200,14 @@ export class HunkService {
             if (!projectId) {
                 return;
             }
-            await Promise.all(
-                hunkIds.map((id) =>
-                    this.deleteHunkOnServer(projectId, id, false)
-                )
+            // шлём по одному, как и откат, и смотрим на ответ каждого запроса
+            const failed = await this.deleteHunksOneByOne(
+                projectId,
+                hunkIds,
+                false
             );
             await this.refreshAfterAccept();
+            this.reportAcceptFailure(failed);
         } finally {
             this.unmarkPending(hunkIds);
         }
@@ -190,10 +230,13 @@ export class HunkService {
             if (!projectId) {
                 return;
             }
-            for (const id of hunkIds) {
-                await this.deleteHunkOnServer(projectId, id, true);
-            }
+            const failed = await this.deleteHunksOneByOne(
+                projectId,
+                hunkIds,
+                true
+            );
             await this.refreshAfterRevert();
+            this.reportRevertFailure(failed);
         } finally {
             this.unmarkPending(hunkIds);
         }
@@ -226,10 +269,9 @@ export class HunkService {
         if (!projectId) {
             return;
         }
-        await Promise.all(
-            ids.map((id) => this.deleteHunkOnServer(projectId, id, false))
-        );
+        const failed = await this.deleteHunksOneByOne(projectId, ids, false);
         await this.loadHunks();
+        this.reportAcceptFailure(failed);
     };
 
     revertAll = async (): Promise<void> => {
@@ -250,10 +292,9 @@ export class HunkService {
             if (!projectId) {
                 return;
             }
-            for (const id of ids) {
-                await this.deleteHunkOnServer(projectId, id, true);
-            }
+            const failed = await this.deleteHunksOneByOne(projectId, ids, true);
             await this.refreshAfterRevert();
+            this.reportRevertFailure(failed);
         } finally {
             this.unmarkPending(ids);
         }
@@ -268,10 +309,7 @@ export class HunkService {
     };
 
     acceptHunksInBackground = (hunkIds: string[]): void => {
-        if (hunkIds.length === 0 || this.acceptInFlight) {
-            if (hunkIds.length > 0) {
-                this.removeHunksLocally(hunkIds);
-            }
+        if (hunkIds.length === 0) {
             return;
         }
         this.removeHunksLocally(hunkIds);
@@ -282,19 +320,34 @@ export class HunkService {
         if (!projectId) {
             return;
         }
+        // при занятой отправке ханки нельзя бросать: с экрана убраны, а на сервере нет
+        this.backgroundAcceptQueue.push(...hunkIds);
+        if (this.acceptInFlight) {
+            return;
+        }
         this.acceptInFlight = true;
-        void (async () => {
-            try {
-                await Promise.all(
-                    hunkIds.map((id) =>
-                        this.deleteHunkOnServer(projectId, id, false)
-                    )
+        void this.drainBackgroundAccept(projectId);
+    };
+
+    private drainBackgroundAccept = async (
+        projectId: string
+    ): Promise<void> => {
+        try {
+            let failed = 0;
+            while (this.backgroundAcceptQueue.length > 0) {
+                const batch = this.backgroundAcceptQueue.splice(0);
+                failed += await this.deleteHunksOneByOne(
+                    projectId,
+                    batch,
+                    false
                 );
+                // перечитываем внутри круга: пока список ехал, могла прийти новая пачка
                 await this.loadHunks();
-            } finally {
-                this.acceptInFlight = false;
             }
-        })();
+            this.reportAcceptFailure(failed);
+        } finally {
+            this.acceptInFlight = false;
+        }
     };
 
     acceptAllHunksInBackground = (): void => {

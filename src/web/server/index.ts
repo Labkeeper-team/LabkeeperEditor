@@ -614,6 +614,7 @@ export class WebRpi implements Rpi {
         hunkId: string,
         revert: boolean
     ): Promise<RequestResult> {
+        // 403 и 404 из спеки намеренно не ожидаем: иначе такие ответы перестанут доходить до Sentry
         return this.requestWrapper('deleteHunkRequest', [200, 401], () =>
             axios.delete(
                 URLS.deleteHunk
