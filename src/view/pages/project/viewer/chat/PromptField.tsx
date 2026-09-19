@@ -116,15 +116,29 @@ export const PromptField = () => {
                         }
                     />
                 </div>
-                <button
-                    type="button"
-                    className="agent-chat__submit"
-                    disabled={!canSubmit}
-                    aria-label={dictionary.agent_chat.send}
-                    onClick={submit}
-                >
-                    <ArrowRight />
-                </button>
+                {/* пока агент работает, та же круглая кнопка прерывает прогон */}
+                {isRunning ? (
+                    <button
+                        type="button"
+                        className="agent-chat__submit agent-chat__submit--stop"
+                        aria-label={dictionary.agent_chat.abort}
+                        onClick={() =>
+                            dispatch(controller.onAgentAbortRequest())
+                        }
+                    >
+                        <StopSquare />
+                    </button>
+                ) : (
+                    <button
+                        type="button"
+                        className="agent-chat__submit"
+                        disabled={!canSubmit}
+                        aria-label={dictionary.agent_chat.send}
+                        onClick={submit}
+                    >
+                        <ArrowRight />
+                    </button>
+                )}
             </div>
         </div>
     );
@@ -140,6 +154,12 @@ const InfoIcon = () => (
             strokeLinecap="round"
         />
         <circle cx="7" cy="4" r="0.8" fill="currentColor" />
+    </svg>
+);
+
+const StopSquare = () => (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <rect x="5" y="5" width="10" height="10" rx="2" fill="currentColor" />
     </svg>
 );
 

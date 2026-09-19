@@ -59,14 +59,15 @@ export class HunkService {
         return this.shouldShowHunks();
     };
 
-    loadHunks = async (): Promise<void> => {
+    /** false, если список на экране может расходиться с сервером */
+    loadHunks = async (): Promise<boolean> => {
         if (!this.shouldShowHunks()) {
             this.repository.ideViewModelRepository.setHunks([]);
-            return;
+            return true;
         }
         const project = this.repository.projectViewModelRepository.project();
         if (!project) {
-            return;
+            return false;
         }
         const result = await this.rpi.listHunksRequest(project.projectId);
         // пока hunks ехали, могли открыть другой проект, чужие ему ни к чему
@@ -74,7 +75,7 @@ export class HunkService {
             this.repository.projectViewModelRepository.project()?.projectId !==
             project.projectId
         ) {
-            return;
+            return false;
         }
         if (result.isOk) {
             const nextHunks = result.body.hunks ?? [];
@@ -82,9 +83,14 @@ export class HunkService {
             await this.textFileEditorService.reloadActiveTextFileIfOpen(
                 nextHunks
             );
-        } else if (result.isUnauth) {
-            this.repository.ideViewModelRepository.setHunks([]);
+            return true;
         }
+        if (result.isUnauth) {
+            // сессия кончилась: своих правок у гостя нет, и пустой список тут верен
+            this.repository.ideViewModelRepository.setHunks([]);
+            return true;
+        }
+        return false;
     };
 
     setHunksFromPrompt = (hunks: Hunk[]): void => {

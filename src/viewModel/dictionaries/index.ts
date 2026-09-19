@@ -164,6 +164,7 @@ export interface Translations {
         pdf_tab_label: string;
         placeholder: string;
         send: string;
+        abort: string;
         disclaimer: string;
         result: string;
         error: string;
@@ -208,6 +209,12 @@ export interface Translations {
             read_file: string;
             done: string;
         };
+        change: {
+            segment: string;
+            file: string;
+            other: string;
+            more: string;
+        };
         stop: {
             ContextOverflow: string;
             IterationLimit: string;
@@ -223,6 +230,10 @@ export interface Translations {
             connect_failed: string;
             save_failed: string;
             sync_failed: string;
+            aborted: string;
+            aborted_nothing: string;
+            aborted_guest: string;
+            aborted_unsynced: string;
         };
     };
     mobile_view: {

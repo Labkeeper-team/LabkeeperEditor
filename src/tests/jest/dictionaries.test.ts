@@ -18,6 +18,10 @@ const EXTRA_STOP_KEYS = [
     'connect_failed',
     'save_failed',
     'sync_failed',
+    'aborted',
+    'aborted_nothing',
+    'aborted_guest',
+    'aborted_unsynced',
 ];
 
 const TOOL_NAMES: AgentToolName[] = [
@@ -82,6 +86,16 @@ test.each(DICTIONARIES)(
         for (const key of ['add_segment', 'add_lines_to_segment']) {
             expect(events[key]).toContain('{segment}');
         }
+    }
+);
+
+test.each(DICTIONARIES)(
+    'change-summary-texts-keep-their-placeholders-in-%s',
+    (_name, dictionary) => {
+        const change = dictionary.agent_chat.change;
+        // без подстановки строка списка обрывается на «Сегмент №» и «Файл»
+        expect(change.segment).toContain('{segment}');
+        expect(change.file).toContain('{file}');
     }
 );
 

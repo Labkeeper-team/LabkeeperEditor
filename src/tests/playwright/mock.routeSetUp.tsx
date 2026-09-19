@@ -335,16 +335,18 @@ export class RouteSetup {
     /**
      * Канал агента. connectToServer не зовём, поэтому сокет замокан целиком
      * и наружу ничего не уходит. Хендлер живёт в процессе теста, так что
-     * отправленные страницей кадры просто копятся в массиве.
+     * отправленные страницей кадры просто копятся в массиве. В closes ложатся
+     * коды, с которыми сокет закрыла сама страница.
      */
     async setupAgentSocket(
         frames: Record<string, unknown>[] = [],
-        options: { dropConnection?: boolean } = {}
+        options: { dropConnection?: boolean; closes?: number[] } = {}
     ) {
         const received: Record<string, unknown>[] = [];
         await this.page.routeWebSocket(
             `**/api/${version}/ws/**`,
             async (ws) => {
+                ws.onClose((code) => options.closes?.push(code ?? 0));
                 ws.onMessage((message) => {
                     received.push(JSON.parse(String(message)));
                     for (const frame of frames) {
