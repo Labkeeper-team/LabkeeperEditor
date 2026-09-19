@@ -54,10 +54,15 @@ export class AgentChatService {
     /** Hunks на старте прогона: база для итогового списка изменений при прерывании */
     private runStartHunks: Hunk[] = [];
     /**
-     * Финальное событие уже разбирается. Пока идёт сверка программы внутри него,
-     * состояние ещё 'running' и кнопка прерывания на экране, но прерывать уже нечего
+     * Прогон кончился сам: пришёл финал или оборвался сокет. Пока внутри идёт
+     * сверка программы, состояние ещё 'running' и кнопка прерывания на экране,
+     * но прерывать уже нечего, а разбор конца прогона обрывать нельзя
      */
-    private finishArrived = false;
+    private runEnded = false;
+    /** Прерывание уже идёт: кнопка висит до конца досинхронизации, второй клик не в счёт */
+    private aborting = false;
+    /** Сокет открыт. Сессию гасят и финал, и обрыв, поэтому о запуске по ней не судим */
+    private runStarted = false;
     /**
      * Номер текущего прогона. Растёт на каждом запуске и на каждом закрытии,
      * поэтому всё, что успело уйти в сеть от прошлого прогона, узнаёт себя
@@ -335,7 +340,8 @@ export class AgentChatService {
         // слот занимается до первого await, иначе второе нажатие проскочит проверку
         const token = ++this.runToken;
         this.lastChange = undefined;
-        this.finishArrived = false;
+        this.runEnded = false;
+        this.runStarted = false;
         this.track(Events.EVENT_AGENT_PROMPT_SUBMITTED, {
             ...this.agentSettings(),
             prompt_length: prompt.length,
@@ -401,6 +407,7 @@ export class AgentChatService {
                 params,
                 handlers
             );
+            this.runStarted = true;
             return;
         }
 
@@ -412,6 +419,7 @@ export class AgentChatService {
             },
             handlers
         );
+        this.runStarted = true;
     };
 
     /**
@@ -422,15 +430,28 @@ export class AgentChatService {
         if (!this.isRunning()) {
             return;
         }
-        // финал уже разбирается: прогон закончится ответом сам, а токены за него списаны
-        if (this.finishArrived) {
+        // прогон кончился сам: ответ модели оплачен, а сообщение об обрыве обязано дойти
+        if (this.runEnded) {
             return;
         }
+        // первое прерывание ещё идёт, и второй клик написал бы в ленту свой итог
+        if (this.aborting) {
+            return;
+        }
+        this.aborting = true;
+        try {
+            await this.abortRun();
+        } finally {
+            this.aborting = false;
+        }
+    };
+
+    private abortRun = async (): Promise<void> => {
         const chat = this.repository.chatViewModelRepository;
         const authenticated =
             this.repository.userViewModelRepository.isAuthenticated();
-        // сессии нет, пока идёт сверка и сохранение перед запуском: агент ещё не стартовал
-        const started = this.session !== null;
+        // до открытия сокета останавливать нечего: сверка и сохранение идут сами по себе
+        const started = this.runStarted;
         logBreadcrumb('agent', 'abort', { authenticated, started });
         this.track(Events.EVENT_AGENT_ABORTED, {
             ...this.agentSettings(),
@@ -651,7 +672,7 @@ export class AgentChatService {
     ): Promise<void> => {
         const chat = this.repository.chatViewModelRepository;
         this.session = null;
-        this.finishArrived = true;
+        this.runEnded = true;
         this.observerService.setUserState(
             States.STATE_AGENT_STOP_REASON,
             event.stopReason
@@ -763,7 +784,12 @@ export class AgentChatService {
                 this.programMayBeStale = true;
                 return false;
             }
-            return await this.hunkService.loadHunks();
+            const loaded = await this.hunkService.loadHunks();
+            if (!loaded) {
+                // список правок остался неизвестным, а снимок прогона берут с него
+                this.programMayBeStale = true;
+            }
+            return loaded;
         } catch (error) {
             reportUnexpectedError(
                 this.observerService,
@@ -829,6 +855,8 @@ export class AgentChatService {
             return;
         }
         this.session = null;
+        // до первого await: пока разбирается обрыв, прерывать уже нечего
+        this.runEnded = true;
         logBreadcrumb(
             'agent',
             `chat closed ${reason}`,
