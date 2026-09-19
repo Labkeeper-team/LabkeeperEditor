@@ -175,6 +175,12 @@ export const en: Translations = {
         error: 'Error',
         notice: 'Note',
         buy_tokens: 'Proceed to purchase tokens',
+        // общая подсказка: под отказом, который вход не снимает, обещать нечего
+        guest_login_hint:
+            'You are not logged in. With an account the agent has its own token balance and its own history',
+        guest_login_hint_limit:
+            'You are not logged in, so the agent runs under the limit for unregistered users. Logging in removes that limit: requests are paid from your token balance, and history and changes stay in the project. The iteration count, the context size and the ten minutes per run stay limited after login',
+        guest_login_action: 'Login',
         clear_history: 'Clear history',
         history_loading: 'Loading history',
         history_error: 'Could not load the history',
@@ -224,8 +230,9 @@ export const en: Translations = {
                 'The agent ran out of steps. What it managed to change is already in the project. Try raising the iteration limit or splitting the task',
             Timeout:
                 'The server stopped the agent on time, but it managed to write a result. The changes are already in the project',
+            // призыв войти приезжает отдельным блоком, в тексте ошибки он был бы вторым
             UnauthorizedLimitExceeded:
-                'You have reached the limit for unregistered users. Sign in to continue',
+                'You have reached the limit for unregistered users',
             PaymentRequired:
                 'You have reached the limit on using the assistant.',
             Locked: 'The agent is already running in another tab, or the project is being changed. Wait for it to finish and try again',

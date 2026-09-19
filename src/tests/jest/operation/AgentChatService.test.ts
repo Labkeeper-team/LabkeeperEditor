@@ -101,6 +101,69 @@ test('agent-start-sends-prompt-and-settings', async () => {
     );
 });
 
+test('agent-settings-max-tokens-offers-login-to-a-guest', () => {
+    const ctx = setup(false);
+    const onEvent = jest.spyOn(ctx.observerService, 'onEvent');
+
+    ctx.agentChatService.onMaxTokensChanged(30000);
+
+    expect(ctx.repository.authViewModelRepository.currentView()).toBe('login');
+    // значение осталось прежним, иначе гость поменял бы настройку в обход входа
+    expect(ctx.repository.persistenceViewModelRepository.agentMaxTokens()).toBe(
+        10000
+    );
+    // по источнику в аналитике видно, какая кнопка привела человека в окно входа
+    expect(onEvent).toHaveBeenCalledWith(
+        Events.EVENT_AUTH_MODAL_OPENED,
+        expect.objectContaining({ source: 'agent_settings' })
+    );
+    expect(onEvent).not.toHaveBeenCalledWith(
+        Events.EVENT_AGENT_SETTINGS_CHANGED,
+        expect.anything()
+    );
+});
+
+test('agent-settings-iterations-offers-login-to-a-guest', () => {
+    const ctx = setup(false);
+    const onEvent = jest.spyOn(ctx.observerService, 'onEvent');
+
+    ctx.agentChatService.onIterationsChanged(12);
+
+    expect(ctx.repository.authViewModelRepository.currentView()).toBe('login');
+    expect(
+        ctx.repository.persistenceViewModelRepository.agentIterations()
+    ).toBe(5);
+    expect(onEvent).toHaveBeenCalledWith(
+        Events.EVENT_AUTH_MODAL_OPENED,
+        expect.objectContaining({ source: 'agent_settings' })
+    );
+    expect(onEvent).not.toHaveBeenCalledWith(
+        Events.EVENT_AGENT_SETTINGS_CHANGED,
+        expect.anything()
+    );
+});
+
+test('agent-settings-stay-editable-for-an-authorized-user', () => {
+    const ctx = setup();
+    const onEvent = jest.spyOn(ctx.observerService, 'onEvent');
+
+    ctx.agentChatService.onMaxTokensChanged(30000);
+    ctx.agentChatService.onIterationsChanged(12);
+
+    expect(ctx.repository.persistenceViewModelRepository.agentMaxTokens()).toBe(
+        30000
+    );
+    expect(
+        ctx.repository.persistenceViewModelRepository.agentIterations()
+    ).toBe(12);
+    // окно входа авторизованному не показываем, проверка не должна быть шире гостя
+    expect(ctx.repository.authViewModelRepository.currentView()).toBe('closed');
+    expect(onEvent).not.toHaveBeenCalledWith(
+        Events.EVENT_AUTH_MODAL_OPENED,
+        expect.anything()
+    );
+});
+
 test('agent-tool-call-describes-fresh-hunk', async () => {
     const ctx = setup();
     const hunk: Hunk = {
@@ -342,6 +405,82 @@ test('unauthorized-limit-exceeded-does-not-replace-program', async () => {
     const program = ctx.repository.projectViewModelRepository.currentProgram();
     expect(program.segments[0].text).toBe('ORIGINAL');
     expect(ctx.repository.authViewModelRepository.currentView()).toBe('login');
+});
+
+/**
+ * Лимит для незарегистрированных вошедшему приходить не должен, а если сервер
+ * его всё-таки прислал, окном входа делу не поможешь: человек уже вошёл
+ */
+test('unauthorized-limit-does-not-open-login-for-an-authorized-user', async () => {
+    const ctx = setup();
+    ctx.repository.chatViewModelRepository.setInput('сделай');
+
+    await ctx.agentChatService.onPromptSubmit();
+    await emit(ctx, {
+        kind: 'finished',
+        message: null,
+        stopReason: 'UnauthorizedLimitExceeded',
+    });
+
+    expect(ctx.repository.authViewModelRepository.currentView()).toBe('closed');
+    // молчать тут нельзя: нарушение контракта иначе не видно ниоткуда
+    expect(Sentry.captureException).toHaveBeenCalled();
+});
+
+test('unauthorized-limit-does-not-report-a-guest', async () => {
+    const ctx = setup(false);
+    ctx.repository.chatViewModelRepository.setInput('сделай');
+
+    await ctx.agentChatService.onPromptSubmit();
+    await emit(ctx, {
+        kind: 'finished',
+        message: null,
+        stopReason: 'UnauthorizedLimitExceeded',
+    });
+
+    // гостевой лимит это штатный отказ, в Sentry ему делать нечего
+    expect(ctx.repository.authViewModelRepository.currentView()).toBe('login');
+    expect(Sentry.captureException).not.toHaveBeenCalled();
+});
+
+/**
+ * Под ошибкой гостю предлагают войти, а вход открывает проект заново и чистит
+ * ленту. Запрос переживает это только в поле ввода, туда его и возвращаем
+ */
+test('agent-error-returns-the-prompt-to-a-guest', async () => {
+    const ctx = setup(false);
+    ctx.repository.chatViewModelRepository.setInput('сделай таблицу');
+
+    await ctx.agentChatService.onPromptSubmit();
+    await emit(ctx, {
+        kind: 'finished',
+        message: null,
+        stopReason: 'UnknownError',
+    });
+
+    expect(ctx.repository.chatViewModelRepository.input()).toBe(
+        'сделай таблицу'
+    );
+    // вход чистит ленту, и набранное должно остаться в поле после этого тоже
+    ctx.agentChatService.onProjectChanged();
+    expect(ctx.repository.chatViewModelRepository.input()).toBe(
+        'сделай таблицу'
+    );
+});
+
+test('agent-error-leaves-the-field-empty-for-an-authorized-user', async () => {
+    const ctx = setup();
+    ctx.repository.chatViewModelRepository.setInput('сделай таблицу');
+
+    await ctx.agentChatService.onPromptSubmit();
+    await emit(ctx, {
+        kind: 'finished',
+        message: null,
+        stopReason: 'UnknownError',
+    });
+
+    // вошедшему возвращать нечего: лента никуда не денется, запрос виден в ней
+    expect(ctx.repository.chatViewModelRepository.input()).toBe('');
 });
 
 test('project-change-closes-session-and-clears-chat', async () => {

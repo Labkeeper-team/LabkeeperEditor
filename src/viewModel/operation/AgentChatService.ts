@@ -83,6 +83,20 @@ export class AgentChatService {
         trackEvent(this.observerService, this.repository, event, properties);
     }
 
+    /**
+     * Гостю показываем окно входа вместо самого действия. Метод не предикат:
+     * он шлёт событие и открывает окно, source это место в интерфейсе, откуда
+     * пришёл клик. Возвращает true, когда действие можно выполнять как обычно
+     */
+    private openLoginIfGuest = (source: string): boolean => {
+        if (this.repository.userViewModelRepository.isAuthenticated()) {
+            return true;
+        }
+        this.track(Events.EVENT_AUTH_MODAL_OPENED, { source });
+        this.repository.authViewModelRepository.setCurrentView('login');
+        return false;
+    };
+
     private agentSettings() {
         return {
             max_tokens:
@@ -110,6 +124,10 @@ export class AgentChatService {
     };
 
     onMaxTokensChanged = (value: number): void => {
+        // клик гостя проглатываем целиком, иначе в аналитику уйдёт изменение, которого не было
+        if (!this.openLoginIfGuest('agent_settings')) {
+            return;
+        }
         this.repository.persistenceViewModelRepository.setAgentMaxTokens(value);
         this.track(Events.EVENT_AGENT_SETTINGS_CHANGED, {
             setting: 'max_tokens',
@@ -118,6 +136,9 @@ export class AgentChatService {
     };
 
     onIterationsChanged = (value: number): void => {
+        if (!this.openLoginIfGuest('agent_settings')) {
+            return;
+        }
         this.repository.persistenceViewModelRepository.setAgentIterations(
             value
         );
@@ -386,7 +407,11 @@ export class AgentChatService {
     /** Смена проекта: гасим сессию и чистим ленту, чтобы не показывать чужую историю. */
     onProjectChanged = (): void => {
         this.closeSession();
-        this.repository.chatViewModelRepository.reset();
+        const chat = this.repository.chatViewModelRepository;
+        // вход гостя открывает проект заново, и набранный им запрос обязан это пережить
+        const typed = chat.input();
+        chat.reset();
+        chat.setInput(typed);
     };
 
     /** Соединение живёт, пока открыт проект. Закрываем при смене проекта и уходе. */
@@ -571,8 +596,12 @@ export class AgentChatService {
 
         if (isError) {
             chat.appendMessage({ kind: 'error', reason: event.stopReason });
-            // сократить можно только то, что видно: иначе длинный текст пришлось бы набирать заново
-            if (event.stopReason === 'PromptTooLong' && !chat.input()) {
+            // длинный запрос возвращаем, чтобы было что сокращать, а гостю возвращаем любой:
+            // под ошибкой ему предлагают войти, а вход оставляет от ленты только поле ввода
+            const returnPrompt =
+                event.stopReason === 'PromptTooLong' ||
+                !this.repository.userViewModelRepository.isAuthenticated();
+            if (returnPrompt && !chat.input()) {
                 chat.setInput(this.lastPrompt);
             }
             chat.setRequestState('error');
@@ -672,10 +701,15 @@ export class AgentChatService {
             return;
         }
         if (reason === 'UnauthorizedLimitExceeded') {
-            this.track(Events.EVENT_AUTH_MODAL_OPENED, {
-                source: 'agent_limit',
-            });
-            this.repository.authViewModelRepository.setCurrentView('login');
+            // вошедшему окно входа не поможет, а раз лимит для незарегистрированных
+            // ему всё-таки прислали, контракт нарушен и это надо увидеть
+            if (this.openLoginIfGuest('agent_limit')) {
+                reportUnexpectedError(
+                    this.observerService,
+                    `agent.stop.${reason}`,
+                    new Error(`Agent stop reason ${reason} for authorized user`)
+                );
+            }
             return;
         }
         if (reason === 'UnknownError' || reason === 'Locked') {
