@@ -170,6 +170,7 @@ export const en: Translations = {
         pdf_tab_label: 'PDF visualization',
         placeholder: 'Enter your promt',
         send: 'Send',
+        abort: 'Stop',
         disclaimer: 'AI may make mistakes. Double-check all generated code.',
         result: 'Result',
         error: 'Error',
@@ -223,6 +224,12 @@ export const en: Translations = {
             read_file: 'Reading a file',
             done: 'Finishing up',
         },
+        change: {
+            segment: 'Segment №{segment}',
+            file: 'File {file}',
+            other: 'A place with no name',
+            more: 'and other places in the project',
+        },
         stop: {
             ContextOverflow:
                 'The task did not fit into the context. Shorten the request or raise the context size',
@@ -251,6 +258,13 @@ export const en: Translations = {
                 'Could not save the project before the run. The agent would work on an outdated version, so the run was cancelled',
             sync_failed:
                 'Could not check the project against the server after the previous run. The run was cancelled so that the agent changes are not overwritten, reload the page and try again',
+            aborted:
+                'The run was stopped. The agent managed to change these places, and its changes stay in the project:',
+            aborted_nothing: 'The run was stopped. The agent changed nothing',
+            aborted_guest:
+                'The run was stopped. Without an account the agent changes arrive only at the end of a run, so the result is lost entirely and the project stays as it was',
+            aborted_unsynced:
+                'The run was stopped, but the project could not be re-read, so there is no way to tell what the agent changed. Reload the page',
         },
     },
     mobile_view: {

@@ -4,7 +4,10 @@ import { AppDispatch, StorageState } from '../../../../store';
 import { useDictionary } from '../../../../store/selectors/translations';
 import { controller } from '../../../../../main.tsx';
 import { Events } from '../../../../../model/service/ObserverService.ts';
-import { ChatMessage } from '../../../../../viewModel/repository';
+import {
+    AgentChangeSummary,
+    ChatMessage,
+} from '../../../../../viewModel/repository';
 import { AgentHistoryEntry } from '../../../../../model/domain.ts';
 import { AGENT_STOP_REASONS } from '../../../../../model/rpi/agentSocket.ts';
 import { Routes } from '../../../../../viewModel/routes.ts';
@@ -121,13 +124,25 @@ const ErrorBlock = ({
     );
 };
 
+/** Строка списка собирается здесь: лента хранит ключи, а язык меняется на ходу */
+const changeText = (
+    texts: Record<string, string>,
+    change: AgentChangeSummary
+): string =>
+    (texts[change.labelKey] ?? change.labelKey)
+        .replace('{segment}', String(change.segmentId ?? ''))
+        .replace('{file}', change.file ?? '');
+
 const NoticeBlock = ({
     reason,
+    changes,
 }: {
     reason: Extract<ChatMessage, { kind: 'notice' }>['reason'];
+    changes?: AgentChangeSummary[];
 }) => {
     const dictionary = useSelector(useDictionary);
     const stop = dictionary.agent_chat.stop as Record<string, string>;
+    const texts = dictionary.agent_chat.change as Record<string, string>;
     return (
         <div className="agent-chat__notice">
             <div className="agent-chat__notice-label">
@@ -136,6 +151,17 @@ const NoticeBlock = ({
             <div className="agent-chat__notice-text">
                 {stop[reason] ?? stop.UnknownError}
             </div>
+            {changes && changes.length > 0 && (
+                <ul className="agent-chat__notice-changes">
+                    {changes.map((change) => (
+                        <li
+                            key={`${change.labelKey}:${change.segmentId ?? change.file ?? ''}`}
+                        >
+                            {changeText(texts, change)}
+                        </li>
+                    ))}
+                </ul>
+            )}
         </div>
     );
 };
@@ -335,6 +361,7 @@ export const Transcript = () => {
                             <NoticeBlock
                                 key={message.id}
                                 reason={message.reason}
+                                changes={message.changes}
                             />
                         );
                     case 'event':

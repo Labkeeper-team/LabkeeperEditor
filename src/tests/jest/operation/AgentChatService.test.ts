@@ -1750,3 +1750,214 @@ test('send-errors-on-a-foreign-project-does-nothing', () => {
         ctx.repository.settingsViewModelRepository.setViewerTab
     ).not.toHaveBeenCalled();
 });
+
+/** Прогон, который уже идёт: сессия открыта, замок правок стоит */
+async function runningAgent(
+    ctx: ReturnType<typeof setup>,
+    prompt = 'сделай таблицу'
+) {
+    ctx.repository.chatViewModelRepository.setInput(prompt);
+    await ctx.agentChatService.onPromptSubmit();
+}
+
+const lastMessage = (ctx: ReturnType<typeof setup>) => {
+    const list = ctx.repository.chatViewModelRepository.messages();
+    return list[list.length - 1];
+};
+
+test('abort-closes-the-socket-and-unlocks-the-project', async () => {
+    const ctx = setup();
+    await runningAgent(ctx);
+    expect(ctx.editingLockService.isLocked()).toBe(true);
+
+    await ctx.agentChatService.onAbortClicked();
+
+    // что close даёт код 1000, снимает таймер и не зовёт onClosed, уже доказано
+    // в web/agentSocket.test.ts: close-stops-the-socket-and-the-timer-without-on-closed
+    expect(ctx.agentSocketState.closeCalls).toBe(1);
+    expect(ctx.repository.chatViewModelRepository.requestState()).toBe('idle');
+    expect(ctx.editingLockService.isLocked()).toBe(false);
+    // закрытие по своей воле обработчик разрыва не зовёт, ошибке взяться неоткуда
+    expect(
+        ctx.repository.chatViewModelRepository
+            .messages()
+            .some((message) => message.kind === 'error')
+    ).toBe(false);
+    expect(lastMessage(ctx)).toMatchObject({
+        kind: 'notice',
+        reason: 'aborted_nothing',
+    });
+});
+
+test('abort-lists-the-places-the-agent-changed', async () => {
+    const ctx = setup();
+    await runningAgent(ctx);
+    ctx.rpi.listHunksRequest = jest.fn().mockResolvedValue(
+        okResult({
+            hunks: [
+                segmentHunk('h1', 3, 1),
+                { id: 'h2', type: 'deleteLinesFromSegment', segmentId: 3 },
+                { id: 'h3', type: 'addLinesToFile', fileName: 'main.tex' },
+            ],
+        })
+    );
+    await emit(ctx, { kind: 'toolCall', toolName: 'add_lines_to_segment' });
+
+    await ctx.agentChatService.onAbortClicked();
+
+    // список считается от снимка на старте прогона, а не от последнего toolCall
+    expect(lastMessage(ctx)).toMatchObject({
+        kind: 'notice',
+        reason: 'aborted',
+        changes: [
+            { labelKey: 'segment', segmentId: 3 },
+            { labelKey: 'file', file: 'main.tex' },
+        ],
+    });
+});
+
+test('abort-picks-up-what-the-last-tool-call-changed', async () => {
+    const ctx = setup();
+    await runningAgent(ctx);
+    // на toolCall список ещё пуст, правка доезжает только к прерыванию
+    ctx.rpi.listHunksRequest = jest
+        .fn()
+        .mockResolvedValueOnce(okResult({ hunks: [] }))
+        .mockResolvedValue(okResult({ hunks: [segmentHunk('h1', 7, 1)] }));
+    await emit(ctx, { kind: 'toolCall', toolName: 'add_lines_to_segment' });
+
+    await ctx.agentChatService.onAbortClicked();
+
+    expect(lastMessage(ctx)).toMatchObject({
+        reason: 'aborted',
+        changes: [{ labelKey: 'segment', segmentId: 7 }],
+    });
+});
+
+test('abort-of-a-guest-run-says-the-result-is-lost', async () => {
+    const ctx = setup(false);
+    await runningAgent(ctx);
+    ctx.rpi.listHunksRequest = jest.fn();
+    ctx.rpi.getProjectRequest = jest.fn();
+
+    await ctx.agentChatService.onAbortClicked();
+
+    expect(lastMessage(ctx)).toMatchObject({
+        kind: 'notice',
+        reason: 'aborted_guest',
+    });
+    // у гостя правки приезжают в финале, тянуть с сервера нечего
+    expect(ctx.rpi.listHunksRequest).not.toHaveBeenCalled();
+    expect(ctx.rpi.getProjectRequest).not.toHaveBeenCalled();
+});
+
+test.each([['getProjectRequest'], ['listHunksRequest']] as const)(
+    'abort-does-not-invent-a-list-when-%s-fails',
+    async (request) => {
+        const ctx = setup();
+        await runningAgent(ctx);
+        ctx.repository.ideViewModelRepository.setHunks([
+            segmentHunk('h1', 3, 1),
+        ]);
+        ctx.rpi[request] = jest.fn().mockResolvedValue(failedResult);
+
+        await ctx.agentChatService.onAbortClicked();
+
+        expect(lastMessage(ctx)).toMatchObject({
+            kind: 'notice',
+            reason: 'aborted_unsynced',
+        });
+        expect(ctx.repository.chatViewModelRepository.requestState()).toBe(
+            'idle'
+        );
+    }
+);
+
+test('abort-keeps-the-answer-that-already-arrived', async () => {
+    const ctx = setup();
+    await submitAndFailReload(ctx);
+    const server = pending<unknown>();
+    ctx.rpi.getProjectRequest = jest.fn().mockReturnValue(server.promise);
+
+    const finishing = emit(ctx, {
+        kind: 'finished',
+        message: 'ответ модели',
+        stopReason: 'Done',
+    });
+    await settled();
+    // финал уже разбирается, а состояние ещё 'running' и кнопка прерывания на экране
+    await ctx.agentChatService.onAbortClicked();
+    server.resolve(okResult({ program: oneSegment('a\nX') }));
+    await finishing;
+
+    expect(ctx.agentSocketState.closeCalls).toBe(0);
+    expect(lastMessage(ctx)).toMatchObject({
+        kind: 'response',
+        text: 'ответ модели',
+    });
+    expect(ctx.repository.chatViewModelRepository.requestState()).toBe('ok');
+});
+
+test('events-and-a-drop-after-abort-do-not-reach-the-chat', async () => {
+    const ctx = setup();
+    await runningAgent(ctx);
+    const handlers = ctx.agentSocketState.handlers;
+
+    await ctx.agentChatService.onAbortClicked();
+    const shown = ctx.repository.chatViewModelRepository.messages().length;
+    await handlers?.onEvent({
+        kind: 'finished',
+        message: 'опоздавший ответ',
+        stopReason: 'Done',
+    });
+    handlers?.onClosed('closed');
+    await settled();
+
+    expect(ctx.repository.chatViewModelRepository.messages()).toHaveLength(
+        shown
+    );
+    expect(ctx.repository.chatViewModelRepository.requestState()).toBe('idle');
+});
+
+test('abort-does-not-revert-what-the-agent-already-applied', async () => {
+    const ctx = setup();
+    ctx.rpi.deleteHunkRequest = jest.fn();
+    await runningAgent(ctx);
+    ctx.rpi.listHunksRequest = jest
+        .fn()
+        .mockResolvedValue(okResult({ hunks: [segmentHunk('h1', 3, 1)] }));
+    await emit(ctx, { kind: 'toolCall', toolName: 'add_lines_to_segment' });
+
+    await ctx.agentChatService.onAbortClicked();
+
+    // прерывание останавливает агента, а не отменяет сделанное им
+    expect(ctx.repository.ideViewModelRepository.hunks()).toHaveLength(1);
+    expect(ctx.rpi.deleteHunkRequest).not.toHaveBeenCalled();
+});
+
+test('abort-before-the-run-starts-does-not-touch-the-project', async () => {
+    const ctx = setup();
+    let releaseSave: () => void = () => {};
+    ctx.rpi.saveProgramRequest = jest.fn().mockReturnValue(
+        new Promise((resolve) => {
+            releaseSave = () => resolve(okResult({}));
+        })
+    );
+    ctx.repository.chatViewModelRepository.setInput('сделай таблицу');
+    const submit = ctx.agentChatService.onPromptSubmit();
+    await settled();
+    ctx.rpi.getProjectRequest = jest.fn();
+
+    await ctx.agentChatService.onAbortClicked();
+    releaseSave();
+    await submit;
+
+    expect(ctx.agentSocketState.started).toBeNull();
+    // сессии ещё не было: ответ сервера затёр бы то, что человек не успел сохранить
+    expect(ctx.rpi.getProjectRequest).not.toHaveBeenCalled();
+    expect(lastMessage(ctx)).toMatchObject({
+        kind: 'notice',
+        reason: 'aborted_nothing',
+    });
+    expect(ctx.repository.chatViewModelRepository.requestState()).toBe('idle');
+});
