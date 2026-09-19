@@ -169,6 +169,8 @@ export interface Translations {
         error: string;
         notice: string;
         buy_tokens: string;
+        guest_login_hint: string;
+        guest_login_action: string;
         clear_history: string;
         history_loading: string;
         history_error: string;
