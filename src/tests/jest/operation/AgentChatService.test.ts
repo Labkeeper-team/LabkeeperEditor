@@ -423,6 +423,24 @@ test('unauthorized-limit-does-not-open-login-for-an-authorized-user', async () =
     });
 
     expect(ctx.repository.authViewModelRepository.currentView()).toBe('closed');
+    // молчать тут нельзя: нарушение контракта иначе не видно ниоткуда
+    expect(Sentry.captureException).toHaveBeenCalled();
+});
+
+test('unauthorized-limit-does-not-report-a-guest', async () => {
+    const ctx = setup(false);
+    ctx.repository.chatViewModelRepository.setInput('сделай');
+
+    await ctx.agentChatService.onPromptSubmit();
+    await emit(ctx, {
+        kind: 'finished',
+        message: null,
+        stopReason: 'UnauthorizedLimitExceeded',
+    });
+
+    // гостевой лимит это штатный отказ, в Sentry ему делать нечего
+    expect(ctx.repository.authViewModelRepository.currentView()).toBe('login');
+    expect(Sentry.captureException).not.toHaveBeenCalled();
 });
 
 /**

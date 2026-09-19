@@ -175,7 +175,10 @@ export const en: Translations = {
         error: 'Error',
         notice: 'Note',
         buy_tokens: 'Proceed to purchase tokens',
+        // общая подсказка: под отказом, который вход не снимает, обещать нечего
         guest_login_hint:
+            'You are not logged in. With an account the agent has its own token balance and its own history',
+        guest_login_hint_limit:
             'You are not logged in, so the agent runs under the limit for unregistered users. Logging in removes that limit: requests are paid from your token balance, and history and changes stay in the project. The iteration count, the context size and the ten minutes per run stay limited after login',
         guest_login_action: 'Login',
         clear_history: 'Clear history',

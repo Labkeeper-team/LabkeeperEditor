@@ -101,5 +101,7 @@ test.each(DICTIONARIES)(
         expect(words).toBeDefined();
         const stop = dictionary.agent_chat.stop as Record<string, string>;
         expect(stop.timeout).toContain(words);
+        // тот же срок назван словами в подсказке гостю про лимит
+        expect(dictionary.agent_chat.guest_login_hint_limit).toContain(words);
     }
 );
