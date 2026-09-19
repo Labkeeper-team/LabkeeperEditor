@@ -243,7 +243,10 @@ test('insert-segment-between', async ({ page }) => {
     await page.locator('div.dropdown-menu-container').nth(2).click();
     await page.getByText('Delete').last().click();
 
-    expect(await page.locator('.cm-content').count()).toBe(0);
+    // поле чата это тоже CodeMirror, поэтому считаем редакторы только внутри сегментов
+    expect(await page.locator('.segments-container .cm-content').count()).toBe(
+        0
+    );
 });
 
 /*
