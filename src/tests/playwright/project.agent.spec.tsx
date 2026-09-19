@@ -718,6 +718,89 @@ test('agent-history-clear-hidden-for-unauthorized', async ({ page }) => {
     ).toHaveCount(0);
 });
 
+/**
+ * Настройки встречает только гость на проекте по умолчанию: чужой проект по
+ * ссылке открывается на чтение, а у readonly чата нет вовсе. Своего проекта у
+ * гостя ещё нет, поэтому ни ручки проекта, ни истории здесь не нужны
+ */
+async function openGuestChat(page: Page) {
+    const routeSetup = new RouteSetup(page);
+    await routeSetup.setupGetUserInfoRequest(false);
+    // согласие на передачу данных проверяется отдельной спекой, здесь оно дано
+    await routeSetup.acceptCrossBorderConsentLocally();
+    const sent = await routeSetup.setupAgentSocket([]);
+
+    await page.goto('/');
+    await expect(page).toHaveURL('/project/default');
+    // несобранный проект открывается сразу на агенте, вкладку переключать нечем
+    await expect(page.locator('.agent-chat')).toBeVisible();
+    return sent;
+}
+
+const authModal = (page: Page) => page.locator('.auth-modal');
+
+/** На десктопе крестик лежит вне .auth-modal, поэтому ищем его по накладке */
+const closeAuthModal = (page: Page) =>
+    page
+        .locator('.modal-container-overlay', {
+            has: page.locator('.auth-modal'),
+        })
+        .getByRole('button', { name: 'Close' });
+
+test('agent-settings-offer-login-to-a-guest', async ({ page }) => {
+    await openGuestChat(page);
+
+    await page
+        .getByRole('group', { name: 'Context Size' })
+        .getByRole('button', { name: '30k' })
+        .click();
+
+    await expect(authModal(page)).toBeVisible();
+    // кнопка кликабельна, но значение не переключилось: задизейбленная клик бы не пропустила
+    await expect(
+        page
+            .getByRole('group', { name: 'Context Size' })
+            .getByRole('button', { name: '10k' })
+    ).toHaveAttribute('aria-pressed', 'true');
+
+    await closeAuthModal(page).click();
+    await expect(authModal(page)).toBeHidden();
+
+    await page
+        .getByRole('group', { name: 'Max Iterations' })
+        .getByRole('button', { name: '12' })
+        .click();
+
+    await expect(authModal(page)).toBeVisible();
+    await expect(
+        page
+            .getByRole('group', { name: 'Max Iterations' })
+            .getByRole('button', { name: '5' })
+    ).toHaveAttribute('aria-pressed', 'true');
+});
+
+test('guest-agent-run-survives-a-swallowed-settings-click', async ({
+    page,
+}) => {
+    const sent = await openGuestChat(page);
+
+    await page
+        .getByRole('group', { name: 'Max Iterations' })
+        .getByRole('button', { name: '12' })
+        .click();
+    await expect(authModal(page)).toBeVisible();
+    await closeAuthModal(page).click();
+    await expect(authModal(page)).toBeHidden();
+
+    await submitPrompt(page, 'поправь введение');
+
+    await expect.poll(() => sent.length).toBe(1);
+    const frame = sent[0] as { type: string; numberIterations: number };
+    // отправка гостю осталась, а настройка ушла прежняя, потому что клик по ней проглочен
+    expect(frame.type).toBe('startAgentUnauthorized');
+    expect(frame.numberIterations).toBe(5);
+});
+
 test('unauthorized-agent-applies-returned-program', async ({ page }) => {
     await openChat(page, {
         authenticated: false,

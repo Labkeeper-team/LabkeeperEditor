@@ -83,6 +83,20 @@ export class AgentChatService {
         trackEvent(this.observerService, this.repository, event, properties);
     }
 
+    /**
+     * Гостю показываем окно входа вместо самого действия. Метод не предикат:
+     * он шлёт событие и открывает окно, source это место в интерфейсе, откуда
+     * пришёл клик. Возвращает true, когда действие можно выполнять как обычно
+     */
+    private openLoginIfGuest = (source: string): boolean => {
+        if (this.repository.userViewModelRepository.isAuthenticated()) {
+            return true;
+        }
+        this.track(Events.EVENT_AUTH_MODAL_OPENED, { source });
+        this.repository.authViewModelRepository.setCurrentView('login');
+        return false;
+    };
+
     private agentSettings() {
         return {
             max_tokens:
@@ -110,6 +124,10 @@ export class AgentChatService {
     };
 
     onMaxTokensChanged = (value: number): void => {
+        // клик гостя проглатываем целиком, иначе в аналитику уйдёт изменение, которого не было
+        if (!this.openLoginIfGuest('agent_settings')) {
+            return;
+        }
         this.repository.persistenceViewModelRepository.setAgentMaxTokens(value);
         this.track(Events.EVENT_AGENT_SETTINGS_CHANGED, {
             setting: 'max_tokens',
@@ -118,6 +136,9 @@ export class AgentChatService {
     };
 
     onIterationsChanged = (value: number): void => {
+        if (!this.openLoginIfGuest('agent_settings')) {
+            return;
+        }
         this.repository.persistenceViewModelRepository.setAgentIterations(
             value
         );
@@ -386,7 +407,11 @@ export class AgentChatService {
     /** Смена проекта: гасим сессию и чистим ленту, чтобы не показывать чужую историю. */
     onProjectChanged = (): void => {
         this.closeSession();
-        this.repository.chatViewModelRepository.reset();
+        const chat = this.repository.chatViewModelRepository;
+        // вход гостя открывает проект заново, и набранный им запрос обязан это пережить
+        const typed = chat.input();
+        chat.reset();
+        chat.setInput(typed);
     };
 
     /** Соединение живёт, пока открыт проект. Закрываем при смене проекта и уходе. */
