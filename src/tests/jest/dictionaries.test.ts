@@ -18,6 +18,10 @@ const EXTRA_STOP_KEYS = [
     'connect_failed',
     'save_failed',
     'sync_failed',
+    'aborted',
+    'aborted_nothing',
+    'aborted_guest',
+    'aborted_unsynced',
 ];
 
 const TOOL_NAMES: AgentToolName[] = [
@@ -85,6 +89,16 @@ test.each(DICTIONARIES)(
     }
 );
 
+test.each(DICTIONARIES)(
+    'change-summary-texts-keep-their-placeholders-in-%s',
+    (_name, dictionary) => {
+        const change = dictionary.agent_chat.change;
+        // без подстановки строка списка обрывается на «Сегмент №» и «Файл»
+        expect(change.segment).toContain('{segment}');
+        expect(change.file).toContain('{file}');
+    }
+);
+
 /** Срок прогона назван в тексте словами, здесь сверяем, что они не разъехались */
 const TIMEOUT_WORDS: Record<number, Record<string, string>> = {
     10: { ru: 'десять минут', en: 'ten minutes' },
@@ -101,5 +115,7 @@ test.each(DICTIONARIES)(
         expect(words).toBeDefined();
         const stop = dictionary.agent_chat.stop as Record<string, string>;
         expect(stop.timeout).toContain(words);
+        // тот же срок назван словами в подсказке гостю про лимит
+        expect(dictionary.agent_chat.guest_login_hint_limit).toContain(words);
     }
 );

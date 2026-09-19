@@ -193,6 +193,14 @@
     color: $gray-10;
 }
 
+.agent-chat__notice-changes {
+    margin: 4px 0 0;
+    padding-left: 18px;
+    font-size: 14px;
+    line-height: 18px;
+    color: $gray-10;
+}
+
 .agent-chat__error-label {
     font-size: 14px;
     line-height: 18px;
@@ -206,7 +214,15 @@
     color: $gray-10;
 }
 
-.agent-chat__buy-tokens {
+.agent-chat__login-hint {
+    margin-top: 8px;
+    font-size: 13px;
+    line-height: 17px;
+    color: $gray-20;
+}
+
+.agent-chat__buy-tokens,
+.agent-chat__login {
     margin-top: 8px;
     border: none;
     background: $blue-10;
@@ -373,6 +389,15 @@
     &:disabled {
         background: $blue-20;
         cursor: default;
+    }
+
+    // прерывание доступно всегда, пока агент работает, поэтому правила :disabled тут нет
+    &--stop {
+        background: $gray-20;
+
+        &:hover {
+            background: $gray-10;
+        }
     }
 }
 

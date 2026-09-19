@@ -534,6 +534,69 @@ test('describe-model-call-uses-the-model-call-key', () => {
     });
 });
 
+test('describe-changes-keeps-one-line-per-place-in-order-of-appearance', () => {
+    const service = new AgentEventService();
+    const hunks = [
+        hunkOf('addLinesToSegment', { id: 'a', segmentId: 3 }),
+        hunkOf('addLinesToFile', { id: 'b', fileName: 'main.tex' }),
+        hunkOf('deleteLinesFromSegment', { id: 'c', segmentId: 3 }),
+    ];
+
+    // вторая правка того же сегмента новой строки не даёт и порядок не меняет
+    expect(service.describeChanges(hunks)).toEqual([
+        { labelKey: 'segment', segmentId: 3 },
+        { labelKey: 'file', file: 'main.tex' },
+    ]);
+});
+
+test('describe-changes-replaces-the-tail-with-one-common-line', () => {
+    const service = new AgentEventService();
+    const hunks = [1, 2, 3, 4, 5, 6].map((segmentId) =>
+        hunkOf('addLinesToSegment', { id: `h${segmentId}`, segmentId })
+    );
+
+    const changes = service.describeChanges(hunks, 5);
+
+    expect(changes).toHaveLength(6);
+    expect(changes[4]).toEqual({ labelKey: 'segment', segmentId: 5 });
+    expect(changes[5]).toEqual({ labelKey: 'more' });
+});
+
+test('describe-changes-does-not-hide-a-hunk-without-a-place', () => {
+    const service = new AgentEventService();
+
+    expect(service.describeChanges([hunkOf('addLinesToSegment')])).toEqual([
+        { labelKey: 'other' },
+    ]);
+});
+
+test.each([['ru'], ['en']] as const)(
+    'every-change-key-exists-in-the-%s-dictionary',
+    (language) => {
+        const service = new AgentEventService();
+        const texts = dictionary[language].agent_chat.change as Record<
+            string,
+            string
+        >;
+        const places = [
+            hunkOf('addLinesToSegment', { id: 'a', segmentId: 1 }),
+            hunkOf('addLinesToFile', { id: 'b', fileName: 'main.tex' }),
+            hunkOf('addLinesToSegment', { id: 'c' }),
+        ];
+        // второй вызов с коротким пределом добавляет ключ общего хвоста
+        const keys = [
+            ...service.describeChanges(places),
+            ...service.describeChanges(places, 1),
+        ].map((change) => change.labelKey);
+
+        const missing = keys.filter((key) => texts[key] === undefined);
+        expect(missing).toEqual([]);
+        expect(new Set(keys)).toEqual(
+            new Set(['segment', 'file', 'other', 'more'])
+        );
+    }
+);
+
 test.each([['ru'], ['en']] as const)(
     'every-label-key-exists-in-the-%s-dictionary',
     (language) => {

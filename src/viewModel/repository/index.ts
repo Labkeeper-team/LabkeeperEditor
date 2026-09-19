@@ -84,7 +84,13 @@ export type ChatMessage =
     | { kind: 'response'; id: number; text: string }
     | { kind: 'error'; id: number; reason: AgentErrorReason }
     /** Прогон дошёл до конца, но с оговоркой: изменения применены, а не отменены */
-    | { kind: 'notice'; id: number; reason: AgentErrorReason }
+    | {
+          kind: 'notice';
+          id: number;
+          reason: AgentErrorReason;
+          /** Что агент успел изменить: показывается под текстом оговорки */
+          changes?: AgentChangeSummary[];
+      }
     | {
           kind: 'event';
           id: number;
@@ -96,6 +102,18 @@ export type ChatMessage =
           /** Куда прокрутить редактор по клику */
           target?: EditorNavigationTarget;
       };
+
+/**
+ * Одно место, которое агент успел поправить. Хранится ключом, а не готовой
+ * строкой: язык переключается на ходу, и текст, собранный сервисом, остался бы
+ * на прежнем языке посреди переведённой ленты
+ */
+export type AgentChangeSummary = {
+    /** Ключ строки в словаре agent_chat.change */
+    labelKey: string;
+    segmentId?: number;
+    file?: string;
+};
 
 /** Omit по объединению должен раздаваться по вариантам, иначе union схлопнется */
 type DistributiveOmit<T, K extends PropertyKey> = T extends unknown
@@ -113,7 +131,15 @@ export type AgentErrorReason =
     /** Проект не удалось сохранить перед запуском, агент работал бы со старой версией */
     | 'save_failed'
     /** Программу не удалось сверить с сервером, в редакторе может быть текст до правки агента */
-    | 'sync_failed';
+    | 'sync_failed'
+    /** Прогон прервали, и список изменений идёт отдельным блоком */
+    | 'aborted'
+    /** Прогон прервали, а поправить агент ничего не успел */
+    | 'aborted_nothing'
+    /** Прогон прервали у гостя: правки приезжают в финале, поэтому результата нет вовсе */
+    | 'aborted_guest'
+    /** Прогон прервали, но перечитать проект не вышло, и что изменилось, неизвестно */
+    | 'aborted_unsynced';
 export type BillingPurchaseRequestState = 'idle' | 'loading' | 'ok' | 'error';
 
 export type PendingSegmentEditorCursor = {

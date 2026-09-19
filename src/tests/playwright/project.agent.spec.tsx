@@ -42,6 +42,7 @@ async function openChat(
         authenticated?: boolean;
         program?: Program;
         historyDelayMs?: number;
+        closes?: number[];
     } = {}
 ) {
     const routeSetup = new RouteSetup(page);
@@ -64,6 +65,7 @@ async function openChat(
     }
     const sent = await routeSetup.setupAgentSocket(options.frames ?? [], {
         dropConnection: options.dropConnection,
+        closes: options.closes,
     });
 
     await page.goto(`/project/${uuid}`);
@@ -241,28 +243,6 @@ test('agent-stop-reason-Done-shows-text', async ({ page }) => {
     );
     await expect(page.locator('.agent-chat__error-text')).toHaveCount(0);
     await expect(page.locator('.agent-chat__notice-text')).toHaveCount(0);
-});
-
-test('agent-stop-reason-UnauthorizedLimitExceeded-shows-text', async ({
-    page,
-}) => {
-    await openChat(page, {
-        authenticated: false,
-        frames: [
-            {
-                type: 'agentFinishedUnauthorized',
-                message: null,
-                stopReason: 'UnauthorizedLimitExceeded',
-            },
-        ],
-    });
-    await submitPrompt(page);
-
-    await expect(page.locator('.agent-chat__error-text')).toHaveText(
-        'You have reached the limit for unregistered users. Sign in to continue'
-    );
-    // по ТЗ тут же показываем окно входа
-    await expect(page.locator('.auth-modal')).toBeVisible();
 });
 
 test('agent-stop-reason-PromptTooLong-returns-the-prompt', async ({ page }) => {
@@ -716,6 +696,233 @@ test('agent-history-clear-hidden-for-unauthorized', async ({ page }) => {
     await expect(
         page.getByRole('button', { name: 'Clear history' })
     ).toHaveCount(0);
+});
+
+/**
+ * Настройки встречает только гость на проекте по умолчанию: чужой проект по
+ * ссылке открывается на чтение, а у readonly чата нет вовсе. Своего проекта у
+ * гостя ещё нет, поэтому ни ручки проекта, ни истории здесь не нужны
+ */
+async function openGuestChat(
+    page: Page,
+    options: {
+        frames?: Frame[];
+        dropConnection?: boolean;
+        closes?: number[];
+    } = {}
+) {
+    const routeSetup = new RouteSetup(page);
+    await routeSetup.setupGetUserInfoRequest(false);
+    // согласие на передачу данных проверяется отдельной спекой, здесь оно дано
+    await routeSetup.acceptCrossBorderConsentLocally();
+    const sent = await routeSetup.setupAgentSocket(options.frames ?? [], {
+        dropConnection: options.dropConnection,
+        closes: options.closes,
+    });
+
+    await page.goto('/');
+    await expect(page).toHaveURL('/project/default');
+    // несобранный проект открывается сразу на агенте, вкладку переключать нечем
+    await expect(page.locator('.agent-chat')).toBeVisible();
+    return sent;
+}
+
+const authModal = (page: Page) => page.locator('.auth-modal');
+
+/** На десктопе крестик лежит вне .auth-modal, поэтому ищем его по накладке */
+const closeAuthModal = (page: Page) =>
+    page
+        .locator('.modal-container-overlay', {
+            has: page.locator('.auth-modal'),
+        })
+        .getByRole('button', { name: 'Close' });
+
+test('agent-settings-offer-login-to-a-guest', async ({ page }) => {
+    await openGuestChat(page);
+
+    await page
+        .getByRole('group', { name: 'Context Size' })
+        .getByRole('button', { name: '30k' })
+        .click();
+
+    await expect(authModal(page)).toBeVisible();
+    // кнопка кликабельна, но значение не переключилось: задизейбленная клик бы не пропустила
+    await expect(
+        page
+            .getByRole('group', { name: 'Context Size' })
+            .getByRole('button', { name: '10k' })
+    ).toHaveAttribute('aria-pressed', 'true');
+
+    await closeAuthModal(page).click();
+    await expect(authModal(page)).toBeHidden();
+
+    await page
+        .getByRole('group', { name: 'Max Iterations' })
+        .getByRole('button', { name: '12' })
+        .click();
+
+    await expect(authModal(page)).toBeVisible();
+    await expect(
+        page
+            .getByRole('group', { name: 'Max Iterations' })
+            .getByRole('button', { name: '5' })
+    ).toHaveAttribute('aria-pressed', 'true');
+});
+
+test('guest-agent-run-survives-a-swallowed-settings-click', async ({
+    page,
+}) => {
+    const sent = await openGuestChat(page);
+
+    await page
+        .getByRole('group', { name: 'Max Iterations' })
+        .getByRole('button', { name: '12' })
+        .click();
+    await expect(authModal(page)).toBeVisible();
+    await closeAuthModal(page).click();
+    await expect(authModal(page)).toBeHidden();
+
+    await submitPrompt(page, 'поправь введение');
+
+    await expect.poll(() => sent.length).toBe(1);
+    const frame = sent[0] as { type: string; numberIterations: number };
+    // отправка гостю осталась, а настройка ушла прежняя, потому что клик по ней проглочен
+    expect(frame.type).toBe('startAgentUnauthorized');
+    expect(frame.numberIterations).toBe(5);
+});
+
+const loginOffer = (page: Page) =>
+    page.locator('.agent-chat__error .agent-chat__login');
+
+test('agent-stop-reason-UnauthorizedLimitExceeded-shows-text', async ({
+    page,
+}) => {
+    await openGuestChat(page, {
+        frames: [
+            {
+                type: 'agentFinishedUnauthorized',
+                message: null,
+                stopReason: 'UnauthorizedLimitExceeded',
+            },
+        ],
+    });
+    await submitPrompt(page);
+
+    await expect(page.locator('.agent-chat__error-text')).toHaveText(
+        'You have reached the limit for unregistered users'
+    );
+    // по ТЗ тут же показываем окно входа
+    await expect(authModal(page)).toBeVisible();
+    // призыв войти ровно один: из текста ошибки он ушёл, в ленте одна кнопка
+    await expect(loginOffer(page)).toHaveCount(1);
+    // снятие лимита обещаем только здесь: под этой причиной вход правда помогает
+    await expect(page.locator('.agent-chat__login-hint')).toContainText(
+        'Logging in removes that limit'
+    );
+});
+
+test('guest-agent-error-offers-login', async ({ page }) => {
+    await openGuestChat(page, { frames: [finished('UnknownError', null)] });
+
+    await submitPrompt(page, 'поправь введение');
+
+    await expect(page.locator('.agent-chat__error-text')).toHaveText(
+        'Something went wrong. Please try again'
+    );
+    await expect(page.locator('.agent-chat__login-hint')).toContainText(
+        'With an account the agent has its own token balance'
+    );
+    // запрос ждёт в поле: вход откроет проект заново и от ленты ничего не оставит
+    await expect(page.getByPlaceholder('Enter your promt')).toHaveValue(
+        'поправь введение'
+    );
+
+    await loginOffer(page).click();
+
+    await expect(authModal(page)).toBeVisible();
+});
+
+test('guest-agent-prompt-too-long-does-not-promise-a-lifted-limit', async ({
+    page,
+}) => {
+    await openGuestChat(page, { frames: [finished('PromptTooLong', null)] });
+
+    await submitPrompt(page, 'очень длинный запрос');
+
+    await expect(page.locator('.agent-chat__error-text')).toHaveText(
+        'The request is too long. Shorten it and send it again'
+    );
+    // сокращать придётся и после входа, обещать снятие лимита тут нельзя
+    const hint = page.locator('.agent-chat__login-hint');
+    await expect(hint).not.toContainText('removes that limit');
+    await expect(hint).not.toContainText('limit for unregistered users');
+    // сама кнопка остаётся: войти гостю всё равно есть зачем
+    await expect(loginOffer(page)).toHaveCount(1);
+});
+
+test('agent-error-does-not-offer-login-to-an-authorized-user', async ({
+    page,
+}) => {
+    await openChat(page, { frames: [finished('UnknownError', null)] });
+
+    await submitPrompt(page);
+
+    await expect(page.locator('.agent-chat__error-text')).toHaveText(
+        'Something went wrong. Please try again'
+    );
+    await expect(loginOffer(page)).toHaveCount(0);
+});
+
+test('guest-agent-payment-required-offers-login-not-tokens', async ({
+    page,
+}) => {
+    await openGuestChat(page, { frames: [finished('PaymentRequired', null)] });
+
+    await submitPrompt(page);
+
+    // гостю пополнять нечего: его покупка всё равно начинается со входа
+    await expect(
+        page.getByRole('button', { name: 'Proceed to purchase tokens' })
+    ).toHaveCount(0);
+    await expect(loginOffer(page)).toHaveCount(1);
+});
+
+test('guest-agent-drop-does-not-offer-login', async ({ page }) => {
+    await openGuestChat(page, { dropConnection: true });
+
+    await submitPrompt(page);
+
+    await expect(page.locator('.agent-chat__error-text')).toHaveText(
+        'The connection to the agent was lost. Please try again'
+    );
+    // обрыв связи вход не чинит, предлагать его тут незачем
+    await expect(loginOffer(page)).toHaveCount(0);
+});
+
+test('guest-agent-notice-does-not-offer-login', async ({ page }) => {
+    await openGuestChat(page, { frames: [finished('IterationLimit')] });
+
+    await submitPrompt(page);
+
+    await expect(page.locator('.agent-chat__notice-text')).toContainText(
+        'The agent ran out of steps'
+    );
+    // лимит итераций после входа остаётся тот же, звать в аккаунт незачем
+    await expect(page.locator('.agent-chat__login')).toHaveCount(0);
+});
+
+test('guest-agent-error-offer-fits-a-phone', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openGuestChat(page, { frames: [finished('UnknownError', null)] });
+
+    await submitPrompt(page);
+
+    await expect(loginOffer(page)).toBeVisible();
+    // лента скроллится внутри себя, поэтому меряем её, а не документ
+    const overflow = await page
+        .locator('.agent-chat__transcript')
+        .evaluate((node) => node.scrollWidth - node.clientWidth);
+    expect(overflow).toBeLessThanOrEqual(0);
 });
 
 test('unauthorized-agent-applies-returned-program', async ({ page }) => {
@@ -1403,4 +1610,78 @@ test.describe('русская локаль', () => {
             .toEqual(['Агент ещё работает. Точно уйти со страницы?']);
         await expect(page).toHaveURL(`/project/${uuid}`);
     });
+});
+
+const stopButton = (page: Page) =>
+    page.getByRole('button', { name: 'Stop', exact: true });
+
+const sendButton = (page: Page) =>
+    page.getByRole('button', { name: 'Send', exact: true });
+
+test('agent-abort-button-stands-in-for-send-while-running', async ({
+    page,
+}) => {
+    await openChat(page, { frames: [toolCall('read_segment')] });
+    await expect(stopButton(page)).toHaveCount(0);
+
+    await submitPrompt(page);
+
+    await expect(page.locator('.agent-chat__event')).toHaveCount(1);
+    await expect(stopButton(page)).toBeVisible();
+    // кнопка одна и та же, иначе на телефоне раскладка поедет
+    await expect(sendButton(page)).toHaveCount(0);
+});
+
+test('agent-abort-closes-the-socket-and-shows-what-changed', async ({
+    page,
+}) => {
+    const closes: number[] = [];
+    await openChat(page, {
+        frames: [toolCall('add_lines_to_segment')],
+        closes,
+    });
+    await submitPrompt(page);
+    await expect(page.locator('.agent-chat__event')).toHaveCount(1);
+    // правка последнего инструмента доезжает до сервера только к прерыванию
+    await new RouteSetup(page).setupListHunksRequest([
+        {
+            id: 'h1',
+            type: 'addLinesToSegment',
+            segmentId: 3,
+            startLine: 1,
+            endLine: 2,
+        },
+    ]);
+
+    await stopButton(page).click();
+
+    await expect(page.locator('.agent-chat__notice-text')).toContainText(
+        'The run was stopped'
+    );
+    await expect(page.locator('.agent-chat__notice-changes li')).toHaveText([
+        'Segment №3',
+    ]);
+    await expect.poll(() => closes).toEqual([1000]);
+    // прогон окончен: поле снова набирается, а кнопка отправки вернулась
+    await expect(page.getByPlaceholder('Enter your promt')).toBeEditable();
+    await expect(sendButton(page)).toBeVisible();
+});
+
+test('agent-abort-of-a-guest-run-says-the-result-is-lost', async ({ page }) => {
+    const closes: number[] = [];
+    await openGuestChat(page, {
+        frames: [toolCall('add_lines_to_segment')],
+        closes,
+    });
+    await submitPrompt(page);
+    await expect(page.locator('.agent-chat__event')).toHaveCount(1);
+
+    await stopButton(page).click();
+
+    await expect(page.locator('.agent-chat__notice-text')).toContainText(
+        'the result is lost entirely'
+    );
+    // у гостя правок в ленте нет, перечислять нечего
+    await expect(page.locator('.agent-chat__notice-changes')).toHaveCount(0);
+    await expect.poll(() => closes).toEqual([1000]);
 });

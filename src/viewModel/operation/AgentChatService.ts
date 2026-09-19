@@ -51,6 +51,18 @@ const PARTIAL_STOP_REASONS: AgentStopReason[] = [
 export class AgentChatService {
     private session: AgentSession | null = null;
     private knownHunks: Hunk[] = [];
+    /** Hunks на старте прогона: база для итогового списка изменений при прерывании */
+    private runStartHunks: Hunk[] = [];
+    /**
+     * Прогон кончился сам: пришёл финал или оборвался сокет. Пока внутри идёт
+     * сверка программы, состояние ещё 'running' и кнопка прерывания на экране,
+     * но прерывать уже нечего, а разбор конца прогона обрывать нельзя
+     */
+    private runEnded = false;
+    /** Прерывание уже идёт: кнопка висит до конца досинхронизации, второй клик не в счёт */
+    private aborting = false;
+    /** Сокет открыт. Сессию гасят и финал, и обрыв, поэтому о запуске по ней не судим */
+    private runStarted = false;
     /**
      * Номер текущего прогона. Растёт на каждом запуске и на каждом закрытии,
      * поэтому всё, что успело уйти в сеть от прошлого прогона, узнаёт себя
@@ -83,6 +95,20 @@ export class AgentChatService {
         trackEvent(this.observerService, this.repository, event, properties);
     }
 
+    /**
+     * Гостю показываем окно входа вместо самого действия. Метод не предикат:
+     * он шлёт событие и открывает окно, source это место в интерфейсе, откуда
+     * пришёл клик. Возвращает true, когда действие можно выполнять как обычно
+     */
+    private openLoginIfGuest = (source: string): boolean => {
+        if (this.repository.userViewModelRepository.isAuthenticated()) {
+            return true;
+        }
+        this.track(Events.EVENT_AUTH_MODAL_OPENED, { source });
+        this.repository.authViewModelRepository.setCurrentView('login');
+        return false;
+    };
+
     private agentSettings() {
         return {
             max_tokens:
@@ -110,6 +136,10 @@ export class AgentChatService {
     };
 
     onMaxTokensChanged = (value: number): void => {
+        // клик гостя проглатываем целиком, иначе в аналитику уйдёт изменение, которого не было
+        if (!this.openLoginIfGuest('agent_settings')) {
+            return;
+        }
         this.repository.persistenceViewModelRepository.setAgentMaxTokens(value);
         this.track(Events.EVENT_AGENT_SETTINGS_CHANGED, {
             setting: 'max_tokens',
@@ -118,6 +148,9 @@ export class AgentChatService {
     };
 
     onIterationsChanged = (value: number): void => {
+        if (!this.openLoginIfGuest('agent_settings')) {
+            return;
+        }
         this.repository.persistenceViewModelRepository.setAgentIterations(
             value
         );
@@ -307,6 +340,8 @@ export class AgentChatService {
         // слот занимается до первого await, иначе второе нажатие проскочит проверку
         const token = ++this.runToken;
         this.lastChange = undefined;
+        this.runEnded = false;
+        this.runStarted = false;
         this.track(Events.EVENT_AGENT_PROMPT_SUBMITTED, {
             ...this.agentSettings(),
             prompt_length: prompt.length,
@@ -349,6 +384,8 @@ export class AgentChatService {
         }
 
         this.knownHunks = this.repository.ideViewModelRepository.hunks();
+        // knownHunks перезаписывается на каждом toolCall, для итога нужен снимок всего прогона
+        this.runStartHunks = this.knownHunks;
         this.track(Events.EVENT_AGENT_STARTED, this.agentSettings());
 
         const params = {
@@ -370,6 +407,7 @@ export class AgentChatService {
                 params,
                 handlers
             );
+            this.runStarted = true;
             return;
         }
 
@@ -381,12 +419,94 @@ export class AgentChatService {
             },
             handlers
         );
+        this.runStarted = true;
+    };
+
+    /**
+     * Кнопка прерывания. Кадра отмены в протоколе нет, поэтому единственный рычаг
+     * это закрыть сокет: сервер про остановку не узнает, и сделанное остаётся в проекте
+     */
+    onAbortClicked = async (): Promise<void> => {
+        if (!this.isRunning()) {
+            return;
+        }
+        // прогон кончился сам: ответ модели оплачен, а сообщение об обрыве обязано дойти
+        if (this.runEnded) {
+            return;
+        }
+        // первое прерывание ещё идёт, и второй клик написал бы в ленту свой итог
+        if (this.aborting) {
+            return;
+        }
+        this.aborting = true;
+        try {
+            await this.abortRun();
+        } finally {
+            this.aborting = false;
+        }
+    };
+
+    private abortRun = async (): Promise<void> => {
+        const chat = this.repository.chatViewModelRepository;
+        const authenticated =
+            this.repository.userViewModelRepository.isAuthenticated();
+        // до открытия сокета останавливать нечего: сверка и сохранение идут сами по себе
+        const started = this.runStarted;
+        logBreadcrumb('agent', 'abort', { authenticated, started });
+        this.track(Events.EVENT_AGENT_ABORTED, {
+            ...this.agentSettings(),
+            started,
+        });
+        // номер занимаем до закрытия: всё, что висит в очереди событий, узнает себя по старому
+        const token = ++this.runToken;
+        this.session?.close();
+        this.session = null;
+
+        if (!started) {
+            // запуск не состоялся, менять на сервере было нечему
+            chat.appendMessage({ kind: 'notice', reason: 'aborted_nothing' });
+            chat.setRequestState('idle');
+            return;
+        }
+        if (!authenticated) {
+            // гостю правки приезжают одним куском в финале, а финала уже не будет
+            chat.appendMessage({ kind: 'notice', reason: 'aborted_guest' });
+            chat.setRequestState('idle');
+            return;
+        }
+
+        const synced = await this.syncAfterAbort(token);
+        if (token !== this.runToken) {
+            return;
+        }
+        if (!synced) {
+            // список собирать не из чего: молча показать старый значит соврать
+            chat.appendMessage({ kind: 'notice', reason: 'aborted_unsynced' });
+            chat.setRequestState('idle');
+            return;
+        }
+        const changes = this.events.describeChanges(
+            this.events.changedHunks(
+                this.runStartHunks,
+                this.repository.ideViewModelRepository.hunks()
+            )
+        );
+        chat.appendMessage(
+            changes.length
+                ? { kind: 'notice', reason: 'aborted', changes }
+                : { kind: 'notice', reason: 'aborted_nothing' }
+        );
+        chat.setRequestState('idle');
     };
 
     /** Смена проекта: гасим сессию и чистим ленту, чтобы не показывать чужую историю. */
     onProjectChanged = (): void => {
         this.closeSession();
-        this.repository.chatViewModelRepository.reset();
+        const chat = this.repository.chatViewModelRepository;
+        // вход гостя открывает проект заново, и набранный им запрос обязан это пережить
+        const typed = chat.input();
+        chat.reset();
+        chat.setInput(typed);
     };
 
     /** Соединение живёт, пока открыт проект. Закрываем при смене проекта и уходе. */
@@ -552,6 +672,7 @@ export class AgentChatService {
     ): Promise<void> => {
         const chat = this.repository.chatViewModelRepository;
         this.session = null;
+        this.runEnded = true;
         this.observerService.setUserState(
             States.STATE_AGENT_STOP_REASON,
             event.stopReason
@@ -571,8 +692,12 @@ export class AgentChatService {
 
         if (isError) {
             chat.appendMessage({ kind: 'error', reason: event.stopReason });
-            // сократить можно только то, что видно: иначе длинный текст пришлось бы набирать заново
-            if (event.stopReason === 'PromptTooLong' && !chat.input()) {
+            // длинный запрос возвращаем, чтобы было что сокращать, а гостю возвращаем любой:
+            // под ошибкой ему предлагают войти, а вход оставляет от ленты только поле ввода
+            const returnPrompt =
+                event.stopReason === 'PromptTooLong' ||
+                !this.repository.userViewModelRepository.isAuthenticated();
+            if (returnPrompt && !chat.input()) {
                 chat.setInput(this.lastPrompt);
             }
             chat.setRequestState('error');
@@ -647,6 +772,35 @@ export class AgentChatService {
         return true;
     };
 
+    /**
+     * Досинхронизация после прерывания. Правка последнего инструмента могла не
+     * доехать, поэтому перечитываем безусловно, а порядок берём как в resyncProgram:
+     * программа перекладывает под себя hunks, поэтому она первая
+     */
+    private syncAfterAbort = async (token: number): Promise<boolean> => {
+        try {
+            if (!(await this.reloadProgram(token))) {
+                // без проекта флаг не выставлен, а следующий запуск обязан свериться
+                this.programMayBeStale = true;
+                return false;
+            }
+            const loaded = await this.hunkService.loadHunks();
+            if (!loaded) {
+                // список правок остался неизвестным, а снимок прогона берут с него
+                this.programMayBeStale = true;
+            }
+            return loaded;
+        } catch (error) {
+            reportUnexpectedError(
+                this.observerService,
+                'agent.abort_resync',
+                error
+            );
+            this.programMayBeStale = true;
+            return false;
+        }
+    };
+
     /** false, если программа может расходиться с сервером. Зовётся под замком */
     private resyncProgram = async (token: number): Promise<boolean> => {
         if (!this.programMayBeStale) {
@@ -672,10 +826,15 @@ export class AgentChatService {
             return;
         }
         if (reason === 'UnauthorizedLimitExceeded') {
-            this.track(Events.EVENT_AUTH_MODAL_OPENED, {
-                source: 'agent_limit',
-            });
-            this.repository.authViewModelRepository.setCurrentView('login');
+            // вошедшему окно входа не поможет, а раз лимит для незарегистрированных
+            // ему всё-таки прислали, контракт нарушен и это надо увидеть
+            if (this.openLoginIfGuest('agent_limit')) {
+                reportUnexpectedError(
+                    this.observerService,
+                    `agent.stop.${reason}`,
+                    new Error(`Agent stop reason ${reason} for authorized user`)
+                );
+            }
             return;
         }
         if (reason === 'UnknownError' || reason === 'Locked') {
@@ -696,6 +855,8 @@ export class AgentChatService {
             return;
         }
         this.session = null;
+        // до первого await: пока разбирается обрыв, прерывать уже нечего
+        this.runEnded = true;
         logBreadcrumb(
             'agent',
             `chat closed ${reason}`,
