@@ -2,6 +2,12 @@
  * Старт сессии аналитики: синхронная часть, отложенная сеть и правило одного присвоения.
  * Идентификатор сессии модульный, поэтому каждый случай берёт свежие копии модулей.
  */
+jest.mock('@sentry/react', () => ({
+    captureException: jest.fn(),
+    captureMessage: jest.fn(),
+    addBreadcrumb: jest.fn(),
+}));
+
 const track = jest.fn();
 const identify = jest.fn();
 
@@ -29,6 +35,7 @@ type SessionModule = typeof import('../../../web/session.ts');
 let openpanel: OpenPanelModule;
 let session: SessionModule;
 let logBreadcrumb: jest.Mock;
+let captureException: jest.Mock;
 
 /** Сетевая часть старта живёт в нескольких промисах подряд, одного тика не хватает. */
 const flushMicrotasks = async () => {
@@ -58,6 +65,10 @@ beforeEach(async () => {
         (await import('../../../viewModel/utils/logBreadcrumb.ts')) as unknown as {
             logBreadcrumb: jest.Mock;
         });
+    // копии модулей свежие после resetModules, поэтому и мок Sentry берём из того же графа
+    ({ captureException } = (await import('@sentry/react')) as unknown as {
+        captureException: jest.Mock;
+    });
 });
 
 afterEach(() => {
@@ -75,12 +86,34 @@ test('guest-gets-the-header-value-before-analytics-answers', async () => {
 
     const starting = service.init();
 
+    // запрос старта уже ушёл, ответа ещё нет, а заголовок у гостя уже есть
     const guestId = session.getSessionId();
+    expect(sessionStartCalls()).toHaveLength(1);
     expect(guestId).toEqual(expect.any(String));
     expect(identifyPayloads()).toEqual([{ profileId: guestId }]);
 
     answerTrack(undefined);
     await starting;
+});
+
+test('an-authorized-tab-gets-a-local-id-when-the-server-sends-none', async () => {
+    track.mockResolvedValue({});
+    const service = new openpanel.OpenPanelService();
+
+    await service.init('user-1', 'user@example.com');
+    const afterStart = session.getSessionId();
+    track.mockResolvedValue({ sessionId: 's-late' });
+    await service.init('user-1', 'user@example.com');
+
+    expect(afterStart).toEqual(expect.any(String));
+    expect(session.getSessionId()).toBe(afterStart);
+    expect(captureException).toHaveBeenCalledTimes(1);
+    expect(captureException).toHaveBeenCalledWith(
+        new Error('openpanel.sessionStart'),
+        expect.objectContaining({
+            tags: { 'error.context': 'openpanel.sessionStart' },
+        })
+    );
 });
 
 test('server-session-id-comes-from-session-started-and-identify-cannot-replace-it', async () => {
@@ -118,6 +151,28 @@ test('a-repeated-init-after-a-broken-start-does-not-open-a-second-session', asyn
     expect(sessionStartCalls()).toHaveLength(1);
 });
 
+test('a-logout-during-the-first-init-keeps-the-guest-profile', async () => {
+    let answerTrack: (value: { sessionId: string }) => void = () => {};
+    track.mockReturnValue(
+        new Promise<{ sessionId: string }>((resolve) => {
+            answerTrack = resolve;
+        })
+    );
+    const service = new openpanel.OpenPanelService();
+
+    const starting = service.init('user-1', 'user@example.com');
+    service.onLogout();
+    answerTrack({ sessionId: 's-1' });
+    await starting;
+
+    expect(lastIdentifyPayload()).toEqual({
+        profileId: session.getSessionId(),
+    });
+    expect(identifyPayloads()).not.toContainEqual(
+        expect.objectContaining({ email: 'user@example.com' })
+    );
+});
+
 test('a-login-during-the-first-init-identifies-the-user-after-it', async () => {
     let answerTrack: (value: { sessionId: string }) => void = () => {};
     track.mockReturnValue(
@@ -128,15 +183,17 @@ test('a-login-during-the-first-init-identifies-the-user-after-it', async () => {
     const service = new openpanel.OpenPanelService();
 
     const guestStart = service.init();
+    const guestId = session.getSessionId();
     const loginStart = service.init('user-1', 'user@example.com');
     answerTrack({ sessionId: 's-1' });
     await Promise.all([guestStart, loginStart]);
 
     expect(sessionStartCalls()).toHaveLength(1);
-    expect(lastIdentifyPayload()).toEqual({
-        profileId: 'user-1',
-        email: 'user@example.com',
-    });
+    expect(identifyPayloads()).toEqual([
+        { profileId: guestId },
+        { profileId: 'user-1' },
+        { profileId: 'user-1', email: 'user@example.com' },
+    ]);
 });
 
 test('logout-drops-the-id-of-the-user-who-left', async () => {

@@ -7,10 +7,12 @@ import {
     ObserverService,
 } from '../../model/service/ObserverService.ts';
 import { logBreadcrumb } from '../../viewModel/utils/logBreadcrumb.ts';
+import { reportToSentry } from '../../viewModel/utils/reportUnexpectedError.ts';
 import { sentryIssueSearchUrl } from '../sentry/sentryUrl.ts';
 import {
     adoptAnalyticsSessionId,
     createGuestSessionId,
+    getSessionId,
     resetSessionIdOnLogout,
 } from '../session.ts';
 
@@ -27,6 +29,9 @@ export class OpenPanelService implements ObserverService {
     // промис сетевой части старта, он же признак начатой сессии: отдельного флага нет,
     // иначе вход, пришедший до конца первой инициализации, уехал бы мимо неё
     private starting: Promise<void> | undefined;
+    // профиль, от имени которого вкладка работает сейчас: хвост первой инициализации доходит
+    // до сети уже после входа или выхода, и представляться устаревшим профилем ему нельзя
+    private currentProfileId: string | undefined;
 
     async init(userId?: string, email?: string) {
         if (!this.ensureClient() || !this.op) {
@@ -35,6 +40,7 @@ export class OpenPanelService implements ObserverService {
         // профиль отдаём SDK синхронно: запроса при одном ключе он не делает, зато все
         // дальнейшие события уже несут profileId, а гость сразу получает значение заголовка
         const profileId = userId ?? createGuestSessionId();
+        this.currentProfileId = profileId;
         void this.op.identify({ profileId });
         if (!this.starting) {
             this.starting = this.startSession(profileId, userId, email);
@@ -53,6 +59,7 @@ export class OpenPanelService implements ObserverService {
         }
         // после выхода вкладка продолжает работу как гостевая, и профиль в SDK тоже гостевой
         const profileId = resetSessionIdOnLogout();
+        this.currentProfileId = profileId;
         void this.op.identify({ profileId });
     }
 
@@ -121,6 +128,7 @@ export class OpenPanelService implements ObserverService {
         if (!this.op) {
             return;
         }
+        let startError: unknown;
         try {
             const result = await withTimeout(
                 this.track('Session started', {
@@ -136,7 +144,14 @@ export class OpenPanelService implements ObserverService {
                 adoptAnalyticsSessionId(result?.sessionId);
             }
         } catch (error) {
+            startError = error;
             logBreadcrumb('openpanel', 'session start failed', { error });
+        }
+        // повтора старта не будет, поэтому вошедшему без серверного id выдаём локальный:
+        // иначе вкладка до закрытия ходит без заголовка, а отчёт делает отказ видимым
+        if (userId && !getSessionId()) {
+            createGuestSessionId();
+            reportToSentry('openpanel.sessionStart', startError);
         }
         // представляемся даже после сорванного Session started: это независимый запрос
         if (userId) {
@@ -152,7 +167,9 @@ export class OpenPanelService implements ObserverService {
         profileId: string,
         options?: { email?: string; firstName?: string }
     ) {
-        if (!this.op) {
+        // профиль сменился, пока хвост старта ждал сеть: возвращать в SDK ушедшего
+        // пользователя или заводить анонимный профиль уже вошедшему нельзя
+        if (!this.op || profileId !== this.currentProfileId) {
             return;
         }
         const payload = {
