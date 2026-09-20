@@ -55,6 +55,7 @@ const lastIdentifyPayload = () => {
 };
 
 beforeEach(async () => {
+    window.localStorage.clear();
     jest.resetModules();
     jest.clearAllMocks();
     track.mockResolvedValue(undefined);
@@ -73,6 +74,7 @@ beforeEach(async () => {
 
 afterEach(() => {
     jest.useRealTimers();
+    window.localStorage.clear();
 });
 
 test('guest-gets-the-header-value-before-analytics-answers', async () => {
@@ -194,6 +196,21 @@ test('a-login-during-the-first-init-identifies-the-user-after-it', async () => {
         { profileId: 'user-1' },
         { profileId: 'user-1', email: 'user@example.com' },
     ]);
+});
+
+test('a-remembered-flag-does-not-start-a-session', async () => {
+    window.localStorage.setItem(openpanel.ANALYTICS_DISABLED_STORAGE_KEY, '1');
+    const { OpenPanel } = jest.requireMock('@openpanel/web') as {
+        OpenPanel: jest.Mock;
+    };
+    const service = new openpanel.OpenPanelService();
+
+    await service.init('user-1', 'user@example.com');
+    service.onEvent('start_run');
+
+    expect(OpenPanel).not.toHaveBeenCalled();
+    expect(sessionStartCalls()).toHaveLength(0);
+    expect(session.getSessionId()).toBeUndefined();
 });
 
 test('logout-drops-the-id-of-the-user-who-left', async () => {

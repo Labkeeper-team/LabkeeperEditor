@@ -1,5 +1,8 @@
 import { OpenPanel } from '@openpanel/web';
-import { OpenPanelService } from '../../../web/openpanel';
+import {
+    ANALYTICS_DISABLED_STORAGE_KEY,
+    OpenPanelService,
+} from '../../../web/openpanel';
 import { getSessionId } from '../../../web/session.ts';
 
 const track = jest.fn().mockResolvedValue(undefined);
@@ -24,6 +27,10 @@ jest.mock('../../../viewModel/utils/logBreadcrumb.ts', () => ({
 }));
 
 describe('OpenPanelService without credentials', () => {
+    beforeEach(() => {
+        window.localStorage.removeItem(ANALYTICS_DISABLED_STORAGE_KEY);
+    });
+
     test('onEvent is a no-op when the client is not configured', () => {
         const service = new OpenPanelService();
 

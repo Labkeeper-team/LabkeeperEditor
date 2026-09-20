@@ -1,5 +1,8 @@
 import { OpenPanel } from '@openpanel/web';
-import { OpenPanelService } from '../../../web/openpanel';
+import {
+    ANALYTICS_DISABLED_STORAGE_KEY,
+    OpenPanelService,
+} from '../../../web/openpanel';
 
 const track = jest.fn().mockResolvedValue(undefined);
 
@@ -26,6 +29,11 @@ describe('OpenPanelService', () => {
     beforeEach(() => {
         jest.clearAllMocks();
         track.mockResolvedValue(undefined);
+        window.localStorage.removeItem(ANALYTICS_DISABLED_STORAGE_KEY);
+    });
+
+    afterEach(() => {
+        window.localStorage.removeItem(ANALYTICS_DISABLED_STORAGE_KEY);
     });
 
     test('trackSentryEvent sends event id and sentry url', () => {
@@ -88,5 +96,16 @@ describe('OpenPanelService', () => {
         service.onEvent('custom_key', { ok: true });
 
         expect(track).toHaveBeenCalledWith('[E] custom_key', { ok: true });
+    });
+
+    test('a remembered flag does not create a client or send events', async () => {
+        window.localStorage.setItem(ANALYTICS_DISABLED_STORAGE_KEY, '1');
+        const service = new OpenPanelService();
+
+        await service.init('user-1', 'user@example.com');
+        service.onEvent('start_run');
+
+        expect(OpenPanel).not.toHaveBeenCalled();
+        expect(track).not.toHaveBeenCalled();
     });
 });

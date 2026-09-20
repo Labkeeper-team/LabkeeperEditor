@@ -18,6 +18,7 @@ import {
 
 const SESSION_TIMEOUT_MS = 2000;
 const EDITOR_EVENT_PREFIX = '[E] ';
+export const ANALYTICS_DISABLED_STORAGE_KEY = 'labkeeper_analytics_disabled';
 
 function anonymousDisplayName(): string {
     const suffix = crypto.getRandomValues(new Uint32Array(1))[0] % 1_000_000;
@@ -103,6 +104,12 @@ export class OpenPanelService implements ObserverService {
     }
 
     private ensureClient(): boolean {
+        // флаг ставит e2e до загрузки приложения; сессию и события не поднимаем
+        if (isAnalyticsDisabled()) {
+            this.op = undefined;
+            this.starting = undefined;
+            return false;
+        }
         if (this.op) {
             return true;
         }
@@ -187,6 +194,19 @@ export class OpenPanelService implements ObserverService {
         } catch (error) {
             logBreadcrumb('openpanel', 'identify failed', { error });
         }
+    }
+}
+
+function isAnalyticsDisabled(): boolean {
+    if (typeof window === 'undefined') {
+        return false;
+    }
+    try {
+        return (
+            window.localStorage.getItem(ANALYTICS_DISABLED_STORAGE_KEY) === '1'
+        );
+    } catch {
+        return false;
     }
 }
 
