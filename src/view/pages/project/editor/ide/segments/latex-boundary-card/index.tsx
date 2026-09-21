@@ -23,7 +23,7 @@ const LATEX_HEADER_TEXT = String.raw`\documentclass[a4paper,12pt]{article}
 \mathtoolsset{showonlyrefs}
 \newcounter{none}
 \begin{document}
-\null`;
+`;
 
 const LATEX_HEADER_DISPLAY_TEXT = String.raw`\documentclass[a4paper,12pt]{article}
 ...
