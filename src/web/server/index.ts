@@ -408,7 +408,7 @@ export class WebRpi implements Rpi {
     ): Promise<RequestResult<Project>> {
         return this.requestWrapper(
             'cloneProjectRequest',
-            [200, 401, 417],
+            [200, 201, 401, 417],
             async () =>
                 axios.post(`${URLS.cloneProject.replace('{id}', projectId)}`)
         );
