@@ -2,8 +2,6 @@ import { toast } from 'react-toastify';
 import { Translations } from '../dictionaries';
 import { ViewModelRepository } from '../repository';
 
-export const checkFileErrorMessage = 'CheckFileErrorMessage';
-
 export class FileService {
     repository: ViewModelRepository;
 
@@ -11,7 +9,7 @@ export class FileService {
         this.repository = repository;
     }
 
-    checkFile = (file: File, dictionary: Translations) => {
+    checkFile = (file: File, dictionary: Translations): boolean => {
         const mbInBytes = 1048576;
         const maxSizeInMb = 5;
         const supportedExtensions = [
@@ -33,7 +31,7 @@ export class FileService {
                 ),
                 { type: 'error' }
             );
-            throw new Error(checkFileErrorMessage);
+            return false;
         }
         const fileName = file.name.toLowerCase();
         const hasSupportedExtension = supportedExtensions.some((ext) =>
@@ -51,8 +49,9 @@ export class FileService {
             toast(dictionary.filemanager.errors.notSupported, {
                 type: 'error',
             });
-            throw new Error(checkFileErrorMessage);
+            return false;
         }
+        return true;
     };
 
     /*

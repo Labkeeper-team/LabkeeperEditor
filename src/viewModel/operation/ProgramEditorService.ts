@@ -121,7 +121,14 @@ export class ProgramEditorService {
                 if (!file) {
                     return;
                 }
-                this.fileService.checkFile(file, this.repository.dictionary);
+                if (
+                    !this.fileService.checkFile(
+                        file,
+                        this.repository.dictionary
+                    )
+                ) {
+                    continue;
+                }
                 const finalItemIndex = itemIndex;
                 const reader = new FileReader();
                 reader.onload = async function () {

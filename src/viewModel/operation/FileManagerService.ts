@@ -249,7 +249,14 @@ export class FileManagerService {
                     );
                     continue;
                 }
-                this.fileService.checkFile(file, this.repository.dictionary);
+                if (
+                    !this.fileService.checkFile(
+                        file,
+                        this.repository.dictionary
+                    )
+                ) {
+                    continue;
+                }
                 const name = this.fileService.calculateNumberFile(
                     null,
                     normalizedName,
