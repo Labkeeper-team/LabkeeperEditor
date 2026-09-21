@@ -248,7 +248,7 @@ https://github.com/Labkeeper-team/TypeThree/issues/199
 export type ObserverEventProperties = Record<string, unknown>;
 
 export interface ObserverService {
-    init: (userId?: string, email?: string) => void | Promise<void>;
+    init: (userId?: string) => void | Promise<void>;
     onEvent: (event: string, properties?: ObserverEventProperties) => void;
     setUserState: (name: string, value: string) => void;
     // сессию заводит аналитика, значит она же и обязана закрыть её при выходе
@@ -265,9 +265,9 @@ export const mockObserver = (): ObserverService => ({
 export class CompositeObserver implements ObserverService {
     constructor(private readonly observers: ObserverService[]) {}
 
-    async init(userId?: string, email?: string) {
+    async init(userId?: string) {
         await Promise.all(
-            this.observers.map((observer) => observer.init(userId, email))
+            this.observers.map((observer) => observer.init(userId))
         );
     }
 

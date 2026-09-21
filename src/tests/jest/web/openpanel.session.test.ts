@@ -102,10 +102,10 @@ test('an-authorized-tab-gets-a-local-id-when-the-server-sends-none', async () =>
     track.mockResolvedValue({});
     const service = new openpanel.OpenPanelService();
 
-    await service.init('user-1', 'user@example.com');
+    await service.init('user-1');
     const afterStart = session.getSessionId();
     track.mockResolvedValue({ sessionId: 's-late' });
-    await service.init('user-1', 'user@example.com');
+    await service.init('user-1');
 
     expect(afterStart).toEqual(expect.any(String));
     expect(session.getSessionId()).toBe(afterStart);
@@ -118,12 +118,27 @@ test('an-authorized-tab-gets-a-local-id-when-the-server-sends-none', async () =>
     );
 });
 
+test('an-authorized-profile-gets-a-user-id-name-instead-of-email', async () => {
+    track.mockResolvedValue({ sessionId: 's-1' });
+    const service = new openpanel.OpenPanelService();
+
+    await service.init('111');
+
+    expect(lastIdentifyPayload()).toEqual({
+        profileId: '111',
+        firstName: 'user111',
+    });
+    expect(identifyPayloads()).not.toContainEqual(
+        expect.objectContaining({ email: expect.anything() })
+    );
+});
+
 test('server-session-id-comes-from-session-started-and-identify-cannot-replace-it', async () => {
     track.mockResolvedValue({ sessionId: 's-1' });
     identify.mockResolvedValue({ sessionId: 's-2' });
     const service = new openpanel.OpenPanelService();
 
-    await service.init('user-1', 'user@example.com');
+    await service.init('user-1');
 
     expect(session.getSessionId()).toBe('s-1');
 });
@@ -148,7 +163,7 @@ test('a-repeated-init-after-a-broken-start-does-not-open-a-second-session', asyn
     const service = new openpanel.OpenPanelService();
 
     await service.init();
-    await service.init('user-1', 'user@example.com');
+    await service.init('user-1');
 
     expect(sessionStartCalls()).toHaveLength(1);
 });
@@ -162,7 +177,7 @@ test('a-logout-during-the-first-init-keeps-the-guest-profile', async () => {
     );
     const service = new openpanel.OpenPanelService();
 
-    const starting = service.init('user-1', 'user@example.com');
+    const starting = service.init('user-1');
     service.onLogout();
     answerTrack({ sessionId: 's-1' });
     await starting;
@@ -171,7 +186,7 @@ test('a-logout-during-the-first-init-keeps-the-guest-profile', async () => {
         profileId: session.getSessionId(),
     });
     expect(identifyPayloads()).not.toContainEqual(
-        expect.objectContaining({ email: 'user@example.com' })
+        expect.objectContaining({ firstName: 'useruser-1' })
     );
 });
 
@@ -186,7 +201,7 @@ test('a-login-during-the-first-init-identifies-the-user-after-it', async () => {
 
     const guestStart = service.init();
     const guestId = session.getSessionId();
-    const loginStart = service.init('user-1', 'user@example.com');
+    const loginStart = service.init('user-1');
     answerTrack({ sessionId: 's-1' });
     await Promise.all([guestStart, loginStart]);
 
@@ -194,7 +209,7 @@ test('a-login-during-the-first-init-identifies-the-user-after-it', async () => {
     expect(identifyPayloads()).toEqual([
         { profileId: guestId },
         { profileId: 'user-1' },
-        { profileId: 'user-1', email: 'user@example.com' },
+        { profileId: 'user-1', firstName: 'useruser-1' },
     ]);
 });
 
@@ -205,7 +220,7 @@ test('a-remembered-flag-does-not-start-a-session', async () => {
     };
     const service = new openpanel.OpenPanelService();
 
-    await service.init('user-1', 'user@example.com');
+    await service.init('user-1');
     service.onEvent('start_run');
 
     expect(OpenPanel).not.toHaveBeenCalled();
@@ -216,7 +231,7 @@ test('a-remembered-flag-does-not-start-a-session', async () => {
 test('logout-drops-the-id-of-the-user-who-left', async () => {
     track.mockResolvedValue({ sessionId: 's-1' });
     const service = new openpanel.OpenPanelService();
-    await service.init('user-1', 'user@example.com');
+    await service.init('user-1');
 
     service.onLogout();
 

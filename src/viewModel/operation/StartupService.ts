@@ -128,8 +128,7 @@ export class StartupService {
         // аналитику не ждём: её сеть стояла ровно между «узнали пользователя» и открытием проекта
         void Promise.resolve(
             this.observerService.init(
-                userInfo.isAuthenticated ? String(userInfo.id) : undefined,
-                userInfo.isAuthenticated ? userInfo.email : undefined
+                userInfo.isAuthenticated ? String(userInfo.id) : undefined
             )
         ).catch((error) => reportToSentry('startup.observerInit', error));
         this.repository.settingsViewModelRepository.setCaptchaBypassToken(

@@ -28,7 +28,7 @@ test('startup-does-not-wait-for-analytics', async () => {
 
     await startupService.onAppStartup();
 
-    expect(observerService.init).toHaveBeenCalledWith('111', 'a@gmail.com');
+    expect(observerService.init).toHaveBeenCalledWith('111');
     expect(rpi.getDefaultProjectRequest).toHaveBeenCalled();
     expect(repository.projectViewModelRepository.project()?.projectId).toBe(
         PROJECT_ID

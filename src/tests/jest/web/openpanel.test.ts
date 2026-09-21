@@ -102,7 +102,7 @@ describe('OpenPanelService', () => {
         window.localStorage.setItem(ANALYTICS_DISABLED_STORAGE_KEY, '1');
         const service = new OpenPanelService();
 
-        await service.init('user-1', 'user@example.com');
+        await service.init('user-1');
         service.onEvent('start_run');
 
         expect(OpenPanel).not.toHaveBeenCalled();

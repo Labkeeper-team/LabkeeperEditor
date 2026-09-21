@@ -25,6 +25,10 @@ function anonymousDisplayName(): string {
     return `anonymous${String(suffix).padStart(6, '0')}`;
 }
 
+function authenticatedDisplayName(userId: string): string {
+    return `user${userId}`;
+}
+
 export class OpenPanelService implements ObserverService {
     private op: OpenPanel | undefined;
     // промис сетевой части старта, он же признак начатой сессии: отдельного флага нет,
@@ -34,7 +38,7 @@ export class OpenPanelService implements ObserverService {
     // до сети уже после входа или выхода, и представляться устаревшим профилем ему нельзя
     private currentProfileId: string | undefined;
 
-    async init(userId?: string, email?: string) {
+    async init(userId?: string) {
         if (!this.ensureClient() || !this.op) {
             return;
         }
@@ -44,11 +48,13 @@ export class OpenPanelService implements ObserverService {
         this.currentProfileId = profileId;
         void this.op.identify({ profileId });
         if (!this.starting) {
-            this.starting = this.startSession(profileId, userId, email);
+            this.starting = this.startSession(profileId, userId);
         } else if (userId) {
             // вход мог прийти, пока первая сессия ещё в полёте: представляем пользователя после неё
             this.starting = this.starting.then(() =>
-                this.identify(userId, { email })
+                this.identify(userId, {
+                    firstName: authenticatedDisplayName(userId),
+                })
             );
         }
         await this.starting;
@@ -127,11 +133,7 @@ export class OpenPanelService implements ObserverService {
         return true;
     }
 
-    private async startSession(
-        profileId: string,
-        userId?: string,
-        email?: string
-    ) {
+    private async startSession(profileId: string, userId?: string) {
         if (!this.op) {
             return;
         }
@@ -162,7 +164,9 @@ export class OpenPanelService implements ObserverService {
         }
         // представляемся даже после сорванного Session started: это независимый запрос
         if (userId) {
-            await this.identify(userId, { email });
+            await this.identify(userId, {
+                firstName: authenticatedDisplayName(userId),
+            });
         } else {
             await this.identify(profileId, {
                 firstName: anonymousDisplayName(),
@@ -172,7 +176,7 @@ export class OpenPanelService implements ObserverService {
 
     private async identify(
         profileId: string,
-        options?: { email?: string; firstName?: string }
+        options?: { firstName?: string }
     ) {
         // профиль сменился, пока хвост старта ждал сеть: возвращать в SDK ушедшего
         // пользователя или заводить анонимный профиль уже вошедшему нельзя
@@ -181,7 +185,6 @@ export class OpenPanelService implements ObserverService {
         }
         const payload = {
             profileId,
-            ...(options?.email ? { email: options.email } : {}),
             ...(options?.firstName ? { firstName: options.firstName } : {}),
         };
         try {
