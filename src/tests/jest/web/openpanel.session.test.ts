@@ -12,7 +12,11 @@ const track = jest.fn();
 const identify = jest.fn();
 
 jest.mock('@openpanel/web', () => ({
-    OpenPanel: jest.fn(() => ({ track, identify })),
+    OpenPanel: jest.fn(() => ({
+        track,
+        identify,
+        setGlobalProperties: jest.fn(),
+    })),
 }));
 
 jest.mock('../../../constants.ts', () => ({

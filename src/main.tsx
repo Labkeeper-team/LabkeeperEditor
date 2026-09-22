@@ -12,21 +12,13 @@ import { OpenPanelService } from './web/openpanel';
 import { CompositeObserver } from './model/service/ObserverService.ts';
 import { WebRpi } from './web/server';
 import { WebAgentSocket } from './web/server/agentSocket.ts';
+import { sentryOptions } from './web/sentry/hooks.ts';
 
 const openPanelService = new OpenPanelService();
 
 Sentry.init({
     dsn: Secrets.sentryDsn,
-    sendDefaultPii: true,
-    maxBreadcrumbs: 100,
-    beforeSend(event) {
-        if (window?.location?.host?.includes('localhost')) {
-            console.log('Error event is dropped due to dev hostname');
-            return null;
-        }
-        openPanelService.trackSentryEvent(event);
-        return event;
-    },
+    ...sentryOptions((event) => openPanelService.trackSentryEvent(event)),
 });
 
 const observerService = new CompositeObserver([
