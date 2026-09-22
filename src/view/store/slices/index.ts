@@ -153,6 +153,8 @@ interface PersistenceState {
      * После входа уезжает на сервер, чтобы не спрашивать второй раз
      */
     crossBorderConsentAcceptedLocally: boolean;
+    /** Высота панели запроса, выставленная ручкой; null значит авторост */
+    agentPromptHeight: number | null;
 }
 
 export interface ChatState {
@@ -217,6 +219,7 @@ export const persistenceInitialState: PersistenceState = {
     agentMaxTokens: AGENT_TOKEN_OPTIONS[0],
     agentIterations: AGENT_ITERATION_OPTIONS[0],
     crossBorderConsentAcceptedLocally: false,
+    agentPromptHeight: null,
 };
 
 export const chatInitialState: ChatState = {

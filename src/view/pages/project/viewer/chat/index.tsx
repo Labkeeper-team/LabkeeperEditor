@@ -35,7 +35,7 @@ export const AgentChat = () => {
             })}
         >
             <Transcript />
-            <PromptField />
+            <PromptField isEmpty={isEmpty} />
             {isEmpty && (
                 <div className="agent-chat__disclaimer">
                     {dictionary.agent_chat.disclaimer}

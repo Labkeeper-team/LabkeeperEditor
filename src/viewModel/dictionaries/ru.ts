@@ -177,6 +177,7 @@ export const ru: Translations = {
         tab_label: 'Агент',
         pdf_tab_label: 'PDF',
         placeholder: 'Опишите, что сделать с проектом',
+        resize_prompt: 'Высота поля запроса',
         send: 'Отправить',
         abort: 'Прервать',
         disclaimer: 'ИИ может ошибаться. Проверяйте сгенерированный код',

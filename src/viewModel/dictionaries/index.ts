@@ -164,6 +164,7 @@ export interface Translations {
         tab_label: string;
         pdf_tab_label: string;
         placeholder: string;
+        resize_prompt: string;
         send: string;
         abort: string;
         disclaimer: string;
