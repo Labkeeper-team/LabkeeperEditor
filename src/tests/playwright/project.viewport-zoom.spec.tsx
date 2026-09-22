@@ -104,14 +104,23 @@ async function expectAppHeight(page: Page, expected: number) {
 
 async function pinchZoom(page: Page, cdp: CDPSession, scaleFactor: number) {
     const before = (await readViewport(page)).scale;
-    await cdp.send('Input.synthesizePinchGesture', {
-        x: 206,
-        y: 420,
-        scaleFactor,
-        relativeSpeed: 800,
-        gestureSourceType: 'touch',
+    // приложение подписано на resize раньше, так что к этому событию его обработчик уже отработал
+    const resized = page.evaluate(
+        () =>
+            new Promise<void>((resolve) =>
+                window.visualViewport!.addEventListener(
+                    'resize',
+                    () => resolve(),
+                    { once: true }
+                )
+            )
+    );
+    // синтез жеста щипка на windows-раннере не срабатывает, а масштаб страницы задаётся напрямую в любой среде
+    await cdp.send('Emulation.setPageScaleFactor', {
+        pageScaleFactor: before * scaleFactor,
     });
-    // без этой проверки тест прошёл бы и там, где щипок не случился
+    await resized;
+    // без этой проверки тест прошёл бы и там, где масштаб не сменился
     await expect
         .poll(async () => (await readViewport(page)).scale)
         .toBeGreaterThan(before * scaleFactor * 0.95);
@@ -193,9 +202,12 @@ test('pinch-zoom-pan-is-not-reset-where-scroll-follows-the-visual-viewport', asy
     page,
 }) => {
     await page.addInitScript(() => {
+        // сдвиг панорамы задаёт тест: жест прокрутки через CDP тоже работает не везде
+        const panned = window as unknown as { panOffset: number };
+        panned.panOffset = 0;
         Object.defineProperty(window, 'scrollY', {
             configurable: true,
-            get: () => window.visualViewport!.offsetTop,
+            get: () => panned.panOffset,
         });
         const resets: number[] = [];
         (window as unknown as { resets: number[] }).resets = resets;
@@ -212,17 +224,12 @@ test('pinch-zoom-pan-is-not-reset-where-scroll-follows-the-visual-viewport', asy
     const cdp = await page.context().newCDPSession(page);
 
     await pinchZoom(page, cdp, 2);
-    await cdp.send('Input.synthesizeScrollGesture', {
-        x: 100,
-        y: 380,
-        yDistance: -200,
-        gestureSourceType: 'touch',
-        speed: 800,
+    // панорама увеличенной страницы: на iOS scrollY становится сдвигом, и визуальный вьюпорт шлёт scroll
+    await page.evaluate(() => {
+        (window as unknown as { panOffset: number }).panOffset = 200;
+        window.visualViewport!.dispatchEvent(new Event('scroll'));
     });
 
-    expect(
-        await page.evaluate(() => window.visualViewport!.offsetTop)
-    ).toBeGreaterThan(0);
     expect(
         await page.evaluate(
             () => (window as unknown as { resets: number[] }).resets
