@@ -374,9 +374,12 @@ export class RouteSetup {
      */
     async acceptCrossBorderConsentLocally() {
         await this.page.addInitScript(() => {
+            // скрипт срабатывает на каждой навигации: без слияния перезагрузка теряла бы остальной срез
+            const saved = window.localStorage.getItem('persist:PERSISTENCE');
             window.localStorage.setItem(
                 'persist:PERSISTENCE',
                 JSON.stringify({
+                    ...(saved ? JSON.parse(saved) : {}),
                     crossBorderConsentAcceptedLocally: 'true',
                     _persist: '{"version":-1,"rehydrated":true}',
                 })
