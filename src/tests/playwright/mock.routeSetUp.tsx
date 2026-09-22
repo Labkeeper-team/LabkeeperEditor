@@ -4,6 +4,7 @@ import {
     CompileErrorResult,
     Hunk,
     Program,
+    ProjectType,
     Statement,
 } from '../../model/domain.ts';
 
@@ -50,12 +51,18 @@ const isExpectedUploadFileName = (fileName: string | null) => {
 export class RouteSetup {
     /** Свой проект по умолчанию уже собирали: экран при входе проверяется отдельно */
     private neverCompiled = false;
+    private projectType: ProjectType = 'markdown';
 
     constructor(private page: Page) {}
 
     /** Проект без lastProgramResult, как у ни разу не собранного: он открывается на агенте */
     setupNeverCompiledProject() {
         this.neverCompiled = true;
+    }
+
+    /** Свой проект latex: PDF рисуется только у него */
+    setupLatexProject() {
+        this.projectType = 'latex';
     }
 
     private compiledState() {
@@ -107,7 +114,7 @@ export class RouteSetup {
                 lastModified: new Date().toISOString(),
                 isPublic: false,
                 program: programOverride,
-                projectType: 'markdown',
+                projectType: this.projectType,
                 ...this.compiledState(),
             };
         }
@@ -155,7 +162,7 @@ export class RouteSetup {
                         roundStrategy: 'noRound',
                     },
                 },
-                projectType: 'markdown',
+                projectType: this.projectType,
                 ...this.compiledState(),
             };
         } else if (typeBody == 'empty') {
