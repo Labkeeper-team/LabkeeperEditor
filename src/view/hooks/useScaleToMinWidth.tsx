@@ -1,5 +1,6 @@
 import { useLayoutEffect } from 'react';
 import { refreshCodeMirrorLayout } from '../utils/refreshCodeMirrorLayout';
+import { layoutViewportWidth } from '../utils/viewportSize';
 import {
     VIEWPORT_RESCALE_EVENT,
     isNativeMobileLayoutPath,
@@ -27,7 +28,7 @@ export function useScaleToMinWidth(ref, minWidth = 1024) {
                 );
                 return;
             }
-            const k = Math.min(1, window.innerWidth / minWidth);
+            const k = Math.min(1, layoutViewportWidth() / minWidth);
             if (k < 1) {
                 el.style.transform = `scale(${k})`;
                 el.style.transformOrigin = 'top left';
