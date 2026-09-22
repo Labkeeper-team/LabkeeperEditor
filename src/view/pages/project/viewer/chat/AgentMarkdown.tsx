@@ -1,10 +1,11 @@
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import Markdown, { type Components, type ExtraProps } from 'react-markdown';
 import remarkBreaks from 'remark-breaks';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import { MathJax } from 'better-react-mathjax';
 import { AppMathJaxContext } from '../../../../components/mathJaxContext';
+import { useMathJaxStatus } from '../../../../components/mathJaxContext/appMathJax.ts';
 import { normalizeMathDelimiters } from '../../../../utils/mathDelimiters.ts';
 import { agentTex } from '../../../../utils/agentTex.ts';
 
@@ -23,6 +24,25 @@ const isMathBlock = (node: ExtraProps['node']) => {
         hasClass(child.properties.className, 'math-display') &&
         text?.type === 'text' &&
         agentTex(text.value) !== null
+    );
+};
+
+// формула прячется до набора, но если MathJax не пришёл, видна текстом, пока он не появится
+const AgentFormula = ({ tex, inline }: { tex: string; inline: boolean }) => {
+    const status = useMathJaxStatus();
+    const unavailable = status === 'failed' || status === 'waiting-online';
+    // библиотека открывает формулу только в первом наборе, поэтому показанную текстом больше не прячем, иначе она пропадёт
+    const [shownAsText, setShownAsText] = useState(false);
+    if (unavailable && !shownAsText) {
+        setShownAsText(true);
+    }
+    const hide = unavailable || shownAsText ? undefined : 'first';
+    return inline ? (
+        <MathJax inline hideUntilTypeset={hide}>
+            {`$${tex}$`}
+        </MathJax>
+    ) : (
+        <MathJax hideUntilTypeset={hide}>{`$$${tex}$$`}</MathJax>
     );
 };
 
@@ -49,13 +69,7 @@ const COMPONENTS: Components = {
         if (tex === null) {
             return <code className={className}>{children}</code>;
         }
-        return inline ? (
-            <MathJax inline hideUntilTypeset="first">
-                {`$${tex}$`}
-            </MathJax>
-        ) : (
-            <MathJax hideUntilTypeset="first">{`$$${tex}$$`}</MathJax>
-        );
+        return <AgentFormula tex={tex} inline={inline} />;
     },
     // формуле-блоку не нужна подложка кода
     pre: ({ node, children }) =>

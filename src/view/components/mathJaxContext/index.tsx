@@ -1,35 +1,13 @@
-import { ReactNode } from 'react';
-import { MathJax3Config, MathJaxContext } from 'better-react-mathjax';
+import { ReactNode, useEffect } from 'react';
+import { MathJaxBaseContext } from 'better-react-mathjax';
+import { MATHJAX_CONTEXT_VALUE, mathJaxLoader } from './appMathJax.ts';
 
-// MathJax в браузере один, настройки ему даёт контекст, смонтированный первым.
-// Поэтому у результата и у чата они общие, иначе всё решал бы порядок открытия
-const MATHJAX_CONFIG: MathJax3Config = {
-    loader: {
-        load: ['input/asciimath', '[tex]/ams', 'output/chtml', 'ui/menu'],
-    },
-    options: {
-        ignoreHtmlClass: 'cm-line',
-        skipTags: ['div', 'p'],
-    },
-    asciimath: { displayMode: true, displaystyle: true },
-    TeX: { MAXBUFFER: 25600 },
-    tex: {
-        inlineMath: [['$', '$']],
-        maxBuffer: 25000,
-        packages: { '[+]': ['ams'] },
-    },
-    CommonHTML: {
-        automatic: false,
-        scale: 10,
-    },
+export const AppMathJaxContext = ({ children }: { children: ReactNode }) => {
+    // грузим с первым контекстом на странице, то есть только когда есть что набирать
+    useEffect(() => mathJaxLoader.load(), []);
+    return (
+        <MathJaxBaseContext.Provider value={MATHJAX_CONTEXT_VALUE}>
+            {children}
+        </MathJaxBaseContext.Provider>
+    );
 };
-
-export const AppMathJaxContext = ({ children }: { children: ReactNode }) => (
-    <MathJaxContext
-        src="/mathjax/tex-mml-chtml.js"
-        config={MATHJAX_CONFIG}
-        version={3}
-    >
-        {children}
-    </MathJaxContext>
-);
