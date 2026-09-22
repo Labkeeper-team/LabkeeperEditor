@@ -69,3 +69,31 @@ test('error-text-is-the-same-as-in-the-panel', () => {
         )
     ).toBe('Quota exceeded. Too many segments. Now: 3; Max: 3');
 });
+
+test('incorrect-argument-appends-english-description', () => {
+    expect(
+        describeCompileError(
+            error(CompileError.INCORRECT_ARGUMENT, {
+                segmentId: 3,
+                line: 4,
+                functionName: 'plot',
+                description: 'x and y must have the same size',
+            }),
+            en
+        )
+    ).toBe(
+        'Incorrect argument size in function plot: x and y must have the same size'
+    );
+});
+
+test('function-error-without-description-stays-unchanged', () => {
+    expect(
+        describeCompileError(
+            error(CompileError.NO_SUCH_FUNCTION, {
+                segmentId: 1,
+                functionName: 'biba',
+            }),
+            en
+        )
+    ).toBe('No such function biba');
+});

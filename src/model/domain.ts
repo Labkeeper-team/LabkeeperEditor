@@ -237,6 +237,7 @@ export interface CompileErrorResult {
         segmentId: number | null;
         /** Путь к latex/текстовому файлу проекта, если ошибка не в сегменте. */
         latexFile?: string | null;
+        description?: string | null;
     };
 }
 
@@ -256,8 +257,9 @@ export interface LatexErrorPayload {
 
 export interface FunctionErrorPayload {
     functionName: string;
+    description?: string | null;
 }
 
-export interface OperatorExcepctedpayload {
+export interface OperatorExpectedPayload {
     operators: string[];
 }

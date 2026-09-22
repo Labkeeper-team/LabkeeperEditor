@@ -4,7 +4,7 @@ import {
     FunctionErrorPayload,
     LatexErrorPayload,
     NoSuchVariablePayload,
-    OperatorExcepctedpayload,
+    OperatorExpectedPayload,
     QuotaPayload,
 } from '../../model/domain.ts';
 import { Translations } from '../dictionaries';
@@ -37,14 +37,22 @@ export const describeCompileError = (
         return `${text}. ${dictionary.quota_definition[quota.quotaIndex]}. ${dictionary.error_common.now}: ${quota.value}; ${dictionary.error_common.max}: ${quota.limit}`;
     }
     if (code === CompileError.OPERATOR_EXPECTED) {
-        const { operators } = payload as unknown as OperatorExcepctedpayload;
+        const { operators } = payload as unknown as OperatorExpectedPayload;
         return `${text} ${typeof operators === 'string' ? operators : operators.join(' ')}`;
     }
     if (code === CompileError.NO_SUCH_VARIABLE) {
         return `${text} ${(payload as unknown as NoSuchVariablePayload).variable}`;
     }
     if (FUNCTION_ERRORS.includes(code)) {
-        return `${text} ${(payload as unknown as FunctionErrorPayload).functionName}`;
+        const functionPayload = payload as unknown as FunctionErrorPayload;
+        const base = `${text} ${functionPayload.functionName ?? ''}`.trim();
+        if (
+            code === CompileError.INCORRECT_ARGUMENT &&
+            functionPayload.description
+        ) {
+            return `${base}: ${functionPayload.description}`;
+        }
+        return base;
     }
     if (code === CompileError.LATEX_ERROR) {
         return `${text}: ${(payload as unknown as LatexErrorPayload).latexErrorMessage}`;
