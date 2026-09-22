@@ -250,13 +250,30 @@ export const Transcript = () => {
         if (!node) {
             return;
         }
+        // высота ленты, которую уже видел ResizeObserver ниже
+        let observedHeight = node.clientHeight;
         const onScroll = () => {
+            // ленту ужали, а наблюдатель ещё не отработал: это не прокрутка человека, и расстояние до низа врёт
+            if (node.clientHeight !== observedHeight) {
+                return;
+            }
             const distance =
                 node.scrollHeight - node.scrollTop - node.clientHeight;
             stickToBottom.current = distance <= STICK_TO_BOTTOM_PX;
         };
+        // панель запроса подросла (авторост или ручка), и низ ленты не должен уйти под неё
+        const observer = new ResizeObserver(() => {
+            observedHeight = node.clientHeight;
+            if (stickToBottom.current) {
+                node.scrollTop = node.scrollHeight;
+            }
+        });
+        observer.observe(node);
         node.addEventListener('scroll', onScroll);
-        return () => node.removeEventListener('scroll', onScroll);
+        return () => {
+            node.removeEventListener('scroll', onScroll);
+            observer.disconnect();
+        };
     }, []);
 
     useLayoutEffect(() => {
