@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react';
+import { layoutViewportWidth } from '../utils/viewportSize';
 
 export const MOBILE_BREAKPOINT = 767;
 
 export const useIsMobile = (maxWidth = MOBILE_BREAKPOINT) => {
     const [isMobile, setIsMobile] = useState(
-        () => window.innerWidth <= maxWidth
+        () => layoutViewportWidth() <= maxWidth
     );
 
     useEffect(() => {
         const handleResize = () => {
-            setIsMobile(window.innerWidth <= maxWidth);
+            setIsMobile(layoutViewportWidth() <= maxWidth);
         };
 
         window.addEventListener('resize', handleResize);
