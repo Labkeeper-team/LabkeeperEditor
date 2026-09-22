@@ -308,6 +308,9 @@
 }
 
 .agent-chat__field {
+    position: relative;
+    // высота от ручки считается вместе с рамкой и отступами, иначе панель выходит на 30px выше
+    box-sizing: border-box;
     border: 1px solid $gray-50;
     border-radius: 8px;
     padding: 12px 16px 16px;
@@ -315,6 +318,69 @@
     flex-direction: column;
     gap: 12px;
     flex-shrink: 0;
+}
+
+// высоту задала ручка: поле ввода забирает всё, что осталось от кнопок, и прокручивается внутри
+.agent-chat__field--sized {
+    .agent-chat__input {
+        flex: 1 1 0;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .agent-chat__input .cm-editor {
+        flex: 1 1 0;
+        max-height: none;
+    }
+}
+
+// ручка лежит в зазоре над панелью и заходит на её верхнюю рамку
+.agent-chat__resize {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -11px;
+    height: 16px;
+    cursor: ns-resize;
+    // без этого палец на сенсорном экране прокручивает страницу, и браузер шлёт pointercancel
+    touch-action: none;
+    user-select: none;
+    z-index: 1;
+
+    &::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 5px;
+        width: 40px;
+        height: 4px;
+        margin-left: -20px;
+        border-radius: 2px;
+        background: $gray-50;
+        transition: background-color 0.15s;
+    }
+
+    &:hover::after,
+    &:focus-visible::after,
+    &--active::after {
+        background: $blue-10;
+    }
+
+    // рамка по всей ширине легла бы на ленту и панель, поэтому кольцо фокуса рисуем вокруг полоски
+    &:focus-visible {
+        outline: none;
+    }
+
+    &:focus-visible::after {
+        outline: 2px solid $blue-10;
+        outline-offset: 2px;
+    }
+}
+
+// пока тянут, курсор не мигает, когда мышь сходит с тонкой ручки
+body.agent-chat-resizing {
+    cursor: ns-resize;
 }
 
 .agent-chat__input {

@@ -38,6 +38,9 @@ export const persistenceSlice = createSlice({
         ) {
             state.crossBorderConsentAcceptedLocally = payload;
         },
+        setAgentPromptHeight(state, { payload }: PayloadAction<number | null>) {
+            state.agentPromptHeight = payload;
+        },
     },
 });
 export const {
@@ -49,4 +52,5 @@ export const {
     setAgentMaxTokens,
     setAgentIterations,
     setCrossBorderConsentAcceptedLocally,
+    setAgentPromptHeight,
 } = persistenceSlice.actions;

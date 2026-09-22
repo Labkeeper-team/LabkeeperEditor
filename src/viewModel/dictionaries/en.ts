@@ -170,6 +170,7 @@ export const en: Translations = {
         tab_label: 'AI agent',
         pdf_tab_label: 'PDF visualization',
         placeholder: 'Enter your promt',
+        resize_prompt: 'Prompt field height',
         send: 'Send',
         abort: 'Stop',
         disclaimer: 'AI may make mistakes. Double-check all generated code.',

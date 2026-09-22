@@ -1,6 +1,8 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import CodeMirror from '@uiw/react-codemirror';
+import { EditorView } from '@codemirror/view';
+import classNames from 'classnames';
 import { AppDispatch, StorageState } from '../../../../store';
 import { useDictionary } from '../../../../store/selectors/translations';
 import { controller } from '../../../../../main.tsx';
@@ -10,13 +12,51 @@ import {
 } from '../../../../../model/rpi/agentSocket.ts';
 import { SegmentedControl } from '../../../../components/segmentedControl';
 import { promptEditorExtensions } from './promptEditorExtensions.ts';
+import { useIsMobile } from '../../../../hooks/useMobile';
+import { useHasFinePointer } from '../../../../hooks/useFinePointer';
+import { setAgentPromptHeight } from '../../../../store/slices/persistence';
+import { usePromptFieldResize } from './usePromptFieldResize.ts';
+
+const FIELD_ID = 'agent-chat-field';
 
 const formatTokens = (value: number): string =>
     value >= 1000 ? `${Math.round(value / 1000)}k` : String(value);
 
-export const PromptField = () => {
+export const PromptField = ({ isEmpty }: { isEmpty: boolean }) => {
     const dispatch = useDispatch<AppDispatch>();
     const dictionary = useSelector(useDictionary);
+    const isMobile = useIsMobile();
+    const hasFinePointer = useHasFinePointer();
+    // ручка только при мыши или тачпаде: телефону, даже повёрнутому, она ни к чему
+    const resizable = !isMobile && hasFinePointer;
+    const fieldRef = useRef<HTMLDivElement>(null);
+    const viewRef = useRef<EditorView | null>(null);
+    const storedHeight = useSelector(
+        (state: StorageState) => state.persistence.agentPromptHeight
+    );
+    const commitHeight = useCallback(
+        (value: number | null) => dispatch(setAgentPromptHeight(value)),
+        [dispatch]
+    );
+    const resize = usePromptFieldResize({
+        fieldRef,
+        enabled: resizable,
+        isEmpty,
+        storedHeight,
+        onCommit: commitHeight,
+    });
+    // поле ужалось, пока в нём печатали, а CodeMirror сам не возвращает курсор из-под нижней кромки
+    useLayoutEffect(() => {
+        const view = viewRef.current;
+        if (!view || !view.hasFocus) {
+            return;
+        }
+        view.dispatch({
+            effects: EditorView.scrollIntoView(view.state.selection.main.head, {
+                y: 'nearest',
+            }),
+        });
+    }, [resize.height]);
     const input = useSelector((state: StorageState) => state.chat.input);
     const requestState = useSelector(
         (state: StorageState) => state.chat.requestState
@@ -51,8 +91,32 @@ export const PromptField = () => {
         [dispatch]
     );
 
+    const onCreateEditor = useCallback((view: EditorView) => {
+        viewRef.current = view;
+    }, []);
+
     return (
-        <div className="agent-chat__field">
+        <div
+            id={FIELD_ID}
+            ref={fieldRef}
+            className={classNames('agent-chat__field', {
+                'agent-chat__field--sized': resize.height != null,
+            })}
+            // высота идёт стилем, а не пропом height у @uiw: тот пересобирает расширения на каждое значение
+            style={
+                resize.height != null ? { height: resize.height } : undefined
+            }
+        >
+            {resizable && (
+                <div
+                    {...resize.separatorProps}
+                    aria-label={dictionary.agent_chat.resize_prompt}
+                    aria-controls={FIELD_ID}
+                    className={classNames('agent-chat__resize', {
+                        'agent-chat__resize--active': resize.dragging,
+                    })}
+                />
+            )}
             <CodeMirror
                 className="agent-chat__input"
                 placeholder={placeholder}
@@ -60,6 +124,7 @@ export const PromptField = () => {
                 readOnly={isRunning}
                 onChange={onChange}
                 extensions={extensions}
+                onCreateEditor={onCreateEditor}
                 basicSetup={false}
                 // иначе Tab перестанет уводить фокус из поля
                 indentWithTab={false}
