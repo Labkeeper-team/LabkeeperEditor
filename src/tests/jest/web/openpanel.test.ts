@@ -5,11 +5,13 @@ import {
 } from '../../../web/openpanel';
 
 const track = jest.fn().mockResolvedValue(undefined);
+const setGlobalProperties = jest.fn();
 
 jest.mock('@openpanel/web', () => ({
     OpenPanel: jest.fn(() => ({
         track,
         identify: jest.fn(),
+        setGlobalProperties,
     })),
 }));
 
@@ -96,6 +98,25 @@ describe('OpenPanelService', () => {
         service.onEvent('custom_key', { ok: true });
 
         expect(track).toHaveBeenCalledWith('[E] custom_key', { ok: true });
+    });
+
+    test('client gets the referrer without the captcha token', () => {
+        const referrer = jest
+            .spyOn(document, 'referrer', 'get')
+            .mockReturnValue(
+                'https://labkeeper.io/project/default?captcha=e2e-token&type=latex'
+            );
+
+        new OpenPanelService().onEvent('start_run');
+        referrer.mockRestore();
+
+        expect(setGlobalProperties).toHaveBeenCalledWith({
+            __referrer:
+                'https://labkeeper.io/project/default?captcha=[Filtered]&type=latex',
+        });
+        expect(setGlobalProperties.mock.invocationCallOrder[0]).toBeLessThan(
+            track.mock.invocationCallOrder[0]
+        );
     });
 
     test('a remembered flag does not create a client or send events', async () => {

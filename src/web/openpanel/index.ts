@@ -9,6 +9,8 @@ import {
 import { logBreadcrumb } from '../../viewModel/utils/logBreadcrumb.ts';
 import { reportToSentry } from '../../viewModel/utils/reportUnexpectedError.ts';
 import { sentryIssueSearchUrl } from '../sentry/sentryUrl.ts';
+import { scrubCaptcha } from '../sentry/scrubCaptcha.ts';
+import { isAnalyticsDisabled } from '../analyticsFlag.ts';
 import {
     adoptAnalyticsSessionId,
     createGuestSessionId,
@@ -18,7 +20,7 @@ import {
 
 const SESSION_TIMEOUT_MS = 2000;
 const EDITOR_EVENT_PREFIX = '[E] ';
-export const ANALYTICS_DISABLED_STORAGE_KEY = 'labkeeper_analytics_disabled';
+export { ANALYTICS_DISABLED_STORAGE_KEY } from '../analyticsFlag.ts';
 
 function anonymousDisplayName(): string {
     const suffix = crypto.getRandomValues(new Uint32Array(1))[0] % 1_000_000;
@@ -130,6 +132,10 @@ export class OpenPanelService implements ObserverService {
             trackScreenViews: false,
             trackOutgoingLinks: false,
         });
+        // SDK кладёт document.referrer во все события, а после перехода с адреса e2e там токен обхода капчи
+        this.op.setGlobalProperties({
+            __referrer: scrubCaptcha(document.referrer),
+        });
         return true;
     }
 
@@ -197,19 +203,6 @@ export class OpenPanelService implements ObserverService {
         } catch (error) {
             logBreadcrumb('openpanel', 'identify failed', { error });
         }
-    }
-}
-
-function isAnalyticsDisabled(): boolean {
-    if (typeof window === 'undefined') {
-        return false;
-    }
-    try {
-        return (
-            window.localStorage.getItem(ANALYTICS_DISABLED_STORAGE_KEY) === '1'
-        );
-    } catch {
-        return false;
     }
 }
 
