@@ -2,14 +2,18 @@ import { useEffect, useRef } from 'react';
 import { useScaleToMinWidth } from '../../hooks/useScaleToMinWidth';
 import { isTokensLandingPath } from '../../hooks/viewportScale';
 import { resetLockedViewportScroll } from '../../utils/resetLockedViewportScroll';
+import {
+    isPinchZoomed,
+    unzoomedViewportHeight,
+} from '../../utils/viewportSize';
 
 function syncInnerHeight() {
-    const vv = window.visualViewport;
-    const height = vv?.height ?? window.innerHeight;
-    document.documentElement.style.setProperty(
-        '--inner-height',
-        `${Math.round(height)}px`
+    const height = unzoomedViewportHeight(
+        window.visualViewport,
+        document.documentElement.clientWidth,
+        window.innerHeight
     );
+    document.documentElement.style.setProperty('--inner-height', `${height}px`);
 }
 
 export default function ScaleWrapper({ minWidth = 1024, children }) {
@@ -19,9 +23,14 @@ export default function ScaleWrapper({ minWidth = 1024, children }) {
     useEffect(() => {
         const onViewportChange = () => {
             syncInnerHeight();
+            // На iOS при щипке scrollY ведёт визуальный вьюпорт, и сброс отдёргивал бы панораму
+            const pinchZoomed = isPinchZoomed(
+                window.visualViewport,
+                document.documentElement.clientWidth
+            );
             // /tokens uses document scroll; visualViewport resize/scroll
             // (URL bar, etc.) must not yank the page back to the top.
-            if (!isTokensLandingPath()) {
+            if (!isTokensLandingPath() && !pinchZoomed) {
                 resetLockedViewportScroll();
             }
         };
