@@ -15,7 +15,7 @@ export function createEmptyProgram(): Program {
     return {
         segments: [],
         parameters: {
-            roundStrategy: 'firstMeaningDigit',
+            roundStrategy: 'threeDigits',
         },
     };
 }

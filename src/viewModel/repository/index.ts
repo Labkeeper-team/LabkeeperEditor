@@ -206,7 +206,7 @@ class MockViewModelRepositoryState {
     lastProgram: Program = {
         segments: [],
         parameters: {
-            roundStrategy: 'firstMeaningDigit',
+            roundStrategy: 'threeDigits',
         },
     };
     lastOpenedProjectUuid: string | undefined = undefined;
@@ -217,7 +217,7 @@ class MockViewModelRepositoryState {
     projectIsReadonly = false;
     currentProgram: Program = {
         segments: [],
-        parameters: { roundStrategy: 'firstMeaningDigit' },
+        parameters: { roundStrategy: 'threeDigits' },
     };
     files: LabkeeperFile[] = [];
 
@@ -489,7 +489,7 @@ export const mockViewModelState = (): MockViewModelRepository => {
             clearLastProgram: () =>
                 (mockViewModelState.lastProgram = {
                     segments: [],
-                    parameters: { roundStrategy: 'firstMeaningDigit' },
+                    parameters: { roundStrategy: 'threeDigits' },
                 }),
         },
         projectViewModelRepository: {

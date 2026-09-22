@@ -155,7 +155,7 @@ test('help-items-add-test', async () => {
     let program = repository.projectViewModelRepository.currentProgram();
     expect(program).toEqual({
         parameters: {
-            roundStrategy: 'firstMeaningDigit',
+            roundStrategy: 'threeDigits',
         },
         segments: [
             {
@@ -171,7 +171,7 @@ test('help-items-add-test', async () => {
     program = repository.projectViewModelRepository.currentProgram();
     expect(program).toEqual({
         parameters: {
-            roundStrategy: 'firstMeaningDigit',
+            roundStrategy: 'threeDigits',
         },
         segments: [
             {
@@ -195,7 +195,7 @@ test('help-items-add-test', async () => {
     program = repository.projectViewModelRepository.currentProgram();
     expect(program).toEqual({
         parameters: {
-            roundStrategy: 'firstMeaningDigit',
+            roundStrategy: 'threeDigits',
         },
         segments: [
             {

@@ -300,7 +300,7 @@ test('no-duplicate-text-changes-test', () => {
                 parameters: { visible: true },
             } as Segment,
         ],
-        parameters: { roundStrategy: 'firstMeaningDigit' },
+        parameters: { roundStrategy: 'threeDigits' },
     } as Program);
 });
 
@@ -326,7 +326,7 @@ test('unite-changes-test', () => {
                 parameters: { visible: true },
             } as Segment,
         ],
-        parameters: { roundStrategy: 'firstMeaningDigit' },
+        parameters: { roundStrategy: 'threeDigits' },
     } as Program);
 });
 
@@ -348,7 +348,7 @@ test('replace-program-undo-redo-test', () => {
                 parameters: { visible: true },
             },
         ],
-        parameters: { roundStrategy: 'firstMeaningDigit' },
+        parameters: { roundStrategy: 'threeDigits' },
     });
 
     expect(service.getCurrentProgram()).toStrictEqual({
@@ -360,7 +360,7 @@ test('replace-program-undo-redo-test', () => {
                 parameters: { visible: true },
             } as Segment,
         ],
-        parameters: { roundStrategy: 'firstMeaningDigit' },
+        parameters: { roundStrategy: 'threeDigits' },
     } as Program);
 
     service.undo();
@@ -380,7 +380,7 @@ test('replace-program-undo-redo-test', () => {
                 parameters: { visible: true },
             } as Segment,
         ],
-        parameters: { roundStrategy: 'firstMeaningDigit' },
+        parameters: { roundStrategy: 'threeDigits' },
     } as Program);
 });
 

@@ -92,7 +92,7 @@ export class ProjectsPageService {
         const emptyProject: Program = {
             segments: [],
             parameters: {
-                roundStrategy: 'noRound',
+                roundStrategy: 'threeDigits',
             },
         };
 
