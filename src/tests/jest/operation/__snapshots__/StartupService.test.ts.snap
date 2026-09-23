@@ -43,7 +43,7 @@ MockViewModelRepositoryState {
   "currentFolderPath": "",
   "currentProgram": {
     "parameters": {
-      "roundStrategy": "firstMeaningDigit",
+      "roundStrategy": "threeDigits",
     },
     "segments": [],
   },
@@ -71,7 +71,7 @@ MockViewModelRepositoryState {
   "lastOpenedProjectUuid": undefined,
   "lastProgram": {
     "parameters": {
-      "roundStrategy": "firstMeaningDigit",
+      "roundStrategy": "threeDigits",
     },
     "segments": [],
   },
