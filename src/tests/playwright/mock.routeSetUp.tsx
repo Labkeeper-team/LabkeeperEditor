@@ -340,6 +340,24 @@ export class RouteSetup {
         return history;
     }
 
+    /** Канал агента, где у каждого прогона свои кадры: n-й startAgent получает runs[n], а прогону без кадров сокет ничего не шлёт, и он идёт, пока его не прервут */
+    async setupAgentSocketRuns(runs: Record<string, unknown>[][]) {
+        const received: Record<string, unknown>[] = [];
+        await this.page.routeWebSocket(
+            `**/api/${version}/ws/**`,
+            async (ws) => {
+                ws.onMessage((message) => {
+                    const frames = runs[received.length] ?? [];
+                    received.push(JSON.parse(String(message)));
+                    for (const frame of frames) {
+                        ws.send(JSON.stringify(frame));
+                    }
+                });
+            }
+        );
+        return received;
+    }
+
     /**
      * Канал агента. connectToServer не зовём, поэтому сокет замокан целиком
      * и наружу ничего не уходит. Хендлер живёт в процессе теста, так что

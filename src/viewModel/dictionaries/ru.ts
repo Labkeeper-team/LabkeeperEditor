@@ -273,6 +273,7 @@ export const ru: Translations = {
             aborted_unsynced:
                 'Прогон прерван, но перечитать проект не удалось, поэтому что успел изменить агент, выяснить не вышло. Обновите страницу',
         },
+        steps_toggle: 'Шаги агента: {count}',
     },
     mobile_view: {
         files: 'Файлы',

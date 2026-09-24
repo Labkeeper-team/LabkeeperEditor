@@ -240,6 +240,7 @@ export interface Translations {
             aborted_guest: string;
             aborted_unsynced: string;
         };
+        steps_toggle: string;
     };
     mobile_view: {
         files: string;
