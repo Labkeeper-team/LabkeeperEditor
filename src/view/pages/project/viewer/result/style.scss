@@ -32,3 +32,28 @@
 .textLayer span::-moz-selection {
     background: rgba(0, 120, 215, 0.35) !important;
 }
+
+[data-pdf-page] {
+    // шаг, с которым pdf.js округляет размер слоёв текста и ссылок; pdf_viewer.css задаёт его только внутри PDFViewer
+    --scale-round-x: 1px;
+    --scale-round-y: 1px;
+    // z-index ссылок pdf.js растёт с их числом, пусть он не вылезает поверх меню и окон
+    isolation: isolate;
+}
+
+// без CSS round() (Chrome до 125) ширина из setLayerDimensions пропадает, слой держится за края страницы
+[data-pdf-page] .annotationLayer {
+    right: 0;
+    bottom: 0;
+}
+
+// пока тянут выделение из PDF, остальной интерфейс не выделяется: Firefox и WebKit иначе прихватывают текст за колонкой
+.pdf-text-selecting * {
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+// на contenteditable user-select: none не действует, и протяжка из PDF уводила выделение и фокус в код сегмента
+.pdf-text-selecting [contenteditable] {
+    pointer-events: none;
+}

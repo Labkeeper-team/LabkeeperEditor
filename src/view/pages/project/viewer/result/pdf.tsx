@@ -3,7 +3,11 @@ import pdfjsWorkerSrc from '../../../../utils/pdfjsWorkerCompatibility.ts?worker
 import { useDispatch, useSelector } from 'react-redux';
 import { StorageState } from '../../../../store';
 import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs';
-import { TextLayer } from 'pdfjs-dist/legacy/build/pdf.mjs';
+import {
+    AnnotationLayer,
+    AnnotationType,
+    TextLayer,
+} from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { PdfPosition } from '../../../../../model/rpi';
 import {
@@ -16,6 +20,14 @@ import 'pdfjs-dist/legacy/web/pdf_viewer.css';
 import { useDictionary } from '../../../../store/selectors/translations';
 import { Typography } from '../../../../components/typography';
 import { AppDispatch } from '../../../../store';
+import {
+    mostVisiblePageIndex,
+    namedActionPageIndex,
+    nearestRectIndex,
+    resolvePdfDestination,
+} from '../../../../utils/pdfLinks';
+import { createPdfLinkService } from './linkService';
+import { PdfTextSelection } from './textSelection';
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
     pdfjsWorkerSrc,
@@ -27,6 +39,65 @@ const SYNCTEX_BASELINE_OFFSET_PT = 10;
 
 /** Gap between rendered PDF pages (matches wrapper marginBottom). */
 const PDF_PAGE_GAP_PX = 4;
+
+/** Насколько палец может промахнуться мимо ссылки на сенсорном экране: половина рекомендуемой зоны нажатия в 24 px */
+const TOUCH_LINK_RADIUS_PX = 12;
+
+type PdfLinkService = Parameters<AnnotationLayer['render']>[0]['linkService'];
+
+/** Слой ссылок страницы: из аннотаций берём только Link, поля форм и примечания просмотрщику не нужны */
+async function renderLinkLayer(
+    page: pdfjs.PDFPageProxy,
+    wrapper: HTMLDivElement,
+    viewport: pdfjs.PageViewport,
+    linkService: ReturnType<typeof createPdfLinkService>
+) {
+    const annotations = (
+        await page.getAnnotations({ intent: 'display' })
+    ).filter((annotation) => annotation.annotationType === AnnotationType.LINK);
+    if (annotations.length === 0) {
+        return;
+    }
+    // слой после текстового: правило pdf.js .textLayer.selecting ~ .annotationLayer пропускает протяжку выделения сквозь ссылки
+    const div = document.createElement('div');
+    div.className = 'annotationLayer';
+    wrapper.appendChild(div);
+    const linkViewport = viewport.clone({ dontFlip: true });
+    await new AnnotationLayer({
+        div,
+        page,
+        viewport: linkViewport,
+        linkService,
+        accessibilityManager: null,
+        annotationCanvasMap: null,
+        annotationEditorUIManager: null,
+        structTreeLayer: null,
+        commentManager: null,
+        annotationStorage: null,
+    }).render({
+        annotations,
+        div,
+        page,
+        viewport: linkViewport,
+        linkService: linkService as unknown as PdfLinkService,
+        renderForms: false,
+    });
+}
+
+/** Страницы из DOM: ссылка срабатывает и до того, как эффект перенесёт их в pageElementsRef */
+const renderedPages = (container: HTMLElement) =>
+    Array.from(
+        container.querySelectorAll<HTMLDivElement>(':scope > [data-pdf-page]')
+    );
+
+/** Верх страницы внутри контейнера прокрутки */
+const pageTopOf = (pages: HTMLDivElement[], pageIndex: number) => {
+    let pageTop = 0;
+    for (let i = 0; i < pageIndex; i++) {
+        pageTop += pages[i].offsetHeight + PDF_PAGE_GAP_PX;
+    }
+    return pageTop;
+};
 
 export const PdfResultViewer = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -51,6 +122,7 @@ export const PdfResultViewer = () => {
     const [isPdfRendering, setIsPdfRendering] = useState<boolean>(false);
     const [pageElements, setPageElements] = useState<HTMLDivElement[]>([]);
     const pageElementsRef = useRef<HTMLDivElement[]>([]);
+    const textSelectionRef = useRef<PdfTextSelection | null>(null);
 
     useEffect(() => {
         pageElementsRef.current = pageElements;
@@ -99,10 +171,7 @@ export const PdfResultViewer = () => {
 
             const scaleBetweenPdfAndCss = pageCSSHeight / pdfPageHeight;
 
-            let pageTop = 0;
-            for (let i = 0; i < pageIndex; i++) {
-                pageTop += pages[i].offsetHeight + PDF_PAGE_GAP_PX;
-            }
+            const pageTop = pageTopOf(pages, pageIndex);
 
             const offsetFromTopOnPage =
                 Math.max(0, position.y - SYNCTEX_BASELINE_OFFSET_PT) *
@@ -118,6 +187,82 @@ export const PdfResultViewer = () => {
             return true;
         },
         []
+    );
+
+    /** Переход по ссылке PDF: точка назначения встаёт к верхнему краю колонки, как в pdf.js */
+    const scrollToPdfPoint = useCallback(
+        async (pageIndex: number, left: number | null, top: number | null) => {
+            const pdf = pdfRef.current;
+            const container = containerRef.current;
+            if (!pdf || !container) {
+                return;
+            }
+            const pages = renderedPages(container);
+            if (!pages[pageIndex]) {
+                return;
+            }
+            const page = await pdf.getPage(pageIndex + 1);
+            if (containerRef.current !== container || pdfRef.current !== pdf) {
+                return;
+            }
+            const viewport = page.getViewport({
+                scale: pdfDisplayScaleRef.current,
+            });
+            const [, y] = viewport.convertToViewportPoint(
+                left ?? viewport.viewBox[0],
+                top ?? viewport.viewBox[3]
+            );
+            const scrollTop = pageTopOf(pages, pageIndex) + Math.max(0, y);
+            container.scrollTo({ top: scrollTop });
+            scrollTopRef.current = scrollTop;
+        },
+        []
+    );
+
+    /** Ссылка PDF на именованное или явное назначение */
+    const goToPdfDestination = useCallback(
+        async (pdf: pdfjs.PDFDocumentProxy, dest: string | unknown[]) => {
+            const target = await resolvePdfDestination(dest, pdf);
+            if (target && pdfRef.current === pdf) {
+                await scrollToPdfPoint(
+                    target.pageIndex,
+                    target.left,
+                    target.top
+                );
+            }
+        },
+        [scrollToPdfPoint]
+    );
+
+    /** Именованное действие PDF вроде NextPage считается от страницы, которая сейчас на экране */
+    const runPdfNamedAction = useCallback(
+        (action: string) => {
+            const container = containerRef.current;
+            if (!container) {
+                return;
+            }
+            const pages = renderedPages(container);
+            if (pages.length === 0) {
+                return;
+            }
+            const current = mostVisiblePageIndex(
+                pages.map((page, index) => ({
+                    top: pageTopOf(pages, index),
+                    height: page.offsetHeight,
+                })),
+                container.scrollTop,
+                container.clientHeight
+            );
+            const pageIndex = namedActionPageIndex(
+                action,
+                current,
+                pages.length
+            );
+            if (pageIndex !== null) {
+                void scrollToPdfPoint(pageIndex, null, null);
+            }
+        },
+        [scrollToPdfPoint]
     );
 
     /** Скролл после ответа API; повтор при появлении страниц PDF. */
@@ -141,9 +286,9 @@ export const PdfResultViewer = () => {
 
     const handlePdfClick = useCallback(
         (event: React.MouseEvent<HTMLDivElement>) => {
-            const pages = pageElementsRef.current;
+            // страницы уже в DOM, даже если эффект ещё не перенёс их в pageElementsRef: ранний клик не должен теряться
             const pdf = pdfRef.current;
-            if (!pages.length || !pdf) {
+            if (!pdf) {
                 return;
             }
 
@@ -151,10 +296,33 @@ export const PdfResultViewer = () => {
             if (!(target instanceof Element)) {
                 return;
             }
+            // нажатие на ссылку это переход, а не выбор места для «в редактор»
+            if (target.closest('.annotationLayer .linkAnnotation')) {
+                return;
+            }
 
             const pageWrapper = target.closest('[data-pdf-page]');
             if (!(pageWrapper instanceof HTMLElement)) {
                 return;
+            }
+
+            // ссылка вроде цифры \pageref на телефоне занимает несколько пикселей, поэтому нажатие рядом с ней тоже переход
+            if (window.matchMedia('(pointer: coarse)').matches) {
+                const links = [
+                    ...pageWrapper.querySelectorAll<HTMLAnchorElement>(
+                        '.annotationLayer .linkAnnotation > a'
+                    ),
+                ];
+                const nearest = nearestRectIndex(
+                    links.map((link) => link.getBoundingClientRect()),
+                    event.clientX,
+                    event.clientY,
+                    TOUCH_LINK_RADIUS_PX
+                );
+                if (nearest !== null) {
+                    links[nearest].click();
+                    return;
+                }
             }
 
             const pageIndex = Number(pageWrapper.dataset.pdfPage);
@@ -206,9 +374,13 @@ export const PdfResultViewer = () => {
     useEffect(() => {
         let lastDpr = window.devicePixelRatio;
         let cancelled = false;
+        let latestRun = 0;
         isRestoringRef.current = true;
 
         const loadPdf = async () => {
+            // смена масштаба браузера запускает новый прогон, и прежний должен остановиться, иначе он дорисовывает страницы поверх нового
+            const run = ++latestRun;
+            const isStale = () => cancelled || run !== latestRun;
             if (!pdfUri) {
                 setIsPdfRendering(false);
                 setIsPdfLoadingError(false);
@@ -222,8 +394,8 @@ export const PdfResultViewer = () => {
                 const pdf = await pdfjs.getDocument({
                     url: pdfUri,
                 }).promise;
-                if (cancelled) {
-                    setIsPdfRendering(false);
+                // здесь и ниже отменённый прогон не гасит заставку: ей уже управляет новый, иначе ссылку нажмут до конца его отрисовки
+                if (isStale()) {
                     return;
                 }
 
@@ -257,6 +429,14 @@ export const PdfResultViewer = () => {
                 if (hideUntilScrolled) {
                     container.style.visibility = 'hidden';
                 }
+                const linkService = createPdfLinkService({
+                    goToDestination: (dest) =>
+                        void goToPdfDestination(pdf, dest),
+                    executeNamedAction: runPdfNamedAction,
+                });
+                const textSelection = (textSelectionRef.current ??=
+                    new PdfTextSelection());
+                textSelection.clear();
                 container.innerHTML = '';
 
                 const pages: HTMLDivElement[] = [];
@@ -272,9 +452,8 @@ export const PdfResultViewer = () => {
 
                 for (let i = 1; i <= pdf.numPages; i++) {
                     const page = await pdf.getPage(i);
-                    if (cancelled) {
+                    if (isStale()) {
                         container.style.visibility = '';
-                        setIsPdfRendering(false);
                         return;
                     }
 
@@ -292,6 +471,11 @@ export const PdfResultViewer = () => {
                     wrapper.style.background = '#fff';
                     wrapper.style.borderRadius = '4px';
                     wrapper.style.boxShadow = '0 1px 4px rgba(0,0,0,0.1)';
+                    // вне PDFViewer pdf_viewer.css не задаёт масштаб, без него span текста получают шрифт страницы и промахиваются мимо букв
+                    wrapper.style.setProperty(
+                        '--total-scale-factor',
+                        String(viewport.scale * viewport.userUnit)
+                    );
 
                     container.appendChild(wrapper);
                     pages.push(wrapper);
@@ -304,9 +488,8 @@ export const PdfResultViewer = () => {
                     viewport,
                     scaledViewport,
                 } of slots) {
-                    if (cancelled) {
+                    if (isStale()) {
                         container.style.visibility = '';
-                        setIsPdfRendering(false);
                         return;
                     }
 
@@ -340,11 +523,28 @@ export const PdfResultViewer = () => {
                         viewport,
                     });
                     await textLayerRenderer.render();
+                    // слой снятой страницы в выделении путает признак Firefox, а после размонтирования оставил бы обработчики на document
+                    if (isStale()) {
+                        container.style.visibility = '';
+                        return;
+                    }
+                    textSelection.add(textLayer);
+
+                    try {
+                        await renderLinkLayer(
+                            page,
+                            wrapper,
+                            viewport,
+                            linkService
+                        );
+                    } catch (e) {
+                        // без ссылок PDF всё равно читается, поэтому страницу не роняем
+                        console.log(e);
+                    }
                 }
 
-                if (cancelled) {
+                if (isStale()) {
                     container.style.visibility = '';
-                    setIsPdfRendering(false);
                     return;
                 }
 
@@ -360,7 +560,7 @@ export const PdfResultViewer = () => {
                 setPageElements(pages);
 
                 const finishRestore = () => {
-                    if (cancelled) return;
+                    if (isStale()) return;
                     isRestoringRef.current = false;
                     setIsPdfRendering(false);
                 };
@@ -368,7 +568,7 @@ export const PdfResultViewer = () => {
                 if (hideUntilScrolled) {
                     requestAnimationFrame(() => {
                         requestAnimationFrame(() => {
-                            if (cancelled || !containerRef.current) return;
+                            if (isStale() || !containerRef.current) return;
                             containerRef.current.style.visibility = '';
                             finishRestore();
                         });
@@ -401,9 +601,10 @@ export const PdfResultViewer = () => {
         return () => {
             window.removeEventListener('resize', onResize);
             cancelled = true;
+            textSelectionRef.current?.clear();
             setIsPdfRendering(false);
         };
-    }, [pdfUri, dispatch, widthEpoch]);
+    }, [pdfUri, dispatch, widthEpoch, goToPdfDestination, runPdfNamedAction]);
 
     // колонку показали обратно: пересобираем страницы под настоящую ширину
     useEffect(() => {
