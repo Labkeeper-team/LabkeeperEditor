@@ -184,6 +184,8 @@ export interface Translations {
         max_iterations: string;
         context_size_hint: string;
         max_iterations_hint: string;
+        settings: string;
+        settings_close: string;
         editing_locked: string;
         leave_confirm: string;
         send_errors: string;

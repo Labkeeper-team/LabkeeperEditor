@@ -90,8 +90,8 @@ test('agent-start-sends-prompt-and-settings', async () => {
     expect(ctx.agentSocketState.projectId).toBe(PROJECT_ID);
     expect(ctx.agentSocketState.started).toEqual({
         prompt: 'сделай таблицу',
-        numberIterations: 5,
-        maxTokens: 10000,
+        numberIterations: 20,
+        maxTokens: 100000,
     });
     // поле очищается сразу, запрос уходит в ленту
     expect(ctx.repository.chatViewModelRepository.input()).toBe('');
@@ -110,7 +110,7 @@ test('agent-settings-max-tokens-offers-login-to-a-guest', () => {
     expect(ctx.repository.authViewModelRepository.currentView()).toBe('login');
     // значение осталось прежним, иначе гость поменял бы настройку в обход входа
     expect(ctx.repository.persistenceViewModelRepository.agentMaxTokens()).toBe(
-        10000
+        100000
     );
     // по источнику в аналитике видно, какая кнопка привела человека в окно входа
     expect(onEvent).toHaveBeenCalledWith(
@@ -132,7 +132,7 @@ test('agent-settings-iterations-offers-login-to-a-guest', () => {
     expect(ctx.repository.authViewModelRepository.currentView()).toBe('login');
     expect(
         ctx.repository.persistenceViewModelRepository.agentIterations()
-    ).toBe(5);
+    ).toBe(20);
     expect(onEvent).toHaveBeenCalledWith(
         Events.EVENT_AUTH_MODAL_OPENED,
         expect.objectContaining({ source: 'agent_settings' })

@@ -11,6 +11,10 @@ import { authSlice } from '../slices/auth';
 import { persistenceSlice } from '../slices/persistence';
 import { billingSlice } from '../slices/billing';
 import { chatSlice } from '../slices/chat';
+import {
+    PERSISTENCE_VERSION,
+    migratePersistence,
+} from '../persistMigrations.ts';
 
 const LOCAL_STORAGE_KEY = 'PERSISTENCE';
 
@@ -29,6 +33,8 @@ export const createRootReducer = () => {
                 key: LOCAL_STORAGE_KEY,
                 storage,
                 blacklist: [],
+                version: PERSISTENCE_VERSION,
+                migrate: migratePersistence,
             },
             persistenceSlice.reducer
         ),

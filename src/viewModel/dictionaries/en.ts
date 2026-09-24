@@ -195,6 +195,8 @@ export const en: Translations = {
             'How many tokens the agent may spend on a single model call. A larger context gives a better answer and costs more',
         max_iterations_hint:
             'How many steps the agent takes before it stops. More steps handle harder tasks and cost more',
+        settings: 'Agent settings',
+        settings_close: 'Close settings',
         editing_locked:
             'The project cannot be edited while the agent is running',
         leave_confirm: 'The agent is still running. Leave the page anyway?',

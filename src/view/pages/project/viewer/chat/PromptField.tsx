@@ -6,16 +6,14 @@ import classNames from 'classnames';
 import { AppDispatch, StorageState } from '../../../../store';
 import { useDictionary } from '../../../../store/selectors/translations';
 import { controller } from '../../../../../main.tsx';
-import {
-    AGENT_ITERATION_OPTIONS,
-    AGENT_TOKEN_OPTIONS,
-} from '../../../../../model/rpi/agentSocket.ts';
+import { AGENT_TOKEN_OPTIONS } from '../../../../../model/rpi/agentSocket.ts';
 import { SegmentedControl } from '../../../../components/segmentedControl';
 import { promptEditorExtensions } from './promptEditorExtensions.ts';
 import { useIsMobile } from '../../../../hooks/useMobile';
 import { useHasFinePointer } from '../../../../hooks/useFinePointer';
 import { setAgentPromptHeight } from '../../../../store/slices/persistence';
 import { usePromptFieldResize } from './usePromptFieldResize.ts';
+import { AgentSettings } from './AgentSettings.tsx';
 
 const FIELD_ID = 'agent-chat-field';
 
@@ -30,6 +28,7 @@ export const PromptField = ({ isEmpty }: { isEmpty: boolean }) => {
     // ручка только при мыши или тачпаде: телефону, даже повёрнутому, она ни к чему
     const resizable = !isMobile && hasFinePointer;
     const fieldRef = useRef<HTMLDivElement>(null);
+    const controlsRef = useRef<HTMLDivElement>(null);
     const viewRef = useRef<EditorView | null>(null);
     const storedHeight = useSelector(
         (state: StorageState) => state.persistence.agentPromptHeight
@@ -63,9 +62,6 @@ export const PromptField = ({ isEmpty }: { isEmpty: boolean }) => {
     );
     const maxTokens = useSelector(
         (state: StorageState) => state.persistence.agentMaxTokens
-    );
-    const iterations = useSelector(
-        (state: StorageState) => state.persistence.agentIterations
     );
 
     const isRunning =
@@ -129,7 +125,7 @@ export const PromptField = ({ isEmpty }: { isEmpty: boolean }) => {
                 // иначе Tab перестанет уводить фокус из поля
                 indentWithTab={false}
             />
-            <div className="agent-chat__controls">
+            <div ref={controlsRef} className="agent-chat__controls">
                 <div className="agent-chat__setting">
                     <span className="agent-chat__setting-label">
                         {dictionary.agent_chat.context_size}
@@ -157,33 +153,12 @@ export const PromptField = ({ isEmpty }: { isEmpty: boolean }) => {
                         }
                     />
                 </div>
-                <div className="agent-chat__setting">
-                    <span className="agent-chat__setting-label">
-                        {dictionary.agent_chat.max_iterations}
-                        <span
-                            className="agent-chat__info"
-                            title={dictionary.agent_chat.max_iterations_hint}
-                        >
-                            <InfoIcon />
-                        </span>
-                    </span>
-                    <SegmentedControl
-                        ariaLabel={dictionary.agent_chat.max_iterations}
-                        options={AGENT_ITERATION_OPTIONS.map((value) => ({
-                            value,
-                            label: String(value),
-                        }))}
-                        value={iterations}
-                        disabled={isRunning}
-                        onChange={(value) =>
-                            dispatch(
-                                controller.onAgentIterationsChangedRequest({
-                                    value,
-                                })
-                            )
-                        }
-                    />
-                </div>
+                {/* панель живёт внутри поля: соседи поля в .agent-chat задают границы ручки */}
+                <AgentSettings
+                    fieldRef={fieldRef}
+                    controlsRef={controlsRef}
+                    isRunning={isRunning}
+                />
                 {/* пока агент работает, та же круглая кнопка прерывает прогон */}
                 {isRunning ? (
                     <button

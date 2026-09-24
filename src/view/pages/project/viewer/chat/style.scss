@@ -457,7 +457,6 @@ body.agent-chat-resizing {
 }
 
 .agent-chat__submit {
-    margin-left: auto;
     width: 50px;
     height: 50px;
     border: none;
@@ -486,6 +485,152 @@ body.agent-chat-resizing {
         &:hover {
             background: $gray-10;
         }
+    }
+}
+
+// кнопка настроек и отправка прижаты вправо, размер контекста остаётся слева
+.agent-settings {
+    margin-left: auto;
+    display: flex;
+    align-self: center;
+}
+
+.agent-settings__toggle {
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: $gray-20;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+
+    // цвет в самой иконке зашит, а открытую панель видно по синей иконке
+    svg path[stroke] {
+        stroke: currentColor;
+    }
+
+    svg path[fill] {
+        fill: currentColor;
+    }
+
+    &:hover,
+    &[aria-expanded='true'] {
+        background: $gray-60;
+    }
+
+    &[aria-expanded='true'] {
+        color: $blue-10;
+    }
+}
+
+// поверх поля ввода и ленты во всю ширину поля; место по высоте считает AgentSettings
+.agent-settings__panel {
+    position: absolute;
+    left: -1px;
+    right: -1px;
+    // выше ручки поля, но ниже окна входа (z-index 100)
+    z-index: 2;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    background: $white;
+    border: 1px solid $gray-50;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(14, 22, 33, 0.12);
+    overflow: hidden;
+
+    // фокус переходит в панель программно, рамка вокруг всей панели не нужна
+    &:focus {
+        outline: none;
+    }
+}
+
+.agent-settings__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 4px 4px 4px 16px;
+    border-bottom: 1px solid $gray-60;
+    flex-shrink: 0;
+}
+
+.agent-settings__title {
+    font-size: 14px;
+    line-height: 18px;
+    font-weight: 600;
+    color: $gray-10;
+}
+
+.agent-settings__close {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+
+    svg {
+        width: 12px;
+        height: 12px;
+    }
+
+    &:hover {
+        background: $gray-60;
+    }
+}
+
+// на низком экране прокручиваются секции, а заголовок с крестиком остаётся на месте
+.agent-settings__body {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 12px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.agent-settings__section {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+}
+
+.agent-settings__section-title {
+    font-size: 12px;
+    line-height: 14px;
+    font-weight: 600;
+    color: $gray-10;
+}
+
+.agent-settings__hint {
+    margin: 0;
+    font-size: 12px;
+    line-height: 16px;
+    color: $gray-20;
+}
+
+// пальцем в узкие кнопки переключателя легко промахнуться
+@media (pointer: coarse) {
+    .agent-settings__panel .segmented-control__item {
+        padding: 6px 14px;
+        font-size: 14px;
+        line-height: 18px;
+    }
+
+    .agent-settings__close {
+        width: 40px;
+        height: 40px;
     }
 }
 
