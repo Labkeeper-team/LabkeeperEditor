@@ -93,6 +93,14 @@ const visiblePromptText = (page: Page) =>
             .join('\n');
     });
 
+/** Число итераций живёт в панели настроек, а размер контекста остался в ряду кнопок */
+async function openAgentSettings(page: Page) {
+    await page.getByRole('button', { name: 'Agent settings' }).click();
+    await expect(
+        page.getByRole('dialog', { name: 'Agent settings' })
+    ).toBeVisible();
+}
+
 async function submitPrompt(page: Page, text = 'сделай таблицу') {
     await promptField(page).fill(text);
     await page.getByRole('button', { name: 'Send' }).click();
@@ -113,6 +121,7 @@ test('agent-tab-switches-with-pdf', async ({ page }) => {
 test('agent-start-sends-prompt-and-settings', async ({ page }) => {
     const sent = await openChat(page);
 
+    await openAgentSettings(page);
     await page
         .getByRole('group', { name: 'Max Iterations' })
         .getByRole('button', { name: '12' })
@@ -129,7 +138,7 @@ test('agent-start-sends-prompt-and-settings', async ({ page }) => {
             type: 'startAgent',
             prompt: 'перепиши введение',
             numberIterations: 12,
-            maxTokens: 10000,
+            maxTokens: 100000,
         },
     ]);
 });
@@ -858,12 +867,13 @@ test('agent-settings-offer-login-to-a-guest', async ({ page }) => {
     await expect(
         page
             .getByRole('group', { name: 'Context Size' })
-            .getByRole('button', { name: '10k' })
+            .getByRole('button', { name: '100k' })
     ).toHaveAttribute('aria-pressed', 'true');
 
     await closeAuthModal(page).click();
     await expect(authModal(page)).toBeHidden();
 
+    await openAgentSettings(page);
     await page
         .getByRole('group', { name: 'Max Iterations' })
         .getByRole('button', { name: '12' })
@@ -873,7 +883,7 @@ test('agent-settings-offer-login-to-a-guest', async ({ page }) => {
     await expect(
         page
             .getByRole('group', { name: 'Max Iterations' })
-            .getByRole('button', { name: '5' })
+            .getByRole('button', { name: '20' })
     ).toHaveAttribute('aria-pressed', 'true');
 });
 
@@ -882,6 +892,7 @@ test('guest-agent-run-survives-a-swallowed-settings-click', async ({
 }) => {
     const sent = await openGuestChat(page);
 
+    await openAgentSettings(page);
     await page
         .getByRole('group', { name: 'Max Iterations' })
         .getByRole('button', { name: '12' })
@@ -896,7 +907,7 @@ test('guest-agent-run-survives-a-swallowed-settings-click', async ({
     const frame = sent[0] as { type: string; numberIterations: number };
     // отправка гостю осталась, а настройка ушла прежняя, потому что клик по ней проглочен
     expect(frame.type).toBe('startAgentUnauthorized');
-    expect(frame.numberIterations).toBe(5);
+    expect(frame.numberIterations).toBe(20);
 });
 
 const loginOffer = (page: Page) =>

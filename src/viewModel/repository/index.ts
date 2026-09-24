@@ -1,7 +1,7 @@
 import { AgentStopReason } from '../../model/rpi/agentSocket.ts';
 import {
-    AGENT_ITERATION_OPTIONS,
-    AGENT_TOKEN_OPTIONS,
+    AGENT_DEFAULT_ITERATIONS,
+    AGENT_DEFAULT_MAX_TOKENS,
 } from '../../model/rpi/agentSocket.ts';
 
 export type MobileView = 'files' | 'editor' | 'pdf' | 'chat';
@@ -260,8 +260,8 @@ class MockViewModelRepositoryState {
     isRegistration: boolean = false;
     hunks: Hunk[] = [];
     pendingHunkIds: string[] = [];
-    agentMaxTokens: number = AGENT_TOKEN_OPTIONS[0];
-    agentIterations: number = AGENT_ITERATION_OPTIONS[0];
+    agentMaxTokens: number = AGENT_DEFAULT_MAX_TOKENS;
+    agentIterations: number = AGENT_DEFAULT_ITERATIONS;
     crossBorderConsentAcceptedLocally: boolean = false;
     chatMessages: ChatMessage[] = [];
     chatNextMessageId: number = 1;

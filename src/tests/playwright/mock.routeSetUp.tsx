@@ -7,6 +7,7 @@ import {
     ProjectType,
     Statement,
 } from '../../model/domain.ts';
+import { PERSISTENCE_VERSION } from '../../view/store/persistMigrations.ts';
 
 // Типы для заглушек
 
@@ -373,18 +374,22 @@ export class RouteSetup {
      * приложение: срезом redux-persist. Иначе плашка перехватит первый запрос
      */
     async acceptCrossBorderConsentLocally() {
-        await this.page.addInitScript(() => {
+        await this.page.addInitScript((version) => {
             // скрипт срабатывает на каждой навигации: без слияния перезагрузка теряла бы остальной срез
             const saved = window.localStorage.getItem('persist:PERSISTENCE');
+            const slice = saved ? JSON.parse(saved) : {};
             window.localStorage.setItem(
                 'persist:PERSISTENCE',
                 JSON.stringify({
-                    ...(saved ? JSON.parse(saved) : {}),
+                    ...slice,
                     crossBorderConsentAcceptedLocally: 'true',
-                    _persist: '{"version":-1,"rehydrated":true}',
+                    // записанную версию не трогаем, а новый срез приложение само кладёт с текущей: иначе шла бы миграция
+                    _persist:
+                        slice._persist ??
+                        JSON.stringify({ version, rehydrated: true }),
                 })
             );
-        });
+        }, PERSISTENCE_VERSION);
     }
 
     /** Ручка приёма согласия на трансграничную передачу */

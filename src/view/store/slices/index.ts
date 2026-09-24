@@ -27,8 +27,8 @@ import {
 } from '../../../viewModel/repository';
 import { createEmptyProgram } from '../../../model/repository/ProgramRepository.ts';
 import {
-    AGENT_ITERATION_OPTIONS,
-    AGENT_TOKEN_OPTIONS,
+    AGENT_DEFAULT_ITERATIONS,
+    AGENT_DEFAULT_MAX_TOKENS,
 } from '../../../model/rpi/agentSocket.ts';
 import { PdfPosition } from '../../../model/rpi';
 import { BillingPricingResponse } from '../../../model/rpi';
@@ -216,8 +216,8 @@ export const persistenceInitialState: PersistenceState = {
     lastProgram: createEmptyProgram(),
     instructionExpanded: true,
     lastOpenedProjectUuid: undefined,
-    agentMaxTokens: AGENT_TOKEN_OPTIONS[0],
-    agentIterations: AGENT_ITERATION_OPTIONS[0],
+    agentMaxTokens: AGENT_DEFAULT_MAX_TOKENS,
+    agentIterations: AGENT_DEFAULT_ITERATIONS,
     crossBorderConsentAcceptedLocally: false,
     agentPromptHeight: null,
 };
