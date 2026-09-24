@@ -839,6 +839,14 @@ export class AgentChatService {
             }
             return;
         }
+        if (reason === 'Locked') {
+            // замок пришёл кадром сокета, а не кодом 423, поэтому WebRpi его не видит
+            this.track(Events.EVENT_PROJECT_LOCKED, {
+                source: 'agent',
+                operation: 'agent_run',
+                expected: true,
+            });
+        }
         if (reason === 'UnknownError' || reason === 'Locked') {
             reportUnexpectedError(
                 this.observerService,

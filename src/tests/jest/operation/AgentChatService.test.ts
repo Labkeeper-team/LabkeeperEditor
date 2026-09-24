@@ -8,7 +8,10 @@ import {
     PROJECT_TITLE,
     USER_ID,
 } from '../common.ts';
-import { AgentEvent } from '../../../model/rpi/agentSocket.ts';
+import {
+    AGENT_STOP_REASONS,
+    AgentEvent,
+} from '../../../model/rpi/agentSocket.ts';
 import { Hunk, Program } from '../../../model/domain.ts';
 import { Events } from '../../../model/service/ObserverService.ts';
 import { MockViewModelRepository } from '../../../viewModel/repository';
@@ -869,6 +872,57 @@ test('stop-reason-locked-reports-unknown-rpi-event', async () => {
     expect(events).toContain(Events.EVENT_RPI_UNKNOWN);
     expect(Sentry.captureException).toHaveBeenCalled();
 });
+
+test.each([
+    ['authorized', true],
+    ['guest', false],
+] as const)(
+    'stop-reason-locked-sends-one-project-locked-event-for-%s',
+    async (_who, authenticated) => {
+        const ctx = setup(authenticated);
+        const onEvent = jest.spyOn(ctx.observerService, 'onEvent');
+        ctx.repository.chatViewModelRepository.setInput('сделай таблицу');
+        await ctx.agentChatService.onPromptSubmit();
+
+        await emit(ctx, {
+            kind: 'finished',
+            message: null,
+            stopReason: 'Locked',
+        });
+
+        const locked = onEvent.mock.calls.filter(
+            ([event]) => event === Events.EVENT_PROJECT_LOCKED
+        );
+        expect(locked).toHaveLength(1);
+        expect(locked[0][1]).toMatchObject({
+            source: 'agent',
+            operation: 'agent_run',
+            expected: true,
+            project_id: PROJECT_ID,
+        });
+    }
+);
+
+test.each(AGENT_STOP_REASONS.filter((reason) => reason !== 'Locked'))(
+    'stop-reason-%s-does-not-send-project-locked-event',
+    async (stopReason) => {
+        const ctx = setup();
+        const onEvent = jest.spyOn(ctx.observerService, 'onEvent');
+        ctx.repository.chatViewModelRepository.setInput('сделай таблицу');
+        await ctx.agentChatService.onPromptSubmit();
+
+        await emit(ctx, { kind: 'finished', message: null, stopReason });
+
+        // финал разобран до конца, иначе отсутствие события ничего не значит
+        expect(['ok', 'error']).toContain(
+            ctx.repository.chatViewModelRepository.requestState()
+        );
+        expect(onEvent).not.toHaveBeenCalledWith(
+            Events.EVENT_PROJECT_LOCKED,
+            expect.anything()
+        );
+    }
+);
 
 test('tool-call-reloads-the-program-for-a-segment-hunk', async () => {
     const ctx = setup();
