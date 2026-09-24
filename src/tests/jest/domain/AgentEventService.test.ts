@@ -1,5 +1,8 @@
 import { Hunk, HunkType } from '../../../model/domain.ts';
-import { AgentToolName } from '../../../model/rpi/agentSocket.ts';
+import {
+    AGENT_TOOL_NAMES,
+    AgentToolName,
+} from '../../../model/rpi/agentSocket.ts';
 import { dictionary } from '../../../viewModel/dictionaries/index.ts';
 import { AgentEventService } from '../../../viewModel/domain/AgentEventService.ts';
 
@@ -13,15 +16,23 @@ const READ_TOOLS: AgentToolName[] = [
     'done',
 ];
 
-/** Инструменты, которые меняют проект и приводят к hunks */
-const WRITE_TOOLS: AgentToolName[] = [
-    'add_segment',
-    'add_lines_to_segment',
-    'delete_lines_from_segment',
-    'add_file',
-    'add_lines_to_file',
-    'delete_lines_from_file',
-];
+/** Остальные знакомые инструменты пишут: новое имя без подписи и перечитывания покраснеет в их опытах */
+const WRITE_TOOLS = AGENT_TOOL_NAMES.filter(
+    (tool) => !READ_TOOLS.includes(tool)
+);
+
+// инструмент, которого фронт ещё не знает: судить можно только по hunks
+const UNKNOWN_TOOL = 'rename_segment';
+
+/** Незнакомые имена, в том числе поля Object.prototype: обычный объект нашёл бы по ним функцию */
+const UNKNOWN_TOOLS = [
+    ['a-new-name', UNKNOWN_TOOL],
+    ['an-empty-name', ''],
+    ['constructor', 'constructor'],
+    ['toString', 'toString'],
+    ['__proto__', '__proto__'],
+    ['hasOwnProperty', 'hasOwnProperty'],
+] as const;
 
 const ALL_HUNK_TYPES: HunkType[] = [
     'addSegment',
@@ -188,6 +199,35 @@ test.each(WRITE_TOOLS.map((tool) => [tool] as const))(
     }
 );
 
+test.each(UNKNOWN_TOOLS)(
+    'describe-tool-call-of-%s-without-fresh-hunks-gives-the-common-line',
+    (_case, tool) => {
+        const service = new AgentEventService();
+
+        expect(service.describeToolCall(tool, [])).toEqual([
+            { kind: 'event', labelKey: 'unknown_tool' },
+        ]);
+    }
+);
+
+test('describe-tool-call-of-an-unknown-tool-names-the-places-it-changed', () => {
+    const service = new AgentEventService();
+    const fresh = [
+        hunkOf('addLinesToSegment', { id: 'a', segmentId: 2, startLine: 4 }),
+    ];
+
+    expect(service.describeToolCall(UNKNOWN_TOOL, fresh)).toEqual([
+        {
+            kind: 'event',
+            labelKey: 'add_lines_to_segment',
+            file: undefined,
+            segmentId: 2,
+            lines: '#L4',
+            target: { segmentIndex: 1, line: 4, focus: false },
+        },
+    ]);
+});
+
 test('describe-tool-call-with-fresh-hunks-gives-a-line-per-hunk', () => {
     const service = new AgentEventService();
     const fresh = [
@@ -245,23 +285,33 @@ test.each([
     });
 });
 
-test('describe-hunk-of-an-unknown-type-falls-back-to-done', () => {
-    const service = new AgentEventService();
-    const unknown = hunkOf('renameFile' as unknown as HunkType, {
-        fileName: 'a.tex',
-        startLine: 3,
-    });
+/** Типы правок, которых фронт ещё не знает, в том числе поля Object.prototype */
+const UNKNOWN_HUNKS: [string, Partial<Hunk>, string][] = [
+    ['renameFile', { fileName: 'a.tex' }, 'add_lines_to_file'],
+    ['deleteSegment', { segmentId: 4 }, 'add_lines_to_segment'],
+    ['constructor', { segmentId: 4 }, 'add_lines_to_segment'],
+    ['toString', { fileName: 'a.tex' }, 'add_lines_to_file'],
+    ['movePlace', {}, 'unknown_tool'],
+];
 
-    expect(service.describeHunk(unknown)).toEqual({
-        kind: 'event',
-        labelKey: 'done',
-        file: 'a.tex',
-        segmentId: undefined,
-        lines: '#L3',
-        // неизвестный тип не считается навигабельным
-        target: undefined,
-    });
-});
+// суть незнакомой правки назвать нечем, а место можно, и «Завершение работы» тут соврало бы
+test.each(UNKNOWN_HUNKS)(
+    'describe-hunk-of-an-unknown-type-%s-names-the-place',
+    (type, place, labelKey) => {
+        const service = new AgentEventService();
+        const unknown = hunkOf(type as HunkType, { ...place, startLine: 3 });
+
+        expect(service.describeHunk(unknown)).toEqual({
+            kind: 'event',
+            labelKey,
+            file: place.fileName,
+            segmentId: place.segmentId,
+            lines: '#L3',
+            // неизвестный тип не считается навигабельным
+            target: undefined,
+        });
+    }
+);
 
 test('describe-hunk-passes-file-and-segment-through', () => {
     const service = new AgentEventService();
@@ -430,8 +480,8 @@ test('last-navigation-target-is-the-last-place-changed', () => {
     expect(service.lastNavigationTarget([])).toBeUndefined();
 });
 
-// инструмент, которого фронт ещё не знает: судить можно только по hunks
-const UNKNOWN_TOOL = 'rename_segment' as AgentToolName;
+// читающий инструмент сам ничего не перечитывает, поэтому видно, что решают hunks
+const READING_TOOL: AgentToolName = 'read_segment';
 
 test.each([
     ['add_segment'],
@@ -485,7 +535,7 @@ test.each([
     const service = new AgentEventService();
 
     expect(
-        service.reloadScope(UNKNOWN_TOOL, [hunkOf(type, { segmentId: 1 })])
+        service.reloadScope(READING_TOOL, [hunkOf(type, { segmentId: 1 })])
     ).toEqual({
         program: true,
         files: false,
@@ -498,7 +548,7 @@ test.each([['addFile'], ['addLinesToFile'], ['deleteLinesFromFile']] as const)(
         const service = new AgentEventService();
 
         expect(
-            service.reloadScope(UNKNOWN_TOOL, [
+            service.reloadScope(READING_TOOL, [
                 hunkOf(type, { fileName: 'a.tex' }),
             ])
         ).toEqual({ program: false, files: true });
@@ -509,21 +559,25 @@ test('reload-scope-of-a-mixed-batch-asks-for-both', () => {
     const service = new AgentEventService();
 
     expect(
-        service.reloadScope(UNKNOWN_TOOL, [
+        service.reloadScope(READING_TOOL, [
             hunkOf('deleteLinesFromSegment', { id: 'a', segmentId: 1 }),
             hunkOf('addFile', { id: 'b', fileName: 'a.tex' }),
         ])
     ).toEqual({ program: true, files: true });
 });
 
-test('reload-scope-of-an-unknown-tool-without-hunks-asks-for-nothing', () => {
-    const service = new AgentEventService();
+// незнакомый инструмент мог писать без hunks, и следующее сохранение затёрло бы его правку
+test.each(UNKNOWN_TOOLS)(
+    'reload-scope-of-%s-without-hunks-asks-for-the-program-and-the-files',
+    (_case, tool) => {
+        const service = new AgentEventService();
 
-    expect(service.reloadScope(UNKNOWN_TOOL, [])).toEqual({
-        program: false,
-        files: false,
-    });
-});
+        expect(service.reloadScope(tool, [])).toEqual({
+            program: true,
+            files: true,
+        });
+    }
+);
 
 test('describe-model-call-uses-the-model-call-key', () => {
     const service = new AgentEventService();
@@ -606,7 +660,11 @@ test.each([['ru'], ['en']] as const)(
             string
         >;
         const keys = new Set<string>([service.describeModelCall().labelKey]);
-        for (const tool of [...READ_TOOLS, ...WRITE_TOOLS]) {
+        const tools = [
+            ...AGENT_TOOL_NAMES,
+            ...UNKNOWN_TOOLS.map(([, tool]) => tool),
+        ];
+        for (const tool of tools) {
             for (const draft of service.describeToolCall(tool, [])) {
                 keys.add(draft.labelKey);
             }
@@ -614,13 +672,17 @@ test.each([['ru'], ['en']] as const)(
         for (const type of ALL_HUNK_TYPES) {
             keys.add(service.describeHunk(hunkOf(type)).labelKey);
         }
-        // fallback у неизвестного типа тоже должен быть переводимым
-        keys.add(
-            service.describeHunk(hunkOf('renameFile' as unknown as HunkType))
-                .labelKey
-        );
+        // подпись незнакомого типа правки тоже должна быть переводимой
+        for (const [type, place] of UNKNOWN_HUNKS) {
+            keys.add(
+                service.describeHunk(hunkOf(type as HunkType, place)).labelKey
+            );
+        }
 
-        const missing = [...keys].filter((key) => events[key] === undefined);
+        // только свои ключи: по 'constructor' обычный объект нашёл бы функцию
+        const missing = [...keys].filter(
+            (key) => !Object.prototype.hasOwnProperty.call(events, key)
+        );
         expect(missing).toEqual([]);
     }
 );

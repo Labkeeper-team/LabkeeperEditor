@@ -44,24 +44,28 @@ export const AGENT_STOP_REASONS: AgentStopReason[] = [
     'UnknownError',
 ];
 
-/** Инструменты агента. Совпадает с enum toolName из AgentToolCallSpec. */
-export type AgentToolName =
-    | 'list_workspace'
-    | 'read_segment'
-    | 'read_segments'
-    | 'search_segments'
-    | 'read_file'
-    | 'add_segment'
-    | 'add_lines_to_segment'
-    | 'delete_lines_from_segment'
-    | 'add_file'
-    | 'add_lines_to_file'
-    | 'delete_lines_from_file'
-    | 'done';
+/** Инструменты агента, которые знает фронт: это enum toolName из AgentToolCallSpec, но сервер добавляет новые раньше, чем обновится фронт */
+export const AGENT_TOOL_NAMES = [
+    'list_workspace',
+    'read_segment',
+    'read_segments',
+    'search_segments',
+    'read_file',
+    'add_segment',
+    'add_lines_to_segment',
+    'delete_lines_from_segment',
+    'add_file',
+    'add_lines_to_file',
+    'delete_lines_from_file',
+    'done',
+] as const;
+
+export type AgentToolName = (typeof AGENT_TOOL_NAMES)[number];
 
 export type AgentEvent =
     | { kind: 'modelFinished'; totalTokens: number; elapsedTimeMillis: number }
-    | { kind: 'toolCall'; toolName: AgentToolName }
+    /** Имя любое, в том числе пустое: незнакомый инструмент тоже мог поменять проект */
+    | { kind: 'toolCall'; toolName: string }
     | {
           kind: 'finished';
           message: string | null;

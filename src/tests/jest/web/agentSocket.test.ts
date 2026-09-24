@@ -265,10 +265,30 @@ test('unparsable-frames-never-reach-on-event', async () => {
 
     socket.fireRaw('это не json');
     socket.fireMessage({ type: 'somethingNew' });
-    socket.fireMessage({ type: 'toolCall' });
     await flush();
 
     expect(handlers.onEvent).not.toHaveBeenCalled();
+});
+
+// выброшенный вызов не перечитал бы проект, и следующее сохранение затёрло бы его правку
+test.each([
+    ['an-unknown-name', 'replace_in_segment', 'replace_in_segment'],
+    ['an-empty-name', '', ''],
+    ['no-name', undefined, ''],
+    ['a-number', 42, ''],
+    ['an-object', { name: 'replace_in_segment' }, ''],
+])('tool-call-with-%s-reaches-on-event', async (_case, toolName, expected) => {
+    const handlers = makeHandlers();
+    new WebAgentSocket().startAgent('project-42', PARAMS, handlers);
+    const socket = lastSocket();
+    socket.fireOpen();
+
+    socket.fireMessage({ type: 'toolCall', toolName });
+    await flush();
+
+    expect(handlers.onEvent.mock.calls.map((call) => call[0])).toEqual([
+        { kind: 'toolCall', toolName: expected },
+    ]);
 });
 
 test('async-on-event-handlers-are-queued', async () => {

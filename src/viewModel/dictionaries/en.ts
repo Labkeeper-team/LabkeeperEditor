@@ -227,6 +227,7 @@ export const en: Translations = {
             search_segments: 'Searching segments',
             read_file: 'Reading a file',
             done: 'Finishing up',
+            unknown_tool: 'The agent performed an action',
         },
         change: {
             segment: 'Segment №{segment}',

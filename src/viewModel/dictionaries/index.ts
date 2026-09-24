@@ -212,6 +212,7 @@ export interface Translations {
             search_segments: string;
             read_file: string;
             done: string;
+            unknown_tool: string;
         };
         change: {
             segment: string;
