@@ -42,6 +42,8 @@ export const Events = {
     EVENT_PROJECT_DELETE_CANCELLED: 'project_delete_cancelled',
     EVENT_PROJECT_TITLE_CHANGED: 'project_title_changed',
     EVENT_BACK_TO_PROJECTS: 'back_to_projects',
+    // сервер ответил 423 или агент остановился с Locked: проект занят прогоном агента
+    EVENT_PROJECT_LOCKED: 'project_locked',
 
     EVENT_COMPILE_SUCCEEDED: 'compile_succeeded',
     EVENT_COMPILE_FAILED: 'compile_failed',
@@ -170,6 +172,7 @@ export const OPENPANEL_EVENT_NAMES: Record<string, string> = {
     [Events.EVENT_PROJECT_DELETE_CANCELLED]: 'Project delete cancelled',
     [Events.EVENT_PROJECT_TITLE_CHANGED]: 'Project title changed',
     [Events.EVENT_BACK_TO_PROJECTS]: 'Back to projects',
+    [Events.EVENT_PROJECT_LOCKED]: 'Project locked',
     [Events.EVENT_COMPILE_SUCCEEDED]: 'Compile succeeded',
     [Events.EVENT_COMPILE_FAILED]: 'Compile failed',
     [Events.EVENT_SYNC_TO_PDF]: 'Sync to PDF',

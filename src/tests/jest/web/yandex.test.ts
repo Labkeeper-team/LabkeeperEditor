@@ -59,6 +59,7 @@ describe('MetrikaService whitelist', () => {
         service.onEvent(Events.EVENT_LOGIN_SUCCEEDED);
         service.onEvent(Events.EVENT_PAGE_VIEWED);
         service.onEvent(Events.EVENT_AGENT_FAILED);
+        service.onEvent(Events.EVENT_PROJECT_LOCKED);
 
         expect(ym).not.toHaveBeenCalled();
     });

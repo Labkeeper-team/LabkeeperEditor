@@ -1,4 +1,5 @@
 import { OpenPanel } from '@openpanel/web';
+import { Events } from '../../../model/service/ObserverService.ts';
 import {
     ANALYTICS_DISABLED_STORAGE_KEY,
     OpenPanelService,
@@ -92,6 +93,20 @@ describe('OpenPanelService', () => {
         });
     });
 
+    test('a locked project goes under its own [E] name with its properties', () => {
+        const service = new OpenPanelService();
+        const properties = {
+            source: 'program',
+            operation: 'saveProgramRequest',
+            expected: true,
+            project_id: 'project-1',
+        };
+
+        service.onEvent(Events.EVENT_PROJECT_LOCKED, properties);
+
+        expect(track).toHaveBeenCalledWith('[E] Project locked', properties);
+    });
+
     test('onEvent keeps an unknown key as-is under the [E] prefix', () => {
         const service = new OpenPanelService();
 
@@ -125,6 +140,19 @@ describe('OpenPanelService', () => {
 
         await service.init('user-1');
         service.onEvent('start_run');
+
+        expect(OpenPanel).not.toHaveBeenCalled();
+        expect(track).not.toHaveBeenCalled();
+    });
+
+    // e2e ставит флаг, а 423 ловит любой запрос: без этого прогоны e2e попали бы в отчёт о замках
+    test('a locked event under the analytics flag is not sent', () => {
+        window.localStorage.setItem(ANALYTICS_DISABLED_STORAGE_KEY, '1');
+        const service = new OpenPanelService();
+
+        service.onEvent(Events.EVENT_PROJECT_LOCKED, {
+            operation: 'saveProgramRequest',
+        });
 
         expect(OpenPanel).not.toHaveBeenCalled();
         expect(track).not.toHaveBeenCalled();
