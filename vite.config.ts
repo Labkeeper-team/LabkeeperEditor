@@ -56,6 +56,10 @@ export default defineConfig(() => {
         resolve: {
             dedupe: ['react', 'react-dom'],
         },
+        optimizeDeps: {
+            // эти пакеты нужны только воркерам, их сканер Vite не видит, и первый запуск воркера на холодном сервере перезагружал все открытые страницы
+            include: ['nspell', 'pdfjs-dist/legacy/build/pdf.worker.min.mjs'],
+        },
         server: {
             port: 3000,
         },
