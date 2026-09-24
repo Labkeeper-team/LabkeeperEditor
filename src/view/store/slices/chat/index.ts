@@ -19,11 +19,17 @@ export const chatSlice = createSlice({
                 id: state.nextMessageId,
             } as ChatMessage);
             state.nextMessageId += 1;
+            // новый запрос сворачивает шаги всех прошлых прогонов, даже развёрнутых руками
+            if (payload.kind === 'request') {
+                state.expandedStepRequestIds = [];
+            }
         },
         setChatMessages(state, { payload }: PayloadAction<ChatMessage[]>) {
             state.messages = payload;
             state.nextMessageId =
                 payload.reduce((max, m) => Math.max(max, m.id), 0) + 1;
+            // id пойдут заново с 1, и старая развёрнутость досталась бы чужому прогону
+            state.expandedStepRequestIds = [];
         },
         setChatRequestState(
             state,
@@ -43,6 +49,12 @@ export const chatSlice = createSlice({
         setChatHistory(state, { payload }: PayloadAction<AgentHistoryEntry[]>) {
             state.history = payload;
         },
+        toggleChatSteps(state, { payload }: PayloadAction<number>) {
+            const expanded = state.expandedStepRequestIds;
+            state.expandedStepRequestIds = expanded.includes(payload)
+                ? expanded.filter((id) => id !== payload)
+                : [...expanded, payload];
+        },
         resetChat() {
             return { ...chatInitialState, messages: [], history: [] };
         },
@@ -56,5 +68,6 @@ export const {
     setChatInput,
     setChatHistoryRequestState,
     setChatHistory,
+    toggleChatSteps,
     resetChat,
 } = chatSlice.actions;

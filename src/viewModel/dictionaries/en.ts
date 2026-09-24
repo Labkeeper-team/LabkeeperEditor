@@ -271,6 +271,7 @@ export const en: Translations = {
             aborted_unsynced:
                 'The run was stopped, but the project could not be re-read, so there is no way to tell what the agent changed. Reload the page',
         },
+        steps_toggle: 'Agent steps: {count}',
     },
     mobile_view: {
         files: 'Files',

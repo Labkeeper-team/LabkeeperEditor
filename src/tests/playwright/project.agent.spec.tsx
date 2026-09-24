@@ -685,6 +685,48 @@ test('chat-keeps-following-after-history-is-cleared', async ({ page }) => {
     await expect.poll(() => distanceToBottom(page)).toBeLessThanOrEqual(1);
 });
 
+test('spinning-spinner-keeps-transcript-height', async ({ page }) => {
+    await openChat(page, {
+        history: FILLER_HISTORY,
+        frames: [toolCall('read_segment')],
+    });
+    await submitPrompt(page);
+    await expect(
+        page
+            .locator('.agent-chat__event')
+            .last()
+            .locator('.agent-chat__spinner')
+    ).toBeVisible();
+
+    // фазы вращения ставим сами: по часам опыт попадал бы в угол наудачу
+    const { spinning, heights } = await page
+        .locator('.agent-chat__transcript')
+        .evaluate((node) => {
+            const animations = document.getAnimations().filter((animation) => {
+                const target = (animation.effect as KeyframeEffect).target;
+                return target !== null && node.contains(target);
+            });
+            const padding = parseFloat(getComputedStyle(node).paddingRight);
+            const heights: number[] = [];
+            for (let time = 0; time < 800; time += 50) {
+                for (const animation of animations) {
+                    animation.pause();
+                    animation.currentTime = time;
+                }
+                // WebKit пересчитывает переполнение только на раскладке, поэтому при каждом угле раскладываем ленту заново
+                node.style.paddingRight = `${padding + 1}px`;
+                void node.scrollHeight;
+                node.style.paddingRight = '';
+                heights.push(node.scrollHeight);
+            }
+            return { spinning: animations.length, heights };
+        });
+
+    expect(spinning).toBeGreaterThan(0);
+    // повёрнутый углом вниз бегунок в последней строке удлинял ленту на 4 px, и лента у низа дрожала
+    expect(new Set(heights).size, heights.join(' ')).toBe(1);
+});
+
 test('wide inline formula can be scrolled', async ({ page }) => {
     const answer = `Сумма $${'a_1 + '.repeat(60)}b$ получилась длинной`;
     await openChat(page, { frames: [finished('Done', answer)] });

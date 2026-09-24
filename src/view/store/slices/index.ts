@@ -164,6 +164,8 @@ export interface ChatState {
     input: string;
     historyRequestState: HistoryRequestState;
     history: AgentHistoryEntry[];
+    /** Прошлые прогоны, чьи шаги человек развернул, по id запроса. В localStorage не пишется */
+    expandedStepRequestIds: number[];
 }
 
 export const authInitialState: AuthState = {
@@ -229,6 +231,7 @@ export const chatInitialState: ChatState = {
     input: '',
     historyRequestState: 'unknown',
     history: [],
+    expandedStepRequestIds: [],
 };
 
 export const projectInitialState: ProjectState = {

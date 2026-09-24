@@ -1,5 +1,6 @@
-import { Fragment, useEffect, useLayoutEffect, useRef } from 'react';
+import { Fragment, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import classNames from 'classnames';
 import { AppDispatch, StorageState } from '../../../../store';
 import { useDictionary } from '../../../../store/selectors/translations';
 import { controller } from '../../../../../main.tsx';
@@ -13,6 +14,9 @@ import { AGENT_STOP_REASONS } from '../../../../../model/rpi/agentSocket.ts';
 import { Routes } from '../../../../../viewModel/routes.ts';
 import { useNavigate } from 'react-router-dom';
 import { AgentMarkdown } from './AgentMarkdown';
+import { ExpandIcon } from '../../../../icons';
+import { toggleChatSteps } from '../../../../store/slices/chat';
+import { groupChatSteps } from '../../../../../viewModel/utils/chatSteps.ts';
 import { eventLabel } from './eventLabel.ts';
 
 /** Насколько близко к низу считаем, что пользователь «внизу» и можно доскроллить */
@@ -220,6 +224,37 @@ const EventRow = ({
     );
 };
 
+const StepsToggle = ({
+    count,
+    expanded,
+    onToggle,
+}: {
+    count: number;
+    expanded: boolean;
+    onToggle: () => void;
+}) => {
+    const dictionary = useSelector(useDictionary);
+    return (
+        <button
+            type="button"
+            className="agent-chat__steps-toggle"
+            aria-expanded={expanded}
+            onClick={onToggle}
+        >
+            {dictionary.agent_chat.steps_toggle.replace(
+                '{count}',
+                String(count)
+            )}
+            <ExpandIcon
+                aria-hidden
+                className={classNames('agent-chat__steps-icon', {
+                    'agent-chat__steps-icon--expanded': expanded,
+                })}
+            />
+        </button>
+    );
+};
+
 const HistoryPair = ({ entry }: { entry: AgentHistoryEntry }) => (
     <div className="agent-chat__pair">
         <RequestCard text={entry.request} createdAt={entry.createdAt} />
@@ -228,6 +263,7 @@ const HistoryPair = ({ entry }: { entry: AgentHistoryEntry }) => (
 );
 
 export const Transcript = () => {
+    const dispatch = useDispatch<AppDispatch>();
     const dictionary = useSelector(useDictionary);
     const messages = useSelector((state: StorageState) => state.chat.messages);
     const history = useSelector((state: StorageState) => state.chat.history);
@@ -237,9 +273,16 @@ export const Transcript = () => {
     const historyRequestState = useSelector(
         (state: StorageState) => state.chat.historyRequestState
     );
+    const expandedSteps = useSelector(
+        (state: StorageState) => state.chat.expandedStepRequestIds
+    );
+    const steps = useMemo(() => groupChatSteps(messages), [messages]);
 
     const containerRef = useRef<HTMLDivElement>(null);
     const stickToBottom = useRef(true);
+    // низ отпустила кнопка шагов у прилипшей ленты, а не прокрутка человека
+    const releasedByToggle = useRef(false);
+    const lastRequestId = useRef<number | null>(null);
 
     useEffect(() => {
         const node = containerRef.current;
@@ -256,6 +299,7 @@ export const Transcript = () => {
             const distance =
                 node.scrollHeight - node.scrollTop - node.clientHeight;
             stickToBottom.current = distance <= STICK_TO_BOTTOM_PX;
+            releasedByToggle.current = false;
         };
         // панель запроса подросла (авторост или ручка), и низ ленты не должен уйти под неё
         const observer = new ResizeObserver(() => {
@@ -274,6 +318,20 @@ export const Transcript = () => {
 
     useLayoutEffect(() => {
         const node = containerRef.current;
+        let requestId: number | null = null;
+        for (const message of messages) {
+            if (message.kind === 'request') {
+                requestId = message.id;
+            }
+        }
+        if (requestId !== lastRequestId.current) {
+            lastRequestId.current = requestId;
+            // новый запрос сам свернул развёрнутые шаги, и держать низ отпущенным больше незачем
+            if (releasedByToggle.current) {
+                releasedByToggle.current = false;
+                stickToBottom.current = true;
+            }
+        }
         // не перебиваем пользователя, если он ушёл читать прошлые события
         if (!node || !stickToBottom.current) {
             return;
@@ -295,6 +353,24 @@ export const Transcript = () => {
         observer.observe(node, { childList: true, subtree: true });
         return () => observer.disconnect();
     }, []);
+
+    const onToggleSteps = (requestId: number) => {
+        // прилипшая к низу лента докрутилась бы вниз и увела кнопку вверх на высоту развёрнутых строк
+        if (stickToBottom.current) {
+            releasedByToggle.current = true;
+        }
+        stickToBottom.current = false;
+        dispatch(toggleChatSteps(requestId));
+        // через кадр низ считается заново: в короткой ленте прокручивать нечего, и без этого она не поехала бы за новым прогоном
+        requestAnimationFrame(() => {
+            const node = containerRef.current;
+            if (node) {
+                stickToBottom.current =
+                    node.scrollHeight - node.scrollTop - node.clientHeight <=
+                    STICK_TO_BOTTOM_PX;
+            }
+        });
+    };
 
     const isRunning =
         requestState === 'running' || requestState === 'connecting';
@@ -342,7 +418,8 @@ export const Transcript = () => {
             {messages.map((message, index) => {
                 const pending = isRunning && index === lastIndex;
                 switch (message.kind) {
-                    case 'request':
+                    case 'request': {
+                        const stepCount = steps.pastStepCounts[message.id] ?? 0;
                         return (
                             <Fragment key={message.id}>
                                 {/* между парами в ленте разделитель, как в макете */}
@@ -353,8 +430,20 @@ export const Transcript = () => {
                                     text={message.text}
                                     createdAt={message.createdAt}
                                 />
+                                {stepCount > 0 && (
+                                    <StepsToggle
+                                        count={stepCount}
+                                        expanded={expandedSteps.includes(
+                                            message.id
+                                        )}
+                                        onToggle={() =>
+                                            onToggleSteps(message.id)
+                                        }
+                                    />
+                                )}
                             </Fragment>
                         );
+                    }
                     case 'response':
                         return (
                             <ResponseBlock
@@ -377,7 +466,12 @@ export const Transcript = () => {
                                 changes={message.changes}
                             />
                         );
-                    case 'event':
+                    case 'event': {
+                        const owner = steps.stepOwner[index];
+                        // шаги прошлого прогона ждут под кнопкой у его запроса
+                        if (owner !== null && !expandedSteps.includes(owner)) {
+                            return null;
+                        }
                         return (
                             <EventRow
                                 key={message.id}
@@ -385,6 +479,7 @@ export const Transcript = () => {
                                 pending={pending}
                             />
                         );
+                    }
                 }
             })}
             {isRunning && lastMessageIsNotEvent && (
