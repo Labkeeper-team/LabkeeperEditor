@@ -347,6 +347,24 @@ export class TextFileEditorService {
         }
     };
 
+    /** Открытого файла нет ни в списке, ни в hunks, значит агент удалил или переименовал его, а сохранение загрузило бы его обратно */
+    closeActiveTextFileIfGone = (): void => {
+        const fileName =
+            this.repository.ideViewModelRepository.activeTextFile();
+        if (!fileName) {
+            return;
+        }
+        const listed = this.repository.projectViewModelRepository
+            .files()
+            .some((item) => item.fileName === fileName);
+        // как при открытии: созданный агентом файл может быть виден только по hunks
+        const hunks = this.repository.ideViewModelRepository.hunks();
+        if (listed || getFileContentFromHunks(hunks, fileName) !== null) {
+            return;
+        }
+        this.onOpenFileDeleted(fileName);
+    };
+
     onOpenFilePathChanged = async (oldPath: string, newPath: string) => {
         const activeText =
             this.repository.ideViewModelRepository.activeTextFile();

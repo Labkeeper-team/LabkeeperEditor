@@ -13,6 +13,7 @@ import { AGENT_STOP_REASONS } from '../../../../../model/rpi/agentSocket.ts';
 import { Routes } from '../../../../../viewModel/routes.ts';
 import { useNavigate } from 'react-router-dom';
 import { AgentMarkdown } from './AgentMarkdown';
+import { eventLabel } from './eventLabel.ts';
 
 /** Насколько близко к низу считаем, что пользователь «внизу» и можно доскроллить */
 const STICK_TO_BOTTOM_PX = 40;
@@ -175,16 +176,11 @@ const EventRow = ({
 }) => {
     const dispatch = useDispatch<AppDispatch>();
     const dictionary = useSelector(useDictionary);
-    const events = dictionary.agent_chat.event as Record<string, string>;
-    const label =
-        message.segmentId == null
-            ? (events[message.labelKey] ?? message.labelKey)
-                  .replace('№{segment}', '')
-                  .trim()
-            : (events[message.labelKey] ?? message.labelKey).replace(
-                  '{segment}',
-                  String(message.segmentId)
-              );
+    const label = eventLabel(
+        dictionary.agent_chat.event as Record<string, string>,
+        message.labelKey,
+        message.segmentId
+    );
 
     const onNavigate = () => {
         if (!message.target) {

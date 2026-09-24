@@ -5,36 +5,54 @@ import { AgentChangeSummary, ChatMessage } from '../repository';
 type EventMessage = Extract<ChatMessage, { kind: 'event' }>;
 export type AgentEventDraft = Omit<EventMessage, 'id'>;
 
-/** Инструменты, которые только читают проект и не порождают hunks. */
-const READ_ONLY_TOOL_LABELS: Partial<Record<AgentToolName, string>> = {
-    list_workspace: 'list_workspace',
-    read_segment: 'read_segment',
-    read_segments: 'read_segments',
-    search_segments: 'search_segments',
-    read_file: 'read_file',
-    done: 'done',
-};
+// имена инструментов и типы hunk приходят с сервера как есть, поэтому Set и Map: объект по 'constructor' нашёл бы функцию
 
-const HUNK_LABELS = {
-    addSegment: 'add_segment',
-    addLinesToSegment: 'add_lines_to_segment',
-    deleteLinesFromSegment: 'delete_lines_from_segment',
-    addFile: 'add_file',
-    addLinesToFile: 'add_lines_to_file',
-    deleteLinesFromFile: 'delete_lines_from_file',
-} as const;
+/** Инструменты, которые только читают проект и не порождают hunks. Подпись совпадает с именем */
+const READ_ONLY_TOOLS = new Set<string>([
+    'list_workspace',
+    'read_segment',
+    'read_segments',
+    'search_segments',
+    'read_file',
+    'done',
+] satisfies AgentToolName[]);
 
-const SEGMENT_TOOLS = new Set<AgentToolName>([
+const HUNK_LABELS = new Map<string, string>([
+    ['addSegment', 'add_segment'],
+    ['addLinesToSegment', 'add_lines_to_segment'],
+    ['deleteLinesFromSegment', 'delete_lines_from_segment'],
+    ['addFile', 'add_file'],
+    ['addLinesToFile', 'add_lines_to_file'],
+    ['deleteLinesFromFile', 'delete_lines_from_file'],
+]);
+
+const SEGMENT_TOOLS = new Set<string>([
     'add_segment',
     'add_lines_to_segment',
     'delete_lines_from_segment',
-]);
+] satisfies AgentToolName[]);
 
-const FILE_TOOLS = new Set<AgentToolName>([
+const FILE_TOOLS = new Set<string>([
     'add_file',
     'add_lines_to_file',
     'delete_lines_from_file',
-]);
+] satisfies AgentToolName[]);
+
+/** Общая строка ленты для инструмента, о котором фронт ничего не знает */
+const UNKNOWN_TOOL_LABEL = 'unknown_tool';
+
+const isKnownTool = (toolName: string) =>
+    READ_ONLY_TOOLS.has(toolName) ||
+    SEGMENT_TOOLS.has(toolName) ||
+    FILE_TOOLS.has(toolName);
+
+/** Незнакомую правку назвать нечем, поэтому подписываем её местом, как правку строк */
+function unknownHunkLabel(hunk: Hunk): string {
+    if (hunk.segmentId != null) {
+        return 'add_lines_to_segment';
+    }
+    return hunk.fileName ? 'add_lines_to_file' : UNKNOWN_TOOL_LABEL;
+}
 
 const lineSpan = (hunk: Hunk) =>
     hunk.startLine == null
@@ -93,27 +111,25 @@ export class AgentEventService {
      * Строки ленты для одного toolCall. Само событие несёт только имя инструмента,
      * поэтому детали (файл, сегмент, диапазон строк) берём из свежих hunks.
      */
-    describeToolCall(
-        toolName: AgentToolName,
-        fresh: Hunk[]
-    ): AgentEventDraft[] {
-        const readOnlyLabel = READ_ONLY_TOOL_LABELS[toolName];
-        if (readOnlyLabel) {
-            return [{ kind: 'event', labelKey: readOnlyLabel }];
+    describeToolCall(toolName: string, fresh: Hunk[]): AgentEventDraft[] {
+        if (READ_ONLY_TOOLS.has(toolName)) {
+            return [{ kind: 'event', labelKey: toolName }];
         }
         if (fresh.length === 0) {
             // инструмент пишущий, но hunks не приехали (упал запрос либо неавторизованный):
             // показываем сам факт вызова отдельным текстом, без имени файла и номера сегмента
-            return [{ kind: 'event', labelKey: `${toolName}_plain` }];
+            const labelKey = isKnownTool(toolName)
+                ? `${toolName}_plain`
+                : UNKNOWN_TOOL_LABEL;
+            return [{ kind: 'event', labelKey }];
         }
         return fresh.map((hunk) => this.describeHunk(hunk));
     }
 
     describeHunk(hunk: Hunk): AgentEventDraft {
-        const labelKey = HUNK_LABELS[hunk.type as keyof typeof HUNK_LABELS];
         return {
             kind: 'event',
-            labelKey: labelKey ?? 'done',
+            labelKey: HUNK_LABELS.get(hunk.type) ?? unknownHunkLabel(hunk),
             file: hunk.fileName,
             segmentId: hunk.segmentId,
             lines: formatLines(hunk),
@@ -196,14 +212,16 @@ export class AgentEventService {
 
     /**
      * Что перечитать после вызова. Пишущий инструмент меняет проект, даже если
-     * hunks не поменялись: агент мог убрать то, что сам добавил
+     * hunks не поменялись: агент мог убрать то, что сам добавил. Незнакомый
+     * инструмент мог поменять что угодно, поэтому после него перечитываем всё
      */
     reloadScope(
-        toolName: AgentToolName,
+        toolName: string,
         fresh: Hunk[]
     ): { program: boolean; files: boolean } {
-        let program = SEGMENT_TOOLS.has(toolName);
-        let files = FILE_TOOLS.has(toolName);
+        const unknown = !isKnownTool(toolName);
+        let program = unknown || SEGMENT_TOOLS.has(toolName);
+        let files = unknown || FILE_TOOLS.has(toolName);
         for (const hunk of fresh) {
             if (
                 hunk.type === 'addSegment' ||

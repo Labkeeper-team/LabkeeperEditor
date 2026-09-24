@@ -1,10 +1,10 @@
 import {
     AGENT_STOP_REASONS,
     AGENT_TIMEOUT_MS,
+    AGENT_TOOL_NAMES,
 } from '../../model/rpi/agentSocket.ts';
 import { ru } from '../../viewModel/dictionaries/ru.ts';
 import { en } from '../../viewModel/dictionaries/en.ts';
-import { AgentToolName } from '../../model/rpi/agentSocket.ts';
 
 const DICTIONARIES = [
     ['ru', ru],
@@ -24,22 +24,7 @@ const EXTRA_STOP_KEYS = [
     'aborted_unsynced',
 ];
 
-const TOOL_NAMES: AgentToolName[] = [
-    'list_workspace',
-    'read_segment',
-    'read_segments',
-    'search_segments',
-    'read_file',
-    'add_segment',
-    'add_lines_to_segment',
-    'delete_lines_from_segment',
-    'add_file',
-    'add_lines_to_file',
-    'delete_lines_from_file',
-    'done',
-];
-
-const WRITE_TOOLS = TOOL_NAMES.filter(
+const WRITE_TOOLS = AGENT_TOOL_NAMES.filter(
     (name) => name.startsWith('add_') || name.startsWith('delete_')
 );
 
@@ -63,7 +48,9 @@ test.each(DICTIONARIES)(
         const events = dictionary.agent_chat.event as Record<string, string>;
         const keys = [
             'model_call',
-            ...TOOL_NAMES.filter((name) => !WRITE_TOOLS.includes(name)),
+            // инструмент, которого фронт не знает, получает одну общую строку
+            'unknown_tool',
+            ...AGENT_TOOL_NAMES.filter((name) => !WRITE_TOOLS.includes(name)),
             'add_segment',
             'add_lines_to_segment',
             'delete_lines_from_segment',

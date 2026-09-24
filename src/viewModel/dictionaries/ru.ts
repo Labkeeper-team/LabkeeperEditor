@@ -232,6 +232,7 @@ export const ru: Translations = {
             search_segments: 'Поиск по сегментам',
             read_file: 'Чтение файла',
             done: 'Завершение работы',
+            unknown_tool: 'Агент выполнил действие',
         },
         change: {
             segment: 'Сегмент №{segment}',

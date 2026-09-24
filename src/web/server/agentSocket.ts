@@ -7,7 +7,6 @@ import {
     AgentSessionParams,
     AgentSocket,
     AgentStopReason,
-    AgentToolName,
     AGENT_STOP_REASONS,
     AGENT_TIMEOUT_MS,
 } from '../../model/rpi/agentSocket.ts';
@@ -21,7 +20,7 @@ type ServerFrame = {
     type?: string;
     totalTokens?: number;
     elapsedTimeMillis?: number;
-    toolName?: AgentToolName;
+    toolName?: unknown;
     message?: string | null;
     stopReason?: AgentStopReason;
     program?: Program;
@@ -57,9 +56,12 @@ function toEvent(frame: ServerFrame): AgentEvent | null {
                 elapsedTimeMillis: Number(frame.elapsedTimeMillis ?? 0),
             };
         case 'toolCall':
-            return frame.toolName
-                ? { kind: 'toolCall', toolName: frame.toolName }
-                : null;
+            // кадр без внятного имени не выбрасываем: вызов мог что-то записать
+            return {
+                kind: 'toolCall',
+                toolName:
+                    typeof frame.toolName === 'string' ? frame.toolName : '',
+            };
         case 'agentFinished':
         case 'agentFinishedUnauthorized':
             return {

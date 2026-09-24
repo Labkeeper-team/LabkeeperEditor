@@ -643,6 +643,8 @@ export class AgentChatService {
         if (token !== this.runToken) {
             return;
         }
+        // незнакомый инструмент мог удалить или переименовать открытый файл
+        this.textFileEditorService.closeActiveTextFileIfGone();
 
         this.lastChange =
             this.events.lastNavigationTarget(fresh) ?? this.lastChange;
