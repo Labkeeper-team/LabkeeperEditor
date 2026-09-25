@@ -512,7 +512,10 @@ export class ProgramEditorService {
         text: string,
         placement: 'start' | 'end'
     ) => {
-        if (this.editingLock.rejectEdit()) {
+        if (
+            this.repository.projectViewModelRepository.projectIsReadonly() ||
+            this.editingLock.rejectEdit()
+        ) {
             return;
         }
         if (placement === 'start') {

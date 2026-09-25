@@ -1,5 +1,8 @@
 import { useDispatch, useSelector } from 'react-redux';
-import { useCurrentProgram } from '../../../../../../store/selectors/program';
+import {
+    useCurrentProgram,
+    useIsProjectReadonly,
+} from '../../../../../../store/selectors/program';
 import { useDictionary } from '../../../../../../store/selectors/translations.ts';
 import { AppDispatch, StorageState } from '../../../../../../store';
 import { controller } from '../../../../../../../main.tsx';
@@ -35,9 +38,9 @@ const LATEX_FOOTER_TEXT = String.raw`\end{document}`;
 interface LatexBoundaryCardBaseProps {
     containerClassName: 'latex-header-segment' | 'latex-footer-segment';
     title: string;
-    hint: string;
+    hint?: string;
     content: string;
-    onClick: () => void;
+    onClick?: () => void;
 }
 
 const LatexBoundaryCardBase = ({
@@ -48,9 +51,12 @@ const LatexBoundaryCardBase = ({
     onClick,
 }: LatexBoundaryCardBaseProps) => {
     return (
-        <div className={containerClassName} onClick={onClick}>
+        <div
+            className={`${containerClassName}${onClick ? ' latex-boundary-card--interactive' : ''}`}
+            onClick={onClick}
+        >
             <div className="latex-boundary-meta">
-                <span className="latex-boundary-hint">{hint}</span>
+                {hint && <span className="latex-boundary-hint">{hint}</span>}
                 <span className="latex-boundary-badge">{title}</span>
             </div>
             <pre className="latex-boundary-content">{content}</pre>
@@ -62,6 +68,7 @@ export const LatexHeaderBoundaryCard = () => {
     const dispatch = useDispatch<AppDispatch>();
     const dictionary = useSelector(useDictionary);
     const program = useSelector(useCurrentProgram);
+    const isReadonly = useSelector(useIsProjectReadonly);
     const isLatexMode = useSelector(
         (state: StorageState) => state.project.mode === 'latex'
     );
@@ -79,15 +86,20 @@ export const LatexHeaderBoundaryCard = () => {
         <LatexBoundaryCardBase
             containerClassName="latex-header-segment"
             title={dictionary.latex_boundary.header}
-            hint={dictionary.latex_boundary.insert_hint}
-            content={LATEX_HEADER_DISPLAY_TEXT}
-            onClick={() =>
-                dispatch(
-                    controller.onAddLatexBoundarySegmentRequest({
-                        text: LATEX_HEADER_TEXT,
-                        placement: 'start',
-                    })
-                )
+            hint={
+                isReadonly ? undefined : dictionary.latex_boundary.insert_hint
+            }
+            content={isReadonly ? LATEX_HEADER_TEXT : LATEX_HEADER_DISPLAY_TEXT}
+            onClick={
+                isReadonly
+                    ? undefined
+                    : () =>
+                          dispatch(
+                              controller.onAddLatexBoundarySegmentRequest({
+                                  text: LATEX_HEADER_TEXT,
+                                  placement: 'start',
+                              })
+                          )
             }
         />
     );
@@ -97,6 +109,7 @@ export const LatexFooterBoundaryCard = () => {
     const dispatch = useDispatch<AppDispatch>();
     const dictionary = useSelector(useDictionary);
     const program = useSelector(useCurrentProgram);
+    const isReadonly = useSelector(useIsProjectReadonly);
     const isLatexMode = useSelector(
         (state: StorageState) => state.project.mode === 'latex'
     );
@@ -116,15 +129,22 @@ export const LatexFooterBoundaryCard = () => {
             <LatexBoundaryCardBase
                 containerClassName="latex-footer-segment"
                 title={dictionary.latex_boundary.footer}
-                hint={dictionary.latex_boundary.insert_hint}
+                hint={
+                    isReadonly
+                        ? undefined
+                        : dictionary.latex_boundary.insert_hint
+                }
                 content={LATEX_FOOTER_TEXT}
-                onClick={() =>
-                    dispatch(
-                        controller.onAddLatexBoundarySegmentRequest({
-                            text: LATEX_FOOTER_TEXT,
-                            placement: 'end',
-                        })
-                    )
+                onClick={
+                    isReadonly
+                        ? undefined
+                        : () =>
+                              dispatch(
+                                  controller.onAddLatexBoundarySegmentRequest({
+                                      text: LATEX_FOOTER_TEXT,
+                                      placement: 'end',
+                                  })
+                              )
                 }
             />
         </>
