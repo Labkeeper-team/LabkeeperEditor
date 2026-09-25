@@ -9,12 +9,12 @@ import { Hunk, Program } from '../domain.ts';
  */
 export const AGENT_TIMEOUT_MS = 10 * 60 * 1000;
 
-/** Значения из макета: Context Size и Max Iterations */
-export const AGENT_TOKEN_OPTIONS = [10000, 30000, 100000];
-export const AGENT_ITERATION_OPTIONS = [5, 12, 20];
-/** По умолчанию наибольшие из списков, так решил заказчик. Сохранённые раньше переписывает миграция persistence */
+/** Варианты Context Size и Max Iterations задал заказчик */
+export const AGENT_TOKEN_OPTIONS = [100000, 200000, 300000];
+export const AGENT_ITERATION_OPTIONS = [200, 500, 1000];
+/** Значения по умолчанию тоже от заказчика. Сохранённые раньше переписывает миграция persistence */
 export const AGENT_DEFAULT_MAX_TOKENS = 100000;
-export const AGENT_DEFAULT_ITERATIONS = 20;
+export const AGENT_DEFAULT_ITERATIONS = 500;
 
 /** Почему агент остановился. Совпадает с AgentStopReason из asyncapi. */
 export type AgentStopReason =

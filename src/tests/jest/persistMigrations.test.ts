@@ -5,7 +5,7 @@ import {
     resetAgentSettings,
 } from '../../view/store/persistMigrations.ts';
 
-/** Так срез лежал в localStorage до версии 1: redux-persist сам ставит -1, когда version не задан */
+/** Так срез лежал в localStorage до первой миграции: redux-persist сам ставит -1, когда version не задан */
 const OLD_PERSIST = { version: -1, rehydrated: true };
 
 const oldSlice = (fields: Record<string, unknown>) =>
@@ -26,7 +26,7 @@ test('persistence-migration-replaces-old-defaults', () => {
 
     expect(agentSettingsOf(migrated)).toEqual({
         agentMaxTokens: 100000,
-        agentIterations: 20,
+        agentIterations: 500,
     });
 });
 
@@ -38,7 +38,7 @@ test('persistence-migration-replaces-values-chosen-by-hand', () => {
 
     expect(agentSettingsOf(migrated)).toEqual({
         agentMaxTokens: 100000,
-        agentIterations: 20,
+        agentIterations: 500,
     });
 });
 
@@ -48,7 +48,7 @@ test('persistence-migration-fills-an-empty-slice', () => {
     expect(migrated).toEqual({
         _persist: OLD_PERSIST,
         agentMaxTokens: 100000,
-        agentIterations: 20,
+        agentIterations: 500,
     });
 });
 
@@ -59,7 +59,7 @@ test('persistence-migration-fills-missing-agent-keys', () => {
         _persist: OLD_PERSIST,
         language: 'ru',
         agentMaxTokens: 100000,
-        agentIterations: 20,
+        agentIterations: 500,
     });
 });
 
@@ -71,7 +71,7 @@ test('persistence-migration-replaces-non-numeric-values', () => {
 
         expect(agentSettingsOf(migrated)).toEqual({
             agentMaxTokens: 100000,
-            agentIterations: 20,
+            agentIterations: 500,
         });
     }
 });
@@ -110,7 +110,7 @@ test('persistence-migration-keeps-other-keys', () => {
     expect(migrated).toEqual({
         ...snapshot,
         agentMaxTokens: 100000,
-        agentIterations: 20,
+        agentIterations: 500,
     });
     expect(migrated.lastProgram).toBe(lastProgram);
     // вход не меняется: redux-persist может держать ссылку на него
@@ -145,23 +145,39 @@ test('persistence-migrate-runs-once-for-an-old-slice', async () => {
 
     expect(agentSettingsOf(migrated)).toEqual({
         agentMaxTokens: 100000,
+        agentIterations: 500,
+    });
+});
+
+test('persistence-migrate-resets-a-slice-saved-with-the-previous-lists', async () => {
+    // версия 1 хранит значения прежних списков: 20 итераций в новом списке нет, и ни одна кнопка не была бы выбрана
+    const previous = {
+        agentMaxTokens: 100000,
         agentIterations: 20,
+        _persist: { version: 1, rehydrated: true },
+    } as unknown as PersistedState;
+
+    const migrated = await migratePersistence(previous, PERSISTENCE_VERSION);
+
+    expect(agentSettingsOf(migrated)).toEqual({
+        agentMaxTokens: 100000,
+        agentIterations: 500,
     });
 });
 
 test('persistence-migrate-keeps-a-choice-made-after-migration', async () => {
-    // после первой загрузки срез лежит уже с версией 1, и выбор человека трогать нельзя
+    // после первой загрузки срез лежит уже с текущей версией, и выбор человека трогать нельзя
     const current = {
-        agentMaxTokens: 30000,
-        agentIterations: 12,
+        agentMaxTokens: 300000,
+        agentIterations: 1000,
         _persist: { version: PERSISTENCE_VERSION, rehydrated: true },
     } as unknown as PersistedState;
 
     const migrated = await migratePersistence(current, PERSISTENCE_VERSION);
 
     expect(agentSettingsOf(migrated)).toEqual({
-        agentMaxTokens: 30000,
-        agentIterations: 12,
+        agentMaxTokens: 300000,
+        agentIterations: 1000,
     });
 });
 

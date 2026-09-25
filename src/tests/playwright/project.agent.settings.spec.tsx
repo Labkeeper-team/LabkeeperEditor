@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { RouteSetup } from './mock.routeSetUp.tsx';
+import { PERSISTENCE_VERSION } from '../../view/store/persistMigrations.ts';
 import { AgentHistoryEntry, Program } from '../../model/domain.ts';
 
 const uuid = '2cd18704-6c3f-48cb-96f1-9a923930f8cb';
@@ -206,7 +207,7 @@ test('agent-start-sends-default-settings', async ({ page }) => {
     expect(sent[0]).toEqual({
         type: 'startAgent',
         prompt: 'перепиши введение',
-        numberIterations: 20,
+        numberIterations: 500,
         maxTokens: 100000,
     });
 });
@@ -219,9 +220,25 @@ test('guest-agent-start-sends-default-settings', async ({ page }) => {
     await expect.poll(() => sent.length).toBe(1);
     expect(sent[0]).toMatchObject({
         type: 'startAgentUnauthorized',
-        numberIterations: 20,
+        numberIterations: 500,
         maxTokens: 100000,
     });
+});
+
+test('settings-offer-the-values-set-by-the-customer', async ({ page }) => {
+    await openChat(page);
+    await openSettings(page);
+
+    await expect(contextSize(page).getByRole('button')).toHaveText([
+        '100k',
+        '200k',
+        '300k',
+    ]);
+    await expect(iterations(page).getByRole('button')).toHaveText([
+        '200',
+        '500',
+        '1000',
+    ]);
 });
 
 test('old-saved-settings-become-new-defaults-once', async ({ page }) => {
@@ -245,16 +262,20 @@ test('old-saved-settings-become-new-defaults-once', async ({ page }) => {
 
     await submitPrompt(page, 'первый');
     await expect.poll(() => sent.length).toBe(1);
-    expect(sent[0]).toMatchObject({ numberIterations: 20, maxTokens: 100000 });
+    expect(sent[0]).toMatchObject({ numberIterations: 500, maxTokens: 100000 });
     await expect(page.getByRole('button', { name: 'Send' })).toBeVisible();
 
     await openSettings(page);
-    await iterations(page).getByRole('button', { name: '12' }).click();
-    await contextSize(page).getByRole('button', { name: '30k' }).click();
+    await iterations(page).getByRole('button', { name: '1000' }).click();
+    await contextSize(page).getByRole('button', { name: '200k' }).click();
     // redux-persist пишет в localStorage асинхронно
     await expect
         .poll(() => storedSlice(page))
-        .toEqual({ version: 1, agentMaxTokens: 30000, agentIterations: 12 });
+        .toEqual({
+            version: PERSISTENCE_VERSION,
+            agentMaxTokens: 200000,
+            agentIterations: 1000,
+        });
 
     await page.reload();
     await page.waitForLoadState('domcontentloaded');
@@ -262,7 +283,10 @@ test('old-saved-settings-become-new-defaults-once', async ({ page }) => {
     await submitPrompt(page, 'второй');
 
     await expect.poll(() => sent.length).toBe(2);
-    expect(sent[1]).toMatchObject({ numberIterations: 12, maxTokens: 30000 });
+    expect(sent[1]).toMatchObject({
+        numberIterations: 1000,
+        maxTokens: 200000,
+    });
 });
 
 test('settings-panel-toggles-by-its-button-and-returns-focus', async ({
@@ -314,7 +338,7 @@ test('settings-panel-closes-by-its-close-button-and-returns-focus', async ({
 test('settings-panel-closes-by-escape-and-returns-focus', async ({ page }) => {
     await openChat(page);
     await openSettings(page);
-    await iterations(page).getByRole('button', { name: '12' }).focus();
+    await iterations(page).getByRole('button', { name: '500' }).focus();
 
     await page.keyboard.press('Escape');
 
@@ -374,13 +398,13 @@ test('settings-values-are-disabled-while-agent-runs', async ({ page }) => {
 
     await openSettings(page);
 
-    for (const value of ['5', '12', '20']) {
+    for (const value of ['200', '500', '1000']) {
         await expect(
-            iterations(page).getByRole('button', { name: value })
+            iterations(page).getByRole('button', { name: value, exact: true })
         ).toBeDisabled();
     }
     await expect(
-        contextSize(page).getByRole('button', { name: '30k' })
+        contextSize(page).getByRole('button', { name: '200k' })
     ).toBeDisabled();
 });
 
@@ -395,11 +419,13 @@ for (const size of [
             await openGuestChat(page);
             await openSettings(page);
 
-            await iterations(page).getByRole('button', { name: '12' }).click();
+            await iterations(page)
+                .getByRole('button', { name: '1000' })
+                .click();
 
             await expect(authModal(page)).toBeVisible();
             await expect(
-                iterations(page).getByRole('button', { name: '20' })
+                iterations(page).getByRole('button', { name: '500' })
             ).toHaveAttribute('aria-pressed', 'true');
             // окно входа лежит поверх панели: в центре панели клик достанется накладке окна
             const onTop = await page.evaluate(() => {
@@ -427,6 +453,7 @@ const LAYOUTS = [
     { width: 390, height: 500 },
     { width: 844, height: 390 },
     { width: 360, height: 740 },
+    { width: 320, height: 640 },
 ];
 
 for (const size of LAYOUTS) {
@@ -444,13 +471,41 @@ for (const size of LAYOUTS) {
                 await openSettings(page);
 
                 expect(await panelProblems(page)).toEqual([]);
-                const twelve = iterations(page).getByRole('button', {
-                    name: '12',
+                // крайняя справа и самая широкая кнопка первой вылезла бы за панель
+                const widest = iterations(page).getByRole('button', {
+                    name: '1000',
                 });
-                await twelve.scrollIntoViewIfNeeded();
-                await expect(twelve).toBeInViewport({ ratio: 1 });
+                await widest.scrollIntoViewIfNeeded();
+                await expect(widest).toBeInViewport({ ratio: 1 });
             });
         }
+
+        test('prompt-controls-stay-in-one-row', async ({ page }) => {
+            await openChat(page);
+
+            // при переносе ряда кнопки уезжают под переключатель контекста; poll пережидает раскладку до масштаба
+            await expect
+                .poll(() =>
+                    page.evaluate(() => {
+                        const context = document
+                            .querySelector(
+                                '[role="group"][aria-label="Context Size"]'
+                            )!
+                            .getBoundingClientRect();
+                        return [
+                            '.agent-settings__toggle',
+                            '.agent-chat__submit',
+                        ].filter(
+                            (selector) =>
+                                document
+                                    .querySelector(selector)!
+                                    .getBoundingClientRect().top >=
+                                context.bottom
+                        );
+                    })
+                )
+                .toEqual([]);
+        });
     });
 }
 

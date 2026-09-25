@@ -714,3 +714,10 @@ body.agent-chat-resizing {
         min-height: 44px;
     }
 }
+
+// в 320px кнопки 100k, 200k и 300k вместе с настройками и отправкой не влезают в строку, и отправка уезжает вниз; запас нужен под системный шрифт iOS, он шире Arial
+@media screen and (max-width: 359px) {
+    .agent-chat__setting .segmented-control__item {
+        padding: 2px 6px;
+    }
+}

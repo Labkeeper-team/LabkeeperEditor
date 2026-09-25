@@ -6,7 +6,7 @@ MockViewModelRepositoryState {
   "activeImageFile": null,
   "activeSegmentIndex": 1,
   "activeTextFile": null,
-  "agentIterations": 20,
+  "agentIterations": 500,
   "agentMaxTokens": 100000,
   "billingPaymentWidgetToken": undefined,
   "billingPricing": {
@@ -162,7 +162,7 @@ MockViewModelRepositoryState {
   "activeImageFile": null,
   "activeSegmentIndex": 1,
   "activeTextFile": null,
-  "agentIterations": 20,
+  "agentIterations": 500,
   "agentMaxTokens": 100000,
   "billingPaymentWidgetToken": undefined,
   "billingPricing": {

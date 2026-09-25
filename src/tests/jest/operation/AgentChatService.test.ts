@@ -95,7 +95,7 @@ test('agent-start-sends-prompt-and-settings', async () => {
     expect(ctx.agentSocketState.projectId).toBe(PROJECT_ID);
     expect(ctx.agentSocketState.started).toEqual({
         prompt: 'сделай таблицу',
-        numberIterations: 20,
+        numberIterations: 500,
         maxTokens: 100000,
     });
     // поле очищается сразу, запрос уходит в ленту
@@ -110,7 +110,7 @@ test('agent-settings-max-tokens-offers-login-to-a-guest', () => {
     const ctx = setup(false);
     const onEvent = jest.spyOn(ctx.observerService, 'onEvent');
 
-    ctx.agentChatService.onMaxTokensChanged(30000);
+    ctx.agentChatService.onMaxTokensChanged(200000);
 
     expect(ctx.repository.authViewModelRepository.currentView()).toBe('login');
     // значение осталось прежним, иначе гость поменял бы настройку в обход входа
@@ -132,12 +132,12 @@ test('agent-settings-iterations-offers-login-to-a-guest', () => {
     const ctx = setup(false);
     const onEvent = jest.spyOn(ctx.observerService, 'onEvent');
 
-    ctx.agentChatService.onIterationsChanged(12);
+    ctx.agentChatService.onIterationsChanged(1000);
 
     expect(ctx.repository.authViewModelRepository.currentView()).toBe('login');
     expect(
         ctx.repository.persistenceViewModelRepository.agentIterations()
-    ).toBe(20);
+    ).toBe(500);
     expect(onEvent).toHaveBeenCalledWith(
         Events.EVENT_AUTH_MODAL_OPENED,
         expect.objectContaining({ source: 'agent_settings' })
@@ -152,15 +152,15 @@ test('agent-settings-stay-editable-for-an-authorized-user', () => {
     const ctx = setup();
     const onEvent = jest.spyOn(ctx.observerService, 'onEvent');
 
-    ctx.agentChatService.onMaxTokensChanged(30000);
-    ctx.agentChatService.onIterationsChanged(12);
+    ctx.agentChatService.onMaxTokensChanged(200000);
+    ctx.agentChatService.onIterationsChanged(1000);
 
     expect(ctx.repository.persistenceViewModelRepository.agentMaxTokens()).toBe(
-        30000
+        200000
     );
     expect(
         ctx.repository.persistenceViewModelRepository.agentIterations()
-    ).toBe(12);
+    ).toBe(1000);
     // окно входа авторизованному не показываем, проверка не должна быть шире гостя
     expect(ctx.repository.authViewModelRepository.currentView()).toBe('closed');
     expect(onEvent).not.toHaveBeenCalledWith(

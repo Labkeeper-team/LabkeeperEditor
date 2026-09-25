@@ -124,7 +124,7 @@ test('agent-start-sends-prompt-and-settings', async ({ page }) => {
     await openAgentSettings(page);
     await page
         .getByRole('group', { name: 'Max Iterations' })
-        .getByRole('button', { name: '12' })
+        .getByRole('button', { name: '1000' })
         .click();
     await submitPrompt(page, 'перепиши введение');
 
@@ -137,7 +137,7 @@ test('agent-start-sends-prompt-and-settings', async ({ page }) => {
         {
             type: 'startAgent',
             prompt: 'перепиши введение',
-            numberIterations: 12,
+            numberIterations: 1000,
             maxTokens: 100000,
         },
     ]);
@@ -901,7 +901,7 @@ test('agent-settings-offer-login-to-a-guest', async ({ page }) => {
 
     await page
         .getByRole('group', { name: 'Context Size' })
-        .getByRole('button', { name: '30k' })
+        .getByRole('button', { name: '200k' })
         .click();
 
     await expect(authModal(page)).toBeVisible();
@@ -918,14 +918,14 @@ test('agent-settings-offer-login-to-a-guest', async ({ page }) => {
     await openAgentSettings(page);
     await page
         .getByRole('group', { name: 'Max Iterations' })
-        .getByRole('button', { name: '12' })
+        .getByRole('button', { name: '1000' })
         .click();
 
     await expect(authModal(page)).toBeVisible();
     await expect(
         page
             .getByRole('group', { name: 'Max Iterations' })
-            .getByRole('button', { name: '20' })
+            .getByRole('button', { name: '500' })
     ).toHaveAttribute('aria-pressed', 'true');
 });
 
@@ -937,7 +937,7 @@ test('guest-agent-run-survives-a-swallowed-settings-click', async ({
     await openAgentSettings(page);
     await page
         .getByRole('group', { name: 'Max Iterations' })
-        .getByRole('button', { name: '12' })
+        .getByRole('button', { name: '1000' })
         .click();
     await expect(authModal(page)).toBeVisible();
     await closeAuthModal(page).click();
@@ -949,7 +949,7 @@ test('guest-agent-run-survives-a-swallowed-settings-click', async ({
     const frame = sent[0] as { type: string; numberIterations: number };
     // отправка гостю осталась, а настройка ушла прежняя, потому что клик по ней проглочен
     expect(frame.type).toBe('startAgentUnauthorized');
-    expect(frame.numberIterations).toBe(20);
+    expect(frame.numberIterations).toBe(500);
 });
 
 const loginOffer = (page: Page) =>
