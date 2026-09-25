@@ -5,9 +5,9 @@ import {
 } from '../../model/rpi/agentSocket.ts';
 
 /** Версия среза PERSISTENCE в localStorage. Срез без версии redux-persist считает версией -1 */
-export const PERSISTENCE_VERSION = 1;
+export const PERSISTENCE_VERSION = 2;
 
-/** Разово ставит новые значения агента по умолчанию всем, иначе autoMergeLevel1 положил бы поверх них старые 10000 и 5 из localStorage; не бросает, потому что при ошибке миграции redux-persist запишет начальное состояние поверх сохранённого, и гость потеряет несохранённый проект и согласие */
+/** Разово ставит новые значения агента по умолчанию всем, иначе autoMergeLevel1 положил бы поверх них сохранённые значения из прежних списков; не бросает, потому что при ошибке миграции redux-persist запишет начальное состояние поверх сохранённого, и гость потеряет несохранённый проект и согласие */
 export const resetAgentSettings = (state: PersistedState): PersistedState => {
     if (!state || typeof state !== 'object') {
         return state;
