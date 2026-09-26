@@ -65,6 +65,14 @@ export class TextFileEditorService {
         if (!fileName) {
             return;
         }
+        // набранное ещё не на сервере, и перечитанный файл стёр бы его с экрана
+        if (
+            this.saveTimeout ||
+            this.savePromise ||
+            (this.canSaveTextFile() && this.hasUnsavedTextFile())
+        ) {
+            return;
+        }
         await this.onTextFileOpened(fileName, {
             silent: true,
             hunksOverride,
@@ -121,6 +129,8 @@ export class TextFileEditorService {
         }
 
         const loadRequestId = ++this.loadRequestId;
+        const changeRevision =
+            this.repository.ideViewModelRepository.textFileChangeRevision();
 
         if (!file) {
             const hunkContent = getFileContentFromHunks(hunks, fileName);
@@ -165,6 +175,14 @@ export class TextFileEditorService {
                 loadRequestId !== this.loadRequestId ||
                 this.repository.ideViewModelRepository.activeTextFile() !==
                     fileName
+            ) {
+                return;
+            }
+            // пока файл ехал, в нём набрали текст: ответ старше экрана
+            if (
+                silent &&
+                changeRevision !==
+                    this.repository.ideViewModelRepository.textFileChangeRevision()
             ) {
                 return;
             }
@@ -404,6 +422,11 @@ export class TextFileEditorService {
 
     /** Под замком сервер правок не примет, а дописывать всё равно нечего. */
     private canFlush = (): boolean => !this.editingLock.isLocked();
+
+    /** Условия saveCurrentTextFile: у гостя и в чужом проекте набранное не сохранится никогда, ждать этого нельзя */
+    private canSaveTextFile = (): boolean =>
+        !this.repository.projectViewModelRepository.projectIsReadonly() &&
+        this.repository.projectViewModelRepository.project() != null;
 
     private hasUnsavedTextFile = (): boolean => {
         if (this.pendingSaveContent != null) {

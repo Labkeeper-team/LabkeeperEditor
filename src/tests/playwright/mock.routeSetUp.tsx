@@ -691,15 +691,21 @@ export class RouteSetup {
     ) {
         let current = content;
         let fetches = 0;
+        let fetchDelayMs = 0;
         const uploads: string[] = [];
         await this.page.route(
             (url) => url.pathname === urlPath,
             async (route) => {
                 fetches += 1;
+                // содержимое на момент запроса: задержанный ответ несёт уже старый текст
+                const body = current;
+                await new Promise((resolve) =>
+                    setTimeout(resolve, fetchDelayMs)
+                );
                 await route.fulfill({
                     status: 200,
                     contentType: 'text/plain; charset=utf-8',
-                    body: current,
+                    body,
                 });
             }
         );
@@ -724,6 +730,9 @@ export class RouteSetup {
         return {
             setContent: (next: string) => {
                 current = next;
+            },
+            setFetchDelayMs: (ms: number) => {
+                fetchDelayMs = ms;
             },
             fetches: () => fetches,
             uploads: () => [...uploads],

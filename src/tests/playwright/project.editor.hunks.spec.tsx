@@ -883,3 +883,54 @@ test('hunk-file-typing-saves-stored-text', async ({ page }) => {
         .poll(() => file.uploads())
         .toEqual([AGENT_EDIT.after.replace('intro', 'intro!')]);
 });
+
+test('hunk-file-typing-keeps-typed-text', async ({ page }) => {
+    const { file, deletes } = await openFileEditedByAgent(page, AGENT_EDIT);
+    const after = AGENT_EDIT.after;
+
+    await fileEditorLines(page).first().click();
+    await page.keyboard.press('End');
+    await page.keyboard.type('!');
+    // набор принимает правки агента, после приёма hunks перечитываются
+    await expect.poll(() => deletes.length).toBe(AGENT_EDIT.hunks.length);
+    await expect
+        .poll(() => file.uploads())
+        .toEqual([after.replace('intro', 'intro!')]);
+    await expect(fileEditorLines(page).first()).toHaveText('intro!');
+
+    // курсор остался за набранным символом, следующий идёт следом
+    await page.keyboard.type('?');
+    await expect
+        .poll(() => file.uploads())
+        .toEqual([
+            after.replace('intro', 'intro!'),
+            after.replace('intro', 'intro!?'),
+        ]);
+    await expect(fileEditorLines(page).first()).toHaveText('intro!?');
+});
+
+test('hunk-file-typing-during-reload-keeps-typed-text', async ({ page }) => {
+    const { file } = await openFileEditedByAgent(page, AGENT_EDIT);
+    const after = AGENT_EDIT.after;
+    file.setFetchDelayMs(1500);
+    const staleAnswer = page.waitForResponse(
+        (response) => new URL(response.url()).pathname === AGENT_FILE_URL
+    );
+
+    // после приёма файл перечитывается, ответ задержан, и в это время идёт набор
+    await page
+        .locator('.text-file-editor-panel .cm-hunk-btn--accept')
+        .first()
+        .click();
+    await expect.poll(() => file.fetches()).toBe(2);
+    await fileEditorLines(page).first().click();
+    await page.keyboard.press('End');
+    await page.keyboard.type('X');
+    await staleAnswer;
+    await page.keyboard.type('Y');
+
+    await expect
+        .poll(() => file.uploads().slice(-1))
+        .toEqual([after.replace('intro', 'introXY')]);
+    await expect(fileEditorLines(page).first()).toHaveText('introXY');
+});
