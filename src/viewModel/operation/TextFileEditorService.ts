@@ -12,10 +12,7 @@ import {
     isImageFilePath,
     isTextFilePath,
 } from '../../view/pages/project/fileManager/svarFileTreeAdapter.ts';
-import {
-    applyFileHunksToContent,
-    getFileContentFromHunks,
-} from '../utils/hunkGrouping.ts';
+import { getFileContentFromHunks } from '../utils/hunkGrouping.ts';
 import { reportUnexpectedError } from '../utils/reportUnexpectedError.ts';
 import { logBreadcrumb } from '../utils/logBreadcrumb.ts';
 
@@ -171,9 +168,8 @@ export class TextFileEditorService {
             ) {
                 return;
             }
-            this.repository.ideViewModelRepository.setTextFileContent(
-                applyFileHunksToContent(content, hunks, fileName)
-            );
+            // правки агента сервер уже записал в файл, hunks их только размечают, как у сегментов
+            this.repository.ideViewModelRepository.setTextFileContent(content);
             this.repository.ideViewModelRepository.resetTextFileRevisions();
             this.repository.ideViewModelRepository.setLoadTextFileRequestState(
                 'ok'

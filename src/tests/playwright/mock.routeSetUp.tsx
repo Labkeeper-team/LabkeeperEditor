@@ -258,7 +258,10 @@ export class RouteSetup {
     // ханки с состоянием: DELETE убирает ханк, и следующий GET его уже не отдаёт
     async setupHunkRequestsWithState(
         hunks: Hunk[] = [],
-        options?: { deleteDelayMs?: number }
+        options?: {
+            deleteDelayMs?: number;
+            onDelete?: (hunkId: string, revert: boolean) => void;
+        }
     ) {
         const state = [...hunks];
         const deleted: string[] = [];
@@ -298,6 +301,7 @@ export class RouteSetup {
                     state.splice(index, 1);
                 }
                 deleted.push(hunkId);
+                options?.onDelete?.(hunkId, url.includes('revert=true'));
                 inFlight -= 1;
                 await route.fulfill({
                     status: 200,
@@ -674,6 +678,56 @@ export class RouteSetup {
                 });
             }
         );
+    }
+
+    /**
+     * Текстовый файл с изменяемым содержимым: отдаёт то, что лежит сейчас,
+     * а загрузка из редактора его переписывает, как на сервере
+     */
+    async setupEditableTextFile(
+        fileName: string,
+        urlPath: string,
+        content: string
+    ) {
+        let current = content;
+        let fetches = 0;
+        const uploads: string[] = [];
+        await this.page.route(
+            (url) => url.pathname === urlPath,
+            async (route) => {
+                fetches += 1;
+                await route.fulfill({
+                    status: 200,
+                    contentType: 'text/plain; charset=utf-8',
+                    body: current,
+                });
+            }
+        );
+        await this.page.route(
+            (url) =>
+                url.pathname ===
+                    `/api/${version}/public/project/${uuid}/file/upload` &&
+                url.searchParams.get('name') === fileName,
+            async (route) => {
+                const request = route.request();
+                const boundary =
+                    request.headers()['content-type']?.split('boundary=')[1] ??
+                    '';
+                const raw = request.postDataBuffer()?.toString('utf8') ?? '';
+                const part = raw.split(`--${boundary}`)[1] ?? '';
+                // тело части идёт после пустой строки заголовков и до \r\n перед границей
+                current = part.slice(part.indexOf('\r\n\r\n') + 4, -2);
+                uploads.push(current);
+                await route.fulfill({ status: 200 });
+            }
+        );
+        return {
+            setContent: (next: string) => {
+                current = next;
+            },
+            fetches: () => fetches,
+            uploads: () => [...uploads],
+        };
     }
 
     // Перехватываем запрос на список файлов

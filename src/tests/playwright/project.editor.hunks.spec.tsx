@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 import { Hunk, Program, Segment } from '../../model/domain.ts';
 import { RouteSetup } from './mock.routeSetUp.tsx';
 
@@ -47,6 +47,7 @@ async function openProjectWithHunks(
         fileContents?: { urlPath: string; content: string }[];
         mobile?: boolean;
         deleteDelayMs?: number;
+        onDelete?: (hunkId: string, revert: boolean) => void;
     }
 ) {
     if (options.mobile) {
@@ -67,7 +68,7 @@ async function openProjectWithHunks(
     }
     const hunkServer = await routeSetup.setupHunkRequestsWithState(
         options.hunks,
-        { deleteDelayMs: options.deleteDelayMs }
+        { deleteDelayMs: options.deleteDelayMs, onDelete: options.onDelete }
     );
 
     await page.goto(`/project/${uuid}`);
@@ -364,7 +365,11 @@ test('hunk-add-file', async ({ page }) => {
 });
 
 test('hunk-delete-lines-from-file', async ({ page }) => {
-    const fileOnDisk = numberedLines(LINE_COUNT);
+    // на сервере файл уже без удалённых строк, номера считаются по нему, как у сегментов
+    const fileOnDisk = numberedLines(LINE_COUNT)
+        .split('\n')
+        .filter((line) => line !== '1' && line !== '9' && line !== '17')
+        .join('\n');
     await openProjectWithHunks(page, {
         program: programOf(mdSegment(1, 'project')),
         hunks: [
@@ -380,16 +385,16 @@ test('hunk-delete-lines-from-file', async ({ page }) => {
                 id: 'hunk-delete-file-middle',
                 type: 'deleteLinesFromFile',
                 fileName: 'notes.txt',
-                startLine: 9,
-                endLine: 9,
+                startLine: 8,
+                endLine: 8,
                 text: '9',
             },
             {
                 id: 'hunk-delete-file-last',
                 type: 'deleteLinesFromFile',
                 fileName: 'notes.txt',
-                startLine: 17,
-                endLine: 17,
+                startLine: 15,
+                endLine: 15,
                 text: '17',
             },
         ],
@@ -497,4 +502,384 @@ test('hunk-accept-all-survives-typing', async ({ page }) => {
     await expect(page.locator('.cm-hunk-added-line')).toHaveCount(0);
     expect(hunkServer.maxInFlight()).toBe(1);
     expect(hunkServer.deleted()).toEqual(['hunk-1', 'hunk-2', 'hunk-3']);
+});
+
+test('hunk-trailing-line-break-in-segment-follows-the-range', async ({
+    page,
+}) => {
+    await openProjectWithHunks(page, {
+        program: programOf(
+            mdSegment(1, 'intro\nnew para\n\nomega'),
+            mdSegment(2, 'intro\nNEW 1\nNEW 2\nomega')
+        ),
+        hunks: [
+            // сервер склеивает строки без завершающего перевода: здесь абзац и пустая строка после него
+            {
+                id: 'hunk-add-blank',
+                type: 'addLinesToSegment',
+                segmentId: 1,
+                startLine: 2,
+                endLine: 3,
+                text: 'new para\n',
+            },
+            // здесь диапазон на строку короче текста, и \n в конце только завершает его
+            {
+                id: 'hunk-add-with-break',
+                type: 'addLinesToSegment',
+                segmentId: 2,
+                startLine: 2,
+                endLine: 3,
+                text: 'NEW 1\nNEW 2\n',
+            },
+        ],
+    });
+
+    // id редактора сегмента идёт по его индексу в программе
+    const addedLines = (segmentIndex: number) =>
+        page.locator(
+            `#ide-segment-${segmentIndex} .cm-content > .cm-line.cm-hunk-added-line`
+        );
+    await expect(addedLines(0)).toHaveText(['new para', '']);
+    await expect(addedLines(1)).toHaveText(['NEW 1', 'NEW 2']);
+});
+
+test('hunk-deleted-blank-line-in-segment-is-shown', async ({ page }) => {
+    await openProjectWithHunks(page, {
+        program: programOf(mdSegment(1, 'intro\nomega')),
+        hunks: [
+            {
+                id: 'hunk-delete-blank',
+                type: 'deleteLinesFromSegment',
+                segmentId: 1,
+                startLine: 2,
+                endLine: 3,
+                text: 'old\n',
+            },
+        ],
+    });
+
+    // удалены две строки, и пустая из них тоже видна в красном блоке
+    await expect(
+        page.locator('#ide-segment-0 .cm-hunk-deleted-line')
+    ).toHaveText(['old', '']);
+});
+
+const AGENT_FILE = 'notes.txt';
+const AGENT_FILE_URL = '/files/notes.txt';
+
+interface AgentFileEdit {
+    // текст файла до агента: к нему сервер возвращает файл при откате
+    before: string;
+    // сервер хранит уже новый текст, hunks только описывают правку
+    after: string;
+    hunks: Hunk[];
+}
+
+function fileHunk(
+    id: string,
+    type: 'addLinesToFile' | 'deleteLinesFromFile',
+    startLine: number,
+    endLine: number,
+    text: string
+): Hunk {
+    return { id, type, fileName: AGENT_FILE, startLine, endLine, text };
+}
+
+const AGENT_EDIT: AgentFileEdit = {
+    before: ['intro', 'alpha', 'middle', 'omega'].join('\n'),
+    after: [
+        'intro',
+        'alpha',
+        'ALPHA ADDED',
+        'middle',
+        'INSERTED ONE',
+        'INSERTED TWO',
+        'omega',
+        'SECOND',
+        'FIRST',
+    ].join('\n'),
+    hunks: [
+        // абзац дописан: удалена строка, и вставлена она же с продолжением
+        fileHunk(
+            'hunk-file-delete-alpha',
+            'deleteLinesFromFile',
+            2,
+            2,
+            'alpha'
+        ),
+        fileHunk(
+            'hunk-file-add-alpha',
+            'addLinesToFile',
+            2,
+            3,
+            'alpha\nALPHA ADDED'
+        ),
+        // текст вставки кончается переводом строки, а диапазон 5..6 говорит, что пустой строки за ним нет
+        fileHunk(
+            'hunk-file-add-middle',
+            'addLinesToFile',
+            5,
+            6,
+            'INSERTED ONE\nINSERTED TWO\n'
+        ),
+        // повторная правка того же места склеена не в порядке строк файла
+        fileHunk('hunk-file-add-end', 'addLinesToFile', 8, 9, 'FIRST\nSECOND'),
+    ],
+};
+
+const AGENT_NEW_LINES = [
+    'ALPHA ADDED',
+    'INSERTED ONE',
+    'INSERTED TWO',
+    'SECOND',
+    'FIRST',
+];
+
+const SINGLE_AGENT_EDIT: AgentFileEdit = {
+    before: ['intro', 'omega'].join('\n'),
+    after: ['intro', 'INSERTED ONE', 'INSERTED TWO', 'omega'].join('\n'),
+    hunks: [
+        fileHunk(
+            'hunk-file-add-single',
+            'addLinesToFile',
+            2,
+            3,
+            'INSERTED ONE\nINSERTED TWO\n'
+        ),
+    ],
+};
+
+async function openFileEditedByAgent(page: Page, edit: AgentFileEdit) {
+    // только моки: страница не ходит наружу
+    await page.route(
+        (url) => url.hostname !== 'localhost',
+        (route) => route.abort()
+    );
+    const file = await new RouteSetup(page).setupEditableTextFile(
+        AGENT_FILE,
+        AGENT_FILE_URL,
+        edit.after
+    );
+    const deletes: { hunkId: string; revert: boolean }[] = [];
+    await openProjectWithHunks(page, {
+        program: programOf(mdSegment(1, 'project')),
+        hunks: edit.hunks,
+        files: [{ fileName: AGENT_FILE, url: AGENT_FILE_URL }],
+        onDelete: (hunkId, revert) => {
+            deletes.push({ hunkId, revert });
+            // откат всех правок возвращает файлу текст до агента
+            if (
+                deletes.filter((item) => item.revert).length ===
+                edit.hunks.length
+            ) {
+                file.setContent(edit.before);
+            }
+        },
+    });
+    await page.locator('div.file-manager-button').click();
+    await page.getByText(AGENT_FILE, { exact: true }).click();
+    await expect(
+        page.locator('.text-file-editor-panel .cm-hunk-controls').first()
+    ).toBeVisible();
+    return { file, deletes };
+}
+
+const fileEditorLines = (page: Page) =>
+    page.locator('.text-file-editor-panel .cm-content > .cm-line');
+
+const fileEditorAddedLines = (page: Page) =>
+    page.locator(
+        '.text-file-editor-panel .cm-content > .cm-line.cm-hunk-added-line'
+    );
+
+type AgentFile = Awaited<ReturnType<typeof openFileEditedByAgent>>['file'];
+
+// автосохранение файла уходит через секунду после изменения: проверка «загрузок нет» раньше этого окна прошла бы и при ошибочном сохранении
+const AUTOSAVE_WINDOW_MS = 2000;
+
+/** После приёма или отката файл перечитывается: экран сверяется только с тем, что пришло в этом ответе */
+async function clickAndWaitForFileReload(
+    page: Page,
+    file: AgentFile,
+    button: Locator
+) {
+    const reloaded = page.waitForResponse(
+        (response) => new URL(response.url()).pathname === AGENT_FILE_URL
+    );
+    await button.click();
+    await (await reloaded).finished();
+    await expect.poll(() => file.fetches()).toBe(2);
+    // текст ответа доходит до CodeMirror через рендер, два кадра его пропускают
+    await page.evaluate(
+        () =>
+            new Promise((resolve) =>
+                requestAnimationFrame(() => requestAnimationFrame(resolve))
+            )
+    );
+}
+
+async function expectNoUploadsAfterAutosaveWindow(page: Page, file: AgentFile) {
+    await page.waitForTimeout(AUTOSAVE_WINDOW_MS);
+    expect(file.uploads()).toEqual([]);
+    expect(file.fetches()).toBe(2);
+}
+
+test('hunk-file-new-lines-are-shown-once', async ({ page }) => {
+    await openFileEditedByAgent(page, AGENT_EDIT);
+
+    await expect(fileEditorLines(page)).toHaveText(
+        AGENT_EDIT.after.split('\n')
+    );
+    // новая строка ровно одна и зелёная, белого дубля под ней нет
+    const shown = await fileEditorLines(page).allTextContents();
+    for (const line of AGENT_NEW_LINES) {
+        expect(shown.filter((text) => text === line)).toHaveLength(1);
+    }
+    await expect(fileEditorAddedLines(page)).toHaveText([
+        'alpha',
+        ...AGENT_NEW_LINES,
+    ]);
+    await expect(
+        page.locator('.text-file-editor-panel .cm-hunk-deleted-line')
+    ).toHaveText(['alpha']);
+});
+
+test('hunk-file-agent-blank-line-is-added', async ({ page }) => {
+    await openFileEditedByAgent(page, {
+        before: ['intro', 'omega'].join('\n'),
+        after: ['intro', 'new para', '', 'omega'].join('\n'),
+        // абзац и пустая строка после него, склеенные без завершающего перевода
+        hunks: [
+            fileHunk(
+                'hunk-file-add-blank',
+                'addLinesToFile',
+                2,
+                3,
+                'new para\n'
+            ),
+        ],
+    });
+
+    await expect(fileEditorLines(page)).toHaveText([
+        'intro',
+        'new para',
+        '',
+        'omega',
+    ]);
+    await expect(fileEditorAddedLines(page)).toHaveText(['new para', '']);
+});
+
+test('hunk-file-deleted-blank-line-is-shown', async ({ page }) => {
+    await openFileEditedByAgent(page, {
+        before: ['intro', 'old', '', 'omega'].join('\n'),
+        after: ['intro', 'omega'].join('\n'),
+        hunks: [
+            fileHunk(
+                'hunk-file-delete-blank',
+                'deleteLinesFromFile',
+                2,
+                3,
+                'old\n'
+            ),
+        ],
+    });
+
+    await expect(
+        page.locator('.text-file-editor-panel .cm-hunk-deleted-line')
+    ).toHaveText(['old', '']);
+});
+
+test('hunk-file-accept-all-keeps-new-text', async ({ page }) => {
+    const { file, deletes } = await openFileEditedByAgent(page, AGENT_EDIT);
+
+    await clickAndWaitForFileReload(
+        page,
+        file,
+        page.getByRole('button', { name: 'Accept all' })
+    );
+
+    await expect(page.locator('.hunk-global-bar')).toHaveCount(0);
+    await expect(fileEditorLines(page)).toHaveText(
+        AGENT_EDIT.after.split('\n')
+    );
+    await expect(fileEditorAddedLines(page)).toHaveCount(0);
+    expect(deletes).toEqual(
+        AGENT_EDIT.hunks.map((hunk) => ({ hunkId: hunk.id, revert: false }))
+    );
+    await expectNoUploadsAfterAutosaveWindow(page, file);
+});
+
+test('hunk-file-revert-all-restores-old-text', async ({ page }) => {
+    const { file, deletes } = await openFileEditedByAgent(page, AGENT_EDIT);
+
+    await clickAndWaitForFileReload(
+        page,
+        file,
+        page.getByRole('button', { name: 'Revert all' })
+    );
+
+    await expect(page.locator('.hunk-global-bar')).toHaveCount(0);
+    await expect(fileEditorLines(page)).toHaveText(
+        AGENT_EDIT.before.split('\n')
+    );
+    await expect(fileEditorAddedLines(page)).toHaveCount(0);
+    expect(deletes).toEqual(
+        AGENT_EDIT.hunks.map((hunk) => ({ hunkId: hunk.id, revert: true }))
+    );
+    await expectNoUploadsAfterAutosaveWindow(page, file);
+});
+
+test('hunk-file-accept-one-keeps-new-text', async ({ page }) => {
+    const { file, deletes } = await openFileEditedByAgent(
+        page,
+        SINGLE_AGENT_EDIT
+    );
+
+    await clickAndWaitForFileReload(
+        page,
+        file,
+        page.locator('.text-file-editor-panel .cm-hunk-btn--accept')
+    );
+
+    await expect(fileEditorAddedLines(page)).toHaveCount(0);
+    await expect(fileEditorLines(page)).toHaveText(
+        SINGLE_AGENT_EDIT.after.split('\n')
+    );
+    expect(deletes).toEqual([
+        { hunkId: 'hunk-file-add-single', revert: false },
+    ]);
+    await expectNoUploadsAfterAutosaveWindow(page, file);
+});
+
+test('hunk-file-revert-one-restores-old-text', async ({ page }) => {
+    const { file, deletes } = await openFileEditedByAgent(
+        page,
+        SINGLE_AGENT_EDIT
+    );
+
+    await clickAndWaitForFileReload(
+        page,
+        file,
+        page.locator('.text-file-editor-panel .cm-hunk-btn--revert')
+    );
+
+    await expect(fileEditorAddedLines(page)).toHaveCount(0);
+    await expect(fileEditorLines(page)).toHaveText(
+        SINGLE_AGENT_EDIT.before.split('\n')
+    );
+    expect(deletes).toEqual([{ hunkId: 'hunk-file-add-single', revert: true }]);
+    await expectNoUploadsAfterAutosaveWindow(page, file);
+});
+
+test('hunk-file-typing-saves-stored-text', async ({ page }) => {
+    const { file } = await openFileEditedByAgent(page, AGENT_EDIT);
+
+    await fileEditorLines(page).first().click();
+    await page.keyboard.press('End');
+    await page.keyboard.type('!');
+
+    // на сервер уходит то, что там лежало, плюс набранный символ, без дублей
+    await expect
+        .poll(() => file.uploads())
+        .toEqual([AGENT_EDIT.after.replace('intro', 'intro!')]);
 });

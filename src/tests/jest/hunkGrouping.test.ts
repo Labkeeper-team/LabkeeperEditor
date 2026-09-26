@@ -5,12 +5,13 @@ import {
     hunksForFile,
     hunksForSegment,
     mapBaseLineToDisplayLine,
+    mapBaseLineToOverlayLine,
     overlayDeleteHunksOnNewContent,
     resolveControlsLine,
     deletedLinesAnchorAtEnd,
     shouldShowGlobalHunkBar,
     stripDeleteHunksFromContent,
-    applyFileHunksToContent,
+    hunkTextLines,
 } from '../../viewModel/utils/hunkGrouping.ts';
 import { Hunk } from '../../model/domain.ts';
 
@@ -251,53 +252,125 @@ test('groupHunks merges addFile with addLinesToFile', () => {
     expect(groups[0].isNewFile).toBe(true);
 });
 
-test('applyFileHunksToContent skips addLinesToFile for new files', () => {
-    const hunks: Hunk[] = [
-        { id: 'add-file', type: 'addFile', fileName: 'data.csv' },
-        {
-            id: 'add-lines',
-            type: 'addLinesToFile',
-            fileName: 'data.csv',
-            startLine: 1,
-            endLine: 2,
-            text: 'a,b\n1,2',
-        },
-    ];
-    const fileOnDisk = 'a,b\n1,2\n';
-
-    expect(applyFileHunksToContent(fileOnDisk, hunks, 'data.csv')).toBe(
-        fileOnDisk
-    );
+test.each([
+    {
+        name: 'one line',
+        hunk: { text: 'one', startLine: 1, endLine: 1 },
+        lines: ['one'],
+    },
+    {
+        name: 'server text has no trailing line break',
+        hunk: { text: '7\n9', startLine: 6, endLine: 7 },
+        lines: ['7', '9'],
+    },
+    {
+        name: 'trailing line break counted by the range adds no line',
+        hunk: { text: 'one\ntwo\n', startLine: 1, endLine: 2 },
+        lines: ['one', 'two'],
+    },
+    {
+        name: 'trailing line break inside the range is a blank line',
+        hunk: { text: 'new para\n', startLine: 2, endLine: 3 },
+        lines: ['new para', ''],
+    },
+    {
+        name: 'CRLF is read as a line break',
+        hunk: { text: 'one\r\ntwo\r\n', startLine: 1, endLine: 2 },
+        lines: ['one', 'two'],
+    },
+    {
+        name: 'blank line before the trailing break stays',
+        hunk: { text: 'one\n\n', startLine: 1, endLine: 2 },
+        lines: ['one', ''],
+    },
+    {
+        name: 'trailing line break without a range is a blank line',
+        hunk: { text: 'one\n' },
+        lines: ['one', ''],
+    },
+    {
+        name: 'empty text is one blank line',
+        hunk: { text: '', startLine: 1, endLine: 1 },
+        lines: [''],
+    },
+])('hunkTextLines: $name', ({ hunk, lines }) => {
+    expect(hunkTextLines(hunk)).toEqual(lines);
 });
 
-test('applyFileHunksToContent deletes old lines then inserts additions', () => {
-    const hunks: Hunk[] = [
+test('blank line added by the agent at the end of its text is highlighted', () => {
+    const [group] = groupHunks([
         {
-            id: '40b728ff-82d9-4e4a-8b4b-89b49110ca9b',
+            id: 'add',
+            type: 'addLinesToSegment',
+            segmentId: 1,
+            startLine: 2,
+            endLine: 3,
+            text: 'new para\n',
+        },
+    ]);
+
+    // в документе 'intro', 'new para', '', 'omega': зелёные строки 2 и 3, кнопки после пустой
+    expect(resolveControlsLine(group, 4)).toBe(3);
+});
+
+test('deleted blank line at the end of the text stays in the deleted block', () => {
+    const [group] = groupHunks([
+        {
+            id: 'delete',
             type: 'deleteLinesFromFile',
             fileName: 'notes.txt',
             startLine: 2,
-            endLine: 7,
-            text: '1\n2\n3\n4\n55\n6',
+            endLine: 3,
+            text: 'old\n',
         },
-        {
-            id: 'ffa6f9d9-c028-4193-be23-f412b5eb6d44',
-            type: 'addLinesToFile',
-            fileName: 'notes.txt',
-            startLine: 1,
-            endLine: 1,
-            text: 'ахаха',
-        },
-    ];
-    const fileOnDisk = 'header\n1\n2\n3\n4\n55\n6\n';
+    ]);
 
-    const applied = applyFileHunksToContent(fileOnDisk, hunks, 'notes.txt');
-    expect(applied).toBe('ахаха\nheader\n');
-    expect(applyFileHunksToContent(applied, hunks, 'notes.txt')).toBe(applied);
+    expect(group.deletedLines).toEqual(['old', '']);
 });
 
-test('applyFileHunksToContent is a no-op without file hunks', () => {
-    expect(applyFileHunksToContent('keep\n', [], 'notes.txt')).toBe('keep\n');
+test('added text whose range counts the trailing line break highlights only its own lines', () => {
+    const [group] = groupHunks([
+        {
+            id: 'add',
+            type: 'addLinesToFile',
+            fileName: 'notes.txt',
+            startLine: 3,
+            endLine: 4,
+            text: 'NEW 1\nNEW 2\n',
+        },
+    ]);
+
+    expect(resolveControlsLine(group, 10)).toBe(4);
+});
+
+test('deleted text with CRLF and a trailing line break counted by the range shows only its own lines', () => {
+    const [group] = groupHunks([
+        {
+            id: 'delete',
+            type: 'deleteLinesFromFile',
+            fileName: 'notes.txt',
+            startLine: 3,
+            endLine: 4,
+            text: 'old 1\r\nold 2\r\n',
+        },
+    ]);
+
+    expect(group.deletedLines).toEqual(['old 1', 'old 2']);
+});
+
+test('mapBaseLineToDisplayLine does not count a trailing line break counted by the range as a line', () => {
+    const hunks: Hunk[] = [
+        {
+            id: 'add-before',
+            type: 'addLinesToFile',
+            fileName: 'notes.txt',
+            startLine: 2,
+            endLine: 3,
+            text: 'new 1\nnew 2\n',
+        },
+    ];
+
+    expect(mapBaseLineToDisplayLine(hunks, 5)).toBe(7);
 });
 
 test('mapBaseLineToDisplayLine accumulates earlier hunk line deltas', () => {
@@ -437,4 +510,24 @@ test('overlayDeleteHunksOnNewContent appends a trailing deleted line', () => {
     ).toEqual(['1', '2', '3', '4', '5']);
     expect(deletedLinesAnchorAtEnd(5, 4)).toBe(true);
     expect(deletedLinesAnchorAtEnd(4, 4)).toBe(false);
+});
+
+test('overlay of deleted text with a trailing line break agrees with its line map', () => {
+    const hunks: Hunk[] = [
+        {
+            id: 'delete',
+            type: 'deleteLinesFromFile',
+            fileName: 'notes.txt',
+            startLine: 2,
+            endLine: 2,
+            text: 'x\n',
+        },
+    ];
+    const newContent = ['a', 'b', 'c'].join('\n');
+
+    const overlayed = overlayDeleteHunksOnNewContent(newContent, hunks);
+    expect(overlayed.split('\n')).toEqual(['a', 'x', 'b', 'c']);
+    const line = mapBaseLineToOverlayLine(hunks, 2, 'add');
+    expect(overlayed.split('\n')[line - 1]).toBe('b');
+    expect(stripDeleteHunksFromContent(overlayed, hunks)).toBe(newContent);
 });
