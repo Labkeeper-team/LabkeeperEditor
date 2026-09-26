@@ -599,6 +599,115 @@ test('unauthorized-run-sends-program-and-applies-result', async () => {
     expect(ctx.repository.ideViewModelRepository.undoEnabled()).toBe(true);
 });
 
+test('unauthorized-redo-returns-agent-result-and-later-edit', async () => {
+    const ctx = setup(false);
+    const { programEditorService } = ctx;
+    const text = () =>
+        ctx.repository.projectViewModelRepository.currentProgram().segments[0]
+            ?.text;
+    programEditorService.onAddSegmentClicked('md');
+    await programEditorService.onSegmentTextEdited(0, 'mine', 4);
+    await programEditorService.onProgramSaveTimeout();
+    ctx.repository.chatViewModelRepository.setInput('сделай');
+    await ctx.agentChatService.onPromptSubmit();
+    await emit(ctx, {
+        kind: 'finished',
+        message: 'готово',
+        stopReason: 'Done',
+        program: {
+            segments: [
+                { type: 'md', parameters: { visible: true }, text: 'LLM' },
+            ],
+            parameters: { roundStrategy: 'noRound' },
+        },
+        hunks: [],
+    });
+    await programEditorService.onProgramSaveTimeout();
+    await programEditorService.onSegmentTextEdited(0, 'LLM!', 4);
+    await programEditorService.onProgramSaveTimeout();
+
+    // у гостя ответ агента откатывается только через undo, значит и повтор должен его вернуть
+    await programEditorService.onPrevVersionButtonClicked();
+    await programEditorService.onPrevVersionButtonClicked();
+    expect(text()).toBe('mine');
+    await programEditorService.onNextVersionButtonClicked();
+    expect(text()).toBe('LLM');
+    await programEditorService.onNextVersionButtonClicked();
+    expect(text()).toBe('LLM!');
+});
+
+test('unauthorized-redo-through-two-agent-replies-keeps-each-step', async () => {
+    const ctx = setup(false);
+    const { programEditorService } = ctx;
+    const texts = () =>
+        ctx.repository.projectViewModelRepository
+            .currentProgram()
+            .segments.map((segment) => segment.text);
+    const agentReply = async (replyTexts: string[]) => {
+        ctx.repository.chatViewModelRepository.setInput('сделай');
+        await ctx.agentChatService.onPromptSubmit();
+        await emit(ctx, {
+            kind: 'finished',
+            message: 'готово',
+            stopReason: 'Done',
+            program: {
+                segments: replyTexts.map((text) => ({
+                    type: 'md',
+                    parameters: { visible: true },
+                    text,
+                })),
+                parameters: { roundStrategy: 'noRound' },
+            },
+            hunks: [],
+        });
+        await programEditorService.onProgramSaveTimeout();
+    };
+    const step = async (kind: 'undo' | 'redo') => {
+        if (kind === 'undo') {
+            await programEditorService.onPrevVersionButtonClicked();
+        } else {
+            await programEditorService.onNextVersionButtonClicked();
+        }
+        await programEditorService.onProgramSaveTimeout();
+        return texts();
+    };
+    programEditorService.onAddSegmentClicked('md');
+    await programEditorService.onSegmentTextEdited(0, 'mine', 4);
+    await programEditorService.onProgramSaveTimeout();
+    await agentReply(['A', 'B']);
+    await programEditorService.deleteSegment(1);
+    await agentReply(['C']);
+
+    // удаление между ответами правит сегменты первого ответа, и повтор первого ответа должен их не видеть
+    const kinds: ('undo' | 'redo')[] = [
+        'undo',
+        'undo',
+        'undo',
+        'redo',
+        'redo',
+        'redo',
+        'undo',
+        'undo',
+        'undo',
+    ];
+    const trail: string[][] = [];
+    for (const kind of kinds) {
+        trail.push(await step(kind));
+    }
+
+    expect(trail).toEqual([
+        ['A'],
+        ['A', 'B'],
+        ['mine'],
+        ['A', 'B'],
+        ['A'],
+        ['C'],
+        ['A'],
+        ['A', 'B'],
+        ['mine'],
+    ]);
+});
+
 test('agent-start-is-abandoned-when-the-project-changes-while-saving', async () => {
     const ctx = setup();
     let releaseSave: () => void = () => {};

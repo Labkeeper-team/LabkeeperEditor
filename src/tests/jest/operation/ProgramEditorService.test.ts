@@ -512,6 +512,41 @@ test('canUndo/canRedo корректны после серии операций'
     expect(svc.canRedo()).toBe(false);
 });
 
+test('redo-walks-whole-history-through-program-save', async () => {
+    const { startupService, rpi, repository, programEditorService } =
+        mockContext();
+    mockAuthenticatedStartup(rpi);
+    mockSaveProgramRequest(rpi);
+    await startupService.onAppStartup();
+    programEditorService.onAddSegmentClicked('md');
+    await programEditorService.onProgramSaveTimeout();
+    for (const text of ['a', 'ab', 'abc']) {
+        await programEditorService.onSegmentTextEdited(0, text, text.length);
+        await programEditorService.onProgramSaveTimeout();
+    }
+    for (let i = 0; i < 3; i++) {
+        await programEditorService.onPrevVersionButtonClicked();
+    }
+
+    const redone: [string, boolean][] = [];
+    for (let i = 0; i < 3; i++) {
+        await programEditorService.onNextVersionButtonClicked();
+        // после повтора текст сегмента меняется, и через секунду сохраняет ещё и таймер
+        await programEditorService.onProgramSaveTimeout();
+        redone.push([
+            repository.projectViewModelRepository.currentProgram().segments[0]
+                .text,
+            repository.ideViewModelRepository.redoEnabled(),
+        ]);
+    }
+
+    expect(redone).toEqual([
+        ['a', true],
+        ['ab', true],
+        ['abc', false],
+    ]);
+});
+
 test('divider-inserts-segment-and-tracks-openpanel-event', async () => {
     const { programEditorService, programService, observerService } =
         mockContext();
