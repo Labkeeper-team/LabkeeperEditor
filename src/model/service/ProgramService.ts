@@ -76,14 +76,17 @@ export class ProgramService {
         this.programRepository.program = structuredClone(program);
     };
 
-    private applyChange = (action: ProgramChangeAction) => {
-        action.apply(this.programRepository.program);
+    private pushToHistory = (action: ProgramChangeAction) => {
         this.programRepository.history.push(action);
-        this.programRepository.redoHistory = [];
-
         if (this.programRepository.history.length > historyLimit) {
             this.programRepository.history.shift();
         }
+    };
+
+    private applyChange = (action: ProgramChangeAction) => {
+        action.apply(this.programRepository.program);
+        this.pushToHistory(action);
+        this.programRepository.redoHistory = [];
     };
 
     changeSegmentVisibility = (
@@ -156,8 +159,8 @@ export class ProgramService {
         if (last instanceof GapAction) {
             return;
         }
-        const gap = new GapAction();
-        this.applyChange(gap);
+        // граница шага не правка: сохранение ставит её и после undo и redo, и стек повтора она стирать не должна
+        this.pushToHistory(new GapAction());
     };
 
     private getLineDiff(text1: string, text2: string) {
@@ -272,6 +275,13 @@ export class ProgramService {
                 this.changeSegmentTextByPositionIndex(index, text, cursorHead);
                 return;
             }
+            // правка поверх отменённого до границы шага сбрасывает повтор, а эхо того же текста из редактора нет
+            if (
+                this.programRepository.redoHistory.length > 0 &&
+                text !== lastTextChangeAction.newValue
+            ) {
+                this.programRepository.redoHistory = [];
+            }
             lastTextChangeAction.newValue = text;
             lastTextChangeAction.cursorHeadAfterEdit = clampHead(
                 text,
@@ -347,10 +357,7 @@ export class ProgramService {
                 break;
             }
             redo.apply(this.programRepository.program);
-            this.programRepository.history.push(redo);
-            if (this.programRepository.history.length > historyLimit) {
-                this.programRepository.history.shift();
-            }
+            this.pushToHistory(redo);
 
             if (!(redo instanceof GapAction)) {
                 if (redo instanceof SegmentTextChangedAction) {
@@ -358,6 +365,13 @@ export class ProgramService {
                         segmentIndex: redo.segmentIndex,
                         cursorOffset: redo.cursorHeadAfterEdit,
                     };
+                }
+                // undo снимает шаг вместе с границей после него, redo возвращает так же, иначе каждый круг добавлял бы лишнюю границу
+                const redoHistory = this.programRepository.redoHistory;
+                while (
+                    redoHistory[redoHistory.length - 1] instanceof GapAction
+                ) {
+                    this.pushToHistory(redoHistory.pop()!);
                 }
                 break;
             }
@@ -470,14 +484,16 @@ class ReplaceProgramAction implements ProgramChangeAction {
 
     apply = (program: Program) => {
         this.oldProgram = structuredClone(program);
-        program.segments = this.newProgram.segments;
+        // копия: следующие шаги правят массив программы, а повтор должен вернуть ответ таким, каким он пришёл
+        program.segments = structuredClone(this.newProgram.segments);
         program.parameters = this.newProgram.parameters;
         renumberSegmentIds(program.segments);
     };
 
     revert = (program: Program) => {
         if (this.oldProgram) {
-            program.segments = this.oldProgram.segments;
+            // копия и здесь: снимок до ответа остаётся нетронутым, какие бы шаги ни отменяли после
+            program.segments = structuredClone(this.oldProgram.segments);
             program.parameters = this.oldProgram.parameters;
         }
     };

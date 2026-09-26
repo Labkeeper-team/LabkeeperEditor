@@ -217,6 +217,123 @@ test('redo-enabled-test', () => {
     expect(service.canRedo()).toBe(false);
 });
 
+function serviceWithSegments(...texts: string[]): ProgramService {
+    const service = new ProgramService(new InMemoryProgramRepository());
+    service.setNewProgram({
+        segments: texts.map((text) => ({
+            type: 'md',
+            text,
+            parameters: { visible: true },
+        })),
+        parameters: { roundStrategy: 'noRound' },
+    });
+    return service;
+}
+
+const segmentTexts = (service: ProgramService) =>
+    service.getCurrentProgram().segments.map((segment) => segment.text);
+
+// редактор сохраняет программу после каждого undo и redo, а сохранение ставит границу шага
+test('redo-walks-whole-history-when-save-puts-gaps-test', () => {
+    const service = serviceWithSegments('');
+    for (const text of ['a', 'ab', 'abc']) {
+        service.changeSegmentTextByPositionIndex(0, text);
+        service.gap();
+    }
+    for (let i = 0; i < 3; i++) {
+        service.undo();
+        service.gap();
+    }
+    expect(segmentTexts(service)).toEqual(['']);
+
+    const redone: string[] = [];
+    for (let i = 0; i < 3; i++) {
+        service.redo();
+        service.gap();
+        redone.push(segmentTexts(service)[0]);
+    }
+
+    expect(redone).toEqual(['a', 'ab', 'abc']);
+    expect(service.canRedo()).toBe(false);
+});
+
+// правки в двух сегментах быстрее таймера сохранения получают одну границу на двоих
+test('redo-survives-gap-after-undo-of-adjacent-edits-test', () => {
+    const service = serviceWithSegments('A', 'B');
+    service.changeSegmentTextByPositionIndex(0, 'Ax');
+    service.changeSegmentTextByPositionIndex(1, 'By');
+    service.gap();
+    for (let i = 0; i < 2; i++) {
+        service.undo();
+        service.gap();
+    }
+    expect(segmentTexts(service)).toEqual(['A', 'B']);
+
+    for (let i = 0; i < 2; i++) {
+        service.redo();
+        service.gap();
+    }
+
+    expect(segmentTexts(service)).toEqual(['Ax', 'By']);
+});
+
+// лимит истории считает и границы, лишняя граница на каждом круге вытеснила бы старые шаги
+test('undo-redo-cycles-keep-history-depth-test', () => {
+    const service = serviceWithSegments('');
+    const steps = 20;
+    let text = '';
+    for (let i = 0; i < steps; i++) {
+        text += `${i % 10}`;
+        service.changeSegmentTextByPositionIndex(0, text);
+        service.gap();
+    }
+    for (let cycle = 0; cycle < 3; cycle++) {
+        for (let i = 0; i < steps; i++) {
+            service.undo();
+            service.gap();
+        }
+        for (let i = 0; i < steps; i++) {
+            service.redo();
+            service.gap();
+        }
+    }
+    expect(segmentTexts(service)).toEqual([text]);
+
+    for (let i = 0; i < steps; i++) {
+        service.undo();
+        service.gap();
+    }
+
+    expect(segmentTexts(service)).toEqual(['']);
+});
+
+// сохранение после undo ещё в сети, а человек уже печатает, и правка сливается с прошлой
+test('typing-over-undone-step-before-gap-clears-redo-test', () => {
+    const service = serviceWithSegments('A', 'B');
+    service.changeSegmentTextByPositionIndex(0, 'Ax');
+    service.changeSegmentTextByPositionIndex(1, 'By');
+    service.undo();
+    expect(service.canRedo()).toBe(true);
+
+    service.changeSegmentTextByPositionIndex(0, 'Axz');
+
+    expect(service.canRedo()).toBe(false);
+});
+
+// редактор присылает обратно тот же текст, это не правка
+test('echo-of-same-text-keeps-redo-test', () => {
+    const service = serviceWithSegments('A', 'B');
+    service.changeSegmentTextByPositionIndex(0, 'Ax');
+    service.changeSegmentTextByPositionIndex(1, 'By');
+    service.undo();
+
+    service.changeSegmentTextByPositionIndex(0, 'Ax');
+
+    expect(service.canRedo()).toBe(true);
+    service.redo();
+    expect(segmentTexts(service)).toEqual(['Ax', 'By']);
+});
+
 test('auto-gaps-test', () => {
     const service: ProgramService = new ProgramService(
         new InMemoryProgramRepository()
