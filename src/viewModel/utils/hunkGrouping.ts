@@ -24,6 +24,21 @@ export interface HunkGroup {
     isNewSegment: boolean;
 }
 
+/** Строки текста hunk: сервер склеивает строки без завершающего перевода, поэтому \n в конце обычно значит пустую последнюю строку */
+export function hunkTextLines(
+    hunk: Pick<Hunk, 'text' | 'startLine' | 'endLine'>
+): string[] {
+    const parts = (hunk.text ?? '').replace(/\r\n/g, '\n').split('\n');
+    // \n в конце лишний, только если частей на одну больше, чем строк в startLine..endLine; без диапазона сверить не с чем, и остаётся формат сервера
+    const endsWithLineBreak =
+        parts.length > 1 &&
+        parts[parts.length - 1] === '' &&
+        hunk.startLine != null &&
+        hunk.endLine != null &&
+        parts.length === hunk.endLine - hunk.startLine + 2;
+    return endsWithLineBreak ? parts.slice(0, -1) : parts;
+}
+
 const isLineAdd = (t: Hunk['type']) =>
     t === 'addLinesToFile' || t === 'addLinesToSegment';
 const isLineDelete = (t: Hunk['type']) =>
@@ -111,7 +126,7 @@ function buildGroup(hunks: Hunk[]): HunkGroup | null {
         }
         if (isLineDelete(hunk.type)) {
             if (hunk.text) {
-                deletedLines.push(...hunk.text.split('\n'));
+                deletedLines.push(...hunkTextLines(hunk));
             }
             if (hunk.startLine != null) {
                 anchorLine = hunk.startLine;
@@ -278,7 +293,7 @@ export function expandGroupsForDisplay(groups: HunkGroup[]): HunkGroup[] {
 
 function hunkLineCount(hunk: Hunk): number {
     if (hunk.text != null) {
-        return hunk.text.split('\n').length;
+        return hunkTextLines(hunk).length;
     }
     if (hunk.startLine == null) {
         return 0;
@@ -328,7 +343,7 @@ export function resolveControlsLine(
             docLines
         );
         if (lineAdd?.text) {
-            const textLineCount = lineAdd.text.split('\n').length;
+            const textLineCount = hunkTextLines(lineAdd).length;
             return Math.min(start + textLineCount - 1, docLines);
         }
         const end = Math.min(
@@ -580,7 +595,7 @@ function rawDeleteInserts(hunks: Hunk[]): { at: number; text: string[] }[] {
         }
         inserts.push({
             at: Math.max(hunk.startLine - 1, 0),
-            text: hunk.text.split('\n'),
+            text: hunkTextLines(hunk),
         });
     }
     return inserts;
@@ -676,85 +691,4 @@ function linesMatchAt(
         return false;
     }
     return expected.every((line, index) => lines[start + index] === line);
-}
-
-/**
- * File on disk is the old document; hunk line numbers are against that base.
- * Apply deletes then inserts (bottom-to-top) so the editor shows the new state,
- * matching how segment hunks are displayed.
- * Already-applied hunks are skipped so reopening the same file does not duplicate.
- */
-export function applyFileHunksToContent(
-    content: string,
-    hunks: Hunk[],
-    fileName: string
-): string {
-    const allFileHunks = hunksForFile(hunks, fileName);
-    const isNewFileFromHunk = allFileHunks.some(
-        (hunk) => hunk.type === 'addFile'
-    );
-    // New files already contain final content on disk; addLinesToFile only describes
-    // the diff from empty and must not be applied on top of the downloaded file.
-    const fileHunks = allFileHunks.filter(
-        (hunk) =>
-            isLineDelete(hunk.type) ||
-            (isLineAdd(hunk.type) &&
-                hunk.text != null &&
-                !(isNewFileFromHunk && hunk.type === 'addLinesToFile'))
-    );
-    if (fileHunks.length === 0) {
-        return content;
-    }
-
-    const normalized = content.replace(/\r\n/g, '\n');
-    const endsWithNewline = normalized.endsWith('\n');
-    const lines =
-        normalized === ''
-            ? []
-            : (endsWithNewline ? normalized.slice(0, -1) : normalized).split(
-                  '\n'
-              );
-
-    const ops = [...fileHunks].sort((a, b) => {
-        const lineA = a.startLine ?? 1;
-        const lineB = b.startLine ?? 1;
-        if (lineA !== lineB) {
-            return lineB - lineA;
-        }
-        if (isLineDelete(a.type) !== isLineDelete(b.type)) {
-            return isLineDelete(a.type) ? -1 : 1;
-        }
-        return 0;
-    });
-
-    for (const op of ops) {
-        const start = Math.max((op.startLine ?? 1) - 1, 0);
-        if (isLineDelete(op.type)) {
-            const expected = op.text != null ? op.text.split('\n') : null;
-            if (expected && !linesMatchAt(lines, start, expected)) {
-                continue;
-            }
-            const endInclusive = op.endLine ?? op.startLine ?? 1;
-            const count = Math.min(
-                expected?.length ?? Math.max(endInclusive - start, 0),
-                Math.max(lines.length - start, 0)
-            );
-            if (count > 0 && start < lines.length) {
-                lines.splice(start, count);
-            }
-            continue;
-        }
-        if (op.text != null) {
-            const inserted = op.text.split('\n');
-            if (linesMatchAt(lines, start, inserted)) {
-                continue;
-            }
-            lines.splice(start, 0, ...inserted);
-        }
-    }
-
-    if (lines.length === 0) {
-        return endsWithNewline ? '\n' : '';
-    }
-    return lines.join('\n') + (endsWithNewline ? '\n' : '');
 }
