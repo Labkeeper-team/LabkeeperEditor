@@ -1118,6 +1118,53 @@ test('unauthorized-agent-applies-returned-program', async ({ page }) => {
     );
 });
 
+// финал гостя с препрода 28.09: программа уже с заменой, hunk описывает старую строку
+test('unauthorized-agent-replace-is-drawn-in-the-editor', async ({ page }) => {
+    const segment = (text: string) => ({
+        segments: [{ id: 1, type: 'md', text, parameters: { visible: true } }],
+        parameters: { roundStrategy: 'noRound' },
+    });
+    await openChat(page, {
+        authenticated: false,
+        program: segment('intro\nAlpha line one.\nomega') as Program,
+        frames: [
+            {
+                type: 'agentFinishedUnauthorized',
+                message: 'заменил строку',
+                stopReason: 'Done',
+                program: segment('intro\nBeta line one.\nomega'),
+                hunks: [
+                    {
+                        id: 'replace',
+                        type: 'replaceTextInSegment',
+                        fileName: null,
+                        segmentId: 1,
+                        startLine: 2,
+                        endLine: 2,
+                        text: 'Alpha line one.',
+                    },
+                ],
+            },
+        ],
+    });
+
+    await submitPrompt(page, 'замени строку');
+
+    await expect(page.locator('.agent-chat__response-text')).toHaveText(
+        'заменил строку'
+    );
+    const editor = page.locator('#ide-segment-0');
+    await expect(editor.locator('.cm-hunk-deleted-line')).toHaveText([
+        'Alpha line one.',
+    ]);
+    await expect(
+        editor.locator('.cm-content > .cm-line.cm-hunk-added-line')
+    ).toHaveText(['Beta line one.']);
+    // гость откатывает отменой, поэтому у правки одна кнопка
+    await expect(editor.locator('.cm-hunk-btn--accept')).toHaveCount(1);
+    await expect(editor.locator('.cm-hunk-btn--revert')).toHaveCount(0);
+});
+
 test('unauthorized-agent-sends-program-with-segment-ids', async ({ page }) => {
     const sent = await openChat(page, {
         authenticated: false,

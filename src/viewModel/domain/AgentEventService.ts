@@ -24,18 +24,22 @@ const HUNK_LABELS = new Map<string, string>([
     ['addFile', 'add_file'],
     ['addLinesToFile', 'add_lines_to_file'],
     ['deleteLinesFromFile', 'delete_lines_from_file'],
+    ['replaceTextInSegment', 'replace_text_in_segment'],
+    ['replaceTextInFile', 'replace_text_in_file'],
 ]);
 
 const SEGMENT_TOOLS = new Set<string>([
     'add_segment',
     'add_lines_to_segment',
     'delete_lines_from_segment',
+    'replace_text_in_segment',
 ] satisfies AgentToolName[]);
 
 const FILE_TOOLS = new Set<string>([
     'add_file',
     'add_lines_to_file',
     'delete_lines_from_file',
+    'replace_text_in_file',
 ] satisfies AgentToolName[]);
 
 /** Общая строка ленты для инструмента, о котором фронт ничего не знает */
@@ -70,12 +74,14 @@ const isSameChange = (a: Hunk, b: Hunk) =>
 /** Сколько мест перечисляем в итоге прерывания: остальное человек найдёт в самой ленте */
 const CHANGE_SUMMARY_LIMIT = 5;
 
-/** Типы, к которым осмысленно скроллить: удалённых строк на месте уже нет. */
+/** Типы, к которым осмысленно скроллить: удалённых строк на месте уже нет, а новые строки замены есть */
 const NAVIGABLE_HUNK_TYPES = new Set([
     'addSegment',
     'addLinesToSegment',
+    'replaceTextInSegment',
     'addFile',
     'addLinesToFile',
+    'replaceTextInFile',
 ]);
 
 function formatLines(hunk: Hunk): string | undefined {
@@ -223,17 +229,20 @@ export class AgentEventService {
         let program = unknown || SEGMENT_TOOLS.has(toolName);
         let files = unknown || FILE_TOOLS.has(toolName);
         for (const hunk of fresh) {
+            // сервер сливает соседние правки, и тип hunk не обязан совпадать с вызванным инструментом
             if (
                 hunk.type === 'addSegment' ||
                 hunk.type === 'addLinesToSegment' ||
-                hunk.type === 'deleteLinesFromSegment'
+                hunk.type === 'deleteLinesFromSegment' ||
+                hunk.type === 'replaceTextInSegment'
             ) {
                 program = true;
             }
             if (
                 hunk.type === 'addFile' ||
                 hunk.type === 'addLinesToFile' ||
-                hunk.type === 'deleteLinesFromFile'
+                hunk.type === 'deleteLinesFromFile' ||
+                hunk.type === 'replaceTextInFile'
             ) {
                 files = true;
             }

@@ -599,9 +599,9 @@ export function dispatchHunkGroups(
 
 const lastHunkDispatchByView = new WeakMap<EditorView, string>();
 
-// id мало: повторную правку того же места сервер дописывает в прежний hunk
+// id мало: повторную правку того же места сервер дописывает в прежний hunk и может сменить ему тип
 const hunkSignature = (hunk: Hunk) =>
-    `${hunk.id}@${hunk.startLine}-${hunk.endLine}:${hunk.text ?? ''}`;
+    `${hunk.id}:${hunk.type}@${hunk.startLine}-${hunk.endLine}:${hunk.text ?? ''}`;
 
 function serializeHunkDispatchPayload(
     groups: HunkGroupView[],
