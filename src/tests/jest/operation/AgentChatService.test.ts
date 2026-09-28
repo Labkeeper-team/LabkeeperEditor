@@ -848,6 +848,38 @@ test('agent-events-append-to-transcript-in-order', async () => {
     ).toEqual(['request', 'model_call', 'read_segment', 'response']);
 });
 
+// сборку агент запускает посреди прогона: после неё он ещё думает и правит
+test('compilation-events-do-not-end-the-run', async () => {
+    const ctx = setup();
+    ctx.repository.chatViewModelRepository.setInput('собери документ');
+    await ctx.agentChatService.onPromptSubmit();
+
+    await emit(ctx, { kind: 'compilationStarted' });
+    await emit(ctx, {
+        kind: 'compilationFinished',
+        pdfUri: 'https://files.labkeeper.io/generated/result1.pdf',
+    });
+    await emit(ctx, { kind: 'compilationFailed', errors: { errors: [] } });
+
+    expect(ctx.repository.chatViewModelRepository.requestState()).toBe(
+        'running'
+    );
+    expect(ctx.agentChatService.isRunning()).toBe(true);
+
+    await emit(ctx, {
+        kind: 'finished',
+        message: 'готово',
+        stopReason: 'Done',
+    });
+
+    const messages = ctx.repository.chatViewModelRepository.messages();
+    expect(messages[messages.length - 1]).toMatchObject({
+        kind: 'response',
+        text: 'готово',
+    });
+    expect(ctx.repository.chatViewModelRepository.requestState()).toBe('ok');
+});
+
 test('prompt-too-long-returns-the-text-to-the-field', async () => {
     const ctx = setup();
     ctx.repository.chatViewModelRepository.setInput('очень длинный запрос');

@@ -1,4 +1,9 @@
-import { Hunk, Program } from '../domain.ts';
+import {
+    CompileErrorResultList,
+    CompileSuccessResult,
+    Hunk,
+    Program,
+} from '../domain.ts';
 
 /**
  * Общий срок на прогон: столько ждём финальное событие с момента запуска.
@@ -66,6 +71,15 @@ export type AgentEvent =
     | { kind: 'modelFinished'; totalTokens: number; elapsedTimeMillis: number }
     /** Имя любое, в том числе пустое: незнакомый инструмент тоже мог поменять проект */
     | { kind: 'toolCall'; toolName: string }
+    /** Сборку запускает сам агент, в toolCall её нет. Вместо итога может сразу прийти финал: оплата, замок */
+    | { kind: 'compilationStarted' }
+    /** По спеке ровно одно из полей, но кадр без обоих тоже значит, что сборка была */
+    | {
+          kind: 'compilationFinished';
+          pdfUri?: string;
+          markdown?: CompileSuccessResult;
+      }
+    | { kind: 'compilationFailed'; errors: CompileErrorResultList }
     | {
           kind: 'finished';
           message: string | null;
