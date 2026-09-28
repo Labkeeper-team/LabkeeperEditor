@@ -595,6 +595,15 @@ export class AgentChatService {
             return;
         }
 
+        // сборка идёт посреди прогона и не завершает его, её результат лента пока не показывает
+        if (
+            event.kind === 'compilationStarted' ||
+            event.kind === 'compilationFinished' ||
+            event.kind === 'compilationFailed'
+        ) {
+            return;
+        }
+
         await this.onFinished(token, event);
     };
 

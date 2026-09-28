@@ -1,4 +1,9 @@
-import { Program } from '../../model/domain.ts';
+import {
+    CompileErrorResult,
+    CompileErrorResultList,
+    CompileSuccessResult,
+    Program,
+} from '../../model/domain.ts';
 import {
     AgentClosedReason,
     AgentEvent,
@@ -25,6 +30,10 @@ type ServerFrame = {
     stopReason?: AgentStopReason;
     program?: Program;
     hunks?: Hunk[];
+    // кадры компиляции разбираются защитно: вместо отсутствующего поля сервер шлёт null
+    pdf?: unknown;
+    markdown?: unknown;
+    errors?: unknown;
 };
 
 /**
@@ -44,6 +53,46 @@ function toStopReason(value: unknown): AgentStopReason {
         );
     }
     return 'UnknownError';
+}
+
+/** Поле значения, если это объект: у null, строки и числа полей нет */
+function field(value: unknown, name: string): unknown {
+    return value !== null && typeof value === 'object'
+        ? (value as Record<string, unknown>)[name]
+        : undefined;
+}
+
+const asString = (value: unknown): string | undefined =>
+    typeof value === 'string' ? value : undefined;
+
+function toCompilationFinished(frame: ServerFrame): AgentEvent {
+    const pdfUri = asString(field(frame.pdf, 'pdfUri'));
+    const segments = field(frame.markdown, 'segments');
+    const markdown = Array.isArray(segments)
+        ? ({ segments } as CompileSuccessResult)
+        : undefined;
+    if (pdfUri === undefined && !markdown) {
+        // по спеке одно из полей есть всегда, а событие всё равно нужно: сборка была
+        logBreadcrumb(
+            'agent',
+            'compilation without result',
+            undefined,
+            'warning'
+        );
+    }
+    return { kind: 'compilationFinished', pdfUri, markdown };
+}
+
+/** Без списка ошибок событие всё равно нужно: сборка была и не удалась */
+function toCompileErrors(value: unknown): CompileErrorResultList {
+    const errors = field(value, 'errors');
+    if (!Array.isArray(errors)) {
+        logBreadcrumb('agent', 'bad compilation errors', undefined, 'warning');
+    }
+    return {
+        errors: Array.isArray(errors) ? (errors as CompileErrorResult[]) : [],
+        unfinishedPdfUri: asString(field(value, 'unfinishedPdfUri')),
+    };
 }
 
 /** Превращает кадр сервера в событие домена. Неизвестный тип отбрасывается. */
@@ -70,6 +119,15 @@ function toEvent(frame: ServerFrame): AgentEvent | null {
                 stopReason: toStopReason(frame.stopReason),
                 program: frame.program,
                 hunks: frame.hunks,
+            };
+        case 'compilationStarted':
+            return { kind: 'compilationStarted' };
+        case 'compilationFinished':
+            return toCompilationFinished(frame);
+        case 'compilationFailed':
+            return {
+                kind: 'compilationFailed',
+                errors: toCompileErrors(frame.errors),
             };
         default:
             return null;

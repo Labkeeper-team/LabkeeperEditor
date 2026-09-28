@@ -50,7 +50,10 @@ export type HunkType =
     | 'addLinesToFile'
     | 'deleteLinesFromFile'
     | 'addLinesToSegment'
-    | 'deleteLinesFromSegment';
+    | 'deleteLinesFromSegment'
+    /** Диапазон это новые строки, text это заменённые старые, "" значит одна пустая строка */
+    | 'replaceTextInFile'
+    | 'replaceTextInSegment';
 
 export interface Hunk {
     id: string;
