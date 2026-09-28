@@ -12,6 +12,7 @@ import {
     shouldShowGlobalHunkBar,
     stripDeleteHunksFromContent,
     hunkTextLines,
+    getFileContentFromHunks,
 } from '../../viewModel/utils/hunkGrouping.ts';
 import { Hunk } from '../../model/domain.ts';
 
@@ -530,4 +531,239 @@ test('overlay of deleted text with a trailing line break agrees with its line ma
     const line = mapBaseLineToOverlayLine(hunks, 2, 'add');
     expect(overlayed.split('\n')[line - 1]).toBe('b');
     expect(stripDeleteHunksFromContent(overlayed, hunks)).toBe(newContent);
+});
+
+type ReplaceType = 'replaceTextInSegment' | 'replaceTextInFile';
+
+/** hunk замены в том виде, как его шлёт сервер: у чужой цели явный null */
+function replaceHunk(
+    type: ReplaceType,
+    startLine: number,
+    endLine: number,
+    text: string,
+    id = 'replace'
+): Hunk {
+    const place =
+        type === 'replaceTextInSegment'
+            ? { segmentId: 1, fileName: null }
+            : { segmentId: null, fileName: 'notes.txt' };
+    return { id, type, startLine, endLine, text, ...place } as unknown as Hunk;
+}
+
+// формы с препрода 28.09 (бэкенд 4.10.1.886): диапазон это новые строки, text это заменённые старые
+test.each([
+    {
+        name: 'one line for one in a segment',
+        hunk: replaceHunk('replaceTextInSegment', 3, 3, 'Alpha line one.'),
+        deletedLines: ['Alpha line one.'],
+    },
+    {
+        name: 'two lines for three in a segment',
+        hunk: replaceHunk(
+            'replaceTextInSegment',
+            5,
+            7,
+            'Second paragraph line.\nThird paragraph line.'
+        ),
+        deletedLines: ['Second paragraph line.', 'Third paragraph line.'],
+    },
+    {
+        name: 'empty text is one blank line',
+        hunk: replaceHunk('replaceTextInSegment', 4, 4, ''),
+        deletedLines: [''],
+    },
+    {
+        name: 'blank line after the last line break is an old line too',
+        hunk: replaceHunk(
+            'replaceTextInFile',
+            7,
+            10,
+            'line e\nkeep 3\nline f\nkeep 4\n'
+        ),
+        deletedLines: ['line e', 'keep 3', 'line f', 'keep 4', ''],
+    },
+    {
+        name: 'two lines for one in a file',
+        hunk: replaceHunk('replaceTextInFile', 6, 6, 'old one\nold two'),
+        deletedLines: ['old one', 'old two'],
+    },
+    {
+        name: 'CRLF is read as a line break',
+        hunk: replaceHunk('replaceTextInFile', 4, 5, 'line c\r\n\r\nline d'),
+        deletedLines: ['line c', '', 'line d'],
+    },
+    {
+        name: 'CRLF at the end keeps its blank old line',
+        hunk: replaceHunk('replaceTextInFile', 3, 3, 'old\r\n'),
+        deletedLines: ['old', ''],
+    },
+])('replace hunk: $name', ({ hunk, deletedLines }) => {
+    const groups = expandGroupsForDisplay(groupHunks([hunk]));
+
+    expect(groups).toHaveLength(1);
+    const [group] = groups;
+    expect(group.hunks).toEqual([hunk]);
+    expect(group.deletedLines).toEqual(deletedLines);
+    // старые строки стоят над первой новой, кнопки после последней новой
+    expect(group.anchorLine).toBe(hunk.startLine);
+    expect(group.addedLineRange).toEqual({
+        startLine: hunk.startLine,
+        endLine: hunk.endLine,
+    });
+    expect(group.controlsAfterLine).toBe(hunk.endLine);
+    expect(resolveControlsLine(group, 20)).toBe(hunk.endLine);
+    expect(group.isCreation).toBe(false);
+});
+
+test('replace hunks of one file merged by the server stay one group each', () => {
+    // сервер слил удаление, вставку и замену в одну замену 7..10, а соседние замены остаются отдельными группами
+    const hunks = [
+        replaceHunk('replaceTextInFile', 2, 2, 'line b', 'da6d05be'),
+        replaceHunk('replaceTextInFile', 4, 5, 'line c\n\nline d', '7257addd'),
+        replaceHunk(
+            'replaceTextInFile',
+            7,
+            10,
+            'line e\nkeep 3\nline f\nkeep 4\n',
+            '600cf653'
+        ),
+    ];
+
+    const groups = expandGroupsForDisplay(groupHunks(hunks));
+
+    expect(groups.map((group) => group.hunks.map((hunk) => hunk.id))).toEqual([
+        ['da6d05be'],
+        ['7257addd'],
+        ['600cf653'],
+    ]);
+    expect(groups.map((group) => group.addedLineRange)).toEqual([
+        { startLine: 2, endLine: 2 },
+        { startLine: 4, endLine: 5 },
+        { startLine: 7, endLine: 10 },
+    ]);
+});
+
+test('replace next to a delete and an add on the same line pairs with neither', () => {
+    // замена первой: как зерно группы она не должна забрать удаление
+    const hunks: Hunk[] = [
+        replaceHunk('replaceTextInFile', 4, 4, 'old', 'replace'),
+        {
+            id: 'delete',
+            type: 'deleteLinesFromFile',
+            fileName: 'notes.txt',
+            startLine: 4,
+            endLine: 4,
+            text: 'gone',
+        },
+        {
+            id: 'add',
+            type: 'addLinesToFile',
+            fileName: 'notes.txt',
+            startLine: 4,
+            endLine: 4,
+            text: 'new',
+        },
+    ];
+
+    const groups = expandGroupsForDisplay(groupHunks(hunks));
+
+    expect(
+        groups.map((group) => group.hunks.map((hunk) => hunk.id).sort()).sort()
+    ).toEqual([['add', 'delete'], ['replace']]);
+});
+
+test('replace inside a new file stays in the group of the new file', () => {
+    const replace = replaceHunk('replaceTextInFile', 1, 2, '');
+    const hunks: Hunk[] = [
+        replace,
+        { id: 'new-file', type: 'addFile', fileName: 'notes.txt' },
+    ];
+
+    const groups = expandGroupsForDisplay(groupHunks(hunks));
+
+    expect(groups).toHaveLength(1);
+    expect(groups[0].hunks.map((hunk) => hunk.id).sort()).toEqual(
+        ['new-file', 'replace'].sort()
+    );
+    expect(groups[0].isNewFile).toBe(true);
+    // файла до агента не было, старым строкам в нём взяться неоткуда
+    expect(groups[0].deletedLines).toEqual([]);
+    expect(getFileHunkEntries(hunks)).toEqual([
+        {
+            fileName: 'notes.txt',
+            state: 'added',
+            hunkIds: groups[0].hunks.map((hunk) => hunk.id),
+        },
+    ]);
+});
+
+test('replace inside a new segment stays in the group of the new segment', () => {
+    const replace = replaceHunk('replaceTextInSegment', 1, 3, '');
+    const hunks: Hunk[] = [
+        replace,
+        { id: 'new-segment', type: 'addSegment', segmentId: 1 },
+    ];
+
+    const groups = expandGroupsForDisplay(groupHunks(hunks));
+
+    expect(groups).toHaveLength(1);
+    expect(groups[0].hunks.map((hunk) => hunk.id).sort()).toEqual(
+        ['new-segment', 'replace'].sort()
+    );
+    expect(groups[0].isNewSegment).toBe(true);
+    expect(groups[0].deletedLines).toEqual([]);
+});
+
+test('replace in another file does not join a new file', () => {
+    const hunks: Hunk[] = [
+        { id: 'new-file', type: 'addFile', fileName: 'other.txt' },
+        replaceHunk('replaceTextInFile', 2, 2, 'line b'),
+    ];
+
+    const groups = groupHunks(hunks);
+
+    expect(groups.map((group) => group.hunks.map((hunk) => hunk.id))).toEqual([
+        ['new-file'],
+        ['replace'],
+    ]);
+});
+
+test('replace in another segment does not join a new segment', () => {
+    const hunks: Hunk[] = [
+        { id: 'new-segment', type: 'addSegment', segmentId: 2 },
+        replaceHunk('replaceTextInSegment', 3, 3, 'Alpha line one.'),
+    ];
+
+    const groups = groupHunks(hunks);
+
+    expect(groups.map((group) => group.hunks.map((hunk) => hunk.id))).toEqual([
+        ['new-segment'],
+        ['replace'],
+    ]);
+});
+
+test('file with only replaced lines is modified in the tree, not deleted', () => {
+    const entries = getFileHunkEntries([
+        replaceHunk('replaceTextInFile', 2, 2, 'line b', 'one'),
+        {
+            ...replaceHunk('replaceTextInFile', 6, 6, 'old one\nold two'),
+            id: 'two',
+            fileName: 'other.txt',
+        },
+    ]);
+
+    expect(entries).toEqual([
+        { fileName: 'notes.txt', state: 'modified', hunkIds: ['one'] },
+        { fileName: 'other.txt', state: 'modified', hunkIds: ['two'] },
+    ]);
+});
+
+// text замены это старые строки: выдать его за содержимое файла значило бы показать текст до правки
+test('replaced text is not taken for the content of a file', () => {
+    expect(
+        getFileContentFromHunks(
+            [replaceHunk('replaceTextInFile', 2, 2, 'line b')],
+            'notes.txt'
+        )
+    ).toBeNull();
 });

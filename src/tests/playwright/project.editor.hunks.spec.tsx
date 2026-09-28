@@ -409,6 +409,129 @@ test('hunk-delete-lines-from-file', async ({ page }) => {
     await expectFullPageHunkSnapshot(page, 'hunk-delete-lines-from-file');
 });
 
+/** Строки редактора сверху вниз: « » обычная, «+» зелёная, «-» призрак старой, [..] кнопки */
+function editorRows(editor: Locator): Promise<string[]> {
+    return editor.locator('.cm-content').evaluate((content) =>
+        [...content.children].flatMap((node) => {
+            if (node.classList.contains('cm-line')) {
+                const mark = node.classList.contains('cm-hunk-added-line')
+                    ? '+'
+                    : ' ';
+                return [`${mark}${node.textContent}`];
+            }
+            if (node.classList.contains('cm-hunk-deleted-wrap')) {
+                // пустая старая строка рисуется пробелом, иначе у неё не было бы высоты
+                return [...node.querySelectorAll('.cm-hunk-deleted-line')].map(
+                    (line) =>
+                        `-${line.textContent === ' ' ? '' : line.textContent}`
+                );
+            }
+            if (node.classList.contains('cm-hunk-controls-host')) {
+                const buttons = [...node.querySelectorAll('button')].map(
+                    (button) => button.textContent
+                );
+                return [`[${buttons.join('|')}]`];
+            }
+            return [];
+        })
+    );
+}
+
+const HUNK_BUTTONS = '[Accept change|Revert change]';
+
+/** Флаг revert в адресе DELETE как он ушёл: false от пропущенного параметра не отличить по includes */
+function recordHunkDeletes(page: Page) {
+    const deletes: { hunkId: string; revert: string | null }[] = [];
+    page.on('request', (request) => {
+        if (request.method() !== 'DELETE') {
+            return;
+        }
+        const url = new URL(request.url());
+        const hunkId = url.pathname.split('/hunk/')[1];
+        if (hunkId) {
+            deletes.push({ hunkId, revert: url.searchParams.get('revert') });
+        }
+    });
+    return deletes;
+}
+
+// формы замены с препрода: диапазон это новые строки, text заменённые старые, "" одна пустая строка
+const SEGMENT_REPLACES = {
+    program: programOf(
+        mdSegment(1, 'intro\nRow one.\n\nRow three.\nomega'),
+        mdSegment(2, 'intro\nFilled line.\nomega')
+    ),
+    hunks: [
+        {
+            id: 'hunk-replace-lines',
+            type: 'replaceTextInSegment',
+            segmentId: 1,
+            startLine: 2,
+            endLine: 4,
+            text: 'Second paragraph line.\nThird paragraph line.',
+        },
+        {
+            id: 'hunk-replace-blank',
+            type: 'replaceTextInSegment',
+            segmentId: 2,
+            startLine: 2,
+            endLine: 2,
+            text: '',
+        },
+    ] satisfies Hunk[],
+};
+
+test('hunk-replace-in-segment-shows-old-lines-above-new', async ({ page }) => {
+    await openProjectWithHunks(page, SEGMENT_REPLACES);
+
+    await expect
+        .poll(() => editorRows(page.locator('#ide-segment-0')))
+        .toEqual([
+            ' intro',
+            '-Second paragraph line.',
+            '-Third paragraph line.',
+            '+Row one.',
+            '+',
+            '+Row three.',
+            HUNK_BUTTONS,
+            ' omega',
+        ]);
+    await expect
+        .poll(() => editorRows(page.locator('#ide-segment-1')))
+        .toEqual([' intro', '-', '+Filled line.', HUNK_BUTTONS, ' omega']);
+    await expect(page.locator('.cm-hunk-deleted-line')).toHaveCount(3);
+    await expect(page.locator('.cm-hunk-added-line')).toHaveCount(4);
+    // одна пара кнопок на замену
+    await expect(page.locator('.cm-hunk-btn--accept')).toHaveCount(2);
+    await expect(page.locator('.cm-hunk-btn--revert')).toHaveCount(2);
+    await expect(page.getByText('Total 2 changes')).toBeVisible();
+});
+
+test('hunk-replace-in-segment-accept-and-revert-send-their-flag', async ({
+    page,
+}) => {
+    const deletes = recordHunkDeletes(page);
+    await openProjectWithHunks(page, SEGMENT_REPLACES);
+
+    await page.locator('#ide-segment-0 .cm-hunk-btn--accept').click();
+    await expect
+        .poll(() => deletes)
+        .toEqual([{ hunkId: 'hunk-replace-lines', revert: 'false' }]);
+    await expect(
+        page.locator('#ide-segment-0 .cm-hunk-deleted-line')
+    ).toHaveCount(0);
+
+    await page.locator('#ide-segment-1 .cm-hunk-btn--revert').click();
+    await expect
+        .poll(() => deletes)
+        .toEqual([
+            { hunkId: 'hunk-replace-lines', revert: 'false' },
+            { hunkId: 'hunk-replace-blank', revert: 'true' },
+        ]);
+    await expect(page.locator('.cm-hunk-deleted-line')).toHaveCount(0);
+    await expect(page.locator('.cm-hunk-added-line')).toHaveCount(0);
+});
+
 test('hunk-global-bar-is-hidden-on-mobile', async ({ page }) => {
     await openProjectWithHunks(page, {
         program: programOf(mdSegment(1, 'existing line\nadded line')),
@@ -577,7 +700,7 @@ interface AgentFileEdit {
 
 function fileHunk(
     id: string,
-    type: 'addLinesToFile' | 'deleteLinesFromFile',
+    type: 'addLinesToFile' | 'deleteLinesFromFile' | 'replaceTextInFile',
     startLine: number,
     endLine: number,
     text: string
@@ -933,4 +1056,157 @@ test('hunk-file-typing-during-reload-keeps-typed-text', async ({ page }) => {
         .poll(() => file.uploads().slice(-1))
         .toEqual([after.replace('intro', 'introXY')]);
     await expect(fileEditorLines(page).first()).toHaveText('introXY');
+});
+
+// файл после двух замен агента: последняя съела пустую строку после завершающего перевода, и файл его потерял
+const REPLACE_FILE_EDIT: AgentFileEdit = {
+    before: [
+        'intro',
+        'line c',
+        '',
+        'line d',
+        'middle',
+        'line e',
+        'keep 3',
+        'line f',
+        'keep 4',
+        '',
+    ].join('\n'),
+    after: [
+        'intro',
+        'line X',
+        'line Y',
+        'middle',
+        'NEW 1',
+        'NEW 2',
+        'NEW 3',
+        'NEW 4',
+    ].join('\n'),
+    hunks: [
+        fileHunk(
+            'hunk-file-replace-para',
+            'replaceTextInFile',
+            2,
+            3,
+            'line c\n\nline d'
+        ),
+        fileHunk(
+            'hunk-file-replace-tail',
+            'replaceTextInFile',
+            5,
+            8,
+            'line e\nkeep 3\nline f\nkeep 4\n'
+        ),
+    ],
+};
+
+const SINGLE_REPLACE_FILE_EDIT: AgentFileEdit = {
+    before: ['intro', 'line c', '', 'line d', 'omega'].join('\n'),
+    after: ['intro', 'line X', 'line Y', 'omega'].join('\n'),
+    hunks: [
+        fileHunk(
+            'hunk-file-replace-single',
+            'replaceTextInFile',
+            2,
+            3,
+            'line c\n\nline d'
+        ),
+    ],
+};
+
+const fileEditor = (page: Page) => page.locator('.text-file-editor-panel');
+
+test('hunk-replace-in-file-shows-old-lines-above-new', async ({ page }) => {
+    await openFileEditedByAgent(page, REPLACE_FILE_EDIT);
+
+    await expect
+        .poll(() => editorRows(fileEditor(page)))
+        .toEqual([
+            ' intro',
+            '-line c',
+            '-',
+            '-line d',
+            '+line X',
+            '+line Y',
+            HUNK_BUTTONS,
+            ' middle',
+            '-line e',
+            '-keep 3',
+            '-line f',
+            '-keep 4',
+            '-',
+            '+NEW 1',
+            '+NEW 2',
+            '+NEW 3',
+            '+NEW 4',
+            HUNK_BUTTONS,
+        ]);
+    await expect(fileEditor(page).locator('.cm-hunk-deleted-line')).toHaveCount(
+        8
+    );
+    await expect(fileEditorAddedLines(page)).toHaveCount(6);
+    await expect(fileEditor(page).locator('.cm-hunk-controls')).toHaveCount(2);
+    // замена это правка файла, а не удаление строк: красной пометки в дереве нет
+    await expect(
+        page.locator('.tree-row-file--hunk-modified', { hasText: AGENT_FILE })
+    ).toBeVisible();
+    await expect(page.locator('.tree-row-file--hunk-deleted')).toHaveCount(0);
+});
+
+test('hunk-replace-in-file-accept-keeps-new-text', async ({ page }) => {
+    const flags = recordHunkDeletes(page);
+    const { file, deletes } = await openFileEditedByAgent(
+        page,
+        SINGLE_REPLACE_FILE_EDIT
+    );
+
+    await clickAndWaitForFileReload(
+        page,
+        file,
+        fileEditor(page).locator('.cm-hunk-btn--accept')
+    );
+
+    await expect(fileEditorLines(page)).toHaveText(
+        SINGLE_REPLACE_FILE_EDIT.after.split('\n')
+    );
+    await expect(fileEditorAddedLines(page)).toHaveCount(0);
+    await expect(fileEditor(page).locator('.cm-hunk-deleted-line')).toHaveCount(
+        0
+    );
+    expect(deletes).toEqual([
+        { hunkId: 'hunk-file-replace-single', revert: false },
+    ]);
+    expect(flags).toEqual([
+        { hunkId: 'hunk-file-replace-single', revert: 'false' },
+    ]);
+    await expect(page.locator('.tree-row-file--has-hunks')).toHaveCount(0);
+});
+
+test('hunk-replace-in-file-revert-restores-old-text', async ({ page }) => {
+    const flags = recordHunkDeletes(page);
+    const { file, deletes } = await openFileEditedByAgent(
+        page,
+        SINGLE_REPLACE_FILE_EDIT
+    );
+
+    await clickAndWaitForFileReload(
+        page,
+        file,
+        fileEditor(page).locator('.cm-hunk-btn--revert')
+    );
+
+    await expect(fileEditorLines(page)).toHaveText(
+        SINGLE_REPLACE_FILE_EDIT.before.split('\n')
+    );
+    await expect(fileEditorAddedLines(page)).toHaveCount(0);
+    await expect(fileEditor(page).locator('.cm-hunk-deleted-line')).toHaveCount(
+        0
+    );
+    expect(deletes).toEqual([
+        { hunkId: 'hunk-file-replace-single', revert: true },
+    ]);
+    expect(flags).toEqual([
+        { hunkId: 'hunk-file-replace-single', revert: 'true' },
+    ]);
+    await expect(page.locator('.tree-row-file--has-hunks')).toHaveCount(0);
 });

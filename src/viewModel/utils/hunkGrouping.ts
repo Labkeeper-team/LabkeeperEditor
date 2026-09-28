@@ -39,10 +39,17 @@ export function hunkTextLines(
     return endsWithLineBreak ? parts.slice(0, -1) : parts;
 }
 
+/** Заменённые строки: text относится к старым строкам, а диапазон к новым, поэтому сверять с ним и срезать \n в конце нельзя */
+function replacedTextLines(text: string): string[] {
+    return text.replace(/\r\n/g, '\n').split('\n');
+}
+
 const isLineAdd = (t: Hunk['type']) =>
     t === 'addLinesToFile' || t === 'addLinesToSegment';
 const isLineDelete = (t: Hunk['type']) =>
     t === 'deleteLinesFromFile' || t === 'deleteLinesFromSegment';
+const isReplace = (t: Hunk['type']) =>
+    t === 'replaceTextInFile' || t === 'replaceTextInSegment';
 const isCreation = (t: Hunk['type']) => t === 'addFile' || t === 'addSegment';
 
 function targetKey(hunk: Hunk): string | null {
@@ -80,12 +87,17 @@ function canPairReplace(deleteHunk: Hunk, addHunk: Hunk): boolean {
 }
 
 function canPairCreation(creation: Hunk, addition: Hunk): boolean {
-    if (creation.type === 'addFile' && addition.type === 'addLinesToFile') {
+    if (
+        creation.type === 'addFile' &&
+        (addition.type === 'addLinesToFile' ||
+            addition.type === 'replaceTextInFile')
+    ) {
         return creation.fileName === addition.fileName;
     }
     if (
         creation.type === 'addSegment' &&
-        addition.type === 'addLinesToSegment'
+        (addition.type === 'addLinesToSegment' ||
+            addition.type === 'replaceTextInSegment')
     ) {
         return creation.segmentId === addition.segmentId;
     }
@@ -109,6 +121,7 @@ function buildGroup(hunks: Hunk[]): HunkGroup | null {
     let isWholeSegment = false;
     let isNewFile = false;
     let isNewSegment = false;
+    const inCreation = hunks.some((hunk) => isCreation(hunk.type));
 
     for (const hunk of hunks) {
         if (isCreation(hunk.type)) {
@@ -133,7 +146,13 @@ function buildGroup(hunks: Hunk[]): HunkGroup | null {
             }
             continue;
         }
-        if (isLineAdd(hunk.type)) {
+        if (isReplace(hunk.type)) {
+            // "" это одна пустая строка, поэтому != null; в новом файле или сегменте старых строк не было
+            if (hunk.text != null && !inCreation) {
+                deletedLines.push(...replacedTextLines(hunk.text));
+            }
+        }
+        if (isLineAdd(hunk.type) || isReplace(hunk.type)) {
             if (hunk.startLine != null) {
                 anchorLine = hunk.startLine;
                 addedStart =
@@ -429,8 +448,11 @@ export function buildFileHunkEntries(groups: HunkGroup[]): FileHunkEntry[] {
         .filter((group) => group.target.kind === 'file')
         .map((group) => {
             const hasAddFile = group.hunks.some((h) => h.type === 'addFile');
+            // замена кладёт и старые строки, и новые: это правка файла, а не удаление
             const hasLineAdd = group.hunks.some(
-                (h) => h.type === 'addLinesToFile'
+                (h) =>
+                    h.type === 'addLinesToFile' ||
+                    h.type === 'replaceTextInFile'
             );
             const hasLineDelete = group.deletedLines.length > 0;
 

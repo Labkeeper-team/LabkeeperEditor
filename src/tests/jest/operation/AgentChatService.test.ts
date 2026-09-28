@@ -1843,6 +1843,37 @@ test('unauthorized-agent-stores-hunks', async () => {
     expect(ctx.repository.ideViewModelRepository.hunks()).toEqual([hunk]);
 });
 
+// финал гостя с препрода 28.09: замена приходит одним hunk вместе с программой
+test('guest-replace-from-the-final-frame-is-stored-and-shown-in-the-editor', async () => {
+    const ctx = setup(false);
+    ctx.repository.projectViewModelRepository.setCurrentProgram(threeSegments);
+    const replace = {
+        id: 'replace',
+        type: 'replaceTextInSegment',
+        fileName: null,
+        segmentId: 1,
+        startLine: 3,
+        endLine: 3,
+        text: 'Alpha line one.',
+    } as unknown as Hunk;
+    ctx.repository.chatViewModelRepository.setInput('замени строку');
+    await ctx.agentChatService.onPromptSubmit();
+
+    await emit(ctx, {
+        kind: 'finished',
+        message: 'готово',
+        stopReason: 'Done',
+        program: threeSegments,
+        hunks: [replace],
+    });
+
+    expect(ctx.repository.ideViewModelRepository.hunks()).toEqual([replace]);
+    // новые строки на месте, редактор ведём к ним
+    expect(
+        ctx.repository.ideViewModelRepository.editorNavigationTarget()
+    ).toEqual({ segmentIndex: 0, line: 3, focus: false });
+});
+
 /**
  * Согласие на трансграничную передачу данных в DeepSeek.
  * Пока оно не дано, запрос не должен уходить ни у вошедшего, ни у гостя

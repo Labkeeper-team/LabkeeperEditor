@@ -25,7 +25,10 @@ const EXTRA_STOP_KEYS = [
 ];
 
 const WRITE_TOOLS = AGENT_TOOL_NAMES.filter(
-    (name) => name.startsWith('add_') || name.startsWith('delete_')
+    (name) =>
+        name.startsWith('add_') ||
+        name.startsWith('delete_') ||
+        name.startsWith('replace_')
 );
 
 test.each(DICTIONARIES)(
@@ -57,6 +60,8 @@ test.each(DICTIONARIES)(
             'add_file',
             'add_lines_to_file',
             'delete_lines_from_file',
+            'replace_text_in_segment',
+            'replace_text_in_file',
             ...WRITE_TOOLS.map((name) => `${name}_plain`),
         ];
         for (const key of keys) {
@@ -70,7 +75,11 @@ test.each(DICTIONARIES)(
     (_name, dictionary) => {
         const events = dictionary.agent_chat.event as Record<string, string>;
         // строка без объекта не должна обрываться на предлоге: для этого есть _plain
-        for (const key of ['add_segment', 'add_lines_to_segment']) {
+        for (const key of [
+            'add_segment',
+            'add_lines_to_segment',
+            'replace_text_in_segment',
+        ]) {
             expect(events[key]).toContain('{segment}');
         }
     }

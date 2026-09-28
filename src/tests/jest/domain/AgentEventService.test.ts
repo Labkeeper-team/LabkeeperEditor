@@ -41,6 +41,8 @@ const ALL_HUNK_TYPES: HunkType[] = [
     'addFile',
     'addLinesToFile',
     'deleteLinesFromFile',
+    'replaceTextInSegment',
+    'replaceTextInFile',
 ];
 
 function hunkOf(type: HunkType, rest: Partial<Hunk> = {}): Hunk {
@@ -276,6 +278,8 @@ test.each([
     ['addFile', 'add_file'],
     ['addLinesToFile', 'add_lines_to_file'],
     ['deleteLinesFromFile', 'delete_lines_from_file'],
+    ['replaceTextInSegment', 'replace_text_in_segment'],
+    ['replaceTextInFile', 'replace_text_in_file'],
 ] as const)('describe-hunk-%s-uses-label-%s', (type, labelKey) => {
     const service = new AgentEventService();
 
@@ -346,6 +350,23 @@ test('lines-of-an-adding-hunk-are-a-range', () => {
     ).toBe('#L1-12');
 });
 
+// диапазон замены это новые строки, их и показываем, как у вставки
+test.each([['replaceTextInSegment'], ['replaceTextInFile']] as const)(
+    'lines-of-%s-are-a-range-of-the-new-lines',
+    (type) => {
+        const service = new AgentEventService();
+
+        expect(
+            service.describeHunk(hunkOf(type, { startLine: 5, endLine: 7 }))
+                .lines
+        ).toBe('#L5-7');
+        expect(
+            service.describeHunk(hunkOf(type, { startLine: 3, endLine: 3 }))
+                .lines
+        ).toBe('#L3');
+    }
+);
+
 test.each([['deleteLinesFromSegment'], ['deleteLinesFromFile']] as const)(
     'lines-of-%s-are-enumerated',
     (type) => {
@@ -366,7 +387,7 @@ test('lines-are-absent-when-the-hunk-has-no-start-line', () => {
     ).toBeUndefined();
 });
 
-test.each([['addFile'], ['addLinesToFile']] as const)(
+test.each([['addFile'], ['addLinesToFile'], ['replaceTextInFile']] as const)(
     'navigation-target-of-%s-points-at-the-file-without-focus',
     (type) => {
         const service = new AgentEventService();
@@ -384,18 +405,17 @@ test.each([['addFile'], ['addLinesToFile']] as const)(
     }
 );
 
-test.each([['addSegment'], ['addLinesToSegment']] as const)(
-    'navigation-target-of-%s-shifts-segment-id-to-index',
-    (type) => {
-        const service = new AgentEventService();
+test.each([
+    ['addSegment'],
+    ['addLinesToSegment'],
+    ['replaceTextInSegment'],
+] as const)('navigation-target-of-%s-shifts-segment-id-to-index', (type) => {
+    const service = new AgentEventService();
 
-        expect(
-            service.navigationTarget(
-                hunkOf(type, { segmentId: 3, startLine: 7 })
-            )
-        ).toEqual({ segmentIndex: 2, line: 7, focus: false });
-    }
-);
+    expect(
+        service.navigationTarget(hunkOf(type, { segmentId: 3, startLine: 7 }))
+    ).toEqual({ segmentIndex: 2, line: 7, focus: false });
+});
 
 test.each([['deleteLinesFromSegment'], ['deleteLinesFromFile']] as const)(
     'navigation-target-of-%s-is-absent',
@@ -487,6 +507,7 @@ test.each([
     ['add_segment'],
     ['add_lines_to_segment'],
     ['delete_lines_from_segment'],
+    ['replace_text_in_segment'],
 ] as const)(
     'reload-scope-of-%s-asks-for-the-program-even-without-hunk-changes',
     (tool) => {
@@ -503,6 +524,7 @@ test.each([
     ['add_file'],
     ['add_lines_to_file'],
     ['delete_lines_from_file'],
+    ['replace_text_in_file'],
 ] as const)(
     'reload-scope-of-%s-asks-for-the-files-even-without-hunk-changes',
     (tool) => {
@@ -531,6 +553,7 @@ test.each([
     ['addSegment'],
     ['addLinesToSegment'],
     ['deleteLinesFromSegment'],
+    ['replaceTextInSegment'],
 ] as const)('reload-scope-of-%s-asks-for-the-program-only', (type) => {
     const service = new AgentEventService();
 
@@ -542,18 +565,131 @@ test.each([
     });
 });
 
-test.each([['addFile'], ['addLinesToFile'], ['deleteLinesFromFile']] as const)(
-    'reload-scope-of-%s-asks-for-the-files-only',
-    (type) => {
-        const service = new AgentEventService();
+test.each([
+    ['addFile'],
+    ['addLinesToFile'],
+    ['deleteLinesFromFile'],
+    ['replaceTextInFile'],
+] as const)('reload-scope-of-%s-asks-for-the-files-only', (type) => {
+    const service = new AgentEventService();
 
-        expect(
-            service.reloadScope(READING_TOOL, [
-                hunkOf(type, { fileName: 'a.tex' }),
-            ])
-        ).toEqual({ program: false, files: true });
-    }
-);
+    expect(
+        service.reloadScope(READING_TOOL, [hunkOf(type, { fileName: 'a.tex' })])
+    ).toEqual({ program: false, files: true });
+});
+
+/** hunks с препрода как есть: у чужой цели явный null */
+const serverHunk = (hunk: Record<string, unknown>) => hunk as unknown as Hunk;
+
+// соседние кадры препрода 28.09 (бэкенд 4.10.1.886): сервер слил удаление и вставку в файле в одну замену под id удаления
+const HUNKS_BEFORE_MERGE = [
+    serverHunk({
+        id: '600cf653-900d-404c-a262-b82cf56b406d',
+        type: 'deleteLinesFromFile',
+        fileName: 'notes.txt',
+        segmentId: null,
+        startLine: 8,
+        endLine: 8,
+        text: 'keep 3',
+    }),
+    serverHunk({
+        id: 'f31910a5-fb56-440e-b8fa-1836c9644ae5',
+        type: 'addLinesToFile',
+        fileName: 'notes.txt',
+        segmentId: null,
+        startLine: 11,
+        endLine: 11,
+        text: 'line added',
+    }),
+    serverHunk({
+        id: 'e092bf5d-1efa-4668-a073-75498a246562',
+        type: 'replaceTextInSegment',
+        fileName: null,
+        segmentId: 1,
+        startLine: 5,
+        endLine: 7,
+        text: 'Second paragraph line.\nThird paragraph line.\n',
+    }),
+    serverHunk({
+        id: 'bd53e77d-0bc9-478d-ae8b-45789a01b46c',
+        type: 'addLinesToSegment',
+        fileName: null,
+        segmentId: 1,
+        startLine: 11,
+        endLine: 11,
+        text: 'Added in segment.',
+    }),
+];
+
+const HUNKS_AFTER_MERGE = [
+    serverHunk({
+        id: '600cf653-900d-404c-a262-b82cf56b406d',
+        type: 'replaceTextInFile',
+        fileName: 'notes.txt',
+        segmentId: null,
+        startLine: 7,
+        endLine: 10,
+        text: 'line e\nkeep 3\nline f\nkeep 4\n',
+    }),
+    serverHunk({
+        id: 'e092bf5d-1efa-4668-a073-75498a246562',
+        type: 'replaceTextInSegment',
+        fileName: null,
+        segmentId: 1,
+        startLine: 5,
+        endLine: 7,
+        text: 'Second paragraph line.\nThird paragraph line.\n\nDelete me line.',
+    }),
+    // строку выше удалили, hunk только сдвинулся
+    serverHunk({
+        id: 'bd53e77d-0bc9-478d-ae8b-45789a01b46c',
+        type: 'addLinesToSegment',
+        fileName: null,
+        segmentId: 1,
+        startLine: 10,
+        endLine: 10,
+        text: 'Added in segment.',
+    }),
+];
+
+test('merged-replaces-from-preprod-are-named-by-the-hunk-not-by-the-tool', () => {
+    const service = new AgentEventService();
+
+    const fresh = service.changedHunks(HUNKS_BEFORE_MERGE, HUNKS_AFTER_MERGE);
+
+    expect(fresh.map((hunk) => hunk.id)).toEqual([
+        '600cf653-900d-404c-a262-b82cf56b406d',
+        'e092bf5d-1efa-4668-a073-75498a246562',
+    ]);
+    expect(
+        service.describeToolCall('delete_lines_from_segment', fresh)
+    ).toMatchObject([
+        {
+            kind: 'event',
+            labelKey: 'replace_text_in_file',
+            file: 'notes.txt',
+            lines: '#L7-10',
+            target: {
+                segmentIndex: -1,
+                line: 7,
+                file: 'notes.txt',
+                focus: false,
+            },
+        },
+        {
+            kind: 'event',
+            labelKey: 'replace_text_in_segment',
+            segmentId: 1,
+            lines: '#L5-7',
+            target: { segmentIndex: 0, line: 5, focus: false },
+        },
+    ]);
+    // инструмент сегментный, но замена пришла и в файл: перечитать надо обе стороны
+    expect(service.reloadScope('delete_lines_from_segment', fresh)).toEqual({
+        program: true,
+        files: true,
+    });
+});
 
 test('reload-scope-of-a-mixed-batch-asks-for-both', () => {
     const service = new AgentEventService();

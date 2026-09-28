@@ -200,12 +200,16 @@ export interface Translations {
             add_file: string;
             add_lines_to_file: string;
             delete_lines_from_file: string;
+            replace_text_in_segment: string;
+            replace_text_in_file: string;
             add_segment_plain: string;
             add_lines_to_segment_plain: string;
             delete_lines_from_segment_plain: string;
             add_file_plain: string;
             add_lines_to_file_plain: string;
             delete_lines_from_file_plain: string;
+            replace_text_in_segment_plain: string;
+            replace_text_in_file_plain: string;
             list_workspace: string;
             read_segment: string;
             read_segments: string;

@@ -59,9 +59,11 @@ export const AGENT_TOOL_NAMES = [
     'add_segment',
     'add_lines_to_segment',
     'delete_lines_from_segment',
+    'replace_text_in_segment',
     'add_file',
     'add_lines_to_file',
     'delete_lines_from_file',
+    'replace_text_in_file',
     'done',
 ] as const;
 
