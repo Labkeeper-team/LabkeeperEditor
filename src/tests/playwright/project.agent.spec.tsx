@@ -139,6 +139,7 @@ test('agent-start-sends-prompt-and-settings', async ({ page }) => {
             prompt: 'перепиши введение',
             numberIterations: 1000,
             maxTokens: 100000,
+            compilationAllowed: true,
         },
     ]);
 });

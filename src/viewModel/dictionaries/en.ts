@@ -195,6 +195,10 @@ export const en: Translations = {
             'How many tokens the agent may spend on a single model call. A larger context gives a better answer and costs more',
         max_iterations_hint:
             'How many steps the agent takes before it stops. More steps handle harder tasks and cost more',
+        compilation: 'Compilation',
+        compilation_allowed: 'Allow the agent to compile',
+        compilation_allowed_hint:
+            'The agent can build the document to check its changes. After a run with a build, the result opens',
         settings: 'Agent settings',
         settings_close: 'Close settings',
         editing_locked:

@@ -107,6 +107,7 @@ test('agent-start-sends-prompt-and-settings', async () => {
         prompt: 'сделай таблицу',
         numberIterations: 500,
         maxTokens: 100000,
+        compilationAllowed: true,
     });
     // поле очищается сразу, запрос уходит в ленту
     expect(ctx.repository.chatViewModelRepository.input()).toBe('');
@@ -177,6 +178,98 @@ test('agent-settings-stay-editable-for-an-authorized-user', () => {
         Events.EVENT_AUTH_MODAL_OPENED,
         expect.anything()
     );
+});
+
+test('agent-start-sends-compilation-turned-off-in-settings', async () => {
+    const ctx = setup();
+    ctx.agentChatService.onCompilationAllowedChanged(false);
+    ctx.repository.chatViewModelRepository.setInput('сделай таблицу');
+
+    await ctx.agentChatService.onPromptSubmit();
+
+    expect(ctx.agentSocketState.started).toEqual({
+        prompt: 'сделай таблицу',
+        numberIterations: 500,
+        maxTokens: 100000,
+        compilationAllowed: false,
+    });
+});
+
+test('guest-agent-start-sends-the-saved-compilation-setting', async () => {
+    const ctx = setup(false);
+    // выбор сделан до выхода из аккаунта и лежит в браузере, как и итерации
+    ctx.repository.persistenceViewModelRepository.setAgentCompilationAllowed(
+        false
+    );
+    ctx.repository.chatViewModelRepository.setInput('сделай');
+
+    await ctx.agentChatService.onPromptSubmit();
+
+    expect(ctx.agentSocketState.program).not.toBeNull();
+    expect(ctx.agentSocketState.started).toMatchObject({
+        compilationAllowed: false,
+    });
+});
+
+test('agent-settings-compilation-offers-login-to-a-guest', () => {
+    const ctx = setup(false);
+    const onEvent = jest.spyOn(ctx.observerService, 'onEvent');
+
+    ctx.agentChatService.onCompilationAllowedChanged(false);
+
+    expect(ctx.repository.authViewModelRepository.currentView()).toBe('login');
+    expect(
+        ctx.repository.persistenceViewModelRepository.agentCompilationAllowed()
+    ).toBe(true);
+    expect(onEvent).toHaveBeenCalledWith(
+        Events.EVENT_AUTH_MODAL_OPENED,
+        expect.objectContaining({ source: 'agent_settings' })
+    );
+    expect(onEvent).not.toHaveBeenCalledWith(
+        Events.EVENT_AGENT_SETTINGS_CHANGED,
+        expect.anything()
+    );
+});
+
+test('agent-settings-compilation-turns-off-and-back-on-for-an-authorized-user', () => {
+    const ctx = setup();
+    const onEvent = jest.spyOn(ctx.observerService, 'onEvent');
+    const allowed = () =>
+        ctx.repository.persistenceViewModelRepository.agentCompilationAllowed();
+
+    ctx.agentChatService.onCompilationAllowedChanged(false);
+    expect(allowed()).toBe(false);
+    ctx.agentChatService.onCompilationAllowedChanged(true);
+    expect(allowed()).toBe(true);
+
+    expect(ctx.repository.authViewModelRepository.currentView()).toBe('closed');
+    expect(
+        onEvent.mock.calls
+            .filter(([event]) => event === Events.EVENT_AGENT_SETTINGS_CHANGED)
+            .map(([, properties]) => [properties?.setting, properties?.value])
+    ).toEqual([
+        ['compilation_allowed', false],
+        ['compilation_allowed', true],
+    ]);
+});
+
+test('agent-analytics-tells-whether-compilation-is-allowed', async () => {
+    const ctx = setup();
+    ctx.agentChatService.onCompilationAllowedChanged(false);
+    const onEvent = jest.spyOn(ctx.observerService, 'onEvent');
+    ctx.repository.chatViewModelRepository.setInput('сделай');
+
+    await ctx.agentChatService.onPromptSubmit();
+
+    for (const event of [
+        Events.EVENT_AGENT_PROMPT_SUBMITTED,
+        Events.EVENT_AGENT_STARTED,
+    ]) {
+        expect(onEvent).toHaveBeenCalledWith(
+            event,
+            expect.objectContaining({ compilation_allowed: false })
+        );
+    }
 });
 
 test('agent-tool-call-describes-fresh-hunk', async () => {

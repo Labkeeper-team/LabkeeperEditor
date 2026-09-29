@@ -262,6 +262,7 @@ class MockViewModelRepositoryState {
     pendingHunkIds: string[] = [];
     agentMaxTokens: number = AGENT_DEFAULT_MAX_TOKENS;
     agentIterations: number = AGENT_DEFAULT_ITERATIONS;
+    agentCompilationAllowed: boolean = true;
     crossBorderConsentAcceptedLocally: boolean = false;
     chatMessages: ChatMessage[] = [];
     chatNextMessageId: number = 1;
@@ -472,10 +473,14 @@ export const mockViewModelState = (): MockViewModelRepository => {
                 mockViewModelState.lastOpenedProjectUuid,
             agentMaxTokens: () => mockViewModelState.agentMaxTokens,
             agentIterations: () => mockViewModelState.agentIterations,
+            agentCompilationAllowed: () =>
+                mockViewModelState.agentCompilationAllowed,
             crossBorderConsentAcceptedLocally: () =>
                 mockViewModelState.crossBorderConsentAcceptedLocally,
             setAgentMaxTokens: (v) => (mockViewModelState.agentMaxTokens = v),
             setAgentIterations: (v) => (mockViewModelState.agentIterations = v),
+            setAgentCompilationAllowed: (v) =>
+                (mockViewModelState.agentCompilationAllowed = v),
             setCrossBorderConsentAcceptedLocally: (v) =>
                 (mockViewModelState.crossBorderConsentAcceptedLocally = v),
             setLastOpenedProjectUuid: (uuid) =>
@@ -849,11 +854,13 @@ export interface PersistenceViewModelRepository {
     lastOpenedProjectUuid: () => string | undefined;
     agentMaxTokens: () => number;
     agentIterations: () => number;
+    agentCompilationAllowed: () => boolean;
     crossBorderConsentAcceptedLocally: () => boolean;
 
     setCrossBorderConsentAcceptedLocally: (value: boolean) => void;
     setAgentMaxTokens: (value: number) => void;
     setAgentIterations: (value: number) => void;
+    setAgentCompilationAllowed: (value: boolean) => void;
     setLastOpenedProjectUuid: (uuid: string | undefined) => void;
     setLanguage: (language: Language) => void;
     setInstructionExpanded: (instructionExpanded: boolean) => void;

@@ -672,6 +672,37 @@ body.agent-chat-resizing {
     color: $gray-20;
 }
 
+.agent-settings__check {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 0;
+    font-size: 14px;
+    line-height: 18px;
+    color: $gray-10;
+    cursor: pointer;
+
+    input {
+        margin: 1px 0 0;
+        accent-color: $blue-10;
+        // сафари на айфоне ужимает чекбокс до нуля в flex-строке
+        flex: none;
+        width: 16px;
+        height: 16px;
+        cursor: inherit;
+    }
+
+    span {
+        min-width: 0;
+    }
+
+    // во время прогона подпись гаснет вместе с галкой, как значения переключателя выше
+    &--disabled {
+        cursor: default;
+        opacity: 0.6;
+    }
+}
+
 // пальцем в узкие кнопки переключателя легко промахнуться
 @media (pointer: coarse) {
     .agent-settings__panel .segmented-control__item {
@@ -683,6 +714,11 @@ body.agent-chat-resizing {
     .agent-settings__close {
         width: 40px;
         height: 40px;
+    }
+
+    // по строке галки попадают пальцем, она не должна быть мельче кнопок переключателя
+    .agent-settings__check {
+        padding: 6px 0;
     }
 }
 

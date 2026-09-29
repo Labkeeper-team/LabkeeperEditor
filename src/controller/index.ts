@@ -971,6 +971,15 @@ export class Controller {
         }
     );
 
+    onAgentCompilationAllowedChangedRequest = createAsyncThunk(
+        'onAgentCompilationAllowedChanged',
+        async ({ value }: { value: boolean }) => {
+            await this.wrapper('onAgentCompilationAllowedChanged', () =>
+                this.agentChatService.onCompilationAllowedChanged(value)
+            );
+        }
+    );
+
     onClearChatHistoryRequest = createAsyncThunk(
         'onClearChatHistory',
         async () => {

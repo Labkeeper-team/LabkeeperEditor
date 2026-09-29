@@ -148,6 +148,8 @@ interface PersistenceState {
     /** Настройки агента переживают перезагрузку, история чата — нет */
     agentMaxTokens: number;
     agentIterations: number;
+    /** Галка компиляции агентом; срез, сохранённый до неё, получит true из начального состояния */
+    agentCompilationAllowed: boolean;
     /**
      * Согласие на трансграничную передачу, данное до входа в аккаунт.
      * После входа уезжает на сервер, чтобы не спрашивать второй раз
@@ -220,6 +222,7 @@ export const persistenceInitialState: PersistenceState = {
     lastOpenedProjectUuid: undefined,
     agentMaxTokens: AGENT_DEFAULT_MAX_TOKENS,
     agentIterations: AGENT_DEFAULT_ITERATIONS,
+    agentCompilationAllowed: true,
     crossBorderConsentAcceptedLocally: false,
     agentPromptHeight: null,
 };

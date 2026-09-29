@@ -1,4 +1,7 @@
-import type { PersistedState } from 'redux-persist';
+import { configureStore } from '@reduxjs/toolkit';
+import { persistStore, type PersistedState } from 'redux-persist';
+import { createRootReducer } from '../../view/store/reducers';
+import { setAgentCompilationAllowed } from '../../view/store/slices/persistence';
 import {
     PERSISTENCE_VERSION,
     migratePersistence,
@@ -185,4 +188,87 @@ test('persistence-migrate-leaves-a-fresh-browser-to-initial-state', async () => 
     await expect(
         migratePersistence(undefined, PERSISTENCE_VERSION)
     ).resolves.toBeUndefined();
+});
+
+// Галка компиляции появилась без подъёма версии: сохранённый срез без неё берёт значение из начального состояния
+
+/** Так redux-persist кладёт срез в localStorage: каждое поле отдельной JSON-строкой */
+const seedSlice = (fields: Record<string, unknown>) =>
+    window.localStorage.setItem(
+        'persist:PERSISTENCE',
+        JSON.stringify(
+            Object.fromEntries(
+                Object.entries(fields).map(([key, value]) => [
+                    key,
+                    JSON.stringify(value),
+                ])
+            )
+        )
+    );
+
+/** Стор собирается как в приложении и ждёт, пока срез поднимется из localStorage */
+const rehydratedStore = async () => {
+    const store = configureStore({
+        reducer: createRootReducer(),
+        middleware: (getDefault) => getDefault({ serializableCheck: false }),
+    });
+    const persistor = persistStore(store);
+    await new Promise<void>((resolve) => {
+        const check = () => {
+            if (persistor.getState().bootstrapped) {
+                resolve();
+            }
+        };
+        persistor.subscribe(check);
+        check();
+    });
+    return { store, persistor };
+};
+
+const rehydratedPersistence = async () => {
+    const { store, persistor } = await rehydratedStore();
+    persistor.pause();
+    return store.getState().persistence;
+};
+
+afterEach(() => window.localStorage.clear());
+
+test('persistence-rehydrate-allows-compilation-for-a-slice-saved-without-it', async () => {
+    // версия 2 лежит у всех, кто уже заходил: выбранные итерации и контекст трогать нельзя
+    seedSlice({
+        agentMaxTokens: 200000,
+        agentIterations: 1000,
+        _persist: { version: 2, rehydrated: true },
+    });
+
+    const persistence = await rehydratedPersistence();
+
+    expect(persistence.agentCompilationAllowed).toBe(true);
+    expect(persistence.agentIterations).toBe(1000);
+    expect(persistence.agentMaxTokens).toBe(200000);
+});
+
+test('persistence-rehydrate-allows-compilation-for-a-slice-older-than-the-migration', async () => {
+    seedSlice({
+        agentMaxTokens: 10000,
+        agentIterations: 5,
+        _persist: OLD_PERSIST,
+    });
+
+    const persistence = await rehydratedPersistence();
+
+    expect(persistence.agentCompilationAllowed).toBe(true);
+    expect(persistence.agentIterations).toBe(500);
+});
+
+test('persistence-keeps-compilation-turned-off-after-a-reload', async () => {
+    const before = await rehydratedStore();
+    before.store.dispatch(setAgentCompilationAllowed(false));
+    // срез пишется в localStorage по таймеру, flush дописывает его сразу
+    await before.persistor.flush();
+    before.persistor.pause();
+
+    const persistence = await rehydratedPersistence();
+
+    expect(persistence.agentCompilationAllowed).toBe(false);
 });
