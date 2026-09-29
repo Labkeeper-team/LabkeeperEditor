@@ -33,10 +33,12 @@ describe('OpenPanelService', () => {
         jest.clearAllMocks();
         track.mockResolvedValue(undefined);
         window.localStorage.removeItem(ANALYTICS_DISABLED_STORAGE_KEY);
+        window.sessionStorage.clear();
     });
 
     afterEach(() => {
         window.localStorage.removeItem(ANALYTICS_DISABLED_STORAGE_KEY);
+        window.sessionStorage.clear();
     });
 
     test('trackSentryEvent sends event id and sentry url', () => {

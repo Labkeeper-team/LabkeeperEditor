@@ -60,6 +60,7 @@ const lastIdentifyPayload = () => {
 
 beforeEach(async () => {
     window.localStorage.clear();
+    window.sessionStorage.clear();
     jest.resetModules();
     jest.clearAllMocks();
     track.mockResolvedValue(undefined);
@@ -79,6 +80,7 @@ beforeEach(async () => {
 afterEach(() => {
     jest.useRealTimers();
     window.localStorage.clear();
+    window.sessionStorage.clear();
 });
 
 test('guest-gets-the-header-value-before-analytics-answers', async () => {
@@ -230,6 +232,98 @@ test('a-remembered-flag-does-not-start-a-session', async () => {
     expect(OpenPanel).not.toHaveBeenCalled();
     expect(sessionStartCalls()).toHaveLength(0);
     expect(session.getSessionId()).toBeUndefined();
+});
+
+test('a-guest-from-the-landing-keeps-the-profile-and-skips-a-second-start', async () => {
+    window.sessionStorage.setItem(
+        session.OPENPANEL_PROFILE_STORAGE_KEY,
+        'landingprofile'
+    );
+    window.sessionStorage.setItem(session.OPENPANEL_SESSION_STARTED_KEY, '1');
+    window.sessionStorage.setItem(
+        session.OPENPANEL_FIRST_NAME_STORAGE_KEY,
+        'anonymous000042'
+    );
+    const service = new openpanel.OpenPanelService();
+
+    await service.init();
+
+    expect(session.getSessionId()).toBe('landingprofile');
+    expect(sessionStartCalls()).toHaveLength(0);
+    expect(lastIdentifyPayload()).toEqual({
+        profileId: 'landingprofile',
+        firstName: 'anonymous000042',
+    });
+});
+
+test('an-authorized-visit-still-starts-a-session-after-the-landing', async () => {
+    window.sessionStorage.setItem(session.OPENPANEL_SESSION_STARTED_KEY, '1');
+    window.sessionStorage.setItem(
+        session.OPENPANEL_PROFILE_STORAGE_KEY,
+        'landingprofile'
+    );
+    const service = new openpanel.OpenPanelService();
+
+    await service.init('user-1');
+
+    expect(sessionStartCalls()).toHaveLength(1);
+    expect(lastIdentifyPayload()).toEqual({
+        profileId: 'user-1',
+        firstName: 'useruser-1',
+    });
+});
+
+test('campaign-properties-from-the-landing-stick-to-the-guest-profile', async () => {
+    window.sessionStorage.setItem(
+        session.OPENPANEL_ATTRIBUTION_STORAGE_KEY,
+        JSON.stringify({
+            utm_campaign: 'spring',
+            yclid: 'click-1',
+            ignored: 'no',
+        })
+    );
+    const service = new openpanel.OpenPanelService();
+
+    await service.init();
+
+    const { OpenPanel } = jest.requireMock('@openpanel/web') as {
+        OpenPanel: jest.Mock;
+    };
+    const setGlobalProperties = OpenPanel.mock.results[0].value
+        .setGlobalProperties as jest.Mock;
+
+    expect(setGlobalProperties).toHaveBeenCalledWith(
+        expect.objectContaining({
+            utm_campaign: 'spring',
+            yclid: 'click-1',
+        })
+    );
+    expect(setGlobalProperties.mock.calls[0][0]).not.toHaveProperty('ignored');
+    expect(lastIdentifyPayload()).toEqual(
+        expect.objectContaining({
+            profileId: session.getSessionId(),
+            properties: {
+                utm_campaign: 'spring',
+                yclid: 'click-1',
+            },
+        })
+    );
+});
+
+test('campaign-properties-from-the-landing-stick-to-the-signed-in-profile', async () => {
+    window.sessionStorage.setItem(
+        session.OPENPANEL_ATTRIBUTION_STORAGE_KEY,
+        JSON.stringify({ utm_source: 'yandex', utm_campaign: 'spring' })
+    );
+    const service = new openpanel.OpenPanelService();
+
+    await service.init('111');
+
+    expect(lastIdentifyPayload()).toEqual({
+        profileId: '111',
+        firstName: 'user111',
+        properties: { utm_source: 'yandex', utm_campaign: 'spring' },
+    });
 });
 
 test('logout-drops-the-id-of-the-user-who-left', async () => {

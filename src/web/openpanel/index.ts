@@ -15,17 +15,15 @@ import {
     adoptAnalyticsSessionId,
     createGuestSessionId,
     getSessionId,
+    landingSessionAlreadyStarted,
+    readOpenPanelAttribution,
+    readOrCreateGuestDisplayName,
     resetSessionIdOnLogout,
 } from '../session.ts';
 
 const SESSION_TIMEOUT_MS = 2000;
 const EDITOR_EVENT_PREFIX = '[E] ';
 export { ANALYTICS_DISABLED_STORAGE_KEY } from '../analyticsFlag.ts';
-
-function anonymousDisplayName(): string {
-    const suffix = crypto.getRandomValues(new Uint32Array(1))[0] % 1_000_000;
-    return `anonymous${String(suffix).padStart(6, '0')}`;
-}
 
 function authenticatedDisplayName(userId: string): string {
     return `user${userId}`;
@@ -48,15 +46,20 @@ export class OpenPanelService implements ObserverService {
         // дальнейшие события уже несут profileId, а гость сразу получает значение заголовка
         const profileId = userId ?? createGuestSessionId();
         this.currentProfileId = profileId;
-        void this.op.identify({ profileId });
+        const attribution = readOpenPanelAttribution();
+        void this.op.identify({
+            profileId,
+            ...(attribution ? { properties: attribution } : {}),
+        });
         if (!this.starting) {
             this.starting = this.startSession(profileId, userId);
         } else if (userId) {
             // вход мог прийти, пока первая сессия ещё в полёте: представляем пользователя после неё
             this.starting = this.starting.then(() =>
-                this.identify(userId, {
-                    firstName: authenticatedDisplayName(userId),
-                })
+                this.identify(
+                    userId,
+                    attributionIdentifyOptions(authenticatedDisplayName(userId))
+                )
             );
         }
         await this.starting;
@@ -135,6 +138,7 @@ export class OpenPanelService implements ObserverService {
         // SDK кладёт document.referrer во все события, а после перехода с адреса e2e там токен обхода капчи
         this.op.setGlobalProperties({
             __referrer: scrubCaptcha(document.referrer),
+            ...(readOpenPanelAttribution() ?? {}),
         });
         return true;
     }
@@ -143,24 +147,30 @@ export class OpenPanelService implements ObserverService {
         if (!this.op) {
             return;
         }
+        // лендинг в этой вкладке уже отправил старт: второй Session started
+        // разрезал бы один визит гостя на две сессии. У вошедшего профиль другой.
+        const continueLandingSession =
+            !userId && landingSessionAlreadyStarted();
         let startError: unknown;
-        try {
-            const result = await withTimeout(
-                this.track('Session started', {
-                    __path: window.location.pathname,
-                    __title: document.title,
-                    profileId,
-                }),
-                SESSION_TIMEOUT_MS,
-                'session start'
-            );
-            // у гостя заголовок уже равен локальному profileId, серверный id берём только у вошедшего
-            if (userId) {
-                adoptAnalyticsSessionId(result?.sessionId);
+        if (!continueLandingSession) {
+            try {
+                const result = await withTimeout(
+                    this.track('Session started', {
+                        __path: window.location.pathname,
+                        __title: document.title,
+                        profileId,
+                    }),
+                    SESSION_TIMEOUT_MS,
+                    'session start'
+                );
+                // у гостя заголовок уже равен локальному profileId, серверный id берём только у вошедшего
+                if (userId) {
+                    adoptAnalyticsSessionId(result?.sessionId);
+                }
+            } catch (error) {
+                startError = error;
+                logBreadcrumb('openpanel', 'session start failed', { error });
             }
-        } catch (error) {
-            startError = error;
-            logBreadcrumb('openpanel', 'session start failed', { error });
         }
         // повтора старта не будет, поэтому вошедшему без серверного id выдаём локальный:
         // иначе вкладка до закрытия ходит без заголовка, а отчёт делает отказ видимым
@@ -170,19 +180,24 @@ export class OpenPanelService implements ObserverService {
         }
         // представляемся даже после сорванного Session started: это независимый запрос
         if (userId) {
-            await this.identify(userId, {
-                firstName: authenticatedDisplayName(userId),
-            });
+            await this.identify(
+                userId,
+                attributionIdentifyOptions(authenticatedDisplayName(userId))
+            );
         } else {
-            await this.identify(profileId, {
-                firstName: anonymousDisplayName(),
-            });
+            await this.identify(
+                profileId,
+                attributionIdentifyOptions(readOrCreateGuestDisplayName())
+            );
         }
     }
 
     private async identify(
         profileId: string,
-        options?: { firstName?: string }
+        options?: {
+            firstName?: string;
+            properties?: Record<string, string>;
+        }
     ) {
         // профиль сменился, пока хвост старта ждал сеть: возвращать в SDK ушедшего
         // пользователя или заводить анонимный профиль уже вошедшему нельзя
@@ -192,6 +207,7 @@ export class OpenPanelService implements ObserverService {
         const payload = {
             profileId,
             ...(options?.firstName ? { firstName: options.firstName } : {}),
+            ...(options?.properties ? { properties: options.properties } : {}),
         };
         try {
             // без таймаута ретраи SDK держат промис до 3.5 секунды, и отменить их нечем
@@ -204,6 +220,17 @@ export class OpenPanelService implements ObserverService {
             logBreadcrumb('openpanel', 'identify failed', { error });
         }
     }
+}
+
+function attributionIdentifyOptions(firstName: string): {
+    firstName: string;
+    properties?: Record<string, string>;
+} {
+    const properties = readOpenPanelAttribution();
+    return {
+        firstName,
+        ...(properties ? { properties } : {}),
+    };
 }
 
 function configuredSecret(value: string | undefined): string {
