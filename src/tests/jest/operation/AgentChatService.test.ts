@@ -11,6 +11,7 @@ import {
 import {
     AGENT_STOP_REASONS,
     AgentEvent,
+    AgentStopReason,
 } from '../../../model/rpi/agentSocket.ts';
 import {
     CompileError,
@@ -2868,4 +2869,224 @@ test('finished-run-tells-analytics-whether-the-agent-compiled', async () => {
             .filter(([event]) => event === Events.EVENT_AGENT_FINISHED)
             .map(([, properties]) => properties?.compiled)
     ).toEqual([true, false]);
+});
+
+// После прогона со сборкой открывается результат, но только если прогон кончился сам и без отказа
+
+const PDF_BUILT: AgentEvent = {
+    kind: 'compilationFinished',
+    pdfUri: RESULT_PDF,
+    markdown: undefined,
+};
+
+const PDF_FAILED: AgentEvent = {
+    kind: 'compilationFailed',
+    errors: { errors: [LATEX_ERROR], unfinishedPdfUri: UNFINISHED_PDF },
+};
+
+const done = (stopReason: AgentStopReason = 'Done'): AgentEvent => ({
+    kind: 'finished',
+    message: 'готово',
+    stopReason,
+});
+
+/** Телефон после конца прогона делает свой шаг, десктоп нет: так видно оба экрана */
+async function phoneAfterRun(ctx: ReturnType<typeof setup>) {
+    await ctx.agentChatService.onAgentFinishedOnPhone();
+    return {
+        ...resultShown(ctx),
+        target: ctx.repository.ideViewModelRepository.editorNavigationTarget(),
+    };
+}
+
+test.each([
+    ['a-built-document', PDF_BUILT, 'Done'],
+    ['build-errors', PDF_FAILED, 'Done'],
+    ['an-iteration-limit', PDF_BUILT, 'IterationLimit'],
+] as [string, AgentEvent, AgentStopReason][])(
+    'finished-run-with-%s-opens-the-pdf-on-a-desktop',
+    async (_name, result, stopReason) => {
+        const ctx = setup();
+        await compilingRun(ctx);
+        await emit(ctx, { kind: 'compilationStarted' });
+        await emit(ctx, result);
+
+        // посреди прогона человек читает ленту
+        expect(resultShown(ctx)).toEqual(NOTHING_SHOWN);
+
+        await emit(ctx, done(stopReason));
+
+        // вкладку ставит сервис, а не счётчик результата: на телефоне он гонялся бы с концом прогона
+        expect(resultShown(ctx)).toEqual({
+            pdfUpdated: 0,
+            viewerTab: [['pdf']],
+            mobileView: [],
+        });
+    }
+);
+
+test('finished-run-with-a-compilation-on-a-phone-opens-the-pdf-instead-of-the-change', async () => {
+    const ctx = phoneSetup();
+    ctx.repository.settingsViewModelRepository.setViewerTab = jest.fn();
+    ctx.repository.projectViewModelRepository.setProjectType('latex');
+    ctx.rpi.listHunksRequest = jest
+        .fn()
+        .mockResolvedValueOnce(okResult({ hunks: [segmentHunk('a', 2, 1)] }))
+        .mockResolvedValue(
+            okResult({
+                hunks: [
+                    segmentHunk('a', 2, 1),
+                    segmentHunk('b', 3, 4),
+                    segmentHunk('c', 1, 7),
+                ],
+            })
+        );
+    ctx.repository.chatViewModelRepository.setInput('поправь и собери');
+    await ctx.agentChatService.onPromptSubmit();
+    await emit(ctx, { kind: 'toolCall', toolName: 'add_lines_to_segment' });
+    await emit(ctx, { kind: 'toolCall', toolName: 'add_lines_to_segment' });
+    await emit(ctx, PDF_BUILT);
+    await emit(ctx, done());
+
+    // редактор остаётся там, куда его поставил шаг агента, а экран уходит на результат
+    expect(await phoneAfterRun(ctx)).toEqual({
+        pdfUpdated: 0,
+        viewerTab: [['pdf']],
+        mobileView: [['pdf']],
+        target: { segmentIndex: 2, line: 4, focus: false },
+    });
+});
+
+test.each([
+    ['no-compilation', []],
+    ['a-compilation-that-only-started', [{ kind: 'compilationStarted' }]],
+] as [string, AgentEvent[]][])(
+    'run-with-%s-opens-the-last-change-as-before',
+    async (_name, frames) => {
+        const ctx = phoneSetup();
+        ctx.repository.settingsViewModelRepository.setViewerTab = jest.fn();
+        ctx.rpi.listHunksRequest = jest
+            .fn()
+            .mockResolvedValue(okResult({ hunks: [segmentHunk('a', 2, 1)] }));
+        ctx.repository.chatViewModelRepository.setInput('сделай');
+        await ctx.agentChatService.onPromptSubmit();
+        await emit(ctx, { kind: 'toolCall', toolName: 'add_lines_to_segment' });
+        for (const frame of frames) {
+            await emit(ctx, frame);
+        }
+        await emit(ctx, done());
+
+        // без результата сборки показывать нечего: десктоп на чате, телефон в редакторе на правке
+        expect(await phoneAfterRun(ctx)).toEqual({
+            pdfUpdated: 0,
+            viewerTab: [],
+            mobileView: [['editor']],
+            target: { segmentIndex: 1, line: 1, focus: false },
+        });
+    }
+);
+
+test.each([
+    [
+        'an-error',
+        async (ctx: ReturnType<typeof setup>) => {
+            await emit(ctx, {
+                kind: 'finished',
+                message: null,
+                stopReason: 'UnknownError',
+            });
+        },
+        'error',
+    ],
+    [
+        'an-abort',
+        async (ctx: ReturnType<typeof setup>) => {
+            await ctx.agentChatService.onAbortClicked();
+        },
+        'idle',
+    ],
+    [
+        'a-dropped-connection',
+        async (ctx: ReturnType<typeof setup>) => {
+            ctx.agentSocketState.handlers?.onClosed('closed');
+            await settled();
+        },
+        'error',
+    ],
+] as const)(
+    'run-with-a-compilation-that-ends-with-%s-keeps-the-chat',
+    async (_name, end, state) => {
+        const ctx = phoneSetup();
+        ctx.repository.settingsViewModelRepository.setViewerTab = jest.fn();
+        ctx.repository.projectViewModelRepository.setProjectType('latex');
+        ctx.rpi.listHunksRequest = jest
+            .fn()
+            .mockResolvedValue(okResult({ hunks: [segmentHunk('a', 2, 1)] }));
+        ctx.repository.chatViewModelRepository.setInput('собери документ');
+        await ctx.agentChatService.onPromptSubmit();
+        await emit(ctx, { kind: 'toolCall', toolName: 'add_lines_to_segment' });
+        await emit(ctx, PDF_BUILT);
+
+        await end(ctx);
+
+        // в ленте ошибка или итог прерывания, их надо прочитать там
+        expect(ctx.repository.chatViewModelRepository.requestState()).toBe(
+            state
+        );
+        expect(await phoneAfterRun(ctx)).toEqual({
+            ...NOTHING_SHOWN,
+            target: { segmentIndex: 1, line: 1, focus: false },
+        });
+    }
+);
+
+test('next-run-forgets-the-compilation-of-the-previous-one', async () => {
+    const ctx = phoneSetup();
+    ctx.repository.settingsViewModelRepository.setViewerTab = jest.fn();
+    ctx.repository.projectViewModelRepository.setProjectType('latex');
+    ctx.rpi.listHunksRequest = jest
+        .fn()
+        .mockResolvedValue(okResult({ hunks: [segmentHunk('a', 2, 1)] }));
+    ctx.repository.chatViewModelRepository.setInput('собери документ');
+    await ctx.agentChatService.onPromptSubmit();
+    await emit(ctx, PDF_BUILT);
+    await emit(ctx, done());
+    await ctx.agentChatService.onAgentFinishedOnPhone();
+
+    ctx.repository.chatViewModelRepository.setInput('поправь');
+    await ctx.agentChatService.onPromptSubmit();
+    await emit(ctx, { kind: 'toolCall', toolName: 'add_lines_to_segment' });
+    await emit(ctx, done());
+
+    // второй прогон без сборки: вкладка PDF только от первого, телефон идёт к правке
+    expect(await phoneAfterRun(ctx)).toEqual({
+        pdfUpdated: 0,
+        viewerTab: [['pdf']],
+        mobileView: [['pdf'], ['editor']],
+        target: { segmentIndex: 1, line: 1, focus: false },
+    });
+});
+
+test('run-left-during-the-final-sync-does-not-open-the-pdf', async () => {
+    const ctx = setup();
+    await compilingRun(ctx);
+    // перечитать после правки не вышло: финал сверится с сервером и будет его ждать
+    ctx.rpi.listHunksRequest = jest
+        .fn()
+        .mockResolvedValue(okResult({ hunks: [addedLines(2, 'X')] }));
+    ctx.rpi.getProjectRequest = jest.fn().mockResolvedValue(failedResult);
+    await emit(ctx, { kind: 'toolCall', toolName: 'add_lines_to_segment' });
+    await emit(ctx, PDF_BUILT);
+    const server = pending<unknown>();
+    ctx.rpi.getProjectRequest = jest.fn().mockReturnValue(server.promise);
+
+    const finished = emit(ctx, done());
+    await settled();
+    ctx.agentChatService.onProjectChanged();
+    server.resolve(okResult({ program: oneSegment('a\nX') }));
+    await finished;
+
+    // прогон остался в прошлом проекте, а вкладку нового он менять не должен
+    expect(ctx.rpi.getProjectRequest).toHaveBeenCalledTimes(1);
+    expect(resultShown(ctx)).toEqual(NOTHING_SHOWN);
 });
