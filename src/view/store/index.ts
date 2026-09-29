@@ -68,6 +68,7 @@ import {
     setLastOpenedProjectUuid,
     setAgentMaxTokens,
     setAgentIterations,
+    setAgentCompilationAllowed,
     setCrossBorderConsentAcceptedLocally,
     setLastProgram,
 } from './slices/persistence';
@@ -344,6 +345,8 @@ export const createViewModelStateFromStore = (
                 store.getState().persistence.lastOpenedProjectUuid,
             agentMaxTokens: () => store.getState().persistence.agentMaxTokens,
             agentIterations: () => store.getState().persistence.agentIterations,
+            agentCompilationAllowed: () =>
+                store.getState().persistence.agentCompilationAllowed,
             crossBorderConsentAcceptedLocally: () =>
                 store.getState().persistence.crossBorderConsentAcceptedLocally,
 
@@ -353,6 +356,8 @@ export const createViewModelStateFromStore = (
                 store.dispatch(setAgentMaxTokens(value)),
             setAgentIterations: (value) =>
                 store.dispatch(setAgentIterations(value)),
+            setAgentCompilationAllowed: (value) =>
+                store.dispatch(setAgentCompilationAllowed(value)),
             setLastOpenedProjectUuid: (uuid) =>
                 store.dispatch(setLastOpenedProjectUuid(uuid)),
             setInstructionExpanded: (instructionExpanded) =>

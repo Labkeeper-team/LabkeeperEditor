@@ -1,3 +1,4 @@
+import classNames from 'classnames';
 import {
     useCallback,
     useEffect,
@@ -23,7 +24,25 @@ const PANEL_GAP = 8;
 
 type PanelPlace = { bottom: number; maxHeight: number };
 
-/** Панель над рядом кнопок растёт вверх не выше колонки чата, потому что выше её обрезал бы overflow hidden у .project-pane на телефоне; счёт в пикселях вёрстки, потому что между 768 и 1024 шелл уменьшен через transform: scale */
+/** Верх области, которую не срезают предки колонки чата с overflow: такой предок бывает прокручен фокусом или scrollIntoView, и тогда его верх ниже верха чата */
+const clipTop = (chat: HTMLElement, scale: number) => {
+    let top = -Infinity;
+    for (
+        let el = chat.parentElement;
+        el && el !== document.body;
+        el = el.parentElement
+    ) {
+        if (getComputedStyle(el).overflowY !== 'visible') {
+            top = Math.max(
+                top,
+                el.getBoundingClientRect().top / scale + el.clientTop
+            );
+        }
+    }
+    return top;
+};
+
+/** Панель над рядом кнопок растёт вверх не выше колонки чата и обрезающих её предков, потому что выше её срезал бы их overflow hidden; счёт в пикселях вёрстки, потому что между 768 и 1024 шелл уменьшен через transform: scale */
 const measurePanelPlace = (
     field: HTMLElement,
     controls: HTMLElement
@@ -41,7 +60,11 @@ const measurePanelPlace = (
         bottom: field.clientHeight - controls.offsetTop + PANEL_GAP,
         maxHeight: Math.max(
             0,
-            Math.floor(controlsTop - PANEL_GAP - Math.max(chatTop, viewportTop))
+            Math.floor(
+                controlsTop -
+                    PANEL_GAP -
+                    Math.max(chatTop, viewportTop, clipTop(chat, scale))
+            )
         ),
     };
 };
@@ -78,6 +101,9 @@ export const AgentSettings = ({
     const dictionary = useSelector(useDictionary);
     const iterations = useSelector(
         (state: StorageState) => state.persistence.agentIterations
+    );
+    const compilationAllowed = useSelector(
+        (state: StorageState) => state.persistence.agentCompilationAllowed
     );
     const [open, setOpen] = useState(false);
     const [place, setPlace] = useState<PanelPlace | null>(null);
@@ -219,6 +245,36 @@ export const AgentSettings = ({
                                     )
                                 }
                             />
+                        </SettingsSection>
+                        <SettingsSection
+                            title={dictionary.agent_chat.compilation}
+                            hint={
+                                dictionary.agent_chat.compilation_allowed_hint
+                            }
+                        >
+                            {/* нативная галка внутри label: роль, фокус, пробел и клик по подписи браузер даёт сам */}
+                            <label
+                                className={classNames('agent-settings__check', {
+                                    'agent-settings__check--disabled':
+                                        isRunning,
+                                })}
+                            >
+                                <input
+                                    type="checkbox"
+                                    checked={compilationAllowed}
+                                    disabled={isRunning}
+                                    onChange={(event) =>
+                                        dispatch(
+                                            controller.onAgentCompilationAllowedChangedRequest(
+                                                { value: event.target.checked }
+                                            )
+                                        )
+                                    }
+                                />
+                                <span>
+                                    {dictionary.agent_chat.compilation_allowed}
+                                </span>
+                            </label>
                         </SettingsSection>
                     </div>
                 </div>

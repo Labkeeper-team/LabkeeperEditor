@@ -110,6 +110,8 @@ export interface AgentSessionParams {
     prompt: string;
     numberIterations: number;
     maxTokens: number;
+    /** Шлём всегда: сервер без поля компилирует, и выключенная галка потерялась бы молча */
+    compilationAllowed: boolean;
 }
 
 export interface AgentSession {

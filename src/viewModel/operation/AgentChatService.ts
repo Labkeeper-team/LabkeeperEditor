@@ -122,6 +122,8 @@ export class AgentChatService {
                 this.repository.persistenceViewModelRepository.agentMaxTokens(),
             iterations:
                 this.repository.persistenceViewModelRepository.agentIterations(),
+            compilation_allowed:
+                this.repository.persistenceViewModelRepository.agentCompilationAllowed(),
             authorized:
                 this.repository.userViewModelRepository.isAuthenticated(),
         };
@@ -163,6 +165,19 @@ export class AgentChatService {
         );
         this.track(Events.EVENT_AGENT_SETTINGS_CHANGED, {
             setting: 'iterations',
+            value,
+        });
+    };
+
+    onCompilationAllowedChanged = (value: boolean): void => {
+        if (!this.openLoginIfGuest('agent_settings')) {
+            return;
+        }
+        this.repository.persistenceViewModelRepository.setAgentCompilationAllowed(
+            value
+        );
+        this.track(Events.EVENT_AGENT_SETTINGS_CHANGED, {
+            setting: 'compilation_allowed',
             value,
         });
     };
@@ -402,6 +417,8 @@ export class AgentChatService {
                 this.repository.persistenceViewModelRepository.agentIterations(),
             maxTokens:
                 this.repository.persistenceViewModelRepository.agentMaxTokens(),
+            compilationAllowed:
+                this.repository.persistenceViewModelRepository.agentCompilationAllowed(),
         };
         const handlers = {
             onEvent: (event: AgentEvent) => this.onAgentEvent(token, event),

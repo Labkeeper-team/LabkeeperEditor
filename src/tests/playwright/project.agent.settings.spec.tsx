@@ -88,6 +88,8 @@ const iterations = (page: Page) =>
     panel(page).getByRole('group', { name: 'Max Iterations' });
 const contextSize = (page: Page) =>
     page.getByRole('group', { name: 'Context Size' });
+const compilation = (page: Page) =>
+    panel(page).getByRole('checkbox', { name: 'Allow the agent to compile' });
 const promptField = (page: Page) => page.getByPlaceholder('Enter your promt');
 const authModal = (page: Page) => page.locator('.auth-modal');
 const separator = (page: Page) =>
@@ -114,6 +116,10 @@ const storedSlice = (page: Page) =>
             version: JSON.parse(slice._persist).version,
             agentMaxTokens: JSON.parse(slice.agentMaxTokens),
             agentIterations: JSON.parse(slice.agentIterations),
+            agentCompilationAllowed:
+                'agentCompilationAllowed' in slice
+                    ? JSON.parse(slice.agentCompilationAllowed)
+                    : 'missing',
         };
     });
 
@@ -209,6 +215,7 @@ test('agent-start-sends-default-settings', async ({ page }) => {
         prompt: 'перепиши введение',
         numberIterations: 500,
         maxTokens: 100000,
+        compilationAllowed: true,
     });
 });
 
@@ -222,6 +229,7 @@ test('guest-agent-start-sends-default-settings', async ({ page }) => {
         type: 'startAgentUnauthorized',
         numberIterations: 500,
         maxTokens: 100000,
+        compilationAllowed: true,
     });
 });
 
@@ -275,6 +283,8 @@ test('old-saved-settings-become-new-defaults-once', async ({ page }) => {
             version: PERSISTENCE_VERSION,
             agentMaxTokens: 200000,
             agentIterations: 1000,
+            // в старом срезе галки нет, и она берётся включённой из начального состояния
+            agentCompilationAllowed: true,
         });
 
     await page.reload();
@@ -287,6 +297,49 @@ test('old-saved-settings-become-new-defaults-once', async ({ page }) => {
         numberIterations: 1000,
         maxTokens: 200000,
     });
+});
+
+test('compilation-turned-off-survives-reload-and-reaches-the-agent', async ({
+    page,
+}) => {
+    const sent = await openChat(page, { frames: [DONE] });
+    await openSettings(page);
+    await expect(compilation(page)).toBeChecked();
+
+    await compilation(page).click();
+
+    await expect(compilation(page)).not.toBeChecked();
+    await expect
+        .poll(() => storedSlice(page))
+        .toMatchObject({ agentCompilationAllowed: false });
+
+    await page.reload();
+    await page.waitForLoadState('domcontentloaded');
+    await openAgentTab(page);
+    await openSettings(page);
+    await expect(compilation(page)).not.toBeChecked();
+    await page.keyboard.press('Escape');
+    await submitPrompt(page, 'без сборки');
+
+    await expect.poll(() => sent.length).toBe(1);
+    expect(sent[0]).toEqual({
+        type: 'startAgent',
+        prompt: 'без сборки',
+        numberIterations: 500,
+        maxTokens: 100000,
+        compilationAllowed: false,
+    });
+    await expect(page.getByRole('button', { name: 'Send' })).toBeVisible();
+
+    // подпись входит в label: галка включается и кликом по тексту
+    await openSettings(page);
+    await panel(page).getByText('Allow the agent to compile').click();
+    await expect(compilation(page)).toBeChecked();
+    await page.keyboard.press('Escape');
+    await submitPrompt(page, 'со сборкой');
+
+    await expect.poll(() => sent.length).toBe(2);
+    expect(sent[1]).toMatchObject({ compilationAllowed: true });
 });
 
 test('settings-panel-toggles-by-its-button-and-returns-focus', async ({
@@ -406,6 +459,7 @@ test('settings-values-are-disabled-while-agent-runs', async ({ page }) => {
     await expect(
         contextSize(page).getByRole('button', { name: '200k' })
     ).toBeDisabled();
+    await expect(compilation(page)).toBeDisabled();
 });
 
 for (const size of [
@@ -438,6 +492,19 @@ for (const size of [
                 return Boolean(hit?.closest('.modal-container-overlay'));
             });
             expect(onTop).toBe(true);
+        });
+
+        test('guest-gets-login-from-the-compilation-checkbox', async ({
+            page,
+        }) => {
+            await openGuestChat(page);
+            await openSettings(page);
+
+            await compilation(page).click();
+
+            await expect(authModal(page)).toBeVisible();
+            // галка управляемая: без входа она остаётся как была
+            await expect(compilation(page)).toBeChecked();
         });
     });
 }
@@ -477,6 +544,23 @@ for (const size of LAYOUTS) {
                 });
                 await widest.scrollIntoViewIfNeeded();
                 await expect(widest).toBeInViewport({ ratio: 1 });
+                // галка ниже итераций: колесо докручивает до неё тело панели, а scrollIntoView прокрутил бы и панель с overflow hidden
+                await panel(page).locator('.agent-settings__body').hover();
+                const compilationRow = panel(page)
+                    .locator('label')
+                    .filter({ hasText: 'Allow the agent to compile' });
+                // Firefox за одно событие колеса прокручивает не больше высоты тела панели, поэтому колесо крутится, пока строка не покажется целиком
+                await expect(async () => {
+                    await page.mouse.wheel(0, 400);
+                    await expect(compilationRow).toBeInViewport({
+                        ratio: 1,
+                        timeout: 500,
+                    });
+                }).toPass({ timeout: 5000 });
+                // прокручиваются только секции, крестик остаётся на месте
+                await expect(
+                    panel(page).getByRole('button', { name: 'Close settings' })
+                ).toBeInViewport({ ratio: 1 });
             });
         }
 
@@ -505,6 +589,56 @@ for (const size of LAYOUTS) {
                     })
                 )
                 .toEqual([]);
+        });
+    });
+}
+
+for (const size of [
+    { width: 390, height: 844 },
+    { width: 390, height: 500 },
+    { width: 844, height: 390 },
+]) {
+    test.describe(`touch ${size.width}x${size.height}`, () => {
+        // Firefox не умеет isMobile, ему хватает сенсорного экрана без мыши
+        test.use({
+            viewport: size,
+            hasTouch: true,
+            isMobile: async ({ browserName }, provide) =>
+                provide(browserName !== 'firefox'),
+        });
+
+        test('compilation-checkbox-is-as-tall-as-the-toggle-buttons', async ({
+            page,
+        }) => {
+            await openChat(page);
+
+            await openSettings(page);
+
+            expect(await panelProblems(page)).toEqual([]);
+            // пальцем попадают по всей строке галки, и она не должна быть мельче кнопок переключателя над ней
+            const row = panel(page)
+                .locator('label')
+                .filter({ hasText: 'Allow the agent to compile' });
+            const button = iterations(page).getByRole('button', {
+                name: '500',
+            });
+            expect((await row.boundingBox())!.height).toBeGreaterThanOrEqual(
+                (await button.boundingBox())!.height
+            );
+            // колеса на сенсорном webkit нет, поэтому строку ставим в середину тела панели сами; шелл на ширине планшета уменьшен transform, а scrollTop считается до масштаба
+            await panel(page)
+                .locator('.agent-settings__body')
+                .evaluate((body) => {
+                    const box = body.getBoundingClientRect();
+                    const check = body
+                        .querySelector('.agent-settings__check')!
+                        .getBoundingClientRect();
+                    body.scrollTop +=
+                        ((check.top + check.bottom - box.top - box.bottom) /
+                            2) *
+                        (body.clientHeight / box.height);
+                });
+            await expect(row).toBeInViewport({ ratio: 1 });
         });
     });
 }
