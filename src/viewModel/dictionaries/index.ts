@@ -194,6 +194,9 @@ export interface Translations {
         errors_agent_running: string;
         event: {
             model_call: string;
+            compile_started: string;
+            compile_finished: string;
+            compile_failed: string;
             add_segment: string;
             add_lines_to_segment: string;
             delete_lines_from_segment: string;

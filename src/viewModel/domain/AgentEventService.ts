@@ -1,5 +1,5 @@
 import { Hunk } from '../../model/domain.ts';
-import { AgentToolName } from '../../model/rpi/agentSocket.ts';
+import { AgentEvent, AgentToolName } from '../../model/rpi/agentSocket.ts';
 import { AgentChangeSummary, ChatMessage } from '../repository';
 
 type EventMessage = Extract<ChatMessage, { kind: 'event' }>;
@@ -41,6 +41,18 @@ const FILE_TOOLS = new Set<string>([
     'delete_lines_from_file',
     'replace_text_in_file',
 ] satisfies AgentToolName[]);
+
+export type CompilationKind = Extract<
+    AgentEvent['kind'],
+    'compilationStarted' | 'compilationFinished' | 'compilationFailed'
+>;
+
+/** Строку ленты обновить нельзя, поэтому у сборки их две: начало и итог */
+const COMPILATION_LABELS: Record<CompilationKind, string> = {
+    compilationStarted: 'compile_started',
+    compilationFinished: 'compile_finished',
+    compilationFailed: 'compile_failed',
+};
 
 /** Общая строка ленты для инструмента, о котором фронт ничего не знает */
 const UNKNOWN_TOOL_LABEL = 'unknown_tool';
@@ -177,6 +189,10 @@ export class AgentEventService {
 
     describeModelCall(): AgentEventDraft {
         return { kind: 'event', labelKey: 'model_call' };
+    }
+
+    describeCompilation(kind: CompilationKind): AgentEventDraft {
+        return { kind: 'event', labelKey: COMPILATION_LABELS[kind] };
     }
 
     /** Куда прокрутить редактор. undefined, если прыгать некуда. */

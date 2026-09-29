@@ -165,6 +165,7 @@ export function setupContext(
         tokenPageService,
         observerService,
         editingLockService,
+        compilationService,
         new AgentEventService()
     );
     startupService.setAgentChatService(agentChatService);

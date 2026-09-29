@@ -15,8 +15,12 @@ import {
 import { EditorNavigationTarget, ViewModelRepository } from '../repository';
 import { IdeService } from '../domain/IdeService.ts';
 import { LoaderService } from '../domain/LoaderService.ts';
-import { AgentEventService } from '../domain/AgentEventService.ts';
+import {
+    AgentEventService,
+    CompilationKind,
+} from '../domain/AgentEventService.ts';
 import { EditingLockService } from '../domain/EditingLockService.ts';
+import { CompilationService } from '../domain/CompilationService.ts';
 import { HunkService } from './HunkService.ts';
 import { TextFileEditorService } from './TextFileEditorService.ts';
 import { ProgramEditorService } from './ProgramEditorService.ts';
@@ -71,6 +75,8 @@ export class AgentChatService {
     private runToken = 0;
     /** Последнее место, которое агент правил в текущем прогоне */
     private lastChange: EditorNavigationTarget | undefined;
+    /** Сборка агента в текущем прогоне дала результат: pdf или ошибки */
+    private compiledInRun = false;
     /** Перечитать программу не вышло или сокет оборвался: в редакторе может быть старая программа */
     private programMayBeStale = false;
     /** Текст последнего запроса: слишком длинный вернём в поле, чтобы его сократили */
@@ -88,6 +94,7 @@ export class AgentChatService {
         private tokenPageService: TokenPageService,
         private observerService: ObserverService,
         private editingLock: EditingLockService,
+        private compilationService: CompilationService,
         private events: AgentEventService = new AgentEventService()
     ) {}
 
@@ -340,6 +347,7 @@ export class AgentChatService {
         // слот занимается до первого await, иначе второе нажатие проскочит проверку
         const token = ++this.runToken;
         this.lastChange = undefined;
+        this.compiledInRun = false;
         this.runEnded = false;
         this.runStarted = false;
         this.track(Events.EVENT_AGENT_PROMPT_SUBMITTED, {
@@ -579,14 +587,7 @@ export class AgentChatService {
 
         if (event.kind === 'modelFinished') {
             chat.appendMessage(this.events.describeModelCall());
-            if (this.repository.userViewModelRepository.isAuthenticated()) {
-                try {
-                    await this.tokenPageService.refreshUserInfo();
-                } catch (error) {
-                    // баланс это справка сбоку, его отказ не должен ронять прогон
-                    console.error(error);
-                }
-            }
+            await this.refreshBalance();
             return;
         }
 
@@ -595,16 +596,89 @@ export class AgentChatService {
             return;
         }
 
-        // сборка идёт посреди прогона и не завершает его, её результат лента пока не показывает
+        // сборка идёт посреди прогона и не завершает его
         if (
             event.kind === 'compilationStarted' ||
             event.kind === 'compilationFinished' ||
             event.kind === 'compilationFailed'
         ) {
+            await this.onCompilation(event);
             return;
         }
 
         await this.onFinished(token, event);
+    };
+
+    private refreshBalance = async (): Promise<void> => {
+        if (!this.repository.userViewModelRepository.isAuthenticated()) {
+            return;
+        }
+        try {
+            await this.tokenPageService.refreshUserInfo();
+        } catch (error) {
+            // баланс это справка сбоку, его отказ не должен ронять прогон
+            console.error(error);
+        }
+    };
+
+    /** Результат ложится тем же разбором, что у кнопки Run, но показать его не просим: вкладка PDF спрятала бы ленту посреди прогона */
+    private onCompilation = async (
+        event: Extract<AgentEvent, { kind: CompilationKind }>
+    ): Promise<void> => {
+        const chat = this.repository.chatViewModelRepository;
+        if (event.kind === 'compilationStarted') {
+            chat.appendMessage(this.events.describeCompilation(event.kind));
+            return;
+        }
+        this.compiledInRun = true;
+        this.applyCompilation(event);
+        chat.appendMessage(this.events.describeCompilation(event.kind));
+
+        // как после кнопки Run: собранный pdf ложится в файлы проекта, а сборка стоит токенов
+        const project = this.repository.projectViewModelRepository.project();
+        if (
+            project &&
+            this.repository.userViewModelRepository.isAuthenticated()
+        ) {
+            await this.loaderService.loadFiles(project.projectId);
+        }
+        await this.refreshBalance();
+    };
+
+    /** Результат по режиму проекта: гостю сервер собирает pdf и в markdown, где вкладка результата рисует только сегменты */
+    private applyCompilation = (
+        event: Extract<
+            AgentEvent,
+            { kind: 'compilationFinished' | 'compilationFailed' }
+        >
+    ): void => {
+        const mode = this.repository.projectViewModelRepository.mode();
+        const latex = mode === 'latex';
+        const misfit = (hasPdf: boolean, hasMarkdown: boolean) =>
+            logBreadcrumb(
+                'agent',
+                'compilation result does not fit the mode',
+                { mode, hasPdf, hasMarkdown },
+                'warning'
+            );
+        if (event.kind === 'compilationFailed') {
+            const { errors, unfinishedPdfUri } = event.errors;
+            // ошибки относятся к сегментам и нужны в любом режиме, а недособранный pdf только в latex
+            this.compilationService.applyCompileErrors(
+                latex ? event.errors : { errors }
+            );
+            if (!latex && unfinishedPdfUri != null) {
+                misfit(true, false);
+            }
+            return;
+        }
+        if (latex && event.pdfUri != null) {
+            this.compilationService.applyPdfResult(event.pdfUri);
+        } else if (!latex && event.markdown != null) {
+            this.compilationService.applyMarkdownResult(event.markdown);
+        } else if (event.pdfUri != null || event.markdown != null) {
+            misfit(event.pdfUri != null, event.markdown != null);
+        }
     };
 
     private onToolCall = async (
@@ -728,6 +802,7 @@ export class AgentChatService {
             ...this.agentSettings(),
             stop_reason: event.stopReason,
             hunk_count: event.hunks?.length ?? this.knownHunks.length,
+            compiled: this.compiledInRun,
         });
     };
 

@@ -219,6 +219,123 @@ test('compile-308-opens-auth-modal-once-for-several-errors', async () => {
     expect(repository.authViewModelRepository.currentView()).toBe('login');
 });
 
+// Кнопка Run и агент раскладывают результат сборки одним разбором, а показать его сразу просит только кнопка: агенту посреди прогона вкладку не переключают
+
+const compiled = (code: number, body: unknown) =>
+    jest.fn().mockResolvedValue({
+        code,
+        body,
+        isOk: code === 200,
+        isUnauth: false,
+        isForbidden: false,
+    });
+
+const LATEX_ERROR = {
+    code: CompileError.LATEX_ERROR,
+    payload: { line: 1, position: 0, segmentId: 1 },
+};
+
+function runButtonSetup(mode: 'latex' | 'markdown') {
+    const ctx = mockContext();
+    ctx.repository.projectViewModelRepository.setProjectType(mode);
+    ctx.programService.setNewProgram({
+        segments: [
+            {
+                type: mode === 'latex' ? 'latex' : 'computational',
+                text: 'a = 10',
+                parameters: { visible: true },
+            },
+        ],
+        parameters: { roundStrategy: 'noRound' },
+    });
+    // прошлая сборка оставила ошибку и pdf
+    ctx.repository.projectViewModelRepository.setCompileErrorResult({
+        errors: [LATEX_ERROR],
+    });
+    ctx.repository.projectViewModelRepository.setPdfUri('/files/old.pdf');
+    return ctx;
+}
+
+const shown = (ctx: ReturnType<typeof runButtonSetup>) => ({
+    pdfUri: ctx.repository.projectViewModelRepository.pdfUri(),
+    errors: ctx.repository.projectViewModelRepository.compileErrorResult(),
+    expanded: ctx.repository.settingsViewModelRepository.expandProblemViewer(),
+    pdfUpdated: ctx.repository.ideViewModelRepository.pdfUpdated(),
+});
+
+test('run-button-shows-the-new-pdf', async () => {
+    const ctx = runButtonSetup('latex');
+    ctx.rpi.pdfCompilationRequest = compiled(200, { pdfUri: '/files/new.pdf' });
+
+    await ctx.projectPageService.onRunButtonClicked();
+
+    expect(shown(ctx)).toEqual({
+        pdfUri: '/files/new.pdf',
+        errors: { errors: [] },
+        expanded: false,
+        pdfUpdated: 1,
+    });
+});
+
+test('run-button-shows-the-markdown-result', async () => {
+    const ctx = runButtonSetup('markdown');
+    const result = {
+        segments: [
+            {
+                type: 'computational',
+                statements: [{ type: 'table', items: [['a', '10']] }],
+            },
+        ],
+    };
+    ctx.rpi.compilationRequest = compiled(200, result);
+
+    await ctx.projectPageService.onRunButtonClicked();
+
+    expect(
+        ctx.repository.projectViewModelRepository.compileSuccessResult()
+    ).toEqual(result);
+    expect(shown(ctx)).toEqual({
+        pdfUri: '/files/old.pdf',
+        errors: { errors: [] },
+        expanded: false,
+        pdfUpdated: 1,
+    });
+});
+
+test('run-button-shows-the-errors-and-the-unfinished-pdf', async () => {
+    const ctx = runButtonSetup('latex');
+    const errors = {
+        errors: [LATEX_ERROR],
+        unfinishedPdfUri: '/files/half.pdf',
+    };
+    ctx.rpi.pdfCompilationRequest = compiled(203, errors);
+
+    await ctx.projectPageService.onRunButtonClicked();
+
+    expect(shown(ctx)).toEqual({
+        pdfUri: '/files/half.pdf',
+        errors,
+        expanded: true,
+        pdfUpdated: 1,
+    });
+});
+
+test('run-button-errors-without-a-pdf-stay-in-the-editor', async () => {
+    const ctx = runButtonSetup('markdown');
+    const errors = { errors: [LATEX_ERROR] };
+    ctx.rpi.compilationRequest = compiled(203, errors);
+
+    await ctx.projectPageService.onRunButtonClicked();
+
+    // показывать нечего: панель ошибок раскрыта в редакторе
+    expect(shown(ctx)).toEqual({
+        pdfUri: '/files/old.pdf',
+        errors,
+        expanded: true,
+        pdfUpdated: 0,
+    });
+});
+
 test('help-merge-into-same-type-segment-does-not-track-create', () => {
     const { observerService, programService, projectPageService, repository } =
         mockContext();

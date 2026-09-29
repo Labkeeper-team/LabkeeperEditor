@@ -214,6 +214,9 @@ export const ru: Translations = {
             'Агент ещё работает. Дождитесь окончания и отправьте ошибки снова',
         event: {
             model_call: 'Обращение к модели',
+            compile_started: 'Сборка документа',
+            compile_finished: 'Документ собран',
+            compile_failed: 'Сборка с ошибками',
             add_segment: 'Добавлен сегмент №{segment}',
             add_lines_to_segment: 'Изменён сегмент №{segment}',
             delete_lines_from_segment: 'Удалены строки из сегмента №{segment}',

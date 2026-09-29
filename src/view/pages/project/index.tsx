@@ -125,11 +125,16 @@ export const ProjectPage = () => {
         }
 
         initialPdfViewAppliedRef.current = true;
+        // pdf собрал агент посреди прогона: экран чата не отнимаем
+        if (isAgentRunning) {
+            return;
+        }
         dispatch(setViewerTab('pdf'));
         dispatch(setMobileView('pdf'));
     }, [
         dispatch,
         getProjectRequestState,
+        isAgentRunning,
         isMobile,
         pdfUri,
         project?.projectId,
