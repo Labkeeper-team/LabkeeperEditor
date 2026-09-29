@@ -737,14 +737,20 @@ export class AgentChatService {
         }
     };
 
-    /** На телефоне чат и редактор разные экраны: после прогона ведём туда, где агент правил последним */
+    /** На телефоне чат, редактор и результат разные экраны: после прогона ведём на собранный документ или туда, где агент правил последним */
     onAgentFinishedOnPhone = async (): Promise<void> => {
         const target = this.lastChange;
-        // без правок и после ошибки человеку нужен чат: там ответ или текст ошибки
-        if (
-            !target ||
-            this.repository.chatViewModelRepository.requestState() !== 'ok'
-        ) {
+        // после ошибки и прерывания человеку нужен чат: там текст ошибки или итог прерывания
+        if (this.repository.chatViewModelRepository.requestState() !== 'ok') {
+            return;
+        }
+        // агент собрал документ: итог работы это результат, вкладку внутри колонки уже выбрал onFinished
+        if (this.compiledInRun) {
+            this.repository.settingsViewModelRepository.setMobileView('pdf');
+            return;
+        }
+        // без правок человеку нужен чат: там ответ
+        if (!target) {
             return;
         }
         this.repository.settingsViewModelRepository.setMobileView('editor');
@@ -798,6 +804,10 @@ export class AgentChatService {
             chat.appendMessage({ kind: 'notice', reason: event.stopReason });
         }
         chat.setRequestState('ok');
+        // вкладку ставим здесь, а не счётчиком результата: на телефоне он гонялся бы с переходом к правке
+        if (this.compiledInRun) {
+            this.repository.settingsViewModelRepository.setViewerTab('pdf');
+        }
         this.track(Events.EVENT_AGENT_FINISHED, {
             ...this.agentSettings(),
             stop_reason: event.stopReason,

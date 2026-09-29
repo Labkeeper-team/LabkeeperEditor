@@ -1,4 +1,4 @@
-import { Page, Route } from '@playwright/test';
+import { Page, Route, WebSocketRoute } from '@playwright/test';
 import {
     AgentHistoryEntry,
     CompileErrorResult,
@@ -360,6 +360,31 @@ export class RouteSetup {
             }
         );
         return received;
+    }
+
+    /** Канал агента, где кадры шлёт сам тест, по одному и когда нужно: так видно экран посреди прогона и после его конца. send ждёт первого кадра от страницы и пишет в сокет, приславший последний кадр, поэтому помощник рассчитан на один прогон */
+    async setupAgentSocketByHand() {
+        const received: Record<string, unknown>[] = [];
+        let socket: WebSocketRoute | undefined;
+        let started: () => void = () => {};
+        const start = new Promise<void>((done) => (started = done));
+        await this.page.routeWebSocket(
+            `**/api/${version}/ws/**`,
+            async (ws) => {
+                ws.onMessage((message) => {
+                    received.push(JSON.parse(String(message)));
+                    socket = ws;
+                    started();
+                });
+            }
+        );
+        return {
+            received,
+            send: async (frame: Record<string, unknown>) => {
+                await start;
+                socket?.send(JSON.stringify(frame));
+            },
+        };
     }
 
     /**

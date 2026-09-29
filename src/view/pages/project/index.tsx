@@ -78,7 +78,7 @@ export const ProjectPage = () => {
         refreshCodeMirrorLayout();
     }, [isMobile, mobileView]);
 
-    // на телефоне редактор скрыт за чатом: после прогона агента открываем его на последней правке
+    // на телефоне редактор и результат скрыты за чатом: после прогона агента открываем собранный документ или последнюю правку
     useEffect(() => {
         const finished = wasAgentRunningRef.current && !isAgentRunning;
         wasAgentRunningRef.current = isAgentRunning;

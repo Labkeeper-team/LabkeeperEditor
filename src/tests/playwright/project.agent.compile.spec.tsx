@@ -3,7 +3,7 @@ import { readFileSync } from 'fs';
 import { RouteSetup } from './mock.routeSetUp.tsx';
 import { Program } from '../../model/domain.ts';
 
-/** Сборку агент запускает сам посреди прогона: результат доходит до редактора и просмотрщика, а лента остаётся на экране. Прогоны тут не кончаются, иначе не проверить, что вкладку посреди прогона не трогают */
+/** Сборку агент запускает сам посреди прогона: результат доходит до редактора и просмотрщика, лента остаётся на экране до конца прогона, а после него открывается PDF */
 
 const uuid = '2cd18704-6c3f-48cb-96f1-9a923930f8cb';
 
@@ -98,6 +98,12 @@ const LATEX_FAILED: Frame = {
     },
 };
 
+const AGENT_DONE: Frame = {
+    type: 'agentFinished',
+    message: 'готово',
+    stopReason: 'Done',
+};
+
 const promptField = (page: Page) => page.getByPlaceholder('Enter your promt');
 const eventLabels = (page: Page) => page.locator('.agent-chat__event-label');
 
@@ -120,12 +126,12 @@ async function openCompilingRun(
     await routeSetup.setupGetAllProjectsRequest();
     await routeSetup.setupSaveProgramRequest();
     await routeSetup.setupAgentHistoryRequest([]);
-    const sent = await routeSetup.setupAgentSocket(frames);
+    const agent = await routeSetup.setupAgentSocketByHand();
     // до сборки файлов нет, после неё сервер кладёт собранный pdf в системные
     await page.route(`**/public/project/${uuid}/file/list**`, (route) =>
         route.fulfill({
             json: {
-                files: sent.length
+                files: agent.received.length
                     ? [
                           {
                               fileName: 'result7.pdf',
@@ -140,7 +146,7 @@ async function openCompilingRun(
     // запросы после старта прогона: сборка перечитывает файлы и баланс, как кнопка Run
     const requestsAfterStart: string[] = [];
     page.on('request', (request) => {
-        if (sent.length) {
+        if (agent.received.length) {
             requestsAfterStart.push(new URL(request.url()).pathname);
         }
     });
@@ -165,7 +171,11 @@ async function openCompilingRun(
     }
     await promptField(page).fill('собери документ');
     await page.getByRole('button', { name: 'Send' }).click();
+    for (const frame of frames) {
+        await agent.send(frame);
+    }
     return {
+        send: agent.send,
         pdfRequests,
         refreshes: () =>
             requestsAfterStart.filter(
@@ -284,5 +294,86 @@ test.describe('agent compilation on a phone', () => {
             page.locator('.mobile-view-switcher-bar__label')
         ).toHaveText('AI agent');
         await expect(page.locator('.agent-chat')).toBeVisible();
+    });
+});
+
+/** Лента ушла, на экране первая страница собранного PDF */
+async function expectPdfShown(page: Page) {
+    await expect(page.locator('.agent-chat')).toHaveCount(0);
+    const firstPage = page.locator('[data-pdf-page="0"] .textLayer').first();
+    await expect(firstPage).toContainText(PDF_LINE, { timeout: 30000 });
+    await expect(firstPage).toBeInViewport();
+}
+
+test('finished-run-with-a-compilation-opens-the-pdf', async ({ page }) => {
+    const { send } = await openCompilingRun(
+        page,
+        [started, pdfCompiled(RESULT_PDF)],
+        { program: LATEX_PROGRAM, latex: true }
+    );
+
+    await expect(eventLabels(page)).toHaveText([
+        'Building the document',
+        'Document built',
+    ]);
+    // сборка уже прошла, а прогон ещё идёт: человек читает ленту
+    await expectChatStays(page);
+
+    await send(AGENT_DONE);
+
+    await expect(
+        page.getByRole('tab', { name: 'PDF visualization' })
+    ).toHaveAttribute('aria-selected', 'true');
+    await expectPdfShown(page);
+});
+
+test.describe('agent run with a compilation on a phone', () => {
+    test.use({ viewport: { width: 390, height: 844 } });
+
+    test('finished-run-opens-the-pdf-instead-of-the-change', async ({
+        page,
+    }) => {
+        const { send } = await openCompilingRun(page, [], {
+            program: LATEX_PROGRAM,
+            latex: true,
+        });
+        const label = page.locator('.mobile-view-switcher-bar__label');
+        // правка появляется после старта: поздний маршрут перекрывает пустой список из RouteSetup
+        await page.route(`**/public/project/${uuid}/hunk`, (route) =>
+            route.request().method() === 'GET'
+                ? route.fulfill({
+                      json: {
+                          hunks: [
+                              {
+                                  id: 'h1',
+                                  type: 'addLinesToSegment',
+                                  segmentId: 1,
+                                  startLine: 1,
+                                  endLine: 1,
+                              },
+                          ],
+                      },
+                  })
+                : route.fallback()
+        );
+
+        await send({ type: 'toolCall', toolName: 'add_lines_to_segment' });
+        await send(started);
+        await send(pdfCompiled(RESULT_PDF));
+
+        // агент поправил сегмент и собрал документ, прогон ещё идёт
+        await expect(eventLabels(page)).toHaveText([
+            'Changes have been made to segment №1',
+            'Building the document',
+            'Document built',
+        ]);
+        await expect(label).toHaveText('AI agent');
+        await expect(page.locator('.agent-chat')).toBeVisible();
+
+        await send(AGENT_DONE);
+
+        // без сборки телефон открыл бы редактор на правке, а итог работы тут документ
+        await expect(label).toHaveText('PDF');
+        await expectPdfShown(page);
     });
 });
