@@ -45,6 +45,12 @@ const ALL_HUNK_TYPES: HunkType[] = [
     'replaceTextInFile',
 ];
 
+const COMPILATION_KINDS = [
+    'compilationStarted',
+    'compilationFinished',
+    'compilationFailed',
+] as const;
+
 function hunkOf(type: HunkType, rest: Partial<Hunk> = {}): Hunk {
     return { id: 'h', type, ...rest };
 }
@@ -724,6 +730,19 @@ test('describe-model-call-uses-the-model-call-key', () => {
     });
 });
 
+// ленту только дописывают, поэтому у сборки две строки: начало и итог
+test('describe-compilation-gives-a-line-for-each-stage', () => {
+    const service = new AgentEventService();
+
+    expect(
+        COMPILATION_KINDS.map((kind) => service.describeCompilation(kind))
+    ).toEqual([
+        { kind: 'event', labelKey: 'compile_started' },
+        { kind: 'event', labelKey: 'compile_finished' },
+        { kind: 'event', labelKey: 'compile_failed' },
+    ]);
+});
+
 test('describe-changes-keeps-one-line-per-place-in-order-of-appearance', () => {
     const service = new AgentEventService();
     const hunks = [
@@ -795,7 +814,12 @@ test.each([['ru'], ['en']] as const)(
             string,
             string
         >;
-        const keys = new Set<string>([service.describeModelCall().labelKey]);
+        const keys = new Set<string>([
+            service.describeModelCall().labelKey,
+            ...COMPILATION_KINDS.map(
+                (kind) => service.describeCompilation(kind).labelKey
+            ),
+        ]);
         const tools = [
             ...AGENT_TOOL_NAMES,
             ...UNKNOWN_TOOLS.map(([, tool]) => tool),

@@ -51,6 +51,10 @@ test.each(DICTIONARIES)(
         const events = dictionary.agent_chat.event as Record<string, string>;
         const keys = [
             'model_call',
+            // сборку агент запускает сам, в toolCall её нет
+            'compile_started',
+            'compile_finished',
+            'compile_failed',
             // инструмент, которого фронт не знает, получает одну общую строку
             'unknown_tool',
             ...AGENT_TOOL_NAMES.filter((name) => !WRITE_TOOLS.includes(name)),

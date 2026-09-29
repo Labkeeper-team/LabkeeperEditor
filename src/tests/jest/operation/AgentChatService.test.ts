@@ -12,7 +12,16 @@ import {
     AGENT_STOP_REASONS,
     AgentEvent,
 } from '../../../model/rpi/agentSocket.ts';
-import { Hunk, Program } from '../../../model/domain.ts';
+import {
+    CompileError,
+    CompileErrorResult,
+    CompileSuccessResult,
+    ComputationalOutputSegment,
+    Hunk,
+    Program,
+    ProjectType,
+    TableStatement,
+} from '../../../model/domain.ts';
 import { Events } from '../../../model/service/ObserverService.ts';
 import { MockViewModelRepository } from '../../../viewModel/repository';
 import * as Sentry from '@sentry/react';
@@ -854,17 +863,35 @@ test('compilation-events-do-not-end-the-run', async () => {
     ctx.repository.chatViewModelRepository.setInput('собери документ');
     await ctx.agentChatService.onPromptSubmit();
 
-    await emit(ctx, { kind: 'compilationStarted' });
-    await emit(ctx, {
-        kind: 'compilationFinished',
-        pdfUri: 'https://files.labkeeper.io/generated/result1.pdf',
-    });
-    await emit(ctx, { kind: 'compilationFailed', errors: { errors: [] } });
-
-    expect(ctx.repository.chatViewModelRepository.requestState()).toBe(
-        'running'
-    );
-    expect(ctx.agentChatService.isRunning()).toBe(true);
+    const frames: AgentEvent[] = [
+        { kind: 'compilationStarted' },
+        {
+            kind: 'compilationFinished',
+            pdfUri: 'https://files.labkeeper.io/generated/result1.pdf',
+            markdown: undefined,
+        },
+        {
+            kind: 'compilationFailed',
+            errors: { errors: [], unfinishedPdfUri: undefined },
+        },
+    ];
+    for (const frame of frames) {
+        await emit(ctx, frame);
+        // после каждого кадра, иначе прогон, закрытый вторым кадром и снова открытый третьим, прошёл бы
+        expect({
+            frame: frame.kind,
+            state: ctx.repository.chatViewModelRepository.requestState(),
+            running: ctx.agentChatService.isRunning(),
+            responses: ctx.repository.chatViewModelRepository
+                .messages()
+                .filter((message) => message.kind === 'response').length,
+        }).toEqual({
+            frame: frame.kind,
+            state: 'running',
+            running: true,
+            responses: 0,
+        });
+    }
 
     await emit(ctx, {
         kind: 'finished',
@@ -2425,4 +2452,420 @@ test('a-failed-hunk-reload-on-abort-makes-the-next-run-resync', async () => {
 
     // в ленте второго прогона только его собственная правка
     expect(events(ctx)).toHaveLength(shown + 1);
+});
+
+// Сборку агент запускает сам посреди прогона: результат ложится тем же разбором, что у кнопки Run, а вкладку не трогаем, иначе лента ушла бы за PDF
+
+const RESULT_PDF =
+    'https://files.labkeeper.io/generated/user-1/project-1/result7.pdf';
+const UNFINISHED_PDF =
+    'https://files.labkeeper.io/generated/user-1/project-1/result8.pdf';
+const GUEST_PDF = 'https://files.labkeeper.io/incognito/7c1d.pdf';
+
+/** Ошибка LaTeX в том виде, в каком её прислал препрод: строка на 1 меньше строки сегмента */
+const LATEX_ERROR = {
+    code: CompileError.LATEX_ERROR,
+    payload: {
+        line: 9,
+        position: 0,
+        segmentId: 1,
+        latexErrorMessage: 'Undefined control sequence.',
+    },
+} as CompileErrorResult;
+
+const FILE_ERROR = {
+    code: CompileError.FILE_USAGE_NOT_ALLOWED,
+    payload: { line: 1, position: 0, segmentId: 1 },
+} as CompileErrorResult;
+
+const CALCULATED: CompileSuccessResult = {
+    segments: [
+        {
+            type: 'computational',
+            statements: [
+                { type: 'table', items: [['a', '10']] } as TableStatement,
+            ],
+        } as ComputationalOutputSegment,
+    ],
+};
+
+async function compilingRun(
+    ctx: ReturnType<typeof setup>,
+    mode: ProjectType = 'latex'
+) {
+    ctx.repository.projectViewModelRepository.setProjectType(mode);
+    ctx.repository.settingsViewModelRepository.setViewerTab = jest.fn();
+    ctx.repository.settingsViewModelRepository.setMobileView = jest.fn();
+    ctx.repository.chatViewModelRepository.setInput('собери документ');
+    await ctx.agentChatService.onPromptSubmit();
+}
+
+/** Всё, чем интерфейс уводит на результат: счётчик для эффекта страницы и сами вкладки */
+const resultShown = (ctx: ReturnType<typeof setup>) => ({
+    pdfUpdated: ctx.repository.ideViewModelRepository.pdfUpdated(),
+    viewerTab: (
+        ctx.repository.settingsViewModelRepository.setViewerTab as jest.Mock
+    ).mock.calls,
+    mobileView: (
+        ctx.repository.settingsViewModelRepository.setMobileView as jest.Mock
+    ).mock.calls,
+});
+
+const NOTHING_SHOWN = { pdfUpdated: 0, viewerTab: [], mobileView: [] };
+
+const eventLabels = (ctx: ReturnType<typeof setup>) =>
+    ctx.repository.chatViewModelRepository
+        .messages()
+        .flatMap((message) =>
+            message.kind === 'event' ? [message.labelKey] : []
+        );
+
+test('agent-compilation-puts-the-pdf-into-the-viewer-and-keeps-the-chat', async () => {
+    const ctx = setup();
+    ctx.repository.projectViewModelRepository.setCompileErrorResult({
+        errors: [LATEX_ERROR],
+    });
+    await compilingRun(ctx);
+
+    await emit(ctx, { kind: 'compilationStarted' });
+    await emit(ctx, {
+        kind: 'compilationFinished',
+        pdfUri: RESULT_PDF,
+        markdown: undefined,
+    });
+
+    expect(ctx.repository.projectViewModelRepository.pdfUri()).toBe(RESULT_PDF);
+    // сборка прошла, прежние ошибки уже не про этот документ
+    expect(
+        ctx.repository.projectViewModelRepository.compileErrorResult()
+    ).toEqual({ errors: [] });
+    expect(resultShown(ctx)).toEqual(NOTHING_SHOWN);
+    expect(eventLabels(ctx)).toEqual(['compile_started', 'compile_finished']);
+});
+
+test.each([
+    ['an-authorized-user', true],
+    ['a-guest', false],
+])(
+    'agent-compilation-of-markdown-puts-the-result-into-segments-for-%s',
+    async (_name, authenticated) => {
+        const ctx = setup(authenticated);
+        await compilingRun(ctx, 'markdown');
+
+        // отсутствующее поле лежит ключом со значением undefined, так его отдаёт сокет
+        await emit(ctx, {
+            kind: 'compilationFinished',
+            pdfUri: undefined,
+            markdown: CALCULATED,
+        });
+
+        expect(
+            ctx.repository.projectViewModelRepository.compileSuccessResult()
+        ).toEqual(CALCULATED);
+        expect(
+            ctx.repository.projectViewModelRepository.pdfUri()
+        ).toBeUndefined();
+        expect(resultShown(ctx)).toEqual(NOTHING_SHOWN);
+        expect(eventLabels(ctx)).toEqual(['compile_finished']);
+    }
+);
+
+test('agent-compilation-errors-open-the-panel-with-the-unfinished-pdf', async () => {
+    const ctx = setup();
+    await compilingRun(ctx);
+
+    await emit(ctx, { kind: 'compilationStarted' });
+    await emit(ctx, {
+        kind: 'compilationFailed',
+        errors: {
+            errors: [LATEX_ERROR, FILE_ERROR],
+            unfinishedPdfUri: UNFINISHED_PDF,
+        },
+    });
+
+    expect(
+        ctx.repository.projectViewModelRepository.compileErrorResult()
+    ).toEqual({
+        errors: [LATEX_ERROR, FILE_ERROR],
+        unfinishedPdfUri: UNFINISHED_PDF,
+    });
+    expect(
+        ctx.repository.settingsViewModelRepository.expandProblemViewer()
+    ).toBe(true);
+    expect(ctx.repository.projectViewModelRepository.pdfUri()).toBe(
+        UNFINISHED_PDF
+    );
+    // окно входа от кнопки Run перекрыло бы ленту посреди прогона
+    expect(ctx.repository.authViewModelRepository.currentView()).toBe('closed');
+    expect(resultShown(ctx)).toEqual(NOTHING_SHOWN);
+    expect(eventLabels(ctx)).toEqual(['compile_started', 'compile_failed']);
+});
+
+test('agent-compilation-errors-without-an-unfinished-pdf-keep-the-last-pdf', async () => {
+    const ctx = setup();
+    ctx.repository.projectViewModelRepository.setPdfUri(RESULT_PDF);
+    await compilingRun(ctx);
+
+    await emit(ctx, {
+        kind: 'compilationFailed',
+        errors: { errors: [LATEX_ERROR], unfinishedPdfUri: undefined },
+    });
+
+    expect(ctx.repository.projectViewModelRepository.pdfUri()).toBe(RESULT_PDF);
+    expect(
+        ctx.repository.projectViewModelRepository.compileErrorResult()
+    ).toEqual({ errors: [LATEX_ERROR], unfinishedPdfUri: undefined });
+});
+
+test.each([
+    [
+        'finished',
+        {
+            kind: 'compilationFinished',
+            pdfUri: RESULT_PDF,
+            markdown: undefined,
+        },
+    ],
+    [
+        'failed',
+        {
+            kind: 'compilationFailed',
+            errors: { errors: [LATEX_ERROR], unfinishedPdfUri: UNFINISHED_PDF },
+        },
+    ],
+] as [string, AgentEvent][])(
+    'agent-compilation-%s-refreshes-the-files-and-the-balance',
+    async (_name, result) => {
+        const ctx = setup();
+        const pdf = {
+            fileName: 'result7.pdf',
+            url: RESULT_PDF,
+            autogenerated: true,
+        };
+        ctx.rpi.listFilesRequest = jest
+            .fn()
+            .mockResolvedValue(okResult({ files: [pdf] }));
+        await compilingRun(ctx);
+        mockUserInfoWithDefaultUser(ctx.rpi);
+
+        await emit(ctx, { kind: 'compilationStarted' });
+        // до результата обновлять нечего
+        expect(ctx.rpi.listFilesRequest).not.toHaveBeenCalled();
+        expect(ctx.rpi.getUserInfoRequest).not.toHaveBeenCalled();
+
+        await emit(ctx, result);
+
+        // собранный pdf ложится в файлы проекта, а сборка стоит токенов
+        expect(ctx.rpi.listFilesRequest).toHaveBeenCalledWith(PROJECT_ID);
+        expect(ctx.repository.projectViewModelRepository.files()).toEqual([
+            pdf,
+        ]);
+        expect(ctx.rpi.getUserInfoRequest).toHaveBeenCalledTimes(1);
+        expect(ctx.repository.userViewModelRepository.tokenBalance()).toBe(0);
+    }
+);
+
+test('agent-compilation-result-survives-the-next-edit-of-the-agent', async () => {
+    const ctx = setup();
+    const program = (text: string): Program => ({
+        segments: [
+            {
+                id: 1,
+                type: 'computational',
+                text,
+                parameters: { visible: true },
+            },
+        ],
+        parameters: { roundStrategy: 'noRound' },
+    });
+    await compilingRun(ctx, 'markdown');
+    await emit(ctx, {
+        kind: 'compilationFinished',
+        pdfUri: undefined,
+        markdown: CALCULATED,
+    });
+    ctx.rpi.listHunksRequest = jest.fn().mockResolvedValue(
+        okResult({
+            hunks: [
+                {
+                    id: 'r1',
+                    type: 'replaceTextInSegment',
+                    segmentId: 1,
+                    startLine: 1,
+                    endLine: 1,
+                    text: 'a = 10',
+                },
+            ],
+        })
+    );
+    // любая правка агента обнуляет результат проекта на сервере
+    ctx.rpi.getProjectRequest = jest
+        .fn()
+        .mockResolvedValue(
+            okResult({ program: program('a = 20'), lastProgramResult: null })
+        );
+
+    await emit(ctx, { kind: 'toolCall', toolName: 'replace_text_in_segment' });
+
+    expect(ctx.rpi.getProjectRequest).toHaveBeenCalled();
+    expect(
+        ctx.repository.projectViewModelRepository.currentProgram().segments[0]
+            .text
+    ).toBe('a = 20');
+    expect(
+        ctx.repository.projectViewModelRepository.compileSuccessResult()
+    ).toEqual(CALCULATED);
+});
+
+test('agent-compilation-of-a-left-run-writes-nothing', async () => {
+    const ctx = setup();
+    await compilingRun(ctx);
+    const leftRun = ctx.agentSocketState.handlers;
+    await ctx.agentChatService.onAbortClicked();
+    const shown = ctx.repository.chatViewModelRepository.messages().length;
+    ctx.rpi.listFilesRequest = jest.fn();
+
+    // кадры, которые успели встать в очередь до закрытия сокета
+    await leftRun?.onEvent({ kind: 'compilationStarted' });
+    await leftRun?.onEvent({
+        kind: 'compilationFinished',
+        pdfUri: RESULT_PDF,
+        markdown: undefined,
+    });
+    await leftRun?.onEvent({
+        kind: 'compilationFailed',
+        errors: { errors: [LATEX_ERROR], unfinishedPdfUri: UNFINISHED_PDF },
+    });
+
+    expect(ctx.repository.projectViewModelRepository.pdfUri()).toBeUndefined();
+    expect(
+        ctx.repository.projectViewModelRepository.compileErrorResult()
+    ).toBeUndefined();
+    expect(
+        ctx.repository.settingsViewModelRepository.expandProblemViewer()
+    ).toBe(false);
+    expect(ctx.repository.chatViewModelRepository.messages()).toHaveLength(
+        shown
+    );
+    expect(ctx.rpi.listFilesRequest).not.toHaveBeenCalled();
+});
+
+test('guest-agent-compilation-shows-the-pdf-of-a-latex-program', async () => {
+    const ctx = setup(false);
+    ctx.rpi.getUserInfoRequest = jest.fn();
+    await compilingRun(ctx, 'latex');
+
+    await emit(ctx, {
+        kind: 'compilationFinished',
+        pdfUri: GUEST_PDF,
+        markdown: undefined,
+    });
+
+    expect(ctx.repository.projectViewModelRepository.pdfUri()).toBe(GUEST_PDF);
+    expect(resultShown(ctx)).toEqual(NOTHING_SHOWN);
+    // у гостя нет ни файлов проекта на сервере, ни баланса
+    expect(ctx.rpi.listFilesRequest).not.toHaveBeenCalled();
+    expect(ctx.rpi.getUserInfoRequest).not.toHaveBeenCalled();
+});
+
+test('guest-agent-pdf-in-markdown-mode-is-not-shown', async () => {
+    const ctx = setup(false);
+    await compilingRun(ctx, 'markdown');
+    jest.mocked(Sentry.addBreadcrumb).mockClear();
+
+    await emit(ctx, {
+        kind: 'compilationFinished',
+        pdfUri: GUEST_PDF,
+        markdown: undefined,
+    });
+    await emit(ctx, {
+        kind: 'compilationFailed',
+        errors: { errors: [LATEX_ERROR], unfinishedPdfUri: GUEST_PDF },
+    });
+
+    // вкладка результата в markdown рисует только сегменты, pdf там показать негде
+    expect(ctx.repository.projectViewModelRepository.pdfUri()).toBeUndefined();
+    // ошибки относятся к сегментам и видны в любом режиме
+    expect(
+        ctx.repository.projectViewModelRepository.compileErrorResult()
+    ).toEqual({ errors: [LATEX_ERROR] });
+    expect(eventLabels(ctx)).toEqual(['compile_finished', 'compile_failed']);
+    expect(
+        jest
+            .mocked(Sentry.addBreadcrumb)
+            .mock.calls.filter(
+                ([crumb]) =>
+                    crumb.category === 'agent' &&
+                    crumb.message === 'compilation result does not fit the mode'
+            )
+    ).toHaveLength(2);
+});
+
+test('agent-markdown-result-in-latex-mode-is-not-applied', async () => {
+    const ctx = setup();
+    ctx.repository.projectViewModelRepository.setPdfUri(RESULT_PDF);
+    ctx.repository.projectViewModelRepository.setCompileErrorResult({
+        errors: [LATEX_ERROR],
+    });
+    await compilingRun(ctx, 'latex');
+    const segmentsBefore =
+        ctx.repository.projectViewModelRepository.compileSuccessResult();
+    jest.mocked(Sentry.addBreadcrumb).mockClear();
+
+    await emit(ctx, {
+        kind: 'compilationFinished',
+        pdfUri: undefined,
+        markdown: CALCULATED,
+    });
+
+    // сегменты latex не рисуют результат markdown, а ошибки и pdf остаются от прошлой сборки
+    expect(
+        ctx.repository.projectViewModelRepository.compileSuccessResult()
+    ).toBe(segmentsBefore);
+    expect(
+        ctx.repository.projectViewModelRepository.compileErrorResult()
+    ).toEqual({ errors: [LATEX_ERROR] });
+    expect(ctx.repository.projectViewModelRepository.pdfUri()).toBe(RESULT_PDF);
+    expect(resultShown(ctx)).toEqual(NOTHING_SHOWN);
+    expect(eventLabels(ctx)).toEqual(['compile_finished']);
+    expect(
+        jest
+            .mocked(Sentry.addBreadcrumb)
+            .mock.calls.filter(
+                ([crumb]) =>
+                    crumb.category === 'agent' &&
+                    crumb.message === 'compilation result does not fit the mode'
+            )
+    ).toHaveLength(1);
+});
+
+test('finished-run-tells-analytics-whether-the-agent-compiled', async () => {
+    const ctx = setup();
+    const onEvent = jest.spyOn(ctx.observerService, 'onEvent');
+    await compilingRun(ctx);
+    await emit(ctx, {
+        kind: 'compilationFailed',
+        errors: { errors: [LATEX_ERROR], unfinishedPdfUri: undefined },
+    });
+    await emit(ctx, {
+        kind: 'finished',
+        message: 'готово',
+        stopReason: 'Done',
+    });
+
+    // второй прогон: сборка началась, но результата не дала
+    ctx.repository.chatViewModelRepository.setInput('ещё раз');
+    await ctx.agentChatService.onPromptSubmit();
+    await emit(ctx, { kind: 'compilationStarted' });
+    await emit(ctx, {
+        kind: 'finished',
+        message: 'готово',
+        stopReason: 'Done',
+    });
+
+    expect(
+        onEvent.mock.calls
+            .filter(([event]) => event === Events.EVENT_AGENT_FINISHED)
+            .map(([, properties]) => properties?.compiled)
+    ).toEqual([true, false]);
 });

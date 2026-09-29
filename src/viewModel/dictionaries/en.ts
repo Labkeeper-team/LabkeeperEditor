@@ -208,6 +208,9 @@ export const en: Translations = {
             'The agent is still running. Wait for it to finish and send the errors again',
         event: {
             model_call: 'Calling the model',
+            compile_started: 'Building the document',
+            compile_finished: 'Document built',
+            compile_failed: 'Build finished with errors',
             add_segment: 'A new segment has been added №{segment}',
             add_lines_to_segment:
                 'Changes have been made to segment №{segment}',

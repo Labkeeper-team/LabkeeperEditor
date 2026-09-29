@@ -81,6 +81,45 @@ export class CompilationService {
         }
     };
 
+    /** Разбор общий у кнопки Run и агента, а показать результат просит только кнопка: агенту посреди прогона вкладку не переключают */
+    applyPdfResult = (pdfUri: string) => {
+        this.repository.projectViewModelRepository.setPdfUri(pdfUri);
+        this.clearCompileErrors();
+    };
+
+    /** Как applyPdfResult, только результат ложится в сегменты */
+    applyMarkdownResult = (result: CompileSuccessResult) => {
+        this.repository.projectViewModelRepository.setCompileResult(result);
+        this.clearCompileErrors();
+    };
+
+    /** Окно входа при запрещённом файле открывает только кнопка Run: посреди прогона агента оно перекрыло бы ленту */
+    applyCompileErrors = (result: CompileErrorResultList) => {
+        this.repository.projectViewModelRepository.setCompileErrorResult(
+            result
+        );
+        this.repository.settingsViewModelRepository.setExpandProblemViewer(
+            true
+        );
+        if (result.unfinishedPdfUri) {
+            this.repository.projectViewModelRepository.setPdfUri(
+                result.unfinishedPdfUri
+            );
+        }
+    };
+
+    private clearCompileErrors = () => {
+        this.repository.projectViewModelRepository.setCompileErrorResult({
+            errors: [],
+        });
+    };
+
+    private showCompileResult = () => {
+        this.repository.ideViewModelRepository.setPdfUpdated(
+            this.repository.ideViewModelRepository.pdfUpdated() + 1
+        );
+    };
+
     runCompilation = async () => {
         const projectId =
             this.repository.projectViewModelRepository.project()?.projectId;
@@ -136,25 +175,14 @@ export class CompilationService {
             this.ideService.resetEditor();
         } else if (result.code === 200) {
             if (mode === 'latex') {
-                const body = result.body as CompileSuccessPdfResponse;
-                this.repository.projectViewModelRepository.setPdfUri(
-                    body.pdfUri
-                );
-                this.repository.ideViewModelRepository.setPdfUpdated(
-                    this.repository.ideViewModelRepository.pdfUpdated() + 1
+                this.applyPdfResult(
+                    (result.body as CompileSuccessPdfResponse).pdfUri
                 );
             } else {
-                this.repository.projectViewModelRepository.setCompileResult(
-                    result.body as CompileSuccessResult
-                );
-                // Как и для PDF: сигнал UI переключить мобильный вид на результат
-                this.repository.ideViewModelRepository.setPdfUpdated(
-                    this.repository.ideViewModelRepository.pdfUpdated() + 1
-                );
+                this.applyMarkdownResult(result.body as CompileSuccessResult);
             }
-            this.repository.projectViewModelRepository.setCompileErrorResult({
-                errors: [],
-            });
+            // и для PDF, и для markdown: сигнал UI переключить вид на результат
+            this.showCompileResult();
             this.track(Events.EVENT_COMPILE_SUCCEEDED, {
                 mode,
                 http_code: 200,
@@ -165,12 +193,7 @@ export class CompilationService {
             }
         } else if (result.code === 203) {
             const compileResult = result.body as CompileErrorResultList;
-            this.repository.projectViewModelRepository.setCompileErrorResult(
-                compileResult
-            );
-            this.repository.settingsViewModelRepository.setExpandProblemViewer(
-                true
-            );
+            this.applyCompileErrors(compileResult);
             this.track(Events.EVENT_COMPILE_FAILED, {
                 mode,
                 http_code: 203,
@@ -188,12 +211,7 @@ export class CompilationService {
                 this.repository.authViewModelRepository.setCurrentView('login');
             }
             if (compileResult.unfinishedPdfUri) {
-                this.repository.projectViewModelRepository.setPdfUri(
-                    compileResult.unfinishedPdfUri
-                );
-                this.repository.ideViewModelRepository.setPdfUpdated(
-                    this.repository.ideViewModelRepository.pdfUpdated() + 1
-                );
+                this.showCompileResult();
             }
             if (projectId) {
                 await this.refreshProjectFiles(projectId);
