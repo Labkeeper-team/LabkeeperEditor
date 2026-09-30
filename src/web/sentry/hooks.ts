@@ -52,7 +52,6 @@ export function sentryOptions(
     onEvent: (event: ErrorEvent) => void
 ): BrowserOptions {
     return {
-        sendDefaultPii: true,
         maxBreadcrumbs: 100,
         initialScope: { tags: automationTags() },
         // e2e открывает приложение с токеном обхода капчи в адресе, а адрес SDK кладёт и в событие, и в крошки
