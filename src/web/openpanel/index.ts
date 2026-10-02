@@ -13,6 +13,7 @@ import { scrubCaptcha } from '../sentry/scrubCaptcha.ts';
 import { isAnalyticsDisabled } from '../analyticsFlag.ts';
 import {
     adoptAnalyticsSessionId,
+    captureOpenPanelAttributionFromLocation,
     createGuestSessionId,
     getSessionId,
     landingSessionAlreadyStarted,
@@ -129,6 +130,7 @@ export class OpenPanelService implements ObserverService {
         if (!clientId || !apiUrl) {
             return false;
         }
+        captureOpenPanelAttributionFromLocation();
         this.op = new OpenPanel({
             clientId,
             apiUrl,

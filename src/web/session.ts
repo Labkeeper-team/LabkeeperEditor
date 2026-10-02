@@ -112,23 +112,54 @@ export function readOpenPanelAttribution(): Record<string, string> | undefined {
         if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
             return undefined;
         }
-        const record = parsed as Record<string, unknown>;
-        const properties: Record<string, string> = {};
-        for (const name of CAMPAIGN_PARAM_NAMES) {
-            const value = record[name];
-            if (typeof value !== 'string') {
-                continue;
-            }
-            const trimmed = value.trim();
-            if (!trimmed) {
-                continue;
-            }
-            properties[name] = trimmed;
-        }
-        return Object.keys(properties).length > 0 ? properties : undefined;
+        return campaignProperties((name) => {
+            const value = (parsed as Record<string, unknown>)[name];
+            return typeof value === 'string' ? value : undefined;
+        });
     } catch {
         return undefined;
     }
+}
+
+// прямой заход в редактор несёт метки кампании в адресе. Запись лендинга уже лежит
+// в хранилище вкладки, и второй раз её подменять нельзя.
+export function captureOpenPanelAttributionFromLocation() {
+    if (readOpenPanelAttribution()) {
+        return;
+    }
+    const params = new URLSearchParams(window.location.search);
+    const properties = campaignProperties(
+        (name) => params.get(name) ?? undefined
+    );
+    if (!properties) {
+        return;
+    }
+    try {
+        sessionStorage.setItem(
+            OPENPANEL_ATTRIBUTION_STORAGE_KEY,
+            JSON.stringify(properties)
+        );
+    } catch {
+        // приватный режим не должен ронять вкладку: без хранилища метки не доедут до событий
+    }
+}
+
+function campaignProperties(
+    read: (name: (typeof CAMPAIGN_PARAM_NAMES)[number]) => string | undefined
+): Record<string, string> | undefined {
+    const properties: Record<string, string> = {};
+    for (const name of CAMPAIGN_PARAM_NAMES) {
+        const value = read(name);
+        if (!value) {
+            continue;
+        }
+        const trimmed = value.trim();
+        if (!trimmed) {
+            continue;
+        }
+        properties[name] = trimmed;
+    }
+    return Object.keys(properties).length > 0 ? properties : undefined;
 }
 
 export function createGuestSessionId(): string {

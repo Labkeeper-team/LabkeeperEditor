@@ -59,6 +59,7 @@ const lastIdentifyPayload = () => {
 };
 
 beforeEach(async () => {
+    window.history.replaceState({}, '', '/');
     window.localStorage.clear();
     window.sessionStorage.clear();
     jest.resetModules();
@@ -305,6 +306,121 @@ test('campaign-properties-from-the-landing-stick-to-the-guest-profile', async ()
             properties: {
                 utm_campaign: 'spring',
                 yclid: 'click-1',
+            },
+        })
+    );
+});
+
+test('a-direct-visit-sends-campaign-parameters-from-the-address', async () => {
+    const search = new URLSearchParams({
+        utm_source: 'yandex',
+        utm_medium: '',
+        utm_campaign: 'spring',
+        utm_content: 'banner',
+        utm_term: ' latex ',
+        yclid: 'click-1',
+        campaign_id: 'c1',
+        ad_id: 'a1',
+        banner_id: 'b1',
+        phrase_id: 'p1',
+        source: 'search',
+        device: ' ',
+        region: '213',
+        ignored: 'no',
+    });
+    window.history.replaceState({}, '', `/?${search.toString()}`);
+    const service = new openpanel.OpenPanelService();
+
+    await service.init();
+
+    const properties = {
+        utm_source: 'yandex',
+        utm_campaign: 'spring',
+        utm_content: 'banner',
+        utm_term: 'latex',
+        yclid: 'click-1',
+        campaign_id: 'c1',
+        ad_id: 'a1',
+        banner_id: 'b1',
+        phrase_id: 'p1',
+        source: 'search',
+        region: '213',
+    };
+    expect(
+        JSON.parse(
+            window.sessionStorage.getItem(
+                session.OPENPANEL_ATTRIBUTION_STORAGE_KEY
+            ) ?? 'null'
+        )
+    ).toEqual(properties);
+
+    const { OpenPanel } = jest.requireMock('@openpanel/web') as {
+        OpenPanel: jest.Mock;
+    };
+    const setGlobalProperties = OpenPanel.mock.results[0].value
+        .setGlobalProperties as jest.Mock;
+
+    expect(setGlobalProperties).toHaveBeenCalledWith(
+        expect.objectContaining(properties)
+    );
+    expect(setGlobalProperties.mock.calls[0][0]).not.toHaveProperty(
+        'utm_medium'
+    );
+    expect(setGlobalProperties.mock.calls[0][0]).not.toHaveProperty('device');
+    expect(setGlobalProperties.mock.calls[0][0]).not.toHaveProperty('ignored');
+    expect(identifyPayloads()[0]).toEqual(
+        expect.objectContaining({
+            profileId: session.getSessionId(),
+            properties,
+        })
+    );
+    expect(lastIdentifyPayload()).toEqual(
+        expect.objectContaining({
+            profileId: session.getSessionId(),
+            properties,
+        })
+    );
+});
+
+test('a-direct-visit-does-not-replace-attribution-saved-by-the-landing', async () => {
+    const stored = JSON.stringify({
+        utm_source: 'landing',
+        utm_campaign: 'from-landing',
+    });
+    window.sessionStorage.setItem(
+        session.OPENPANEL_ATTRIBUTION_STORAGE_KEY,
+        stored
+    );
+    window.history.replaceState(
+        {},
+        '',
+        '/?utm_source=yandex&yclid=click-1&utm_campaign=direct'
+    );
+    const service = new openpanel.OpenPanelService();
+
+    await service.init();
+
+    expect(
+        window.sessionStorage.getItem(session.OPENPANEL_ATTRIBUTION_STORAGE_KEY)
+    ).toBe(stored);
+    const { OpenPanel } = jest.requireMock('@openpanel/web') as {
+        OpenPanel: jest.Mock;
+    };
+    const setGlobalProperties = OpenPanel.mock.results[0].value
+        .setGlobalProperties as jest.Mock;
+
+    expect(setGlobalProperties).toHaveBeenCalledWith(
+        expect.objectContaining({
+            utm_source: 'landing',
+            utm_campaign: 'from-landing',
+        })
+    );
+    expect(setGlobalProperties.mock.calls[0][0]).not.toHaveProperty('yclid');
+    expect(lastIdentifyPayload()).toEqual(
+        expect.objectContaining({
+            properties: {
+                utm_source: 'landing',
+                utm_campaign: 'from-landing',
             },
         })
     );
