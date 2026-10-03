@@ -12,7 +12,7 @@ import { OpenPanelService } from './web/openpanel';
 import { CompositeObserver } from './model/service/ObserverService.ts';
 import { WebRpi } from './web/server';
 import { WebAgentSocket } from './web/server/agentSocket.ts';
-import { sentryOptions } from './web/sentry/hooks.ts';
+import { reactRootErrorOptions, sentryOptions } from './web/sentry/hooks.ts';
 
 const openPanelService = new OpenPanelService();
 
@@ -33,9 +33,7 @@ export const { controller } = setupContext(
     new WebAgentSocket()
 );
 
-createRoot(document.getElementById('root')!, {
-    onRecoverableError: Sentry.reactErrorHandler(),
-}).render(
+createRoot(document.getElementById('root')!, reactRootErrorOptions()).render(
     <StrictMode>
         <App />
     </StrictMode>

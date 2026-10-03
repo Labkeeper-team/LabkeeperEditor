@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { RouteSetup } from './mock.routeSetUp.tsx';
-import { AgentHistoryEntry } from '../../model/domain.ts';
+import { AgentHistoryEntry, Program } from '../../model/domain.ts';
 
 /**
  * Страница проекта падала с React #185 («Maximum update depth exceeded») через
@@ -137,3 +137,83 @@ test.describe('телефон', () => {
         expect(resizes).toBeLessThanOrEqual(1);
     });
 });
+
+/**
+ * Сценарий e2e «старого пользователя», на котором упал прод 30 сентября:
+ * новый LaTeX-проект ни разу не собирали, поэтому он сам открывается на агенте,
+ * а через несколько секунд в него добавляют LaTeX-сегмент, печатают текст и
+ * вставляют преамбулу и конец документа
+ */
+const EMPTY_PROGRAM: Program = {
+    segments: [],
+    parameters: { roundStrategy: 'noRound' },
+};
+
+async function openNewLatexProject(page: Page) {
+    const routeSetup = new RouteSetup(page);
+    await routeSetup.setupGetUserInfoRequest(true);
+    await routeSetup.acceptCrossBorderConsentLocally();
+    routeSetup.setupNeverCompiledProject();
+    routeSetup.setupLatexProject();
+    await routeSetup.setupGetProjectRequest(200, 'default', EMPTY_PROGRAM);
+    await routeSetup.setupGetAllProjectsRequest();
+    await routeSetup.setupSaveProgramRequest();
+    await routeSetup.setupListFilesRequest(200, 'emptyFiles');
+    await routeSetup.setupAgentHistoryRequest([]);
+    await routeSetup.setupAgentSocket([]);
+    await page.goto(`/project/${uuid}`);
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page.locator('.agent-chat')).toBeVisible();
+}
+
+async function writeLatexBodyWithBoundaries(page: Page) {
+    // на телефоне редактор за переключателем колонок, как и в e2e
+    if ((page.viewportSize()?.width ?? 0) <= 767) {
+        await page.locator('.mobile-view-switcher-bar__toggle').click();
+        await page.getByRole('option', { name: 'Editor', exact: true }).click();
+        await expect(
+            page.locator('.project-pane--editor.project-pane--active')
+        ).toBeVisible();
+    }
+    await page
+        .locator('.empty-project-placeholder-container')
+        .getByRole('button', { name: 'Latex', exact: true })
+        .click();
+    const editor = page
+        .locator('.segment-editor-container .cm-content')
+        .first();
+    await expect(editor).toBeEditable();
+    await editor.focus();
+    await page.keyboard.insertText('\\pagestyle{empty}\nhello');
+    await page.locator('.latex-header-segment').click();
+    await page.locator('.latex-footer-segment').click();
+    await expect(
+        page.locator('.segment-editor-container .cm-content')
+    ).toHaveCount(3);
+}
+
+for (const [name, viewport] of [
+    ['компьютер', { width: 1280, height: 720 }],
+    ['телефон', { width: 390, height: 844 }],
+] as const) {
+    test.describe(name, () => {
+        test.use({ viewport });
+
+        test('новый LaTeX-проект переживает агента и набор первого сегмента', async ({
+            page,
+        }) => {
+            const pageErrors: string[] = [];
+            page.on('pageerror', (error) => pageErrors.push(error.message));
+
+            await openNewLatexProject(page);
+            await writeLatexBodyWithBoundaries(page);
+            // на проде страница падала через несколько секунд после этого шага
+            await page.waitForTimeout(5000);
+
+            expect(pageErrors).toEqual([]);
+            await expect(
+                page.locator('.segment-editor-container .cm-content')
+            ).toHaveCount(3);
+        });
+    });
+}
