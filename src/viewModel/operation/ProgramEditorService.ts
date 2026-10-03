@@ -792,6 +792,15 @@ export class ProgramEditorService {
             );
             return;
         }
+        // Собранного PDF нет: проект ещё не компилировали или сборку вытеснили.
+        // Это штатный ответ, а не сбой, поэтому подсказываем собрать заново
+        if (result.code === 410) {
+            this.repository.toast(
+                this.repository.dictionary.synctex.errors.missing,
+                'error'
+            );
+            return;
+        }
         if (!result.isOk || !result.body) {
             this.repository.toast(
                 this.repository.dictionary.synctex.errors.failed,
