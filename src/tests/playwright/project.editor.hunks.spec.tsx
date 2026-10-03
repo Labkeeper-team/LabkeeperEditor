@@ -38,6 +38,9 @@ const LONG_LINE =
 
 const MULTILINE_TEXT = [LONG_LINE, LONG_LINE, LONG_LINE].join('\n');
 
+// на телефоне нет общей панели правок, а файлы открываются через переключатель экранов
+const isPhoneLayout = (page: Page) => (page.viewportSize()?.width ?? 0) <= 767;
+
 async function openProjectWithHunks(
     page: Page,
     options: {
@@ -74,7 +77,7 @@ async function openProjectWithHunks(
     await page.goto(`/project/${uuid}`);
     await page.waitForLoadState('domcontentloaded');
     await expect(page).toHaveURL(`/project/${uuid}`);
-    if (options.mobile) {
+    if (isPhoneLayout(page)) {
         // на мобильном общей панели нет, ждём сам редактор
         await page.locator('.cm-content').first().waitFor({ state: 'visible' });
         return hunkServer;
@@ -799,7 +802,12 @@ async function openFileEditedByAgent(page: Page, edit: AgentFileEdit) {
             }
         },
     });
-    await page.locator('div.file-manager-button').click();
+    if (isPhoneLayout(page)) {
+        await page.locator('.mobile-view-switcher-bar__toggle').click();
+        await page.getByRole('option', { name: 'Files' }).click();
+    } else {
+        await page.locator('div.file-manager-button').click();
+    }
     await page.getByText(AGENT_FILE, { exact: true }).click();
     await expect(
         page.locator('.text-file-editor-panel .cm-hunk-controls').first()
@@ -1210,3 +1218,163 @@ test('hunk-replace-in-file-revert-restores-old-text', async ({ page }) => {
     ]);
     await expect(page.locator('.tree-row-file--has-hunks')).toHaveCount(0);
 });
+
+// WebKit не знает overflow-clip-margin: хост нулевой высоты обрезал кнопки целиком, и в Safari правку было нечем принять
+const HUNK_BUTTON_VIEWPORTS = [
+    { width: 1360, height: 900 },
+    { width: 390, height: 844 },
+];
+
+const SEGMENT_EDITS = {
+    add: {
+        program: programOf(mdSegment(1, 'intro\nadded line\nomega')),
+        hunks: [
+            {
+                id: 'hunk-segment-add',
+                type: 'addLinesToSegment',
+                segmentId: 1,
+                startLine: 2,
+                endLine: 2,
+                text: 'added line',
+            },
+        ] satisfies Hunk[],
+    },
+    replace: {
+        program: programOf(mdSegment(1, 'intro\nRow one.\nRow two.\nomega')),
+        hunks: [
+            {
+                id: 'hunk-segment-replace',
+                type: 'replaceTextInSegment',
+                segmentId: 1,
+                startLine: 2,
+                endLine: 3,
+                text: 'Old line.',
+            },
+        ] satisfies Hunk[],
+    },
+};
+
+const FILE_EDITS = {
+    add: SINGLE_AGENT_EDIT,
+    replace: SINGLE_REPLACE_FILE_EDIT,
+};
+
+/** Что получит касание в центре кнопки и чуть левее неё: обрезку предком toBeVisible не замечает */
+async function hitAroundButton(button: Locator) {
+    await button.scrollIntoViewIfNeeded();
+    return button.evaluate((target) => {
+        const rect = target.getBoundingClientRect();
+        const y = rect.top + rect.height / 2;
+        const describe = (hit: Element | null) => {
+            if (hit === null) {
+                return 'nothing';
+            }
+            if (target.contains(hit)) {
+                return 'button';
+            }
+            return hit.closest('.cm-line') ? 'line' : hit.className;
+        };
+        return {
+            center: describe(
+                document.elementFromPoint(rect.left + rect.width / 2, y)
+            ),
+            left: describe(document.elementFromPoint(rect.left - 8, y)),
+        };
+    });
+}
+
+for (const viewport of HUNK_BUTTON_VIEWPORTS) {
+    for (const place of ['segment', 'file'] as const) {
+        for (const kind of ['add', 'replace'] as const) {
+            test(`hunk-buttons-take-the-click-${place}-${kind}-${viewport.width}`, async ({
+                page,
+            }) => {
+                const flags = recordHunkDeletes(page);
+                await page.setViewportSize(viewport);
+                let editor: Locator;
+                let hunkId: string;
+                if (place === 'segment') {
+                    await openProjectWithHunks(page, SEGMENT_EDITS[kind]);
+                    editor = page.locator('#ide-segment-0');
+                    hunkId = SEGMENT_EDITS[kind].hunks[0].id;
+                } else {
+                    await openFileEditedByAgent(page, FILE_EDITS[kind]);
+                    editor = fileEditor(page);
+                    hunkId = FILE_EDITS[kind].hunks[0].id;
+                }
+                const accept = editor.locator('.cm-hunk-btn--accept');
+                const revert = editor.locator('.cm-hunk-btn--revert');
+                await expect(accept).toBeVisible();
+
+                // строка под кнопками остаётся строкой: левее кнопок касание ставит курсор
+                expect(await hitAroundButton(accept)).toEqual({
+                    center: 'button',
+                    left: 'line',
+                });
+                expect((await hitAroundButton(revert)).center).toBe('button');
+
+                // на телефоне жмём откат, на широком экране приём: так каждая кнопка нажата в каждом месте
+                const revertFlag = isPhoneLayout(page);
+                const box = await (revertFlag ? revert : accept).boundingBox();
+                await page.mouse.click(
+                    box!.x + box!.width / 2,
+                    box!.y + box!.height / 2
+                );
+                await expect
+                    .poll(() => flags)
+                    .toEqual([{ hunkId, revert: String(revertFlag) }]);
+            });
+        }
+    }
+}
+
+for (const viewport of HUNK_BUTTON_VIEWPORTS) {
+    test(`hunk-buttons-at-segment-end-do-not-scroll-the-segment-${viewport.width}`, async ({
+        page,
+    }) => {
+        await page.setViewportSize(viewport);
+        await openProjectWithHunks(page, {
+            program: programOf(
+                mdSegment(1, 'intro\nadded end'),
+                mdSegment(2, 'intro\nNew end.')
+            ),
+            hunks: [
+                {
+                    id: 'hunk-add-end',
+                    type: 'addLinesToSegment',
+                    segmentId: 1,
+                    startLine: 2,
+                    endLine: 2,
+                    text: 'added end',
+                },
+                {
+                    id: 'hunk-replace-end',
+                    type: 'replaceTextInSegment',
+                    segmentId: 2,
+                    startLine: 2,
+                    endLine: 2,
+                    text: 'Old end.',
+                },
+            ],
+        });
+        for (const segment of ['#ide-segment-0', '#ide-segment-1']) {
+            const editor = page.locator(segment);
+            await expect(editor.locator('.cm-hunk-btn--accept')).toBeVisible();
+            // кнопки у последней строки стоят на пустой строке после неё и не выходят за текст, иначе у сегмента появилась бы своя прокрутка
+            const layout = await editor.evaluate((root) => {
+                const scroller = root.querySelector('.cm-scroller')!;
+                const content = root.querySelector('.cm-content')!;
+                const buttons = [...root.querySelectorAll('.cm-hunk-btn')];
+                return {
+                    buttonsInsideText: buttons.every(
+                        (button) =>
+                            button.getBoundingClientRect().bottom <=
+                            content.getBoundingClientRect().bottom
+                    ),
+                    extraScroll: scroller.scrollHeight - scroller.clientHeight,
+                };
+            });
+            expect(layout).toEqual({ buttonsInsideText: true, extraScroll: 0 });
+        }
+    });
+}
