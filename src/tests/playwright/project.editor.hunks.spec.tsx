@@ -687,6 +687,65 @@ test('hunk-deleted-blank-line-in-segment-is-shown', async ({ page }) => {
     ).toHaveText(['old', '']);
 });
 
+// Одна удалённая пустая строка приходит с text: "". На проверке истинности
+// она терялась целиком: красного призрака не было, а кнопки правки вставали
+// на строку ниже, потому что группа переставала считаться удалением
+test('hunk-deleted-single-blank-line-in-segment-is-shown', async ({ page }) => {
+    await openProjectWithHunks(page, {
+        program: programOf(mdSegment(1, 'intro\nomega')),
+        hunks: [
+            {
+                id: 'hunk-delete-single-blank',
+                type: 'deleteLinesFromSegment',
+                segmentId: 1,
+                startLine: 2,
+                endLine: 2,
+                text: '',
+            },
+        ],
+    });
+
+    await expect(
+        page.locator('#ide-segment-0 .cm-hunk-deleted-line')
+    ).toHaveText(['']);
+    await expect(
+        page.locator('#ide-segment-0 .cm-hunk-btn--accept')
+    ).toBeVisible();
+});
+
+// Кнопки удаления стоят на месте удалённой строки. Проверяем по вертикали:
+// у пустой строки они должны стоять там же, где у непустой
+test('hunk-deleted-single-blank-line-keeps-buttons-in-place', async ({
+    page,
+}) => {
+    await openProjectWithHunks(page, {
+        program: programOf(mdSegment(1, 'intro\nomega')),
+        hunks: [
+            {
+                id: 'hunk-delete-single-blank',
+                type: 'deleteLinesFromSegment',
+                segmentId: 1,
+                startLine: 2,
+                endLine: 2,
+                text: '',
+            },
+        ],
+    });
+
+    const ghost = page.locator('#ide-segment-0 .cm-hunk-deleted-block');
+    const accept = page.locator('#ide-segment-0 .cm-hunk-btn--accept');
+    await expect(ghost).toBeVisible();
+    await expect(accept).toBeVisible();
+
+    const ghostBox = await ghost.boundingBox();
+    const acceptBox = await accept.boundingBox();
+    expect(ghostBox).not.toBeNull();
+    expect(acceptBox).not.toBeNull();
+    // кнопки держатся блока удалённой строки, а не следующей строки документа
+    const ghostBottom = ghostBox!.y + ghostBox!.height;
+    expect(acceptBox!.y).toBeLessThan(ghostBottom + ghostBox!.height);
+});
+
 const AGENT_FILE = 'notes.txt';
 const AGENT_FILE_URL = '/files/notes.txt';
 
@@ -910,6 +969,30 @@ test('hunk-file-deleted-blank-line-is-shown', async ({ page }) => {
     await expect(
         page.locator('.text-file-editor-panel .cm-hunk-deleted-line')
     ).toHaveText(['old', '']);
+});
+
+// То же самое в файловом редакторе
+test('hunk-file-deleted-single-blank-line-is-shown', async ({ page }) => {
+    await openFileEditedByAgent(page, {
+        before: ['intro', '', 'omega'].join('\n'),
+        after: ['intro', 'omega'].join('\n'),
+        hunks: [
+            fileHunk(
+                'hunk-file-delete-single-blank',
+                'deleteLinesFromFile',
+                2,
+                2,
+                ''
+            ),
+        ],
+    });
+
+    await expect(
+        page.locator('.text-file-editor-panel .cm-hunk-deleted-line')
+    ).toHaveText(['']);
+    await expect(
+        page.locator('.text-file-editor-panel .cm-hunk-btn--accept')
+    ).toBeVisible();
 });
 
 test('hunk-file-accept-all-keeps-new-text', async ({ page }) => {

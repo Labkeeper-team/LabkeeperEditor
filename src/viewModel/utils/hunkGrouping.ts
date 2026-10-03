@@ -138,7 +138,10 @@ function buildGroup(hunks: Hunk[]): HunkGroup | null {
             continue;
         }
         if (isLineDelete(hunk.type)) {
-            if (hunk.text) {
+            // "" это удалённая пустая строка, поэтому != null: на проверке
+            // истинности она терялась, призрак строки не рисовался, а кнопки
+            // правки уезжали на строку ниже. Так же сделано у замены
+            if (hunk.text != null) {
                 deletedLines.push(...hunkTextLines(hunk));
             }
             if (hunk.startLine != null) {
