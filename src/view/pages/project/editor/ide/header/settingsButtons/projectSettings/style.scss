@@ -34,3 +34,26 @@
         }
     }
 }
+
+// Второй вход в агентский режим: первый живёт на вкладке агента
+.project-settings-dropdown__agent-mode {
+    display: block;
+    width: 100%;
+    margin-top: 12px;
+    padding: 6px 12px;
+    border: 2px solid $blue-10;
+    border-radius: 100px;
+    background: $white;
+    color: $blue-10;
+    font-size: 14px;
+    line-height: 18px;
+    font-family: inherit;
+    white-space: nowrap;
+    cursor: pointer;
+    box-sizing: border-box;
+
+    &:hover {
+        background: $blue-10;
+        color: $white;
+    }
+}

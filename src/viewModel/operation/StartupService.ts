@@ -20,6 +20,8 @@ import { trackEvent } from '../utils/observerContext.ts';
 
 const qrPagePattern = /\/qr\/v\d+/i;
 const projectPagePattern = /\/project\/\S+/i;
+/** Агентский режим: тот же проект, только раскладка другая */
+const AGENT_MODE_SUFFIX = '/agent';
 
 export class StartupService {
     rpi: Rpi;
@@ -312,9 +314,14 @@ export class StartupService {
 
     private extractProjectIdFromUrl(location: string): string {
         const withoutLastSlash = this.cutOfLastSlash(location);
-        return withoutLastSlash.substring(
-            withoutLastSlash.lastIndexOf('/') + 1,
-            withoutLastSlash.length
+        // Агентский режим живёт по /project/{id}/agent: без отбрасывания
+        // суффикса за id принимается слово agent и проект не открывается
+        const withoutMode = withoutLastSlash.endsWith(AGENT_MODE_SUFFIX)
+            ? withoutLastSlash.slice(0, -AGENT_MODE_SUFFIX.length)
+            : withoutLastSlash;
+        return withoutMode.substring(
+            withoutMode.lastIndexOf('/') + 1,
+            withoutMode.length
         );
     }
 
@@ -375,8 +382,19 @@ export class StartupService {
             this.repository.projectViewModelRepository.setProjectType(
                 project.projectType
             );
+            // Адрес нормализуем под открытый проект, но режим сохраняем:
+            // иначе ссылка на агентский режим сбрасывалась бы в обычный сразу
+            // после загрузки проекта
+            const projectLocation = Routes.Project.replace(
+                ':id',
+                project.projectId
+            );
             this.repository.setLocation(
-                Routes.Project.replace(':id', project.projectId)
+                this.cutOfLastSlash(this.repository.location()).endsWith(
+                    AGENT_MODE_SUFFIX
+                )
+                    ? `${projectLocation}${AGENT_MODE_SUFFIX}`
+                    : projectLocation
             );
             this.observerService.setUserState(
                 States.STATE_PROJECT,

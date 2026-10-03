@@ -179,6 +179,11 @@ export const ru: Translations = {
         change_language_to: 'Поменять язык на «{language}»',
         github: 'GitHub',
     },
+    agent_mode: {
+        leave: 'Перейти в LaTeX редактор',
+        enter: 'Агентский режим',
+        enter_hint: 'Только агент и собранный PDF, без редактора',
+    },
     agent_chat: {
         tab_label: 'Агент',
         pdf_tab_label: 'PDF',

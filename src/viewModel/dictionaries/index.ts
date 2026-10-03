@@ -166,6 +166,11 @@ export interface Translations {
         change_language_to: string;
         github: string;
     };
+    agent_mode: {
+        leave: string;
+        enter: string;
+        enter_hint: string;
+    };
     agent_chat: {
         tab_label: string;
         pdf_tab_label: string;
