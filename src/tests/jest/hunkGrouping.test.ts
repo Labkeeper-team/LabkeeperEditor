@@ -183,6 +183,105 @@ test('getFileHunkEntries marks addFile as added and delete-only as deleted', () 
     );
 });
 
+// У одной удалённой пустой строки text равен "". На проверке истинности она
+// терялась: призрака удалённой строки не было, а кнопки правки уезжали ниже,
+// потому что группа переставала считаться удалением
+test('удаление одной пустой строки даёт призрак пустой строки', () => {
+    const groups = groupHunks([
+        {
+            id: 'del-empty',
+            type: 'deleteLinesFromSegment',
+            segmentId: 7,
+            startLine: 4,
+            endLine: 4,
+            text: '',
+        },
+    ]);
+
+    expect(groups).toHaveLength(1);
+    expect(groups[0].deletedLines).toEqual(['']);
+    expect(groups[0].anchorLine).toBe(4);
+});
+
+// Кнопки «Принять» и «Отклонить» у удаления стоят на строке-якоре, то есть на
+// месте удалённой строки, а не на следующей
+test('кнопки удалённой пустой строки стоят на её месте', () => {
+    const groups = groupHunks([
+        {
+            id: 'del-empty',
+            type: 'deleteLinesFromFile',
+            fileName: 'notes.tex',
+            startLine: 3,
+            endLine: 3,
+            text: '',
+        },
+    ]);
+
+    expect(resolveControlsLine(groups[0], 10)).toBe(3);
+    // addedLineRange пуст: это чистое удаление, и редактор ставит кнопки
+    // в начало строки-якоря, как у удаления непустых строк
+    expect(groups[0].addedLineRange).toBeNull();
+});
+
+test('удаление пустой строки ведёт себя как удаление непустой', () => {
+    const empty = groupHunks([
+        {
+            id: 'e',
+            type: 'deleteLinesFromFile',
+            fileName: 'a.tex',
+            startLine: 2,
+            endLine: 2,
+            text: '',
+        },
+    ])[0];
+    const filled = groupHunks([
+        {
+            id: 'f',
+            type: 'deleteLinesFromFile',
+            fileName: 'a.tex',
+            startLine: 2,
+            endLine: 2,
+            text: 'текст',
+        },
+    ])[0];
+
+    expect(empty.deletedLines).toHaveLength(filled.deletedLines.length);
+    expect(empty.anchorLine).toBe(filled.anchorLine);
+    expect(empty.controlsAfterLine).toBe(filled.controlsAfterLine);
+});
+
+// Несколько пустых строк подряд приходят как "\n" и работали раньше:
+// проверяем, что их разбор не изменился
+test('удаление двух пустых строк по-прежнему даёт две строки', () => {
+    const groups = groupHunks([
+        {
+            id: 'del-two',
+            type: 'deleteLinesFromFile',
+            fileName: 'b.tex',
+            startLine: 5,
+            endLine: 6,
+            text: '\n',
+        },
+    ]);
+
+    expect(groups[0].deletedLines).toEqual(['', '']);
+});
+
+// Ханк без текста вообще это не пустая строка, а отсутствие данных
+test('удаление без текста призраков не даёт', () => {
+    const groups = groupHunks([
+        {
+            id: 'del-none',
+            type: 'deleteLinesFromFile',
+            fileName: 'c.tex',
+            startLine: 1,
+            endLine: 1,
+        },
+    ]);
+
+    expect(groups[0].deletedLines).toEqual([]);
+});
+
 test('expandGroupsForDisplay splits delete and add on different lines', () => {
     const hunks: Hunk[] = [
         {
