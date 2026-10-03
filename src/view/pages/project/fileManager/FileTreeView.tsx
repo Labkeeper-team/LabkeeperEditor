@@ -33,6 +33,7 @@ import {
     fileHunkEntryForPath,
     type FileHunkEntry,
 } from '../../../../viewModel/utils/hunkGrouping.ts';
+import { SUPPORTED_EXTENSIONS_ACCEPT } from '../../../../viewModel/domain/supportedFileExtensions.ts';
 import { setMobileView } from '../../../store/slices/settings';
 
 const SystemFileRow = (props: { file: LabkeeperFile }) => {
@@ -919,7 +920,7 @@ export const FileTreeView = (props: {
                         ref={inputRef as LegacyRef<HTMLInputElement>}
                         style={{ display: 'none' }}
                         type="file"
-                        accept=".png, .jpg, .jpeg, .svg, .txt, .csv, .tex, .bib, .bst"
+                        accept={SUPPORTED_EXTENSIONS_ACCEPT}
                         multiple
                     />
                     <button

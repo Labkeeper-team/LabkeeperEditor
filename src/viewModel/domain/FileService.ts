@@ -6,24 +6,7 @@ import {
     ObserverService,
 } from '../../model/service/ObserverService.ts';
 import { fileExtension, trackEvent } from '../utils/observerContext.ts';
-
-/**
- * Расширения, которые редактор принимает в проект. Классы и пакеты LaTeX
- * (`.cls`, `.sty`) нужны шаблонам вроде AltaCV: без них проект не собирается.
- */
-const SUPPORTED_EXTENSIONS = [
-    '.png',
-    '.jpg',
-    '.jpeg',
-    '.svg',
-    '.txt',
-    '.csv',
-    '.tex',
-    '.bib',
-    '.bst',
-    '.cls',
-    '.sty',
-];
+import { SUPPORTED_EXTENSIONS } from './supportedFileExtensions.ts';
 
 export class FileService {
     repository: ViewModelRepository;
