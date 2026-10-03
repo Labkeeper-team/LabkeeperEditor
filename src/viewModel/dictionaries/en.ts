@@ -148,6 +148,8 @@ export const en: Translations = {
             no_pdf_selection: 'Click in the PDF to choose a position.',
             failed: 'Could not sync position. Recompile and try again.',
             locked: 'The PDF is being processed. Please try again shortly.',
+            missing:
+                'There is no compiled PDF. Compile the project and try again.',
         },
     },
     header_menu: {
@@ -523,6 +525,8 @@ export const en: Translations = {
             fileAlreadyExists: 'A file with this name already exists',
             rename_file_failed: 'Could not rename file. Please try again',
             rename_folder_failed: 'Could not rename folder. Please try again',
+            folder_locked:
+                'The folder is busy with another operation. Please try again shortly',
             upload_failed: 'Could not upload file. Please try again',
         },
     },

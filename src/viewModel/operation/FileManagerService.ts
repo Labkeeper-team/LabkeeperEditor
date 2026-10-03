@@ -539,6 +539,14 @@ export class FileManagerService {
                 'error'
             );
             this.restoreFilesReadyState();
+        } else if (result.code === 423) {
+            // Папку держит другая операция, например сохранение программы.
+            // Ответ штатный: сообщаем и даём повторить, в мониторинг не шлём
+            this.restoreFilesReadyState();
+            this.repository.toast(
+                this.repository.dictionary.filemanager.errors.folder_locked,
+                'error'
+            );
         } else {
             this.restoreFilesReadyState();
             this.repository.toast(

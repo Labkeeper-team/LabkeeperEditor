@@ -251,6 +251,39 @@ test('synctex editor-to-pdf shows locked error for 423', async () => {
     expect(repository.ideViewModelRepository.pdfNavigationTarget()).toBeNull();
 });
 
+// 410 приходит, когда собранного PDF нет: ответ штатный, в мониторинг он не идёт,
+// а пользователь должен увидеть, что проект надо собрать заново
+test('synctex editor-to-pdf просит собрать проект при 410', async () => {
+    const { startupService, rpi, repository, programEditorService } =
+        mockContext();
+    mockAuthenticatedStartup(rpi);
+    await startupService.onAppStartup();
+
+    repository.projectViewModelRepository.setProjectType('latex');
+    repository.projectViewModelRepository.setPdfUri('result.pdf');
+    repository.ideViewModelRepository.setSynctexEditorPosition({
+        segmentIndex: 0,
+        line: 1,
+    });
+    rpi.navigationDocToPdfRequest = jest.fn().mockResolvedValue({
+        code: 410,
+        body: 'Compiled document is missing. Compile it again.',
+        isOk: false,
+        isUnauth: false,
+        isForbidden: false,
+    });
+    const toastSpy = jest.spyOn(repository, 'toast');
+
+    await programEditorService.onSyncEditorToPdf();
+
+    expect(toastSpy).toHaveBeenCalledTimes(1);
+    expect(toastSpy).toHaveBeenCalledWith(
+        repository.dictionary.synctex.errors.missing,
+        'error'
+    );
+    expect(repository.ideViewModelRepository.pdfNavigationTarget()).toBeNull();
+});
+
 test('synctex pdf-to-editor shows locked error for 423', async () => {
     const { startupService, rpi, repository, programEditorService } =
         mockContext();
