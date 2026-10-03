@@ -7,6 +7,7 @@ import { controller } from '../../../../main.tsx';
 import { Events } from '../../../../model/service/ObserverService.ts';
 import { ViewerTab } from '../../../store/slices';
 import { useIsProjectReadonly } from '../../../store/selectors/program';
+import { useAgentModeNavigation } from '../../../hooks/useAgentMode';
 
 export const ViewerTabs = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -26,6 +27,7 @@ export const ViewerTabs = () => {
         const s = state.chat.requestState;
         return s === 'running' || s === 'connecting';
     });
+    const { enterAgentMode } = useAgentModeNavigation();
 
     // на чужом проекте агента запускать некуда: сервер правок не примет
     if (isReadonly) {
@@ -68,6 +70,17 @@ export const ViewerTabs = () => {
                     {tab.label}
                 </button>
             ))}
+            {viewerTab === 'chat' && (
+                <button
+                    type="button"
+                    className="viewer-tabs__agent-mode"
+                    title={dictionary.agent_mode.enter_hint}
+                    aria-label={dictionary.agent_mode.enter}
+                    onClick={() => enterAgentMode('viewer_tab')}
+                >
+                    <ExpandIcon />
+                </button>
+            )}
             {showClearHistory && (
                 <button
                     type="button"
@@ -85,6 +98,19 @@ export const ViewerTabs = () => {
         </div>
     );
 };
+
+// Стрелки наружу: привычный знак «развернуть на весь экран»
+const ExpandIcon = () => (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <path
+            d="M8 4H4v4M12 4h4v4M8 16H4v-4M12 16h4v-4"
+            stroke="currentColor"
+            strokeWidth="1.4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        />
+    </svg>
+);
 
 const TrashIcon = () => (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none">

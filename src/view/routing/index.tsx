@@ -46,6 +46,18 @@ export const appRouter = createBrowserRouter([
                 ),
             },
             {
+                // та же страница: режим отличается только раскладкой, проект и
+                // его состояние грузятся одинаково
+                path: Routes.ProjectAgent,
+                element: (
+                    <Suspense fallback={<SuspenseLoader />}>
+                        <div className="fade-in">
+                            <ProjectPage />
+                        </div>
+                    </Suspense>
+                ),
+            },
+            {
                 path: Routes.Projects,
                 element: <ProjectsPage />,
             },

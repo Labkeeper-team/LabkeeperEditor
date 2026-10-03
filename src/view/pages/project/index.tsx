@@ -16,6 +16,7 @@ import {
     useCurrentProject,
     useHasUnsavedChanges,
     useIsAgentRunning,
+    useIsProjectReadonly,
     useMobileView,
 } from '../../store/selectors/program';
 import { useDictionary } from '../../store/selectors/translations';
@@ -23,11 +24,14 @@ import { useIsMobile } from '../../hooks/useMobile';
 import { setMobileView, setViewerTab } from '../../store/slices/settings';
 import { refreshCodeMirrorLayout } from '../../utils/refreshCodeMirrorLayout';
 import { useHunkActionHandler } from '../../hooks/useHunkEditorSync';
+import { useAgentModeNavigation } from '../../hooks/useAgentMode';
+import { AgentModePane } from './agentMode';
 
 export const ProjectPage = () => {
     useHunkActionHandler();
     const dispatch = useDispatch<AppDispatch>();
     const isMobile = useIsMobile();
+    const { isAgentMode, leaveAgentMode } = useAgentModeNavigation();
     const mobileView = useSelector(useMobileView);
     const activeTextFile = useSelector(
         (state: StorageState) => state.ide.activeTextFile
@@ -140,6 +144,16 @@ export const ProjectPage = () => {
         project?.projectId,
     ]);
 
+    // На чужом проекте агента запускать некуда: сервер правок не примет, и
+    // режим с одним агентом остался бы пустым. Возвращаем в обычный, как
+    // только проект прочитан
+    const isReadonly = useSelector(useIsProjectReadonly);
+    useEffect(() => {
+        if (isAgentMode && getProjectRequestState === 'ok' && isReadonly) {
+            leaveAgentMode();
+        }
+    }, [getProjectRequestState, isAgentMode, isReadonly, leaveAgentMode]);
+
     /*
      * ACTIONS
      */
@@ -169,6 +183,42 @@ export const ProjectPage = () => {
             preventDefault: true,
         }
     );
+
+    // В агентском режиме редактор и файлы не показываем: экран делят чат и PDF.
+    // На телефоне колонки те же, но видна одна за раз, как и в обычном режиме
+    if (isAgentMode) {
+        return (
+            <div
+                className={classNames(
+                    'project-container',
+                    'project-container--agent',
+                    { 'project-container--mobile': isMobile }
+                )}
+            >
+                <div
+                    className={classNames(
+                        'project-pane',
+                        'project-pane--agent',
+                        {
+                            'project-pane--active':
+                                !isMobile || mobileView !== 'pdf',
+                        }
+                    )}
+                >
+                    <AgentModePane />
+                </div>
+                <div
+                    className={classNames('project-pane', 'project-pane--pdf', {
+                        'project-pane--active':
+                            !isMobile || mobileView === 'pdf',
+                    })}
+                >
+                    <Viewer />
+                </div>
+                <DeleteFilesModal />
+            </div>
+        );
+    }
 
     return (
         <div

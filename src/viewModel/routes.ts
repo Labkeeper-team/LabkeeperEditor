@@ -5,6 +5,8 @@ export enum Routes {
     Tokens = '/tokens',
     Pay = '/pay',
     Project = '/project/:id',
+    // агентский режим: только агент и собранный PDF, редактора нет
+    ProjectAgent = '/project/:id/agent',
     ProjectDefault = '/project/default',
 
     // Oauth2
