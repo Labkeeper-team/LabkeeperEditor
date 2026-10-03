@@ -61,7 +61,10 @@ export function setupContext(
         ideService,
         programService
     );
-    const fileService: FileService = new FileService(repository);
+    const fileService: FileService = new FileService(
+        repository,
+        observerService
+    );
     const compilationService: CompilationService = new CompilationService(
         repository,
         rpi,

@@ -1,29 +1,45 @@
 import { toast } from 'react-toastify';
 import { Translations } from '../dictionaries';
 import { ViewModelRepository } from '../repository';
+import {
+    Events,
+    ObserverService,
+} from '../../model/service/ObserverService.ts';
+import { fileExtension, trackEvent } from '../utils/observerContext.ts';
+import { SUPPORTED_EXTENSIONS } from './supportedFileExtensions.ts';
 
 export class FileService {
     repository: ViewModelRepository;
+    observerService: ObserverService;
 
-    constructor(repository: ViewModelRepository) {
+    constructor(
+        repository: ViewModelRepository,
+        observerService: ObserverService
+    ) {
         this.repository = repository;
+        this.observerService = observerService;
     }
+
+    private trackRejected = (file: File, reason: 'too_big' | 'format') => {
+        trackEvent(
+            this.observerService,
+            this.repository,
+            Events.EVENT_FILE_UPLOAD_REJECTED,
+            {
+                reason,
+                // расширение файла, а не имя: имя пользователя в аналитику не уходит
+                extension: fileExtension(file.name) ?? '',
+                mime_type: file.type,
+                size: file.size,
+            }
+        );
+    };
 
     checkFile = (file: File, dictionary: Translations): boolean => {
         const mbInBytes = 1048576;
         const maxSizeInMb = 5;
-        const supportedExtensions = [
-            '.png',
-            '.jpg',
-            '.jpeg',
-            '.svg',
-            '.txt',
-            '.csv',
-            '.tex',
-            '.bib',
-            '.bst',
-        ];
         if (file.size > mbInBytes * maxSizeInMb) {
+            this.trackRejected(file, 'too_big');
             toast(
                 dictionary.filemanager.errors.tooBigFile.replace(
                     '${replace1}',
@@ -34,7 +50,7 @@ export class FileService {
             return false;
         }
         const fileName = file.name.toLowerCase();
-        const hasSupportedExtension = supportedExtensions.some((ext) =>
+        const hasSupportedExtension = SUPPORTED_EXTENSIONS.some((ext) =>
             fileName.endsWith(ext)
         );
         if (
@@ -46,6 +62,7 @@ export class FileService {
             !file.type.startsWith('application/bibtex') &&
             !hasSupportedExtension
         ) {
+            this.trackRejected(file, 'format');
             toast(dictionary.filemanager.errors.notSupported, {
                 type: 'error',
             });
