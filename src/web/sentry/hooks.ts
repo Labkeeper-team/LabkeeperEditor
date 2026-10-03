@@ -1,4 +1,6 @@
+import * as Sentry from '@sentry/react';
 import type { Breadcrumb, BrowserOptions, ErrorEvent } from '@sentry/react';
+import type { RootOptions } from 'react-dom/client';
 import { isAnalyticsDisabled } from '../analyticsFlag.ts';
 import { scrubCaptcha, scrubCaptchaDeep } from './scrubCaptcha.ts';
 
@@ -57,5 +59,25 @@ export function sentryOptions(
         // e2e открывает приложение с токеном обхода капчи в адресе, а адрес SDK кладёт и в событие, и в крошки
         beforeBreadcrumb: scrubBreadcrumb,
         beforeSend: createBeforeSend(onEvent),
+    };
+}
+
+/**
+ * Обработчики ошибок корня React. Ошибку, которую поймала граница (в том числе
+ * errorElement роутера), React отдаёт сюда вместе со стеком компонентов, и
+ * Sentry кладёт его в событие. Без этого в Bugsink уходит только
+ * минифицированный стек, по которому не понять, какой компонент зациклился,
+ * как вышло с React #185 в GH-134
+ *
+ * Граница роутера ловит ту же ошибку и тоже отправляет её, но повторный захват
+ * того же объекта Sentry отбрасывает, поэтому событие одно
+ */
+export function reactRootErrorOptions(): RootOptions {
+    // React по умолчанию пишет пойманную ошибку в консоль, без этого её не видно при разработке
+    const logToConsole = (error: unknown) => console.error(error);
+    return {
+        onCaughtError: Sentry.reactErrorHandler(logToConsole),
+        onUncaughtError: Sentry.reactErrorHandler(logToConsole),
+        onRecoverableError: Sentry.reactErrorHandler(),
     };
 }
