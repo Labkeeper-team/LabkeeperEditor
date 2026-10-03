@@ -1,5 +1,8 @@
 import { Hunk } from '../../model/domain.ts';
-import { projectFilePathsMatch } from './projectFilePath.ts';
+import {
+    normalizeProjectFilePath,
+    projectFilePathsMatch,
+} from './projectFilePath.ts';
 
 export type HunkGroupTarget =
     { kind: 'segment'; segmentId: number } | { kind: 'file'; fileName: string };
@@ -443,34 +446,64 @@ export function getFileHunkEntries(hunks: Hunk[]): FileHunkEntry[] {
     return buildFileHunkEntries(groupHunks(hunks));
 }
 
+/**
+ * Одна запись на файл, а не на каждую группу правок
+ *
+ * Независимые правки одного файла лежат в разных группах. Пока записей было
+ * столько же, сколько групп, дерево файлов брало через `fileHunkEntryForPath`
+ * первую подходящую и принимало только её ханки, а значок состояния описывал
+ * одну правку вместо всего файла
+ */
 export function buildFileHunkEntries(groups: HunkGroup[]): FileHunkEntry[] {
-    return groups
-        .filter((group) => group.target.kind === 'file')
-        .map((group) => {
-            const hasAddFile = group.hunks.some((h) => h.type === 'addFile');
-            // замена кладёт и старые строки, и новые: это правка файла, а не удаление
-            const hasLineAdd = group.hunks.some(
-                (h) =>
-                    h.type === 'addLinesToFile' ||
-                    h.type === 'replaceTextInFile'
-            );
-            const hasLineDelete = group.deletedLines.length > 0;
+    interface FileAccumulator {
+        fileName: string;
+        hunkIds: string[];
+        hasAddFile: boolean;
+        hasLineAdd: boolean;
+        hasLineDelete: boolean;
+    }
+    const byFile = new Map<string, FileAccumulator>();
 
-            let state: FileHunkVisualState = 'modified';
-            if (hasAddFile || group.isNewFile) {
-                state = 'added';
-            } else if (hasLineDelete && !hasLineAdd) {
-                state = 'deleted';
-            }
+    for (const group of groups) {
+        if (group.target.kind !== 'file') {
+            continue;
+        }
+        const fileName = group.target.fileName;
+        // Один и тот же файл приходит и с ведущим слэшем, и без него:
+        // без нормализации его записи не склеятся
+        const key = normalizeProjectFilePath(fileName);
+        const entry: FileAccumulator = byFile.get(key) ?? {
+            fileName,
+            hunkIds: [],
+            hasAddFile: false,
+            hasLineAdd: false,
+            hasLineDelete: false,
+        };
 
-            return {
-                fileName: (
-                    group.target as Extract<HunkGroupTarget, { kind: 'file' }>
-                ).fileName,
-                state,
-                hunkIds: group.hunks.map((h) => h.id),
-            };
-        });
+        entry.hunkIds.push(...group.hunks.map((h) => h.id));
+        entry.hasAddFile ||=
+            group.isNewFile || group.hunks.some((h) => h.type === 'addFile');
+        // замена кладёт и старые строки, и новые: это правка файла, а не удаление
+        entry.hasLineAdd ||= group.hunks.some(
+            (h) => h.type === 'addLinesToFile' || h.type === 'replaceTextInFile'
+        );
+        entry.hasLineDelete ||= group.deletedLines.length > 0;
+        byFile.set(key, entry);
+    }
+
+    return [...byFile.values()].map((entry) => {
+        let state: FileHunkVisualState = 'modified';
+        if (entry.hasAddFile) {
+            state = 'added';
+        } else if (entry.hasLineDelete && !entry.hasLineAdd) {
+            state = 'deleted';
+        }
+        return {
+            fileName: entry.fileName,
+            state,
+            hunkIds: entry.hunkIds,
+        };
+    });
 }
 
 export function getPhantomFileNamesFromHunks(
