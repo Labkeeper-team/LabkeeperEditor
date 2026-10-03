@@ -767,3 +767,164 @@ test('replaced text is not taken for the content of a file', () => {
         )
     ).toBeNull();
 });
+
+// Дерево файлов берёт из записи все id сразу: пока запись строилась на группу,
+// кнопка «Принять» в дереве принимала только первую правку файла
+test('у файла с несколькими правками одна запись со всеми id', () => {
+    const hunks: Hunk[] = [
+        {
+            id: 'add-top',
+            type: 'addLinesToFile',
+            fileName: 'report.tex',
+            startLine: 2,
+            endLine: 2,
+        },
+        {
+            id: 'add-bottom',
+            type: 'addLinesToFile',
+            fileName: 'report.tex',
+            startLine: 40,
+            endLine: 41,
+        },
+        {
+            id: 'delete-middle',
+            type: 'deleteLinesFromFile',
+            fileName: 'report.tex',
+            startLine: 20,
+            endLine: 20,
+            text: 'устаревшая строка',
+        },
+    ];
+
+    const entries = getFileHunkEntries(hunks);
+
+    expect(entries).toHaveLength(1);
+    expect(entries[0].fileName).toBe('report.tex');
+    expect([...entries[0].hunkIds].sort()).toEqual([
+        'add-bottom',
+        'add-top',
+        'delete-middle',
+    ]);
+});
+
+// Файл приходит и с ведущим слэшем, и без него: это один и тот же файл
+test('записи одного файла склеиваются независимо от ведущего слэша', () => {
+    const entries = getFileHunkEntries([
+        {
+            id: 'a',
+            type: 'addLinesToFile',
+            fileName: 'chapters/intro.tex',
+            startLine: 1,
+            endLine: 1,
+        },
+        {
+            id: 'b',
+            type: 'addLinesToFile',
+            fileName: '/chapters/intro.tex',
+            startLine: 10,
+            endLine: 10,
+        },
+    ]);
+
+    expect(entries).toHaveLength(1);
+    expect([...entries[0].hunkIds].sort()).toEqual(['a', 'b']);
+});
+
+// Значок состояния описывает файл целиком, а не первую его правку.
+// Порядок правок перебирается оба: флаг добавления должен копиться по всем
+// группам, иначе последняя группа затрёт его и файл станет «удаляемым»
+test.each([
+    ['удаление раньше добавления', 'del', 1, 'add', 30],
+    ['добавление раньше удаления', 'add', 1, 'del', 30],
+])(
+    'файл с добавлением и удалением показан как изменённый: %s',
+    (_case, firstKind, firstLine, secondKind, secondLine) => {
+        const hunkOf = (kind: string, line: number): Hunk =>
+            kind === 'del'
+                ? {
+                      id: `del-${line}`,
+                      type: 'deleteLinesFromFile',
+                      fileName: 'mixed.tex',
+                      startLine: line,
+                      endLine: line,
+                      text: 'было',
+                  }
+                : {
+                      id: `add-${line}`,
+                      type: 'addLinesToFile',
+                      fileName: 'mixed.tex',
+                      startLine: line,
+                      endLine: line,
+                  };
+
+        const entries = getFileHunkEntries([
+            hunkOf(firstKind as string, firstLine as number),
+            hunkOf(secondKind as string, secondLine as number),
+        ]);
+
+        expect(entries).toHaveLength(1);
+        expect(entries[0].state).toBe('modified');
+    }
+);
+
+// Новый файл с дописанными строками остаётся добавленным: на этом держится
+// список фантомных файлов, которых ещё нет в проекте
+test('новый файл с дополнительной правкой остаётся добавленным', () => {
+    const entries = getFileHunkEntries([
+        { id: 'create', type: 'addFile', fileName: 'fresh.tex' },
+        {
+            id: 'more',
+            type: 'addLinesToFile',
+            fileName: 'fresh.tex',
+            startLine: 5,
+            endLine: 5,
+        },
+    ]);
+
+    expect(entries).toHaveLength(1);
+    expect(entries[0].state).toBe('added');
+});
+
+// Создание файла и удаление строк в отдельные группы не сливаются: признак
+// создания обязан пережить следующую группу, иначе файл перестанет быть новым
+test('новый файл с удалением строк остаётся добавленным', () => {
+    const entries = getFileHunkEntries([
+        { id: 'create', type: 'addFile', fileName: 'fresh.tex' },
+        {
+            id: 'cut',
+            type: 'deleteLinesFromFile',
+            fileName: 'fresh.tex',
+            startLine: 3,
+            endLine: 3,
+            text: 'лишняя строка',
+        },
+    ]);
+
+    expect(entries).toHaveLength(1);
+    expect(entries[0].state).toBe('added');
+});
+
+// Удаление в двух разных местах файла: добавлений нет, значит файл удаляемый
+test('файл только с удалениями в разных местах показан как удаляемый', () => {
+    const entries = getFileHunkEntries([
+        {
+            id: 'd1',
+            type: 'deleteLinesFromFile',
+            fileName: 'drop.tex',
+            startLine: 1,
+            endLine: 1,
+            text: 'первая',
+        },
+        {
+            id: 'd2',
+            type: 'deleteLinesFromFile',
+            fileName: 'drop.tex',
+            startLine: 9,
+            endLine: 9,
+            text: 'вторая',
+        },
+    ]);
+
+    expect(entries).toHaveLength(1);
+    expect(entries[0].state).toBe('deleted');
+});
