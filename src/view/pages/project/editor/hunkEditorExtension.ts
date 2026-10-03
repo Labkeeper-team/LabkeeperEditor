@@ -666,6 +666,12 @@ export const hunkEditorTheme = EditorView.theme({
         pointerEvents: 'none',
         lineHeight: '0',
     },
+    // WebKit не знает overflow-clip-margin и срезал бы кнопки целиком; место под кнопками у конца текста держит cm-hunk-trailing-line
+    '@supports not (overflow-clip-margin: 1px)': {
+        '.cm-hunk-controls-host': {
+            overflow: 'visible',
+        },
+    },
     '.cm-hunk-trailing-line': {
         display: 'block',
         width: '100%',
