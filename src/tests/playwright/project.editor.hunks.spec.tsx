@@ -82,9 +82,12 @@ async function openProjectWithHunks(
         await page.locator('.cm-content').first().waitFor({ state: 'visible' });
         return hunkServer;
     }
-    await expect(
-        page.getByRole('button', { name: 'Accept all' })
-    ).toBeVisible();
+    // страница проекта грузится лениво, с секундой искусственной задержки, а
+    // на холодном раннере Windows модуль ещё и собирается: пяти секунд по
+    // умолчанию не хватало, и опыт падал до самой проверки
+    await expect(page.getByRole('button', { name: 'Accept all' })).toBeVisible({
+        timeout: 15_000,
+    });
     return hunkServer;
 }
 
@@ -747,6 +750,55 @@ test('hunk-deleted-single-blank-line-keeps-buttons-in-place', async ({
     // кнопки держатся блока удалённой строки, а не следующей строки документа
     const ghostBottom = ghostBox!.y + ghostBox!.height;
     expect(acceptBox!.y).toBeLessThan(ghostBottom + ghostBox!.height);
+});
+
+// Принятие и откут удаления одной пустой строки: правка должна доезжать до
+// сервера так же, как у непустой, и не оставлять следов в редакторе
+test('hunk-deleted-single-blank-line-accept-and-revert-send-their-flag', async ({
+    page,
+}) => {
+    const deletes = recordHunkDeletes(page);
+    await openProjectWithHunks(page, {
+        program: programOf(
+            mdSegment(1, 'intro\nomega'),
+            mdSegment(2, 'intro\nomega')
+        ),
+        hunks: [
+            {
+                id: 'hunk-blank-accept',
+                type: 'deleteLinesFromSegment',
+                segmentId: 1,
+                startLine: 2,
+                endLine: 2,
+                text: '',
+            },
+            {
+                id: 'hunk-blank-revert',
+                type: 'deleteLinesFromSegment',
+                segmentId: 2,
+                startLine: 2,
+                endLine: 2,
+                text: '',
+            },
+        ],
+    });
+
+    await page.locator('#ide-segment-0 .cm-hunk-btn--accept').click();
+    await expect
+        .poll(() => deletes)
+        .toEqual([{ hunkId: 'hunk-blank-accept', revert: 'false' }]);
+    await expect(
+        page.locator('#ide-segment-0 .cm-hunk-deleted-line')
+    ).toHaveCount(0);
+
+    await page.locator('#ide-segment-1 .cm-hunk-btn--revert').click();
+    await expect
+        .poll(() => deletes)
+        .toEqual([
+            { hunkId: 'hunk-blank-accept', revert: 'false' },
+            { hunkId: 'hunk-blank-revert', revert: 'true' },
+        ]);
+    await expect(page.locator('.cm-hunk-deleted-line')).toHaveCount(0);
 });
 
 const AGENT_FILE = 'notes.txt';
