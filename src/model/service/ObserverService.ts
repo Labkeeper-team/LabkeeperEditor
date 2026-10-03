@@ -62,6 +62,8 @@ export const Events = {
     EVENT_FILE_MANAGER_OPENED: 'file_manager_opened',
     EVENT_FILE_MANAGER_CLOSED: 'file_manager_closed',
     EVENT_FILE_UPLOADED: 'file_uploaded',
+    // файл отклонён до отправки на сервер: не тот формат или больше лимита
+    EVENT_FILE_UPLOAD_REJECTED: 'file_upload_rejected',
     EVENT_FILE_CREATED: 'file_created',
     EVENT_FOLDER_CREATED: 'folder_created',
     EVENT_FILE_OPENED: 'file_opened',
@@ -188,6 +190,7 @@ export const OPENPANEL_EVENT_NAMES: Record<string, string> = {
     [Events.EVENT_FILE_MANAGER_OPENED]: 'File manager opened',
     [Events.EVENT_FILE_MANAGER_CLOSED]: 'File manager closed',
     [Events.EVENT_FILE_UPLOADED]: 'File uploaded',
+    [Events.EVENT_FILE_UPLOAD_REJECTED]: 'File upload rejected',
     [Events.EVENT_FILE_CREATED]: 'File created',
     [Events.EVENT_FOLDER_CREATED]: 'Folder created',
     [Events.EVENT_FILE_OPENED]: 'File opened',
