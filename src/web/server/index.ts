@@ -277,7 +277,8 @@ export class WebRpi implements Rpi {
     ): Promise<RequestResult<PdfPosition>> {
         return this.requestWrapper(
             'navigationDocToPdfRequest',
-            [200, 401, 423],
+            // 410: собранного PDF нет, проект надо собрать заново
+            [200, 401, 410, 423],
             async () =>
                 axios.post(
                     URLS.navigationDocToPdf.replace('{id}', projectId),
@@ -430,7 +431,8 @@ export class WebRpi implements Rpi {
         const newParam = newPath.startsWith('/') ? newPath : `/${newPath}`;
         return this.requestWrapper(
             'renameFolderRequest',
-            [200, 400, 401],
+            // 423: папку держит другая операция, например сохранение программы
+            [200, 400, 401, 423],
             async () =>
                 axios.post(
                     `${URLS.renameFolder.replace('{id}', projectId)}?old=${encodeURIComponent(oldParam)}&new=${encodeURIComponent(newParam)}`

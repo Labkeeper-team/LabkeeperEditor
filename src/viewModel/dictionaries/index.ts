@@ -142,6 +142,7 @@ export interface Translations {
             no_pdf_selection: string;
             failed: string;
             locked: string;
+            missing: string;
         };
     };
     header_menu: {
@@ -464,6 +465,7 @@ export interface Translations {
             fileAlreadyExists: string;
             rename_file_failed: string;
             rename_folder_failed: string;
+            folder_locked: string;
             upload_failed: string;
         };
     };

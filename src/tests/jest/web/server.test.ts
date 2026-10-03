@@ -226,7 +226,8 @@ const RPI_CASES: RpiCase[] = [
         method: 'renameFolderRequest',
         source: 'file',
         scoped: true,
-        expects423: false,
+        // папку может держать другая операция: замок тут штатный ответ
+        expects423: true,
         call: (rpi) => rpi.renameFolderRequest('a', 'b', PROJECT_ID),
     },
     {
@@ -678,6 +679,39 @@ describe('WebRpi', () => {
             );
         }
     );
+
+    // Сервер отвечает 410, когда собранного PDF нет. Ответ штатный:
+    // пользователю показывают подсказку собрать проект, мониторинг молчит
+    test('ожидаемый 410 от navigationDocToPdfRequest не идёт в мониторинг', async () => {
+        respondWith(410);
+        const { rpi, observerService } = createRpi();
+
+        const result = await rpi.navigationDocToPdfRequest(PROJECT_ID, {
+            segmentId: 1,
+            line: 1,
+        });
+
+        expect(result.code).toBe(410);
+        expect(Sentry.captureException).not.toHaveBeenCalled();
+        expect(observerService.onEvent).not.toHaveBeenCalledWith(
+            Events.EVENT_RPI_UNKNOWN,
+            expect.anything()
+        );
+    });
+
+    // Прочие коды этих же запросов мониторинг по-прежнему видит
+    test('неожиданный 410 от другого запроса по-прежнему идёт в мониторинг', async () => {
+        respondWith(410);
+        const { rpi, observerService } = createRpi();
+
+        await rpi.renameFolderRequest('a', 'b', PROJECT_ID);
+
+        expect(observerService.onEvent).toHaveBeenCalledWith(
+            Events.EVENT_RPI_UNKNOWN,
+            expect.objectContaining({ operation: 'renameFolderRequest' })
+        );
+        expect(Sentry.captureException).toHaveBeenCalledTimes(1);
+    });
 
     test('an unexpected 423 sends the locked event and is still reported as unknown', async () => {
         respondWith(423);
