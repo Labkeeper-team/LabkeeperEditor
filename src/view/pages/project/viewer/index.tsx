@@ -9,21 +9,33 @@ import { useIsMobile } from '../../../hooks/useMobile';
 import { CloneProjectButton } from '../cloneProjectButton';
 import { ViewerTabs } from './ViewerTabs';
 import { AgentChat } from './chat';
+import { useIsAgentMode } from '../../../hooks/useAgentMode';
+import { useDictionary } from '../../../store/selectors/translations';
 
 import '../editor/ide/header/settingsButtons/markdownType/style.scss';
 
 export const Viewer = () => {
     const isReadonly = useSelector(useIsProjectReadonly);
     const isMobile = useIsMobile();
+    const isAgentMode = useIsAgentMode();
+    const dictionary = useSelector(useDictionary);
     const viewerTab = useSelector(
         (state: StorageState) => state.settings.viewerTab
     );
-    const isChat = viewerTab === 'chat' && !isReadonly;
+    // в агентском режиме чат занимает свою колонку, здесь только результат,
+    // и переключать вкладками нечего
+    const isChat = !isAgentMode && viewerTab === 'chat' && !isReadonly;
 
     return (
         <div className="viewer-container">
             <div className="viewer-header">
-                <ViewerTabs />
+                {isAgentMode ? (
+                    <span className="viewer-header__title">
+                        {dictionary.agent_chat.pdf_tab_label}
+                    </span>
+                ) : (
+                    <ViewerTabs />
+                )}
                 {isMobile ? (
                     <div
                         className="ide-wrapper"

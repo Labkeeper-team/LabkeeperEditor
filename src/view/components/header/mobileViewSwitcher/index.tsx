@@ -14,6 +14,7 @@ import { MobileView } from '../../../store/slices';
 import { controller } from '../../../../main.tsx';
 import { Events } from '../../../../model/service/ObserverService.ts';
 import { useIsMobile } from '../../../hooks/useMobile';
+import { useIsAgentMode } from '../../../hooks/useAgentMode';
 
 import './style.scss';
 
@@ -24,6 +25,7 @@ export const MobileViewSwitcher = () => {
     const mobileView = useSelector(useMobileView);
     const isReadonly = useSelector(useIsProjectReadonly);
     const isMobile = useIsMobile();
+    const isAgentMode = useIsAgentMode();
     const [open, setOpen] = useState(false);
     const barRef = useRef<HTMLDivElement>(null);
 
@@ -50,15 +52,26 @@ export const MobileViewSwitcher = () => {
         return null;
     }
 
-    const views = [
-        { id: 'files' as const, label: dictionary.mobile_view.files },
-        { id: 'editor' as const, label: dictionary.mobile_view.editor },
-        { id: 'pdf' as const, label: dictionary.mobile_view.pdf },
-        // на чужом проекте чата нет, как нет и вкладки в правой колонке
-        ...(isReadonly
-            ? []
-            : [{ id: 'chat' as const, label: dictionary.mobile_view.chat }]),
-    ];
+    // в агентском режиме колонки всего две: агент и собранный PDF
+    const views = isAgentMode
+        ? [
+              { id: 'chat' as const, label: dictionary.mobile_view.chat },
+              { id: 'pdf' as const, label: dictionary.mobile_view.pdf },
+          ]
+        : [
+              { id: 'files' as const, label: dictionary.mobile_view.files },
+              { id: 'editor' as const, label: dictionary.mobile_view.editor },
+              { id: 'pdf' as const, label: dictionary.mobile_view.pdf },
+              // на чужом проекте чата нет, как нет и вкладки в правой колонке
+              ...(isReadonly
+                  ? []
+                  : [
+                        {
+                            id: 'chat' as const,
+                            label: dictionary.mobile_view.chat,
+                        },
+                    ]),
+          ];
 
     const currentView = views.find((view) => view.id === mobileView);
 
@@ -73,8 +86,9 @@ export const MobileViewSwitcher = () => {
         if (id === 'files') {
             dispatch(controller.onFolderButtonClickedRequest());
         }
-        // чат и результат делят одну колонку, поэтому синхронизируем таб внутри неё
-        if (id === 'chat' || id === 'pdf') {
+        // чат и результат делят одну колонку, поэтому синхронизируем таб внутри
+        // неё. В агентском режиме колонки разные, и таб правой трогать нечем
+        if (!isAgentMode && (id === 'chat' || id === 'pdf')) {
             dispatch(setViewerTab(id === 'chat' ? 'chat' : 'pdf'));
         }
         dispatch(setMobileView(id));

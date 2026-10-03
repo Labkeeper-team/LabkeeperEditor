@@ -82,6 +82,9 @@ export const Events = {
     EVENT_CROSS_BORDER_CONSENT_DISMISSED: 'cross_border_consent_dismissed',
     EVENT_BUY_TOKENS_FROM_CHAT: 'buy_tokens_from_chat',
     EVENT_VIEWER_TAB_CHANGED: 'viewer_tab_changed',
+    // режим, где на странице остаются только агент и PDF
+    EVENT_AGENT_MODE_ENTERED: 'agent_mode_entered',
+    EVENT_AGENT_MODE_LEFT: 'agent_mode_left',
     EVENT_MOBILE_VIEW_CHANGED: 'mobile_view_changed',
 
     EVENT_HUNK_ACCEPTED: 'hunk_accepted',
@@ -209,6 +212,8 @@ export const OPENPANEL_EVENT_NAMES: Record<string, string> = {
         'Cross-border consent dismissed',
     [Events.EVENT_BUY_TOKENS_FROM_CHAT]: 'Buy tokens from chat',
     [Events.EVENT_VIEWER_TAB_CHANGED]: 'Viewer tab changed',
+    [Events.EVENT_AGENT_MODE_ENTERED]: 'Agent mode entered',
+    [Events.EVENT_AGENT_MODE_LEFT]: 'Agent mode left',
     [Events.EVENT_MOBILE_VIEW_CHANGED]: 'Mobile view changed',
     [Events.EVENT_HUNK_ACCEPTED]: 'Hunk accepted',
     [Events.EVENT_HUNK_REVERTED]: 'Hunk reverted',

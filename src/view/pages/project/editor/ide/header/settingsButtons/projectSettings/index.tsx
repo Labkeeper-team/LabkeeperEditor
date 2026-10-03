@@ -9,11 +9,16 @@ import { useDictionary } from '../../../../../../../store/selectors/translations
 import { AppDispatch, StorageState } from '../../../../../../../store';
 import { controller } from '../../../../../../../../main.tsx';
 import { ProjectType } from '../../../../../../../../model/domain.ts';
+import { useAgentModeNavigation } from '../../../../../../../hooks/useAgentMode';
+import { useIsProjectReadonly } from '../../../../../../../store/selectors/program';
 
 export const ProjectSettings = () => {
     const activeProgram = useSelector(useCurrentProgram);
     const dictionary = useSelector(useDictionary);
     const mode = useSelector((state: StorageState) => state.project.mode);
+
+    const isReadonly = useSelector(useIsProjectReadonly);
+    const { enterAgentMode } = useAgentModeNavigation();
 
     const dispatch = useDispatch<AppDispatch>();
     const onTypeChange = (projectType: ProjectType) => {
@@ -138,6 +143,17 @@ export const ProjectSettings = () => {
                     title={dictionary.rounding_mode.first_digit}
                 />
             </div>
+            {/* на чужом проекте агента запускать некуда, как и на вкладке агента */}
+            {isReadonly ? null : (
+                <button
+                    type="button"
+                    className="project-settings-dropdown__agent-mode"
+                    title={dictionary.agent_mode.enter_hint}
+                    onClick={() => enterAgentMode('project_settings')}
+                >
+                    {dictionary.agent_mode.enter}
+                </button>
+            )}
         </div>
     );
 };

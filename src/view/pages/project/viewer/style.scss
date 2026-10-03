@@ -121,6 +121,22 @@
     }
 }
 
+// Вход в агентский режим: рядом с очисткой истории, на вкладке агента
+.viewer-tabs__agent-mode {
+    flex-shrink: 0;
+    border: none;
+    background: transparent;
+    color: $gray-20;
+    padding: 0 12px;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+
+    &:hover {
+        color: $blue-10;
+    }
+}
+
 .viewer-tabs__clear {
     flex-shrink: 0;
     border: none;
@@ -151,4 +167,15 @@
         margin: 0;
         justify-content: flex-end;
     }
+}
+
+// В агентском режиме колонка результата не переключается, поэтому вместо
+// вкладок стоит её название
+.viewer-header__title {
+    font-size: 14px;
+    line-height: 18px;
+    color: $gray-10;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }

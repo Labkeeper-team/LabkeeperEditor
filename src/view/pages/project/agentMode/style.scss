@@ -1,0 +1,81 @@
+@use '../../../styles/colors' as *;
+@use '../../../styles/common' as *;
+
+// Колонка повторяет геометрию viewer-container: в агентском режиме экран делят
+// пополам чат и PDF
+.agent-mode-pane {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    flex: 1;
+    gap: 8px;
+    max-width: 50%;
+    min-width: 50%;
+
+    @media screen and (max-width: $mobile-breakpoint) {
+        max-width: none;
+        min-width: 0;
+        width: 100%;
+    }
+}
+
+// Та же шапка, что у колонки результата: одна высота и один фон у обеих колонок
+.agent-mode-pane__header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 50px;
+    min-height: 50px;
+    padding: 10px 18px;
+    box-sizing: border-box;
+    background: $gray-50;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+.agent-mode-pane__leave {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 28px;
+    padding: 0 24px;
+    border: 2px solid $blue-10;
+    border-radius: 100px;
+    background: $white;
+    color: $blue-10;
+    font-size: 15px;
+    line-height: normal;
+    font-family: inherit;
+    white-space: nowrap;
+    cursor: pointer;
+    touch-action: manipulation;
+
+    &:hover {
+        background: $blue-10;
+        color: $white;
+    }
+
+    @media screen and (max-width: $mobile-breakpoint) {
+        max-width: 100%;
+        padding: 0 16px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: block;
+        line-height: 24px;
+    }
+}
+
+// Чат занимает всё, что осталось между шапкой и панелью ошибок
+.agent-mode-pane__chat {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+
+    .agent-chat {
+        flex: 1;
+        min-height: 0;
+    }
+}

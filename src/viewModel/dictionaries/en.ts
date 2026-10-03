@@ -166,6 +166,11 @@ export const en: Translations = {
         change_language_to: 'Switch language to {language}',
         github: 'GitHub',
     },
+    agent_mode: {
+        leave: 'Go to LaTeX editor',
+        enter: 'Agent mode',
+        enter_hint: 'Only the agent and the compiled PDF, no editor',
+    },
     agent_chat: {
         tab_label: 'AI agent',
         pdf_tab_label: 'PDF visualization',
