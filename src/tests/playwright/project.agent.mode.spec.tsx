@@ -85,6 +85,38 @@ test('шапка и чат стоят вплотную и доходят до н
     ).toBeLessThan(1);
 });
 
+// Замечание заказчика: тёмная граница между колонками прыгала при
+// переключении режимов. Обе колонки по 50% вместе с зазором были шире экрана,
+// граница уезжала вправо на ширину зазора, а PDF вылезал за край
+test('граница между колонками не сдвигается при переключении режимов', async ({
+    page,
+}) => {
+    await openProject(page);
+    const viewer = page.locator('.viewer-container');
+    const container = page.locator('.project-container');
+    await page.getByRole('tab', { name: 'AI agent' }).click();
+    const editorMode = (await viewer.boundingBox())!;
+    const editor = (await page.locator('.editor-container').boundingBox())!;
+    const editorGap = editorMode.x - (editor.x + editor.width);
+
+    await page.getByRole('button', { name: 'Agent mode' }).click();
+    await expect(agentPane(page)).toBeVisible();
+    const agentMode = (await viewer.boundingBox())!;
+    const agent = (await agentPane(page).boundingBox())!;
+    const bounds = (await container.boundingBox())!;
+
+    expect(Math.abs(agentMode.x - editorMode.x)).toBeLessThan(0.5);
+    expect(Math.abs(agentMode.width - editorMode.width)).toBeLessThan(0.5);
+    // PDF кончается у правого края страницы, а не за ним
+    expect(
+        Math.abs(agentMode.x + agentMode.width - (bounds.x + bounds.width))
+    ).toBeLessThan(0.5);
+    // слева от PDF тот же зазор, что в обычном режиме
+    expect(
+        Math.abs(agentMode.x - (agent.x + agent.width) - editorGap)
+    ).toBeLessThan(0.5);
+});
+
 test('в агентском режиме нет панели ошибок сборки', async ({ page }) => {
     await openProject(page, `/project/${uuid}/agent`);
     await expect(agentPane(page)).toBeVisible();
