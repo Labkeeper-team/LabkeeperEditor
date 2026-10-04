@@ -87,6 +87,7 @@
 }
 
 .viewer-tabs {
+    position: relative;
     display: flex;
     align-items: stretch;
     align-self: stretch;
@@ -121,19 +122,23 @@
     }
 }
 
-// Вход в агентский режим: рядом с очисткой истории, на вкладке агента
+// Вход в агентский режим лежит поверх левого края вкладки агента, как в
+// макете: 17 px от края колонки. В раскладку вкладок он не входит, иначе
+// вкладки разошлись бы по ширине
 .viewer-tabs__agent-mode {
-    flex-shrink: 0;
-    border: none;
-    background: transparent;
-    color: $gray-20;
-    padding: 0 12px;
+    position: absolute;
+    top: 50%;
+    left: 17px;
+    transform: translateY(-50%);
     display: inline-flex;
     align-items: center;
+    padding: 0;
+    border: none;
+    background: transparent;
     cursor: pointer;
 
     &:hover {
-        color: $blue-10;
+        opacity: 0.7;
     }
 }
 
@@ -166,6 +171,13 @@
     .viewer-tabs {
         margin: 0;
         justify-content: flex-end;
+    }
+
+    // вкладок нет, вход в режим стоит в шапке колонки рядом с очисткой истории
+    .viewer-tabs__agent-mode {
+        position: static;
+        transform: none;
+        padding: 0 12px;
     }
 }
 

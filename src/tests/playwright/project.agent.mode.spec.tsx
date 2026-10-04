@@ -64,6 +64,36 @@ test('в агентском режиме колонка результата н�
     await expect(page.locator('.viewer-tabs')).toHaveCount(0);
 });
 
+// Замечание к макету: шапка с выходом и чат это одна карточка. Зазор между
+// ними показывал тёмный фон страницы полосой, а панель ошибок под чатом
+// заказчик попросил из агентского режима убрать
+test('шапка и чат стоят вплотную и доходят до низа колонки', async ({
+    page,
+}) => {
+    await openProject(page, `/project/${uuid}/agent`);
+    await expect(agentPane(page)).toBeVisible();
+
+    const pane = (await agentPane(page).boundingBox())!;
+    const header = (await page
+        .locator('.agent-mode-pane__header')
+        .boundingBox())!;
+    const chat = (await agentPane(page).locator('.agent-chat').boundingBox())!;
+
+    expect(Math.abs(chat.y - (header.y + header.height))).toBeLessThan(1);
+    expect(
+        Math.abs(chat.y + chat.height - (pane.y + pane.height))
+    ).toBeLessThan(1);
+});
+
+test('в агентском режиме нет панели ошибок сборки', async ({ page }) => {
+    await openProject(page, `/project/${uuid}/agent`);
+    await expect(agentPane(page)).toBeVisible();
+
+    await expect(
+        page.locator('.labkeeper-problem-viewer-container')
+    ).toHaveCount(0);
+});
+
 test('кнопка сверху возвращает в обычный режим и меняет адрес', async ({
     page,
 }) => {
@@ -75,6 +105,30 @@ test('кнопка сверху возвращает в обычный режи�
     await expect(page).toHaveURL(`/project/${uuid}`);
     await expect(page.locator('.editor-container')).toBeVisible();
     await expect(agentPane(page)).toHaveCount(0);
+});
+
+// Замечание к макету: кнопка входа стоит на самой вкладке агента, у левого
+// края, а не в конце полосы вкладок
+test('кнопка входа лежит на вкладке агента у левого края', async ({ page }) => {
+    await openProject(page);
+    const agentTab = page.getByRole('tab', { name: 'AI agent' });
+    await agentTab.click();
+    const enter = page.getByRole('button', { name: 'Agent mode' });
+    await expect(enter).toBeVisible();
+
+    const tabBox = (await agentTab.boundingBox())!;
+    const enterBox = (await enter.boundingBox())!;
+    // по макету 17 px от края колонки и по центру высоты вкладки
+    expect(enterBox.x - tabBox.x).toBeGreaterThanOrEqual(12);
+    expect(enterBox.x - tabBox.x).toBeLessThanOrEqual(24);
+    expect(enterBox.x + enterBox.width).toBeLessThan(
+        tabBox.x + tabBox.width / 2
+    );
+    expect(
+        Math.abs(
+            enterBox.y + enterBox.height / 2 - (tabBox.y + tabBox.height / 2)
+        )
+    ).toBeLessThanOrEqual(1);
 });
 
 test('кнопка на вкладке агента открывает режим и меняет адрес', async ({

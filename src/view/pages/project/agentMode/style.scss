@@ -1,15 +1,15 @@
 @use '../../../styles/colors' as *;
 @use '../../../styles/common' as *;
 
-// Колонка повторяет геометрию viewer-container: в агентском режиме экран делят
-// пополам чат и PDF
+// Колонка повторяет ширину viewer-container: в агентском режиме экран делят
+// пополам чат и PDF. Шапка и чат стоят вплотную и вместе дают одну карточку,
+// зазор между ними показал бы тёмный фон страницы полосой
 .agent-mode-pane {
     position: relative;
     display: flex;
     flex-direction: column;
     height: 100%;
     flex: 1;
-    gap: 8px;
     max-width: 50%;
     min-width: 50%;
 
@@ -66,7 +66,7 @@
     }
 }
 
-// Чат занимает всё, что осталось между шапкой и панелью ошибок
+// Чат занимает всё под шапкой до низа колонки
 .agent-mode-pane__chat {
     position: relative;
     display: flex;
