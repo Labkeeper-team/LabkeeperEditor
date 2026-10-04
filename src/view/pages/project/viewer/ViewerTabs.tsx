@@ -70,6 +70,7 @@ export const ViewerTabs = () => {
                     {tab.label}
                 </button>
             ))}
+            {/* вход в агентский режим лежит на самой вкладке агента, у левого края, как в макете */}
             {viewerTab === 'chat' && (
                 <button
                     type="button"
@@ -78,7 +79,7 @@ export const ViewerTabs = () => {
                     aria-label={dictionary.agent_mode.enter}
                     onClick={() => enterAgentMode('viewer_tab')}
                 >
-                    <ExpandIcon />
+                    <FullScreenIcon />
                 </button>
             )}
             {showClearHistory && (
@@ -99,15 +100,14 @@ export const ViewerTabs = () => {
     );
 };
 
-// Стрелки наружу: привычный знак «развернуть на весь экран»
-const ExpandIcon = () => (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+// Иконка из макета (full-screen, 22 px), контур перенесён без изменений
+const FullScreenIcon = () => (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
         <path
-            d="M8 4H4v4M12 4h4v4M8 16H4v-4M12 16h4v-4"
-            stroke="currentColor"
-            strokeWidth="1.4"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M20.2884 0H13.2V2.2H19.8V8.8H22V1.05059V0H20.2884ZM19.8 19.8H13.2V22H20.2884H22V18.6506V13.2H19.8V19.8ZM2.2 13.2H0V18.6506V22H2.6884H8.8V19.8H2.2V13.2ZM2.2 8.8H0V1.05059V0H2.6884H8.8V2.2H2.2V8.8Z"
+            fill="#4469E0"
         />
     </svg>
 );
