@@ -33,6 +33,11 @@ export const ru: Translations = {
         asciimath: 'Простая формула',
     },
 
+    segment_error: {
+        message: 'Сегмент не удалось показать. Текст не потерян',
+        retry: 'Показать снова',
+    },
+
     segment_divider: {
         add: 'Добавить',
         computation: 'Вычисления',

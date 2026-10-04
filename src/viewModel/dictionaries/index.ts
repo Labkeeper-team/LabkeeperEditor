@@ -35,6 +35,11 @@ export interface Translations {
         asciimath: string;
     };
 
+    segment_error: {
+        message: string;
+        retry: string;
+    };
+
     segment_divider: {
         add: string;
         computation: string;

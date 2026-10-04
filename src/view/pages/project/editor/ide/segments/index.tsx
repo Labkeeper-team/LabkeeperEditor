@@ -8,6 +8,7 @@ import { useEffect, useRef } from 'react';
 import { AppDispatch, StorageState } from '../../../../../store';
 import { setScrollEditorToBottom } from '../../../../../store/slices/callback';
 import { SegmentDivider } from './segment-divider';
+import { SegmentErrorBoundary } from './segment-error-boundary';
 import {
     LatexFooterBoundaryCard,
     LatexHeaderBoundaryCard,
@@ -116,7 +117,10 @@ const SegmentEditorWrapper = memo(
     ({ index, isLast }: { index: number; isLast: boolean }) => {
         return (
             <React.Fragment key={index}>
-                <SegmentEditor index={index} isLast={isLast} />
+                {/* сбой редактора пересоздаёт этот сегмент, а не закрывает страницу */}
+                <SegmentErrorBoundary>
+                    <SegmentEditor index={index} isLast={isLast} />
+                </SegmentErrorBoundary>
                 <SegmentDivider index={index} showDivider={!isLast} />
             </React.Fragment>
         );

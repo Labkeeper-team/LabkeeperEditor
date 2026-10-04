@@ -31,6 +31,11 @@ export const en: Translations = {
         asciimath: 'Simple-formula',
     },
 
+    segment_error: {
+        message: 'This segment could not be shown. Its text is safe',
+        retry: 'Show again',
+    },
+
     segment_divider: {
         add: 'Add',
         computation: 'Computation',
