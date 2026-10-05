@@ -17,11 +17,10 @@ import type { AgentChatService } from './AgentChatService.ts';
 import { logBreadcrumb } from '../utils/logBreadcrumb.ts';
 import { reportToSentry } from '../utils/reportUnexpectedError.ts';
 import { trackEvent } from '../utils/observerContext.ts';
+import { AGENT_MODE_SUFFIX } from '../utils/agentModePath.ts';
 
 const qrPagePattern = /\/qr\/v\d+/i;
 const projectPagePattern = /\/project\/\S+/i;
-/** Агентский режим: тот же проект, только раскладка другая */
-const AGENT_MODE_SUFFIX = '/agent';
 
 export class StartupService {
     rpi: Rpi;

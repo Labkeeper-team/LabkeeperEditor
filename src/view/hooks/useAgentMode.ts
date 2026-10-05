@@ -7,20 +7,19 @@ import {
 } from 'react-router-dom';
 import { controller } from '../../main.tsx';
 import { Events } from '../../model/service/ObserverService.ts';
+import { AGENT_MODE_SUFFIX } from '../../viewModel/utils/agentModePath.ts';
+
+/** Кнопки перехода кладут в историю, откуда пришёл человек */
+type AgentModeLocationState = { agentModeSource?: string } | null;
 
 /**
  * Агентский режим: на странице остаются только агент и собранный PDF.
  * Отличается от обычного режима адресом, поэтому его можно открыть ссылкой
  * и вернуть кнопкой «назад» в браузере
  */
-const AGENT_PATH_SUFFIX = '/agent';
-
-/** Кнопки перехода кладут в историю, откуда пришёл человек */
-type AgentModeLocationState = { agentModeSource?: string } | null;
-
 export const useIsAgentMode = (): boolean => {
     const { pathname } = useLocation();
-    return pathname.endsWith(AGENT_PATH_SUFFIX);
+    return pathname.endsWith(AGENT_MODE_SUFFIX);
 };
 
 export const useAgentModeNavigation = () => {
@@ -30,7 +29,7 @@ export const useAgentModeNavigation = () => {
 
     // id из параметров нет у /project/default, поэтому режем сам путь
     const projectPath = isAgentMode
-        ? pathname.slice(0, -AGENT_PATH_SUFFIX.length)
+        ? pathname.slice(0, -AGENT_MODE_SUFFIX.length)
         : pathname;
 
     const enterAgentMode = useCallback(
@@ -38,7 +37,7 @@ export const useAgentModeNavigation = () => {
             if (isAgentMode) {
                 return;
             }
-            navigate(`${projectPath}${AGENT_PATH_SUFFIX}`, {
+            navigate(`${projectPath}${AGENT_MODE_SUFFIX}`, {
                 state: { agentModeSource: source },
             });
         },

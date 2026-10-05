@@ -32,6 +32,7 @@ import {
 import { logBreadcrumb } from '../utils/logBreadcrumb.ts';
 import { compileErrorsPrompt } from '../utils/compileErrors.ts';
 import { trackEvent } from '../utils/observerContext.ts';
+import { isAgentModePath } from '../utils/agentModePath.ts';
 
 /** Причины, при которых показываем ошибку, а не ответ. */
 const ERROR_STOP_REASONS: AgentStopReason[] = [
@@ -77,6 +78,8 @@ export class AgentChatService {
     private lastChange: EditorNavigationTarget | undefined;
     /** Сборка агента в текущем прогоне дала результат: pdf или ошибки */
     private compiledInRun = false;
+    /** Последняя сборка в прогоне прошла: PDF собран из того, что агент написал */
+    private pdfBuiltInRun = false;
     /** Перечитать программу не вышло или сокет оборвался: в редакторе может быть старая программа */
     private programMayBeStale = false;
     /** Текст последнего запроса: слишком длинный вернём в поле, чтобы его сократили */
@@ -363,6 +366,7 @@ export class AgentChatService {
         const token = ++this.runToken;
         this.lastChange = undefined;
         this.compiledInRun = false;
+        this.pdfBuiltInRun = false;
         this.runEnded = false;
         this.runStarted = false;
         this.track(Events.EVENT_AGENT_PROMPT_SUBMITTED, {
@@ -648,6 +652,8 @@ export class AgentChatService {
             return;
         }
         this.compiledInRun = true;
+        // решает последняя сборка: после ошибки PDF старый или недособранный
+        this.pdfBuiltInRun = event.kind === 'compilationFinished';
         this.applyCompilation(event);
         chat.appendMessage(this.events.describeCompilation(event.kind));
 
@@ -831,6 +837,31 @@ export class AgentChatService {
             hunk_count: event.hunks?.length ?? this.knownHunks.length,
             compiled: this.compiledInRun,
         });
+        await this.showLastChangeInPdf();
+    };
+
+    /**
+     * GH-149: в агентском режиме редактора нет, и правку видно только в PDF.
+     * После прогона со сборкой PDF встаёт на первую строку последней правки
+     * агента. Не вышло, человеку не говорим, но событие отправляем
+     */
+    private showLastChangeInPdf = async (): Promise<void> => {
+        const target = this.lastChange;
+        if (
+            !this.pdfBuiltInRun ||
+            !target ||
+            !isAgentModePath(this.repository.location())
+        ) {
+            return;
+        }
+        const result =
+            await this.programEditorService.scrollPdfToAgentChange(target);
+        if (result.outcome === 'failed') {
+            this.track(Events.EVENT_AGENT_PDF_SCROLL_FAILED, {
+                code: result.code,
+                target: target.file ? 'file' : 'segment',
+            });
+        }
     };
 
     private applyUnauthorizedResult = (
