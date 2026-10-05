@@ -23,11 +23,17 @@ test.use({ viewport: { width: 1360, height: 900 } });
 async function openProject(
     page: Page,
     path = `/project/${uuid}`,
-    { foreign = false }: { foreign?: boolean } = {}
+    {
+        foreign = false,
+        latex = false,
+    }: { foreign?: boolean; latex?: boolean } = {}
 ) {
     const routeSetup = new RouteSetup(page);
     await routeSetup.setupGetUserInfoRequest(true);
     await routeSetup.acceptCrossBorderConsentLocally();
+    if (latex) {
+        routeSetup.setupLatexProject();
+    }
     await routeSetup.setupGetProjectRequest(
         200,
         foreign ? 'withTwoSegmentsBibaAndAEqualTen' : 'default'
@@ -43,6 +49,31 @@ async function openProject(
 
 const agentPane = (page: Page) => page.locator('.agent-mode-pane');
 const leaveButton = (page: Page) => page.locator('.agent-mode-pane__leave');
+
+// Замечание заказчика: в агентском режиме кнопки «Выполнить» нет, поэтому до
+// первой сборки заглушка результата предлагает описать документ агенту
+const AGENT_EMPTY_RESULT =
+    'Describe to the agent the PDF you would like to see';
+
+for (const [kind, latex, editorText] of [
+    ['markdown', false, 'Add the code or markdown'],
+    ['latex', true, 'Click the "Run" button to display the PDF file.'],
+] as const) {
+    test(`до первой сборки заглушка агентского режима зовёт к агенту: ${kind}`, async ({
+        page,
+    }) => {
+        await openProject(page, `/project/${uuid}/agent`, { latex });
+        const viewer = page.locator('.viewer-container');
+        await expect(viewer.getByText(AGENT_EMPTY_RESULT)).toBeVisible();
+        await expect(viewer.getByText(editorText)).toHaveCount(0);
+
+        // в обычном режиме кнопка «Выполнить» есть, и текст прежний
+        await leaveButton(page).click();
+        await page.getByRole('tab', { name: 'PDF' }).click();
+        await expect(viewer.getByText(editorText)).toBeVisible();
+        await expect(viewer.getByText(AGENT_EMPTY_RESULT)).toHaveCount(0);
+    });
+}
 
 test('агентский режим открывается по своему адресу', async ({ page }) => {
     await openProject(page, `/project/${uuid}/agent`);

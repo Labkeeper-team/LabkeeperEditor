@@ -167,9 +167,10 @@ export const en: Translations = {
         github: 'GitHub',
     },
     agent_mode: {
-        leave: 'Go to LaTeX editor',
+        leave: 'Open the full code editor',
         enter: 'Agent mode',
         enter_hint: 'Only the agent and the compiled PDF, no editor',
+        no_pdf: 'Describe to the agent the PDF you would like to see',
     },
     agent_chat: {
         tab_label: 'AI agent',

@@ -164,6 +164,8 @@ export interface Translations {
         leave: string;
         enter: string;
         enter_hint: string;
+        // заглушка результата до первой сборки: кнопки «Выполнить» в режиме нет
+        no_pdf: string;
     };
     agent_chat: {
         tab_label: string;
