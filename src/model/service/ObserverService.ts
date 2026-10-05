@@ -87,6 +87,8 @@ export const Events = {
     // режим, где на странице остаются только агент и PDF
     EVENT_AGENT_MODE_ENTERED: 'agent_mode_entered',
     EVENT_AGENT_MODE_LEFT: 'agent_mode_left',
+    // PDF после прогона агента не встал на его правку: навигация не удалась
+    EVENT_AGENT_PDF_SCROLL_FAILED: 'agent_pdf_scroll_failed',
     EVENT_MOBILE_VIEW_CHANGED: 'mobile_view_changed',
 
     EVENT_HUNK_ACCEPTED: 'hunk_accepted',
@@ -217,6 +219,7 @@ export const OPENPANEL_EVENT_NAMES: Record<string, string> = {
     [Events.EVENT_VIEWER_TAB_CHANGED]: 'Viewer tab changed',
     [Events.EVENT_AGENT_MODE_ENTERED]: 'Agent mode entered',
     [Events.EVENT_AGENT_MODE_LEFT]: 'Agent mode left',
+    [Events.EVENT_AGENT_PDF_SCROLL_FAILED]: 'Agent PDF scroll failed',
     [Events.EVENT_MOBILE_VIEW_CHANGED]: 'Mobile view changed',
     [Events.EVENT_HUNK_ACCEPTED]: 'Hunk accepted',
     [Events.EVENT_HUNK_REVERTED]: 'Hunk reverted',

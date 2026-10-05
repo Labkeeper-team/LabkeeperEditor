@@ -3183,3 +3183,140 @@ test('run-left-during-the-final-sync-does-not-open-the-pdf', async () => {
     expect(ctx.rpi.getProjectRequest).toHaveBeenCalledTimes(1);
     expect(resultShown(ctx)).toEqual(NOTHING_SHOWN);
 });
+
+/*
+ * GH-149: в агентском режиме редактора нет, и правку агента видно только в
+ * PDF. После прогона со сборкой PDF встаёт на первую строку последней правки
+ */
+
+const PDF_POSITION = { page: 2, x: 72, y: 340 };
+
+function agentModeSetup(path = `/project/${PROJECT_ID}/agent`) {
+    const ctx = phoneSetup();
+    ctx.repository.settingsViewModelRepository.setViewerTab = jest.fn();
+    ctx.repository.projectViewModelRepository.setProjectType('latex');
+    ctx.repository.setLocation(path);
+    ctx.rpi.navigationDocToPdfRequest = jest
+        .fn()
+        .mockResolvedValue(okResult(PDF_POSITION));
+    ctx.rpi.listHunksRequest = jest
+        .fn()
+        .mockResolvedValueOnce(okResult({ hunks: [segmentHunk('a', 2, 1)] }))
+        .mockResolvedValue(
+            okResult({
+                hunks: [
+                    segmentHunk('a', 2, 1),
+                    segmentHunk('b', 3, 4),
+                    segmentHunk('c', 1, 7),
+                ],
+            })
+        );
+    return ctx;
+}
+
+/** Две правки агента, сборки из frames и конец прогона */
+async function runWithChanges(
+    ctx: ReturnType<typeof agentModeSetup>,
+    frames: AgentEvent[] = [PDF_BUILT]
+) {
+    ctx.repository.chatViewModelRepository.setInput('поправь и собери');
+    await ctx.agentChatService.onPromptSubmit();
+    await emit(ctx, { kind: 'toolCall', toolName: 'add_lines_to_segment' });
+    await emit(ctx, { kind: 'toolCall', toolName: 'add_lines_to_segment' });
+    for (const frame of frames) {
+        await emit(ctx, frame);
+    }
+    await emit(ctx, done());
+}
+
+const scrollFailures = (onEvent: jest.SpyInstance) =>
+    onEvent.mock.calls
+        .filter(([event]) => event === Events.EVENT_AGENT_PDF_SCROLL_FAILED)
+        .map(([, properties]) => ({
+            code: properties?.code,
+            target: properties?.target,
+        }));
+
+test('agent-mode-run-with-a-built-pdf-shows-the-last-change-in-the-pdf', async () => {
+    const ctx = agentModeSetup();
+
+    await runWithChanges(ctx);
+
+    // последняя правка это сегмент 1, а не первая из последней пачки
+    expect(ctx.rpi.navigationDocToPdfRequest).toHaveBeenCalledWith(PROJECT_ID, {
+        segmentId: 1,
+        line: 7,
+    });
+    expect(ctx.repository.ideViewModelRepository.pdfNavigationTarget()).toEqual(
+        PDF_POSITION
+    );
+});
+
+test('agent-mode-run-that-changed-a-file-finds-it-in-the-pdf-by-file-and-line', async () => {
+    const ctx = agentModeSetup();
+    const fileHunk: Hunk = {
+        id: 'f',
+        type: 'addLinesToFile',
+        fileName: 'chapter.tex',
+        startLine: 3,
+        endLine: 3,
+    };
+    ctx.rpi.listHunksRequest = jest
+        .fn()
+        .mockResolvedValue(
+            okResult({ hunks: [segmentHunk('a', 2, 1), fileHunk] })
+        );
+
+    await runWithChanges(ctx);
+
+    expect(ctx.rpi.navigationDocToPdfRequest).toHaveBeenCalledWith(PROJECT_ID, {
+        file: 'chapter.tex',
+        line: 3,
+    });
+});
+
+test('failed-navigation-goes-to-analytics-and-not-to-the-user', async () => {
+    const ctx = agentModeSetup();
+    ctx.rpi.navigationDocToPdfRequest = jest.fn().mockResolvedValue({
+        code: 500,
+        body: undefined,
+        isOk: false,
+        isUnauth: false,
+        isForbidden: false,
+    });
+    const onEvent = jest.spyOn(ctx.observerService, 'onEvent');
+
+    await runWithChanges(ctx);
+
+    expect(
+        ctx.repository.ideViewModelRepository.pdfNavigationTarget()
+    ).toBeNull();
+    // по ТЗ человеку ничего не говорим, PDF просто остаётся на месте
+    expect(toasts(ctx)).toEqual([]);
+    expect(scrollFailures(onEvent)).toEqual([{ code: 500, target: 'segment' }]);
+});
+
+test.each([
+    ['editor-mode', `/project/${PROJECT_ID}`, [PDF_BUILT]],
+    [
+        'a-run-whose-last-build-failed',
+        `/project/${PROJECT_ID}/agent`,
+        [PDF_BUILT, PDF_FAILED],
+    ],
+    ['a-run-without-a-build', `/project/${PROJECT_ID}/agent`, []],
+] as [string, string, AgentEvent[]][])(
+    '%s-leaves-the-pdf-where-it-was',
+    async (_name, path, frames) => {
+        const ctx = agentModeSetup(path);
+        const onEvent = jest.spyOn(ctx.observerService, 'onEvent');
+
+        await runWithChanges(ctx, frames);
+
+        expect(ctx.rpi.navigationDocToPdfRequest).not.toHaveBeenCalled();
+        expect(
+            ctx.repository.ideViewModelRepository.pdfNavigationTarget()
+        ).toBeNull();
+        // это не сбой навигации: её просто не было
+        expect(scrollFailures(onEvent)).toEqual([]);
+    }
+);

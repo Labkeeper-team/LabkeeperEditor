@@ -30,6 +30,12 @@ import {
 import { resolveSegmentId } from '../utils/segmentId.ts';
 import { segmentCreateEvent, trackEvent } from '../utils/observerContext.ts';
 
+/** Чем кончилась попытка показать в PDF последнюю правку агента */
+export type AgentPdfScrollResult =
+    | { outcome: 'scrolled' }
+    | { outcome: 'skipped' }
+    | { outcome: 'failed'; code: number };
+
 export class ProgramEditorService {
     repository: ViewModelRepository;
     rpi: Rpi;
@@ -811,6 +817,50 @@ export class ProgramEditorService {
         this.repository.ideViewModelRepository.setPdfNavigationTarget(
             result.body
         );
+    };
+
+    /**
+     * GH-149: после прогона агента со сборкой PDF встаёт на правку агента.
+     * Человек об этом не просил, поэтому ошибок ему не показываем, а
+     * возвращаем причину: её отправит в аналитику сервис агента
+     */
+    scrollPdfToAgentChange = async (
+        target: EditorNavigationTarget
+    ): Promise<AgentPdfScrollResult> => {
+        if (!this.canUseSynctexNavigation()) {
+            return { outcome: 'skipped' };
+        }
+        const project = this.repository.projectViewModelRepository.project();
+        if (
+            !project?.projectId ||
+            !this.repository.projectViewModelRepository.pdfUri()
+        ) {
+            return { outcome: 'skipped' };
+        }
+        const requestBody = target.file
+            ? { file: target.file, line: target.line }
+            : {
+                  segmentId: this.getSegmentIdForNavigation(
+                      target.segmentIndex
+                  ),
+                  line: target.line,
+              };
+        const result = await this.rpi.navigationDocToPdfRequest(
+            project.projectId,
+            requestBody
+        );
+        // пока шёл запрос, человек мог уйти в другой проект: его PDF не трогаем
+        const current = this.repository.projectViewModelRepository.project();
+        if (current?.projectId !== project.projectId) {
+            return { outcome: 'skipped' };
+        }
+        if (!result.isOk || !result.body) {
+            return { outcome: 'failed', code: result.code };
+        }
+        this.repository.ideViewModelRepository.setPdfNavigationTarget(
+            result.body
+        );
+        return { outcome: 'scrolled' };
     };
 
     onSyncPdfToEditor = async () => {
