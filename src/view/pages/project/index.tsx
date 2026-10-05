@@ -24,7 +24,10 @@ import { useIsMobile } from '../../hooks/useMobile';
 import { setMobileView, setViewerTab } from '../../store/slices/settings';
 import { refreshCodeMirrorLayout } from '../../utils/refreshCodeMirrorLayout';
 import { useHunkActionHandler } from '../../hooks/useHunkEditorSync';
-import { useAgentModeNavigation } from '../../hooks/useAgentMode';
+import {
+    useAgentModeNavigation,
+    useAgentModeTracking,
+} from '../../hooks/useAgentMode';
 import { AgentModePane } from './agentMode';
 
 export const ProjectPage = () => {
@@ -32,6 +35,7 @@ export const ProjectPage = () => {
     const dispatch = useDispatch<AppDispatch>();
     const isMobile = useIsMobile();
     const { isAgentMode, leaveAgentMode } = useAgentModeNavigation();
+    useAgentModeTracking();
     const mobileView = useSelector(useMobileView);
     const activeTextFile = useSelector(
         (state: StorageState) => state.ide.activeTextFile
@@ -150,7 +154,7 @@ export const ProjectPage = () => {
     const isReadonly = useSelector(useIsProjectReadonly);
     useEffect(() => {
         if (isAgentMode && getProjectRequestState === 'ok' && isReadonly) {
-            leaveAgentMode();
+            leaveAgentMode('readonly_project');
         }
     }, [getProjectRequestState, isAgentMode, isReadonly, leaveAgentMode]);
 

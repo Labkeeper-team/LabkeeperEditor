@@ -8,6 +8,7 @@ import { Events } from '../../../../model/service/ObserverService.ts';
 import { ViewerTab } from '../../../store/slices';
 import { useIsProjectReadonly } from '../../../store/selectors/program';
 import { useAgentModeNavigation } from '../../../hooks/useAgentMode';
+import { ClearHistoryButton } from './chat/ClearHistoryButton.tsx';
 
 export const ViewerTabs = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -15,18 +16,7 @@ export const ViewerTabs = () => {
     const viewerTab = useSelector(
         (state: StorageState) => state.settings.viewerTab
     );
-    const isAuthenticated = useSelector(
-        (state: StorageState) => state.user.isAuthenticated
-    );
     const isReadonly = useSelector(useIsProjectReadonly);
-    const hasHistory = useSelector(
-        (state: StorageState) =>
-            state.chat.history.length > 0 || state.chat.messages.length > 0
-    );
-    const isRunning = useSelector((state: StorageState) => {
-        const s = state.chat.requestState;
-        return s === 'running' || s === 'connecting';
-    });
     const { enterAgentMode } = useAgentModeNavigation();
 
     // на чужом проекте агента запускать некуда: сервер правок не примет
@@ -38,10 +28,6 @@ export const ViewerTabs = () => {
         { id: 'chat', label: dictionary.agent_chat.tab_label },
         { id: 'pdf', label: dictionary.agent_chat.pdf_tab_label },
     ];
-
-    // кнопка очистки истории есть только у авторизованного и только когда есть что чистить
-    const showClearHistory =
-        viewerTab === 'chat' && isAuthenticated && hasHistory;
 
     return (
         <div className="viewer-tabs">
@@ -70,32 +56,18 @@ export const ViewerTabs = () => {
                     {tab.label}
                 </button>
             ))}
-            {/* вход в агентский режим лежит на самой вкладке агента, у левого края, как в макете */}
-            {viewerTab === 'chat' && (
-                <button
-                    type="button"
-                    className="viewer-tabs__agent-mode"
-                    title={dictionary.agent_mode.enter_hint}
-                    aria-label={dictionary.agent_mode.enter}
-                    onClick={() => enterAgentMode('viewer_tab')}
-                >
-                    <FullScreenIcon />
-                </button>
-            )}
-            {showClearHistory && (
-                <button
-                    type="button"
-                    disabled={isRunning}
-                    className="viewer-tabs__clear"
-                    title={dictionary.agent_chat.clear_history}
-                    aria-label={dictionary.agent_chat.clear_history}
-                    onClick={() =>
-                        dispatch(controller.onClearChatHistoryRequest())
-                    }
-                >
-                    <TrashIcon />
-                </button>
-            )}
+            {/* вход в агентский режим лежит на вкладке агента, у левого края, как в
+                макете, и виден при любой открытой вкладке */}
+            <button
+                type="button"
+                className="viewer-tabs__agent-mode"
+                title={dictionary.agent_mode.enter_hint}
+                aria-label={dictionary.agent_mode.enter}
+                onClick={() => enterAgentMode('viewer_tab')}
+            >
+                <FullScreenIcon />
+            </button>
+            {viewerTab === 'chat' && <ClearHistoryButton />}
         </div>
     );
 };
@@ -108,18 +80,6 @@ const FullScreenIcon = () => (
             clipRule="evenodd"
             d="M20.2884 0H13.2V2.2H19.8V8.8H22V1.05059V0H20.2884ZM19.8 19.8H13.2V22H20.2884H22V18.6506V13.2H19.8V19.8ZM2.2 13.2H0V18.6506V22H2.6884H8.8V19.8H2.2V13.2ZM2.2 8.8H0V1.05059V0H2.6884H8.8V2.2H2.2V8.8Z"
             fill="#4469E0"
-        />
-    </svg>
-);
-
-const TrashIcon = () => (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-        <path
-            d="M4 6h12M8 6V4h4v2M6 6l1 10h6l1-10M9 9v5M11 9v5"
-            stroke="currentColor"
-            strokeWidth="1.4"
-            strokeLinecap="round"
-            strokeLinejoin="round"
         />
     </svg>
 );

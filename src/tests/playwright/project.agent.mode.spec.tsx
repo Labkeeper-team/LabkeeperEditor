@@ -117,6 +117,23 @@ test('граница между колонками не сдвигается п�
     ).toBeLessThan(0.5);
 });
 
+// Замечание заказчика: вкладок в агентском режиме нет, а очистка истории
+// нужна и здесь, поэтому она стоит в шапке колонки агента
+test('в агентском режиме историю можно очистить из шапки', async ({ page }) => {
+    await openProject(page, `/project/${uuid}/agent`);
+    const clear = page
+        .locator('.agent-mode-pane__header')
+        .getByRole('button', { name: 'Clear history' });
+    await expect(page.locator('.agent-chat__pair')).toHaveCount(1);
+    await expect(clear).toBeVisible();
+
+    await clear.click();
+
+    await expect(page.locator('.agent-chat__pair')).toHaveCount(0);
+    // чистить больше нечего, кнопка уходит
+    await expect(clear).toHaveCount(0);
+});
+
 test('в агентском режиме нет панели ошибок сборки', async ({ page }) => {
     await openProject(page, `/project/${uuid}/agent`);
     await expect(agentPane(page)).toBeVisible();
@@ -161,6 +178,25 @@ test('кнопка входа лежит на вкладке агента у л�
             enterBox.y + enterBox.height / 2 - (tabBox.y + tabBox.height / 2)
         )
     ).toBeLessThanOrEqual(1);
+});
+
+// Замечание заказчика: вход в режим нужен и тогда, когда открыт PDF
+test('кнопка входа видна и при открытом PDF', async ({ page }) => {
+    await openProject(page);
+    await page.getByRole('tab', { name: 'PDF' }).click();
+    const agentTab = page.getByRole('tab', { name: 'AI agent' });
+    const enter = page.getByRole('button', { name: 'Agent mode' });
+    await expect(enter).toBeVisible();
+
+    const tabBox = (await agentTab.boundingBox())!;
+    const enterBox = (await enter.boundingBox())!;
+    expect(enterBox.x - tabBox.x).toBeGreaterThanOrEqual(12);
+    expect(enterBox.x + enterBox.width).toBeLessThan(
+        tabBox.x + tabBox.width / 2
+    );
+
+    await enter.click();
+    await expect(page).toHaveURL(`/project/${uuid}/agent`);
 });
 
 test('кнопка на вкладке агента открывает режим и меняет адрес', async ({
