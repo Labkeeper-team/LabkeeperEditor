@@ -21,6 +21,7 @@
 
 // Та же шапка, что у колонки результата: одна высота и один фон у обеих колонок
 .agent-mode-pane__header {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -31,6 +32,14 @@
     background: $gray-50;
     border-top-left-radius: 8px;
     border-top-right-radius: 8px;
+}
+
+// Очистка истории у правого края шапки, кнопка выхода остаётся по центру
+.agent-mode-pane__clear {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 100%;
 }
 
 .agent-mode-pane__leave {

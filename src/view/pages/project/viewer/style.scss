@@ -142,7 +142,8 @@
     }
 }
 
-.viewer-tabs__clear {
+// Очистка истории чата: рядом с вкладками и в шапке агентского режима
+.chat-clear-history {
     flex-shrink: 0;
     border: none;
     background: transparent;
