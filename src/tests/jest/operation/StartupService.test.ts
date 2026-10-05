@@ -474,3 +474,50 @@ test('default-latex-project-opens-the-agent-before-files-load', async () => {
     releaseFiles();
     await startup;
 });
+
+/*
+ * Агентский режим проекта по умолчанию живёт по /project/default/agent. Это
+ * тот же проект по умолчанию, а не проект с id default: иначе гость после
+ * перезагрузки в режиме получал пустую программу и сломанный редактор
+ */
+
+const DEFAULT_AGENT_MODE = `${Routes.ProjectDefault}/agent`;
+
+test('guest-agent-mode-of-the-default-project-opens-the-default-project', async () => {
+    const { startupService, rpi, repository } = mockContext();
+    mockUserInfoForUnauthorized(rpi);
+    rpi.getProjectRequest = jest.fn();
+    repository.setLocation(DEFAULT_AGENT_MODE);
+    const setLocation = jest.spyOn(repository, 'setLocation');
+
+    await startupService.onAppStartup();
+
+    expect(rpi.getProjectRequest).not.toHaveBeenCalled();
+    expect(
+        repository.projectViewModelRepository.currentProgram()
+    ).toBeDefined();
+    // режим остаётся: адрес тот же
+    expect(setLocation).toHaveBeenCalledWith(DEFAULT_AGENT_MODE, {
+        replace: true,
+    });
+    expect(repository.location()).toBe(DEFAULT_AGENT_MODE);
+});
+
+test('signed-in-agent-mode-of-the-default-project-keeps-the-mode-on-its-address', async () => {
+    const { startupService, rpi, repository } = mockContext();
+    mockAuthenticatedStartup(rpi);
+    repository.setLocation(DEFAULT_AGENT_MODE);
+    const setLocation = jest.spyOn(repository, 'setLocation');
+
+    await startupService.onAppStartup();
+
+    // проект по умолчанию у вошедшего свой, и адрес встаёт под него вместе с режимом
+    expect(rpi.getDefaultProjectRequest).toHaveBeenCalled();
+    expect(
+        (rpi.getProjectRequest as jest.Mock).mock.calls.map(([id]) => id)
+    ).not.toContain('default');
+    expect(setLocation).toHaveBeenCalledWith(`/project/${PROJECT_ID}/agent`, {
+        replace: true,
+    });
+    expect(repository.location()).toBe(`/project/${PROJECT_ID}/agent`);
+});
