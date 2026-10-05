@@ -40,6 +40,10 @@
     top: 0;
     right: 0;
     height: 100%;
+
+    @media screen and (max-width: $mobile-breakpoint) {
+        padding: 0 8px;
+    }
 }
 
 .agent-mode-pane__leave {
@@ -65,8 +69,12 @@
     }
 
     @media screen and (max-width: $mobile-breakpoint) {
-        max-width: 100%;
-        padding: 0 16px;
+        // справа в шапке корзина очистки истории: место под неё оставляем с
+        // обеих сторон, чтобы кнопка осталась по центру. Шрифт и поля чуть
+        // меньше, иначе подпись на телефоне шириной 360 px не помещается
+        max-width: calc(100% - 36px);
+        padding: 0 12px;
+        font-size: 14px;
         overflow: hidden;
         text-overflow: ellipsis;
         display: block;

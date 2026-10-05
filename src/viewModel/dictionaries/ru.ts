@@ -180,9 +180,10 @@ export const ru: Translations = {
         github: 'GitHub',
     },
     agent_mode: {
-        leave: 'Перейти в LaTeX редактор',
+        leave: 'Открыть полный редактор кода',
         enter: 'Агентский режим',
         enter_hint: 'Только агент и собранный PDF, без редактора',
+        no_pdf: 'Опишите агенту PDF-файл, который вы хотели бы видеть',
     },
     agent_chat: {
         tab_label: 'Агент',

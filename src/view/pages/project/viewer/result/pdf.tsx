@@ -27,6 +27,7 @@ import {
     resolvePdfDestination,
 } from '../../../../utils/pdfLinks';
 import { createPdfLinkService } from './linkService';
+import { useIsAgentMode } from '../../../../hooks/useAgentMode';
 import { PdfTextSelection } from './textSelection';
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -103,6 +104,7 @@ export const PdfResultViewer = () => {
     const dispatch = useDispatch<AppDispatch>();
     const pdfUri = useSelector((state: StorageState) => state.project.pdfUri);
     const dictionary = useSelector(useDictionary);
+    const isAgentMode = useIsAgentMode();
     const pdfNavigationTarget = useSelector(
         (state: StorageState) => state.ide.pdfNavigationTarget
     );
@@ -649,7 +651,14 @@ export const PdfResultViewer = () => {
                         width: '100%',
                     }}
                 >
-                    <Typography text={dictionary.viewer.no_pdf} />
+                    {/* в агентском режиме кнопки «Выполнить» нет, PDF собирает агент */}
+                    <Typography
+                        text={
+                            isAgentMode
+                                ? dictionary.agent_mode.no_pdf
+                                : dictionary.viewer.no_pdf
+                        }
+                    />
                 </div>
             ) : (
                 <>
