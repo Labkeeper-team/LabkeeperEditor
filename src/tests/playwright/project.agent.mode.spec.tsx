@@ -271,6 +271,47 @@ test('кнопка браузера «назад» возвращает в об�
     await expect(page.locator('.editor-container')).toBeVisible();
 });
 
+// Ошибка из обзора: гость в инкогнито открывает агентский режим ссылкой или
+// перезагружает его и жмёт «Открыть полный редактор кода». Адрес
+// /project/default/agent принимался за проект с id default, программа
+// приходила пустой, и редактор ломался
+for (const [way, path] of [
+    ['ссылкой', '/project/default/agent'],
+    ['с перезагрузкой', '/project/default'],
+] as const) {
+    test(`гость открывает режим ${way} и выходит в рабочий редактор`, async ({
+        page,
+    }) => {
+        const errors: string[] = [];
+        page.on('console', (message) => {
+            if (message.type() === 'error') {
+                errors.push(message.text());
+            }
+        });
+        const routeSetup = new RouteSetup(page);
+        await routeSetup.setupGetUserInfoRequest(false);
+        await routeSetup.acceptCrossBorderConsentLocally();
+        await routeSetup.setupAgentSocket([]);
+        await page.goto(path);
+        if (path === '/project/default') {
+            await page.getByRole('button', { name: 'Agent mode' }).click();
+            await expect(agentPane(page)).toBeVisible();
+            await page.reload();
+        }
+        await expect(agentPane(page)).toBeVisible();
+        // режим пережил загрузку: адрес остался агентским
+        await expect(page).toHaveURL('/project/default/agent');
+
+        await leaveButton(page).click();
+
+        await expect(page).toHaveURL('/project/default');
+        await expect(
+            page.locator('.empty-project-placeholder-container')
+        ).toBeVisible();
+        expect(errors.filter((text) => text.includes('TypeError'))).toEqual([]);
+    });
+}
+
 // Чужой проект: агента там запускать некуда, сервер правок не примет.
 // Режим с одним агентом остался бы пустым, поэтому возвращаем в обычный
 test('на чужом проекте агентский режим не открывается', async ({ page }) => {

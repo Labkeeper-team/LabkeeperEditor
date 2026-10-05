@@ -162,8 +162,12 @@ export class StartupService {
             }
         }
 
-        // PROJECT DEFAULT PAGE ENTER
-        else if (locationWithoutLastSlash === Routes.ProjectDefault) {
+        // PROJECT DEFAULT PAGE ENTER, в том числе в агентском режиме:
+        // /project/default/agent это тот же проект по умолчанию, а не проект с id default
+        else if (
+            this.withoutAgentMode(locationWithoutLastSlash) ===
+            Routes.ProjectDefault
+        ) {
             await this.openDefaultProject(userInfo, open);
         }
 
@@ -302,23 +306,40 @@ export class StartupService {
      * Replace them in history so Back skips the extra editor entry.
      */
     private isEditorLandingPath(location: string): boolean {
-        const path = this.cutOfLastSlash(location);
+        const path = this.withoutAgentMode(location);
         return path === Routes.Home || path === Routes.ProjectDefault;
     }
 
     private setEditorLocation(url: string): void {
-        this.repository.setLocation(url, {
+        this.repository.setLocation(this.keepingAgentMode(url), {
             replace: this.isEditorLandingPath(this.repository.location()),
         });
     }
 
+    /** Адрес страницы без хвоста агентского режима: проект тот же, меняется раскладка */
+    private withoutAgentMode(location: string): string {
+        const path = this.cutOfLastSlash(location);
+        return path.endsWith(AGENT_MODE_SUFFIX)
+            ? path.slice(0, -AGENT_MODE_SUFFIX.length)
+            : path;
+    }
+
+    /**
+     * Адрес под открытый проект с прежним режимом: иначе ссылка на агентский
+     * режим сбрасывалась бы в обычный сразу после загрузки проекта
+     */
+    private keepingAgentMode(url: string): string {
+        return this.cutOfLastSlash(this.repository.location()).endsWith(
+            AGENT_MODE_SUFFIX
+        )
+            ? `${url}${AGENT_MODE_SUFFIX}`
+            : url;
+    }
+
     private extractProjectIdFromUrl(location: string): string {
-        const withoutLastSlash = this.cutOfLastSlash(location);
         // Агентский режим живёт по /project/{id}/agent: без отбрасывания
         // суффикса за id принимается слово agent и проект не открывается
-        const withoutMode = withoutLastSlash.endsWith(AGENT_MODE_SUFFIX)
-            ? withoutLastSlash.slice(0, -AGENT_MODE_SUFFIX.length)
-            : withoutLastSlash;
+        const withoutMode = this.withoutAgentMode(location);
         return withoutMode.substring(
             withoutMode.lastIndexOf('/') + 1,
             withoutMode.length
@@ -382,19 +403,11 @@ export class StartupService {
             this.repository.projectViewModelRepository.setProjectType(
                 project.projectType
             );
-            // Адрес нормализуем под открытый проект, но режим сохраняем:
-            // иначе ссылка на агентский режим сбрасывалась бы в обычный сразу
-            // после загрузки проекта
-            const projectLocation = Routes.Project.replace(
-                ':id',
-                project.projectId
-            );
+            // адрес нормализуем под открытый проект, но режим сохраняем
             this.repository.setLocation(
-                this.cutOfLastSlash(this.repository.location()).endsWith(
-                    AGENT_MODE_SUFFIX
+                this.keepingAgentMode(
+                    Routes.Project.replace(':id', project.projectId)
                 )
-                    ? `${projectLocation}${AGENT_MODE_SUFFIX}`
-                    : projectLocation
             );
             this.observerService.setUserState(
                 States.STATE_PROJECT,
