@@ -5,5 +5,13 @@
     "trailingComma": "es5",
     "bracketSpacing": true,
     "bracketSameLine": false,
-    "endOfLine": "auto"
+    "endOfLine": "auto",
+    "overrides": [
+        {
+            "files": "*.svg",
+            "options": {
+                "parser": "html"
+            }
+        }
+    ]
 }
