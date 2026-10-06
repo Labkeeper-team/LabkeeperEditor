@@ -217,6 +217,29 @@ export const editorHelpItems: EditorHelpItem[] = [
 const basicEndingRu = 'Больше информации доступно на';
 const basicEndingEn = 'More information on';
 
+export const agentModeInstructions: LocalizedInstructionItem[] = [
+    {
+        ru: {
+            title: 'Агентский режим',
+            points: [
+                'Опишите в чате, какой документ нужен, и отправьте сообщение.',
+                'Агент сам пишет и правит проект. Код набирать не нужно.',
+                'Если хотите редактировать сам документ вручную, нажмите кнопку перехода в полный редактор.',
+            ],
+            image: '/instructions/agent_mode.svg',
+        },
+        en: {
+            title: 'Agent mode',
+            points: [
+                'Describe the document you need in the chat and send the message.',
+                'The agent writes and edits the project. You do not type the code.',
+                'To edit the document by hand, press the button that opens the full editor.',
+            ],
+            image: '/instructions/agent_mode.svg',
+        },
+    },
+];
+
 export const instructions: LocalizedInstructionItem[] = [
     {
         ru: {
@@ -249,6 +272,7 @@ export const instructions: LocalizedInstructionItem[] = [
             image: '/instructions/welcome.png',
         },
     },
+    agentModeInstructions[0],
     {
         ru: {
             title: 'LaTeX',

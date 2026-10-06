@@ -19,9 +19,10 @@ import {
     useCurrentLanguage,
     useDictionary,
 } from '../../../../store/selectors/translations';
-import { instructions } from '../../../../../model/help';
+import { agentModeInstructions, instructions } from '../../../../../model/help';
 import { setInstructionExpanded } from '../../../../store/slices/persistence';
 import { useInstructionsExpanded } from '../../../../store/selectors/program';
+import { useIsAgentMode } from '../../../../hooks/useAgentMode';
 
 export const Instruction = () => {
     const swiperRef = useRef<SwiperType | null>(null);
@@ -29,6 +30,9 @@ export const Instruction = () => {
     const dictionary = useSelector(useDictionary);
     const dispatch = useDispatch();
     const language = useSelector(useCurrentLanguage);
+    const isAgentMode = useIsAgentMode();
+    const slides = isAgentMode ? agentModeInstructions : instructions;
+    const hasSeveralSlides = slides.length > 1;
 
     return (
         <div className={classNames('labkeeper-instruction-container')}>
@@ -50,23 +54,28 @@ export const Instruction = () => {
                     }}
                 >
                     <Swiper
+                        key={isAgentMode ? 'agent' : 'editor'}
                         style={{ height: '100%' }}
                         spaceBetween={0}
                         width={undefined}
                         slidesPerView={1}
                         onSwiper={(swiper) => (swiperRef.current = swiper)}
                         cssMode
-                        pagination={{
-                            clickable: true,
-                            bulletClass: 'swiper-pagination-bullet',
-                            bulletActiveClass:
-                                'swiper-pagination-bullet-active',
-                        }}
+                        pagination={
+                            hasSeveralSlides
+                                ? {
+                                      clickable: true,
+                                      bulletClass: 'swiper-pagination-bullet',
+                                      bulletActiveClass:
+                                          'swiper-pagination-bullet-active',
+                                  }
+                                : false
+                        }
                         navigation={false}
                         onSlideChange={(sw) => sw.activeIndex}
                         modules={[Pagination, Navigation]}
                     >
-                        {instructions.map((instruction, index) => (
+                        {slides.map((instruction, index) => (
                             <SwiperSlide key={index}>
                                 <InstructionItemComponent
                                     item={instruction[language]}
@@ -74,21 +83,27 @@ export const Instruction = () => {
                             </SwiperSlide>
                         ))}
                     </Swiper>
-                    <div className="nav-button left">
-                        <ImageButton
-                            onClick={() => swiperRef.current?.slidePrev()}
-                            rotate
-                            type="primary"
-                        />
-                    </div>
-                    <div className="nav-button right">
-                        <ImageButton
-                            onClick={() => {
-                                swiperRef.current?.slideNext();
-                            }}
-                            type="primary"
-                        />
-                    </div>
+                    {hasSeveralSlides ? (
+                        <>
+                            <div className="nav-button left">
+                                <ImageButton
+                                    onClick={() =>
+                                        swiperRef.current?.slidePrev()
+                                    }
+                                    rotate
+                                    type="primary"
+                                />
+                            </div>
+                            <div className="nav-button right">
+                                <ImageButton
+                                    onClick={() => {
+                                        swiperRef.current?.slideNext();
+                                    }}
+                                    type="primary"
+                                />
+                            </div>
+                        </>
+                    ) : null}
                 </div>
             ) : null}
         </div>
