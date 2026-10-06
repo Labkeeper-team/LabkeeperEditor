@@ -297,12 +297,9 @@ export const instructions: LocalizedInstructionItem[] = [
         ru: {
             title: 'Markdown',
             points: [
-                `
-                Создайте сегмент нужного типа.
-                Markdown нужен для текста.
-                Вычисление позволяет считать выражения`,
-                'Напишите что-нибудь',
-                'Нажмите кнопку Выполнить',
+                'Заголовки, списки, таблицы и ссылки рисуются сразу в браузере, без кнопки «Выполнить».',
+                'Формулы пишутся как в LaTeX: ```$...$``` в строке и ```$$...$$``` отдельным блоком.',
+                'В текст можно вставлять HTML: он тоже рисуется.',
             ],
             image: '/instructions/quick_start.png',
             ending: basicEndingRu,
@@ -311,13 +308,9 @@ export const instructions: LocalizedInstructionItem[] = [
         en: {
             title: 'Markdown',
             points: [
-                `
-                Create a segment with required type.
-                Markdown helps you render text and images.
-                Computation lets you perform custom calculations
-                and then insert the result into other segments`,
-                'Write some text in it',
-                'Press the run button',
+                'Headings, lists, tables, and links render in the browser. The Run button is not needed.',
+                'Formulas use LaTeX syntax: ```$...$``` inline and ```$$...$$``` as a block.',
+                'HTML in the text is rendered too.',
             ],
             ending: basicEndingEn,
             wikiLink: WikiLinks.examples,
