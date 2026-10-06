@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 320" fill="none">
+    <rect x="40" y="18" width="400" height="72" rx="36" fill="#FFFFFF" />
+    <rect x="72" y="40" width="168" height="10" rx="5" fill="#D4DEF6" />
+    <rect x="72" y="58" width="112" height="10" rx="5" fill="#E6EDFF" />
+    <circle cx="396" cy="54" r="22" fill="#1CA852" />
+    <path
+        d="M386 54h18M396 46l10 8-10 8"
+        stroke="#FFFFFF"
+        stroke-width="2.6"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+    />
+
+    <path
+        d="M240 104v34"
+        stroke="#8EB8DC"
+        stroke-width="10"
+        stroke-linecap="round"
+    />
+    <path d="M222 128l18 22 18-22" fill="#8EB8DC" />
+
+    <rect
+        x="156"
+        y="176"
+        width="168"
+        height="122"
+        rx="10"
+        fill="#FFFFFF"
+        stroke="#4469E0"
+        stroke-width="2.5"
+    />
+    <text
+        x="240"
+        y="210"
+        text-anchor="middle"
+        fill="#4469E0"
+        font-family="Roboto, Arial, sans-serif"
+        font-size="18"
+        font-weight="700"
+    >
+        PDF
+    </text>
+    <rect x="176" y="224" width="128" height="7" rx="3.5" fill="#D4DEF6" />
+    <rect x="176" y="240" width="104" height="7" rx="3.5" fill="#D4DEF6" />
+    <rect x="176" y="256" width="116" height="7" rx="3.5" fill="#D4DEF6" />
+    <rect x="176" y="272" width="72" height="7" rx="3.5" fill="#D4DEF6" />
+</svg>

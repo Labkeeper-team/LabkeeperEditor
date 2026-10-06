@@ -217,6 +217,29 @@ export const editorHelpItems: EditorHelpItem[] = [
 const basicEndingRu = 'Больше информации доступно на';
 const basicEndingEn = 'More information on';
 
+export const agentModeInstructions: LocalizedInstructionItem[] = [
+    {
+        ru: {
+            title: 'Агентский режим',
+            points: [
+                'Опишите в чате, какой документ нужен, и отправьте сообщение.',
+                'Агент сам пишет и правит проект. Код набирать не нужно.',
+                'Если хотите редактировать сам документ вручную, нажмите кнопку перехода в полный редактор.',
+            ],
+            image: '/instructions/agent_mode.svg',
+        },
+        en: {
+            title: 'Agent mode',
+            points: [
+                'Describe the document you need in the chat and send the message.',
+                'The agent writes and edits the project. You do not type the code.',
+                'To edit the document by hand, press the button that opens the full editor.',
+            ],
+            image: '/instructions/agent_mode.svg',
+        },
+    },
+];
+
 export const instructions: LocalizedInstructionItem[] = [
     {
         ru: {
@@ -249,6 +272,7 @@ export const instructions: LocalizedInstructionItem[] = [
             image: '/instructions/welcome.png',
         },
     },
+    agentModeInstructions[0],
     {
         ru: {
             title: 'LaTeX',
@@ -273,12 +297,9 @@ export const instructions: LocalizedInstructionItem[] = [
         ru: {
             title: 'Markdown',
             points: [
-                `
-                Создайте сегмент нужного типа.
-                Markdown нужен для текста.
-                Вычисление позволяет считать выражения`,
-                'Напишите что-нибудь',
-                'Нажмите кнопку Выполнить',
+                'Заголовки, списки, таблицы и ссылки рисуются сразу в браузере, без кнопки «Выполнить».',
+                'Формулы пишутся как в LaTeX: ```$...$``` в строке и ```$$...$$``` отдельным блоком.',
+                'В текст можно вставлять HTML: он тоже рисуется.',
             ],
             image: '/instructions/quick_start.png',
             ending: basicEndingRu,
@@ -287,13 +308,9 @@ export const instructions: LocalizedInstructionItem[] = [
         en: {
             title: 'Markdown',
             points: [
-                `
-                Create a segment with required type.
-                Markdown helps you render text and images.
-                Computation lets you perform custom calculations
-                and then insert the result into other segments`,
-                'Write some text in it',
-                'Press the run button',
+                'Headings, lists, tables, and links render in the browser. The Run button is not needed.',
+                'Formulas use LaTeX syntax: ```$...$``` inline and ```$$...$$``` as a block.',
+                'HTML in the text is rendered too.',
             ],
             ending: basicEndingEn,
             wikiLink: WikiLinks.examples,
