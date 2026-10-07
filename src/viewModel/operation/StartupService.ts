@@ -615,11 +615,6 @@ export class StartupService {
                 this.showAgentIfNeverCompiled();
             }
         }
-        if (open === 'ai') {
-            // ссылка ?open=ai разошлась до появления чата, ведём её на ближайший по смыслу экран
-            this.repository.settingsViewModelRepository.setViewerTab('chat');
-            this.repository.settingsViewModelRepository.setMobileView('chat');
-        }
         if (open === 'login' && !userInfo.isAuthenticated) {
             this.repository.authViewModelRepository.setCurrentView('login');
         }
