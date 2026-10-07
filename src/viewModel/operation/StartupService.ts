@@ -218,7 +218,6 @@ export class StartupService {
         }
 
         this.ideService.onProgramUpdated();
-        // пустой ?latex= сегмент добавляет, но собирать нечего
         if (compileLatex) {
             await this.projectPageService?.onRunButtonClicked('button');
         }
@@ -503,10 +502,9 @@ export class StartupService {
         latex?: string
     ): Promise<void> {
         this.repository.projectViewModelRepository.setReadOnly(false);
-        const program =
-            latex === undefined
-                ? this.repository.persistenceViewModelRepository.lastProgram()
-                : this.programWithLatexSegment(latex);
+        const program = latex
+            ? this.programWithLatexSegment(latex)
+            : this.repository.persistenceViewModelRepository.lastProgram();
         if (userInfo.isAuthenticated) {
             const result = await this.rpi.getDefaultProjectRequest(
                 this.repository.persistenceViewModelRepository.language(),
@@ -542,11 +540,11 @@ export class StartupService {
                     Routes.Project.replace(':id', project.projectId)
                 );
                 // сегмент из ссылки должен быть на экране, а не под чатом агента
-                if (latex === undefined) {
+                if (latex) {
+                    this.focusLastSegment();
+                } else {
                     // у проекта по умолчанию pdf из файлов не берётся, поэтому решаем до их загрузки
                     this.showAgentIfNeverCompiled(project);
-                } else {
-                    this.focusLastSegment();
                 }
                 if (userInfo.isAuthenticated) {
                     await this.loader.loadFiles(project.projectId);
@@ -581,10 +579,10 @@ export class StartupService {
             }
             this.setEditorLocation(Routes.ProjectDefault);
             this.programService.setNewProgram(program);
-            if (latex === undefined) {
-                this.showAgentIfNeverCompiled();
-            } else {
+            if (latex) {
                 this.focusLastSegment();
+            } else {
+                this.showAgentIfNeverCompiled();
             }
         }
         if (open === 'ai') {

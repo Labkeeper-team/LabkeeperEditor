@@ -725,23 +725,22 @@ test('signed-in-user-without-a-saved-program-sends-one-latex-segment', async () 
     expect(rpi.compileProjectPdfRequest).toHaveBeenCalledWith(PROJECT_ID);
 });
 
-test('empty-latex-query-does-not-compile', async () => {
+test('empty-latex-query-does-not-add-a-segment', async () => {
     const { startupService, projectPageService, rpi, repository } =
         mockContext();
     mockUserInfoForUnauthorized(rpi);
     const run = jest.spyOn(projectPageService, 'onRunButtonClicked');
     repository.setLocation(Routes.ProjectDefault);
+    repository.persistenceViewModelRepository.setLastProgram(
+        draftProgram('черновик')
+    );
 
     await startupService.onAppStartup(undefined, undefined, '');
 
     expect(run).not.toHaveBeenCalled();
     expect(
-        repository.projectViewModelRepository.currentProgram().segments
-    ).toEqual([
-        {
-            type: 'latex',
-            text: '',
-            parameters: { visible: true },
-        },
-    ]);
+        repository.projectViewModelRepository
+            .currentProgram()
+            .segments.map((segment) => segment.text)
+    ).toEqual(['черновик']);
 });
