@@ -154,6 +154,7 @@ export function setupContext(
         hunkService,
         editingLockService
     );
+    startupService.setProjectPageService(projectPageService);
     startupService.setHunkService(hunkService);
     compilationService.setHunkService(hunkService);
     const agentChatService: AgentChatService = new AgentChatService(

@@ -14,6 +14,7 @@ import { TokenPageService } from './TokenPageService.ts';
 import { ResetService } from '../domain/ResetService.ts';
 import { HunkService } from './HunkService.ts';
 import type { AgentChatService } from './AgentChatService.ts';
+import type { ProjectPageService } from './ProjectPageService.ts';
 import { logBreadcrumb } from '../utils/logBreadcrumb.ts';
 import { reportToSentry } from '../utils/reportUnexpectedError.ts';
 import { trackEvent } from '../utils/observerContext.ts';
@@ -33,6 +34,7 @@ export class StartupService {
     resetService: ResetService;
     private hunkService: HunkService | null = null;
     private agentChatService: AgentChatService | null = null;
+    private projectPageService: ProjectPageService | null = null;
 
     constructor(
         rpi: Rpi,
@@ -64,6 +66,10 @@ export class StartupService {
 
     setHunkService = (hunkService: HunkService) => {
         this.hunkService = hunkService;
+    };
+
+    setProjectPageService = (projectPageService: ProjectPageService) => {
+        this.projectPageService = projectPageService;
     };
 
     onAppEnterWithOauthCode = async (code: string, state: string) => {
@@ -141,12 +147,14 @@ export class StartupService {
         const locationWithoutLastSlash = this.cutOfLastSlash(
             this.repository.location()
         );
+        let compileLatex = false;
         // HOME PAGE ENTER
         if (
             locationWithoutLastSlash === Routes.Home ||
             qrPagePattern.test(locationWithoutLastSlash)
         ) {
             await this.openDefaultProject(userInfo, open, latex);
+            compileLatex = Boolean(latex);
         }
 
         // OAUTH
@@ -158,6 +166,7 @@ export class StartupService {
             );
             if (!lastOpenedProjectUuid) {
                 await this.openDefaultProject(userInfo, open, latex);
+                compileLatex = Boolean(latex);
             } else {
                 await this.openProjectById(userInfo, lastOpenedProjectUuid);
             }
@@ -170,6 +179,7 @@ export class StartupService {
             Routes.ProjectDefault
         ) {
             await this.openDefaultProject(userInfo, open, latex);
+            compileLatex = Boolean(latex);
         }
 
         // PAY PAGE ENTER
@@ -193,6 +203,7 @@ export class StartupService {
         else if (locationWithoutLastSlash === Routes.Projects) {
             if (!userInfo.isAuthenticated) {
                 await this.openDefaultProject(userInfo, open, latex);
+                compileLatex = Boolean(latex);
             }
         }
 
@@ -207,6 +218,10 @@ export class StartupService {
         }
 
         this.ideService.onProgramUpdated();
+        // пустой ?latex= сегмент добавляет, но собирать нечего
+        if (compileLatex) {
+            await this.projectPageService?.onRunButtonClicked('button');
+        }
     };
 
     private loadBillingPricing = async (): Promise<void> => {
