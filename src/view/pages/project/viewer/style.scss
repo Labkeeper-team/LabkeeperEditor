@@ -73,6 +73,15 @@
     margin-top: -8px;
 }
 
+// Под чатом помощь остаётся, пока ему хватает высоты: на телефоне и в низком
+// окне лента с полем запроса и без неё едва помещаются. Под PDF она есть всегда
+@media screen and (max-width: $mobile-breakpoint),
+    screen and (max-height: 699px) {
+    .viewer-container--chat > .labkeeper-instruction-container {
+        display: none;
+    }
+}
+
 .viewer-pane {
     display: flex;
     flex-direction: column;

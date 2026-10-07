@@ -439,6 +439,24 @@ export class RouteSetup {
         }, PERSISTENCE_VERSION);
     }
 
+    /** Помощь под результатом свёрнута: опыту про геометрию колонки она не должна отнимать высоту */
+    async collapseHelp() {
+        await this.page.addInitScript((version) => {
+            const saved = window.localStorage.getItem('persist:PERSISTENCE');
+            const slice = saved ? JSON.parse(saved) : {};
+            window.localStorage.setItem(
+                'persist:PERSISTENCE',
+                JSON.stringify({
+                    ...slice,
+                    instructionExpanded: 'false',
+                    _persist:
+                        slice._persist ??
+                        JSON.stringify({ version, rehydrated: true }),
+                })
+            );
+        }, PERSISTENCE_VERSION);
+    }
+
     /** Ручка приёма согласия на трансграничную передачу */
     async setupCrossBorderDataTransferPolicyRequest(status: number = 200) {
         const calls: string[] = [];

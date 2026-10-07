@@ -3,7 +3,8 @@ import { RouteSetup } from './mock.routeSetUp.tsx';
 
 /**
  * Панель помощи под результатом: слайды с подсказками. Текст слайда не
- * обрезается, а стрелки не лежат на тексте и картинке
+ * обрезается, стрелки не лежат на тексте и картинке, а сама панель видна и
+ * под вкладкой агента
  */
 
 const uuid = '2cd18704-6c3f-48cb-96f1-9a923930f8cb';
@@ -156,4 +157,81 @@ test('в узкой колонке слайд отдаёт всю ширину �
 
     await expect(first.locator('.instruction-slide__image')).toBeHidden();
     await expect(first.locator('.instruction-slide__title')).toBeVisible();
+});
+
+// Задача 155: под вкладкой агента помощь пропадала вместе с результатом
+test('помощь видна и под вкладкой агента, на том же месте', async ({
+    page,
+}) => {
+    await openProject(page);
+    await page.getByRole('tab', { name: 'PDF visualization' }).click();
+    await expect(page.locator('.agent-chat')).toHaveCount(0);
+    const underPdf = await box(help(page));
+
+    await page.getByRole('tab', { name: 'AI agent' }).click();
+
+    await expect(page.locator('.agent-chat')).toBeVisible();
+    await expect(help(page)).toBeVisible();
+    await expect(slides(page).first()).toBeVisible();
+    expect(await box(help(page))).toEqual(underPdf);
+    // чат заканчивается над помощью, а не под ней
+    const chat = await box(page.locator('.agent-chat'));
+    expect(chat.y + chat.height).toBeLessThanOrEqual(underPdf.y + 0.5);
+});
+
+test('помощь под агентом сворачивается и разворачивается', async ({ page }) => {
+    await openProject(page);
+    await page.getByRole('tab', { name: 'AI agent' }).click();
+    await expect(slides(page).first()).toBeVisible();
+
+    await help(page).locator('.expnad-container').click();
+
+    await expect(slides(page)).toHaveCount(0);
+    await expect(help(page)).toBeVisible();
+});
+
+// Под чатом помощь отнимает у него около 260px. Где ленте и полю запроса без
+// того тесно, она остаётся только под результатом
+test.describe('низкое окно', () => {
+    test.use({ viewport: { width: 1360, height: 650 } });
+
+    test('под чатом помощи нет, под результатом есть', async ({ page }) => {
+        await openProject(page);
+        await page.getByRole('tab', { name: 'AI agent' }).click();
+        await expect(page.locator('.agent-chat')).toBeVisible();
+        await expect(help(page)).toBeHidden();
+
+        await page.getByRole('tab', { name: 'PDF visualization' }).click();
+
+        await expect(help(page)).toBeVisible();
+    });
+});
+
+test.describe('телефон', () => {
+    test.use({ viewport: { width: 390, height: 844 } });
+
+    test('на экране агента помощи нет, на экране PDF есть', async ({
+        page,
+    }) => {
+        const routeSetup = new RouteSetup(page);
+        await routeSetup.setupGetUserInfoRequest(true);
+        await routeSetup.acceptCrossBorderConsentLocally();
+        await routeSetup.setupGetProjectRequest(200, 'default');
+        await routeSetup.setupGetAllProjectsRequest();
+        await routeSetup.setupSaveProgramRequest();
+        await routeSetup.setupListFilesRequest(200, 'emptyFiles');
+        await routeSetup.setupAgentHistoryRequest([]);
+        await routeSetup.setupAgentSocket([]);
+        await page.goto(`/project/${uuid}`);
+        const switcher = page.locator('.mobile-view-switcher-bar__toggle');
+
+        await switcher.click();
+        await page.getByRole('option', { name: 'AI agent' }).click();
+        await expect(page.locator('.agent-chat')).toBeVisible();
+        await expect(help(page)).toBeHidden();
+
+        await switcher.click();
+        await page.getByRole('option', { name: 'PDF' }).click();
+        await expect(help(page)).toBeVisible();
+    });
 });
