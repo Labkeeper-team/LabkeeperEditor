@@ -243,14 +243,11 @@ export const agentModeInstructions: LocalizedInstructionItem[] = [
 export const instructions: LocalizedInstructionItem[] = [
     {
         ru: {
-            title: 'Добро пожаловать',
+            title: 'Создайте ваш первый документ',
             points: [
-                'labkeeper.io - приложение, позволяющее объединить верстку и вычисления',
-                `
-                Пишите красивые тексты с использованием markdown и latex,
-                используйте научный калькулятор для ваших вычислений.
-                Экспортируйте ваши документы в pdf.
-                `,
+                'Добавьте сегмент: Markdown, LaTeX или «Вычисление» — и напишите текст, формулу или расчёт.',
+                'Или опишите документ ИИ-агенту: он напишет проект сам.',
+                'Нажмите «Выполнить»: справа появится результат, его можно сохранить в PDF.',
             ],
             image: '/instructions/welcome.png',
             ending: basicEndingRu,
@@ -258,14 +255,11 @@ export const instructions: LocalizedInstructionItem[] = [
             wikiLink: WikiLinks.home,
         },
         en: {
-            title: 'Welcome',
+            title: 'Create your first document',
             points: [
-                'labkeeper.io - combines markdown text editor with scientific calculator',
-                `
-                Write beautiful texts using markdown and latex,
-                Use a scientific calculator for your calculations.
-                Export your documents to pdf.
-                `,
+                'Add a Markdown, LaTeX, or Computation segment and write text, a formula, or a calculation.',
+                'Or describe the document to the AI agent: it will write the project for you.',
+                'Press Run: the result appears on the right and can be saved as a PDF.',
             ],
             ending: basicEndingEn,
             wikiLink: WikiLinks.home,
@@ -411,7 +405,7 @@ export const instructions: LocalizedInstructionItem[] = [
                 'By default, any variable has an error of 0',
                 'All error calculations are drawn automatically. You can turn off the display in the segment settings.',
             ],
-            image: '/instructions/simple_formula.png',
+            image: '/instructions/error.png',
             ending: basicEndingEn,
             wikiLink: WikiLinks.errorOperator,
         },

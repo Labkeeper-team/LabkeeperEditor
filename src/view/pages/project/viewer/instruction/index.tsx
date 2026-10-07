@@ -44,18 +44,9 @@ export const Instruction = () => {
                 title={dictionary.instructions.label}
             />
             {instructionExpanded ? (
-                <div
-                    style={{
-                        height: 214,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        position: 'relative',
-                        padding: '0 16px',
-                    }}
-                >
+                <div className="labkeeper-instruction-body">
                     <Swiper
                         key={isAgentMode ? 'agent' : 'editor'}
-                        style={{ height: '100%' }}
                         spaceBetween={0}
                         width={undefined}
                         slidesPerView={1}
