@@ -161,3 +161,30 @@ test('signed-in-default-project-request-includes-the-latex-segment', async ({
     ).toEqual([['черновик', 'E=mc^2']]);
     expect(compiledProject).toBe(true);
 });
+
+test('compute-latex-markdown-params-appear-in-that-order', async ({ page }) => {
+    const routeSetup = new RouteSetup(page);
+    await routeSetup.setupApi();
+    await routeSetup.setupGetUserInfoRequest(false);
+    const compiled = await captureGuestCompile(page);
+
+    await page.goto(
+        `/?compute=${encodeURIComponent('a = 1')}&latex=${encodeURIComponent('E=mc^2')}&markdown=${encodeURIComponent('текст')}`
+    );
+
+    const fields = editors(page);
+    await expect(fields).toHaveCount(3, { timeout: 30_000 });
+    await expect(fields.nth(0)).toHaveText('a = 1');
+    await expect(fields.nth(1)).toHaveText('E=mc^2');
+    await expect(fields.nth(2)).toHaveText('текст');
+    expect(
+        compiled[0]?.segments.map((segment) => ({
+            type: segment.type,
+            text: segment.text,
+        }))
+    ).toEqual([
+        { type: 'computational', text: 'a = 1' },
+        { type: 'latex', text: 'E=mc^2' },
+        { type: 'md', text: 'текст' },
+    ]);
+});

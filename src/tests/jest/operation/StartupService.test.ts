@@ -556,7 +556,9 @@ test('guest-with-a-saved-program-appends-a-latex-segment-from-the-query', async 
         'setMobileView'
     );
 
-    await startupService.onAppStartup(undefined, undefined, 'E=mc^2');
+    await startupService.onAppStartup(undefined, undefined, {
+        latex: 'E=mc^2',
+    });
 
     const segments =
         repository.projectViewModelRepository.currentProgram().segments;
@@ -592,7 +594,9 @@ test('guest-without-a-saved-program-opens-a-single-latex-segment', async () => {
     rpi.pdfCompilationRequest = jest.fn().mockResolvedValue(compiledPdf());
     repository.setLocation(Routes.Home);
 
-    await startupService.onAppStartup(undefined, undefined, '\\alpha+\\beta');
+    await startupService.onAppStartup(undefined, undefined, {
+        latex: '\\alpha+\\beta',
+    });
 
     expect(
         repository.projectViewModelRepository.currentProgram().segments
@@ -653,7 +657,9 @@ test('signed-in-user-sends-the-saved-program-plus-a-latex-segment', async () => 
         draftProgram('черновик')
     );
 
-    await startupService.onAppStartup(undefined, undefined, 'E=mc^2');
+    await startupService.onAppStartup(undefined, undefined, {
+        latex: 'E=mc^2',
+    });
 
     expect(rpi.getDefaultProjectRequest).toHaveBeenCalledTimes(1);
     const sent = (rpi.getDefaultProjectRequest as jest.Mock).mock.calls[0][1];
@@ -712,7 +718,9 @@ test('signed-in-user-without-a-saved-program-sends-one-latex-segment', async () 
     rpi.compileProjectPdfRequest = jest.fn().mockResolvedValue(compiledPdf());
     repository.setLocation(Routes.ProjectDefault);
 
-    await startupService.onAppStartup(undefined, undefined, 'только формула');
+    await startupService.onAppStartup(undefined, undefined, {
+        latex: 'только формула',
+    });
 
     const sent = (rpi.getDefaultProjectRequest as jest.Mock).mock.calls[0][1];
     expect(sent.segments).toEqual([
@@ -725,6 +733,56 @@ test('signed-in-user-without-a-saved-program-sends-one-latex-segment', async () 
     expect(rpi.compileProjectPdfRequest).toHaveBeenCalledWith(PROJECT_ID);
 });
 
+test('query-segments-are-appended-in-compute-latex-markdown-order', async () => {
+    const { startupService, rpi, repository } = mockContext();
+    mockUserInfoForUnauthorized(rpi);
+    rpi.pdfCompilationRequest = jest.fn().mockResolvedValue(compiledPdf());
+    repository.setLocation(Routes.ProjectDefault);
+    repository.persistenceViewModelRepository.setLastProgram(
+        draftProgram('черновик')
+    );
+
+    await startupService.onAppStartup(undefined, undefined, {
+        markdown: 'текст',
+        latex: 'E=mc^2',
+        compute: 'a = 1',
+    });
+
+    expect(
+        repository.projectViewModelRepository
+            .currentProgram()
+            .segments.map((segment) => ({
+                type: segment.type,
+                text: segment.text,
+            }))
+    ).toEqual([
+        { type: 'md', text: 'черновик' },
+        { type: 'computational', text: 'a = 1' },
+        { type: 'latex', text: 'E=mc^2' },
+        { type: 'md', text: 'текст' },
+    ]);
+    expect(rpi.pdfCompilationRequest).toHaveBeenCalledTimes(1);
+});
+
+test('empty-query-params-are-skipped-between-filled-ones', async () => {
+    const { startupService, rpi, repository } = mockContext();
+    mockUserInfoForUnauthorized(rpi);
+    rpi.pdfCompilationRequest = jest.fn().mockResolvedValue(compiledPdf());
+    repository.setLocation(Routes.Home);
+
+    await startupService.onAppStartup(undefined, undefined, {
+        compute: '',
+        latex: 'E=mc^2',
+        markdown: '',
+    });
+
+    expect(
+        repository.projectViewModelRepository
+            .currentProgram()
+            .segments.map((segment) => segment.type)
+    ).toEqual(['latex']);
+});
+
 test('empty-latex-query-does-not-add-a-segment', async () => {
     const { startupService, projectPageService, rpi, repository } =
         mockContext();
@@ -735,7 +793,7 @@ test('empty-latex-query-does-not-add-a-segment', async () => {
         draftProgram('черновик')
     );
 
-    await startupService.onAppStartup(undefined, undefined, '');
+    await startupService.onAppStartup(undefined, undefined, { latex: '' });
 
     expect(run).not.toHaveBeenCalled();
     expect(
