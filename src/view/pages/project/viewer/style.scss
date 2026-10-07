@@ -172,6 +172,47 @@
     }
 }
 
+// Очистка истории у правого края вкладки агента: вкладки делят полосу пополам
+.viewer-tabs__clear {
+    position: absolute;
+    top: 0;
+    left: calc(50% - 48px);
+    height: 100%;
+}
+
+.chat-clear-history-confirm {
+    padding: 30px 40px 40px 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+
+    &__dont-ask {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 16px;
+        font-size: 14px;
+        line-height: 18px;
+        color: $gray-20;
+        cursor: pointer;
+
+        input {
+            margin: 0;
+            accent-color: $blue-10;
+            flex: none;
+            width: 16px;
+            height: 16px;
+            cursor: inherit;
+        }
+    }
+
+    &__button {
+        align-self: stretch;
+        margin-top: 11px;
+    }
+}
+
 @media screen and (max-width: $mobile-breakpoint) {
     // на мобильном роль переключателя играет список вкладок в шапке приложения
     .viewer-tabs__tab {
@@ -188,6 +229,11 @@
         position: static;
         transform: none;
         padding: 0 12px;
+    }
+
+    .viewer-tabs__clear {
+        position: static;
+        height: auto;
     }
 }
 

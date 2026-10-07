@@ -44,6 +44,9 @@ export const persistenceSlice = createSlice({
         setAgentPromptHeight(state, { payload }: PayloadAction<number | null>) {
             state.agentPromptHeight = payload;
         },
+        setSkipClearHistoryConfirm(state, { payload }: PayloadAction<boolean>) {
+            state.skipClearHistoryConfirm = payload;
+        },
     },
 });
 export const {
@@ -57,4 +60,5 @@ export const {
     setAgentCompilationAllowed,
     setCrossBorderConsentAcceptedLocally,
     setAgentPromptHeight,
+    setSkipClearHistoryConfirm,
 } = persistenceSlice.actions;

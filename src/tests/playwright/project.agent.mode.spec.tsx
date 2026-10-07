@@ -159,6 +159,12 @@ test('в агентском режиме историю можно очисти�
     await expect(clear).toBeVisible();
 
     await clear.click();
+    await page
+        .getByRole('dialog', {
+            name: 'Are you sure you want to clear the history?',
+        })
+        .getByRole('button', { name: 'Yes' })
+        .click();
 
     await expect(page.locator('.agent-chat__pair')).toHaveCount(0);
     // чистить больше нечего, кнопка уходит

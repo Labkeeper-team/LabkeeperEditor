@@ -189,6 +189,8 @@ export interface Translations {
         guest_login_hint_limit: string;
         guest_login_action: string;
         clear_history: string;
+        clear_history_confirm: string;
+        clear_history_dont_ask: string;
         history_loading: string;
         history_error: string;
         history_clear_error: string;

@@ -679,6 +679,12 @@ test('chat-keeps-following-after-history-is-cleared', async ({ page }) => {
 
     // лента сжимается, и браузер сам сдвигает прокрутку вверх
     await page.getByRole('button', { name: 'Clear history' }).click();
+    await page
+        .getByRole('dialog', {
+            name: 'Are you sure you want to clear the history?',
+        })
+        .getByRole('button', { name: 'Yes' })
+        .click();
     await expect(page.locator('.agent-chat__pair')).toHaveCount(0);
     await submitPrompt(page);
 
@@ -774,6 +780,12 @@ test('agent-history-clear-empties-chat', async ({ page }) => {
     await expect(page.locator('.agent-chat__pair')).toHaveCount(1);
 
     await page.getByRole('button', { name: 'Clear history' }).click();
+    await page
+        .getByRole('dialog', {
+            name: 'Are you sure you want to clear the history?',
+        })
+        .getByRole('button', { name: 'Yes' })
+        .click();
 
     await expect(page.locator('.agent-chat__pair')).toHaveCount(0);
     await expect(page.locator('.agent-chat__disclaimer')).toBeVisible();

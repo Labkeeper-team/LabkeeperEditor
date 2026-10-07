@@ -155,6 +155,8 @@ interface PersistenceState {
      * После входа уезжает на сервер, чтобы не спрашивать второй раз
      */
     crossBorderConsentAcceptedLocally: boolean;
+    /** Галка «больше не спрашивать» в подтверждении очистки истории агента */
+    skipClearHistoryConfirm: boolean;
     /** Высота панели запроса, выставленная ручкой; null значит авторост */
     agentPromptHeight: number | null;
 }
@@ -224,6 +226,7 @@ export const persistenceInitialState: PersistenceState = {
     agentIterations: AGENT_DEFAULT_ITERATIONS,
     agentCompilationAllowed: true,
     crossBorderConsentAcceptedLocally: false,
+    skipClearHistoryConfirm: false,
     agentPromptHeight: null,
 };
 
