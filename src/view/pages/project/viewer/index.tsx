@@ -1,3 +1,4 @@
+import classNames from 'classnames';
 import { Instruction } from './instruction';
 import { Result } from './result';
 import './style.scss';
@@ -27,7 +28,11 @@ export const Viewer = () => {
     const isChat = !isAgentMode && viewerTab === 'chat' && !isReadonly;
 
     return (
-        <div className="viewer-container">
+        <div
+            className={classNames('viewer-container', {
+                'viewer-container--chat': isChat,
+            })}
+        >
             <div className="viewer-header">
                 {isAgentMode ? (
                     <span className="viewer-header__title">
@@ -54,9 +59,11 @@ export const Viewer = () => {
                 в своём состоянии, и переключение вкладки перекачивало бы файл */}
             <div className="viewer-pane" hidden={isChat}>
                 <Result />
-                <Instruction />
             </div>
             {isChat && <AgentChat />}
+            {/* помощь видна и под агентом: подсказки нужны и тем, кто начинает с чата.
+                Где чату не хватает высоты, под ним её прячут стили */}
+            <Instruction />
         </div>
     );
 };

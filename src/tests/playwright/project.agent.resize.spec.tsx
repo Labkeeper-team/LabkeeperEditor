@@ -28,6 +28,8 @@ async function openChat(
     const routeSetup = new RouteSetup(page);
     await routeSetup.setupGetUserInfoRequest(true);
     await routeSetup.acceptCrossBorderConsentLocally();
+    // границы ручки считаются от высоты чата, а помощь под ним её отнимает
+    await routeSetup.collapseHelp();
     await routeSetup.setupGetProjectRequest(200, 'default');
     await routeSetup.setupGetAllProjectsRequest();
     await routeSetup.setupSaveProgramRequest();
