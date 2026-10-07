@@ -609,3 +609,90 @@ test('divider-inserts-segment-and-tracks-openpanel-event', async () => {
         })
     );
 });
+
+/** Буфер обмена глазами обработчика: ему нужны только виды элементов */
+const clipboard = (...kinds: ('string' | 'file')[]) =>
+    kinds.map((kind) => ({
+        kind,
+        type: kind === 'string' ? 'text/plain' : 'image/png',
+        getAsFile: () => null,
+    })) as unknown as DataTransferItemList;
+
+const pasteEvents = (onEvent: jest.SpyInstance) =>
+    onEvent.mock.calls.filter(
+        ([event]) => event === Events.EVENT_SEGMENT_PASTED
+    );
+
+describe('вставка из буфера в сегмент', () => {
+    let nowSpy: jest.SpyInstance;
+    let now = 0;
+
+    beforeEach(() => {
+        now = 1_000_000;
+        nowSpy = jest.spyOn(Date, 'now').mockImplementation(() => now);
+    });
+
+    afterEach(() => {
+        nowSpy.mockRestore();
+    });
+
+    function setup() {
+        const { programEditorService, programService, observerService } =
+            mockContext();
+        programService.setNewProgram({
+            segments: [
+                { type: 'md', text: 'first', parameters: { visible: true } },
+                {
+                    type: 'computational',
+                    text: 'a = 1',
+                    parameters: { visible: true },
+                },
+            ],
+            parameters: { roundStrategy: 'noRound' },
+        });
+        return {
+            programEditorService,
+            onEvent: jest.spyOn(observerService, 'onEvent'),
+        };
+    }
+
+    test('paste-into-segment-tracks-openpanel-event', async () => {
+        const { programEditorService, onEvent } = setup();
+
+        await programEditorService.onAddedFilesToSegmentEditor(
+            clipboard('string'),
+            1,
+            0
+        );
+
+        expect(onEvent).toHaveBeenCalledWith(
+            Events.EVENT_SEGMENT_PASTED,
+            expect.objectContaining({
+                segment_type: 'computational',
+                file_count: 0,
+                has_text: true,
+            })
+        );
+    });
+
+    test('paste-events-are-limited-to-three-per-minute', async () => {
+        const { programEditorService, onEvent } = setup();
+        const paste = () =>
+            programEditorService.onAddedFilesToSegmentEditor(
+                clipboard('string'),
+                0,
+                0
+            );
+
+        for (let i = 0; i < 5; i++) {
+            await paste();
+            now += 1000;
+        }
+        expect(pasteEvents(onEvent)).toHaveLength(3);
+
+        // минута с первой вставки прошла: в окне снова есть место
+        now = 1_000_000 + 60_000;
+        await paste();
+        expect(pasteEvents(onEvent)).toHaveLength(4);
+    });
+});
