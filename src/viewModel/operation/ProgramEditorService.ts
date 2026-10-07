@@ -29,6 +29,10 @@ import {
 } from '../utils/projectFilePath.ts';
 import { resolveSegmentId } from '../utils/segmentId.ts';
 import { segmentCreateEvent, trackEvent } from '../utils/observerContext.ts';
+import { createRateLimiter } from '../utils/rateLimit.ts';
+
+/** Вставок в сегмент в аналитике не больше трёх в минуту: зажатый Ctrl+V залил бы ленту событий */
+const SEGMENT_PASTE_EVENTS_PER_MINUTE = 3;
 
 /** Чем кончилась попытка показать в PDF последнюю правку агента */
 export type AgentPdfScrollResult =
@@ -74,6 +78,11 @@ export class ProgramEditorService {
         this.hunkService = hunkService;
     };
 
+    private allowPasteEvent = createRateLimiter(
+        SEGMENT_PASTE_EVENTS_PER_MINUTE,
+        60_000
+    );
+
     private track(event: string, properties?: Record<string, unknown>) {
         trackEvent(this.observerService, this.repository, event, properties);
     }
@@ -94,12 +103,25 @@ export class ProgramEditorService {
         segmentIndex: number,
         cursorPosition: number
     ) => {
-        if (this.editingLock.rejectEdit()) {
-            return;
-        }
         const fileCount = Array.from(items).filter(
             (item) => item.kind === 'file'
         ).length;
+        // Ctrl+V и вставка из меню приходят сюда одинаково, в том числе под замком агента
+        if (this.allowPasteEvent()) {
+            this.track(Events.EVENT_SEGMENT_PASTED, {
+                segment_type:
+                    this.programService.getCurrentProgram()?.segments[
+                        segmentIndex
+                    ]?.type,
+                file_count: fileCount,
+                has_text: Array.from(items).some(
+                    (item) => item.kind === 'string'
+                ),
+            });
+        }
+        if (this.editingLock.rejectEdit()) {
+            return;
+        }
         if (fileCount > 0) {
             this.track(Events.EVENT_FILES_DROPPED_INTO_SEGMENT, {
                 file_count: fileCount,
