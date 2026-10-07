@@ -22,6 +22,7 @@ import {
 import { TokenPageService } from '../viewModel/operation/TokenPageService.ts';
 import { HunkService } from '../viewModel/operation/HunkService.ts';
 import { AgentChatService } from '../viewModel/operation/AgentChatService.ts';
+import { AgentFilesService } from '../viewModel/operation/AgentFilesService.ts';
 import { logBreadcrumb } from '../viewModel/utils/logBreadcrumb.ts';
 import { trackEvent } from '../viewModel/utils/observerContext.ts';
 
@@ -37,6 +38,7 @@ export class Controller {
     observerService: ObserverService;
     hunkService: HunkService;
     agentChatService: AgentChatService;
+    agentFilesService: AgentFilesService;
 
     constructor(
         authService: AuthService,
@@ -49,7 +51,8 @@ export class Controller {
         startupService: StartupService,
         observerService: ObserverService,
         hunkService: HunkService,
-        agentChatService: AgentChatService
+        agentChatService: AgentChatService,
+        agentFilesService: AgentFilesService
     ) {
         this.observerService = observerService;
         this.authService = authService;
@@ -62,6 +65,7 @@ export class Controller {
         this.startupService = startupService;
         this.hunkService = hunkService;
         this.agentChatService = agentChatService;
+        this.agentFilesService = agentFilesService;
     }
 
     onFormLoginClickedRequest = createAsyncThunk(
@@ -950,6 +954,39 @@ export class Controller {
             this.agentChatService.onAbortClicked()
         );
     });
+
+    onAgentFilesAddedRequest = createAsyncThunk(
+        'onAgentFilesAdded',
+        async ({
+            files,
+            method,
+        }: {
+            files: File[];
+            method: 'picker' | 'drop';
+        }) => {
+            await this.wrapper('onAgentFilesAdded', () =>
+                this.agentFilesService.onFilesAdded(files, method)
+            );
+        }
+    );
+
+    onAgentFilesGuestRequest = createAsyncThunk(
+        'onAgentFilesGuest',
+        async () => {
+            await this.wrapper('onAgentFilesGuest', () =>
+                this.agentFilesService.onGuestFileAttempt()
+            );
+        }
+    );
+
+    onAgentFileMentionedRequest = createAsyncThunk(
+        'onAgentFileMentioned',
+        async ({ name }: { name: string }) => {
+            await this.wrapper('onAgentFileMentioned', () =>
+                this.agentFilesService.onFileMentioned(name)
+            );
+        }
+    );
 
     onCrossBorderConsentAcceptedRequest = createAsyncThunk(
         'onCrossBorderConsentAccepted',

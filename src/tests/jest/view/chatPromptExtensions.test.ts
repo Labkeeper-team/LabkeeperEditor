@@ -5,7 +5,7 @@ import {
     promptEditorExtensions,
 } from '../../../view/pages/project/viewer/chat/promptEditorExtensions.ts';
 
-const PLACEHOLDER = 'Опишите, что сделать с проектом';
+const PLACEHOLDER = 'Опишите, что сделать с документом';
 
 const views: EditorView[] = [];
 let escaped: KeyboardEvent[] = [];

@@ -9,8 +9,8 @@ import './style.scss';
 /**
  * Левая колонка агентского режима: одна карточка, сверху выход в обычный
  * режим и очистка истории, под ними чат агента. Панели ошибок сборки здесь
- * нет, её оставили редактору. Правую колонку занимает PDF, её рисует обычный
- * Viewer
+ * нет, её оставили редактору, а файлы добавляют прямо из чата. Правую
+ * колонку занимает итоговый документ, её рисует обычный Viewer
  */
 export const AgentModePane = () => {
     const dictionary = useSelector(useDictionary);
@@ -30,7 +30,7 @@ export const AgentModePane = () => {
                 <ClearHistoryButton className="agent-mode-pane__clear" />
             </div>
             <div className="agent-mode-pane__chat">
-                <AgentChat />
+                <AgentChat withFiles />
             </div>
         </div>
     );

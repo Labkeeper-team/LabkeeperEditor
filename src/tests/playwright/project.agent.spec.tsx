@@ -158,7 +158,7 @@ test('agent-events-render-in-order-with-spinner-on-last', async ({ page }) => {
     const rows = page.locator('.agent-chat__event-label');
     await expect(rows).toHaveText([
         'Calling the model',
-        'Reading the project structure',
+        'Reading the document structure',
         'Reading a segment',
     ]);
     // бегунок висит только на последней строке
@@ -189,7 +189,7 @@ test('agent-locks-editor-and-run-while-running', async ({ page }) => {
 
     expect(await editor.innerText()).toBe(before);
     await expect(page.locator('div.Toastify__toast').first()).toContainText(
-        'The project cannot be edited while the agent is running'
+        'The document cannot be edited while the agent is running'
     );
 });
 
@@ -220,7 +220,7 @@ const ERROR_STOP_REASONS: [string, string][] = [
     ['PaymentRequired', 'You have reached the limit on using the assistant.'],
     [
         'Locked',
-        'The agent is already running in another tab, or the project is being changed. Wait for it to finish and try again',
+        'The agent is already running in another tab, or the document is being changed. Wait for it to finish and try again',
     ],
     ['UnknownError', 'Something went wrong. Please try again'],
 ];
@@ -237,7 +237,7 @@ for (const [stopReason, text] of ERROR_STOP_REASONS) {
 const PARTIAL_STOP_REASONS: [string, string][] = [
     [
         'IterationLimit',
-        'The agent ran out of steps. What it managed to change is already in the project. Try raising the iteration limit or splitting the task',
+        'The agent ran out of steps. What it managed to change is already in the document. Try raising the iteration limit or splitting the task',
     ],
     [
         'ContextOverflow',
@@ -245,7 +245,7 @@ const PARTIAL_STOP_REASONS: [string, string][] = [
     ],
     [
         'Timeout',
-        'The server stopped the agent on time, but it managed to write a result. The changes are already in the project',
+        'The server stopped the agent on time, but it managed to write a result. The changes are already in the document',
     ],
 ];
 
@@ -1816,7 +1816,7 @@ test.describe('русская локаль', () => {
         await page.waitForLoadState('domcontentloaded');
         await page.getByRole('tab', { name: 'Агент' }).click();
         await page
-            .getByPlaceholder('Опишите, что сделать с проектом')
+            .getByPlaceholder('Опишите, что сделать с документом')
             .fill('сделай таблицу');
         await page.getByRole('button', { name: 'Отправить' }).click();
         await expect(page.locator('.agent-chat__event')).toHaveCount(1);

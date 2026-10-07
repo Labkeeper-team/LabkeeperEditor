@@ -83,7 +83,7 @@ test('unknown-tool-names-give-the-common-line-and-the-run-finishes', async ({
 
     await expect(responses(page)).toHaveText('готово');
     await expect(page.locator('.agent-chat__event-label')).toHaveText([
-        'Reading the project structure',
+        'Reading the document structure',
         COMMON_LINE,
         COMMON_LINE,
         COMMON_LINE,

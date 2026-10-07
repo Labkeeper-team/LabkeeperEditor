@@ -55,8 +55,16 @@ export const chatSlice = createSlice({
                 ? expanded.filter((id) => id !== payload)
                 : [...expanded, payload];
         },
+        setChatRecentFiles(state, { payload }: PayloadAction<string[]>) {
+            state.recentFiles = payload;
+        },
         resetChat() {
-            return { ...chatInitialState, messages: [], history: [] };
+            return {
+                ...chatInitialState,
+                messages: [],
+                history: [],
+                recentFiles: [],
+            };
         },
     },
 });
@@ -69,5 +77,6 @@ export const {
     setChatHistoryRequestState,
     setChatHistory,
     toggleChatSteps,
+    setChatRecentFiles,
     resetChat,
 } = chatSlice.actions;

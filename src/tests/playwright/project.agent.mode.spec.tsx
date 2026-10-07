@@ -91,7 +91,10 @@ test('в агентском режиме колонка результата н�
 }) => {
     await openProject(page, `/project/${uuid}/agent`);
 
-    await expect(page.locator('.viewer-header__title')).toBeVisible();
+    // в режиме агента результат это документ, а не PDF
+    await expect(page.locator('.viewer-header__title')).toHaveText(
+        'Final document'
+    );
     await expect(page.locator('.viewer-tabs')).toHaveCount(0);
 });
 
@@ -332,18 +335,23 @@ test('на чужом проекте агентский режим не откр
 test.describe('телефон', () => {
     test.use({ viewport: { width: 390, height: 844 } });
 
-    test('переключатель колонок предлагает только агента и PDF', async ({
+    test('переключатель колонок предлагает только агента и итоговый документ', async ({
         page,
     }) => {
         await openProject(page, `/project/${uuid}/agent`);
         await expect(agentPane(page)).toBeVisible();
 
+        // открыт чат, и переключатель подписан им, а не редактором из обычного режима
+        await expect(
+            page.locator('.mobile-view-switcher-bar__label')
+        ).toHaveText('AI agent');
         await page.locator('.mobile-view-switcher-bar__toggle').click();
         const options = page.getByRole('option');
 
         await expect(options).toHaveCount(2);
+        await expect(options.nth(0)).toHaveAttribute('aria-selected', 'true');
         await expect(options.nth(0)).toHaveText('AI agent');
-        await expect(options.nth(1)).toHaveText('PDF');
+        await expect(options.nth(1)).toHaveText('Final document');
     });
 
     test('на телефоне видна одна колонка за раз', async ({ page }) => {
@@ -353,7 +361,7 @@ test.describe('телефон', () => {
         await expect(page.locator('.viewer-container')).toBeHidden();
 
         await page.locator('.mobile-view-switcher-bar__toggle').click();
-        await page.getByRole('option', { name: 'PDF' }).click();
+        await page.getByRole('option', { name: 'Final document' }).click();
 
         await expect(page.locator('.viewer-container')).toBeVisible();
         await expect(page.locator('.agent-chat')).toBeHidden();

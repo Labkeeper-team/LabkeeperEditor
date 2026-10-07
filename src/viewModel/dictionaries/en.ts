@@ -178,6 +178,7 @@ export const en: Translations = {
         enter: 'Agent mode',
         enter_hint: 'Only the agent and the compiled PDF, no editor',
         no_pdf: 'Describe to the agent the PDF you would like to see',
+        document: 'Final document',
     },
     agent_chat: {
         tab_label: 'AI agent',
@@ -195,7 +196,7 @@ export const en: Translations = {
         guest_login_hint:
             'You are not logged in. With an account the agent has its own token balance and its own history',
         guest_login_hint_limit:
-            'You are not logged in, so the agent runs under the limit for unregistered users. Logging in removes that limit: requests are paid from your token balance, and history and changes stay in the project. The iteration count, the context size and the ten minutes per run stay limited after login',
+            'You are not logged in, so the agent runs under the limit for unregistered users. Logging in removes that limit: requests are paid from your token balance, and history and changes stay in the document. The iteration count, the context size and the ten minutes per run stay limited after login',
         guest_login_action: 'Login',
         clear_history: 'Clear history',
         clear_history_confirm: 'Are you sure you want to clear the history?',
@@ -217,7 +218,7 @@ export const en: Translations = {
         settings: 'Agent settings',
         settings_close: 'Close settings',
         editing_locked:
-            'The project cannot be edited while the agent is running',
+            'The document cannot be edited while the agent is running',
         leave_confirm: 'The agent is still running. Leave the page anyway?',
         send_errors: 'Send to agent',
         errors_prompt: 'Fix the compilation errors:',
@@ -247,7 +248,7 @@ export const en: Translations = {
             delete_lines_from_file_plain: 'Deleted lines from a file',
             replace_text_in_segment_plain: 'Replaced lines in a segment',
             replace_text_in_file_plain: 'Replaced lines in a file',
-            list_workspace: 'Reading the project structure',
+            list_workspace: 'Reading the document structure',
             read_segment: 'Reading a segment',
             read_segments: 'Reading segments',
             search_segments: 'Searching segments',
@@ -259,25 +260,25 @@ export const en: Translations = {
             segment: 'Segment №{segment}',
             file: 'File {file}',
             other: 'A place with no name',
-            more: 'and other places in the project',
+            more: 'and other places in the document',
         },
         stop: {
             ContextOverflow:
                 'The task did not fit into the context. Shorten the request or raise the context size',
             IterationLimit:
-                'The agent ran out of steps. What it managed to change is already in the project. Try raising the iteration limit or splitting the task',
+                'The agent ran out of steps. What it managed to change is already in the document. Try raising the iteration limit or splitting the task',
             Timeout:
-                'The server stopped the agent on time, but it managed to write a result. The changes are already in the project',
+                'The server stopped the agent on time, but it managed to write a result. The changes are already in the document',
             // призыв войти приезжает отдельным блоком, в тексте ошибки он был бы вторым
             UnauthorizedLimitExceeded:
                 'You have reached the limit for unregistered users',
             PaymentRequired:
                 'You have reached the limit on using the assistant.',
-            Locked: 'The agent is already running in another tab, or the project is being changed. Wait for it to finish and try again',
+            Locked: 'The agent is already running in another tab, or the document is being changed. Wait for it to finish and try again',
             PromptTooLong:
                 'The request is too long. Shorten it and send it again',
             QuotaExceeded:
-                'The agent was stopped: it tried to create a file larger than allowed or to add more segments than allowed. What it managed to change before that is already in the project',
+                'The agent was stopped: it tried to create a file larger than allowed or to add more segments than allowed. What it managed to change before that is already in the document',
             UnknownError: 'Something went wrong. Please try again',
             timeout:
                 'The agent did not finish within ten minutes. Please try again',
@@ -286,18 +287,25 @@ export const en: Translations = {
             connect_failed:
                 'Could not connect to the agent. Check your network and try again',
             save_failed:
-                'Could not save the project before the run. The agent would work on an outdated version, so the run was cancelled',
+                'Could not save the document before the run. The agent would work on an outdated version, so the run was cancelled',
             sync_failed:
-                'Could not check the project against the server after the previous run. The run was cancelled so that the agent changes are not overwritten, reload the page and try again',
+                'Could not check the document against the server after the previous run. The run was cancelled so that the agent changes are not overwritten, reload the page and try again',
             aborted:
-                'The run was stopped. The agent managed to change these places, and its changes stay in the project:',
+                'The run was stopped. The agent managed to change these places, and its changes stay in the document:',
             aborted_nothing: 'The run was stopped. The agent changed nothing',
             aborted_guest:
-                'The run was stopped. Without an account the agent changes arrive only at the end of a run, so the result is lost entirely and the project stays as it was',
+                'The run was stopped. Without an account the agent changes arrive only at the end of a run, so the result is lost entirely and the document stays as it was',
             aborted_unsynced:
-                'The run was stopped, but the project could not be re-read, so there is no way to tell what the agent changed. Reload the page',
+                'The run was stopped, but the document could not be re-read, so there is no way to tell what the agent changed. Reload the page',
         },
         steps_toggle: 'Agent steps: {count}',
+        files: {
+            drop_title: 'Drag a file here',
+            drop_hint: 'or click to add it to the document',
+            guest_hint: 'Files are available after logging in',
+            upload: 'Upload file',
+            mention: 'Add the file {name} that I uploaded to the document',
+        },
     },
     mobile_view: {
         files: 'Files',

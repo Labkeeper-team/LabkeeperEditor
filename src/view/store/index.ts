@@ -79,6 +79,7 @@ import {
     setChatHistoryRequestState,
     setChatInput,
     setChatMessages,
+    setChatRecentFiles,
     setChatRequestState,
 } from './slices/chat';
 import {
@@ -323,6 +324,7 @@ export const createViewModelStateFromStore = (
             historyRequestState: () =>
                 store.getState().chat.historyRequestState,
             history: () => store.getState().chat.history,
+            recentFiles: () => store.getState().chat.recentFiles,
 
             appendMessage: (message) =>
                 store.dispatch(appendChatMessage(message)),
@@ -334,6 +336,8 @@ export const createViewModelStateFromStore = (
             setHistoryRequestState: (state) =>
                 store.dispatch(setChatHistoryRequestState(state)),
             setHistory: (history) => store.dispatch(setChatHistory(history)),
+            setRecentFiles: (names) =>
+                store.dispatch(setChatRecentFiles(names)),
             reset: () => store.dispatch(resetChat()),
         },
         persistenceViewModelRepository: {

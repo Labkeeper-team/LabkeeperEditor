@@ -45,6 +45,17 @@ test.each(['', 'application/octet-stream'])(
     }
 );
 
+// PDF вставляют в LaTeX как картинку и отдают агенту из чата, MIME у него не из списка
+test.each(['', 'application/pdf'])('PDF принимается при MIME "%s"', (mime) => {
+    const { fileService, onEvent } = setup();
+
+    expect(fileService.checkFile(fileOf('report.pdf', mime), ru)).toBe(true);
+    expect(onEvent).not.toHaveBeenCalledWith(
+        Events.EVENT_FILE_UPLOAD_REJECTED,
+        expect.anything()
+    );
+});
+
 test('прежние форматы по-прежнему принимаются', () => {
     const { fileService } = setup();
 

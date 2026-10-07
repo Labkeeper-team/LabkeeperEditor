@@ -36,7 +36,7 @@ export const Viewer = () => {
             <div className="viewer-header">
                 {isAgentMode ? (
                     <span className="viewer-header__title">
-                        {dictionary.agent_chat.pdf_tab_label}
+                        {dictionary.agent_mode.document}
                     </span>
                 ) : (
                     <ViewerTabs />

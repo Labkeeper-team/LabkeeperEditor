@@ -216,20 +216,23 @@ export class FileManagerService {
         }
     };
 
+    /** Возвращает имена загруженных файлов в проекте: по ним чат агента дописывает запрос */
     onUploadFiles = async (
         files: File[],
         folderPrefix?: string | null,
-        method: 'picker' | 'drop' = 'picker'
-    ) => {
+        method: 'picker' | 'drop' = 'picker',
+        source?: 'agent_chat'
+    ): Promise<string[]> => {
+        const uploaded: string[] = [];
         if (this.editingLock.rejectEdit()) {
-            return;
+            return uploaded;
         }
         this.repository.settingsViewModelRepository.setIsFileDraggedToFileManager(
             false
         );
         const project = this.repository.projectViewModelRepository.project();
         if (!project) {
-            return;
+            return uploaded;
         }
         const prefix =
             folderPrefix !== undefined && folderPrefix !== null
@@ -304,6 +307,7 @@ export class FileManagerService {
                 }
                 if (result.isOk) {
                     isResultOk = true;
+                    uploaded.push(name);
                 } else if (
                     result.code !== 413 &&
                     result.code !== 400 &&
@@ -322,6 +326,7 @@ export class FileManagerService {
                     file_count: files.length,
                     method,
                     ...(prefix ? { folder: prefix } : {}),
+                    ...(source ? { source } : {}),
                 });
                 await this.loaderService.loadFiles(project.projectId);
             } else {
@@ -331,6 +336,7 @@ export class FileManagerService {
             this.restoreFilesReadyState();
             throw error;
         }
+        return uploaded;
     };
 
     onSvarCreateFile = async (ev: {
