@@ -32,6 +32,7 @@ export const BaseLayout = () => {
     const isLandingPage =
         location.pathname === Routes.Tokens || location.pathname === Routes.Pay;
     const open = (searchParams.get('open') as OpenParams) || undefined;
+    const latex = searchParams.get('latex') ?? undefined;
 
     /*
     GLOBAL STATE
@@ -84,7 +85,9 @@ export const BaseLayout = () => {
                     })
                 );
             } else {
-                dispatch(controller.onAppEnterRequest({ captcha, open }));
+                dispatch(
+                    controller.onAppEnterRequest({ captcha, open, latex })
+                );
             }
             loaded = true;
         }

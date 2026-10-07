@@ -212,9 +212,17 @@ export class Controller {
 
     onAppEnterRequest = createAsyncThunk(
         'onAppEnter',
-        async ({ captcha, open }: { captcha?: string; open?: OpenParams }) => {
+        async ({
+            captcha,
+            open,
+            latex,
+        }: {
+            captcha?: string;
+            open?: OpenParams;
+            latex?: string;
+        }) => {
             await this.wrapper('onAppEnter', () =>
-                this.startupService.onAppStartup(captcha, open)
+                this.startupService.onAppStartup(captcha, open, latex)
             );
         }
     );

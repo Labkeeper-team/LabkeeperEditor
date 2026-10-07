@@ -9,6 +9,7 @@ import {
     PROJECT_ID,
     USER_ID,
 } from '../common.ts';
+import { Program } from '../../../model/domain.ts';
 import { RichProject } from '../../../model/rpi';
 import { Routes } from '../../../viewModel/routes.ts';
 
@@ -520,4 +521,108 @@ test('signed-in-agent-mode-of-the-default-project-keeps-the-mode-on-its-address'
         replace: true,
     });
     expect(repository.location()).toBe(`/project/${PROJECT_ID}/agent`);
+});
+
+const draftProgram = (text: string): Program => ({
+    segments: [
+        {
+            type: 'md',
+            text,
+            parameters: { visible: true },
+        },
+    ],
+    parameters: { roundStrategy: 'threeDigits' },
+});
+
+test('guest-with-a-saved-program-appends-a-latex-segment-from-the-query', async () => {
+    const { startupService, rpi, repository } = mockContext();
+    mockUserInfoForUnauthorized(rpi);
+    rpi.getDefaultProjectRequest = jest.fn();
+    repository.setLocation(Routes.ProjectDefault);
+    repository.persistenceViewModelRepository.setLastProgram(
+        draftProgram('черновик')
+    );
+    const setMobileView = jest.spyOn(
+        repository.settingsViewModelRepository,
+        'setMobileView'
+    );
+
+    await startupService.onAppStartup(undefined, undefined, 'E=mc^2');
+
+    const segments =
+        repository.projectViewModelRepository.currentProgram().segments;
+    expect(segments.map((segment) => segment.text)).toEqual([
+        'черновик',
+        'E=mc^2',
+    ]);
+    expect(segments[1]).toMatchObject({
+        type: 'latex',
+        parameters: { visible: true },
+    });
+    expect(
+        repository.persistenceViewModelRepository.lastProgram().segments
+    ).toEqual(segments);
+    expect(repository.ideViewModelRepository.activeSegmentIndex()).toBe(1);
+    expect(rpi.getDefaultProjectRequest).not.toHaveBeenCalled();
+    expect(setMobileView).not.toHaveBeenCalled();
+});
+
+test('guest-without-a-saved-program-opens-a-single-latex-segment', async () => {
+    const { startupService, rpi, repository } = mockContext();
+    mockUserInfoForUnauthorized(rpi);
+    rpi.getDefaultProjectRequest = jest.fn();
+    repository.setLocation(Routes.Home);
+
+    await startupService.onAppStartup(undefined, undefined, '\\alpha+\\beta');
+
+    expect(
+        repository.projectViewModelRepository.currentProgram().segments
+    ).toEqual([
+        {
+            type: 'latex',
+            text: '\\alpha+\\beta',
+            parameters: { visible: true },
+        },
+    ]);
+    expect(repository.ideViewModelRepository.activeSegmentIndex()).toBe(0);
+    expect(rpi.getDefaultProjectRequest).not.toHaveBeenCalled();
+});
+
+test('signed-in-user-sends-the-saved-program-plus-a-latex-segment', async () => {
+    const { startupService, rpi, repository } = mockContext();
+    mockAuthenticatedStartup(rpi);
+    repository.setLocation(Routes.ProjectDefault);
+    repository.persistenceViewModelRepository.setLastProgram(
+        draftProgram('черновик')
+    );
+
+    await startupService.onAppStartup(undefined, undefined, 'E=mc^2');
+
+    expect(rpi.getDefaultProjectRequest).toHaveBeenCalledTimes(1);
+    const sent = (rpi.getDefaultProjectRequest as jest.Mock).mock.calls[0][1];
+    expect(
+        sent.segments.map((segment: { text: string }) => segment.text)
+    ).toEqual(['черновик', 'E=mc^2']);
+    expect(sent.segments[1]).toMatchObject({
+        type: 'latex',
+        parameters: { visible: true },
+    });
+    expect(sent.parameters).toEqual({ roundStrategy: 'threeDigits' });
+});
+
+test('signed-in-user-without-a-saved-program-sends-one-latex-segment', async () => {
+    const { startupService, rpi, repository } = mockContext();
+    mockAuthenticatedStartup(rpi);
+    repository.setLocation(Routes.ProjectDefault);
+
+    await startupService.onAppStartup(undefined, undefined, 'только формула');
+
+    const sent = (rpi.getDefaultProjectRequest as jest.Mock).mock.calls[0][1];
+    expect(sent.segments).toEqual([
+        {
+            type: 'latex',
+            text: 'только формула',
+            parameters: { visible: true },
+        },
+    ]);
 });

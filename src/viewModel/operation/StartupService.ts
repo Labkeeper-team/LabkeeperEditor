@@ -1,6 +1,6 @@
 import { ViewModelRepository } from '../repository';
 import { Routes } from '../routes.ts';
-import { OpenParams, Project, UserInfo } from '../../model/domain.ts';
+import { OpenParams, Program, Project, UserInfo } from '../../model/domain.ts';
 import { RequestResult, RichProject, Rpi } from '../../model/rpi';
 import { ProgramService } from '../../model/service/ProgramService.ts';
 import { LoaderService } from '../domain/LoaderService.ts';
@@ -93,12 +93,14 @@ export class StartupService {
 
     onAppStartup = async (
         captcha?: string,
-        open?: OpenParams
+        open?: OpenParams,
+        latex?: string
     ): Promise<void> => {
         void open;
         logBreadcrumb('startup', 'onAppStartup', {
             location: this.repository.location(),
             hasCaptcha: Boolean(captcha),
+            hasLatex: latex !== undefined,
         });
         await this.loadBillingPricing();
 
@@ -144,7 +146,7 @@ export class StartupService {
             locationWithoutLastSlash === Routes.Home ||
             qrPagePattern.test(locationWithoutLastSlash)
         ) {
-            await this.openDefaultProject(userInfo, open);
+            await this.openDefaultProject(userInfo, open, latex);
         }
 
         // OAUTH
@@ -155,7 +157,7 @@ export class StartupService {
                 undefined
             );
             if (!lastOpenedProjectUuid) {
-                await this.openDefaultProject(userInfo, open);
+                await this.openDefaultProject(userInfo, open, latex);
             } else {
                 await this.openProjectById(userInfo, lastOpenedProjectUuid);
             }
@@ -167,7 +169,7 @@ export class StartupService {
             this.withoutAgentMode(locationWithoutLastSlash) ===
             Routes.ProjectDefault
         ) {
-            await this.openDefaultProject(userInfo, open);
+            await this.openDefaultProject(userInfo, open, latex);
         }
 
         // PAY PAGE ENTER
@@ -190,7 +192,7 @@ export class StartupService {
         // PROJECTS PAGE ENTER
         else if (locationWithoutLastSlash === Routes.Projects) {
             if (!userInfo.isAuthenticated) {
-                await this.openDefaultProject(userInfo, open);
+                await this.openDefaultProject(userInfo, open, latex);
             }
         }
 
@@ -454,15 +456,46 @@ export class StartupService {
         }
     }
 
+    /**
+     * `?latex=` дописывает latex-сегмент в конец локальной программы.
+     * Без сегментов это и есть вся программа. У вошедшего она целиком уходит
+     * в запрос проекта по умолчанию, у гостя сразу показывается в редакторе.
+     */
+    private programWithLatexSegment(latex: string): Program {
+        const program = structuredClone(
+            this.repository.persistenceViewModelRepository.lastProgram()
+        );
+        program.segments.push({
+            type: 'latex',
+            text: latex,
+            parameters: { visible: true },
+        });
+        return program;
+    }
+
+    private focusLastSegment(): void {
+        const count = this.programService.getCurrentProgram().segments.length;
+        if (count > 0) {
+            this.repository.ideViewModelRepository.setActiveSegmentIndex(
+                count - 1
+            );
+        }
+    }
+
     private async openDefaultProject(
         userInfo: UserInfo,
-        open?: OpenParams
+        open?: OpenParams,
+        latex?: string
     ): Promise<void> {
         this.repository.projectViewModelRepository.setReadOnly(false);
+        const program =
+            latex === undefined
+                ? this.repository.persistenceViewModelRepository.lastProgram()
+                : this.programWithLatexSegment(latex);
         if (userInfo.isAuthenticated) {
             const result = await this.rpi.getDefaultProjectRequest(
                 this.repository.persistenceViewModelRepository.language(),
-                this.repository.persistenceViewModelRepository.lastProgram(),
+                program,
                 this.repository.projectViewModelRepository.mode()
             );
             if (result.isOk) {
@@ -493,8 +526,13 @@ export class StartupService {
                 this.setEditorLocation(
                     Routes.Project.replace(':id', project.projectId)
                 );
-                // у проекта по умолчанию pdf из файлов не берётся, поэтому решаем до их загрузки
-                this.showAgentIfNeverCompiled(project);
+                // сегмент из ссылки должен быть на экране, а не под чатом агента
+                if (latex === undefined) {
+                    // у проекта по умолчанию pdf из файлов не берётся, поэтому решаем до их загрузки
+                    this.showAgentIfNeverCompiled(project);
+                } else {
+                    this.focusLastSegment();
+                }
                 if (userInfo.isAuthenticated) {
                     await this.loader.loadFiles(project.projectId);
                 }
@@ -527,10 +565,12 @@ export class StartupService {
                 );
             }
             this.setEditorLocation(Routes.ProjectDefault);
-            this.programService.setNewProgram(
-                this.repository.persistenceViewModelRepository.lastProgram()
-            );
-            this.showAgentIfNeverCompiled();
+            this.programService.setNewProgram(program);
+            if (latex === undefined) {
+                this.showAgentIfNeverCompiled();
+            } else {
+                this.focusLastSegment();
+            }
         }
         if (open === 'ai') {
             // ссылка ?open=ai разошлась до появления чата, ведём её на ближайший по смыслу экран
