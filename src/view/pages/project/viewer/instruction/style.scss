@@ -1,5 +1,12 @@
 @use '../../../../styles/colors' as *;
 
+// Высота подобрана по самому длинному слайду в колонке обычной ширины: его текст
+// помещается целиком. В колонке уже пункты прокручиваются
+$body-height: 232px;
+// В боковых полях слайда лежат стрелки: ни на текст, ни на картинку они не заходят
+$side-gutter: 56px;
+$pagination-height: 28px;
+
 .labkeeper-instruction-container {
     position: relative;
     border-radius: 8px 8px 0 0;
@@ -7,16 +14,22 @@
     min-height: 26px;
     overflow: hidden;
     width: 100%;
+    // по ширине колонки помощи слайд решает, показывать ли картинку
+    container-type: inline-size;
+
+    .labkeeper-instruction-body {
+        position: relative;
+        height: $body-height;
+    }
 
     .swiper {
         width: 100%;
         height: 100%;
-        padding-left: 5px;
         overflow: hidden;
     }
+
     .swiper-wrapper {
         display: flex;
-        align-items: center;
         overflow: hidden;
         width: 100%;
     }
@@ -24,24 +37,22 @@
     .swiper-slide {
         width: 100% !important;
         height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
         overflow: hidden;
     }
 
     .nav-button {
         position: absolute;
         z-index: 12;
-        top: 50%;
+        // по середине слайда, а не всей панели: снизу своё место занимают точки
+        top: calc(50% - #{$pagination-height * 0.5});
         transform: translateY(-50%);
 
         &.left {
-            left: 0;
+            left: 7px;
         }
 
         &.right {
-            right: 0;
+            right: 7px;
         }
 
         .image-button {
@@ -50,23 +61,147 @@
         }
     }
 
-    :global {
-        .swiper-pagination {
-            bottom: 8px !important;
-        }
+    .swiper-pagination {
+        bottom: 10px !important;
+        line-height: 8px;
+    }
 
-        .swiper-pagination-bullet {
-            width: 8px;
-            height: 8px;
-            background: $gray-40;
-            opacity: 0.5;
-            transition: all 0.3s ease;
+    .swiper-pagination-bullet {
+        width: 8px;
+        height: 8px;
+        background: $gray-40;
+        opacity: 1;
+        transition: background-color 0.3s ease;
 
-            &-active {
-                opacity: 1;
-                background: $button-action-blue;
-                transform: scale(1.2);
-            }
+        &-active {
+            background: $button-action-blue;
         }
+    }
+}
+
+.instruction-slide {
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    display: grid;
+    // тексту две трети: картинка поясняет, а не делит слайд пополам
+    grid-template-columns: minmax(0, 13fr) minmax(0, 7fr);
+    column-gap: 24px;
+    padding: 14px $side-gutter $pagination-height;
+    color: $gray-10;
+
+    &--no-image {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+.instruction-slide__text {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 0;
+}
+
+.instruction-slide__title {
+    flex-shrink: 0;
+    font-size: 16px;
+    line-height: 20px;
+    font-weight: 600;
+}
+
+.instruction-slide__points {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: $gray-40 transparent;
+    font-size: 13px;
+    line-height: 17px;
+    // тень у края видна, только пока за ним есть текст: заглушки едут вместе
+    // с содержимым и закрывают её в начале и в конце списка
+    background:
+        linear-gradient($gray-60 40%, rgba($gray-60, 0)) center top,
+        linear-gradient(rgba($gray-60, 0), $gray-60 60%) center bottom,
+        linear-gradient(rgba($gray-20, 0.22), rgba($gray-20, 0)) center top,
+        linear-gradient(rgba($gray-20, 0), rgba($gray-20, 0.22)) center bottom;
+    background-repeat: no-repeat;
+    background-size:
+        100% 20px,
+        100% 20px,
+        100% 8px,
+        100% 8px;
+    background-attachment: local, local, scroll, scroll;
+}
+
+.instruction-slide__point {
+    position: relative;
+    padding-left: 14px;
+
+    &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 6px;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: $button-action-blue;
+    }
+}
+
+.instruction-slide__code {
+    padding: 0 5px;
+    border: 1px solid $gray-40;
+    border-radius: 4px;
+    background: $gray-50;
+    font-family:
+        ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+        'Liberation Mono', 'Courier New', monospace;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.instruction-slide__more {
+    flex-shrink: 0;
+    font-size: 13px;
+    line-height: 17px;
+    color: $gray-20;
+
+    a {
+        color: $button-action-blue;
+        font-weight: 600;
+        text-decoration: none;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+}
+
+.instruction-slide__image {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
+
+    img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+}
+
+// В узкой колонке картинка отнимала бы у текста половину ширины, и пункты уходили бы под прокрутку
+@container (max-width: 520px) {
+    .instruction-slide {
+        grid-template-columns: minmax(0, 1fr);
+        padding-left: 48px;
+        padding-right: 48px;
+    }
+
+    .instruction-slide__image {
+        display: none;
     }
 }
