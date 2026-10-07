@@ -23,7 +23,7 @@ export type StatementType =
     | 'latex'
     | 'no_result';
 export type PlotType = 'line' | 'scatter' | 'histogram' | 'dotted';
-export type OpenParams = 'login' | 'ai' | 'latex' | 'markdown';
+export type OpenParams = 'login' | 'latex' | 'markdown';
 
 /*
 Domain

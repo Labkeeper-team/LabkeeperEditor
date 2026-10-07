@@ -9,6 +9,7 @@ import {
     PROJECT_ID,
     USER_ID,
 } from '../common.ts';
+import { Program } from '../../../model/domain.ts';
 import { RichProject } from '../../../model/rpi';
 import { Routes } from '../../../viewModel/routes.ts';
 
@@ -520,4 +521,284 @@ test('signed-in-agent-mode-of-the-default-project-keeps-the-mode-on-its-address'
         replace: true,
     });
     expect(repository.location()).toBe(`/project/${PROJECT_ID}/agent`);
+});
+
+const draftProgram = (text: string): Program => ({
+    segments: [
+        {
+            type: 'md',
+            text,
+            parameters: { visible: true },
+        },
+    ],
+    parameters: { roundStrategy: 'threeDigits' },
+});
+
+const compiledPdf = (pdfUri = 'https://files.labkeeper.io/out.pdf') => ({
+    code: 200,
+    isOk: true,
+    isUnauth: false,
+    isForbidden: false,
+    body: { pdfUri },
+});
+
+test('guest-with-a-saved-program-appends-a-latex-segment-from-the-query', async () => {
+    const { startupService, rpi, repository } = mockContext();
+    mockUserInfoForUnauthorized(rpi);
+    rpi.getDefaultProjectRequest = jest.fn();
+    rpi.pdfCompilationRequest = jest.fn().mockResolvedValue(compiledPdf());
+    repository.setLocation(Routes.ProjectDefault);
+    repository.persistenceViewModelRepository.setLastProgram(
+        draftProgram('черновик')
+    );
+    const setMobileView = jest.spyOn(
+        repository.settingsViewModelRepository,
+        'setMobileView'
+    );
+
+    await startupService.onAppStartup(undefined, undefined, {
+        latex: 'E=mc^2',
+    });
+
+    const segments =
+        repository.projectViewModelRepository.currentProgram().segments;
+    expect(segments.map((segment) => segment.text)).toEqual([
+        'черновик',
+        'E=mc^2',
+    ]);
+    expect(segments[1]).toMatchObject({
+        type: 'latex',
+        parameters: { visible: true },
+    });
+    expect(
+        repository.persistenceViewModelRepository.lastProgram().segments
+    ).toEqual(segments);
+    expect(repository.ideViewModelRepository.activeSegmentIndex()).toBe(1);
+    expect(rpi.getDefaultProjectRequest).not.toHaveBeenCalled();
+    expect(setMobileView).not.toHaveBeenCalled();
+    expect(rpi.pdfCompilationRequest).toHaveBeenCalledTimes(1);
+    expect(
+        (rpi.pdfCompilationRequest as jest.Mock).mock.calls[0][0].segments.map(
+            (segment: { text: string }) => segment.text
+        )
+    ).toEqual(['черновик', 'E=mc^2']);
+    expect(repository.projectViewModelRepository.pdfUri()).toBe(
+        'https://files.labkeeper.io/out.pdf'
+    );
+});
+
+test('guest-without-a-saved-program-opens-a-single-latex-segment', async () => {
+    const { startupService, rpi, repository } = mockContext();
+    mockUserInfoForUnauthorized(rpi);
+    rpi.getDefaultProjectRequest = jest.fn();
+    rpi.pdfCompilationRequest = jest.fn().mockResolvedValue(compiledPdf());
+    repository.setLocation(Routes.Home);
+
+    await startupService.onAppStartup(undefined, undefined, {
+        latex: '\\alpha+\\beta',
+    });
+
+    expect(
+        repository.projectViewModelRepository.currentProgram().segments
+    ).toEqual([
+        {
+            type: 'latex',
+            text: '\\alpha+\\beta',
+            parameters: { visible: true },
+        },
+    ]);
+    expect(repository.ideViewModelRepository.activeSegmentIndex()).toBe(0);
+    expect(rpi.getDefaultProjectRequest).not.toHaveBeenCalled();
+    expect(rpi.pdfCompilationRequest).toHaveBeenCalledTimes(1);
+    expect(
+        (rpi.pdfCompilationRequest as jest.Mock).mock.calls[0][0].segments
+    ).toEqual([
+        {
+            type: 'latex',
+            text: '\\alpha+\\beta',
+            parameters: { visible: true },
+        },
+    ]);
+});
+
+test('signed-in-user-sends-the-saved-program-plus-a-latex-segment', async () => {
+    const { startupService, rpi, repository } = mockContext();
+    mockAuthenticatedStartup(rpi);
+    rpi.getDefaultProjectRequest = jest
+        .fn()
+        .mockImplementation((_lang: string, posted: Program) =>
+            Promise.resolve({
+                code: 200,
+                isOk: true,
+                isUnauth: false,
+                isForbidden: false,
+                body: {
+                    projectId: PROJECT_ID,
+                    userId: USER_ID,
+                    title: 'biba project',
+                    lastModified: DEFAULT_INSTANT.toISOString(),
+                    isPublic: false,
+                    program: posted,
+                    projectType: 'latex',
+                    lastProgramResult: undefined,
+                },
+            })
+        );
+    rpi.saveProgramRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+        body: {},
+    });
+    rpi.compileProjectPdfRequest = jest.fn().mockResolvedValue(compiledPdf());
+    repository.setLocation(Routes.ProjectDefault);
+    repository.persistenceViewModelRepository.setLastProgram(
+        draftProgram('черновик')
+    );
+
+    await startupService.onAppStartup(undefined, undefined, {
+        latex: 'E=mc^2',
+    });
+
+    expect(rpi.getDefaultProjectRequest).toHaveBeenCalledTimes(1);
+    const sent = (rpi.getDefaultProjectRequest as jest.Mock).mock.calls[0][1];
+    expect(
+        sent.segments.map((segment: { text: string }) => segment.text)
+    ).toEqual(['черновик', 'E=mc^2']);
+    expect(sent.segments[1]).toMatchObject({
+        type: 'latex',
+        parameters: { visible: true },
+    });
+    expect(sent.parameters).toEqual({ roundStrategy: 'threeDigits' });
+    expect(rpi.saveProgramRequest).toHaveBeenCalledTimes(1);
+    expect(
+        (rpi.saveProgramRequest as jest.Mock).mock.calls[0][1].segments.map(
+            (segment: { text: string }) => segment.text
+        )
+    ).toEqual(['черновик', 'E=mc^2']);
+    expect(rpi.compileProjectPdfRequest).toHaveBeenCalledWith(PROJECT_ID);
+    expect(
+        (rpi.saveProgramRequest as jest.Mock).mock.invocationCallOrder[0]
+    ).toBeLessThan(
+        (rpi.compileProjectPdfRequest as jest.Mock).mock.invocationCallOrder[0]
+    );
+});
+
+test('signed-in-user-without-a-saved-program-sends-one-latex-segment', async () => {
+    const { startupService, rpi, repository } = mockContext();
+    mockAuthenticatedStartup(rpi);
+    rpi.getDefaultProjectRequest = jest
+        .fn()
+        .mockImplementation((_lang: string, posted: Program) =>
+            Promise.resolve({
+                code: 200,
+                isOk: true,
+                isUnauth: false,
+                isForbidden: false,
+                body: {
+                    projectId: PROJECT_ID,
+                    userId: USER_ID,
+                    title: 'biba project',
+                    lastModified: DEFAULT_INSTANT.toISOString(),
+                    isPublic: false,
+                    program: posted,
+                    projectType: 'latex',
+                    lastProgramResult: undefined,
+                },
+            })
+        );
+    rpi.saveProgramRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+        body: {},
+    });
+    rpi.compileProjectPdfRequest = jest.fn().mockResolvedValue(compiledPdf());
+    repository.setLocation(Routes.ProjectDefault);
+
+    await startupService.onAppStartup(undefined, undefined, {
+        latex: 'только формула',
+    });
+
+    const sent = (rpi.getDefaultProjectRequest as jest.Mock).mock.calls[0][1];
+    expect(sent.segments).toEqual([
+        {
+            type: 'latex',
+            text: 'только формула',
+            parameters: { visible: true },
+        },
+    ]);
+    expect(rpi.compileProjectPdfRequest).toHaveBeenCalledWith(PROJECT_ID);
+});
+
+test('query-segments-are-appended-in-compute-latex-markdown-order', async () => {
+    const { startupService, rpi, repository } = mockContext();
+    mockUserInfoForUnauthorized(rpi);
+    rpi.pdfCompilationRequest = jest.fn().mockResolvedValue(compiledPdf());
+    repository.setLocation(Routes.ProjectDefault);
+    repository.persistenceViewModelRepository.setLastProgram(
+        draftProgram('черновик')
+    );
+
+    await startupService.onAppStartup(undefined, undefined, {
+        markdown: 'текст',
+        latex: 'E=mc^2',
+        compute: 'a = 1',
+    });
+
+    expect(
+        repository.projectViewModelRepository
+            .currentProgram()
+            .segments.map((segment) => ({
+                type: segment.type,
+                text: segment.text,
+            }))
+    ).toEqual([
+        { type: 'md', text: 'черновик' },
+        { type: 'computational', text: 'a = 1' },
+        { type: 'latex', text: 'E=mc^2' },
+        { type: 'md', text: 'текст' },
+    ]);
+    expect(rpi.pdfCompilationRequest).toHaveBeenCalledTimes(1);
+});
+
+test('empty-query-params-are-skipped-between-filled-ones', async () => {
+    const { startupService, rpi, repository } = mockContext();
+    mockUserInfoForUnauthorized(rpi);
+    rpi.pdfCompilationRequest = jest.fn().mockResolvedValue(compiledPdf());
+    repository.setLocation(Routes.Home);
+
+    await startupService.onAppStartup(undefined, undefined, {
+        compute: '',
+        latex: 'E=mc^2',
+        markdown: '',
+    });
+
+    expect(
+        repository.projectViewModelRepository
+            .currentProgram()
+            .segments.map((segment) => segment.type)
+    ).toEqual(['latex']);
+});
+
+test('empty-latex-query-does-not-add-a-segment', async () => {
+    const { startupService, projectPageService, rpi, repository } =
+        mockContext();
+    mockUserInfoForUnauthorized(rpi);
+    const run = jest.spyOn(projectPageService, 'onRunButtonClicked');
+    repository.setLocation(Routes.ProjectDefault);
+    repository.persistenceViewModelRepository.setLastProgram(
+        draftProgram('черновик')
+    );
+
+    await startupService.onAppStartup(undefined, undefined, { latex: '' });
+
+    expect(run).not.toHaveBeenCalled();
+    expect(
+        repository.projectViewModelRepository
+            .currentProgram()
+            .segments.map((segment) => segment.text)
+    ).toEqual(['черновик']);
 });
