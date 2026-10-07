@@ -67,7 +67,11 @@ export const ViewerTabs = () => {
             >
                 <FullScreenIcon />
             </button>
-            {viewerTab === 'chat' && <ClearHistoryButton />}
+            {/* очистка лежит на самой вкладке агента и в раскладку не входит:
+                иначе вкладки меняли бы ширину при переключении */}
+            {viewerTab === 'chat' && (
+                <ClearHistoryButton className="viewer-tabs__clear" />
+            )}
         </div>
     );
 };

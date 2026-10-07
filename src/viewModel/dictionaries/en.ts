@@ -198,6 +198,8 @@ export const en: Translations = {
             'You are not logged in, so the agent runs under the limit for unregistered users. Logging in removes that limit: requests are paid from your token balance, and history and changes stay in the project. The iteration count, the context size and the ten minutes per run stay limited after login',
         guest_login_action: 'Login',
         clear_history: 'Clear history',
+        clear_history_confirm: 'Are you sure you want to clear the history?',
+        clear_history_dont_ask: "Don't ask again",
         history_loading: 'Loading history',
         history_error: 'Could not load the history',
         history_clear_error: 'Could not clear the history. Please try again',

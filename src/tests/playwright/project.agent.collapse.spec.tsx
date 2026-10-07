@@ -218,6 +218,12 @@ test('run-after-clearing-does-not-inherit-an-expanded-id', async ({ page }) => {
     await expect(toggles(page)).toHaveAttribute('aria-expanded', 'true');
 
     await page.getByRole('button', { name: 'Clear history' }).click();
+    await page
+        .getByRole('dialog', {
+            name: 'Are you sure you want to clear the history?',
+        })
+        .getByRole('button', { name: 'Yes' })
+        .click();
 
     await expect(page.locator('.agent-chat__request')).toHaveCount(0);
     await expect(toggles(page)).toHaveCount(0);
