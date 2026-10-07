@@ -203,7 +203,7 @@ test.describe('по-русски', () => {
     test('consent-modal-keeps-the-wording-from-the-spec', async ({ page }) => {
         await openChat(page, { agentLabel: 'Агент' });
         await page
-            .getByPlaceholder('Опишите, что сделать с проектом')
+            .getByPlaceholder('Опишите, что сделать с документом')
             .fill('сделай таблицу');
         await page.getByRole('button', { name: 'Отправить' }).click();
 

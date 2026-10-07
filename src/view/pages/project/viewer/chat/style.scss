@@ -23,6 +23,148 @@
     .agent-chat__disclaimer {
         margin-top: auto;
     }
+
+    // над полем зона загрузки и ряд файлов: по центру встаёт вся группа
+    &.agent-chat--files {
+        .agent-files__drop {
+            margin-top: auto;
+        }
+
+        .agent-chat__field {
+            margin-top: 0;
+        }
+    }
+}
+
+// Файлы в чате агентского режима: зона загрузки в пустом чате и ряд над запросом
+.agent-files__drop {
+    // высота как у поля запроса без ручной подгонки, на низком экране зона ужимается первой
+    flex: 0 1 152px;
+    min-height: 96px;
+    box-sizing: border-box;
+    border: 2px dashed $gray-40;
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    text-align: center;
+    color: $gray-20;
+    cursor: pointer;
+    overflow: hidden;
+    transition:
+        border-color 0.15s,
+        background-color 0.15s;
+
+    // иначе dragleave приходит при каждом переходе через подпись
+    > * {
+        pointer-events: none;
+    }
+
+    svg {
+        color: $blue-10;
+        margin-bottom: 4px;
+        flex-shrink: 0;
+    }
+
+    &:hover,
+    &:focus-visible,
+    &--active {
+        border-color: $blue-10;
+        background: $gray-60;
+    }
+
+    &:focus-visible {
+        outline: none;
+    }
+}
+
+.agent-files__drop-title {
+    font-size: 16px;
+    line-height: 20px;
+    font-weight: 700;
+    color: $gray-10;
+}
+
+.agent-files__drop-hint {
+    font-size: 14px;
+    line-height: 18px;
+}
+
+.agent-files__drop-guest {
+    margin-top: 4px;
+    font-size: 12px;
+    line-height: 16px;
+    color: $gray-30;
+}
+
+.agent-files__row {
+    display: grid;
+    // три места под файлы и кнопка: файлы не растягиваются, когда их меньше трёх
+    grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.agent-files__file,
+.agent-files__upload {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 32px;
+    box-sizing: border-box;
+    border-radius: 6px;
+    font-size: 14px;
+    line-height: 18px;
+    cursor: pointer;
+
+    &:disabled {
+        cursor: default;
+        opacity: 0.6;
+    }
+}
+
+.agent-files__file {
+    min-width: 0;
+    padding: 6px 10px;
+    border: 1px solid transparent;
+    background: $gray-60;
+    color: $gray-10;
+    text-align: left;
+
+    svg {
+        flex-shrink: 0;
+        color: $gray-20;
+    }
+
+    &:hover:not(:disabled) {
+        border-color: $gray-50;
+    }
+}
+
+.agent-files__file-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.agent-files__upload {
+    grid-column: 4;
+    padding: 6px 12px;
+    border: 1px solid $gray-50;
+    background: $white;
+    color: $blue-10;
+    white-space: nowrap;
+
+    &:hover:not(:disabled) {
+        border-color: $blue-10;
+    }
+}
+
+.agent-files__input {
+    display: none;
 }
 
 .agent-chat__transcript {
@@ -747,6 +889,21 @@ body.agent-chat-resizing {
 
     // строка в 18px мала для пальца: зона нажатия как у остальных кнопок на телефоне
     .agent-chat__steps-toggle {
+        min-height: 44px;
+    }
+
+    // в узкой колонке кнопка загрузки уходит под файлы во всю ширину
+    .agent-files__row {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .agent-files__upload {
+        grid-column: 1 / -1;
+        justify-content: center;
+    }
+
+    .agent-files__file,
+    .agent-files__upload {
         min-height: 44px;
     }
 }

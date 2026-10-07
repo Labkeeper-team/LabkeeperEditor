@@ -223,7 +223,7 @@ export const agentModeInstructions: LocalizedInstructionItem[] = [
             title: 'Агентский режим',
             points: [
                 'Опишите в чате, какой документ нужен, и отправьте сообщение.',
-                'Агент сам пишет и правит проект. Код набирать не нужно.',
+                'Агент сам пишет и правит документ. Код набирать не нужно.',
                 'Если хотите редактировать сам документ вручную, нажмите кнопку перехода в полный редактор.',
             ],
             image: '/instructions/agent_mode.svg',
@@ -232,7 +232,7 @@ export const agentModeInstructions: LocalizedInstructionItem[] = [
             title: 'Agent mode',
             points: [
                 'Describe the document you need in the chat and send the message.',
-                'The agent writes and edits the project. You do not type the code.',
+                'The agent writes and edits the document. You do not type the code.',
                 'To edit the document by hand, press the button that opens the full editor.',
             ],
             image: '/instructions/agent_mode.svg',

@@ -29,7 +29,7 @@ const FIRST_RUN: Frame[] = [
 ];
 const FIRST_RUN_STEPS = [
     'Calling the model',
-    'Reading the project structure',
+    'Reading the document structure',
     'Reading a segment',
 ];
 const RUNNING: Frame[] = [toolCall('read_file')];
@@ -164,7 +164,7 @@ test('failed-and-stopped-runs-collapse-too', async ({ page }) => {
 
     await submitPrompt(page, 'второй');
     await expect(stepLabels(page)).toHaveText([
-        'Reading the project structure',
+        'Reading the document structure',
     ]);
     await stopButton(page).click();
     await expect(page.locator('.agent-chat__notice-text')).toBeVisible();

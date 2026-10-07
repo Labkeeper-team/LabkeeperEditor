@@ -6,9 +6,11 @@ import { useDictionary } from '../../../../store/selectors/translations';
 import { controller } from '../../../../../main.tsx';
 import { Transcript } from './Transcript';
 import { PromptField } from './PromptField';
+import { AgentFiles } from './AgentFiles.tsx';
 import './style.scss';
 
-export const AgentChat = () => {
+/** withFiles: файлы прямо в чате, они нужны там, где нет файлового менеджера, то есть в агентском режиме */
+export const AgentChat = ({ withFiles = false }: { withFiles?: boolean }) => {
     const dispatch = useDispatch<AppDispatch>();
     const dictionary = useSelector(useDictionary);
     const messages = useSelector((state: StorageState) => state.chat.messages);
@@ -32,9 +34,11 @@ export const AgentChat = () => {
         <div
             className={classNames('agent-chat', {
                 'agent-chat--empty': isEmpty,
+                'agent-chat--files': withFiles,
             })}
         >
             <Transcript />
+            {withFiles && <AgentFiles isEmpty={isEmpty} />}
             <PromptField isEmpty={isEmpty} />
             {isEmpty && (
                 <div className="agent-chat__disclaimer">

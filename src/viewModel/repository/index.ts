@@ -270,6 +270,7 @@ class MockViewModelRepositoryState {
     chatInput: string = '';
     chatHistoryRequestState: HistoryRequestState = 'unknown';
     chatHistory: AgentHistoryEntry[] = [];
+    chatRecentFiles: string[] = [];
 
     toasts: { message: string; type: TypeOptions }[] = [];
 }
@@ -438,6 +439,7 @@ export const mockViewModelState = (): MockViewModelRepository => {
             historyRequestState: () =>
                 mockViewModelState.chatHistoryRequestState,
             history: () => mockViewModelState.chatHistory,
+            recentFiles: () => mockViewModelState.chatRecentFiles,
             appendMessage: (message) => {
                 mockViewModelState.chatMessages = [
                     ...mockViewModelState.chatMessages,
@@ -456,6 +458,8 @@ export const mockViewModelState = (): MockViewModelRepository => {
             setHistoryRequestState: (state) =>
                 (mockViewModelState.chatHistoryRequestState = state),
             setHistory: (history) => (mockViewModelState.chatHistory = history),
+            setRecentFiles: (names) =>
+                (mockViewModelState.chatRecentFiles = names),
             reset: () => {
                 mockViewModelState.chatMessages = [];
                 mockViewModelState.chatNextMessageId = 1;
@@ -463,6 +467,7 @@ export const mockViewModelState = (): MockViewModelRepository => {
                 mockViewModelState.chatInput = '';
                 mockViewModelState.chatHistoryRequestState = 'unknown';
                 mockViewModelState.chatHistory = [];
+                mockViewModelState.chatRecentFiles = [];
             },
         },
         persistenceViewModelRepository: {
@@ -837,6 +842,7 @@ export interface ChatViewModelRepository {
     input: () => string;
     historyRequestState: () => HistoryRequestState;
     history: () => AgentHistoryEntry[];
+    recentFiles: () => string[];
 
     appendMessage: (message: ChatMessageDraft) => void;
     setMessages: (messages: ChatMessage[]) => void;
@@ -844,6 +850,7 @@ export interface ChatViewModelRepository {
     setInput: (input: string) => void;
     setHistoryRequestState: (state: HistoryRequestState) => void;
     setHistory: (history: AgentHistoryEntry[]) => void;
+    setRecentFiles: (names: string[]) => void;
     reset: () => void;
 }
 

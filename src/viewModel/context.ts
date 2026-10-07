@@ -25,6 +25,7 @@ import { HunkService } from './operation/HunkService.ts';
 import { Controller } from '../controller/index.ts';
 import { AgentSocket } from '../model/rpi/agentSocket.ts';
 import { AgentChatService } from './operation/AgentChatService.ts';
+import { AgentFilesService } from './operation/AgentFilesService.ts';
 import { AgentEventService } from './domain/AgentEventService.ts';
 import { EditingLockService } from './domain/EditingLockService.ts';
 
@@ -174,6 +175,11 @@ export function setupContext(
     );
     startupService.setAgentChatService(agentChatService);
     resetService.setBeforeProjectReset(agentChatService.closeSession);
+    const agentFilesService: AgentFilesService = new AgentFilesService(
+        repository,
+        fileManagerService,
+        observerService
+    );
     const projectsPageService: ProjectsPageService = new ProjectsPageService(
         repository,
         rpi,
@@ -198,7 +204,8 @@ export function setupContext(
         startupService,
         observerService,
         hunkService,
-        agentChatService
+        agentChatService,
+        agentFilesService
     );
 
     return {
@@ -212,6 +219,7 @@ export function setupContext(
         OPERATION
          */
         agentChatService,
+        agentFilesService,
         startupService,
         authService,
         fileManagerService,

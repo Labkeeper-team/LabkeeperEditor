@@ -52,11 +52,11 @@ export const MobileViewSwitcher = () => {
         return null;
     }
 
-    // в агентском режиме колонки всего две: агент и собранный PDF
+    // в агентском режиме колонки всего две: агент и итоговый документ
     const views = isAgentMode
         ? [
               { id: 'chat' as const, label: dictionary.mobile_view.chat },
-              { id: 'pdf' as const, label: dictionary.mobile_view.pdf },
+              { id: 'pdf' as const, label: dictionary.agent_mode.document },
           ]
         : [
               { id: 'files' as const, label: dictionary.mobile_view.files },
@@ -73,7 +73,10 @@ export const MobileViewSwitcher = () => {
                     ]),
           ];
 
-    const currentView = views.find((view) => view.id === mobileView);
+    // в агентском режиме всё, кроме документа, показывает чат: экрана редактора там нет
+    const currentView =
+        views.find((view) => view.id === mobileView) ??
+        (isAgentMode ? views[0] : undefined);
 
     const onSelectView = (id: MobileView) => {
         if (id !== mobileView) {
@@ -123,12 +126,12 @@ export const MobileViewSwitcher = () => {
                             key={id}
                             type="button"
                             role="option"
-                            aria-selected={mobileView === id}
+                            aria-selected={currentView?.id === id}
                             className={classNames(
                                 'mobile-view-switcher-bar__option',
                                 {
                                     'mobile-view-switcher-bar__option--active':
-                                        mobileView === id,
+                                        currentView?.id === id,
                                 }
                             )}
                             onClick={() => onSelectView(id)}

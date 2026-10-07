@@ -172,6 +172,8 @@ export interface Translations {
         enter_hint: string;
         // заглушка результата до первой сборки: кнопки «Выполнить» в режиме нет
         no_pdf: string;
+        // подпись колонки результата: в режиме агента это документ, а не PDF
+        document: string;
     };
     agent_chat: {
         tab_label: string;
@@ -266,6 +268,14 @@ export interface Translations {
             aborted_unsynced: string;
         };
         steps_toggle: string;
+        files: {
+            drop_title: string;
+            drop_hint: string;
+            guest_hint: string;
+            upload: string;
+            // дописывается в запрос, {name} это имя файла в проекте
+            mention: string;
+        };
     };
     mobile_view: {
         files: string;

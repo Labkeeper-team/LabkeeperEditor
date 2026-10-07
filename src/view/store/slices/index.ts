@@ -170,6 +170,8 @@ export interface ChatState {
     history: AgentHistoryEntry[];
     /** Прошлые прогоны, чьи шаги человек развернул, по id запроса. В localStorage не пишется */
     expandedStepRequestIds: number[];
+    /** Файлы, загруженные из чата в этом проекте, свежие первыми: их ряд над запросом показывает раньше прочих */
+    recentFiles: string[];
 }
 
 export const authInitialState: AuthState = {
@@ -238,6 +240,7 @@ export const chatInitialState: ChatState = {
     historyRequestState: 'unknown',
     history: [],
     expandedStepRequestIds: [],
+    recentFiles: [],
 };
 
 export const projectInitialState: ProjectState = {
