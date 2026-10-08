@@ -1,5 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { RouteSetup } from './mock.routeSetUp.tsx';
+import { AgentHistoryEntry } from '../../model/domain.ts';
 
 /**
  * Панель помощи под результатом: слайды с подсказками. Текст слайда не
@@ -190,48 +191,183 @@ test('помощь под агентом сворачивается и разв�
     await expect(help(page)).toBeVisible();
 });
 
-// Под чатом помощь отнимает у него около 260px. Где ленте и полю запроса без
-// того тесно, она остаётся только под результатом
+// Под чатом помощь отнимает у него около 260px, поэтому остаётся там, только
+// пока чат помещается сам: пустому хватает поля запроса, с перепиской нужна лента
+async function openWithHistory(page: Page, history: AgentHistoryEntry[]) {
+    const routeSetup = new RouteSetup(page);
+    await routeSetup.setupGetUserInfoRequest(true);
+    await routeSetup.acceptCrossBorderConsentLocally();
+    await routeSetup.setupGetProjectRequest(200, 'default');
+    await routeSetup.setupGetAllProjectsRequest();
+    await routeSetup.setupSaveProgramRequest();
+    await routeSetup.setupListFilesRequest(200, 'emptyFiles');
+    await routeSetup.setupAgentHistoryRequest(history);
+    await routeSetup.setupAgentSocket([]);
+    await page.goto(`/project/${uuid}`);
+    await page.waitForLoadState('domcontentloaded');
+}
+
+const HISTORY: AgentHistoryEntry[] = [
+    {
+        id: '1',
+        request: 'сократи первый сегмент',
+        response: 'готово',
+        createdAt: '2026-09-20T10:00:00Z',
+    },
+];
+
+/** На телефоне экраны переключает список в шапке, вкладок там нет */
+async function openPhoneScreen(page: Page, name: string) {
+    await page.locator('.mobile-view-switcher-bar__toggle').click();
+    await page.getByRole('option', { name }).click();
+}
+
+/** Чат целиком над помощью и не обрезан: поле запроса и строка под ним видны */
+async function expectChatAboveHelp(page: Page) {
+    const chat = await box(page.locator('.agent-chat'));
+    const panel = await box(help(page));
+    expect(chat.y + chat.height).toBeLessThanOrEqual(panel.y + 0.5);
+    await expect(page.locator('.agent-chat__field')).toBeInViewport({
+        ratio: 1,
+    });
+    const field = await box(page.locator('.agent-chat__field'));
+    expect(field.y).toBeGreaterThanOrEqual(chat.y);
+    expect(field.y + field.height).toBeLessThanOrEqual(chat.y + chat.height);
+}
+
 test.describe('низкое окно', () => {
     test.use({ viewport: { width: 1360, height: 650 } });
 
-    test('под чатом помощи нет, под результатом есть', async ({ page }) => {
-        await openProject(page);
+    test('под пустым чатом помощь есть: ему хватает поля запроса', async ({
+        page,
+    }) => {
+        await openWithHistory(page, []);
         await page.getByRole('tab', { name: 'AI agent' }).click();
-        await expect(page.locator('.agent-chat')).toBeVisible();
+
+        await expect(help(page)).toBeVisible();
+        await expectChatAboveHelp(page);
+    });
+
+    test('под чатом с перепиской помощи нет, под результатом есть', async ({
+        page,
+    }) => {
+        await openWithHistory(page, HISTORY);
+        await page.getByRole('tab', { name: 'AI agent' }).click();
+        await expect(page.locator('.agent-chat__pair')).toHaveCount(1);
         await expect(help(page)).toBeHidden();
 
         await page.getByRole('tab', { name: 'PDF visualization' }).click();
 
         await expect(help(page)).toBeVisible();
     });
+
+    test('свёрнутая помощь места почти не занимает и остаётся под перепиской', async ({
+        page,
+    }) => {
+        await new RouteSetup(page).collapseHelp();
+        await openWithHistory(page, HISTORY);
+        await page.getByRole('tab', { name: 'AI agent' }).click();
+        await expect(page.locator('.agent-chat__pair')).toHaveCount(1);
+
+        await expect(help(page)).toBeVisible();
+        await expect(slides(page)).toHaveCount(0);
+    });
 });
+
+// Замечание заказчика: с телефона проект открывается на экране агента, и без
+// помощи там голое поле запроса: непонятно, что делать
+for (const [label, viewport] of [
+    ['телефон', { width: 390, height: 844 }],
+    // айфон с адресной строкой и панелью браузера
+    ['телефон с панелями браузера', { width: 390, height: 664 }],
+] as const) {
+    test.describe(label, () => {
+        test.use({ viewport });
+
+        test('под пустым чатом агента видна помощь', async ({ page }) => {
+            await openWithHistory(page, []);
+            await openPhoneScreen(page, 'AI agent');
+
+            await expect(help(page)).toBeVisible();
+            await expect(slides(page).first()).toBeVisible();
+            await expect(help(page)).toBeInViewport({ ratio: 1 });
+            await expectChatAboveHelp(page);
+        });
+
+        test('на экране PDF помощь тоже есть', async ({ page }) => {
+            await openWithHistory(page, HISTORY);
+            await openPhoneScreen(page, 'PDF');
+
+            await expect(help(page)).toBeVisible();
+        });
+    });
+}
 
 test.describe('телефон', () => {
     test.use({ viewport: { width: 390, height: 844 } });
 
-    test('на экране агента помощи нет, на экране PDF есть', async ({
+    test('высокому экрану помощи хватает и под перепиской', async ({
         page,
     }) => {
-        const routeSetup = new RouteSetup(page);
-        await routeSetup.setupGetUserInfoRequest(true);
-        await routeSetup.acceptCrossBorderConsentLocally();
-        await routeSetup.setupGetProjectRequest(200, 'default');
-        await routeSetup.setupGetAllProjectsRequest();
-        await routeSetup.setupSaveProgramRequest();
-        await routeSetup.setupListFilesRequest(200, 'emptyFiles');
-        await routeSetup.setupAgentHistoryRequest([]);
-        await routeSetup.setupAgentSocket([]);
-        await page.goto(`/project/${uuid}`);
-        const switcher = page.locator('.mobile-view-switcher-bar__toggle');
+        await openWithHistory(page, HISTORY);
+        await openPhoneScreen(page, 'AI agent');
+        await expect(page.locator('.agent-chat__pair')).toHaveCount(1);
 
-        await switcher.click();
-        await page.getByRole('option', { name: 'AI agent' }).click();
-        await expect(page.locator('.agent-chat')).toBeVisible();
-        await expect(help(page)).toBeHidden();
-
-        await switcher.click();
-        await page.getByRole('option', { name: 'PDF' }).click();
         await expect(help(page)).toBeVisible();
+        await expectChatAboveHelp(page);
+    });
+
+    test('клавиатура сжимает страницу, и помощь уступает место полю запроса', async ({
+        page,
+    }) => {
+        await openWithHistory(page, []);
+        await openPhoneScreen(page, 'AI agent');
+        await expect(help(page)).toBeVisible();
+
+        // так страницу видит приложение при открытой клавиатуре
+        await page.setViewportSize({ width: 390, height: 500 });
+
+        await expect(help(page)).toBeHidden();
+        await expect(page.locator('.agent-chat__field')).toBeInViewport({
+            ratio: 1,
+        });
+
+        await page.setViewportSize({ width: 390, height: 844 });
+        await expect(help(page)).toBeVisible();
+    });
+});
+
+test.describe('телефон с панелями браузера', () => {
+    test.use({ viewport: { width: 390, height: 664 } });
+
+    test('открытая панель настроек агента забирает место помощи', async ({
+        page,
+    }) => {
+        await openWithHistory(page, []);
+        await openPhoneScreen(page, 'AI agent');
+        await expect(help(page)).toBeVisible();
+
+        await page.getByRole('button', { name: 'Agent settings' }).click();
+        const settings = page.getByRole('dialog', { name: 'Agent settings' });
+
+        await expect(settings).toBeVisible();
+        await expect(help(page)).toBeHidden();
+        // под помощью панели оставалось меньше ста пикселей
+        await expect
+            .poll(async () => (await box(settings)).height)
+            .toBeGreaterThan(200);
+
+        await page.getByRole('button', { name: 'Close settings' }).click();
+        await expect(help(page)).toBeVisible();
+    });
+
+    test('с перепиской помощь под чатом не помещается и прячется', async ({
+        page,
+    }) => {
+        await openWithHistory(page, HISTORY);
+        await openPhoneScreen(page, 'AI agent');
+        await expect(page.locator('.agent-chat__pair')).toHaveCount(1);
+
+        await expect(help(page)).toBeHidden();
     });
 });
