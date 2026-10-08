@@ -182,7 +182,7 @@ export const en: Translations = {
     },
     agent_chat: {
         tab_label: 'AI agent',
-        pdf_tab_label: 'PDF visualization',
+        pdf_tab_label: 'Final document',
         placeholder: 'Enter your promt',
         resize_prompt: 'Prompt field height',
         send: 'Send',

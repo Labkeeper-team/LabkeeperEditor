@@ -69,9 +69,31 @@ for (const [kind, latex, editorText] of [
 
         // в обычном режиме кнопка «Выполнить» есть, и текст прежний
         await leaveButton(page).click();
-        await page.getByRole('tab', { name: 'PDF' }).click();
+        await page.getByRole('tab', { name: 'Final document' }).click();
         await expect(viewer.getByText(editorText)).toBeVisible();
         await expect(viewer.getByText(AGENT_EMPTY_RESULT)).toHaveCount(0);
+    });
+}
+
+// Просьба заказчика: вкладка результата в редакторе называется так же, как
+// колонка в агентском режиме. Человеку важен документ, а не его формат
+for (const [locale, agentTab, resultTab] of [
+    ['en-US', 'AI agent', 'Final document'],
+    ['ru-RU', 'Агент', 'Итоговый документ'],
+] as const) {
+    test.describe(locale, () => {
+        test.use({ locale });
+
+        test('вкладка результата в редакторе названа «Итоговый документ»', async ({
+            page,
+        }) => {
+            await openProject(page);
+
+            await expect(page.getByRole('tab')).toHaveText([
+                agentTab,
+                resultTab,
+            ]);
+        });
     });
 }
 
@@ -223,7 +245,7 @@ test('кнопка входа лежит на вкладке агента у л�
 // Замечание заказчика: вход в режим нужен и тогда, когда открыт PDF
 test('кнопка входа видна и при открытом PDF', async ({ page }) => {
     await openProject(page);
-    await page.getByRole('tab', { name: 'PDF' }).click();
+    await page.getByRole('tab', { name: 'Final document' }).click();
     const agentTab = page.getByRole('tab', { name: 'AI agent' });
     const enter = page.getByRole('button', { name: 'Agent mode' });
     await expect(enter).toBeVisible();

@@ -165,7 +165,7 @@ test('помощь видна и под вкладкой агента, на то
     page,
 }) => {
     await openProject(page);
-    await page.getByRole('tab', { name: 'PDF visualization' }).click();
+    await page.getByRole('tab', { name: 'Final document' }).click();
     await expect(page.locator('.agent-chat')).toHaveCount(0);
     const underPdf = await box(help(page));
 
@@ -256,7 +256,7 @@ test.describe('низкое окно', () => {
         await expect(page.locator('.agent-chat__pair')).toHaveCount(1);
         await expect(help(page)).toBeHidden();
 
-        await page.getByRole('tab', { name: 'PDF visualization' }).click();
+        await page.getByRole('tab', { name: 'Final document' }).click();
 
         await expect(help(page)).toBeVisible();
     });

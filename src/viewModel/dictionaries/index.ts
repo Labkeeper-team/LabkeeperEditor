@@ -177,6 +177,7 @@ export interface Translations {
     };
     agent_chat: {
         tab_label: string;
+        // вкладка результата: человеку важен документ, а не его формат
         pdf_tab_label: string;
         placeholder: string;
         resize_prompt: string;

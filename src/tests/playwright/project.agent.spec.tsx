@@ -112,7 +112,7 @@ test('agent-tab-switches-with-pdf', async ({ page }) => {
     await expect(page.locator('.agent-chat')).toBeVisible();
     await expect(page.locator('.result-container')).toBeHidden();
 
-    await page.getByRole('tab', { name: 'PDF visualization' }).click();
+    await page.getByRole('tab', { name: 'Final document' }).click();
 
     await expect(page.locator('.agent-chat')).toHaveCount(0);
     await expect(page.locator('.result-container')).toBeVisible();

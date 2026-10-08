@@ -188,7 +188,7 @@ export const ru: Translations = {
     },
     agent_chat: {
         tab_label: 'Агент',
-        pdf_tab_label: 'PDF',
+        pdf_tab_label: 'Итоговый документ',
         placeholder: 'Опишите, что сделать с документом',
         resize_prompt: 'Высота поля запроса',
         send: 'Отправить',

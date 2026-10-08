@@ -218,7 +218,7 @@ test('agent-compiled-pdf-reaches-the-viewer-while-the-chat-stays', async ({
             '/api/v4/public/user-info',
         ]);
 
-    await page.getByRole('tab', { name: 'PDF visualization' }).click();
+    await page.getByRole('tab', { name: 'Final document' }).click();
 
     await expect(
         page.locator('[data-pdf-page="0"] .textLayer').first()
@@ -236,7 +236,7 @@ test('agent-markdown-result-reaches-the-segment-result', async ({ page }) => {
     ]);
     await expectChatStays(page);
 
-    await page.getByRole('tab', { name: 'PDF visualization' }).click();
+    await page.getByRole('tab', { name: 'Final document' }).click();
 
     await expect(page.locator('#result-segment-0 td')).toHaveText(['a', '10']);
 });
@@ -322,7 +322,7 @@ test('finished-run-with-a-compilation-opens-the-pdf', async ({ page }) => {
     await send(AGENT_DONE);
 
     await expect(
-        page.getByRole('tab', { name: 'PDF visualization' })
+        page.getByRole('tab', { name: 'Final document' })
     ).toHaveAttribute('aria-selected', 'true');
     await expectPdfShown(page);
 });

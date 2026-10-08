@@ -632,7 +632,7 @@ test('links-and-selection-work-after-dpr-change-behind-chat-tab', async ({
         mobile: false,
     });
     await page.evaluate(() => window.dispatchEvent(new Event('resize')));
-    await page.getByRole('tab', { name: 'PDF visualization' }).click();
+    await page.getByRole('tab', { name: 'Final document' }).click();
     await expect(page.locator('[data-pdf-page][data-old]')).toHaveCount(0);
     await waitForPdfText(page);
 
