@@ -1,6 +1,9 @@
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch } from '../../../store';
 import { useDictionary } from '../../../store/selectors/translations';
 import { useAgentModeNavigation } from '../../../hooks/useAgentMode';
+import { useIsMobile } from '../../../hooks/useMobile';
+import { setMobileView } from '../../../store/slices/settings';
 import { AgentChat } from '../viewer/chat';
 import { ClearHistoryButton } from '../viewer/chat/ClearHistoryButton.tsx';
 
@@ -13,8 +16,19 @@ import './style.scss';
  * колонку занимает итоговый документ, её рисует обычный Viewer
  */
 export const AgentModePane = () => {
+    const dispatch = useDispatch<AppDispatch>();
     const dictionary = useSelector(useDictionary);
+    const isMobile = useIsMobile();
     const { leaveAgentMode } = useAgentModeNavigation();
+
+    const openEditor = () => {
+        leaveAgentMode('button');
+        // на телефоне экран один: без этого после выхода остался бы тот же чат,
+        // и кнопка «открыть редактор кода» ничего бы не меняла
+        if (isMobile) {
+            dispatch(setMobileView('editor'));
+        }
+    };
 
     return (
         <div className="agent-mode-pane">
@@ -22,7 +36,7 @@ export const AgentModePane = () => {
                 <button
                     type="button"
                     className="agent-mode-pane__leave"
-                    onClick={() => leaveAgentMode('button')}
+                    onClick={openEditor}
                 >
                     {dictionary.agent_mode.leave}
                 </button>
