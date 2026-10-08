@@ -115,7 +115,6 @@ export class StartupService {
         open?: OpenParams,
         query: StartupQuery = {}
     ): Promise<void> => {
-        void open;
         logBreadcrumb('startup', 'onAppStartup', {
             location: this.repository.location(),
             hasCaptcha: Boolean(captcha),
@@ -492,25 +491,59 @@ export class StartupService {
     /**
      * Дописывает сегменты из query в конец локальной программы.
      * Порядок: compute, latex, markdown. Пустой параметр сегмент не добавляет.
+     * У гостя удаляет весь предыдущий пример по комментариям в первой строке,
+     * включая типы, которых нет в новой ссылке. Немаркированные сегменты
+     * и программа вошедшего не очищаются.
      * У вошедшего программа целиком уходит в запрос проекта по умолчанию,
      * у гостя сразу показывается в редакторе.
      */
-    private programWithQuerySegments(query: StartupQuery): Program {
+    private programWithQuerySegments(
+        query: StartupQuery,
+        isAuthenticated: boolean
+    ): Program {
         const program = structuredClone(
             this.repository.persistenceViewModelRepository.lastProgram()
         );
-        const additions: { type: SegmentType; text: string | undefined }[] = [
-            { type: 'computational', text: query.compute },
-            { type: 'latex', text: query.latex },
-            { type: 'md', text: query.markdown },
+        const additions: {
+            type: SegmentType;
+            text: string | undefined;
+            comment: string;
+        }[] = [
+            {
+                type: 'computational',
+                text: query.compute,
+                comment: '// Labkeeper: query compute',
+            },
+            {
+                type: 'latex',
+                text: query.latex,
+                comment: '% Labkeeper: query latex',
+            },
+            {
+                type: 'md',
+                text: query.markdown,
+                comment: '<!-- Labkeeper: query markdown -->',
+            },
         ];
+        if (!isAuthenticated && this.hasQueryText(query)) {
+            program.segments = program.segments.filter(
+                (segment) =>
+                    !additions.some(
+                        ({ type, comment }) =>
+                            segment.type === type &&
+                            segment.text.split(/\r?\n/, 1)[0] === comment
+                    )
+            );
+        }
         for (const addition of additions) {
             if (!addition.text) {
                 continue;
             }
             program.segments.push({
                 type: addition.type,
-                text: addition.text,
+                text: isAuthenticated
+                    ? addition.text
+                    : `${addition.comment}\n${addition.text}`,
                 parameters: { visible: true },
             });
         }
@@ -533,7 +566,7 @@ export class StartupService {
     ): Promise<void> {
         this.repository.projectViewModelRepository.setReadOnly(false);
         const program = this.hasQueryText(query)
-            ? this.programWithQuerySegments(query)
+            ? this.programWithQuerySegments(query, userInfo.isAuthenticated)
             : this.repository.persistenceViewModelRepository.lastProgram();
         if (userInfo.isAuthenticated) {
             const result = await this.rpi.getDefaultProjectRequest(
