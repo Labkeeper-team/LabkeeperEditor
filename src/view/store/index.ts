@@ -91,6 +91,7 @@ import {
     setInputSegmentText,
     setProject,
     setReadOnly,
+    setIsExample,
     setProjectMode,
     setPdfUri,
 } from './slices/project';
@@ -374,6 +375,7 @@ export const createViewModelStateFromStore = (
                 store.getState().project.compileSuccessResult,
             project: () => store.getState().project.project,
             projectIsReadonly: () => store.getState().project.projectIsReadonly,
+            isExample: () => store.getState().project.isExample,
             currentProgram: () => store.getState().project.currentProgram,
             files: () => store.getState().project.files,
             mode: () => store.getState().project.mode,
@@ -394,6 +396,7 @@ export const createViewModelStateFromStore = (
                     })
                 ),
             setReadOnly: (value: boolean) => store.dispatch(setReadOnly(value)),
+            setIsExample: (value) => store.dispatch(setIsExample(value)),
             setProject: (project?: Project) =>
                 store.dispatch(setProject(project)),
             setCompileResult: (compileResult: CompileSuccessResult) =>

@@ -19,6 +19,7 @@ const savedProgram: Program = {
 async function seedSavedProgram(page: Page, program: Program) {
     await page.addInitScript(
         ({ stored, version }) => {
+            if (window.localStorage.getItem('persist:PERSISTENCE')) return;
             window.localStorage.setItem(
                 'persist:PERSISTENCE',
                 JSON.stringify({
@@ -187,4 +188,110 @@ test('compute-latex-markdown-params-appear-in-that-order', async ({ page }) => {
         { type: 'latex', text: 'E=mc^2' },
         { type: 'md', text: 'текст' },
     ]);
+});
+
+async function savedDraft(page: Page): Promise<Program> {
+    return page.evaluate(() => {
+        const persisted = JSON.parse(
+            localStorage.getItem('persist:PERSISTENCE')!
+        );
+        return JSON.parse(persisted.lastProgram);
+    });
+}
+
+test('example links stay isolated across editing, reload and return to the draft', async ({
+    page,
+}) => {
+    const routeSetup = new RouteSetup(page);
+    await routeSetup.setupApi();
+    await routeSetup.setupGetUserInfoRequest(false);
+    const compiled = await captureGuestCompile(page);
+    await seedSavedProgram(page, savedProgram);
+
+    await page.goto('/project/default?example=1&latex=first');
+    await expect(editors(page)).toHaveCount(1);
+    await expect(editors(page)).toHaveText('first');
+    await expect(page.getByRole('note')).toBeVisible();
+    await expect.poll(() => compiled.length).toBe(1);
+
+    await editors(page).fill('edited example');
+    // Изменение и уход из сегмента не должны затрагивать черновик.
+    await page.getByRole('note').click();
+    await expect(editors(page)).toHaveText('edited example');
+    await expect.poll(() => savedDraft(page)).toEqual(savedProgram);
+    page.on('dialog', (dialog) => dialog.accept());
+    await page.reload();
+    await expect(editors(page)).toHaveCount(1);
+    await expect(editors(page)).toHaveText('first');
+    await expect.poll(() => compiled.length).toBe(2);
+    expect(await savedDraft(page)).toEqual(savedProgram);
+
+    await page.goto('/project/default?example=1&latex=second');
+    await expect(editors(page)).toHaveCount(1);
+    await expect(editors(page)).toHaveText('second');
+    await expect.poll(() => compiled.length).toBe(3);
+    expect(compiled.map((p) => p.segments.map((s) => s.text))).toEqual([
+        ['first'],
+        ['first'],
+        ['second'],
+    ]);
+    expect(await savedDraft(page)).toEqual(savedProgram);
+
+    await page.getByRole('note').getByRole('link').click();
+    await expect(page.getByRole('note')).toHaveCount(0);
+    await expect(editors(page)).toHaveCount(1);
+    await expect(editors(page)).toHaveText('черновик');
+});
+
+test('signed-in example does not load or overwrite a personal project', async ({
+    page,
+}) => {
+    const routeSetup = new RouteSetup(page);
+    await routeSetup.setupApi();
+    await routeSetup.setupGetUserInfoRequest(true);
+    await routeSetup.setupGetAllProjectsRequest();
+    const compiled = await captureGuestCompile(page);
+    await seedSavedProgram(page, savedProgram);
+    const projectRequests: string[] = [];
+    page.on('request', (request) => {
+        if (/\/api\/v4\/public\/project\/(?!all(?:\?|$))/.test(request.url())) {
+            projectRequests.push(request.url());
+        }
+    });
+
+    await page.goto('/project/default?example=1&latex=isolated');
+    await expect(editors(page)).toHaveText('isolated');
+    await expect.poll(() => compiled.length).toBe(1);
+    await expect(page.getByRole('note')).toBeVisible();
+    expect(projectRequests).toEqual([]);
+    expect(await savedDraft(page)).toEqual(savedProgram);
+});
+
+test('Markdown example selects Markdown mode and renders locally', async ({
+    page,
+}) => {
+    const routeSetup = new RouteSetup(page);
+    await routeSetup.setupApi();
+    await routeSetup.setupGetUserInfoRequest(false);
+    await seedSavedProgram(page, savedProgram);
+    await page.route('**/api/v4/public/compile', (route) =>
+        route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({
+                segments: [{ type: 'md', text: '# Markdown example' }],
+            }),
+        })
+    );
+
+    await page.goto(
+        `/project/default?example=1&markdown=${encodeURIComponent('# Markdown example')}`
+    );
+    await expect(editors(page)).toHaveCount(1);
+    await expect(editors(page)).toHaveText('# Markdown example');
+    await expect(
+        page.getByRole('heading', { name: 'Markdown example', exact: true })
+    ).toBeVisible();
+    await expect(page).toHaveURL(/open=markdown/);
+    expect(await savedDraft(page)).toEqual(savedProgram);
 });

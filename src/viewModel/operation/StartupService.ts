@@ -9,6 +9,7 @@ import {
 } from '../../model/domain.ts';
 import { RequestResult, RichProject, Rpi } from '../../model/rpi';
 import { ProgramService } from '../../model/service/ProgramService.ts';
+import { createEmptyProgram } from '../../model/repository/ProgramRepository.ts';
 import { LoaderService } from '../domain/LoaderService.ts';
 import {
     Events,
@@ -34,6 +35,8 @@ export type StartupQuery = {
     compute?: string;
     latex?: string;
     markdown?: string;
+    /** Изолированный пример: без добавления в черновик и без автосохранения. */
+    example?: boolean;
 };
 
 export class StartupService {
@@ -115,7 +118,6 @@ export class StartupService {
         open?: OpenParams,
         query: StartupQuery = {}
     ): Promise<void> => {
-        void open;
         logBreadcrumb('startup', 'onAppStartup', {
             location: this.repository.location(),
             hasCaptcha: Boolean(captcha),
@@ -275,7 +277,13 @@ export class StartupService {
             tokenBalance:
                 this.repository.userViewModelRepository.tokenBalance(),
         };
+        const wasExample =
+            this.repository.projectViewModelRepository.isExample();
+        if (wasExample) {
+            this.resetService.resetProject();
+        }
         await this.openDefaultProject(userInfo);
+        if (wasExample) this.ideService.onProgramUpdated();
     };
 
     /**
@@ -491,14 +499,17 @@ export class StartupService {
 
     /**
      * Дописывает сегменты из query в конец локальной программы.
+     * Пример начинается с пустой программы, не затрагивая черновик.
      * Порядок: compute, latex, markdown. Пустой параметр сегмент не добавляет.
-     * У вошедшего программа целиком уходит в запрос проекта по умолчанию,
-     * у гостя сразу показывается в редакторе.
+     * Без example=1 у вошедшего программа уходит в запрос проекта по умолчанию,
+     * у гостя сразу показывается в редакторе. Пример остаётся временным у обоих.
      */
     private programWithQuerySegments(query: StartupQuery): Program {
-        const program = structuredClone(
-            this.repository.persistenceViewModelRepository.lastProgram()
-        );
+        const program = query.example
+            ? createEmptyProgram()
+            : structuredClone(
+                  this.repository.persistenceViewModelRepository.lastProgram()
+              );
         const additions: { type: SegmentType; text: string | undefined }[] = [
             { type: 'computational', text: query.compute },
             { type: 'latex', text: query.latex },
@@ -531,6 +542,17 @@ export class StartupService {
         open?: OpenParams,
         query: StartupQuery = {}
     ): Promise<void> {
+        if (query.example && this.hasQueryText(query)) {
+            this.openExample(query, open);
+            return;
+        }
+        // Вход в аккаунт не должен заменять открытый пример последним проектом.
+        if (
+            this.repository.projectViewModelRepository.isExample() &&
+            !this.hasQueryText(query)
+        ) {
+            return;
+        }
         this.repository.projectViewModelRepository.setReadOnly(false);
         const program = this.hasQueryText(query)
             ? this.programWithQuerySegments(query)
@@ -618,5 +640,31 @@ export class StartupService {
         if (open === 'login' && !userInfo.isAuthenticated) {
             this.repository.authViewModelRepository.setCurrentView('login');
         }
+    }
+
+    private openExample(query: StartupQuery, open?: OpenParams): void {
+        this.resetService.resetProject();
+        this.repository.projectViewModelRepository.setIsExample(true);
+        const mode =
+            open === 'markdown' || open === 'latex'
+                ? open
+                : query.latex || query.compute
+                  ? 'latex'
+                  : 'markdown';
+        this.repository.projectViewModelRepository.setProjectType(mode);
+        this.ideService.setNewProgram(this.programWithQuerySegments(query));
+        this.focusLastSegment();
+        this.repository.settingsViewModelRepository.setViewerTab('pdf');
+        this.repository.settingsViewModelRepository.setMobileView('editor');
+
+        // Сохраняем исходный пример в адресе для перезагрузки страницы.
+        // Captcha и другие параметры запуска в ссылку не переносятся.
+        const params = new URLSearchParams({ example: '1', open: mode });
+        for (const key of ['compute', 'latex', 'markdown'] as const) {
+            if (query[key]) params.set(key, query[key]);
+        }
+        this.repository.setLocation(`${Routes.ProjectDefault}?${params}`, {
+            replace: true,
+        });
     }
 }

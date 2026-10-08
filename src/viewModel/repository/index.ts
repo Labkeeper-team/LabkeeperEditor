@@ -284,6 +284,7 @@ export const mockViewModelState = (): MockViewModelRepository => {
     let savedProgramRevision = 0;
     let textFileChangeRevision = 0;
     let savedTextFileRevision = 0;
+    let isExample = false;
     return {
         mockState: () => mockViewModelState,
         scrollEditorToBottom: () => ({}),
@@ -503,6 +504,7 @@ export const mockViewModelState = (): MockViewModelRepository => {
             compileSuccessResult: () => mockViewModelState.compileSuccessResult,
             project: () => mockViewModelState.project,
             projectIsReadonly: () => mockViewModelState.projectIsReadonly,
+            isExample: () => isExample,
             currentProgram: () => mockViewModelState.currentProgram,
             files: () => mockViewModelState.files,
             pdfUri: () => mockViewModelState.pdfUri,
@@ -529,8 +531,11 @@ export const mockViewModelState = (): MockViewModelRepository => {
             },
             setReadOnly: (v: boolean) =>
                 (mockViewModelState.projectIsReadonly = v),
-            setProject: (v?: Project) =>
-                (mockViewModelState.project = structuredClone(v)),
+            setIsExample: (value) => (isExample = value),
+            setProject: (v?: Project) => {
+                mockViewModelState.project = structuredClone(v);
+                if (v) isExample = false;
+            },
             setCompileResult: (v: CompileSuccessResult) =>
                 (mockViewModelState.compileSuccessResult = structuredClone(v)),
             setCompileErrorResult: (v: CompileErrorResultList) =>
@@ -650,6 +655,8 @@ export interface ProjectViewModelRepository {
     compileSuccessResult: () => CompileSuccessResult;
     compileErrorResult: () => CompileErrorResultList | undefined;
     projectIsReadonly: () => boolean;
+    /** Временный пример не меняет сохранённый гостевой черновик. */
+    isExample: () => boolean;
     currentProgram: () => Program;
     files: () => LabkeeperFile[];
     mode: () => ProjectType;
@@ -661,6 +668,7 @@ export interface ProjectViewModelRepository {
     setCompileResultSegmentsSize: (size: number) => void;
     setCompileResultForSegment: (index: number, segment: OutputSegment) => void;
     setReadOnly: (value: boolean) => void;
+    setIsExample: (value: boolean) => void;
     setProject: (project?: Project) => void;
     setCompileResult: (compileResult: CompileSuccessResult) => void;
     setCompileErrorResult: (

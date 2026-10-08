@@ -152,15 +152,17 @@ export class IdeService {
         const program = this.programService.getCurrentProgram();
 
         this.repository.projectViewModelRepository.setCurrentProgram(program);
-        if (
-            !this.repository.userViewModelRepository.isAuthenticated() &&
-            !this.repository.projectViewModelRepository.projectIsReadonly()
-        ) {
-            this.repository.persistenceViewModelRepository.setLastProgram(
-                structuredClone(program)
-            );
-        } else {
-            this.repository.persistenceViewModelRepository.clearLastProgram();
+        if (!this.repository.projectViewModelRepository.isExample()) {
+            if (
+                !this.repository.userViewModelRepository.isAuthenticated() &&
+                !this.repository.projectViewModelRepository.projectIsReadonly()
+            ) {
+                this.repository.persistenceViewModelRepository.setLastProgram(
+                    structuredClone(program)
+                );
+            } else {
+                this.repository.persistenceViewModelRepository.clearLastProgram();
+            }
         }
 
         this.repository.projectViewModelRepository.setCompileResultSegmentsSize(

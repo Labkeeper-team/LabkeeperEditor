@@ -9,6 +9,10 @@ export const en: Translations = {
     loading: 'Loading',
     yes: 'Yes',
     no: 'No',
+    example_preview: {
+        notice: 'This is a temporary example. Changes are not saved; your draft and projects are not affected.',
+        return_to_editor: 'Return to your work',
+    },
     add_segment: 'Add code to run your program',
     no_comp_segment: 'Add computation segment to run',
 

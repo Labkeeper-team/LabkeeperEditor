@@ -14,6 +14,7 @@ import { StorageState } from '../../../../store';
 import { useDictionary } from '../../../../store/selectors/translations.ts';
 import { RunButton } from '../runButton';
 import { HunkGlobalButtons } from '../../../../components/hunkGlobalButtons';
+import { Routes } from '../../../../../viewModel/routes.ts';
 
 export const Ide = () => {
     /*
@@ -21,6 +22,9 @@ export const Ide = () => {
      */
     const program = useSelector(useCurrentProgram);
     const isReadonly = useSelector(useIsProjectReadonly);
+    const isExample = useSelector(
+        (state: StorageState) => state.project.isExample
+    );
     const dictionary = useSelector(useDictionary);
     const getProjectRequestState = useSelector(
         (state: StorageState) => state.ide.getProjectRequestState
@@ -29,6 +33,14 @@ export const Ide = () => {
     return (
         <div className="ide-container">
             <IdeHeader />
+            {isExample && (
+                <p className="ide-example-notice" role="note">
+                    {dictionary.example_preview.notice}{' '}
+                    <a href={Routes.ProjectDefault}>
+                        {dictionary.example_preview.return_to_editor}
+                    </a>
+                </p>
+            )}
 
             <div
                 className={classNames('ide-flexibility-container', {
