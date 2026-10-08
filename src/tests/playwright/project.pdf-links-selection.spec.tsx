@@ -230,6 +230,9 @@ test('drag-long-line-to-page-edge-selects-that-line', async ({ page }) => {
 });
 
 test('drag-into-empty-space-keeps-selection-start', async ({ page }) => {
+    // протяжка кончается у нижней кромки окна PDF: с развёрнутой помощью до кромки
+    // остаётся 5px, и браузер, прокручивая страницу за указателем, дотягивает до последней строки
+    await new RouteSetup(page).collapseHelp();
     await openPdf(page);
     const short = await spanBox(page, SHORT_LINE);
     const last = await spanBox(page, LAST_LINE);
