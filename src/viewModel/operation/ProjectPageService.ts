@@ -104,18 +104,11 @@ export class ProjectPageService {
 
     onBackButtonClicked = async () => {
         this.track(Events.EVENT_BACK_TO_PROJECTS);
-        const wasExample =
-            this.repository.projectViewModelRepository.isExample();
         this.resetService.resetProject();
         this.repository.projectViewModelRepository.setReadOnly(false);
         if (this.repository.userViewModelRepository.isAuthenticated()) {
             this.repository.setLocation(Routes.Projects);
         } else {
-            if (wasExample) {
-                this.ideService.setNewProgram(
-                    this.repository.persistenceViewModelRepository.lastProgram()
-                );
-            }
             this.repository.setLocation(Routes.ProjectDefault);
         }
         await this.loaderService.loadProjects();

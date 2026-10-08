@@ -55,10 +55,7 @@ export class LoaderService {
     };
 
     segmentEditorSaveProgram = async (): Promise<void> => {
-        if (
-            this.repository.projectViewModelRepository.projectIsReadonly() ||
-            this.repository.projectViewModelRepository.isExample()
-        ) {
+        if (this.repository.projectViewModelRepository.projectIsReadonly()) {
             return;
         }
         this.saveProgramRequested = true;

@@ -123,10 +123,9 @@ export const useHasUnsavedChanges = createSelector(
         (state: StorageState) => state.ide,
         (state: StorageState) => state.user.isAuthenticated,
         (state: StorageState) => state.project.projectIsReadonly,
-        (state: StorageState) => state.project.isExample,
     ],
-    (ide, isAuthenticated, projectIsReadonly, isExample) =>
-        (isAuthenticated || isExample) &&
+    (ide, isAuthenticated, projectIsReadonly) =>
+        isAuthenticated &&
         !projectIsReadonly &&
         (ide.programChangeRevision !== ide.savedProgramRevision ||
             ide.textFileChangeRevision !== ide.savedTextFileRevision)

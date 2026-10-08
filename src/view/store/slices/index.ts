@@ -86,7 +86,6 @@ interface ProjectState {
     compileErrorResult?: CompileErrorResultList;
     currentProgram: Program;
     projectIsReadonly: boolean;
-    isExample: boolean;
     files: LabkeeperFile[];
     mode: ProjectType;
     pdfUri?: string;
@@ -241,7 +240,6 @@ export const chatInitialState: ChatState = {
 export const projectInitialState: ProjectState = {
     compileErrorResult: { errors: [] },
     projectIsReadonly: true,
-    isExample: false,
     compileSuccessResult: { segments: [] },
     files: [],
     currentProgram: createEmptyProgram(),

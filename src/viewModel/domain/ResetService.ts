@@ -129,7 +129,6 @@ export class ResetService {
 
         // Project
         this.repository.projectViewModelRepository.setProject(undefined);
-        this.repository.projectViewModelRepository.setIsExample(false);
         this.repository.projectViewModelRepository.setCurrentProgram(
             createEmptyProgram()
         );

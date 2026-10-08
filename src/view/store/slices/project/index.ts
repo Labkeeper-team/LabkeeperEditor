@@ -21,9 +21,6 @@ export const projectSlice = createSlice({
         setReadOnly: (state, { payload }: PayloadAction<boolean>) => {
             state.projectIsReadonly = payload;
         },
-        setIsExample: (state, { payload }: PayloadAction<boolean>) => {
-            state.isExample = payload;
-        },
         setCompileResult: (
             state,
             { payload }: PayloadAction<CompileSuccessResult>
@@ -130,7 +127,6 @@ export const projectSlice = createSlice({
             { payload }: PayloadAction<Project | undefined>
         ) => {
             state.project = payload;
-            if (payload) state.isExample = false;
         },
         setProjectMode: (state, { payload }: PayloadAction<ProjectType>) => {
             state.mode = payload;
@@ -145,7 +141,6 @@ export const {
     setProject,
     setFiles,
     setReadOnly,
-    setIsExample,
     setCompileResult,
     setCompileError,
     setCurrentProgram,

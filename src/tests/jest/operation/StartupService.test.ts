@@ -564,7 +564,7 @@ test('guest-with-a-saved-program-appends-a-latex-segment-from-the-query', async 
         repository.projectViewModelRepository.currentProgram().segments;
     expect(segments.map((segment) => segment.text)).toEqual([
         'черновик',
-        'E=mc^2',
+        '% Labkeeper: query latex\nE=mc^2',
     ]);
     expect(segments[1]).toMatchObject({
         type: 'latex',
@@ -581,7 +581,7 @@ test('guest-with-a-saved-program-appends-a-latex-segment-from-the-query', async 
         (rpi.pdfCompilationRequest as jest.Mock).mock.calls[0][0].segments.map(
             (segment: { text: string }) => segment.text
         )
-    ).toEqual(['черновик', 'E=mc^2']);
+    ).toEqual(['черновик', '% Labkeeper: query latex\nE=mc^2']);
     expect(repository.projectViewModelRepository.pdfUri()).toBe(
         'https://files.labkeeper.io/out.pdf'
     );
@@ -603,7 +603,7 @@ test('guest-without-a-saved-program-opens-a-single-latex-segment', async () => {
     ).toEqual([
         {
             type: 'latex',
-            text: '\\alpha+\\beta',
+            text: '% Labkeeper: query latex\n\\alpha+\\beta',
             parameters: { visible: true },
         },
     ]);
@@ -615,7 +615,7 @@ test('guest-without-a-saved-program-opens-a-single-latex-segment', async () => {
     ).toEqual([
         {
             type: 'latex',
-            text: '\\alpha+\\beta',
+            text: '% Labkeeper: query latex\n\\alpha+\\beta',
             parameters: { visible: true },
         },
     ]);
@@ -757,9 +757,9 @@ test('query-segments-are-appended-in-compute-latex-markdown-order', async () => 
             }))
     ).toEqual([
         { type: 'md', text: 'черновик' },
-        { type: 'computational', text: 'a = 1' },
-        { type: 'latex', text: 'E=mc^2' },
-        { type: 'md', text: 'текст' },
+        { type: 'computational', text: '// Labkeeper: query compute\na = 1' },
+        { type: 'latex', text: '% Labkeeper: query latex\nE=mc^2' },
+        { type: 'md', text: '<!-- Labkeeper: query markdown -->\nтекст' },
     ]);
     expect(rpi.pdfCompilationRequest).toHaveBeenCalledTimes(1);
 });

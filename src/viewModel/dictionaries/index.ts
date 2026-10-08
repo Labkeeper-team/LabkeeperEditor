@@ -16,11 +16,6 @@ export interface Translations {
     yes: string;
     no: string;
 
-    example_preview: {
-        notice: string;
-        return_to_editor: string;
-    };
-
     warning_dontuselongvarioables: string;
 
     label_add_latex: string;
