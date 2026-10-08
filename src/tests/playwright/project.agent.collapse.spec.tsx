@@ -192,7 +192,7 @@ test('expanded-steps-survive-a-trip-to-the-pdf-tab', async ({ page }) => {
     await expect(stepLabels(page)).toHaveCount(4);
 
     // вкладка PDF размонтирует чат целиком
-    await page.getByRole('tab', { name: 'PDF visualization' }).click();
+    await page.getByRole('tab', { name: 'Final document' }).click();
     await expect(page.locator('.agent-chat')).toHaveCount(0);
     await page.getByRole('tab', { name: 'AI agent' }).click();
 

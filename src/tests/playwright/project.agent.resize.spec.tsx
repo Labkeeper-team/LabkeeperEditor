@@ -715,7 +715,7 @@ test('pdf-tab-mid-drag-leaves-nothing-behind', async ({ page }) => {
 
     // так же вкладку переключает конец компиляции: мышь при этом всё ещё зажата
     await page
-        .getByRole('tab', { name: 'PDF visualization' })
+        .getByRole('tab', { name: 'Final document' })
         .dispatchEvent('click');
     await expect(page.locator('.agent-chat')).toHaveCount(0);
     await page.mouse.up();

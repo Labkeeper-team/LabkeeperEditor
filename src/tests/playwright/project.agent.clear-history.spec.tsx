@@ -70,7 +70,7 @@ test('корзина стоит на вкладке агента, и вклад�
         agentTab!.x + agentTab!.width
     );
 
-    await page.getByRole('tab', { name: 'PDF visualization' }).click();
+    await page.getByRole('tab', { name: 'Final document' }).click();
     await expect(clearButton(page)).toHaveCount(0);
 
     expect(await tabBoxes(page)).toEqual(onChat);

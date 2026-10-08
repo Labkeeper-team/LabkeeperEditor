@@ -52,7 +52,10 @@ async function showColumn(page: Page, name: 'AI agent' | 'PDF') {
         await page.getByRole('option', { name }).click();
         return;
     }
-    await page.getByRole('tab', { name }).click();
+    // вкладка результата названа по документу, а пункт списка на телефоне по формату
+    await page
+        .getByRole('tab', { name: name === 'PDF' ? 'Final document' : name })
+        .click();
 }
 
 async function openChat(page: Page, history: AgentHistoryEntry[]) {
