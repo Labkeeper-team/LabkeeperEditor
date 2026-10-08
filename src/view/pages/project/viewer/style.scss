@@ -73,11 +73,17 @@
     margin-top: -8px;
 }
 
-// Под чатом помощь остаётся, пока ему хватает высоты: на телефоне и в низком
-// окне лента с полем запроса и без неё едва помещаются. Под PDF она есть всегда
-@media screen and (max-width: $mobile-breakpoint),
-    screen and (max-height: 699px) {
-    .viewer-container--chat > .labkeeper-instruction-container {
+// Под чатом помощь остаётся, пока ему хватает высоты колонки: место считает
+// useHelpRoom. Под PDF она есть всегда
+.viewer-container--no-help > .labkeeper-instruction-container {
+    display: none;
+}
+
+// Панель настроек агента растёт вверх от поля запроса. На телефоне под
+// помощью ей остаётся одна строка, поэтому, пока панель открыта, помощь прячется
+@media screen and (max-width: $mobile-breakpoint) {
+    .viewer-container:has(.agent-settings__panel)
+        > .labkeeper-instruction-container {
         display: none;
     }
 }
