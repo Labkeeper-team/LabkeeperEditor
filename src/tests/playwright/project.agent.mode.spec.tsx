@@ -367,12 +367,41 @@ test.describe('телефон', () => {
         await expect(page.locator('.agent-chat')).toBeHidden();
     });
 
-    test('выход в обычный режим работает и на телефоне', async ({ page }) => {
+    // Замечание заказчика: кнопка зовёт в редактор кода, а на экране оставался
+    // тот же чат, и казалось, что она не работает
+    test('выход на телефоне открывает экран с кодом, а не чат', async ({
+        page,
+    }) => {
         await openProject(page, `/project/${uuid}/agent`);
+        await expect(page.locator('.agent-chat')).toBeVisible();
 
         await leaveButton(page).click();
 
         await expect(page).toHaveURL(`/project/${uuid}`);
         await expect(agentPane(page)).toHaveCount(0);
+        await expect(page.locator('.editor-container')).toBeVisible();
+        await expect(page.locator('.agent-chat')).toBeHidden();
+        await expect(
+            page.locator('.mobile-view-switcher-bar__label')
+        ).toHaveText('Editor');
+    });
+
+    test('«назад» из режима на телефоне возвращает к чату, откуда входили', async ({
+        page,
+    }) => {
+        await openProject(page, `/project/${uuid}`);
+        await page.locator('.mobile-view-switcher-bar__toggle').click();
+        await page.getByRole('option', { name: 'AI agent' }).click();
+        await page.getByRole('button', { name: 'Agent mode' }).click();
+        await expect(agentPane(page)).toBeVisible();
+
+        await page.goBack();
+
+        // вернулись туда, откуда входили: к чату обычного режима
+        await expect(page).toHaveURL(`/project/${uuid}`);
+        await expect(page.locator('.agent-chat')).toBeVisible();
+        await expect(
+            page.locator('.mobile-view-switcher-bar__label')
+        ).toHaveText('AI agent');
     });
 });
