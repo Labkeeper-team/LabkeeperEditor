@@ -363,11 +363,12 @@ export const HeaderMenu = () => {
           ? authenticatedMenuItems
           : publicMenuItems;
     const useIconTrigger = isMobile;
-    const triggerTitle = useIconTrigger
-        ? dictionary.header_menu.menu
-        : isAuthenticated && email
-          ? email
-          : dictionary.header_menu.menu;
+    const showsEmailInTrigger = Boolean(
+        !useIconTrigger && isAuthenticated && email
+    );
+    const triggerTitle = showsEmailInTrigger
+        ? email
+        : dictionary.header_menu.menu;
 
     const options = useMemo((): SelectItem[] => {
         const menuOptions = items.flatMap((item, index): SelectItem[] => {
@@ -383,7 +384,15 @@ export const HeaderMenu = () => {
 
         if (useIconTrigger && isAuthenticated) {
             const headerInfo: SelectItem[] = [
-                ...(email ? [{ info: true as const, label: email }] : []),
+                ...(email
+                    ? [
+                          {
+                              info: true as const,
+                              label: email,
+                              className: 'ym-hide-content',
+                          },
+                      ]
+                    : []),
                 {
                     info: true as const,
                     label: `${dictionary.header_menu.tokens}: ${tokenBalance}`,
@@ -440,6 +449,9 @@ export const HeaderMenu = () => {
                 onChange={onMenuItemChange}
                 value=""
                 title={triggerTitle}
+                titleClassName={
+                    showsEmailInTrigger ? 'ym-hide-content' : undefined
+                }
                 containerClassName="header-menu-select"
                 fitToOptionsWidth
                 triggerContent={
