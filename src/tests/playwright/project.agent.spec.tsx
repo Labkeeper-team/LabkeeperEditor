@@ -1913,3 +1913,35 @@ test('agent-abort-of-a-guest-run-says-the-result-is-lost', async ({ page }) => {
     await expect(page.locator('.agent-chat__notice-changes')).toHaveCount(0);
     await expect.poll(() => closes).toEqual([1000]);
 });
+
+test('agent-response-code-block-wraps-without-a-scrollbar', async ({
+    page,
+}) => {
+    const longLine =
+        'Арбуз — крупная ягода с плотной зелёной полосатой коркой и сочной красной мякотью, в которой много воды и сахара';
+    const answer = [
+        'Предлагаю добавить сегмент:',
+        '',
+        '```',
+        '# Арбуз',
+        '',
+        longLine,
+        '    отступ_остаётся',
+        'https://labkeeper.io/' + 'очень-длинный-адрес-без-пробелов-'.repeat(6),
+        '```',
+    ].join('\n');
+    await openChat(page, { frames: [finished('Done', answer)] });
+    await submitPrompt(page);
+
+    const block = page.locator('.agent-chat__response-text pre');
+    await expect(block).toContainText(longLine);
+    // ни строка с пробелами, ни адрес без них не уходят в прокрутку
+    const overflow = await block.evaluate(
+        (node) => node.scrollWidth - node.clientWidth
+    );
+    expect(overflow).toBeLessThanOrEqual(0);
+    // отступ в начале строки кода значим: перенос не должен схлопывать пробелы, как white-space: normal
+    expect(
+        await block.evaluate((node) => getComputedStyle(node).whiteSpace)
+    ).toBe('pre-wrap');
+});
