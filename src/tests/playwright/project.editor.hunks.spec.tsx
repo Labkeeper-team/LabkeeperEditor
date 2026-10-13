@@ -49,6 +49,7 @@ async function openProjectWithHunks(
         files?: { fileName: string; url: string }[];
         fileContents?: { urlPath: string; content: string }[];
         mobile?: boolean;
+        latex?: boolean;
         deleteDelayMs?: number;
         onDelete?: (hunkId: string, revert: boolean) => void;
     }
@@ -57,6 +58,9 @@ async function openProjectWithHunks(
         await page.setViewportSize({ width: 480, height: 900 });
     }
     const routeSetup = new RouteSetup(page);
+    if (options.latex) {
+        routeSetup.setupLatexProject();
+    }
     await routeSetup.setupGetUserInfoRequest();
     await routeSetup.setupGetProjectRequest(200, 'default', options.program);
     await routeSetup.setupGetAllProjectsRequest();
@@ -1679,4 +1683,37 @@ test('hunk-delete-file-does-not-hide-a-file-uploaded-again', async ({
     await expect(row).not.toHaveClass(/tree-row-file--hunk-removed/);
     await row.click();
     await expect(page.getByText('uploaded again')).toBeVisible();
+});
+
+test('hunk-delete-of-the-only-segment-keeps-its-card', async ({ page }) => {
+    // так поймал заказчик: в LaTeX-проекте один сегмент, агента попросили удалить все
+    const deletes = recordHunkDeletes(page);
+    await openProjectWithHunks(page, {
+        program: programOf(),
+        latex: true,
+        hunks: [
+            {
+                id: 'hunk-delete-only',
+                type: 'deleteSegment',
+                segmentId: 1,
+                text: '\\section{Введение}',
+            },
+        ],
+    });
+
+    // пустой проект показывал заглушку «добавить сегмент», и карточка пропадала вместе с откатом
+    await expect(deletedCard(page)).toBeVisible();
+    await expect(deletedCard(page)).toContainText('\\section{Введение}');
+
+    await deletedCard(page)
+        .getByRole('button', { name: 'Accept change' })
+        .click();
+    await expect
+        .poll(() => deletes)
+        .toEqual([{ hunkId: 'hunk-delete-only', revert: 'false' }]);
+    // удаление принято: проект пуст, и на месте снова заглушка
+    await expect(deletedCard(page)).toHaveCount(0);
+    await expect(
+        page.locator('.empty-project-placeholder-container').last()
+    ).toBeVisible();
 });
