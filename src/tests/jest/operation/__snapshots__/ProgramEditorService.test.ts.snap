@@ -9,6 +9,7 @@ MockViewModelRepositoryState {
   "agentCompilationAllowed": true,
   "agentIterations": 500,
   "agentMaxTokens": 100000,
+  "agentRunMode": "agent",
   "billingPaymentWidgetToken": undefined,
   "billingPricing": {
     "newUserInitialTokensCount": 0,
@@ -167,6 +168,7 @@ MockViewModelRepositoryState {
   "agentCompilationAllowed": true,
   "agentIterations": 500,
   "agentMaxTokens": 100000,
+  "agentRunMode": "agent",
   "billingPaymentWidgetToken": undefined,
   "billingPricing": {
     "newUserInitialTokensCount": 0,

@@ -184,6 +184,13 @@ export const en: Translations = {
         tab_label: 'AI agent',
         pdf_tab_label: 'Final document',
         placeholder: 'Enter your promt',
+        placeholder_ask: 'Ask about the document, the agent will not change it',
+        mode_agent: 'Agent',
+        mode_ask: 'Ask',
+        mode_agent_hint:
+            'Agent mode: the agent edits the document. Click or press Shift+Tab to only ask a question',
+        mode_ask_hint:
+            'Ask mode: the agent only reads the document and answers without changing anything. Click or press Shift+Tab to allow edits again',
         resize_prompt: 'Prompt field height',
         send: 'Send',
         abort: 'Stop',

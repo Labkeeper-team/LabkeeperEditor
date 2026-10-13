@@ -124,6 +124,7 @@ type StartFrame = {
     numberIterations: number;
     maxTokens: number;
     compilationAllowed: boolean;
+    mode: string;
     program?: Program;
 };
 
@@ -136,6 +137,8 @@ const PARAMS: AgentSessionParams = {
     maxTokens: 30000,
     // не значение по умолчанию: так видно, что поле дошло из настроек, а не подставлено
     compilationAllowed: false,
+    // тоже не значение по умолчанию
+    mode: 'ask',
 };
 
 const PROGRAM: Program = {
@@ -226,6 +229,7 @@ test('start-frame-is-sent-only-after-the-socket-opens', () => {
         numberIterations: 12,
         maxTokens: 30000,
         compilationAllowed: false,
+        mode: 'ask',
     });
 });
 
@@ -244,6 +248,7 @@ test('unauthorized-start-frame-carries-the-program-with-segment-ids', () => {
     expect(frame.numberIterations).toBe(12);
     expect(frame.maxTokens).toBe(30000);
     expect(frame.compilationAllowed).toBe(false);
+    expect(frame.mode).toBe('ask');
     expect(frame.program?.segments.map((segment) => segment.id)).toEqual([
         1, 2,
     ]);

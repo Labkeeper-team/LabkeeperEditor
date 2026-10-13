@@ -140,6 +140,7 @@ test('agent-start-sends-prompt-and-settings', async ({ page }) => {
             numberIterations: 1000,
             maxTokens: 100000,
             compilationAllowed: true,
+            mode: 'agent',
         },
     ]);
 });

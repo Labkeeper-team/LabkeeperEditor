@@ -260,10 +260,16 @@ test('keyboard-focus-rings-the-grip', async ({ page }) => {
     await openChat(page);
     await promptField(page).click();
 
-    // ручка стоит в порядке Tab прямо перед полем
+    // ручка стоит в порядке Tab прямо перед полем. Сам Shift+Tab в поле
+    // переключает режим агента, а Escape перед ним по правилу CodeMirror
+    // отпускает фокус: так из поля выходят с клавиатуры
+    await page.keyboard.press('Escape');
     await page.keyboard.press('Shift+Tab');
 
     await expect(separator(page)).toBeFocused();
+    await expect(
+        page.getByRole('button', { name: 'Agent', exact: true })
+    ).toBeVisible();
     const ring = await separator(page).evaluate((node) => {
         const style = getComputedStyle(node, '::after');
         return { style: style.outlineStyle, width: style.outlineWidth };

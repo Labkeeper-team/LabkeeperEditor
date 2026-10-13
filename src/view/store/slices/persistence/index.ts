@@ -3,6 +3,7 @@ import { Language } from '../../../../viewModel/dictionaries';
 import { Program } from '../../../../model/domain.ts';
 import { persistenceInitialState } from '../index.ts';
 import { createEmptyProgram } from '../../../../model/repository/ProgramRepository.ts';
+import { AgentRunMode } from '../../../../model/rpi/agentSocket.ts';
 
 export const persistenceSlice = createSlice({
     name: 'persistenceSlice',
@@ -35,6 +36,9 @@ export const persistenceSlice = createSlice({
         setAgentCompilationAllowed(state, { payload }: PayloadAction<boolean>) {
             state.agentCompilationAllowed = payload;
         },
+        setAgentRunMode(state, { payload }: PayloadAction<AgentRunMode>) {
+            state.agentRunMode = payload;
+        },
         setCrossBorderConsentAcceptedLocally(
             state,
             { payload }: PayloadAction<boolean>
@@ -58,6 +62,7 @@ export const {
     setAgentMaxTokens,
     setAgentIterations,
     setAgentCompilationAllowed,
+    setAgentRunMode,
     setCrossBorderConsentAcceptedLocally,
     setAgentPromptHeight,
     setSkipClearHistoryConfirm,

@@ -682,9 +682,58 @@ body.agent-chat-resizing {
     }
 }
 
-// кнопка настроек и отправка прижаты вправо, размер контекста остаётся слева
-.agent-settings {
+// режим, настройки и отправка прижаты вправо, размер контекста остаётся слева
+.agent-chat__mode {
     margin-left: auto;
+    align-self: center;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    box-sizing: border-box;
+    padding: 0 10px;
+    border: 1px solid $gray-50;
+    border-radius: 16px;
+    background: $white;
+    color: $gray-20;
+    font-size: 13px;
+    line-height: 16px;
+    white-space: nowrap;
+    cursor: pointer;
+    flex-shrink: 0;
+
+    svg {
+        flex-shrink: 0;
+    }
+
+    &:hover:not(:disabled) {
+        background: $gray-60;
+    }
+
+    &:focus-visible {
+        outline: 2px solid $blue-10;
+        outline-offset: 2px;
+    }
+
+    &:disabled {
+        cursor: default;
+        opacity: 0.6;
+    }
+
+    // «Вопрос» заметен издалека: агент в нём ничего не меняет, и забытый режим удивит
+    &--ask {
+        border-color: $green;
+        // тот же оттенок, что у новых правок в сегментах и файлах
+        background: rgba(28, 168, 82, 0.1);
+        color: $button-action-green;
+
+        &:hover:not(:disabled) {
+            background: rgba(28, 168, 82, 0.18);
+        }
+    }
+}
+
+.agent-settings {
     display: flex;
     align-self: center;
 }
@@ -879,7 +928,20 @@ body.agent-chat-resizing {
 
     .agent-chat__controls {
         flex-wrap: wrap;
-        gap: 12px;
+        gap: 8px;
+    }
+
+    // в узкой колонке подпись режима не помещается в ряд с контекстом, настройками и отправкой; режим виден по значку, цвету и плейсхолдеру
+    .agent-chat__mode {
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        justify-content: center;
+        border-radius: 50%;
+    }
+
+    .agent-chat__mode-label {
+        display: none;
     }
 
     // ниже 16px айфон зумит страницу при фокусе, и тап по полю дёргал бы весь экран
@@ -908,9 +970,40 @@ body.agent-chat-resizing {
     }
 }
 
-// в 320px кнопки 100k, 200k и 300k вместе с настройками и отправкой не влезают в строку, и отправка уезжает вниз; запас нужен под системный шрифт iOS, он шире Arial
-@media screen and (max-width: 359px) {
+// до 380px кнопки 100k, 200k и 300k вместе с режимом, настройками и отправкой не влезают в строку, и отправка уезжает вниз; запас нужен под системный шрифт iOS, он шире Arial
+@media screen and (max-width: 379px) {
     .agent-chat__setting .segmented-control__item {
         padding: 2px 6px;
+    }
+}
+
+// в 320px ряду не хватает и этого: ужимаются отступы поля и круглые кнопки. В Safari переключатель контекста шире на 8px, запас нужен и под него
+@media screen and (max-width: 359px) {
+    .agent-chat__field {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .agent-chat__controls {
+        gap: 4px;
+    }
+
+    .agent-chat__setting .segmented-control__item {
+        padding: 2px 5px;
+    }
+
+    .agent-chat__mode {
+        width: 32px;
+        height: 32px;
+    }
+
+    .agent-settings__toggle {
+        width: 32px;
+        height: 32px;
+    }
+
+    .agent-chat__submit {
+        width: 44px;
+        height: 44px;
     }
 }

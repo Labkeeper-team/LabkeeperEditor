@@ -1,7 +1,9 @@
-import { AgentStopReason } from '../../model/rpi/agentSocket.ts';
 import {
     AGENT_DEFAULT_ITERATIONS,
     AGENT_DEFAULT_MAX_TOKENS,
+    AGENT_DEFAULT_RUN_MODE,
+    AgentRunMode,
+    AgentStopReason,
 } from '../../model/rpi/agentSocket.ts';
 
 export type MobileView = 'files' | 'editor' | 'pdf' | 'chat';
@@ -263,6 +265,7 @@ class MockViewModelRepositoryState {
     agentMaxTokens: number = AGENT_DEFAULT_MAX_TOKENS;
     agentIterations: number = AGENT_DEFAULT_ITERATIONS;
     agentCompilationAllowed: boolean = true;
+    agentRunMode: AgentRunMode = AGENT_DEFAULT_RUN_MODE;
     crossBorderConsentAcceptedLocally: boolean = false;
     chatMessages: ChatMessage[] = [];
     chatNextMessageId: number = 1;
@@ -480,12 +483,14 @@ export const mockViewModelState = (): MockViewModelRepository => {
             agentIterations: () => mockViewModelState.agentIterations,
             agentCompilationAllowed: () =>
                 mockViewModelState.agentCompilationAllowed,
+            agentRunMode: () => mockViewModelState.agentRunMode,
             crossBorderConsentAcceptedLocally: () =>
                 mockViewModelState.crossBorderConsentAcceptedLocally,
             setAgentMaxTokens: (v) => (mockViewModelState.agentMaxTokens = v),
             setAgentIterations: (v) => (mockViewModelState.agentIterations = v),
             setAgentCompilationAllowed: (v) =>
                 (mockViewModelState.agentCompilationAllowed = v),
+            setAgentRunMode: (v) => (mockViewModelState.agentRunMode = v),
             setCrossBorderConsentAcceptedLocally: (v) =>
                 (mockViewModelState.crossBorderConsentAcceptedLocally = v),
             setLastOpenedProjectUuid: (uuid) =>
@@ -862,12 +867,14 @@ export interface PersistenceViewModelRepository {
     agentMaxTokens: () => number;
     agentIterations: () => number;
     agentCompilationAllowed: () => boolean;
+    agentRunMode: () => AgentRunMode;
     crossBorderConsentAcceptedLocally: () => boolean;
 
     setCrossBorderConsentAcceptedLocally: (value: boolean) => void;
     setAgentMaxTokens: (value: number) => void;
     setAgentIterations: (value: number) => void;
     setAgentCompilationAllowed: (value: boolean) => void;
+    setAgentRunMode: (value: AgentRunMode) => void;
     setLastOpenedProjectUuid: (uuid: string | undefined) => void;
     setLanguage: (language: Language) => void;
     setInstructionExpanded: (instructionExpanded: boolean) => void;

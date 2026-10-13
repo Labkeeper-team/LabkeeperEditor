@@ -24,12 +24,20 @@ afterEach(() => {
     views.splice(0).forEach((view) => view.destroy());
 });
 
-const promptView = (onSubmit: () => void = () => {}, extra: Extension = []) => {
+const promptView = (
+    onSubmit: () => void = () => {},
+    extra: Extension = [],
+    onToggleMode: () => void = () => {}
+) => {
     const view = new EditorView({
         state: EditorState.create({
             doc: '',
             extensions: [
-                promptEditorExtensions({ label: PLACEHOLDER, onSubmit }),
+                promptEditorExtensions({
+                    label: PLACEHOLDER,
+                    onSubmit,
+                    onToggleMode,
+                }),
                 extra,
             ],
         }),
@@ -160,6 +168,52 @@ test('Enter не отправляет пустой запрос и запрос 
     expect(submits).toEqual([]);
     // Enter всё равно съеден, переноса строки в поле не появилось
     expect(running.state.doc.toString()).toBe('запрос');
+});
+
+const shiftTab: KeyboardEventInit = {
+    key: 'Tab',
+    code: 'Tab',
+    keyCode: 9,
+    shiftKey: true,
+};
+
+test('Shift+Tab переключает режим и не уводит фокус из поля', () => {
+    let toggles = 0;
+    const view = promptView(undefined, [], () => (toggles += 1));
+    type(view, 'вопрос');
+
+    const event = new KeyboardEvent('keydown', {
+        bubbles: true,
+        cancelable: true,
+        ...shiftTab,
+    });
+    view.contentDOM.dispatchEvent(event);
+
+    expect(toggles).toBe(1);
+    // без preventDefault браузер увёл бы фокус на соседнюю кнопку
+    expect(event.defaultPrevented).toBe(true);
+    // текст запроса режим не трогает
+    expect(view.state.doc.toString()).toBe('вопрос');
+});
+
+test('Shift+Tab во время прогона режим не меняет', () => {
+    let toggles = 0;
+    const view = promptView(
+        undefined,
+        EditorState.readOnly.of(true),
+        () => (toggles += 1)
+    );
+
+    const event = new KeyboardEvent('keydown', {
+        bubbles: true,
+        cancelable: true,
+        ...shiftTab,
+    });
+    view.contentDOM.dispatchEvent(event);
+
+    expect(toggles).toBe(0);
+    // фокус уходит назад как обычно, клавиатура не заперта в поле
+    expect(event.defaultPrevented).toBe(false);
 });
 
 test('стандартная раскладка на месте: Ctrl+A выделяет весь текст', () => {

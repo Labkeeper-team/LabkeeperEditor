@@ -21,6 +21,14 @@ export const AGENT_ITERATION_OPTIONS = [200, 500, 1000];
 export const AGENT_DEFAULT_MAX_TOKENS = 100000;
 export const AGENT_DEFAULT_ITERATIONS = 500;
 
+/**
+ * Режим прогона, поле mode из StartAgentSpec. В ask агент только читает
+ * проект и отвечает: пишущих инструментов и сборки у него нет. Не путать
+ * с агентским режимом страницы, это другой адрес и другая раскладка
+ */
+export type AgentRunMode = 'agent' | 'ask';
+export const AGENT_DEFAULT_RUN_MODE: AgentRunMode = 'agent';
+
 /** Почему агент остановился. Совпадает с AgentStopReason из asyncapi. */
 export type AgentStopReason =
     | 'Done'
@@ -112,6 +120,8 @@ export interface AgentSessionParams {
     maxTokens: number;
     /** Шлём всегда: сервер без поля компилирует, и выключенная галка потерялась бы молча */
     compilationAllowed: boolean;
+    /** Тоже шлём всегда: в ask сервер сам игнорирует compilationAllowed */
+    mode: AgentRunMode;
 }
 
 export interface AgentSession {

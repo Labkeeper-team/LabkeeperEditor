@@ -63,6 +63,13 @@ export const PromptField = ({ isEmpty }: { isEmpty: boolean }) => {
     const maxTokens = useSelector(
         (state: StorageState) => state.persistence.agentMaxTokens
     );
+    const runMode = useSelector(
+        (state: StorageState) => state.persistence.agentRunMode
+    );
+    const isAsk = runMode === 'ask';
+    const modeLabel = isAsk
+        ? dictionary.agent_chat.mode_ask
+        : dictionary.agent_chat.mode_agent;
 
     const isRunning =
         requestState === 'running' || requestState === 'connecting';
@@ -73,11 +80,22 @@ export const PromptField = ({ isEmpty }: { isEmpty: boolean }) => {
         dispatch(controller.onAgentPromptSubmitRequest());
     }, [dispatch]);
 
-    const placeholder = dictionary.agent_chat.placeholder;
+    const toggleMode = useCallback(() => {
+        dispatch(controller.onAgentRunModeToggledRequest());
+    }, [dispatch]);
+
+    const placeholder = isAsk
+        ? dictionary.agent_chat.placeholder_ask
+        : dictionary.agent_chat.placeholder;
     // стабильная ссылка: иначе @uiw пересобирает расширения на каждый символ
     const extensions = useMemo(
-        () => promptEditorExtensions({ label: placeholder, onSubmit: submit }),
-        [placeholder, submit]
+        () =>
+            promptEditorExtensions({
+                label: placeholder,
+                onSubmit: submit,
+                onToggleMode: toggleMode,
+            }),
+        [placeholder, submit, toggleMode]
     );
 
     const onChange = useCallback(
@@ -153,6 +171,27 @@ export const PromptField = ({ isEmpty }: { isEmpty: boolean }) => {
                         }
                     />
                 </div>
+                <button
+                    type="button"
+                    className={classNames('agent-chat__mode', {
+                        'agent-chat__mode--ask': isAsk,
+                    })}
+                    title={
+                        isAsk
+                            ? dictionary.agent_chat.mode_ask_hint
+                            : dictionary.agent_chat.mode_agent_hint
+                    }
+                    // имя короткое, а пояснение в title: на узком экране подпись прячется, имя должно остаться
+                    aria-label={modeLabel}
+                    aria-keyshortcuts="Shift+Tab"
+                    disabled={isRunning}
+                    onClick={toggleMode}
+                >
+                    {isAsk ? <AskIcon /> : <AgentIcon />}
+                    <span className="agent-chat__mode-label" aria-hidden="true">
+                        {modeLabel}
+                    </span>
+                </button>
                 {/* панель живёт внутри поля: соседи поля в .agent-chat задают границы ручки */}
                 <AgentSettings
                     fieldRef={fieldRef}
@@ -197,6 +236,49 @@ const InfoIcon = () => (
             strokeLinecap="round"
         />
         <circle cx="7" cy="4" r="0.8" fill="currentColor" />
+    </svg>
+);
+
+/** Карандаш: агент правит документ */
+const AgentIcon = () => (
+    <svg
+        width="16"
+        height="16"
+        viewBox="0 0 16 16"
+        fill="none"
+        aria-hidden="true"
+    >
+        <path
+            d="M10.5 2.5l3 3L6 13H3v-3l7.5-7.5z"
+            stroke="currentColor"
+            strokeWidth="1.4"
+            strokeLinejoin="round"
+        />
+    </svg>
+);
+
+/** Облачко с вопросом: агент только отвечает */
+const AskIcon = () => (
+    <svg
+        width="16"
+        height="16"
+        viewBox="0 0 16 16"
+        fill="none"
+        aria-hidden="true"
+    >
+        <path
+            d="M8 14.5A6.5 6.5 0 1 0 2.4 11.3L1.5 14.5l3.2-.9A6.5 6.5 0 0 0 8 14.5z"
+            stroke="currentColor"
+            strokeWidth="1.3"
+            strokeLinejoin="round"
+        />
+        <path
+            d="M6.3 6.2a1.75 1.75 0 1 1 2.4 1.6c-.45.2-.7.55-.7 1v.4"
+            stroke="currentColor"
+            strokeWidth="1.3"
+            strokeLinecap="round"
+        />
+        <circle cx="8" cy="11.1" r="0.75" fill="currentColor" />
     </svg>
 );
 
