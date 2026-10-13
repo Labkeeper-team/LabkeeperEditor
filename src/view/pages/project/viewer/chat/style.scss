@@ -2,6 +2,9 @@
 @use '../../../../styles/common' as *;
 
 .agent-chat {
+    // высота чата задаёт, что в него помещается: на низком экране, например с
+    // открытой клавиатурой телефона, второстепенное уходит, а поле остаётся целиком
+    container: agent-chat / size;
     display: flex;
     flex-direction: column;
     flex: 1;
@@ -918,6 +921,70 @@ body.agent-chat-resizing {
     line-height: 16px;
     color: $gray-20;
     flex-shrink: 0;
+}
+
+// Низкий чат. Пороги считают высоту содержимого без отступов чата: поле 152px,
+// ряд файлов 44px, дисклеймер до двух строк, зона загрузки от 96px и зазоры
+// по 12px. Первой уходит зона загрузки, её дублирует кнопка в ряду, потом
+// файлы из ряда, дисклеймер и сам ряд; поле с отправкой и настройками остаётся всегда
+
+// на телефоне кнопка загрузки при файлах в ряду уходит второй строкой, и ряд выходит 96px
+@media screen and (max-width: $mobile-breakpoint) {
+    @container agent-chat (max-height: 411.98px) {
+        .agent-files__drop {
+            display: none;
+        }
+
+        .agent-chat--empty.agent-chat--files .agent-files__row {
+            margin-top: auto;
+        }
+    }
+}
+
+@container agent-chat (max-height: 359.98px) {
+    .agent-files__drop {
+        display: none;
+    }
+
+    // ряд в одну строку: остаётся кнопка загрузки, упомянуть файл можно и текстом
+    .agent-files__file {
+        display: none;
+    }
+
+    // без зоны группу над полем центрирует ряд файлов
+    .agent-chat--empty.agent-chat--files .agent-files__row {
+        margin-top: auto;
+    }
+}
+
+@container agent-chat (max-height: 251.98px) {
+    .agent-chat__disclaimer {
+        display: none;
+    }
+}
+
+@container agent-chat (max-height: 207.98px) {
+    .agent-files__row {
+        display: none;
+    }
+
+    .agent-chat--empty .agent-chat__field,
+    .agent-chat--empty.agent-chat--files .agent-chat__field {
+        margin-top: auto;
+    }
+}
+
+// не помещается и одно поле: ввод ужимается до строки, у поля тоньше отступы, кнопки ряда остаются на экране
+@container agent-chat (max-height: 151.98px) {
+    .agent-chat__field {
+        padding-top: 8px;
+        padding-bottom: 8px;
+        gap: 8px;
+    }
+
+    .agent-chat__input .cm-editor {
+        min-height: 22px;
+    }
 }
 
 @media screen and (max-width: $mobile-breakpoint) {

@@ -334,6 +334,93 @@ test('во вкладке агента обычного редактора фа�
     await expect(page.locator('.agent-files__row')).toHaveCount(0);
 });
 
+/** Что из поля запроса не видно целиком: само поле и его кнопки должны помещаться и в чат, и в окно */
+const promptFieldProblems = (page: Page) =>
+    page.evaluate(() => {
+        const chat = document
+            .querySelector('.agent-chat')!
+            .getBoundingClientRect();
+        const problems: string[] = [];
+        for (const selector of [
+            '.agent-chat__field',
+            '.agent-chat__mode',
+            '.agent-settings__toggle',
+            '.agent-chat__submit',
+        ]) {
+            const box = document
+                .querySelector(selector)
+                ?.getBoundingClientRect();
+            if (
+                !box ||
+                box.height === 0 ||
+                box.top < chat.top - 0.5 ||
+                box.bottom > chat.bottom + 0.5 ||
+                box.bottom > window.innerHeight + 0.5
+            ) {
+                problems.push(
+                    `${selector} ${JSON.stringify(box)} chat ${chat.top}-${chat.bottom}`
+                );
+            }
+        }
+        return problems;
+    });
+
+// GH-167: на телефоне открытая клавиатура отнимает больше половины высоты.
+// 390x430 как в видео из задачи, на 390x540 зона загрузки уже не помещается рядом с двухстрочным рядом файлов, последний это узкий телефон с клавиатурой
+for (const size of [
+    { width: 390, height: 540 },
+    { width: 390, height: 430 },
+    { width: 375, height: 360 },
+    { width: 320, height: 300 },
+]) {
+    test.describe(`низкий экран ${size.width}x${size.height}`, () => {
+        test.use({ viewport: size });
+
+        // с файлом в проекте ряд файлов на телефоне двухстрочный: кнопка загрузки уходит под файлы
+        for (const [history, files] of [
+            [[], []],
+            [HISTORY, []],
+            [[], [{ fileName: 'data.csv' }]],
+            [HISTORY, [{ fileName: 'data.csv' }]],
+        ] as [AgentHistoryEntry[], ProjectFile[]][]) {
+            test(`поле запроса видно целиком в ${history.length ? 'чате с историей' : 'пустом чате'}${files.length ? ' и с файлом' : ''}`, async ({
+                page,
+            }) => {
+                await openAgentMode(page, { history, files });
+                await page.locator('.agent-chat__field').waitFor();
+
+                expect(await promptFieldProblems(page)).toEqual([]);
+                await expect(
+                    page.getByRole('button', { name: 'Send' })
+                ).toBeInViewport({ ratio: 1 });
+            });
+        }
+
+        test('поле запроса видно целиком и вне агентского режима', async ({
+            page,
+        }) => {
+            await openAgentMode(page, { path: `/project/${uuid}` });
+            await page.locator('.mobile-view-switcher-bar__toggle').click();
+            await page.getByRole('option', { name: 'AI agent' }).click();
+            await page.locator('.agent-chat__field').waitFor();
+
+            expect(await promptFieldProblems(page)).toEqual([]);
+        });
+    });
+}
+
+test.describe('телефон без клавиатуры', () => {
+    test.use({ viewport: { width: 390, height: 844 } });
+
+    test('в пустом чате зона загрузки на месте', async ({ page }) => {
+        await openAgentMode(page);
+
+        await expect(dropZone(page)).toBeVisible();
+        await expect(page.locator('.agent-chat__disclaimer')).toBeVisible();
+        expect(await promptFieldProblems(page)).toEqual([]);
+    });
+});
+
 test.describe('по-русски', () => {
     test.use({ locale: 'ru-RU' });
 
