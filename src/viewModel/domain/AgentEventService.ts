@@ -91,6 +91,36 @@ const isSameChange = (a: Hunk, b: Hunk) =>
     a.text === b.text &&
     lineSpan(a) === lineSpan(b);
 
+/**
+ * Та же правка, только сегмент сменил номер, потому что в этом же вызове
+ * агент удалил или добавил сегмент выше: номер это позиция. Сдвиг, который
+ * ничем не объяснён, остаётся новой правкой, как и раньше
+ */
+function isRenumberedBy(before: Hunk, after: Hunk, added: Hunk[]): boolean {
+    const was = before.segmentId;
+    const now = after.segmentId;
+    if (was == null || now == null || was === now) {
+        return false;
+    }
+    if (!isSameChange(before, { ...after, segmentId: was })) {
+        return false;
+    }
+    return added.some((hunk) => {
+        if (hunk.segmentId == null) {
+            return false;
+        }
+        // удалённый сегмент стоял выше: все ниже него поднялись на один
+        if (hunk.type === 'deleteSegment') {
+            return hunk.segmentId < was && now === was - 1;
+        }
+        // новый сегмент встал на это место или выше: все с этого места опустились на один
+        if (hunk.type === 'addSegment') {
+            return hunk.segmentId <= was && now === was + 1;
+        }
+        return false;
+    });
+}
+
 /** Сколько мест перечисляем в итоге прерывания: остальное человек найдёт в самой ленте */
 const CHANGE_SUMMARY_LIMIT = 5;
 
@@ -127,9 +157,16 @@ export class AgentEventService {
      */
     changedHunks(previous: Hunk[], next: Hunk[]): Hunk[] {
         const known = new Map(previous.map((hunk) => [hunk.id, hunk]));
+        const added = next.filter((hunk) => !known.has(hunk.id));
         return next.filter((hunk) => {
             const before = known.get(hunk.id);
-            return !before || !isSameChange(before, hunk);
+            return (
+                !before ||
+                !(
+                    isSameChange(before, hunk) ||
+                    isRenumberedBy(before, hunk, added)
+                )
+            );
         });
     }
 
