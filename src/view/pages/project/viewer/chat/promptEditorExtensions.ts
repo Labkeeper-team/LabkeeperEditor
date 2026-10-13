@@ -19,6 +19,8 @@ export type PromptEditorOptions = {
     /** Текст плейсхолдера, он же доступное имя: у contenteditable aria-placeholder имени не даёт. */
     label: string;
     onSubmit: () => void;
+    /** Shift+Tab: переключить режим «Агент» и «Вопрос», как в Cursor */
+    onToggleMode: () => void;
 };
 
 /**
@@ -83,6 +85,18 @@ export const promptEditorExtensions = (
                 },
                 shift: insertNewlineAndIndent,
                 preventDefault: true,
+            },
+            {
+                key: 'Shift-Tab',
+                run: (view) => {
+                    // пока агент работает, режим не меняется, и Shift+Tab уводит фокус назад как обычно
+                    if (view.state.readOnly) {
+                        return false;
+                    }
+                    options.onToggleMode();
+                    return true;
+                },
+                // без preventDefault: true, он съел бы клавишу и при false, и фокус застрял бы в поле
             },
         ])
     ),

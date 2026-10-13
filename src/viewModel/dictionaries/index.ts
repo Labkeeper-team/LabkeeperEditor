@@ -180,6 +180,13 @@ export interface Translations {
         // вкладка результата: человеку важен документ, а не его формат
         pdf_tab_label: string;
         placeholder: string;
+        // в режиме «Вопрос» поле подсказывает, что правок не будет
+        placeholder_ask: string;
+        mode_agent: string;
+        mode_ask: string;
+        // подсказка на кнопке режима: что делает текущий и как переключить
+        mode_agent_hint: string;
+        mode_ask_hint: string;
         resize_prompt: string;
         send: string;
         abort: string;

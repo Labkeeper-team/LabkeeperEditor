@@ -1033,6 +1033,15 @@ export class Controller {
         }
     );
 
+    onAgentRunModeToggledRequest = createAsyncThunk(
+        'onAgentRunModeToggled',
+        async () => {
+            await this.wrapper('onAgentRunModeToggled', () =>
+                this.agentChatService.onRunModeToggled()
+            );
+        }
+    );
+
     onClearChatHistoryRequest = createAsyncThunk(
         'onClearChatHistory',
         async () => {

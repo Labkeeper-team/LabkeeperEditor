@@ -29,6 +29,8 @@ import { createEmptyProgram } from '../../../model/repository/ProgramRepository.
 import {
     AGENT_DEFAULT_ITERATIONS,
     AGENT_DEFAULT_MAX_TOKENS,
+    AGENT_DEFAULT_RUN_MODE,
+    AgentRunMode,
 } from '../../../model/rpi/agentSocket.ts';
 import { PdfPosition } from '../../../model/rpi';
 import { BillingPricingResponse } from '../../../model/rpi';
@@ -150,6 +152,8 @@ interface PersistenceState {
     agentIterations: number;
     /** Галка компиляции агентом; срез, сохранённый до неё, получит true из начального состояния */
     agentCompilationAllowed: boolean;
+    /** Режим прогона агента; срез, сохранённый до него, получит agent из начального состояния */
+    agentRunMode: AgentRunMode;
     /**
      * Согласие на трансграничную передачу, данное до входа в аккаунт.
      * После входа уезжает на сервер, чтобы не спрашивать второй раз
@@ -227,6 +231,7 @@ export const persistenceInitialState: PersistenceState = {
     agentMaxTokens: AGENT_DEFAULT_MAX_TOKENS,
     agentIterations: AGENT_DEFAULT_ITERATIONS,
     agentCompilationAllowed: true,
+    agentRunMode: AGENT_DEFAULT_RUN_MODE,
     crossBorderConsentAcceptedLocally: false,
     skipClearHistoryConfirm: false,
     agentPromptHeight: null,

@@ -3,6 +3,7 @@ import { Rpi } from '../../model/rpi';
 import {
     AgentClosedReason,
     AgentEvent,
+    AgentRunMode,
     AgentSession,
     AgentSocket,
     AgentStopReason,
@@ -127,9 +128,18 @@ export class AgentChatService {
                 this.repository.persistenceViewModelRepository.agentIterations(),
             compilation_allowed:
                 this.repository.persistenceViewModelRepository.agentCompilationAllowed(),
+            mode: this.runMode(),
             authorized:
                 this.repository.userViewModelRepository.isAuthenticated(),
         };
+    }
+
+    /** Сохранённый режим из localStorage: чужое значение, например от отката фронта, сервер не примет, поэтому это agent, как и показывает кнопка */
+    private runMode(): AgentRunMode {
+        return this.repository.persistenceViewModelRepository.agentRunMode() ===
+            'ask'
+            ? 'ask'
+            : 'agent';
     }
 
     isRunning = (): boolean => {
@@ -181,6 +191,24 @@ export class AgentChatService {
         );
         this.track(Events.EVENT_AGENT_SETTINGS_CHANGED, {
             setting: 'compilation_allowed',
+            value,
+        });
+    };
+
+    /**
+     * Кнопка режима и Shift+Tab в поле запроса. Гостю тоже можно: режим не
+     * тратит токены сверх обычного прогона. Во время прогона не трогаем, режим
+     * уже ушёл на сервер, и подпись на кнопке соврала бы о текущем прогоне
+     */
+    onRunModeToggled = (): void => {
+        if (this.isRunning()) {
+            return;
+        }
+        const persistence = this.repository.persistenceViewModelRepository;
+        const value = persistence.agentRunMode() === 'ask' ? 'agent' : 'ask';
+        persistence.setAgentRunMode(value);
+        this.track(Events.EVENT_AGENT_SETTINGS_CHANGED, {
+            setting: 'mode',
             value,
         });
     };
@@ -423,6 +451,7 @@ export class AgentChatService {
                 this.repository.persistenceViewModelRepository.agentMaxTokens(),
             compilationAllowed:
                 this.repository.persistenceViewModelRepository.agentCompilationAllowed(),
+            mode: this.runMode(),
         };
         const handlers = {
             onEvent: (event: AgentEvent) => this.onAgentEvent(token, event),

@@ -216,6 +216,7 @@ test('agent-start-sends-default-settings', async ({ page }) => {
         numberIterations: 500,
         maxTokens: 100000,
         compilationAllowed: true,
+        mode: 'agent',
     });
 });
 
@@ -230,6 +231,7 @@ test('guest-agent-start-sends-default-settings', async ({ page }) => {
         numberIterations: 500,
         maxTokens: 100000,
         compilationAllowed: true,
+        mode: 'agent',
     });
 });
 
@@ -328,6 +330,7 @@ test('compilation-turned-off-survives-reload-and-reaches-the-agent', async ({
         numberIterations: 500,
         maxTokens: 100000,
         compilationAllowed: false,
+        mode: 'agent',
     });
     await expect(page.getByRole('button', { name: 'Send' })).toBeVisible();
 
@@ -340,6 +343,59 @@ test('compilation-turned-off-survives-reload-and-reaches-the-agent', async ({
 
     await expect.poll(() => sent.length).toBe(2);
     expect(sent[1]).toMatchObject({ compilationAllowed: true });
+});
+
+const modeButton = (page: Page, name: 'Agent' | 'Ask') =>
+    page.getByRole('button', { name, exact: true });
+
+test('ask-mode-by-button-and-shift-tab-reaches-the-agent-and-survives-reload', async ({
+    page,
+}) => {
+    const sent = await openChat(page, { frames: [DONE] });
+
+    await modeButton(page, 'Agent').click();
+
+    await expect(modeButton(page, 'Ask')).toBeVisible();
+    // плейсхолдер говорит, что правок не будет
+    await expect(
+        page.getByPlaceholder(
+            'Ask about the document, the agent will not change it'
+        )
+    ).toBeVisible();
+    await page
+        .getByPlaceholder(
+            'Ask about the document, the agent will not change it'
+        )
+        .fill('что в документе?');
+    await page.getByRole('button', { name: 'Send' }).click();
+
+    await expect.poll(() => sent.length).toBe(1);
+    expect(sent[0]).toMatchObject({ prompt: 'что в документе?', mode: 'ask' });
+    await expect(page.getByRole('button', { name: 'Send' })).toBeVisible();
+
+    // режим переживает перезагрузку, как остальные настройки агента
+    await page.reload();
+    await openAgentTab(page);
+    await expect(modeButton(page, 'Ask')).toBeVisible();
+
+    // Shift+Tab в поле возвращает режим агента, фокус остаётся в поле
+    await page
+        .getByPlaceholder(
+            'Ask about the document, the agent will not change it'
+        )
+        .click();
+    await page.keyboard.press('Shift+Tab');
+
+    await expect(modeButton(page, 'Agent')).toBeVisible();
+    await expect(promptField(page)).toBeFocused();
+    await page.keyboard.type('перепиши введение');
+    await page.keyboard.press('Enter');
+
+    await expect.poll(() => sent.length).toBe(2);
+    expect(sent[1]).toMatchObject({
+        prompt: 'перепиши введение',
+        mode: 'agent',
+    });
 });
 
 test('settings-panel-toggles-by-its-button-and-returns-focus', async ({
@@ -460,6 +516,8 @@ test('settings-values-are-disabled-while-agent-runs', async ({ page }) => {
         contextSize(page).getByRole('button', { name: '200k' })
     ).toBeDisabled();
     await expect(compilation(page)).toBeDisabled();
+    // режим уже ушёл на сервер, подпись на кнопке не должна меняться посреди прогона
+    await expect(modeButton(page, 'Agent')).toBeDisabled();
 });
 
 for (const size of [
@@ -577,6 +635,7 @@ for (const size of LAYOUTS) {
                             )!
                             .getBoundingClientRect();
                         return [
+                            '.agent-chat__mode',
                             '.agent-settings__toggle',
                             '.agent-chat__submit',
                         ].filter(

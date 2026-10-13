@@ -11,6 +11,7 @@ import {
 import {
     AGENT_STOP_REASONS,
     AgentEvent,
+    AgentRunMode,
     AgentStopReason,
 } from '../../../model/rpi/agentSocket.ts';
 import {
@@ -108,6 +109,7 @@ test('agent-start-sends-prompt-and-settings', async () => {
         numberIterations: 500,
         maxTokens: 100000,
         compilationAllowed: true,
+        mode: 'agent',
     });
     // поле очищается сразу, запрос уходит в ленту
     expect(ctx.repository.chatViewModelRepository.input()).toBe('');
@@ -192,6 +194,7 @@ test('agent-start-sends-compilation-turned-off-in-settings', async () => {
         numberIterations: 500,
         maxTokens: 100000,
         compilationAllowed: false,
+        mode: 'agent',
     });
 });
 
@@ -209,6 +212,78 @@ test('guest-agent-start-sends-the-saved-compilation-setting', async () => {
     expect(ctx.agentSocketState.started).toMatchObject({
         compilationAllowed: false,
     });
+});
+
+test('agent-run-mode-toggle-sends-ask-and-back', async () => {
+    const ctx = setup();
+    const onEvent = jest.spyOn(ctx.observerService, 'onEvent');
+
+    ctx.agentChatService.onRunModeToggled();
+
+    expect(ctx.repository.persistenceViewModelRepository.agentRunMode()).toBe(
+        'ask'
+    );
+    expect(onEvent).toHaveBeenCalledWith(
+        Events.EVENT_AGENT_SETTINGS_CHANGED,
+        expect.objectContaining({ setting: 'mode', value: 'ask' })
+    );
+
+    ctx.repository.chatViewModelRepository.setInput('что в сегменте 2?');
+    await ctx.agentChatService.onPromptSubmit();
+
+    expect(ctx.agentSocketState.started).toMatchObject({ mode: 'ask' });
+
+    await emit(ctx, {
+        kind: 'finished',
+        message: 'ответ',
+        stopReason: 'Done',
+    });
+    expect(ctx.agentChatService.isRunning()).toBe(false);
+    ctx.agentChatService.onRunModeToggled();
+
+    expect(ctx.repository.persistenceViewModelRepository.agentRunMode()).toBe(
+        'agent'
+    );
+});
+
+test('agent-run-mode-from-a-foreign-stored-value-is-sent-as-agent', async () => {
+    const ctx = setup();
+    // так выглядит срез после отката фронта, который знал больше режимов
+    ctx.repository.persistenceViewModelRepository.setAgentRunMode(
+        'plan' as AgentRunMode
+    );
+    ctx.repository.chatViewModelRepository.setInput('сделай таблицу');
+
+    await ctx.agentChatService.onPromptSubmit();
+
+    expect(ctx.agentSocketState.started).toMatchObject({ mode: 'agent' });
+});
+
+test('agent-run-mode-is-available-to-a-guest', async () => {
+    const ctx = setup(false);
+
+    ctx.agentChatService.onRunModeToggled();
+    ctx.repository.chatViewModelRepository.setInput('что тут написано?');
+    await ctx.agentChatService.onPromptSubmit();
+
+    // режим не тратит токены сверх обычного прогона, окно входа ни к чему
+    expect(ctx.repository.authViewModelRepository.currentView()).not.toBe(
+        'login'
+    );
+    expect(ctx.agentSocketState.program).not.toBeNull();
+    expect(ctx.agentSocketState.started).toMatchObject({ mode: 'ask' });
+});
+
+test('agent-run-mode-does-not-change-while-the-agent-runs', async () => {
+    const ctx = setup();
+    ctx.repository.chatViewModelRepository.setInput('сделай таблицу');
+    await ctx.agentChatService.onPromptSubmit();
+
+    ctx.agentChatService.onRunModeToggled();
+
+    expect(ctx.repository.persistenceViewModelRepository.agentRunMode()).toBe(
+        'agent'
+    );
 });
 
 test('agent-settings-compilation-offers-login-to-a-guest', () => {
