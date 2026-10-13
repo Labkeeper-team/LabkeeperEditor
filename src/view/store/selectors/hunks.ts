@@ -11,6 +11,7 @@ import {
     hunksForSegment,
     shouldShowGlobalHunkBarFromGroups,
     getPhantomFileNamesFromEntries,
+    deletedSegmentsByPosition,
     type HunkGroup,
 } from '../../../viewModel/utils/hunkGrouping.ts';
 
@@ -54,6 +55,14 @@ export const selectPhantomFileNames = createSelector(
     [selectFileHunkEntries, selectExistingFileNames],
     (entries, existingFileNames) =>
         getPhantomFileNamesFromEntries(entries, existingFileNames)
+);
+
+const selectSegmentCount = (state: StorageState) =>
+    state.project.currentProgram?.segments.length ?? 0;
+
+export const selectDeletedSegmentsByPosition = createSelector(
+    [selectHunks, selectSegmentCount],
+    (hunks, segmentCount) => deletedSegmentsByPosition(hunks, segmentCount)
 );
 
 const selectSegmentId = (_state: StorageState, segmentId: number) => segmentId;

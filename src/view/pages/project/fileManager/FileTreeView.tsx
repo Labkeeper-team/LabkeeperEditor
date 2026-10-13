@@ -143,6 +143,9 @@ const TreeNodeRow = (props: {
         fileHunkEntry?.hunkIds.some((id) =>
             props.pendingHunkIds.includes(id)
         ) ?? false;
+    // удалённый файл открыть нечем: на сервере его нет, а редактор не берёт текст из deleteFile, и клик лишь закрыл бы открытый файл.
+    // Файл из списка проекта живой, даже если ханк удаления ещё висит: его загрузили заново под тем же именем
+    const isRemoved = fileHunkEntry?.state === 'removed' && !props.node.file;
 
     const handleDragOver = useCallback(
         (event: DragEvent<HTMLElement>) => {
@@ -185,10 +188,13 @@ const TreeNodeRow = (props: {
             props.onSelectFolder(props.node.path);
             return;
         }
+        if (isRemoved) {
+            return;
+        }
         if (props.node.file || props.node.isHunkPhantom) {
             props.onOpenFile(props.node);
         }
-    }, [editMode, isFolder, props]);
+    }, [editMode, isFolder, isRemoved, props]);
 
     const onRename = useCallback(() => {
         if (!isFolder && !props.node.file) {
@@ -423,6 +429,7 @@ const TreeNodeRow = (props: {
                                 fileHunkEntry?.state === 'deleted',
                             'tree-row-file--hunk-modified':
                                 fileHunkEntry?.state === 'modified',
+                            'tree-row-file--hunk-removed': isRemoved,
                         })}
                         onClick={editMode ? undefined : onClickRow}
                         onDragOver={handleDragOver}

@@ -241,6 +241,10 @@ export interface Translations {
             delete_lines_from_file_plain: string;
             replace_text_in_segment_plain: string;
             replace_text_in_file_plain: string;
+            delete_segment: string;
+            delete_file: string;
+            delete_segment_plain: string;
+            delete_file_plain: string;
             list_workspace: string;
             read_segment: string;
             read_segments: string;
@@ -567,6 +571,7 @@ export interface Translations {
         revert_all: string;
         total_changes: string;
         new: string;
+        deleted: string;
         collapse_bar: string;
         expand_bar: string;
         errors: {

@@ -1,0 +1,43 @@
+@use '../../../../../../styles/colors' as *;
+
+.deleted-segment {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    align-self: stretch;
+}
+
+// красный вместо синего плюса добавленного сегмента, цвета как у удалённых строк в редакторе
+.deleted-segment__badge {
+    background: $red-10;
+
+    svg path {
+        fill: $white;
+    }
+}
+
+.deleted-segment__body {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 40px;
+    border: 1px solid $red-30;
+    border-left-width: 3px;
+    background: $red-20;
+}
+
+.deleted-segment__text {
+    margin: 0;
+    padding: 6px 10px;
+    // текст сегмента как есть: переносы и отступы значимы, длинная строка переносится
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.4;
+    color: $red-10;
+    text-decoration: line-through;
+}
+
+.deleted-segment-gap {
+    height: 20px;
+}

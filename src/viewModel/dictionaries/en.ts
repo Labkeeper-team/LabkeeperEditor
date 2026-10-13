@@ -255,6 +255,10 @@ export const en: Translations = {
             delete_lines_from_file_plain: 'Deleted lines from a file',
             replace_text_in_segment_plain: 'Replaced lines in a segment',
             replace_text_in_file_plain: 'Replaced lines in a file',
+            delete_segment: 'Deleted segment №{segment}',
+            delete_file: 'Deleted file',
+            delete_segment_plain: 'Deleted a segment',
+            delete_file_plain: 'Deleted a file',
             list_workspace: 'Reading the document structure',
             read_segment: 'Reading a segment',
             read_segments: 'Reading segments',
@@ -625,6 +629,7 @@ export const en: Translations = {
         revert_all: 'Revert all',
         total_changes: 'Total {n} changes',
         new: 'new',
+        deleted: 'deleted',
         collapse_bar: 'Collapse changes bar',
         expand_bar: 'Expand changes bar',
         errors: {

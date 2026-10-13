@@ -53,7 +53,11 @@ export type HunkType =
     | 'deleteLinesFromSegment'
     /** Диапазон это новые строки, text это заменённые старые, "" значит одна пустая строка */
     | 'replaceTextInFile'
-    | 'replaceTextInSegment';
+    | 'replaceTextInSegment'
+    /** Сегмент удалён целиком: segmentId это место, куда он вернётся при откате, text его текст */
+    | 'deleteSegment'
+    /** Текстовый файл удалён целиком, text его содержимое */
+    | 'deleteFile';
 
 export interface Hunk {
     id: string;

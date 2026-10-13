@@ -13,6 +13,12 @@ import {
     stripDeleteHunksFromContent,
     hunkTextLines,
     getFileContentFromHunks,
+    deletedSegmentsByPosition,
+    filterHunkGroupsForFile,
+    filterHunkGroupsForSegment,
+    getPhantomFileNamesFromHunks,
+    hasHunksForFile,
+    hasHunksForSegment,
 } from '../../viewModel/utils/hunkGrouping.ts';
 import { Hunk } from '../../model/domain.ts';
 
@@ -114,6 +120,8 @@ test('resolveControlsLine uses hunk text length when endLine is overstated', () 
         isWholeSegment: false,
         isNewFile: false,
         isNewSegment: false,
+        isDeletedSegment: false,
+        isDeletedFile: false,
     };
     expect(resolveControlsLine(group, 10)).toBe(5);
 });
@@ -1026,4 +1034,100 @@ test('файл только с удалениями в разных местах
 
     expect(entries).toHaveLength(1);
     expect(entries[0].state).toBe('deleted');
+});
+
+// GH-150: удаление сегмента и файла целиком
+
+const DELETED_SECOND: Hunk = {
+    id: 'del-2',
+    type: 'deleteSegment',
+    segmentId: 2,
+    text: 'второй сегмент',
+};
+
+test('deleted segment is its own group and stays out of the neighbour on its place', () => {
+    const lineAdd: Hunk = {
+        id: 'add-2',
+        type: 'addLinesToSegment',
+        segmentId: 2,
+        startLine: 1,
+        endLine: 1,
+        text: null,
+    };
+    const groups = groupHunks([DELETED_SECOND, lineAdd]);
+
+    expect(groups).toHaveLength(2);
+    const deleted = groups.find((group) => group.isDeletedSegment);
+    expect(deleted?.hunks.map((h) => h.id)).toEqual(['del-2']);
+    expect(deleted?.deletedLines).toEqual([]);
+    // сосед, вставший на место удалённого, получает только свою правку
+    expect(
+        filterHunkGroupsForSegment(expandGroupsForDisplay(groups), 2).map(
+            (group) => group.hunks.map((h) => h.id)
+        )
+    ).toEqual([['add-2']]);
+});
+
+test('typing in the neighbour does not accept a deleted segment on its place', () => {
+    expect(hunksForSegment([DELETED_SECOND], 2)).toEqual([]);
+    expect(hasHunksForSegment([DELETED_SECOND], 2)).toBe(false);
+});
+
+test('deleted file shows as removed and stays listed as a phantom', () => {
+    const deleted: Hunk = {
+        id: 'del-file',
+        type: 'deleteFile',
+        fileName: 'old.tex',
+        text: 'содержимое',
+    };
+
+    expect(getFileHunkEntries([deleted])).toEqual([
+        { fileName: 'old.tex', state: 'removed', hunkIds: ['del-file'] },
+    ]);
+    // в списке файлов проекта его уже нет, строку в дереве даёт только hunk
+    expect(getPhantomFileNamesFromHunks([deleted], ['main.tex'])).toEqual([
+        'old.tex',
+    ]);
+    expect(filterHunkGroupsForFile(groupHunks([deleted]), 'old.tex')).toEqual(
+        []
+    );
+    expect(hunksForFile([deleted], 'old.tex')).toEqual([]);
+    expect(hasHunksForFile([deleted], 'old.tex')).toBe(false);
+});
+
+test('a file deleted and created again under the same name stays openable', () => {
+    const hunks: Hunk[] = [
+        { id: 'del', type: 'deleteFile', fileName: 'x.tex', text: 'старое' },
+        { id: 'add', type: 'addFile', fileName: 'x.tex' },
+    ];
+
+    expect(getFileHunkEntries(hunks)).toEqual([
+        { fileName: 'x.tex', state: 'added', hunkIds: ['add', 'del'] },
+    ]);
+});
+
+test('deleted segments are placed before the segment on their place or after the last one', () => {
+    const third: Hunk = { ...DELETED_SECOND, id: 'del-3', text: 'третий' };
+    const tail: Hunk = {
+        id: 'del-tail',
+        type: 'deleteSegment',
+        segmentId: 9,
+        text: 'последний',
+    };
+    const notDeletion: Hunk = {
+        id: 'add',
+        type: 'addSegment',
+        segmentId: 1,
+    };
+
+    const placed = deletedSegmentsByPosition(
+        [DELETED_SECOND, notDeletion, third, tail],
+        3
+    );
+
+    // два удаления на одном месте идут в порядке списка
+    expect(placed.get(1)?.map((h) => h.id)).toEqual(['del-2', 'del-3']);
+    // место за концом программы значит «после последнего сегмента»
+    expect(placed.get(3)?.map((h) => h.id)).toEqual(['del-tail']);
+    expect([...placed.keys()].sort()).toEqual([1, 3]);
 });

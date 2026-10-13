@@ -43,6 +43,8 @@ const ALL_HUNK_TYPES: HunkType[] = [
     'deleteLinesFromFile',
     'replaceTextInSegment',
     'replaceTextInFile',
+    'deleteSegment',
+    'deleteFile',
 ];
 
 const COMPILATION_KINDS = [
@@ -175,6 +177,65 @@ test('changed-hunks-skip-a-known-hunk-that-only-moved', () => {
     expect(service.changedHunks([before], [moved, deleted])).toEqual([deleted]);
 });
 
+test('changed-hunks-skip-a-deleted-segment-that-only-moved-up', () => {
+    const service = new AgentEventService();
+    // так пришло с прода: удалили третий сегмент, потом второй, и сервер
+    // переставил место первого удаления на второе
+    const third = hunkOf('deleteSegment', {
+        id: 'del-3',
+        segmentId: 3,
+        text: 'третий',
+    });
+    const second = hunkOf('deleteSegment', {
+        id: 'del-2',
+        segmentId: 2,
+        text: 'второй',
+    });
+
+    expect(
+        service.changedHunks([third], [{ ...third, segmentId: 2 }, second])
+    ).toEqual([second]);
+});
+
+test('describe-tool-call-of-delete-segment-names-the-segment-without-a-jump', () => {
+    const service = new AgentEventService();
+
+    expect(
+        service.describeToolCall('delete_segment', [
+            hunkOf('deleteSegment', { segmentId: 3, text: 'текст' }),
+        ])
+    ).toEqual([
+        {
+            kind: 'event',
+            labelKey: 'delete_segment',
+            file: undefined,
+            segmentId: 3,
+            lines: undefined,
+            // сегмента в документе уже нет, прыгать некуда
+            target: undefined,
+        },
+    ]);
+});
+
+test('describe-tool-call-of-delete-file-names-the-file-without-a-jump', () => {
+    const service = new AgentEventService();
+
+    expect(
+        service.describeToolCall('delete_file', [
+            hunkOf('deleteFile', { fileName: 'old.tex', text: 'текст' }),
+        ])
+    ).toEqual([
+        {
+            kind: 'event',
+            labelKey: 'delete_file',
+            file: 'old.tex',
+            segmentId: undefined,
+            lines: undefined,
+            target: undefined,
+        },
+    ]);
+});
+
 test.each(READ_TOOLS.map((tool) => [tool] as const))(
     'describe-tool-call-%s-gives-one-line-named-after-the-tool',
     (tool) => {
@@ -298,7 +359,7 @@ test.each([
 /** Типы правок, которых фронт ещё не знает, в том числе поля Object.prototype */
 const UNKNOWN_HUNKS: [string, Partial<Hunk>, string][] = [
     ['renameFile', { fileName: 'a.tex' }, 'add_lines_to_file'],
-    ['deleteSegment', { segmentId: 4 }, 'add_lines_to_segment'],
+    ['mergeSegments', { segmentId: 4 }, 'add_lines_to_segment'],
     ['constructor', { segmentId: 4 }, 'add_lines_to_segment'],
     ['toString', { fileName: 'a.tex' }, 'add_lines_to_file'],
     ['movePlace', {}, 'unknown_tool'],
@@ -514,6 +575,7 @@ test.each([
     ['add_lines_to_segment'],
     ['delete_lines_from_segment'],
     ['replace_text_in_segment'],
+    ['delete_segment'],
 ] as const)(
     'reload-scope-of-%s-asks-for-the-program-even-without-hunk-changes',
     (tool) => {
@@ -531,6 +593,7 @@ test.each([
     ['add_lines_to_file'],
     ['delete_lines_from_file'],
     ['replace_text_in_file'],
+    ['delete_file'],
 ] as const)(
     'reload-scope-of-%s-asks-for-the-files-even-without-hunk-changes',
     (tool) => {
@@ -560,6 +623,7 @@ test.each([
     ['addLinesToSegment'],
     ['deleteLinesFromSegment'],
     ['replaceTextInSegment'],
+    ['deleteSegment'],
 ] as const)('reload-scope-of-%s-asks-for-the-program-only', (type) => {
     const service = new AgentEventService();
 
@@ -576,6 +640,7 @@ test.each([
     ['addLinesToFile'],
     ['deleteLinesFromFile'],
     ['replaceTextInFile'],
+    ['deleteFile'],
 ] as const)('reload-scope-of-%s-asks-for-the-files-only', (type) => {
     const service = new AgentEventService();
 

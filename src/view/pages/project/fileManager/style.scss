@@ -413,6 +413,17 @@
         &.tree-row-file--hunk-modified {
             background: rgba(28, 168, 82, 0.1);
         }
+
+        // файл удалён агентом целиком: на месте только строка с кнопками, открыть его нельзя
+        &.tree-row-file--hunk-removed {
+            background: $red-20;
+            cursor: default;
+
+            .tree-row-label {
+                color: $red-10;
+                text-decoration: line-through;
+            }
+        }
     }
 
     .tree-file-hunk-wrap {

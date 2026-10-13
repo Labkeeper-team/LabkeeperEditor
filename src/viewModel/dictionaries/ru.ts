@@ -259,6 +259,10 @@ export const ru: Translations = {
             delete_lines_from_file_plain: 'Удалены строки из файла',
             replace_text_in_segment_plain: 'Заменены строки в сегменте',
             replace_text_in_file_plain: 'Заменены строки в файле',
+            delete_segment: 'Удалён сегмент №{segment}',
+            delete_file: 'Удалён файл',
+            delete_segment_plain: 'Удалён сегмент',
+            delete_file_plain: 'Удалён файл',
             list_workspace: 'Просмотр структуры документа',
             read_segment: 'Чтение сегмента',
             read_segments: 'Чтение сегментов',
@@ -635,6 +639,7 @@ export const ru: Translations = {
         revert_all: 'Отклонить все',
         total_changes: 'Всего {n} изменений',
         new: 'new',
+        deleted: 'удалено',
         collapse_bar: 'Свернуть плашку изменений',
         expand_bar: 'Развернуть плашку изменений',
         errors: {
