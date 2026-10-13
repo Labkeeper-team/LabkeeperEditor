@@ -197,6 +197,62 @@ test('changed-hunks-skip-a-deleted-segment-that-only-moved-up', () => {
     ).toEqual([second]);
 });
 
+test('changed-hunks-skip-an-edit-renumbered-by-a-segment-deleted-above', () => {
+    const service = new AgentEventService();
+    const edit = hunkOf('addLinesToSegment', {
+        id: 'edit',
+        segmentId: 3,
+        startLine: 1,
+        endLine: 1,
+        text: 'x',
+    });
+    const deleted = hunkOf('deleteSegment', {
+        id: 'del',
+        segmentId: 1,
+        text: 'первый',
+    });
+
+    // правку третьего сегмента никто не трогал, он стал вторым из-за удаления
+    expect(
+        service.changedHunks([edit], [{ ...edit, segmentId: 2 }, deleted])
+    ).toEqual([deleted]);
+});
+
+test('changed-hunks-skip-an-edit-renumbered-by-a-segment-added-above', () => {
+    const service = new AgentEventService();
+    const edit = hunkOf('addLinesToSegment', {
+        id: 'edit',
+        segmentId: 2,
+        startLine: 1,
+        endLine: 1,
+        text: 'x',
+    });
+    const added = hunkOf('addSegment', { id: 'add', segmentId: 2 });
+
+    expect(
+        service.changedHunks([edit], [{ ...edit, segmentId: 3 }, added])
+    ).toEqual([added]);
+});
+
+test('changed-hunks-keep-a-renumbering-that-nothing-above-explains', () => {
+    const service = new AgentEventService();
+    const edit = hunkOf('addLinesToSegment', {
+        id: 'edit',
+        segmentId: 2,
+        startLine: 1,
+        endLine: 1,
+        text: 'x',
+    });
+    // удалён сегмент ниже правки: её номер от этого не меняется
+    const below = hunkOf('deleteSegment', { id: 'del', segmentId: 4 });
+    const moved = { ...edit, segmentId: 1 };
+
+    expect(service.changedHunks([edit], [moved, below])).toEqual([
+        moved,
+        below,
+    ]);
+});
+
 test('describe-tool-call-of-delete-segment-names-the-segment-without-a-jump', () => {
     const service = new AgentEventService();
 
