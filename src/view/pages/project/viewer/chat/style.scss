@@ -283,11 +283,12 @@
         background: $gray-60;
         font-size: 13px;
     }
+    // длинная строка кода переносится, как текст ответа: полоса прокрутки в узкой колонке чата лишняя. pre-wrap сохраняет отступы, а слово без пробелов рвёт word-break ответа
     pre {
         padding: 8px;
         border-radius: 6px;
         background: $gray-60;
-        overflow-x: auto;
+        white-space: pre-wrap;
 
         code {
             padding: 0;
