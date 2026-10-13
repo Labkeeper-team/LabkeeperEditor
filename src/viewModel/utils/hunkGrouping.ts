@@ -25,6 +25,13 @@ export interface HunkGroup {
     isWholeSegment: boolean;
     isNewFile: boolean;
     isNewSegment: boolean;
+    /**
+     * deleteSegment и deleteFile. Удалённого в документе уже нет: сегмент
+     * рисуется отдельной карточкой между соседями, файл строкой в дереве,
+     * и в редактор соседа такая группа попадать не должна
+     */
+    isDeletedSegment: boolean;
+    isDeletedFile: boolean;
 }
 
 /** Строки текста hunk: сервер склеивает строки без завершающего перевода, поэтому \n в конце обычно значит пустую последнюю строку */
@@ -54,6 +61,9 @@ const isLineDelete = (t: Hunk['type']) =>
 const isReplace = (t: Hunk['type']) =>
     t === 'replaceTextInFile' || t === 'replaceTextInSegment';
 const isCreation = (t: Hunk['type']) => t === 'addFile' || t === 'addSegment';
+/** Удаление целиком: правка не внутри сегмента или файла, а самого их места в проекте */
+const isWholeDeletion = (t: Hunk['type']) =>
+    t === 'deleteSegment' || t === 'deleteFile';
 
 function targetKey(hunk: Hunk): string | null {
     if (hunk.segmentId != null) {
@@ -124,9 +134,19 @@ function buildGroup(hunks: Hunk[]): HunkGroup | null {
     let isWholeSegment = false;
     let isNewFile = false;
     let isNewSegment = false;
+    let isDeletedSegment = false;
+    let isDeletedFile = false;
     const inCreation = hunks.some((hunk) => isCreation(hunk.type));
 
     for (const hunk of hunks) {
+        if (hunk.type === 'deleteSegment') {
+            isDeletedSegment = true;
+            continue;
+        }
+        if (hunk.type === 'deleteFile') {
+            isDeletedFile = true;
+            continue;
+        }
         if (isCreation(hunk.type)) {
             creation = true;
             anchorLine = 1;
@@ -208,6 +228,8 @@ function buildGroup(hunks: Hunk[]): HunkGroup | null {
         isWholeSegment,
         isNewFile,
         isNewSegment,
+        isDeletedSegment,
+        isDeletedFile,
     };
 }
 
@@ -420,8 +442,12 @@ export function filterHunkGroupsForSegment(
     if (segmentId == null) {
         return [];
     }
+    // segmentId удалённого сегмента это место, а не сосед, который сейчас на нём стоит
     return groups.filter(
-        (g) => g.target.kind === 'segment' && g.target.segmentId === segmentId
+        (g) =>
+            g.target.kind === 'segment' &&
+            g.target.segmentId === segmentId &&
+            !g.isDeletedSegment
     );
 }
 
@@ -433,11 +459,15 @@ export function filterHunkGroupsForFile(
         return [];
     }
     return groups.filter(
-        (g) => g.target.kind === 'file' && g.target.fileName === fileName
+        (g) =>
+            g.target.kind === 'file' &&
+            g.target.fileName === fileName &&
+            !g.isDeletedFile
     );
 }
 
-export type FileHunkVisualState = 'added' | 'modified' | 'deleted';
+/** deleted: из файла удалены строки, removed: удалён сам файл */
+export type FileHunkVisualState = 'added' | 'modified' | 'deleted' | 'removed';
 
 export interface FileHunkEntry {
     fileName: string;
@@ -464,6 +494,7 @@ export function buildFileHunkEntries(groups: HunkGroup[]): FileHunkEntry[] {
         hasAddFile: boolean;
         hasLineAdd: boolean;
         hasLineDelete: boolean;
+        hasFileDelete: boolean;
     }
     const byFile = new Map<string, FileAccumulator>();
 
@@ -481,6 +512,7 @@ export function buildFileHunkEntries(groups: HunkGroup[]): FileHunkEntry[] {
             hasAddFile: false,
             hasLineAdd: false,
             hasLineDelete: false,
+            hasFileDelete: false,
         };
 
         entry.hunkIds.push(...group.hunks.map((h) => h.id));
@@ -491,12 +523,16 @@ export function buildFileHunkEntries(groups: HunkGroup[]): FileHunkEntry[] {
             (h) => h.type === 'addLinesToFile' || h.type === 'replaceTextInFile'
         );
         entry.hasLineDelete ||= group.deletedLines.length > 0;
+        entry.hasFileDelete ||= group.isDeletedFile;
         byFile.set(key, entry);
     }
 
     return [...byFile.values()].map((entry) => {
         let state: FileHunkVisualState = 'modified';
-        if (entry.hasAddFile) {
+        // удалён и создан заново под тем же именем: файл на сервере есть, прятать его нельзя
+        if (entry.hasFileDelete && !entry.hasAddFile) {
+            state = 'removed';
+        } else if (entry.hasAddFile) {
             state = 'added';
         } else if (entry.hasLineDelete && !entry.hasLineAdd) {
             state = 'deleted';
@@ -526,7 +562,8 @@ export function getPhantomFileNamesFromEntries(
     const existing = [...existingFileNames];
     const phantoms = new Set<string>();
     for (const entry of entries) {
-        if (entry.state !== 'added') {
+        // созданного агентом файла в списке проекта ещё нет, удалённого уже нет: оба видны только по hunks
+        if (entry.state !== 'added' && entry.state !== 'removed') {
             continue;
         }
         const alreadyListed = existing.some((name) =>
@@ -597,24 +634,55 @@ export function segmentIdsWithHunks(hunks: Hunk[]): Set<number> {
     return ids;
 }
 
+// Правки внутри сегмента или файла. Удаление целиком сюда не входит: удалённый
+// сегмент делит segmentId с соседом, который встал на его место, и набор текста
+// в соседе молча принял бы удаление
+
 export function hasHunksForSegment(hunks: Hunk[], segmentId: number): boolean {
-    return hunks.some((h) => h.segmentId === segmentId);
+    return hunksForSegment(hunks, segmentId).length > 0;
 }
 
 export function hasHunksForFile(hunks: Hunk[], fileName: string): boolean {
-    return hunks.some(
-        (h) => h.fileName != null && projectFilePathsMatch(h.fileName, fileName)
-    );
+    return hunksForFile(hunks, fileName).length > 0;
 }
 
 export function hunksForSegment(hunks: Hunk[], segmentId: number): Hunk[] {
-    return hunks.filter((h) => h.segmentId === segmentId);
+    return hunks.filter(
+        (h) => h.segmentId === segmentId && !isWholeDeletion(h.type)
+    );
 }
 
 export function hunksForFile(hunks: Hunk[], fileName: string): Hunk[] {
     return hunks.filter(
-        (h) => h.fileName != null && projectFilePathsMatch(h.fileName, fileName)
+        (h) =>
+            h.fileName != null &&
+            projectFilePathsMatch(h.fileName, fileName) &&
+            !isWholeDeletion(h.type)
     );
+}
+
+/**
+ * Удалённые сегменты по месту в списке: ключ это индекс сегмента, перед которым
+ * встаёт карточка, а число сегментов значит «после последнего». segmentId
+ * удалённого сервер держит местом в текущей программе, поэтому сдвигать его
+ * на другие удаления не нужно. Порядок внутри одного места как в списке hunks
+ */
+export function deletedSegmentsByPosition(
+    hunks: Hunk[],
+    segmentCount: number
+): Map<number, Hunk[]> {
+    const byPosition = new Map<number, Hunk[]>();
+    for (const hunk of hunks) {
+        if (hunk.type !== 'deleteSegment' || hunk.segmentId == null) {
+            continue;
+        }
+        const position = Math.min(
+            Math.max(hunk.segmentId - 1, 0),
+            segmentCount
+        );
+        byPosition.set(position, [...(byPosition.get(position) ?? []), hunk]);
+    }
+    return byPosition;
 }
 
 type OverlayKind = 'add' | 'delete';

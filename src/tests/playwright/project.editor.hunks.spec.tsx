@@ -1513,3 +1513,170 @@ for (const viewport of HUNK_BUTTON_VIEWPORTS) {
         }
     });
 }
+
+// GH-150: агент удаляет сегмент или файл целиком. Форма hunk как с прода:
+// segmentId это место удалённого сегмента в текущей программе, text его текст
+const DELETED_SEGMENT = {
+    program: programOf(mdSegment(1, 'first'), mdSegment(2, 'third')),
+    hunks: [
+        {
+            id: 'hunk-delete-segment',
+            type: 'deleteSegment',
+            segmentId: 2,
+            text: 'second line A\nsecond line B',
+        } as Hunk,
+    ],
+};
+
+const deletedCard = (page: Page) => page.getByTestId('deleted-segment');
+
+test('hunk-delete-segment-shows-a-card-on-its-place', async ({ page }) => {
+    await openProjectWithHunks(page, DELETED_SEGMENT);
+
+    await expect(deletedCard(page)).toBeVisible();
+    await expect(deletedCard(page)).toContainText('second line B');
+    // карточка стоит между соседями, на месте удалённого сегмента
+    const first = (await page.locator('#ide-segment-0').boundingBox())!;
+    const card = (await deletedCard(page).boundingBox())!;
+    const next = (await page.locator('#ide-segment-1').boundingBox())!;
+    expect(card.y).toBeGreaterThan(first.y + first.height);
+    expect(next.y).toBeGreaterThan(card.y + card.height);
+    // сосед, вставший на это место, кнопок правки не получает
+    await expect(page.locator('#ide-segment-1 .cm-hunk-btn')).toHaveCount(0);
+    await expect(page.getByText('Total 1 changes')).toBeVisible();
+});
+
+test('hunk-delete-segment-accept-and-revert-send-their-flag', async ({
+    page,
+}) => {
+    const deletes = recordHunkDeletes(page);
+    await openProjectWithHunks(page, {
+        ...DELETED_SEGMENT,
+        hunks: [
+            ...DELETED_SEGMENT.hunks,
+            {
+                id: 'hunk-delete-tail',
+                type: 'deleteSegment',
+                segmentId: 3,
+                text: 'fourth',
+            },
+        ],
+    });
+    await expect(deletedCard(page)).toHaveCount(2);
+    // место за концом программы значит «после последнего сегмента»
+    const last = (await page.locator('#ide-segment-1').boundingBox())!;
+    const tail = (await deletedCard(page).nth(1).boundingBox())!;
+    expect(tail.y).toBeGreaterThan(last.y + last.height);
+
+    await deletedCard(page)
+        .first()
+        .getByRole('button', { name: 'Accept change' })
+        .click();
+    await expect
+        .poll(() => deletes)
+        .toEqual([{ hunkId: 'hunk-delete-segment', revert: 'false' }]);
+    await expect(deletedCard(page)).toHaveCount(1);
+
+    await deletedCard(page)
+        .getByRole('button', { name: 'Revert change' })
+        .click();
+    await expect
+        .poll(() => deletes)
+        .toEqual([
+            { hunkId: 'hunk-delete-segment', revert: 'false' },
+            { hunkId: 'hunk-delete-tail', revert: 'true' },
+        ]);
+    await expect(deletedCard(page)).toHaveCount(0);
+});
+
+test('hunk-delete-segment-is-not-accepted-by-typing-in-the-neighbour', async ({
+    page,
+}) => {
+    const deletes = recordHunkDeletes(page);
+    await openProjectWithHunks(page, DELETED_SEGMENT);
+
+    await page.locator('#ide-segment-1 .cm-content').click();
+    await page.keyboard.type(' typed');
+    await expect(page.locator('#ide-segment-1')).toContainText('third typed');
+    // приём правок соседа уходит сразу после набора, ждём заметно дольше него
+    await page.waitForTimeout(1500);
+
+    expect(deletes).toEqual([]);
+    await expect(deletedCard(page)).toBeVisible();
+});
+
+test('hunk-delete-segment-keeps-its-buttons-on-mobile', async ({ page }) => {
+    await openProjectWithHunks(page, { ...DELETED_SEGMENT, mobile: true });
+
+    await expect(deletedCard(page)).toBeVisible();
+    await expect(
+        deletedCard(page).getByRole('button', { name: 'Accept change' })
+    ).toBeVisible();
+    await expect(
+        deletedCard(page).getByRole('button', { name: 'Revert change' })
+    ).toBeVisible();
+});
+
+test('hunk-delete-file-shows-a-row-with-buttons-that-does-not-open', async ({
+    page,
+}) => {
+    const deletes = recordHunkDeletes(page);
+    await openProjectWithHunks(page, {
+        program: programOf(mdSegment(1, 'project')),
+        files: [{ fileName: 'notes.txt', url: '/files/notes.txt' }],
+        fileContents: [{ urlPath: '/files/notes.txt', content: 'kept file' }],
+        hunks: [
+            {
+                id: 'hunk-delete-file',
+                type: 'deleteFile',
+                fileName: 'old.tex',
+                text: 'removed content',
+            },
+        ],
+    });
+
+    await page.locator('div.file-manager-button').click();
+    // открытый файл не должен закрыться от клика по удалённому
+    await page.getByText('notes.txt').click();
+    await expect(page.getByText('kept file')).toBeVisible();
+    const row = page.locator('.tree-row-file', { hasText: 'old.tex' });
+    await expect(row).toHaveClass(/tree-row-file--hunk-removed/);
+    await row.click();
+    await expect(page.getByText('kept file')).toBeVisible();
+
+    const actions = page.locator('.tree-file-hunk-wrap', {
+        hasText: 'old.tex',
+    });
+    await actions.getByRole('button', { name: 'Revert change' }).click();
+    await expect
+        .poll(() => deletes)
+        .toEqual([{ hunkId: 'hunk-delete-file', revert: 'true' }]);
+    await expect(row).toHaveCount(0);
+});
+
+test('hunk-delete-file-does-not-hide-a-file-uploaded-again', async ({
+    page,
+}) => {
+    // пока висит удаление, человек загрузил файл с тем же именем: он живой и открывается
+    await openProjectWithHunks(page, {
+        program: programOf(mdSegment(1, 'project')),
+        files: [{ fileName: 'old.tex', url: '/files/old.tex' }],
+        fileContents: [
+            { urlPath: '/files/old.tex', content: 'uploaded again' },
+        ],
+        hunks: [
+            {
+                id: 'hunk-delete-file',
+                type: 'deleteFile',
+                fileName: 'old.tex',
+                text: 'removed content',
+            },
+        ],
+    });
+
+    await page.locator('div.file-manager-button').click();
+    const row = page.locator('.tree-row-file', { hasText: 'old.tex' });
+    await expect(row).not.toHaveClass(/tree-row-file--hunk-removed/);
+    await row.click();
+    await expect(page.getByText('uploaded again')).toBeVisible();
+});

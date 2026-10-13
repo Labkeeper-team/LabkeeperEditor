@@ -26,6 +26,8 @@ const HUNK_LABELS = new Map<string, string>([
     ['deleteLinesFromFile', 'delete_lines_from_file'],
     ['replaceTextInSegment', 'replace_text_in_segment'],
     ['replaceTextInFile', 'replace_text_in_file'],
+    ['deleteSegment', 'delete_segment'],
+    ['deleteFile', 'delete_file'],
 ]);
 
 const SEGMENT_TOOLS = new Set<string>([
@@ -33,6 +35,7 @@ const SEGMENT_TOOLS = new Set<string>([
     'add_lines_to_segment',
     'delete_lines_from_segment',
     'replace_text_in_segment',
+    'delete_segment',
 ] satisfies AgentToolName[]);
 
 const FILE_TOOLS = new Set<string>([
@@ -40,6 +43,7 @@ const FILE_TOOLS = new Set<string>([
     'add_lines_to_file',
     'delete_lines_from_file',
     'replace_text_in_file',
+    'delete_file',
 ] satisfies AgentToolName[]);
 
 export type CompilationKind = Extract<
@@ -75,10 +79,14 @@ const lineSpan = (hunk: Hunk) =>
         ? null
         : (hunk.endLine ?? hunk.startLine) - hunk.startLine;
 
-/** Та же ли это правка. Сдвиг из-за правки выше не в счёт: сам hunk никто не трогал */
+/**
+ * Та же ли это правка. Сдвиг из-за правки выше не в счёт: сам hunk никто не трогал.
+ * Удалённому сегменту сервер пересчитывает место, когда агент удаляет сегмент
+ * выше, и без этого исключения лента написала бы про старое удаление второй раз
+ */
 const isSameChange = (a: Hunk, b: Hunk) =>
     a.type === b.type &&
-    a.segmentId === b.segmentId &&
+    (a.type === 'deleteSegment' || a.segmentId === b.segmentId) &&
     a.fileName === b.fileName &&
     a.text === b.text &&
     lineSpan(a) === lineSpan(b);
@@ -250,7 +258,8 @@ export class AgentEventService {
                 hunk.type === 'addSegment' ||
                 hunk.type === 'addLinesToSegment' ||
                 hunk.type === 'deleteLinesFromSegment' ||
-                hunk.type === 'replaceTextInSegment'
+                hunk.type === 'replaceTextInSegment' ||
+                hunk.type === 'deleteSegment'
             ) {
                 program = true;
             }
@@ -258,7 +267,8 @@ export class AgentEventService {
                 hunk.type === 'addFile' ||
                 hunk.type === 'addLinesToFile' ||
                 hunk.type === 'deleteLinesFromFile' ||
-                hunk.type === 'replaceTextInFile'
+                hunk.type === 'replaceTextInFile' ||
+                hunk.type === 'deleteFile'
             ) {
                 files = true;
             }

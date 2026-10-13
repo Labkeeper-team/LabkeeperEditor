@@ -16,7 +16,8 @@ const mockFailures = new Map<number, number>();
 const mockRenderFailures = new Map<number, number>();
 const mockState = {
     callback: { scrollEditorToBottom: false },
-    ide: { activeSegmentIndex: -1 },
+    // список сегментов ставит между ними удалённые агентом, их здесь нет
+    ide: { activeSegmentIndex: -1, hunks: [] },
     persistence: { language: 'ru' },
     project: { currentProgram: { segments: [{}, {}] } },
 };

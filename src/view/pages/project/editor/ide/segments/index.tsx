@@ -9,6 +9,9 @@ import { AppDispatch, StorageState } from '../../../../../store';
 import { setScrollEditorToBottom } from '../../../../../store/slices/callback';
 import { SegmentDivider } from './segment-divider';
 import { SegmentErrorBoundary } from './segment-error-boundary';
+import { DeletedSegments } from './deleted-segment';
+import { selectDeletedSegmentsByPosition } from '../../../../../store/selectors/hunks.ts';
+import { useIsProjectReadonly } from '../../../../../store/selectors/program';
 import {
     LatexFooterBoundaryCard,
     LatexHeaderBoundaryCard,
@@ -27,6 +30,11 @@ export const Segments = () => {
     const ref = useRef<HTMLDivElement>(null);
     const dispatch = useDispatch<AppDispatch>();
     const segmentsSize = useSelector(useInputSegmentsSize);
+    const projectIsReadonly = useSelector(useIsProjectReadonly);
+    const deletedSegments = useSelector(selectDeletedSegmentsByPosition);
+    // в чужом проекте правок агента не показываем, как и у добавленных сегментов
+    const deletedAt = (position: number) =>
+        projectIsReadonly ? undefined : deletedSegments.get(position);
     const activeSegmentIndex = useSelector(
         (state: StorageState) => state.ide.activeSegmentIndex
     );
@@ -101,13 +109,16 @@ export const Segments = () => {
             <LatexHeaderBoundaryCard />
             {Array.from(Array(segmentsSize).keys()).map((_, index) => {
                 return (
-                    <SegmentEditorWrapper
-                        index={index}
-                        key={index}
-                        isLast={index + 1 === segmentsSize}
-                    />
+                    <React.Fragment key={index}>
+                        <DeletedSegments hunks={deletedAt(index)} />
+                        <SegmentEditorWrapper
+                            index={index}
+                            isLast={index + 1 === segmentsSize}
+                        />
+                    </React.Fragment>
                 );
             })}
+            <DeletedSegments hunks={deletedAt(segmentsSize)} atEnd />
             <LatexFooterBoundaryCard />
         </div>
     );
