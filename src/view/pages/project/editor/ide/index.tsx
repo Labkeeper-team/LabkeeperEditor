@@ -14,6 +14,7 @@ import { StorageState } from '../../../../store';
 import { useDictionary } from '../../../../store/selectors/translations.ts';
 import { RunButton } from '../runButton';
 import { HunkGlobalButtons } from '../../../../components/hunkGlobalButtons';
+import { selectDeletedSegmentsByPosition } from '../../../../store/selectors/hunks.ts';
 
 export const Ide = () => {
     /*
@@ -24,6 +25,10 @@ export const Ide = () => {
     const dictionary = useSelector(useDictionary);
     const getProjectRequestState = useSelector(
         (state: StorageState) => state.ide.getProjectRequestState
+    );
+    // агент удалил последний сегмент: заглушка пустого проекта спрятала бы карточку удаления, а с ней принятие и откат
+    const hasDeletedSegments = useSelector(
+        (state: StorageState) => selectDeletedSegmentsByPosition(state).size > 0
     );
 
     return (
@@ -61,7 +66,9 @@ export const Ide = () => {
                             </div>
                         </div>
                     </div>
-                ) : !program?.segments.length && !isReadonly ? (
+                ) : !program?.segments.length &&
+                  !isReadonly &&
+                  !hasDeletedSegments ? (
                     <AddBlock isFirst />
                 ) : (
                     <Segments />
