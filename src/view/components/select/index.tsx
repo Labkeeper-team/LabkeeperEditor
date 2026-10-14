@@ -39,6 +39,7 @@ const getOptionKey = (option: SelectItem, index: number): Key => {
 
 export const Select = ({
     title,
+    titleClassName,
     options,
     value,
     onChange,
@@ -194,7 +195,10 @@ export const Select = ({
                         ) : isSelectInfo(option) ? (
                             <div
                                 key={getOptionKey(option, index)}
-                                className="select-width-measurer__option select-option-info"
+                                className={classNames(
+                                    'select-width-measurer__option select-option-info',
+                                    option.className
+                                )}
                             >
                                 {option.label}
                             </div>
@@ -218,7 +222,10 @@ export const Select = ({
             >
                 {fitToOptionsWidth && !useIconTrigger ? (
                     <span
-                        className="select-title-width-measurer"
+                        className={classNames(
+                            'select-title-width-measurer',
+                            titleClassName
+                        )}
                         aria-hidden
                         ref={titleWidthMeasurerRef}
                     >
@@ -230,7 +237,11 @@ export const Select = ({
                         {triggerContent}
                     </span>
                 ) : (
-                    <span className="selected-value">{displayTitle}</span>
+                    <span
+                        className={classNames('selected-value', titleClassName)}
+                    >
+                        {displayTitle}
+                    </span>
                 )}
             </div>
             {isOpen && (
@@ -245,7 +256,10 @@ export const Select = ({
                         ) : isSelectInfo(option) ? (
                             <li
                                 key={getOptionKey(option, index)}
-                                className="select-option-info"
+                                className={classNames(
+                                    'select-option-info',
+                                    option.className
+                                )}
                                 role="presentation"
                             >
                                 {option.label}

@@ -16,7 +16,7 @@ export interface InputProps {
     placeholder?: string;
     className?: string;
     onClear?: (e: MouseEvent<HTMLInputElement>) => void;
-    type?: 'text' | 'password';
+    type?: 'text' | 'password' | 'email';
     multiline?: boolean;
     rows?: number;
     maxLength?: number;

@@ -14,6 +14,7 @@ export type SelectSeparator = {
 export type SelectInfoItem = {
     info: true;
     label: string;
+    className?: string;
 };
 
 export type SelectItem = SelectOption | SelectSeparator | SelectInfoItem;
@@ -26,6 +27,8 @@ export interface ISelectOptions {
     containerClassName?: string;
     minimize?: boolean;
     title?: string;
+    /** Класс на всех узлах, где рисуется заголовок, включая скрытый замер ширины */
+    titleClassName?: string;
     fitToOptionsWidth?: boolean;
     triggerContent?: ReactNode;
 }

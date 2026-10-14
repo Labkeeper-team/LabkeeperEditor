@@ -51,7 +51,13 @@ export const Input = forwardRef((props: InputProps, ref) => {
                     id={props.id}
                     name={props.name}
                     type={props.type || 'text'}
-                    className={classNames('input-base', { error: props.error })}
+                    className={classNames(
+                        'input-base',
+                        { error: props.error },
+                        // Вебвизор подменяет значение поля и не пишет нажатия
+                        props.type === 'email' &&
+                            'ym-disable-keys ym-hide-content'
+                    )}
                     onChange={props.onChange}
                     onBlur={props.onBlur}
                     onKeyDown={props.onKeyDown}
