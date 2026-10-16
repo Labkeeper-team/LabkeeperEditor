@@ -1,0 +1,103 @@
+@use '../../../styles/colors' as *;
+
+.hotkeys-help-button {
+    display: flex;
+    align-items: center;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+
+    &:hover {
+        opacity: 70%;
+    }
+}
+
+.hotkeys-help {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: min(560px, 100%);
+    max-height: 80vh;
+    padding: 28px 32px;
+    box-sizing: border-box;
+    border-radius: 8px;
+    background-color: $white;
+    overflow-y: auto;
+    color: $gray-10;
+    font-family: Roboto, sans-serif;
+}
+
+.hotkeys-help__title {
+    margin: 0;
+    font-size: 22px;
+    line-height: 28px;
+}
+
+.hotkeys-help__section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.hotkeys-help__section-title {
+    margin: 0;
+    color: $gray-20;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 18px;
+    text-transform: uppercase;
+}
+
+.hotkeys-help__list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0;
+}
+
+.hotkeys-help__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    font-size: 14px;
+    line-height: 20px;
+
+    dt,
+    dd {
+        margin: 0;
+    }
+}
+
+.hotkeys-help__keys {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+.hotkeys-help__combo {
+    display: flex;
+    gap: 3px;
+}
+
+.hotkeys-help__or {
+    color: $gray-20;
+}
+
+.hotkeys-help kbd {
+    min-width: 22px;
+    padding: 1px 6px;
+    box-sizing: border-box;
+    border: 1px solid $gray-40;
+    border-bottom-width: 2px;
+    border-radius: 6px;
+    background: $gray-60;
+    font-family: inherit;
+    font-size: 12px;
+    line-height: 18px;
+    text-align: center;
+    white-space: nowrap;
+}

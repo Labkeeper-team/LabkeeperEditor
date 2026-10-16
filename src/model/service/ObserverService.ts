@@ -94,6 +94,8 @@ export const Events = {
     // клик по файлу в ряду над запросом агента дописал его в запрос
     EVENT_AGENT_FILE_MENTIONED: 'agent_file_mentioned',
     EVENT_MOBILE_VIEW_CHANGED: 'mobile_view_changed',
+    // сработало сочетание клавиш страницы проекта, код в параметре hotkey
+    EVENT_HOTKEY_USED: 'hotkey_used',
 
     EVENT_HUNK_ACCEPTED: 'hunk_accepted',
     EVENT_HUNK_REVERTED: 'hunk_reverted',
@@ -227,6 +229,7 @@ export const OPENPANEL_EVENT_NAMES: Record<string, string> = {
     [Events.EVENT_AGENT_PDF_SCROLL_FAILED]: 'Agent PDF scroll failed',
     [Events.EVENT_AGENT_FILE_MENTIONED]: 'Agent file mentioned',
     [Events.EVENT_MOBILE_VIEW_CHANGED]: 'Mobile view changed',
+    [Events.EVENT_HOTKEY_USED]: 'Hotkey used',
     [Events.EVENT_HUNK_ACCEPTED]: 'Hunk accepted',
     [Events.EVENT_HUNK_REVERTED]: 'Hunk reverted',
     [Events.EVENT_HUNKS_ACCEPTED_ALL]: 'Hunks accepted all',

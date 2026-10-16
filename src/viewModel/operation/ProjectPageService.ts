@@ -128,7 +128,12 @@ export class ProjectPageService {
         this.repository.ideViewModelRepository.setSearchCurrentMatch(null);
     };
 
-    onSearchSubmit = () => {
+    onSearchSubmit = () => this.stepSearch('next');
+
+    /** GH-172: Shift+F3, тот же переход, что у Enter, только назад */
+    onSearchPrevious = () => this.stepSearch('previous');
+
+    private stepSearch = (direction: 'next' | 'previous') => {
         const input = this.repository.ideViewModelRepository.searchInput();
         if (input.length === 0) {
             return;
@@ -152,12 +157,23 @@ export class ProjectPageService {
             this.repository.ideViewModelRepository.searchCurrentMatch();
         const isNewQuery = input !== committed || current === null;
 
-        const index = isNewQuery
-            ? this.searchService.firstIndexAtOrAfter(
-                  matches,
-                  this.repository.ideViewModelRepository.segmentsViewportAnchor()
-              )
-            : this.searchService.nextIndexAfter(matches, current);
+        let index: number;
+        if (isNewQuery) {
+            const first = this.searchService.firstIndexAtOrAfter(
+                matches,
+                this.repository.ideViewModelRepository.segmentsViewportAnchor()
+            );
+            // назад от видимой области: последнее совпадение выше неё
+            index =
+                direction === 'next'
+                    ? first
+                    : (first - 1 + matches.length) % matches.length;
+        } else {
+            index =
+                direction === 'next'
+                    ? this.searchService.nextIndexAfter(matches, current)
+                    : this.searchService.previousIndexBefore(matches, current);
+        }
 
         const match = matches[index];
         this.repository.ideViewModelRepository.setSearch(input);

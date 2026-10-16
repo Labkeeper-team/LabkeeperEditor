@@ -203,3 +203,53 @@ test('esc-without-search-falls-through-to-problem-viewer', () => {
         false
     );
 });
+
+// GH-172: Shift+F3 тот же переход, что у Enter, только назад
+
+test('search-previous-with-new-query-takes-the-match-above-the-anchor', () => {
+    const { projectPageService, repository } = setup(
+        ['foo', 'bar foo', 'foo'],
+        { segmentIndex: 1, line: 1 }
+    );
+    repository.ideViewModelRepository.setSearchInput('foo');
+
+    projectPageService.onSearchPrevious();
+
+    expect(repository.ideViewModelRepository.searchCurrentMatch()).toEqual({
+        segmentIndex: 0,
+        from: 0,
+        to: 3,
+    });
+    expect(repository.ideViewModelRepository.editorNavigationTarget()).toEqual({
+        segmentIndex: 0,
+        line: 1,
+        focus: false,
+    });
+});
+
+test('search-previous-steps-back-from-the-current-match-and-wraps', () => {
+    const { projectPageService, repository } = setup(['foo', 'foo', 'foo']);
+    repository.ideViewModelRepository.setSearchInput('foo');
+
+    projectPageService.onSearchSubmit();
+    projectPageService.onSearchSubmit();
+    projectPageService.onSearchPrevious();
+    const afterBack =
+        repository.ideViewModelRepository.searchCurrentMatch()?.segmentIndex;
+    projectPageService.onSearchPrevious();
+
+    expect([
+        afterBack,
+        repository.ideViewModelRepository.searchCurrentMatch()?.segmentIndex,
+    ]).toEqual([0, 2]);
+});
+
+test('search-previous-without-matches-marks-no-match', () => {
+    const { projectPageService, repository } = setup(['foo']);
+    repository.ideViewModelRepository.setSearchInput('bar');
+
+    projectPageService.onSearchPrevious();
+
+    expect(repository.ideViewModelRepository.searchNoMatch()).toBe(true);
+    expect(repository.ideViewModelRepository.searchCurrentMatch()).toBeNull();
+});
