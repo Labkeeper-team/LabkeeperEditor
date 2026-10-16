@@ -120,6 +120,17 @@ export const useProjectHotkeys = () => {
         return 'fired';
     };
 
+    /** Сегмент, где стоит каретка или стояла последней, или -1, если в сегментах ещё не были */
+    const currentSegment = (state: StorageState, count: number): number => {
+        const inRange = (index: number) => index >= 0 && index < count;
+        if (inRange(state.ide.activeSegmentIndex)) {
+            return state.ide.activeSegmentIndex;
+        }
+        return inRange(state.ide.previousActiveSegmentIndex)
+            ? state.ide.previousActiveSegmentIndex
+            : -1;
+    };
+
     const moveToSegment = (step: 1 | -1): Outcome => {
         if (!segmentsShown) {
             return 'skip';
@@ -129,13 +140,8 @@ export const useProjectHotkeys = () => {
         if (count === 0) {
             return 'skip';
         }
-        const inRange = (index: number) => index >= 0 && index < count;
         // фокус в сегменте или был в нём последним: идём от него
-        const current = inRange(state.ide.activeSegmentIndex)
-            ? state.ide.activeSegmentIndex
-            : inRange(state.ide.previousActiveSegmentIndex)
-              ? state.ide.previousActiveSegmentIndex
-              : -1;
+        const current = currentSegment(state, count);
         const target =
             current === -1
                 ? step === 1
@@ -152,19 +158,32 @@ export const useProjectHotkeys = () => {
             return 'skip';
         }
         const state = store.getState();
-        const index = state.project.currentProgram?.segments.length ?? 0;
+        const count = state.project.currentProgram?.segments.length ?? 0;
+        const current = currentSegment(state, count);
+        // новый сегмент встаёт под текущим, как у кнопки-разделителя; в сегментах ещё не были, в конец, как у кнопки в шапке
+        const index = current === -1 ? count : current + 1;
         // во время прогона агента правки закрыты, об этом скажет сам сервис
         const blocked = readIsAgentRunning(state);
         showPane('editor');
-        void dispatch(
-            controller.onAddSegmentButtonClickedRequest({
-                type: 'latex',
-                source: 'hotkey',
-            })
-        ).then(() => {
+        const added: Promise<unknown> =
+            current === -1
+                ? dispatch(
+                      controller.onAddSegmentButtonClickedRequest({
+                          type: 'latex',
+                          source: 'hotkey',
+                      })
+                  )
+                : dispatch(
+                      controller.onSegmentAddedViaDividerRequest({
+                          segmentType: 'latex',
+                          after: current,
+                          source: 'hotkey',
+                      })
+                  );
+        void added.then(() => {
             const segments =
                 store.getState().project.currentProgram?.segments.length ?? 0;
-            if (segments > index) {
+            if (segments > count) {
                 focusSegmentEditor(index);
             }
         });
