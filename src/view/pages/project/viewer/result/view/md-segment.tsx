@@ -10,17 +10,16 @@ import rehypeRaw from 'rehype-raw';
 import { TextOutputSegment } from '../../../../../../model/domain.ts';
 
 const MD_COMPONENTS = {
+    // GH-176: картинка в своём размере, широкая ужимается по сегменту, а размер из тега <img width> соблюдается
     img(props: React.ImgHTMLAttributes<HTMLImageElement>) {
         return (
             <img
+                className="result-markdown__image"
                 src={props.src}
                 alt={props.alt}
-                width="500px"
-                style={{
-                    display: 'block',
-                    marginLeft: 'auto',
-                    marginRight: 'auto',
-                }}
+                title={props.title}
+                width={props.width}
+                height={props.height}
             />
         );
     },
