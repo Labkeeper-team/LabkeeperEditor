@@ -371,6 +371,19 @@ test('ctrl-enter-builds-like-the-run-button-and-keeps-the-segment', async ({
                 .map((event) => event.properties.trigger)
         )
         .toEqual(['hotkey']);
+
+    // кнопка шлёт свой признак: раньше в trigger уходило событие клика
+    const runButton = page.getByRole('button', { name: /Run/i });
+    await expect(runButton).toBeEnabled();
+    await runButton.click();
+    await expect.poll(() => compilations.length).toBe(2);
+    await expect
+        .poll(() =>
+            analytics
+                .named('Run clicked')
+                .map((event) => event.properties.trigger)
+        )
+        .toEqual(['hotkey', 'button']);
 });
 
 test('ctrl-enter-in-the-chat-builds-and-does-not-send-the-prompt', async ({
@@ -548,7 +561,17 @@ test('ctrl-alt-j-and-k-run-synctex-in-a-latex-project', async ({ page }) => {
         page.getByText('Click in the PDF to choose a position.')
     ).toBeVisible();
 
-    expect(analytics.hotkeys()).toEqual(['sync_to_pdf', 'sync_to_editor']);
+    // в latex-проекте фокус встаёт на прокручиваемый PDF, а не на колонку вокруг
+    await page.keyboard.press(`${mod}+Alt+P`);
+    await expect
+        .poll(() => activeElementIs(page, '.pdf-result-scroll'))
+        .toBe(true);
+
+    expect(analytics.hotkeys()).toEqual([
+        'sync_to_pdf',
+        'sync_to_editor',
+        'viewer_pdf',
+    ]);
 });
 
 test('help-lists-the-hotkeys-and-esc-closes-only-it', async ({ page }) => {
@@ -572,6 +595,52 @@ test('help-lists-the-hotkeys-and-esc-closes-only-it', async ({ page }) => {
     await expect(help).toHaveCount(0);
     // Esc ушёл окну: панель за ним осталась открытой
     await expect(fileManager).toBeVisible();
+});
+
+// прежние сочетания: Ctrl+S собирал проект из сегментов и сохранял открытый файл, так и осталось
+test('ctrl-s-still-builds-from-segments-and-saves-an-open-file', async ({
+    page,
+    browserName,
+}) => {
+    const file = await new RouteSetup(page).setupEditableTextFile(
+        'notes.txt',
+        '/gh172/notes.txt',
+        'hello'
+    );
+    const { analytics, compilations, mod } = await openProject(page, {
+        files: [{ fileName: 'notes.txt', url: '/gh172/notes.txt' }],
+    });
+
+    await caretToEnd(page, 1);
+    await page.keyboard.press(`${mod}+s`);
+    await expect.poll(() => compilations.length).toBe(1);
+    await expect
+        .poll(() =>
+            analytics
+                .named('Run clicked')
+                .map((event) => event.properties.trigger)
+        )
+        .toEqual(['hotkey']);
+
+    await page.locator('div.file-manager-button').click();
+    await page.getByText('notes.txt', { exact: true }).click();
+    const editor = page.locator('.text-file-editor-panel .cm-content');
+    await expect(editor).toHaveText('hello');
+    await editor.click();
+    await page.keyboard.press('End');
+    await page.keyboard.type(' world');
+    await page.keyboard.press(`${mod}+s`);
+
+    // автосохранение сработало бы через секунду после последней буквы, Ctrl+S сохраняет сразу
+    await expect.poll(() => file.uploads().length, { timeout: 600 }).toBe(1);
+    // тело multipart-запроса Playwright в WebKit не отдаёт, текст видно только в остальных
+    if (browserName !== 'webkit') {
+        expect(file.uploads()).toEqual(['hello world']);
+    }
+    // в открытом файле Ctrl+S только сохраняет, сборки больше не было
+    expect(compilations).toHaveLength(1);
+    // Ctrl+S не из списка задачи, своего hotkey_used у него нет
+    expect(analytics.hotkeys()).toEqual([]);
 });
 
 test.describe('on a mac', () => {
