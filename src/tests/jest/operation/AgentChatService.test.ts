@@ -3070,7 +3070,6 @@ async function phoneAfterRun(ctx: ReturnType<typeof setup>) {
 test.each([
     ['a-built-document', PDF_BUILT, 'Done'],
     ['build-errors', PDF_FAILED, 'Done'],
-    ['an-iteration-limit', PDF_BUILT, 'IterationLimit'],
 ] as [string, AgentEvent, AgentStopReason][])(
     'finished-run-with-%s-opens-the-pdf-on-a-desktop',
     async (_name, result, stopReason) => {
@@ -3089,6 +3088,110 @@ test.each([
             pdfUpdated: 0,
             viewerTab: [['pdf']],
             mobileView: [],
+        });
+    }
+);
+
+// GH-165: недоделанный прогон оставляет человека в чате, там примечание о том, что делать дальше
+test.each([
+    'IterationLimit',
+    'ContextOverflow',
+    'Timeout',
+    'QuotaExceeded',
+] as const)(
+    'run-stopped-short-by-%s-keeps-the-chat-after-a-compilation',
+    async (stopReason) => {
+        const ctx = phoneSetup();
+        ctx.repository.settingsViewModelRepository.setViewerTab = jest.fn();
+        ctx.repository.projectViewModelRepository.setProjectType('latex');
+        ctx.rpi.listHunksRequest = jest
+            .fn()
+            .mockResolvedValue(okResult({ hunks: [segmentHunk('a', 2, 1)] }));
+        ctx.repository.chatViewModelRepository.setInput('собери документ');
+        await ctx.agentChatService.onPromptSubmit();
+        await emit(ctx, { kind: 'toolCall', toolName: 'add_lines_to_segment' });
+        await emit(ctx, PDF_BUILT);
+        await emit(ctx, done(stopReason));
+
+        const messages = ctx.repository.chatViewModelRepository.messages();
+        expect(messages[messages.length - 1]).toMatchObject({
+            kind: 'notice',
+            reason: stopReason,
+        });
+        // ни вкладки PDF на десктопе, ни экрана результата или редактора на телефоне
+        expect(await phoneAfterRun(ctx)).toEqual({
+            ...NOTHING_SHOWN,
+            target: { segmentIndex: 1, line: 1, focus: false },
+        });
+    }
+);
+
+test('run-stopped-short-without-a-compilation-keeps-the-chat-on-a-phone', async () => {
+    const ctx = phoneSetup();
+    ctx.repository.settingsViewModelRepository.setViewerTab = jest.fn();
+    ctx.rpi.listHunksRequest = jest
+        .fn()
+        .mockResolvedValue(okResult({ hunks: [segmentHunk('a', 2, 1)] }));
+    ctx.repository.chatViewModelRepository.setInput('сделай');
+    await ctx.agentChatService.onPromptSubmit();
+    await emit(ctx, { kind: 'toolCall', toolName: 'add_lines_to_segment' });
+    await emit(ctx, done('IterationLimit'));
+
+    // правка в редакторе подождёт: сначала человек читает, что агент не доделал
+    expect(await phoneAfterRun(ctx)).toEqual({
+        ...NOTHING_SHOWN,
+        target: { segmentIndex: 1, line: 1, focus: false },
+    });
+});
+
+test.each([
+    [
+        'latex-errors-without-a-pdf',
+        'latex',
+        {
+            kind: 'compilationFailed',
+            errors: { errors: [LATEX_ERROR], unfinishedPdfUri: undefined },
+        },
+    ],
+    [
+        'markdown-errors',
+        'markdown',
+        {
+            kind: 'compilationFailed',
+            errors: { errors: [LATEX_ERROR], unfinishedPdfUri: undefined },
+        },
+    ],
+    [
+        'a-result-of-the-other-mode',
+        'markdown',
+        {
+            kind: 'compilationFinished',
+            pdfUri: RESULT_PDF,
+            markdown: undefined,
+        },
+    ],
+] as [string, ProjectType, AgentEvent][])(
+    'run-whose-last-compilation-gave-%s-does-not-open-an-empty-result',
+    async (_name, mode, result) => {
+        const ctx = phoneSetup();
+        ctx.repository.settingsViewModelRepository.setViewerTab = jest.fn();
+        ctx.repository.projectViewModelRepository.setProjectType(mode);
+        ctx.rpi.listHunksRequest = jest
+            .fn()
+            .mockResolvedValue(okResult({ hunks: [segmentHunk('a', 2, 1)] }));
+        ctx.repository.chatViewModelRepository.setInput('собери документ');
+        await ctx.agentChatService.onPromptSubmit();
+        await emit(ctx, { kind: 'toolCall', toolName: 'add_lines_to_segment' });
+        await emit(ctx, PDF_BUILT);
+        await emit(ctx, result);
+        await emit(ctx, done());
+
+        // решает последняя сборка: показать нечего, телефон идёт к правке, как без сборки
+        expect(await phoneAfterRun(ctx)).toEqual({
+            pdfUpdated: 0,
+            viewerTab: [],
+            mobileView: [['editor']],
+            target: { segmentIndex: 1, line: 1, focus: false },
         });
     }
 );
