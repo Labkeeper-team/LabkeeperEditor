@@ -1,18 +1,5 @@
 @use '../../../styles/colors' as *;
 
-.hotkeys-help-button {
-    display: flex;
-    align-items: center;
-    padding: 0;
-    border: 0;
-    background: none;
-    cursor: pointer;
-
-    &:hover {
-        opacity: 70%;
-    }
-}
-
 .hotkeys-help {
     display: flex;
     flex-direction: column;

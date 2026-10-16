@@ -171,6 +171,15 @@ const activeElementIs = (page: Page, selector: string) =>
         selector
     );
 
+/** Список сочетаний открывается из меню справки в шапке: второе выпадающее меню */
+async function openHotkeysHelp(page: Page) {
+    await page
+        .locator('.code-settings-header-container .dropdown-menu-container')
+        .nth(1)
+        .click();
+    await page.locator('.markdown-select-dropdown__hotkeys').click();
+}
+
 /** Каретка в конце текста сегмента: так видно, что фокус вернулся туда же */
 async function caretToEnd(page: Page, index: number) {
     await segment(page, index).click();
@@ -549,7 +558,7 @@ test('help-lists-the-hotkeys-and-esc-closes-only-it', async ({ page }) => {
     await page.keyboard.press(`${mod}+Shift+E`);
     await expect(fileManager).toBeVisible();
 
-    await page.getByRole('button', { name: 'Keyboard shortcuts' }).click();
+    await openHotkeysHelp(page);
     const help = page.getByRole('dialog', { name: 'Keyboard shortcuts' });
     await expect(help).toBeVisible();
     await expect(
@@ -582,7 +591,7 @@ test.describe('on a mac', () => {
 
         // Cmd и Ctrl дают один и тот же код
         expect(analytics.hotkeys()).toEqual(['file_manager']);
-        await page.getByRole('button', { name: 'Keyboard shortcuts' }).click();
+        await openHotkeysHelp(page);
         await expect(
             page.getByRole('dialog', { name: 'Keyboard shortcuts' })
         ).toContainText('⌘⇧E');
