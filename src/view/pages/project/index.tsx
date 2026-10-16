@@ -29,6 +29,8 @@ import {
     useAgentModeTracking,
 } from '../../hooks/useAgentMode';
 import { AgentModePane } from './agentMode';
+import { useProjectHotkeys } from './hotkeys/useProjectHotkeys.ts';
+import { HotkeysHelpModal } from './hotkeys/HotkeysHelp.tsx';
 
 export const ProjectPage = () => {
     useHunkActionHandler();
@@ -170,8 +172,20 @@ export const ProjectPage = () => {
             enableOnFormTags: true,
             enabled: true,
             enableOnContentEditable: true,
+            // список сочетаний закрывает своё окно сам, а поиск и панели за ним остаются.
+            // Окно забирает фокус, поэтому смотрим на цель: состояние к этому слушателю уже может смениться
+            ignoreEventWhen: (event) =>
+                store.getState().settings.showHotkeysHelp ||
+                (event.target instanceof Element &&
+                    Boolean(
+                        event.target
+                            .closest('.modal-container-overlay')
+                            ?.querySelector('.hotkeys-help')
+                    )),
         }
     );
+
+    useProjectHotkeys();
 
     useHotkeys(
         'mod+s',
@@ -257,6 +271,7 @@ export const ProjectPage = () => {
                 <Viewer />
             </div>
             <DeleteFilesModal />
+            <HotkeysHelpModal />
         </div>
     );
 };

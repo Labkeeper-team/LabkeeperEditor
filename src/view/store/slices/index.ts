@@ -60,6 +60,7 @@ interface SettingsState {
     isFileDraggedToManager: boolean;
     isCompiling: boolean;
     showShareModal: boolean;
+    showHotkeysHelp: boolean;
     showContactModal: boolean;
     showPrivacyPolicyAcceptanceModal: boolean;
     showCrossBorderConsentModal: boolean;
@@ -282,6 +283,7 @@ export const settingsInitialState: SettingsState = {
     isFileDraggedToManager: false,
     isCompiling: false,
     showShareModal: false,
+    showHotkeysHelp: false,
     showContactModal: false,
     showPrivacyPolicyAcceptanceModal: false,
     showCrossBorderConsentModal: false,

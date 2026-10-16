@@ -22,6 +22,7 @@ import { AppDispatch, StorageState } from '../../../../../../store';
 import { setShowSearch } from '../../../../../../store/slices/settings';
 import { controller } from '../../../../../../../main.tsx';
 import { useIsMobile } from '../../../../../../hooks/useMobile';
+import { SEARCH_INPUT_ID } from '../../../../hotkeys/focus.ts';
 
 export const SettingsButton = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -63,6 +64,7 @@ export const SettingsButton = () => {
             </div>
             <Input
                 ref={null}
+                id={SEARCH_INPUT_ID}
                 placeholder={`${dictionary.placeholder_search}...`}
                 onClear={
                     showSearch

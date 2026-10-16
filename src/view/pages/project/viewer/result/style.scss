@@ -57,3 +57,12 @@
 .pdf-text-selecting [contenteditable] {
     pointer-events: none;
 }
+
+// GH-172: Ctrl+Alt+P ставит фокус на панель, чтобы стрелки листали документ, а рамка вокруг всей панели лишняя
+.result-container,
+.pdf-result-scroll,
+#compile-result {
+    &:focus {
+        outline: none;
+    }
+}

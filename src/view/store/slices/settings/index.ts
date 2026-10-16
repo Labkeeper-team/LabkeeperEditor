@@ -51,6 +51,9 @@ export const settingsSlice = createSlice({
         setShowShareModal: (state, { payload }: PayloadAction<boolean>) => {
             state.showShareModal = payload;
         },
+        setShowHotkeysHelp: (state, { payload }: PayloadAction<boolean>) => {
+            state.showHotkeysHelp = payload;
+        },
         setShowContactModal: (state, { payload }: PayloadAction<boolean>) => {
             state.showContactModal = payload;
         },
@@ -96,6 +99,7 @@ export const {
     setIsCompiling,
     setEditModeForFilename,
     setShowSearch,
+    setShowHotkeysHelp,
     setExpandProblemViewer,
     setTourVisibility,
     setShoFileManager,

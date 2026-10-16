@@ -166,6 +166,37 @@ export interface Translations {
         change_language_to: string;
         github: string;
     };
+    // GH-172: список сочетаний страницы проекта
+    hotkeys: {
+        open: string;
+        title: string;
+        sections: {
+            project: string;
+            editing: string;
+            chat: string;
+        };
+        actions: {
+            search_open: string;
+            search_step: string;
+            file_manager: string;
+            sync_to_pdf: string;
+            sync_to_editor: string;
+            segment_step: string;
+            add_latex: string;
+            compile: string;
+            send_errors_to_agent: string;
+            viewer_pdf: string;
+            viewer_chat: string;
+            agent_mode: string;
+            save: string;
+            undo: string;
+            redo: string;
+            escape: string;
+            chat_send: string;
+            chat_newline: string;
+            chat_mode: string;
+        };
+    };
     agent_mode: {
         leave: string;
         enter: string;

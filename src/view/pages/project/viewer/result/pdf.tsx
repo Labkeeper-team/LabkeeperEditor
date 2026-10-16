@@ -681,6 +681,7 @@ export const PdfResultViewer = () => {
                     <div
                         ref={containerRef}
                         onClick={handlePdfClick}
+                        className="pdf-result-scroll"
                         style={{
                             overflow: 'auto',
                             height: '100%',

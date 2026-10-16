@@ -155,3 +155,57 @@ test('line-of-offset-is-1-based', () => {
     expect(service.lineOfOffset('a\nb\nc', 0)).toBe(1);
     expect(service.lineOfOffset('a\nb\nc', 4)).toBe(3);
 });
+
+// GH-172: Shift+F3 идёт назад
+
+test('previous-index-before-steps-back-and-wraps-to-last', () => {
+    const service = new SearchService();
+    const matches = service.findMatches(
+        programOf(['foo', 'foo', 'foo']),
+        'foo'
+    );
+
+    expect(
+        service.previousIndexBefore(matches, {
+            segmentIndex: 1,
+            from: 0,
+            to: 3,
+        })
+    ).toBe(0);
+    expect(
+        service.previousIndexBefore(matches, {
+            segmentIndex: 0,
+            from: 0,
+            to: 3,
+        })
+    ).toBe(2);
+});
+
+test('previous-index-before-falls-back-to-closest-when-current-is-gone', () => {
+    const service = new SearchService();
+    const matches = service.findMatches(programOf(['foo', 'foo']), 'foo');
+
+    // такого совпадения в списке нет: текст поменялся между переходами
+    expect(
+        service.previousIndexBefore(matches, {
+            segmentIndex: 1,
+            from: 40,
+            to: 43,
+        })
+    ).toBe(1);
+    expect(
+        service.previousIndexBefore(matches, {
+            segmentIndex: 0,
+            from: -5,
+            to: -2,
+        })
+    ).toBe(1);
+});
+
+test('previous-index-before-returns-last-for-null-current', () => {
+    const service = new SearchService();
+    const matches = service.findMatches(programOf(['foo', 'foo']), 'foo');
+
+    expect(service.previousIndexBefore(matches, null)).toBe(1);
+    expect(service.previousIndexBefore([], null)).toBe(-1);
+});

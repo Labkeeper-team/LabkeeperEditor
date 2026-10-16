@@ -1,21 +1,19 @@
 import classNames from 'classnames';
-import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, StorageState } from '../../../store';
+import { useSelector } from 'react-redux';
+import { StorageState } from '../../../store';
 import { useDictionary } from '../../../store/selectors/translations';
-import { setViewerTab } from '../../../store/slices/settings';
-import { controller } from '../../../../main.tsx';
-import { Events } from '../../../../model/service/ObserverService.ts';
 import { ViewerTab } from '../../../store/slices';
 import { useIsProjectReadonly } from '../../../store/selectors/program';
 import { useAgentModeNavigation } from '../../../hooks/useAgentMode';
 import { ClearHistoryButton } from './chat/ClearHistoryButton.tsx';
+import { useSelectViewerTab } from './useSelectViewerTab.ts';
 
 export const ViewerTabs = () => {
-    const dispatch = useDispatch<AppDispatch>();
     const dictionary = useSelector(useDictionary);
     const viewerTab = useSelector(
         (state: StorageState) => state.settings.viewerTab
     );
+    const selectViewerTab = useSelectViewerTab();
     const isReadonly = useSelector(useIsProjectReadonly);
     const { enterAgentMode } = useAgentModeNavigation();
 
@@ -40,18 +38,7 @@ export const ViewerTabs = () => {
                     className={classNames('viewer-tabs__tab', {
                         'viewer-tabs__tab--active': viewerTab === tab.id,
                     })}
-                    onClick={() => {
-                        if (viewerTab !== tab.id) {
-                            controller.trackUiEvent(
-                                Events.EVENT_VIEWER_TAB_CHANGED,
-                                {
-                                    from: viewerTab,
-                                    to: tab.id,
-                                }
-                            );
-                        }
-                        dispatch(setViewerTab(tab.id));
-                    }}
+                    onClick={() => selectViewerTab(tab.id)}
                 >
                     {tab.label}
                 </button>
