@@ -81,6 +81,10 @@ export class AgentChatService {
     private compiledInRun = false;
     /** Последняя сборка в прогоне прошла: PDF собран из того, что агент написал */
     private pdfBuiltInRun = false;
+    /** Последняя сборка в прогоне дала, что показать во вкладке результата, как у кнопки Run */
+    private resultInRun = false;
+    /** Прогон кончился, не доделав задачу: лимит шагов, контекста, времени или квоты */
+    private stoppedShort = false;
     /** Перечитать программу не вышло или сокет оборвался: в редакторе может быть старая программа */
     private programMayBeStale = false;
     /** Текст последнего запроса: слишком длинный вернём в поле, чтобы его сократили */
@@ -395,6 +399,8 @@ export class AgentChatService {
         this.lastChange = undefined;
         this.compiledInRun = false;
         this.pdfBuiltInRun = false;
+        this.resultInRun = false;
+        this.stoppedShort = false;
         this.runEnded = false;
         this.runStarted = false;
         this.track(Events.EVENT_AGENT_PROMPT_SUBMITTED, {
@@ -683,7 +689,7 @@ export class AgentChatService {
         this.compiledInRun = true;
         // решает последняя сборка: после ошибки PDF старый или недособранный
         this.pdfBuiltInRun = event.kind === 'compilationFinished';
-        this.applyCompilation(event);
+        this.resultInRun = this.applyCompilation(event);
         chat.appendMessage(this.events.describeCompilation(event.kind));
 
         // как после кнопки Run: собранный pdf ложится в файлы проекта, а сборка стоит токенов
@@ -697,13 +703,16 @@ export class AgentChatService {
         await this.refreshBalance();
     };
 
-    /** Результат по режиму проекта: гостю сервер собирает pdf и в markdown, где вкладка результата рисует только сегменты */
+    /**
+     * Результат по режиму проекта: гостю сервер собирает pdf и в markdown, где вкладка результата рисует только сегменты.
+     * true, если во вкладке результата есть что показать: собранный документ или недособранный pdf
+     */
     private applyCompilation = (
         event: Extract<
             AgentEvent,
             { kind: 'compilationFinished' | 'compilationFailed' }
         >
-    ): void => {
+    ): boolean => {
         const mode = this.repository.projectViewModelRepository.mode();
         const latex = mode === 'latex';
         const misfit = (hasPdf: boolean, hasMarkdown: boolean) =>
@@ -722,15 +731,20 @@ export class AgentChatService {
             if (!latex && unfinishedPdfUri != null) {
                 misfit(true, false);
             }
-            return;
+            return latex && unfinishedPdfUri != null;
         }
         if (latex && event.pdfUri != null) {
             this.compilationService.applyPdfResult(event.pdfUri);
-        } else if (!latex && event.markdown != null) {
+            return true;
+        }
+        if (!latex && event.markdown != null) {
             this.compilationService.applyMarkdownResult(event.markdown);
-        } else if (event.pdfUri != null || event.markdown != null) {
+            return true;
+        }
+        if (event.pdfUri != null || event.markdown != null) {
             misfit(event.pdfUri != null, event.markdown != null);
         }
+        return false;
     };
 
     private onToolCall = async (
@@ -796,8 +810,12 @@ export class AgentChatService {
         if (this.repository.chatViewModelRepository.requestState() !== 'ok') {
             return;
         }
+        // GH-165: агент не доделал задачу, и примечание об этом стоит в чате последним
+        if (this.stoppedShort) {
+            return;
+        }
         // агент собрал документ: итог работы это результат, вкладку внутри колонки уже выбрал onFinished
-        if (this.compiledInRun) {
+        if (this.resultInRun) {
             this.repository.settingsViewModelRepository.setMobileView('pdf');
             return;
         }
@@ -851,13 +869,15 @@ export class AgentChatService {
         if (event.message) {
             chat.appendMessage({ kind: 'response', text: event.message });
         }
-        if (PARTIAL_STOP_REASONS.includes(event.stopReason)) {
+        this.stoppedShort = PARTIAL_STOP_REASONS.includes(event.stopReason);
+        if (this.stoppedShort) {
             // прогон не доработал, но изменения применились: это оговорка, а не отказ
             chat.appendMessage({ kind: 'notice', reason: event.stopReason });
         }
         chat.setRequestState('ok');
-        // вкладку ставим здесь, а не счётчиком результата: на телефоне он гонялся бы с переходом к правке
-        if (this.compiledInRun) {
+        // вкладку ставим здесь, а не счётчиком результата: на телефоне он гонялся бы с переходом к правке.
+        // GH-165: недоделанный прогон оставляет чат с примечанием, а пустую вкладку не открываем
+        if (this.resultInRun && !this.stoppedShort) {
             this.repository.settingsViewModelRepository.setViewerTab('pdf');
         }
         this.track(Events.EVENT_AGENT_FINISHED, {
