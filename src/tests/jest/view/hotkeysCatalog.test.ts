@@ -51,11 +51,13 @@ test('mac-is-told-from-other-platforms', () => {
 });
 
 test('hotkey-label-uses-cmd-on-mac-and-ctrl-elsewhere', () => {
+    // сочетания с Alt на macOS на Control: Cmd+Option+J это консоль DevTools в Chrome
     expect(hotkeyLabel(PROJECT_HOTKEYS.sync_to_pdf, true)).toEqual([
-        '⌘',
+        '⌃',
         '⌥',
         'J',
     ]);
+    expect(hotkeyLabel(PROJECT_HOTKEYS.search_open, true)).toEqual(['⌘', 'F']);
     expect(hotkeyLabel(PROJECT_HOTKEYS.sync_to_pdf, false)).toEqual([
         'Ctrl',
         'Alt',

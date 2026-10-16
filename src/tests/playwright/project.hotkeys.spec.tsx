@@ -214,8 +214,9 @@ test('search-and-chat-take-the-focus-in-the-same-keystroke', async ({
                     new KeyboardEvent('keydown', {
                         code,
                         key,
-                        ctrlKey: !meta,
-                        metaKey: meta,
+                        // поиск на Cmd или Ctrl, а сочетания с Alt везде на Control
+                        ctrlKey: alt || !meta,
+                        metaKey: !alt && meta,
                         altKey: alt,
                         bubbles: true,
                         cancelable: true,
@@ -327,7 +328,7 @@ test('alt-arrows-move-between-segments-and-keep-the-caret', async ({
     ]);
 });
 
-test('ctrl-shift-l-adds-a-latex-segment-with-the-caret-in-it', async ({
+test('ctrl-shift-l-adds-a-latex-segment-under-the-current-one', async ({
     page,
 }) => {
     const { analytics, mod } = await openProject(page);
@@ -335,18 +336,35 @@ test('ctrl-shift-l-adds-a-latex-segment-with-the-caret-in-it', async ({
 
     await page.keyboard.press(`${mod}+Shift+L`);
 
-    await expect(segment(page, 3)).toBeVisible();
-    await expect.poll(() => focusedSegment(page)).toBe(3);
-    await page.keyboard.type('\\alpha');
-    await expect(segment(page, 3)).toHaveText('\\alpha');
+    // новый сегмент встал под тем, где была каретка, и каретка в нём
     await expect(page.locator('.segment-editor-container')).toHaveCount(4);
+    await expect.poll(() => focusedSegment(page)).toBe(1);
+    await page.keyboard.type('\\alpha');
+    await expect(segment(page, 1)).toHaveText('\\alpha');
+    await expect
+        .poll(() => segmentLines(page, 2))
+        .toEqual(['a = 10', 'b = 20']);
+    await expect(segment(page, 3)).toHaveText('foo three');
     expect(analytics.hotkeys()).toEqual(['add_latex']);
-    // событие добавления сегмента остаётся и говорит, откуда пришло
+    // событие вставки сегмента остаётся и говорит, откуда пришло
     expect(
         analytics.named('Segment added').map((event) => event.properties)
     ).toEqual([
         expect.objectContaining({ segment_type: 'latex', source: 'hotkey' }),
     ]);
+});
+
+test('ctrl-shift-l-before-any-segment-was-opened-adds-to-the-end', async ({
+    page,
+}) => {
+    const { mod } = await openProject(page);
+
+    await page.keyboard.press(`${mod}+Shift+L`);
+
+    // в сегментах ещё не были: как кнопка «Добавить» в шапке, в конец
+    await expect(page.locator('.segment-editor-container')).toHaveCount(4);
+    await expect.poll(() => focusedSegment(page)).toBe(3);
+    await expect(segment(page, 0)).toHaveText('foo one');
 });
 
 test('ctrl-enter-builds-like-the-run-button-and-keeps-the-segment', async ({
@@ -441,16 +459,16 @@ test('ctrl-period-sends-errors-with-the-caret-after-them', async ({ page }) => {
 test('ctrl-alt-c-and-p-switch-the-viewer-and-take-the-focus', async ({
     page,
 }) => {
-    const { analytics, mod } = await openProject(page);
+    const { analytics } = await openProject(page);
     await segment(page, 0).click();
 
-    await page.keyboard.press(`${mod}+Alt+C`);
+    await page.keyboard.press('Control+Alt+C');
     await expect(page.locator('.agent-chat')).toBeVisible();
     await expect(promptField(page)).toBeFocused();
     await page.keyboard.type('привет');
     await expect.poll(() => promptText(page)).toBe('привет');
 
-    await page.keyboard.press(`${mod}+Alt+P`);
+    await page.keyboard.press('Control+Alt+P');
     await expect(page.locator('.agent-chat')).toHaveCount(0);
     await expect
         .poll(() =>
@@ -502,14 +520,14 @@ test('altgr-letters-do-not-switch-the-viewer', async ({ page }) => {
     expect(analytics.hotkeys()).toEqual(['viewer_chat']);
 });
 
-test('ctrl-shift-i-enters-and-leaves-agent-mode', async ({ page }) => {
-    const { analytics, mod } = await openProject(page);
+test('ctrl-alt-i-enters-and-leaves-agent-mode', async ({ page }) => {
+    const { analytics } = await openProject(page);
 
-    await page.keyboard.press(`${mod}+Shift+I`);
+    await page.keyboard.press('Control+Alt+I');
     await expect(page).toHaveURL(`/project/${uuid}/agent`);
     // адрес меняется раньше, чем страница перерисуется: ждём сам режим
     await expect(page.locator('.agent-mode-pane')).toBeVisible();
-    await page.keyboard.press(`${mod}+Shift+I`);
+    await page.keyboard.press('Control+Alt+I');
     await expect(page).toHaveURL(`/project/${uuid}`);
     await expect(segment(page, 0)).toBeVisible();
 
@@ -531,7 +549,7 @@ test('ctrl-alt-j-and-k-run-synctex-in-a-latex-project', async ({ page }) => {
         (url) => url.pathname.startsWith('/files/'),
         (route) => route.fulfill({ contentType: 'application/pdf', body: PDF })
     );
-    const { analytics, mod } = await openProject(page, {
+    const { analytics } = await openProject(page, {
         latex: true,
         // без собранного PDF переходить некуда: даём проекту файл результата
         files: [{ fileName: 'main.pdf', url: '/files/main.pdf' }],
@@ -550,19 +568,19 @@ test('ctrl-alt-j-and-k-run-synctex-in-a-latex-project', async ({ page }) => {
     await expect(page.locator('.synctex-button').first()).toBeEnabled();
     await segment(page, 0).click();
 
-    await page.keyboard.press(`${mod}+Alt+J`);
+    await page.keyboard.press('Control+Alt+J');
     await expect
         .poll(() => navigation)
         .toEqual([`/api/v4/public/project/${uuid}/navigation/pdf`]);
 
     // как у кнопки «К коду»: без места в PDF подсказка, куда щёлкнуть
-    await page.keyboard.press(`${mod}+Alt+K`);
+    await page.keyboard.press('Control+Alt+K');
     await expect(
         page.getByText('Click in the PDF to choose a position.')
     ).toBeVisible();
 
     // в latex-проекте фокус встаёт на прокручиваемый PDF, а не на колонку вокруг
-    await page.keyboard.press(`${mod}+Alt+P`);
+    await page.keyboard.press('Control+Alt+P');
     await expect
         .poll(() => activeElementIs(page, '.pdf-result-scroll'))
         .toBe(true);
@@ -658,11 +676,17 @@ test.describe('on a mac', () => {
         await page.keyboard.press('Meta+Shift+E');
         await expect(fileManager).toBeVisible();
 
+        // сочетания с Alt и на macOS на Control: Cmd+Option+J и C забирает себе DevTools в Chrome
+        await page.keyboard.press('Meta+Alt+C');
+        await expect(page.locator('.agent-chat')).toHaveCount(0);
+        await page.keyboard.press('Control+Alt+C');
+        await expect(page.locator('.agent-chat')).toBeVisible();
+
         // Cmd и Ctrl дают один и тот же код
-        expect(analytics.hotkeys()).toEqual(['file_manager']);
+        expect(analytics.hotkeys()).toEqual(['file_manager', 'viewer_chat']);
         await openHotkeysHelp(page);
-        await expect(
-            page.getByRole('dialog', { name: 'Keyboard shortcuts' })
-        ).toContainText('⌘⇧E');
+        const help = page.getByRole('dialog', { name: 'Keyboard shortcuts' });
+        await expect(help).toContainText('⌘⇧E');
+        await expect(help).toContainText('⌃⌥I');
     });
 });

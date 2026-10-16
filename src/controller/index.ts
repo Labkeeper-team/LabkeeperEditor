@@ -390,14 +390,17 @@ export class Controller {
         async ({
             segmentType,
             after,
+            source,
         }: {
             segmentType: SegmentType;
             after: number;
+            source?: string;
         }) => {
             await this.wrapper('onSegmentAdded', () =>
                 this.programEditorService.onSegmentAddedViaDivider(
                     segmentType,
-                    after
+                    after,
+                    source
                 )
             );
         }

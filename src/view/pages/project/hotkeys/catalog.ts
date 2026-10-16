@@ -19,22 +19,26 @@ export type HotkeyCode =
     | 'viewer_chat'
     | 'agent_mode';
 
-/** Запись react-hotkeys-hook: mod это Cmd на macOS и Ctrl на остальных, клавиша по event.code */
+/**
+ * Запись react-hotkeys-hook: mod это Cmd на macOS и Ctrl на остальных, клавиша по event.code.
+ * Сочетания с Alt везде на Control: Chrome не отдаёт странице свои клавиши DevTools,
+ * а на macOS это Cmd+Option+I, J и C. Ctrl+Shift+I по той же причине заменён на Ctrl+Alt+I
+ */
 export const PROJECT_HOTKEYS: Record<HotkeyCode, string> = {
     search_open: 'mod+f',
     search_next: 'f3',
     search_prev: 'shift+f3',
     file_manager: 'mod+shift+e',
-    sync_to_pdf: 'mod+alt+j',
-    sync_to_editor: 'mod+alt+k',
+    sync_to_pdf: 'ctrl+alt+j',
+    sync_to_editor: 'ctrl+alt+k',
     segment_prev: 'alt+arrowup',
     segment_next: 'alt+arrowdown',
     add_latex: 'mod+shift+l',
     compile: 'mod+enter',
     send_errors_to_agent: 'mod+period',
-    viewer_pdf: 'mod+alt+p',
-    viewer_chat: 'mod+alt+c',
-    agent_mode: 'mod+shift+i',
+    viewer_pdf: 'ctrl+alt+p',
+    viewer_chat: 'ctrl+alt+c',
+    agent_mode: 'ctrl+alt+i',
 };
 
 /** Сочетания, которые работали и до GH-172: в плашке они стоят рядом с новыми */
