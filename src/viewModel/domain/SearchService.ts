@@ -111,6 +111,41 @@ export class SearchService {
         return fallback === -1 ? 0 : fallback;
     }
 
+    /** Предыдущее совпадение по документу, перед первым снова последнее */
+    previousIndexBefore(
+        matches: SearchMatch[],
+        current: SearchCurrentMatch | null
+    ): number {
+        if (matches.length === 0) {
+            return -1;
+        }
+        if (!current) {
+            return matches.length - 1;
+        }
+
+        const currentIndex = matches.findIndex(
+            (match) =>
+                match.segmentIndex === current.segmentIndex &&
+                match.from === current.from
+        );
+        if (currentIndex !== -1) {
+            return (currentIndex - 1 + matches.length) % matches.length;
+        }
+
+        // текст поменялся между переходами, идём к ближайшему совпадению до старой позиции
+        for (let index = matches.length - 1; index >= 0; index--) {
+            const match = matches[index];
+            if (
+                match.segmentIndex < current.segmentIndex ||
+                (match.segmentIndex === current.segmentIndex &&
+                    match.from < current.from)
+            ) {
+                return index;
+            }
+        }
+        return matches.length - 1;
+    }
+
     lineOfOffset(text: string, offset: number): number {
         let line = 1;
         const limit = Math.min(offset, text.length);

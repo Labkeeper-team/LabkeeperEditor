@@ -3,7 +3,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import './style.scss';
 import { AppDispatch } from '../../../../../../../store';
 import { headerHelpItems } from '../../../../../../../../model/help';
-import { useCurrentLanguage } from '../../../../../../../store/selectors/translations';
+import {
+    useCurrentLanguage,
+    useDictionary,
+} from '../../../../../../../store/selectors/translations';
+import { setShowHotkeysHelp } from '../../../../../../../store/slices/settings';
 import { controller } from '../../../../../../../../main.tsx';
 import { useDropdownClose } from '../../../../../../../components/dropdownMenu/context';
 import { useIsMobile } from '../../../../../../../hooks/useMobile';
@@ -13,9 +17,22 @@ export const HeaderHelperItems = () => {
     const dispatch = useDispatch<AppDispatch>();
     const closeMenu = useDropdownClose();
     const isMobile = useIsMobile();
+    const dictionary = useSelector(useDictionary);
 
     return (
         <div className="markdown-select-dropdown">
+            {/* GH-172: список сочетаний живёт в справке шапки, своя кнопка не поместилась бы в узкую колонку */}
+            {isMobile ? null : (
+                <span
+                    className="markdown-select-dropdown__hotkeys"
+                    onClick={() => {
+                        closeMenu?.();
+                        dispatch(setShowHotkeysHelp(true));
+                    }}
+                >
+                    {dictionary.hotkeys.open}
+                </span>
+            )}
             {headerHelpItems.map((item, index) => (
                 <span
                     key={index}

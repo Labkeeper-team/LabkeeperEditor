@@ -19,4 +19,9 @@
             background: $gray-50;
         }
     }
+    // открывает список сочетаний, а не вставляет заготовку: отделяем от заготовок
+    .markdown-select-dropdown__hotkeys {
+        padding-bottom: 8px;
+        border-bottom: 1px solid $gray-50;
+    }
 }

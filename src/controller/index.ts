@@ -390,14 +390,17 @@ export class Controller {
         async ({
             segmentType,
             after,
+            source,
         }: {
             segmentType: SegmentType;
             after: number;
+            source?: string;
         }) => {
             await this.wrapper('onSegmentAdded', () =>
                 this.programEditorService.onSegmentAddedViaDivider(
                     segmentType,
-                    after
+                    after,
+                    source
                 )
             );
         }
@@ -490,9 +493,9 @@ export class Controller {
 
     onAddSegmentButtonClickedRequest = createAsyncThunk(
         'onAddSegmentButtonClickedRequest',
-        async ({ type }: { type: SegmentType }) => {
+        async ({ type, source }: { type: SegmentType; source?: string }) => {
             await this.wrapper('onAddSegmentButtonClickedRequest', () =>
-                this.programEditorService.onAddSegmentClicked(type)
+                this.programEditorService.onAddSegmentClicked(type, source)
             );
         }
     );
@@ -565,6 +568,15 @@ export class Controller {
         async () => {
             await this.wrapper('onSearchSubmitRequest', () =>
                 this.projectPageService.onSearchSubmit()
+            );
+        }
+    );
+
+    onSearchPreviousRequest = createAsyncThunk(
+        'onSearchPreviousRequest',
+        async () => {
+            await this.wrapper('onSearchPreviousRequest', () =>
+                this.projectPageService.onSearchPrevious()
             );
         }
     );
