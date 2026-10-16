@@ -15,7 +15,6 @@ import { controller } from '../../../../../../main.tsx';
 import { useIsMobile } from '../../../../../hooks/useMobile';
 import { SynctexButton } from '../../../syncButtons';
 import { CloneProjectButton } from '../../../cloneProjectButton';
-import { HotkeysHelpButton } from '../../../hotkeys/HotkeysHelp.tsx';
 
 export const IdeHeader = () => {
     const program = useSelector(useCurrentProgram);
@@ -39,11 +38,7 @@ export const IdeHeader = () => {
                     </div>
                 ) : null}
                 {!isReadonly && <HistoryButtons />}
-                {isMobile ? (
-                    <SynctexButton direction="toPdf" />
-                ) : (
-                    <HotkeysHelpButton />
-                )}
+                {isMobile ? <SynctexButton direction="toPdf" /> : null}
             </div>
             {program?.segments.length && !isReadonly ? (
                 <AddBlock isFirst={false} />
