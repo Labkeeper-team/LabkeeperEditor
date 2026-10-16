@@ -1,4 +1,5 @@
 @use '../../styles/colors' as *;
+@use '../../styles/common' as *;
 
 .pay-page {
     display: flex;
@@ -44,4 +45,24 @@
 
 .pay-page__error {
     color: $red-10;
+}
+
+// GH-178: на телефоне поля страницы и карточки оставляли виджету уже, чем его содержимое,
+// и способы оплаты уходили за правый край. Свои поля у виджета есть, поэтому он идёт во всю ширину экрана
+@media screen and (max-width: $mobile-breakpoint) {
+    .pay-page {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .pay-page__card {
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+    }
+
+    .pay-page__widget {
+        width: auto;
+        margin: 0 -16px;
+    }
 }
