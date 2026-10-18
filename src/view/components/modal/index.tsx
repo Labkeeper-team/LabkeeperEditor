@@ -37,6 +37,36 @@ const isEditableEventTarget = (target: EventTarget | null): boolean => {
     );
 };
 
+/** Есть ли между target и окном блок со своей прокруткой, которому ещё есть куда ехать в сторону deltaY */
+const canScrollInside = (
+    target: EventTarget | null,
+    modal: HTMLElement | null,
+    deltaY: number
+): boolean => {
+    if (!modal || deltaY === 0 || !(target instanceof Element)) {
+        return false;
+    }
+    for (
+        let node: Element | null = target;
+        node && modal.contains(node);
+        node = node.parentElement
+    ) {
+        const { overflowY } = getComputedStyle(node);
+        if (overflowY !== 'auto' && overflowY !== 'scroll') {
+            continue;
+        }
+        const canMove =
+            deltaY < 0
+                ? node.scrollTop > 0
+                : Math.ceil(node.scrollTop + node.clientHeight) <
+                  node.scrollHeight;
+        if (canMove) {
+            return true;
+        }
+    }
+    return false;
+};
+
 export const Modal = ({
     showModal,
     children,
@@ -78,6 +108,10 @@ export const Modal = ({
         }
 
         const onWheel = (event: WheelEvent) => {
+            // длинное содержимое окна крутится колесом, а страница за окном стоит
+            if (canScrollInside(event.target, modalRef.current, event.deltaY)) {
+                return;
+            }
             event.preventDefault();
         };
         const onTouchMove = (event: TouchEvent) => {

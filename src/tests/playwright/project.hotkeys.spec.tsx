@@ -615,6 +615,44 @@ test('help-lists-the-hotkeys-and-esc-closes-only-it', async ({ page }) => {
     await expect(fileManager).toBeVisible();
 });
 
+test('help-entry-in-the-menu-is-shaped-like-the-other-items', async ({
+    page,
+}) => {
+    await openProject(page);
+    await page
+        .locator('.code-settings-header-container .dropdown-menu-container')
+        .nth(1)
+        .click();
+    const menu = await page
+        .locator('.dropdown-menu-content-container')
+        .boundingBox();
+    const items = page.locator('.markdown-select-dropdown > span');
+    const entry = await items.nth(0).boundingBox();
+    const next = await items.nth(1).boundingBox();
+    // подсветка при наведении не выходит за меню и такой же высоты, как у соседей
+    expect(entry!.x + entry!.width).toBeLessThanOrEqual(menu!.x + menu!.width);
+    expect(next!.x + next!.width).toBeLessThanOrEqual(menu!.x + menu!.width);
+    expect(entry!.height).toBeCloseTo(next!.height, 0);
+});
+
+test('help-scrolls-with-the-wheel-inside-the-screen', async ({ page }) => {
+    // экран ниже списка: без прокрутки его конец не виден
+    await page.setViewportSize({ width: 1360, height: 700 });
+    await openProject(page);
+    await openHotkeysHelp(page);
+    const help = page.locator('.hotkeys-help');
+    await expect(help).toBeVisible();
+    const box = await help.boundingBox();
+    expect(box!.y + box!.height).toBeLessThan(700 - 40);
+
+    await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
+    await page.mouse.wheel(0, 2000);
+    await expect
+        .poll(() => help.evaluate((node) => node.scrollTop))
+        .toBeGreaterThan(0);
+    await expect(help.getByText('Agent or Ask mode')).toBeInViewport();
+});
+
 // прежние сочетания: Ctrl+S собирал проект из сегментов и сохранял открытый файл, так и осталось
 test('ctrl-s-still-builds-from-segments-and-saves-an-open-file', async ({
     page,

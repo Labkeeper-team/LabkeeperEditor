@@ -8,6 +8,8 @@
     gap: 5px;
     span {
         width: 100%;
+        // поля внутри ширины: иначе подсветка при наведении вылезает за правый край меню
+        box-sizing: border-box;
         text-align: left;
         padding: 4px 8px;
         color: $gray-10;
@@ -19,9 +21,12 @@
             background: $gray-50;
         }
     }
-    // открывает список сочетаний, а не вставляет заготовку: отделяем от заготовок
-    .markdown-select-dropdown__hotkeys {
-        padding-bottom: 8px;
-        border-bottom: 1px solid $gray-50;
+    // открывает список сочетаний, а не вставляет заготовку: отделяем от заготовок линией
+    // вне пункта, чтобы подсветка у него была такая же, как у остальных
+    .markdown-select-dropdown__divider {
+        width: 100%;
+        height: 1px;
+        flex-shrink: 0;
+        background: $gray-50;
     }
 }
