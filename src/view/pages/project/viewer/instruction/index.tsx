@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { ReactNode, useRef } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Swiper as SwiperType } from 'swiper';
 import { SectorHeader } from '../../../../components/littleSectorHeader';
@@ -23,6 +23,11 @@ import { agentModeInstructions, instructions } from '../../../../../model/help';
 import { setInstructionExpanded } from '../../../../store/slices/persistence';
 import { useInstructionsExpanded } from '../../../../store/selectors/program';
 import { useIsAgentMode } from '../../../../hooks/useAgentMode';
+import { useIsMobile } from '../../../../hooks/useMobile';
+import { HotkeysSlide } from '../../hotkeys/HotkeysSlide.tsx';
+
+/** Слайд о сочетаниях идёт после первого документа и агента: сначала главное, потом ускорение */
+const HOTKEYS_SLIDE_INDEX = 2;
 
 export const Instruction = () => {
     const swiperRef = useRef<SwiperType | null>(null);
@@ -31,7 +36,16 @@ export const Instruction = () => {
     const dispatch = useDispatch();
     const language = useSelector(useCurrentLanguage);
     const isAgentMode = useIsAgentMode();
-    const slides = isAgentMode ? agentModeInstructions : instructions;
+    const isMobile = useIsMobile();
+    const slides: ReactNode[] = (
+        isAgentMode ? agentModeInstructions : instructions
+    ).map((instruction, index) => (
+        <InstructionItemComponent key={index} item={instruction[language]} />
+    ));
+    // GH-172: на телефоне клавиатуры нет, а в агентском режиме почти все сочетания про редактор
+    if (!isAgentMode && !isMobile) {
+        slides.splice(HOTKEYS_SLIDE_INDEX, 0, <HotkeysSlide key="hotkeys" />);
+    }
     const hasSeveralSlides = slides.length > 1;
 
     return (
@@ -66,12 +80,8 @@ export const Instruction = () => {
                         onSlideChange={(sw) => sw.activeIndex}
                         modules={[Pagination, Navigation]}
                     >
-                        {slides.map((instruction, index) => (
-                            <SwiperSlide key={index}>
-                                <InstructionItemComponent
-                                    item={instruction[language]}
-                                />
-                            </SwiperSlide>
+                        {slides.map((slide, index) => (
+                            <SwiperSlide key={index}>{slide}</SwiperSlide>
                         ))}
                     </Swiper>
                     {hasSeveralSlides ? (

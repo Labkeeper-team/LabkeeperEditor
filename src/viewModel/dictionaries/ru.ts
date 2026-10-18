@@ -182,6 +182,7 @@ export const ru: Translations = {
     hotkeys: {
         open: 'Сочетания клавиш',
         title: 'Сочетания клавиш',
+        slide_more: 'Остальные в меню справки:',
         sections: {
             project: 'Проект',
             editing: 'Правка',

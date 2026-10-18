@@ -653,6 +653,34 @@ test('help-scrolls-with-the-wheel-inside-the-screen', async ({ page }) => {
     await expect(help.getByText('Agent or Ask mode')).toBeInViewport();
 });
 
+test('help-carousel-has-a-hotkeys-slide-that-opens-the-list', async ({
+    page,
+}) => {
+    const { mod } = await openProject(page);
+    const carousel = page.locator('.labkeeper-instruction-container');
+    // третьим, после первого документа и агентского режима
+    const slide = carousel.locator('.swiper-slide').nth(2);
+    await expect(slide.locator('.hotkeys-slide')).toHaveCount(1);
+    await expect(slide).toContainText(
+        `Build the project ${mod === 'Meta' ? '⌘' : 'Ctrl'}Enter`
+    );
+
+    const next = carousel.locator('.nav-button.right .image-button');
+    await next.click();
+    await next.click();
+    await slide.getByRole('button', { name: 'Keyboard shortcuts' }).click();
+    await expect(
+        page.getByRole('dialog', { name: 'Keyboard shortcuts' })
+    ).toBeVisible();
+    await page.keyboard.press('Escape');
+
+    // в агентском режиме сочетания редактора не к месту
+    await page.keyboard.press('Control+Alt+I');
+    await expect(page.locator('.agent-mode-pane')).toBeVisible();
+    await expect(carousel.locator('.instruction-slide')).not.toHaveCount(0);
+    await expect(carousel.locator('.hotkeys-slide')).toHaveCount(0);
+});
+
 // прежние сочетания: Ctrl+S собирал проект из сегментов и сохранял открытый файл, так и осталось
 test('ctrl-s-still-builds-from-segments-and-saves-an-open-file', async ({
     page,
