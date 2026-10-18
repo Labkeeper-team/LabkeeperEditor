@@ -1,0 +1,33 @@
+@use '../../../styles/colors' as *;
+
+.hotkey-keys {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.hotkey-keys__combo {
+    display: inline-flex;
+    gap: 3px;
+}
+
+.hotkey-keys__or {
+    color: $gray-20;
+}
+
+.hotkey-keys kbd {
+    min-width: 22px;
+    padding: 1px 6px;
+    box-sizing: border-box;
+    border: 1px solid $gray-40;
+    border-bottom-width: 2px;
+    border-radius: 6px;
+    background: $gray-60;
+    color: $gray-10;
+    font-family: inherit;
+    font-size: 12px;
+    line-height: 18px;
+    text-align: center;
+    white-space: nowrap;
+}

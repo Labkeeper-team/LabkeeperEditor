@@ -176,6 +176,7 @@ export const en: Translations = {
     hotkeys: {
         open: 'Keyboard shortcuts',
         title: 'Keyboard shortcuts',
+        slide_more: 'More in the help menu:',
         sections: {
             project: 'Project',
             editing: 'Editing',

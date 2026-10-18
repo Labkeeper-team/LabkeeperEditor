@@ -170,6 +170,8 @@ export interface Translations {
     hotkeys: {
         open: string;
         title: string;
+        /** слайд в карусели советов: полный список открывается ссылкой под пунктами */
+        slide_more: string;
         sections: {
             project: string;
             editing: string;

@@ -1,0 +1,51 @@
+@use '../../../styles/colors' as *;
+
+// клавиши в строке пункта: ниже обычных, чтобы строка не росла
+.hotkey-keys.hotkeys-slide__keys {
+    gap: 4px;
+    vertical-align: middle;
+
+    kbd {
+        min-width: 18px;
+        padding: 0 4px;
+        border-radius: 4px;
+        background: $white;
+        font-size: 11px;
+        line-height: 15px;
+    }
+}
+
+.hotkeys-slide__open {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: $button-action-blue;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+// крупные клавиши на месте картинки
+.hotkey-keys.hotkeys-slide__hero {
+    flex-wrap: nowrap;
+    gap: 8px;
+
+    .hotkey-keys__combo {
+        gap: 8px;
+    }
+
+    kbd {
+        min-width: 56px;
+        padding: 10px 14px;
+        border-width: 1px 1px 4px;
+        border-radius: 10px;
+        background: $white;
+        font-size: 18px;
+        font-weight: 500;
+        line-height: 24px;
+    }
+}

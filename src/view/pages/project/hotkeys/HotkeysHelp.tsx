@@ -1,41 +1,15 @@
-import { Fragment } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { Modal } from '../../../components/modal';
 import { AppDispatch, StorageState } from '../../../store';
 import { setShowHotkeysHelp } from '../../../store/slices/settings';
 import { useDictionary } from '../../../store/selectors/translations';
-import {
-    EXISTING_HOTKEYS,
-    hotkeyLabel,
-    isMacPlatform,
-    PROJECT_HOTKEYS,
-} from './catalog.ts';
+import { EXISTING_HOTKEYS, PROJECT_HOTKEYS } from './catalog.ts';
+import { Keys } from './Keys.tsx';
 
 import './style.scss';
 
 type Row = { label: string; hotkeys: readonly string[] };
-
-const Keys = ({
-    hotkeys,
-    mac,
-}: {
-    hotkeys: readonly string[];
-    mac: boolean;
-}) => (
-    <span className="hotkeys-help__keys">
-        {hotkeys.map((hotkey, index) => (
-            <Fragment key={hotkey}>
-                {index > 0 ? <span className="hotkeys-help__or">/</span> : null}
-                <span className="hotkeys-help__combo">
-                    {hotkeyLabel(hotkey, mac).map((key) => (
-                        <kbd key={key}>{key}</kbd>
-                    ))}
-                </span>
-            </Fragment>
-        ))}
-    </span>
-);
 
 /** GH-172: плашка со всеми сочетаниями страницы проекта, новыми и прежними. Esc закрывает её как любое окно */
 export const HotkeysHelpModal = () => {
@@ -45,7 +19,6 @@ export const HotkeysHelpModal = () => {
         (state: StorageState) => state.settings.showHotkeysHelp
     );
     const text = dictionary.hotkeys;
-    const mac = isMacPlatform();
     const actions = text.actions;
 
     const sections: { title: string; rows: Row[] }[] = [
@@ -156,7 +129,10 @@ export const HotkeysHelpModal = () => {
                                 >
                                     <dt>{row.label}</dt>
                                     <dd>
-                                        <Keys hotkeys={row.hotkeys} mac={mac} />
+                                        <Keys
+                                            className="hotkeys-help__keys"
+                                            hotkeys={row.hotkeys}
+                                        />
                                     </dd>
                                 </div>
                             ))}
