@@ -31,6 +31,7 @@ import {
 import { AgentModePane } from './agentMode';
 import { useProjectHotkeys } from './hotkeys/useProjectHotkeys.ts';
 import { HotkeysHelpModal } from './hotkeys/HotkeysHelp.tsx';
+import { HotkeyTooltip } from './hotkeys/HotkeyTooltip.tsx';
 
 export const ProjectPage = () => {
     useHunkActionHandler();
@@ -272,6 +273,7 @@ export const ProjectPage = () => {
             </div>
             <DeleteFilesModal />
             <HotkeysHelpModal />
+            <HotkeyTooltip />
         </div>
     );
 };

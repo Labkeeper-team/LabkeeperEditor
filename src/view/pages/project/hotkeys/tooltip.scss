@@ -1,0 +1,45 @@
+@use '../../../styles/colors' as *;
+
+// поверх панелей и меню редактора, но под окнами
+.hotkey-tooltip {
+    position: fixed;
+    z-index: 99;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 8px;
+    border-radius: 6px;
+    background: $gray-10;
+    color: $white;
+    font-size: 12px;
+    line-height: 16px;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba($gray-10, 0.25);
+    pointer-events: none;
+    animation: hotkey-tooltip-in 0.12s ease-out;
+}
+
+@keyframes hotkey-tooltip-in {
+    from {
+        opacity: 0;
+    }
+}
+
+.hotkey-keys.hotkey-tooltip__keys {
+    gap: 4px;
+
+    .hotkey-keys__or {
+        color: $gray-30;
+    }
+
+    kbd {
+        min-width: 18px;
+        padding: 0 4px;
+        border: 1px solid rgba($white, 0.3);
+        border-radius: 4px;
+        background: rgba($white, 0.12);
+        color: $white;
+        font-size: 11px;
+        line-height: 16px;
+    }
+}

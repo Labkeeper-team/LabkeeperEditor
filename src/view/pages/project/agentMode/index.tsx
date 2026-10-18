@@ -6,6 +6,7 @@ import { useIsMobile } from '../../../hooks/useMobile';
 import { setMobileView } from '../../../store/slices/settings';
 import { AgentChat } from '../viewer/chat';
 import { ClearHistoryButton } from '../viewer/chat/ClearHistoryButton.tsx';
+import { hotkeyHint } from '../hotkeys/hint.ts';
 
 import './style.scss';
 
@@ -36,6 +37,7 @@ export const AgentModePane = () => {
                 <button
                     type="button"
                     className="agent-mode-pane__leave"
+                    {...hotkeyHint('agent_mode')}
                     onClick={openEditor}
                 >
                     {dictionary.agent_mode.leave}

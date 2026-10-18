@@ -9,9 +9,12 @@ import { CheckIcon, WarningIcon } from '../../../../../../icons';
 import './style.scss';
 import { AppDispatch, StorageState } from '../../../../../../store';
 import { controller } from '../../../../../../../main.tsx';
+import { useDictionary } from '../../../../../../store/selectors/translations';
+import { hotkeyHint } from '../../../../hotkeys/hint.ts';
 
 export const HistoryButtons = () => {
     const dispatch = useDispatch<AppDispatch>();
+    const actions = useSelector(useDictionary).hotkeys.actions;
     const undoEnabled = useSelector(
         (state: StorageState) => state.ide.undoEnabled
     );
@@ -115,6 +118,7 @@ export const HistoryButtons = () => {
                 onClick={() =>
                     dispatch(controller.onPrevVersionButtonClickedRequest())
                 }
+                {...hotkeyHint('undo', actions.undo)}
                 className={classNames('history-button revert', {
                     disabled: !undoEnabled,
                 })}
@@ -125,6 +129,7 @@ export const HistoryButtons = () => {
                 onClick={() =>
                     dispatch(controller.onNextVersionButtonClickedRequest())
                 }
+                {...hotkeyHint('redo', actions.redo)}
                 className={classNames('history-button', {
                     disabled: !redoEnabled,
                 })}

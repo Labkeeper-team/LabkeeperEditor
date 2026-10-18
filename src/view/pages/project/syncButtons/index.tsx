@@ -3,6 +3,7 @@ import classNames from 'classnames';
 import { RightArrowIcon } from '../../../icons';
 import { useIsMobile } from '../../../hooks/useMobile';
 import { useSynctexNavigation } from './useSynctexNavigation.ts';
+import { hotkeyHint } from '../hotkeys/hint.ts';
 
 import './style.scss';
 
@@ -32,7 +33,9 @@ export const SynctexButton = ({ direction, className }: SynctexButtonProps) => {
                 },
                 className
             )}
-            title={title}
+            // у выключенной кнопки событий мыши нет, и подсказку с клавишами не показать: остаётся родная
+            title={canNavigate ? undefined : title}
+            {...hotkeyHint(isToPdf ? 'sync_to_pdf' : 'sync_to_editor', title)}
             aria-label={title}
             disabled={!canNavigate}
             onMouseDown={

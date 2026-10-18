@@ -14,6 +14,7 @@ import { groupCompileErrors } from '../../../../../viewModel/utils/compileErrors
 import { ErrorGroupedItem } from './errorGroupItem';
 import { AppDispatch, StorageState } from '../../../../store';
 import { controller } from '../../../../../main.tsx';
+import { hotkeyHint } from '../../hotkeys/hint.ts';
 
 export const ProblemViewer = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -48,6 +49,7 @@ export const ProblemViewer = () => {
                         <button
                             type="button"
                             className="problem-viewer-send-to-agent"
+                            {...hotkeyHint('send_errors_to_agent')}
                             onClick={() =>
                                 dispatch(
                                     controller.onSendErrorsToAgentRequest()

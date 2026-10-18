@@ -12,4 +12,6 @@ export interface ButtnProps {
     color: 'green' | 'blue' | 'gray' | 'inherit';
     type?: 'rounded';
     buttonType?: 'submit' | 'reset';
+    /** data-атрибуты кнопки, например для подсказки при наведении */
+    dataAttributes?: Record<`data-${string}`, string | undefined>;
 }

@@ -7,6 +7,7 @@ import { useIsProjectReadonly } from '../../../store/selectors/program';
 import { useAgentModeNavigation } from '../../../hooks/useAgentMode';
 import { ClearHistoryButton } from './chat/ClearHistoryButton.tsx';
 import { useSelectViewerTab } from './useSelectViewerTab.ts';
+import { hotkeyHint } from '../hotkeys/hint.ts';
 
 export const ViewerTabs = () => {
     const dictionary = useSelector(useDictionary);
@@ -39,6 +40,9 @@ export const ViewerTabs = () => {
                         'viewer-tabs__tab--active': viewerTab === tab.id,
                     })}
                     onClick={() => selectViewerTab(tab.id)}
+                    {...hotkeyHint(
+                        tab.id === 'chat' ? 'viewer_chat' : 'viewer_pdf'
+                    )}
                 >
                     {tab.label}
                 </button>
@@ -48,7 +52,7 @@ export const ViewerTabs = () => {
             <button
                 type="button"
                 className="viewer-tabs__agent-mode"
-                title={dictionary.agent_mode.enter_hint}
+                {...hotkeyHint('agent_mode', dictionary.agent_mode.enter_hint)}
                 aria-label={dictionary.agent_mode.enter}
                 onClick={() => enterAgentMode('viewer_tab')}
             >

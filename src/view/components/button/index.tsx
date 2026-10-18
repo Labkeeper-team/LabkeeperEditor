@@ -21,6 +21,7 @@ export const Button = (props: ButtnProps) => {
             style={props.style}
             disabled={props.disabled}
             onClick={props.onPress}
+            {...props.dataAttributes}
         >
             <span style={{ overflow: 'hidden' }}>{props.title}</span>
             {props.titleIcon ? (props.titleIcon() as ReactNode) : null}
