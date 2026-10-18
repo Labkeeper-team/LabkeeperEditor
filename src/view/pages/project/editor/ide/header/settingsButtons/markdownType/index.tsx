@@ -23,15 +23,21 @@ export const HeaderHelperItems = () => {
         <div className="markdown-select-dropdown">
             {/* GH-172: список сочетаний живёт в справке шапки, своя кнопка не поместилась бы в узкую колонку */}
             {isMobile ? null : (
-                <span
-                    className="markdown-select-dropdown__hotkeys"
-                    onClick={() => {
-                        closeMenu?.();
-                        dispatch(setShowHotkeysHelp(true));
-                    }}
-                >
-                    {dictionary.hotkeys.open}
-                </span>
+                <>
+                    <span
+                        className="markdown-select-dropdown__hotkeys"
+                        onClick={() => {
+                            closeMenu?.();
+                            dispatch(setShowHotkeysHelp(true));
+                        }}
+                    >
+                        {dictionary.hotkeys.open}
+                    </span>
+                    <div
+                        className="markdown-select-dropdown__divider"
+                        role="separator"
+                    />
+                </>
             )}
             {headerHelpItems.map((item, index) => (
                 <span
