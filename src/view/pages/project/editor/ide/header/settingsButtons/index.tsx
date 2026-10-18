@@ -23,6 +23,7 @@ import { setShowSearch } from '../../../../../../store/slices/settings';
 import { controller } from '../../../../../../../main.tsx';
 import { useIsMobile } from '../../../../../../hooks/useMobile';
 import { SEARCH_INPUT_ID } from '../../../../hotkeys/focus.ts';
+import { hotkeyHint } from '../../../../hotkeys/hint.ts';
 
 export const SettingsButton = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -56,6 +57,10 @@ export const SettingsButton = () => {
             </div>
             <div
                 onClick={() => dispatch(setShowSearch(true))}
+                {...hotkeyHint(
+                    'search_open',
+                    dictionary.hotkeys.actions.search_open
+                )}
                 className={classNames('action-button', {
                     'action-button--search-hidden': showSearch,
                 })}

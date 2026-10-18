@@ -681,6 +681,92 @@ test('help-carousel-has-a-hotkeys-slide-that-opens-the-list', async ({
     await expect(carousel.locator('.hotkeys-slide')).toHaveCount(0);
 });
 
+test('buttons-show-their-hotkeys-on-hover-and-hide-them-on-click', async ({
+    page,
+}) => {
+    const { mod } = await openProject(page);
+    const mac = mod === 'Meta';
+    const tip = page.locator('.hotkey-tooltip');
+
+    // у значка подсказка называет действие
+    await page
+        .locator('.code-settings-header-container .action-button')
+        .nth(2)
+        .hover();
+    await expect(tip).toBeVisible();
+    await expect(tip).toHaveText(`Search in segments${mac ? '⌘' : 'Ctrl'}F`);
+    // клавиша уводит внимание к набору
+    await page.keyboard.press('Shift');
+    await expect(tip).toBeHidden();
+
+    // у кнопки с текстом только клавиши, а клик подсказку прячет
+    const pdfTab = page.getByRole('tab', { name: 'Final document' });
+    await pdfTab.hover();
+    await expect(tip).toHaveText(mac ? '⌃⌥P' : 'CtrlAltP');
+    await pdfTab.click();
+    await expect(tip).toBeHidden();
+
+    // прежние сочетания тоже подписаны
+    await page.locator('.history-button.revert').hover();
+    await expect(tip).toHaveText(`Undo${mac ? '⌘' : 'Ctrl'}Z`);
+
+    // нажатая кнопка подсказку не зовёт, пока курсор с неё не ушёл: сборка
+    // перерисовывает «Run» под курсором, и подсказка не должна всплыть снова
+    const run = page.locator('.run-button');
+    await run.hover();
+    await expect(tip).toBeVisible();
+    await run.click();
+    await expect(tip).toBeHidden();
+    await expect(page.locator('#compile-result')).toBeVisible();
+    await page.waitForTimeout(1500);
+    await expect(tip).toBeHidden();
+    // и движение внутри кнопки, с подписи на её поле, подсказку не зовёт
+    await run.hover({ position: { x: 4, y: 4 } });
+    await page.waitForTimeout(1000);
+    await expect(tip).toBeHidden();
+    // ушёл и сразу вернулся: снова подсказывает
+    await page.mouse.move(5, 5);
+    await run.hover();
+    await expect(tip).toBeVisible();
+
+    // родная подсказка браузера рядом со своей не всплывает
+    await expect(page.locator('.viewer-tabs__agent-mode')).not.toHaveAttribute(
+        'title'
+    );
+});
+
+test('run-tooltip-stays-above-and-keeps-the-errors-visible', async ({
+    page,
+}) => {
+    await openProject(page, {
+        program: {
+            segments: [
+                {
+                    id: 1,
+                    type: 'computational',
+                    text: 'a = x',
+                    parameters: { visible: true },
+                },
+            ],
+            parameters: { roundStrategy: 'noRound' },
+        },
+        compileErrors: true,
+    });
+    const run = page.locator('.run-button');
+    await run.click();
+    // панель ошибок раскрылась, и под кнопкой подсказке хватило бы места, но там список ошибок
+    const errors = page.locator('.labkeeper-problem-viewer-container');
+    await expect(errors.getByText(/No such variable/)).toBeVisible();
+    await page.mouse.move(5, 5);
+    await run.hover();
+
+    const tip = page.locator('.hotkey-tooltip');
+    await expect(tip).toBeVisible();
+    const tipBox = await tip.boundingBox();
+    const runBox = await run.boundingBox();
+    expect(tipBox!.y + tipBox!.height).toBeLessThanOrEqual(runBox!.y);
+});
+
 // прежние сочетания: Ctrl+S собирал проект из сегментов и сохранял открытый файл, так и осталось
 test('ctrl-s-still-builds-from-segments-and-saves-an-open-file', async ({
     page,
