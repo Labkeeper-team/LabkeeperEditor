@@ -251,7 +251,10 @@ MockViewModelRepositoryState {
   "currentView": "closed",
   "editModeForFilename": false,
   "editModeForProjectTitle": false,
-  "editorNavigationTarget": null,
+  "editorNavigationTarget": {
+    "line": 1,
+    "segmentIndex": 1,
+  },
   "email": "",
   "emailRequest": "unknown",
   "ephemeralFolders": [],

@@ -536,6 +536,10 @@ export class ProgramEditorService {
         this.programService.addSegmentAfterIndex(segmentType, after);
         this.repository.ideViewModelRepository.markProgramChanged();
         this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(after + 1);
+        this.repository.ideViewModelRepository.setEditorNavigationTarget({
+            segmentIndex: after + 1,
+            line: 1,
+        });
         await this.loaderService.segmentEditorSaveProgram();
         this.ideService.onProgramUpdated();
     };
