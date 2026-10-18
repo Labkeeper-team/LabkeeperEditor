@@ -22,10 +22,14 @@ import {
 } from 'react';
 import { useDispatch, useSelector, useStore } from 'react-redux';
 
-import { CompileErrorResult } from '../../../../../../../model/domain';
+import {
+    CompileErrorResult,
+    isDiagramSegmentType,
+} from '../../../../../../../model/domain';
 import { resolveSegmentId } from '../../../../../../../viewModel/utils/segmentId.ts';
 import { customLanguageSupport } from './customLanguage';
 import { latex } from 'codemirror-lang-latex';
+import { mermaid } from 'codemirror-lang-mermaid';
 import {
     getLatexSpellcheckLint,
     getMarkdownSpellcheckLint,
@@ -788,6 +792,12 @@ export const SegmentEditor = memo(
                     autoCloseBrackets: false,
                 });
             }
+            if (t === 'mermaid') {
+                return mermaid();
+            }
+            if (t === 'drawio') {
+                return langs.xml();
+            }
             return undefined;
         }, [segment?.type]);
 
@@ -803,7 +813,8 @@ export const SegmentEditor = memo(
             () =>
                 segment?.type === 'md' ||
                 segment?.type === 'latex' ||
-                segment?.type === 'computational'
+                segment?.type === 'computational' ||
+                isDiagramSegmentType(segment?.type)
                     ? SEGMENT_CM_SPELLCHECK_OFF
                     : SEGMENT_CM_SPELLCHECK,
             [segment?.type]

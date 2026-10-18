@@ -20,17 +20,25 @@ export const AddBlock = (props: AddBlockProps) => {
     const isMobile = useIsMobile(1024);
     const dictionary = useSelector(useDictionary);
 
+    const diagramSelectOptions = [
+        { value: 'mermaid', label: dictionary.label_add_mermaid },
+        { value: 'plantuml', label: dictionary.label_add_plantuml },
+        { value: 'drawio', label: dictionary.label_add_drawio },
+    ];
+
     const headerSelectOptions = [
         { value: 'md', label: dictionary.label_add_markdown },
         { value: 'latex', label: dictionary.label_add_latex },
         { value: 'asciimath', label: dictionary.label_add_asciimath },
         { value: 'computational', label: dictionary.label_add_code },
+        ...diagramSelectOptions,
     ];
 
     const emptyProjectSelectOptions = [
         { value: 'md', label: dictionary.label_add_markdown },
         { value: 'asciimath', label: dictionary.label_add_asciimath },
         { value: 'computational', label: dictionary.label_add_code },
+        ...diagramSelectOptions,
     ];
 
     const addMoreTitle = isMobile

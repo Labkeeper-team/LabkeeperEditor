@@ -3,9 +3,11 @@ import { ProgramService } from '../../model/service/ProgramService.ts';
 import {
     CompileSuccessResult,
     ComputationalOutputSegment,
+    isDiagramSegmentType,
     LabkeeperFile,
     Program,
     Segment,
+    SegmentType,
     TextOutputSegment,
 } from '../../model/domain.ts';
 import { ResetService } from './ResetService.ts';
@@ -80,6 +82,10 @@ export class IdeService {
         return segment.type === 'latex' || segment.type === 'computational';
     }
 
+    private waitsForComputation(type: SegmentType, text: string): boolean {
+        return !isDiagramSegmentType(type) && this.hasReplaceableDollars(text);
+    }
+
     onSegmentUpdate = (segmentIndex: number, segmentText: string) => {
         if (
             !this.isRenderedOnServer(
@@ -89,7 +95,7 @@ export class IdeService {
             const segmentType =
                 this.programService.getCurrentProgram().segments[segmentIndex]
                     .type;
-            if (this.hasReplaceableDollars(segmentText)) {
+            if (this.waitsForComputation(segmentType, segmentText)) {
                 this.schedulePreviewUpdate(() => {
                     this.repository.projectViewModelRepository.setCompileResultForSegment(
                         segmentIndex,
@@ -176,7 +182,10 @@ export class IdeService {
             ) {
                 if (
                     this.isRenderedOnServer(program.segments[i]) ||
-                    this.hasReplaceableDollars(program.segments[i].text)
+                    this.waitsForComputation(
+                        program.segments[i].type,
+                        program.segments[i].text
+                    )
                 ) {
                     if (program.segments[i].parameters.visible) {
                         output = {
@@ -196,7 +205,10 @@ export class IdeService {
                 }
             } else if (
                 !this.isRenderedOnServer(program.segments[i]) &&
-                !this.hasReplaceableDollars(program.segments[i].text)
+                !this.waitsForComputation(
+                    program.segments[i].type,
+                    program.segments[i].text
+                )
             ) {
                 output = {
                     type: program.segments[i].type,

@@ -15,6 +15,9 @@ export const en: Translations = {
     warning_dontuselongvarioables: 'Do not use long name variables',
 
     label_add_asciimath: 'Simple-formula',
+    label_add_mermaid: 'Mermaid',
+    label_add_plantuml: 'PlantUML',
+    label_add_drawio: 'Draw.io',
     label_add_markdown: 'Markdown',
     label_add_markdown_short: 'MD',
     label_add_code: 'Computation',
@@ -29,6 +32,9 @@ export const en: Translations = {
         computational: 'Computation',
         latex: 'Latex',
         asciimath: 'Simple-formula',
+        mermaid: 'Mermaid',
+        plantuml: 'PlantUML',
+        drawio: 'Draw.io',
     },
 
     segment_error: {
@@ -42,6 +48,9 @@ export const en: Translations = {
         markdown: 'Markdown',
         latex: 'Latex',
         asciimath: 'Simple-formula',
+        mermaid: 'Mermaid',
+        plantuml: 'PlantUML',
+        drawio: 'Draw.io',
     },
     latex_boundary: {
         header: 'LaTeX heading',

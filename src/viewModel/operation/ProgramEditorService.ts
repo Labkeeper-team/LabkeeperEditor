@@ -220,6 +220,9 @@ export class ProgramEditorService {
                                 break;
                             }
                             case 'asciimath':
+                            case 'mermaid':
+                            case 'plantuml':
+                            case 'drawio':
                                 return;
                         }
                         await thisCopy.loaderService.loadFiles(

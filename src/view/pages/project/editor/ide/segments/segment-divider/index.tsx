@@ -92,6 +92,18 @@ export const SegmentDivider: React.FC<SegmentDividerProps> = ({
                 type: 'computational',
                 text: dictionary.segment_divider.computation,
             },
+            {
+                type: 'mermaid',
+                text: dictionary.segment_divider.mermaid,
+            },
+            {
+                type: 'plantuml',
+                text: dictionary.segment_divider.plantuml,
+            },
+            {
+                type: 'drawio',
+                text: dictionary.segment_divider.drawio,
+            },
         ],
         [dictionary]
     );

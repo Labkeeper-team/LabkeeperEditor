@@ -30,6 +30,29 @@
     }
 }
 
+.diagram-segment-image {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto;
+}
+.diagram-segment-error {
+    color: $red-30;
+    font-size: 13px;
+    white-space: pre-wrap;
+    @media print {
+        display: none;
+    }
+}
+.diagram-segment-drawio {
+    width: 100%;
+    height: 400px;
+    // у iframe react-drawio инлайн min-width 400px, на узком экране он вылезает за колонку
+    .diagrams-iframe {
+        min-width: 0 !important;
+    }
+}
+
 .result-markdown {
     word-wrap: break-word;
     width: 100%;

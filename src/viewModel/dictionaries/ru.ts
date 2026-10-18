@@ -17,6 +17,9 @@ export const ru: Translations = {
     warning_dontuselongvarioables: 'Не используйте длинные имена переменных',
 
     label_add_asciimath: 'Простая формула',
+    label_add_mermaid: 'Mermaid',
+    label_add_plantuml: 'PlantUML',
+    label_add_drawio: 'Draw.io',
     label_add_markdown: 'Маркдаун',
     label_add_markdown_short: 'MD',
     label_save_to_pdf: 'Сохранить в PDF',
@@ -31,6 +34,9 @@ export const ru: Translations = {
         computational: 'Вычисление',
         latex: 'Latex',
         asciimath: 'Простая формула',
+        mermaid: 'Mermaid',
+        plantuml: 'PlantUML',
+        drawio: 'Draw.io',
     },
 
     segment_error: {
@@ -44,6 +50,9 @@ export const ru: Translations = {
         markdown: 'Маркдаун',
         latex: 'Latex',
         asciimath: 'Простая формула',
+        mermaid: 'Mermaid',
+        plantuml: 'PlantUML',
+        drawio: 'Draw.io',
     },
     latex_boundary: {
         header: 'LaTeX заголовок',

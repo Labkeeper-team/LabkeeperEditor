@@ -10,6 +10,11 @@ import { CodeSegment } from './code-segment';
 import { MdSegment } from './md-segment';
 import { LatexSegment } from './latex-segment.tsx';
 import { AsciimathSegment } from './asciimath-segment.tsx';
+import {
+    DrawioSegment,
+    MermaidSegment,
+    PlantumlSegment,
+} from './diagram-segment.tsx';
 import { useScrollableToActive } from '../../../../../hooks/useScrollableToActive.ts';
 import { AppDispatch } from '../../../../../store/index.ts';
 import { controller } from '../../../../../../main.tsx';
@@ -63,6 +68,12 @@ const SegmentWrapper = memo(({ index }: { index: number }) => {
                 return LatexSegment;
             case 'asciimath':
                 return AsciimathSegment;
+            case 'mermaid':
+                return MermaidSegment;
+            case 'plantuml':
+                return PlantumlSegment;
+            case 'drawio':
+                return DrawioSegment;
             default:
                 return () => <div />;
         }

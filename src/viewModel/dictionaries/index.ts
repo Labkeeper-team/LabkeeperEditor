@@ -20,6 +20,9 @@ export interface Translations {
 
     label_add_latex: string;
     label_add_asciimath: string;
+    label_add_mermaid: string;
+    label_add_plantuml: string;
+    label_add_drawio: string;
     label_add_markdown: string;
     label_add_markdown_short: string;
     label_add_more: string;
@@ -33,6 +36,9 @@ export interface Translations {
         computational: string;
         latex: string;
         asciimath: string;
+        mermaid: string;
+        plantuml: string;
+        drawio: string;
     };
 
     segment_error: {
@@ -46,6 +52,9 @@ export interface Translations {
         markdown: string;
         latex: string;
         asciimath: string;
+        mermaid: string;
+        plantuml: string;
+        drawio: string;
     };
     latex_boundary: {
         header: string;
