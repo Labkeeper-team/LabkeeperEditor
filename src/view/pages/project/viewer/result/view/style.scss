@@ -173,3 +173,55 @@ mjx-stretchy-v {
 .markdown-body li {
     margin-bottom: 0.25em;
 }
+
+// GH-171: схемы mermaid, plantuml и drawio
+.result-diagram {
+    position: relative;
+}
+
+.result-diagram__picture {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto;
+    text-align: center;
+
+    svg {
+        max-width: 100%;
+        height: auto;
+    }
+}
+
+.result-diagram__loading {
+    padding: 12px 0;
+    color: $gray-30;
+    text-align: center;
+}
+
+.result-diagram__error {
+    padding: 8px 12px;
+    border-left: 3px solid $red-30;
+    border-radius: 4px;
+    background: $red-20;
+    color: $red-10;
+}
+
+.result-diagram__error-title {
+    font-weight: 600;
+}
+
+.result-diagram__error-text {
+    margin: 4px 0 0;
+    font-size: 12px;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+// редактор draw.io только рисует картинку: в документе и в печати его не видно
+.result-diagram__drawio-host {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+    visibility: hidden;
+}

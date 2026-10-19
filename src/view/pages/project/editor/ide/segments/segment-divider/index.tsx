@@ -11,7 +11,10 @@ import { useIsProjectReadonly } from '../../../../../../store/selectors/program'
 
 import { useDictionary } from '../../../../../../store/selectors/translations';
 
-import { SegmentType } from '../../../../../../../model/domain.ts';
+import {
+    DIAGRAM_SEGMENT_TYPES,
+    SegmentType,
+} from '../../../../../../../model/domain.ts';
 import { controller } from '../../../../../../../main.tsx';
 import { AppDispatch } from '../../../../../../store';
 import { EditorTypeDivider, SegmentDividerProps } from './model.ts';
@@ -92,6 +95,10 @@ export const SegmentDivider: React.FC<SegmentDividerProps> = ({
                 type: 'computational',
                 text: dictionary.segment_divider.computation,
             },
+            ...DIAGRAM_SEGMENT_TYPES.map((type) => ({
+                type,
+                text: dictionary.segment_divider[type],
+            })),
         ],
         [dictionary]
     );

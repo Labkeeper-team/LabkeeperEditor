@@ -54,6 +54,10 @@ export function segmentCreateEvent(type: SegmentType): string {
             return Events.EVENT_CREATE_LATEX_SEGMENT;
         case 'computational':
             return Events.EVENT_CREATE_COMP_SEGMENT;
+        case 'mermaid':
+        case 'plantuml':
+        case 'drawio':
+            return Events.EVENT_CREATE_DIAGRAM_SEGMENT;
         case 'empty':
             return Events.EVENT_CREATE_MD_SEGMENT;
     }

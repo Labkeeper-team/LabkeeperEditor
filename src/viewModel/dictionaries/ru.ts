@@ -31,6 +31,16 @@ export const ru: Translations = {
         computational: 'Вычисление',
         latex: 'Latex',
         asciimath: 'Простая формула',
+        mermaid: 'Mermaid',
+        plantuml: 'PlantUML',
+        drawio: 'draw.io',
+    },
+
+    diagram: {
+        loading: 'Рисуем схему',
+        failed: 'Схему не удалось нарисовать',
+        bad_drawio_xml:
+            'Это не XML схемы draw.io: нужен mxfile или mxGraphModel',
     },
 
     segment_error: {
@@ -44,6 +54,9 @@ export const ru: Translations = {
         markdown: 'Маркдаун',
         latex: 'Latex',
         asciimath: 'Простая формула',
+        mermaid: 'Mermaid',
+        plantuml: 'PlantUML',
+        drawio: 'draw.io',
     },
     latex_boundary: {
         header: 'LaTeX заголовок',

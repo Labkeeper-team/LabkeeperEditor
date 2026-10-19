@@ -33,6 +33,16 @@ export interface Translations {
         computational: string;
         latex: string;
         asciimath: string;
+        mermaid: string;
+        plantuml: string;
+        drawio: string;
+    };
+
+    /** GH-171: схемы mermaid, plantuml и drawio, которые рисует браузер */
+    diagram: {
+        loading: string;
+        failed: string;
+        bad_drawio_xml: string;
     };
 
     segment_error: {
@@ -46,6 +56,9 @@ export interface Translations {
         markdown: string;
         latex: string;
         asciimath: string;
+        mermaid: string;
+        plantuml: string;
+        drawio: string;
     };
     latex_boundary: {
         header: string;

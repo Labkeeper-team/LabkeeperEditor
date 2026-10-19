@@ -29,6 +29,16 @@ export const en: Translations = {
         computational: 'Computation',
         latex: 'Latex',
         asciimath: 'Simple-formula',
+        mermaid: 'Mermaid',
+        plantuml: 'PlantUML',
+        drawio: 'draw.io',
+    },
+
+    diagram: {
+        loading: 'Drawing the diagram',
+        failed: 'The diagram could not be drawn',
+        bad_drawio_xml:
+            'This is not draw.io diagram XML: mxfile or mxGraphModel is expected',
     },
 
     segment_error: {
@@ -42,6 +52,9 @@ export const en: Translations = {
         markdown: 'Markdown',
         latex: 'Latex',
         asciimath: 'Simple-formula',
+        mermaid: 'Mermaid',
+        plantuml: 'PlantUML',
+        drawio: 'draw.io',
     },
     latex_boundary: {
         header: 'LaTeX heading',

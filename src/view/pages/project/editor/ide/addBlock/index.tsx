@@ -2,7 +2,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Button } from '../../../../../components/button';
 import { Typography } from '../../../../../components/typography';
 import { PlusIcon } from '../../../../../icons';
-import { SegmentType } from '../../../../../../model/domain';
+import {
+    DIAGRAM_SEGMENT_TYPES,
+    SegmentType,
+} from '../../../../../../model/domain';
 
 import { AddBlockProps } from './model';
 import { InterfaceTourAnchorClassnames } from '../../../../../components/tour/helpers';
@@ -20,17 +23,25 @@ export const AddBlock = (props: AddBlockProps) => {
     const isMobile = useIsMobile(1024);
     const dictionary = useSelector(useDictionary);
 
+    // GH-171: схемы последними, после привычных типов
+    const diagramOptions = DIAGRAM_SEGMENT_TYPES.map((type) => ({
+        value: type,
+        label: dictionary.short_segment[type],
+    }));
+
     const headerSelectOptions = [
         { value: 'md', label: dictionary.label_add_markdown },
         { value: 'latex', label: dictionary.label_add_latex },
         { value: 'asciimath', label: dictionary.label_add_asciimath },
         { value: 'computational', label: dictionary.label_add_code },
+        ...diagramOptions,
     ];
 
     const emptyProjectSelectOptions = [
         { value: 'md', label: dictionary.label_add_markdown },
         { value: 'asciimath', label: dictionary.label_add_asciimath },
         { value: 'computational', label: dictionary.label_add_code },
+        ...diagramOptions,
     ];
 
     const addMoreTitle = isMobile
