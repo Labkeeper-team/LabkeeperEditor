@@ -16,6 +16,7 @@ import type { HunkGroup } from '../../../../viewModel/utils/hunkGrouping.ts';
 import {
     deletedLinesAnchorAtEnd,
     resolveControlsLine,
+    trimUnchangedLines,
 } from '../../../../viewModel/utils/hunkGrouping.ts';
 import { colors } from '../../../styles/colors';
 import type { Hunk } from '../../../../model/domain.ts';
@@ -375,8 +376,17 @@ function buildHunkDecorations(
         ).values(),
     ];
     let trailingSpacePx = 0;
+    const lineText = (line: number) =>
+        line >= 1 && line <= docLines ? state.doc.line(line).text : null;
 
-    for (const group of sortedGroups) {
+    for (const sortedGroup of sortedGroups) {
+        // GH-179: одинаковые до и после строки не правка, их не рисуем
+        const shown = trimUnchangedLines(sortedGroup, lineText);
+        if (!shown) {
+            continue;
+        }
+        const group: HunkGroupView = { ...sortedGroup, ...shown };
+        const trimmed = shown !== sortedGroup;
         const ids = group.hunks.map((h) => h.id);
         const pending = ids.some((id) => pendingHunkIds.has(id));
         const addedClass = group.isNewFile
@@ -429,7 +439,13 @@ function buildHunkDecorations(
             }
         } else if (group.addedLineRange) {
             const start = addedStart ?? 1;
-            const end = resolveControlsLine(group, docLines, targetHunks);
+            // у обрезанной группы конец уже свой, а resolveControlsLine считает его по ханку целиком
+            const end = trimmed
+                ? Math.min(
+                      Math.max(group.addedLineRange.endLine, start),
+                      docLines
+                  )
+                : resolveControlsLine(group, docLines, targetHunks);
             for (let lineNo = start; lineNo <= end; lineNo++) {
                 decorations.push(
                     Decoration.line({ class: addedClass }).range(

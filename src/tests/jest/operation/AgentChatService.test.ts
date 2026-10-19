@@ -3498,3 +3498,42 @@ test.each([
         expect(scrollFailures(onEvent)).toEqual([]);
     }
 );
+
+// GH-179: под замком прогона программа отстаёт от ханков, и сверять их можно только после финала
+test('agent-run-accepts-a-replace-back-to-the-same-text-after-it-ends', async () => {
+    const ctx = setup();
+    const sameText: Hunk = {
+        id: 'same-text',
+        type: 'replaceTextInSegment',
+        segmentId: 1,
+        startLine: 2,
+        endLine: 2,
+        text: 'МФТИ',
+    };
+    ctx.rpi.listHunksRequest = jest
+        .fn()
+        .mockResolvedValue(okResult({ hunks: [sameText] }));
+    ctx.rpi.getProjectRequest = jest
+        .fn()
+        .mockResolvedValue(okResult({ program: oneSegment('title\nМФТИ') }));
+    ctx.rpi.deleteHunkRequest = jest.fn().mockResolvedValue(okResult({}));
+    ctx.repository.chatViewModelRepository.setInput('верни название');
+
+    await ctx.agentChatService.onPromptSubmit();
+    await emit(ctx, { kind: 'toolCall', toolName: 'replace_text_in_segment' });
+    await settled();
+    expect(ctx.rpi.deleteHunkRequest).not.toHaveBeenCalled();
+
+    await emit(ctx, {
+        kind: 'finished',
+        message: 'Готово',
+        stopReason: 'Done',
+    });
+    await settled();
+
+    expect(ctx.rpi.deleteHunkRequest).toHaveBeenCalledWith(
+        PROJECT_ID,
+        'same-text',
+        false
+    );
+});

@@ -646,6 +646,147 @@ export function hasHunksForFile(hunks: Hunk[], fileName: string): boolean {
     return hunksForFile(hunks, fileName).length > 0;
 }
 
+/** Строки текста сегмента или файла так, как их видит редактор: пустой текст это одна пустая строка */
+export function documentLines(text: string): string[] {
+    return text.replace(/\r\n/g, '\n').split('\n');
+}
+
+const sameLines = (a: string[], b: string[]) =>
+    a.length === b.length && a.every((line, index) => line === b[index]);
+
+/**
+ * GH-179: ханки, которые ничего не меняют: старые строки совпадают с теми, что
+ * сейчас стоят на их месте. Так выходит, когда агент вернул прежний текст поверх
+ * правки, которую не приняли. linesOf отдаёт текущие строки цели или null, если
+ * текст неизвестен. Новые сегмент и файл целиком новые, сравнивать там не с чем,
+ * а удаление целиком не про текст: его segmentId это место, где теперь сосед
+ */
+export function noOpHunkIds(
+    hunks: Hunk[],
+    linesOf: (target: HunkGroupTarget) => string[] | null
+): string[] {
+    const byTarget = new Map<string, Hunk[]>();
+    for (const hunk of hunks) {
+        const key = targetKey(hunk);
+        if (key == null || isWholeDeletion(hunk.type)) {
+            continue;
+        }
+        byTarget.set(key, [...(byTarget.get(key) ?? []), hunk]);
+    }
+
+    const ids: string[] = [];
+    for (const targetHunks of byTarget.values()) {
+        if (targetHunks.some((hunk) => isCreation(hunk.type))) {
+            continue;
+        }
+        const target = hunkTarget(targetHunks[0]);
+        const lines = target ? linesOf(target) : null;
+        if (!lines) {
+            continue;
+        }
+        const current = (startLine: number, endLine?: number) =>
+            lines.slice(startLine - 1, endLine ?? startLine);
+        for (const hunk of targetHunks) {
+            if (hunk.startLine == null || hunk.text == null) {
+                continue;
+            }
+            if (
+                isReplace(hunk.type) &&
+                sameLines(
+                    replacedTextLines(hunk.text),
+                    current(hunk.startLine, hunk.endLine)
+                )
+            ) {
+                ids.push(hunk.id);
+                continue;
+            }
+            if (!isLineDelete(hunk.type)) {
+                continue;
+            }
+            // удаление и добавление на одном месте это та же замена, только двумя ханками
+            const add = targetHunks.find((candidate) =>
+                canPairReplace(hunk, candidate)
+            );
+            if (
+                add?.startLine != null &&
+                sameLines(
+                    hunkTextLines(hunk),
+                    current(add.startLine, add.endLine)
+                )
+            ) {
+                ids.push(hunk.id, add.id);
+            }
+        }
+    }
+    return ids;
+}
+
+/**
+ * GH-179: замена без одинаковых строк по краям. Сервер отдаёт замену одним
+ * куском, и строки, которые до и после совпадают, иначе рисовались бы и
+ * удалёнными, и добавленными. lineText отдаёт строку документа по номеру с
+ * единицы или null за его пределами. null в ответе значит, что меняться нечему
+ * и группу рисовать не нужно. Кнопки по-прежнему принимают и откатывают ханк целиком
+ */
+export function trimUnchangedLines(
+    group: HunkGroup,
+    lineText: (line: number) => string | null
+): HunkGroup | null {
+    const range = group.addedLineRange;
+    if (
+        !range ||
+        group.deletedLines.length === 0 ||
+        group.isCreation ||
+        group.isWholeSegment
+    ) {
+        return group;
+    }
+    const added: string[] = [];
+    for (let line = range.startLine; line <= range.endLine; line++) {
+        const text = lineText(line);
+        if (text == null) {
+            return group;
+        }
+        added.push(text);
+    }
+    const deleted = group.deletedLines;
+    let prefix = 0;
+    while (
+        prefix < deleted.length &&
+        prefix < added.length &&
+        deleted[prefix] === added[prefix]
+    ) {
+        prefix++;
+    }
+    let suffix = 0;
+    while (
+        suffix < deleted.length - prefix &&
+        suffix < added.length - prefix &&
+        deleted[deleted.length - 1 - suffix] ===
+            added[added.length - 1 - suffix]
+    ) {
+        suffix++;
+    }
+    if (prefix === 0 && suffix === 0) {
+        return group;
+    }
+    const deletedLines = deleted.slice(prefix, deleted.length - suffix);
+    const startLine = range.startLine + prefix;
+    const endLine = range.endLine - suffix;
+    if (deletedLines.length === 0 && startLine > endLine) {
+        return null;
+    }
+    const addedLineRange = startLine <= endLine ? { startLine, endLine } : null;
+    return {
+        ...group,
+        deletedLines,
+        addedLineRange,
+        // удалённое стоит перед первой строкой, которая правда изменилась
+        anchorLine: startLine,
+        controlsAfterLine: addedLineRange ? endLine : startLine,
+    };
+}
+
 export function hunksForSegment(hunks: Hunk[], segmentId: number): Hunk[] {
     return hunks.filter(
         (h) => h.segmentId === segmentId && !isWholeDeletion(h.type)

@@ -580,3 +580,132 @@ test('403 on DELETE reports lost access instead of a retry', async () => {
         { message: en.filemanager.errors.notEnoughRights, type: 'error' },
     ]);
 });
+
+// GH-179: агент вернул прежний текст поверх непринятой правки
+describe('hunks that change nothing', () => {
+    const programWith = (...texts: string[]) => ({
+        segments: texts.map((text, index) => ({
+            id: index + 1,
+            type: 'latex' as const,
+            text,
+            parameters: { visible: true },
+        })),
+        parameters: { roundStrategy: 'noRound' as const },
+    });
+    const sameLine: Hunk = {
+        id: 'same',
+        type: 'replaceTextInSegment',
+        segmentId: 1,
+        startLine: 2,
+        endLine: 2,
+        text: '{\\large МФТИ}',
+    };
+    const realChange: Hunk = {
+        id: 'real',
+        type: 'replaceTextInSegment',
+        segmentId: 1,
+        startLine: 1,
+        endLine: 1,
+        text: 'old title',
+    };
+
+    test('are accepted quietly, real ones stay', async () => {
+        const { hunkService, rpi, repository } = mockContext();
+        setOwnAuthenticatedProject(repository);
+        repository.projectViewModelRepository.setCurrentProgram(
+            programWith('new title\n{\\large МФТИ}')
+        );
+        rpi.listHunksRequest = jest
+            .fn()
+            .mockResolvedValueOnce(hunkListResult([sameLine, realChange]))
+            .mockResolvedValue(hunkListResult([realChange]));
+        rpi.deleteHunkRequest = jest.fn().mockResolvedValue(deleteResult(200));
+
+        await hunkService.loadHunks();
+        await settle();
+
+        expect(rpi.deleteHunkRequest).toHaveBeenCalledTimes(1);
+        expect(rpi.deleteHunkRequest).toHaveBeenCalledWith(
+            PROJECT_ID,
+            'same',
+            false
+        );
+        expect(
+            repository.ideViewModelRepository.hunks().map((h) => h.id)
+        ).toEqual(['real']);
+    });
+
+    test('are not sent again when the accept failed', async () => {
+        const { hunkService, rpi, repository } = mockContext();
+        setOwnAuthenticatedProject(repository);
+        repository.projectViewModelRepository.setCurrentProgram(
+            programWith('new title\n{\\large МФТИ}')
+        );
+        mockListHunksRequestWithHunks(rpi, [sameLine]);
+        rpi.deleteHunkRequest = jest.fn().mockResolvedValue(deleteResult(500));
+
+        await hunkService.loadHunks();
+        await settle();
+        await hunkService.loadHunks();
+        await settle();
+
+        // иначе приём и перечитывание ходили бы по кругу
+        expect(rpi.deleteHunkRequest).toHaveBeenCalledTimes(1);
+        expect(toasts(repository)).toHaveLength(1);
+    });
+
+    test('are left alone while the agent runs: the program lags behind', async () => {
+        const { hunkService, rpi, repository } = mockContext();
+        setOwnAuthenticatedProject(repository);
+        repository.projectViewModelRepository.setCurrentProgram(
+            programWith('new title\n{\\large МФТИ}')
+        );
+        repository.chatViewModelRepository.setRequestState('running');
+        mockListHunksRequestWithHunks(rpi, [sameLine]);
+        rpi.deleteHunkRequest = jest.fn().mockResolvedValue(deleteResult(200));
+
+        await hunkService.loadHunks();
+        await settle();
+
+        expect(rpi.deleteHunkRequest).not.toHaveBeenCalled();
+        expect(
+            repository.ideViewModelRepository.hunks().map((h) => h.id)
+        ).toEqual(['same']);
+    });
+
+    test('after a revert are judged by the new program, not the old one', async () => {
+        const { hunkService, rpi, repository } = mockContext();
+        setOwnAuthenticatedProject(repository);
+        // до отката на второй строке стоит ровно старый текст ханка
+        repository.projectViewModelRepository.setCurrentProgram(
+            programWith('new title\n{\\large МФТИ}')
+        );
+        repository.ideViewModelRepository.setHunks([realChange, sameLine]);
+        mockGetProjectRequestWithDefaultProject(rpi);
+        const reverted = await rpi.getProjectRequest(PROJECT_ID);
+        rpi.getProjectRequest = jest.fn().mockResolvedValue({
+            ...reverted,
+            body: {
+                ...reverted.body,
+                program: programWith('old title\n{\\large Физтех}'),
+            },
+        });
+        mockListFilesRequestWithDefaultFile(rpi);
+        mockListHunksRequestWithHunks(rpi, [sameLine]);
+        rpi.deleteHunkRequest = jest.fn().mockResolvedValue(deleteResult(200));
+
+        await hunkService.revertGroup(['real']);
+        await settle();
+
+        // откатили только своё: на новой программе вторая строка уже другая, это правка
+        expect(rpi.deleteHunkRequest).toHaveBeenCalledTimes(1);
+        expect(rpi.deleteHunkRequest).toHaveBeenCalledWith(
+            PROJECT_ID,
+            'real',
+            true
+        );
+        expect(
+            repository.ideViewModelRepository.hunks().map((h) => h.id)
+        ).toEqual(['same']);
+    });
+});
