@@ -5,7 +5,9 @@ import {
     ComputationalOutputSegment,
     LabkeeperFile,
     Program,
+    isDiagramSegmentType,
     Segment,
+    SegmentType,
     TextOutputSegment,
 } from '../../model/domain.ts';
 import { ResetService } from './ResetService.ts';
@@ -89,7 +91,7 @@ export class IdeService {
             const segmentType =
                 this.programService.getCurrentProgram().segments[segmentIndex]
                     .type;
-            if (this.hasReplaceableDollars(segmentText)) {
+            if (this.hasReplaceableDollars(segmentText, segmentType)) {
                 this.schedulePreviewUpdate(() => {
                     this.repository.projectViewModelRepository.setCompileResultForSegment(
                         segmentIndex,
@@ -176,7 +178,10 @@ export class IdeService {
             ) {
                 if (
                     this.isRenderedOnServer(program.segments[i]) ||
-                    this.hasReplaceableDollars(program.segments[i].text)
+                    this.hasReplaceableDollars(
+                        program.segments[i].text,
+                        program.segments[i].type
+                    )
                 ) {
                     if (program.segments[i].parameters.visible) {
                         output = {
@@ -196,7 +201,10 @@ export class IdeService {
                 }
             } else if (
                 !this.isRenderedOnServer(program.segments[i]) &&
-                !this.hasReplaceableDollars(program.segments[i].text)
+                !this.hasReplaceableDollars(
+                    program.segments[i].text,
+                    program.segments[i].type
+                )
             ) {
                 output = {
                     type: program.segments[i].type,
@@ -259,7 +267,11 @@ export class IdeService {
         this.onProgramUpdated();
     };
 
-    hasReplaceableDollars = (text: string) => {
+    hasReplaceableDollars = (text: string, type?: SegmentType) => {
+        // GH-171: исходник схемы не Markdown, и $ в нём не переменная вычисления
+        if (isDiagramSegmentType(type)) {
+            return false;
+        }
         return (
             this.programService
                 .getCurrentProgram()

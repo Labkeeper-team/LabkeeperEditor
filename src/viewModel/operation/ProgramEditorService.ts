@@ -219,7 +219,11 @@ export class ProgramEditorService {
                                 }
                                 break;
                             }
+                            // GH-171: в исходник схемы картинку не вставить
                             case 'asciimath':
+                            case 'mermaid':
+                            case 'plantuml':
+                            case 'drawio':
                                 return;
                         }
                         await thisCopy.loaderService.loadFiles(

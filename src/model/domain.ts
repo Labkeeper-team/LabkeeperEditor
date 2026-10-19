@@ -9,7 +9,26 @@ export type ProgramRoundStrategy =
     | 'fiveDigits'
     | 'firstMeaningDigit';
 export type SegmentType =
-    'md' | 'computational' | 'latex' | 'asciimath' | 'empty';
+    | 'md'
+    | 'computational'
+    | 'latex'
+    | 'asciimath'
+    | DiagramSegmentType
+    | 'empty';
+
+/** GH-171: схемы, исходник которых сервер в markdown-проекте отдаёт как есть, а рисует браузер */
+export type DiagramSegmentType = 'mermaid' | 'plantuml' | 'drawio';
+
+export const DIAGRAM_SEGMENT_TYPES: readonly DiagramSegmentType[] = [
+    'mermaid',
+    'plantuml',
+    'drawio',
+];
+
+export const isDiagramSegmentType = (
+    type: SegmentType | undefined
+): type is DiagramSegmentType =>
+    DIAGRAM_SEGMENT_TYPES.includes(type as DiagramSegmentType);
 
 // Viewer/Project display mode for result rendering
 export type ProjectType = 'markdown' | 'latex';
@@ -108,7 +127,7 @@ export interface ComputationalOutputSegment extends OutputSegment {
 
 export interface TextOutputSegment extends OutputSegment {
     text: string;
-    type: 'md' | 'latex' | 'asciimath';
+    type: 'md' | 'latex' | 'asciimath' | DiagramSegmentType;
 }
 
 export interface Statement {

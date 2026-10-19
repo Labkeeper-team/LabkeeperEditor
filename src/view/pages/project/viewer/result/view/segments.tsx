@@ -10,6 +10,9 @@ import { CodeSegment } from './code-segment';
 import { MdSegment } from './md-segment';
 import { LatexSegment } from './latex-segment.tsx';
 import { AsciimathSegment } from './asciimath-segment.tsx';
+import { MermaidSegment } from './mermaid-segment.tsx';
+import { PlantUmlSegment } from './plantuml-segment.tsx';
+import { DrawioSegment } from './drawio-segment.tsx';
 import { useScrollableToActive } from '../../../../../hooks/useScrollableToActive.ts';
 import { AppDispatch } from '../../../../../store/index.ts';
 import { controller } from '../../../../../../main.tsx';
@@ -24,6 +27,8 @@ interface IActiveSegmentWrapperProps {
     index: number;
     onClick: () => void;
 }
+
+const EmptySegment = () => <div />;
 
 export const Segments = memo(() => {
     const segmentsSize = useSelector(useCompiledSegmentsSize);
@@ -63,8 +68,14 @@ const SegmentWrapper = memo(({ index }: { index: number }) => {
                 return LatexSegment;
             case 'asciimath':
                 return AsciimathSegment;
+            case 'mermaid':
+                return MermaidSegment;
+            case 'plantuml':
+                return PlantUmlSegment;
+            case 'drawio':
+                return DrawioSegment;
             default:
-                return () => <div />;
+                return EmptySegment;
         }
     }, [segment, index]);
 
