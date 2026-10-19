@@ -1773,8 +1773,9 @@ test('hunk-delete-file-does-not-hide-a-file-uploaded-again', async ({
     page,
 }) => {
     // пока висит удаление, человек загрузил файл с тем же именем: он живой и открывается
+    const deletes = recordHunkDeletes(page);
     await openProjectWithHunks(page, {
-        program: programOf(mdSegment(1, 'project')),
+        program: programOf(mdSegment(1, 'intro\nnew line')),
         files: [{ fileName: 'old.tex', url: '/files/old.tex' }],
         fileContents: [
             { urlPath: '/files/old.tex', content: 'uploaded again' },
@@ -1786,14 +1787,77 @@ test('hunk-delete-file-does-not-hide-a-file-uploaded-again', async ({
                 fileName: 'old.tex',
                 text: 'removed content',
             },
+            {
+                id: 'hunk-real',
+                type: 'replaceTextInSegment',
+                segmentId: 1,
+                startLine: 2,
+                endLine: 2,
+                text: 'old line',
+            },
         ],
     });
 
     await page.locator('div.file-manager-button').click();
     const row = page.locator('.tree-row-file', { hasText: 'old.tex' });
-    await expect(row).not.toHaveClass(/tree-row-file--hunk-removed/);
+    await expect(row).not.toHaveClass(/hunk/);
+    // GH-188: по удалению решать уже нечего, и кнопок у файла нет
+    const actions = page.locator('.tree-file-hunk-wrap', {
+        hasText: 'old.tex',
+    });
+    await expect(actions.locator('.tree-hunk-btn')).toHaveCount(0);
     await row.click();
     await expect(page.getByText('uploaded again')).toBeVisible();
+
+    // общие кнопки его тоже не трогают: приём возвращал старое содержимое
+    await expect(page.getByText('Total 1 changes')).toBeVisible();
+    await page.getByRole('button', { name: 'Accept all' }).click();
+    await expect
+        .poll(() => deletes)
+        .toEqual([{ hunkId: 'hunk-real', revert: 'false' }]);
+    await expect(page.getByText('uploaded again')).toBeVisible();
+});
+
+test('hunk-delete-file-keeps-its-name-from-a-created-file', async ({
+    page,
+}) => {
+    // так поймал заказчик: агент удалил new.txt, а «Создать файл» снова назвал новый файл new.txt
+    await openProjectWithHunks(page, {
+        program: programOf(mdSegment(1, 'project')),
+        hunks: [
+            {
+                id: 'hunk-delete-file',
+                type: 'deleteFile',
+                fileName: 'new.txt',
+                text: 'removed content',
+            },
+        ],
+    });
+    const uploads: (string | null)[] = [];
+    await page.route(
+        (url) => url.pathname.endsWith('/file/upload'),
+        async (route) => {
+            uploads.push(
+                new URL(route.request().url()).searchParams.get('name')
+            );
+            await route.fulfill({ status: 200, body: '' });
+        }
+    );
+
+    await page.locator('div.file-manager-button').click();
+    await page.getByRole('button', { name: 'Create file' }).click();
+
+    await expect.poll(() => uploads).toEqual(['new(1).txt']);
+    // удаление агента на месте и ждёт решения
+    const actions = page.locator('.tree-file-hunk-wrap', {
+        hasText: 'new.txt',
+    });
+    await expect(actions.locator('.tree-row-file').first()).toHaveClass(
+        /tree-row-file--hunk-removed/
+    );
+    await expect(
+        actions.getByRole('button', { name: 'Accept change' })
+    ).toBeVisible();
 });
 
 test('hunk-delete-of-the-only-segment-keeps-its-card', async ({ page }) => {

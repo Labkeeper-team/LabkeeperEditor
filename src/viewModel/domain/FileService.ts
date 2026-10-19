@@ -7,6 +7,8 @@ import {
 } from '../../model/service/ObserverService.ts';
 import { fileExtension, trackEvent } from '../utils/observerContext.ts';
 import { SUPPORTED_EXTENSIONS } from './supportedFileExtensions.ts';
+import { getPhantomFileNamesFromHunks } from '../utils/hunkGrouping.ts';
+import { projectFilePathsMatch } from '../utils/projectFilePath.ts';
 
 export class FileService {
     repository: ViewModelRepository;
@@ -102,12 +104,29 @@ export class FileService {
                     : `file_seg${segmentId}`;
         }
 
+        // GH-188: файл, удалённый или созданный агентом, держит имя, пока по правке не решили.
+        // Иначе новый файл занял бы его, и правка агента повисла бы на чужом файле
+        const heldByAgent = getPhantomFileNamesFromHunks(
+            this.repository.ideViewModelRepository.hunks(),
+            this.repository.projectViewModelRepository
+                .files()
+                .map((file) => file.fileName)
+        );
+        const prefix = folderPrefix || pathPrefix;
+        const isHeld = (candidate: string) =>
+            heldByAgent.some((held) =>
+                projectFilePathsMatch(
+                    held,
+                    prefix ? `${prefix}/${candidate}` : candidate
+                )
+            );
         let resName = name + ext;
         let count = 1;
         while (
             this.repository.projectViewModelRepository
                 .files()
-                .find((s) => s.fileName === resName)
+                .find((s) => s.fileName === resName) ||
+            isHeld(resName)
         ) {
             resName = name + `(${count})` + ext;
             count += 1;

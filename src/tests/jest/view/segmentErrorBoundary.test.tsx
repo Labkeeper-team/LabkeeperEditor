@@ -19,7 +19,7 @@ const mockState = {
     // список сегментов ставит между ними удалённые агентом, их здесь нет
     ide: { activeSegmentIndex: -1, hunks: [] },
     persistence: { language: 'ru' },
-    project: { currentProgram: { segments: [{}, {}] } },
+    project: { currentProgram: { segments: [{}, {}] }, files: [] },
 };
 
 jest.mock('../../../main.tsx', () => ({ controller: {} }));
@@ -93,7 +93,7 @@ beforeEach(() => {
     mockMounts.length = 0;
     mockFailures.clear();
     mockRenderFailures.clear();
-    mockState.project = { currentProgram: { segments: [{}, {}] } };
+    mockState.project = { currentProgram: { segments: [{}, {}] }, files: [] };
 });
 
 afterEach(() => {
@@ -166,6 +166,7 @@ test('редкие сбои за долгую сессию лечатся каж
             currentProgram: {
                 segments: round % 2 === 0 ? [{}, {}, {}] : [{}, {}],
             },
+            files: [],
         };
         rerender(<Segments />);
     }

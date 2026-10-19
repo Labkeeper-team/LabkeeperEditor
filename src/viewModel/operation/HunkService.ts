@@ -12,6 +12,8 @@ import {
     hunksForFile,
     hunksForSegment,
     noOpHunkIds,
+    staleFileDeletionIds,
+    withoutStaleFileDeletions,
 } from '../utils/hunkGrouping.ts';
 import { projectFilePathsMatch } from '../utils/projectFilePath.ts';
 import {
@@ -111,6 +113,66 @@ export class HunkService {
     clearHunks = (): void => {
         this.repository.ideViewModelRepository.setHunks([]);
         this.repository.ideViewModelRepository.setPendingHunkIds([]);
+    };
+
+    private fileNames = (): string[] =>
+        this.repository.projectViewModelRepository
+            .files()
+            .map((file) => file.fileName);
+
+    /**
+     * GH-188: ханки, по которым есть что решать. Удаление файла, созданного заново
+     * под тем же именем, общими кнопками не трогаем: его приём вернул бы старое содержимое
+     */
+    private shownHunks = (): Hunk[] =>
+        withoutStaleFileDeletions(
+            this.repository.ideViewModelRepository.hunks(),
+            this.fileNames()
+        );
+
+    /**
+     * GH-188: человек выбрал имя файла, который удалил агент. Удаление этим
+     * решено, и его принимаем до того, как имя займёт новый файл: после он был бы
+     * испорчен приёмом. false, если приём не прошёл и имя занимать рано
+     */
+    acceptDeletionOfFileName = async (fileName: string): Promise<boolean> => {
+        const hunks = this.repository.ideViewModelRepository.hunks();
+        const stale = staleFileDeletionIds(hunks, this.fileNames());
+        const ids = hunks
+            .filter(
+                (hunk) =>
+                    hunk.type === 'deleteFile' &&
+                    hunk.fileName != null &&
+                    projectFilePathsMatch(hunk.fileName, fileName) &&
+                    !stale.has(hunk.id)
+            )
+            .map((hunk) => hunk.id);
+        if (ids.length === 0) {
+            return true;
+        }
+        if (!this.repository.userViewModelRepository.isAuthenticated()) {
+            this.removeHunksLocally(ids);
+            return true;
+        }
+        const projectId = this.getProjectId();
+        if (!projectId) {
+            return false;
+        }
+        this.markPending(ids);
+        try {
+            const outcome = await this.deleteHunksOneByOne(
+                projectId,
+                ids,
+                false
+            );
+            await this.loadHunks();
+            this.reportAcceptFailure(outcome);
+            return (
+                !outcome.unauth && !outcome.forbidden && outcome.failed === 0
+            );
+        } finally {
+            this.unmarkPending(ids);
+        }
     };
 
     private getProjectId = (): string | null => {
@@ -331,8 +393,7 @@ export class HunkService {
         if (this.editingLock.rejectEdit()) {
             return;
         }
-        const hunks = this.repository.ideViewModelRepository.hunks();
-        const ids = hunks.map((h) => h.id);
+        const ids = this.shownHunks().map((h) => h.id);
         this.track(Events.EVENT_HUNKS_ACCEPTED_ALL, {
             hunk_count: ids.length,
         });
@@ -340,9 +401,7 @@ export class HunkService {
     };
 
     acceptAllForHistoryChange = async (): Promise<void> => {
-        const ids = this.repository.ideViewModelRepository
-            .hunks()
-            .map((h) => h.id);
+        const ids = this.shownHunks().map((h) => h.id);
         if (ids.length === 0) {
             return;
         }
@@ -366,8 +425,7 @@ export class HunkService {
         if (!this.canRevertHunks()) {
             return;
         }
-        const hunks = this.repository.ideViewModelRepository.hunks();
-        const ids = hunks.map((h) => h.id);
+        const ids = this.shownHunks().map((h) => h.id);
         this.track(Events.EVENT_HUNKS_REVERTED_ALL, {
             hunk_count: ids.length,
         });
@@ -457,9 +515,7 @@ export class HunkService {
     };
 
     acceptAllHunksInBackground = (): void => {
-        const ids = this.repository.ideViewModelRepository
-            .hunks()
-            .map((h) => h.id);
+        const ids = this.shownHunks().map((h) => h.id);
         this.acceptHunksInBackground(ids);
     };
 

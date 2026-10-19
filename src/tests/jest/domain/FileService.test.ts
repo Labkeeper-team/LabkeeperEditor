@@ -104,3 +104,44 @@ test('имя отклонённого файла в аналитику не ух
     const payload = JSON.stringify(onEvent.mock.calls);
     expect(payload).not.toContain('секретный-отчёт');
 });
+
+// GH-188: удалённый агентом файл держит имя, пока по удалению не решили
+describe('calculateNumberFile', () => {
+    test('a name held by a file the agent deleted gets a number', () => {
+        const { fileService, repository } = setup();
+        repository.ideViewModelRepository.setHunks([
+            {
+                id: 'del',
+                type: 'deleteFile',
+                fileName: 'new.txt',
+                text: 'old content',
+            },
+        ]);
+
+        expect(fileService.calculateNumberFile(null, 'new.txt')).toBe(
+            'new(1).txt'
+        );
+        expect(fileService.calculateNumberFile(null, 'other.txt')).toBe(
+            'other.txt'
+        );
+    });
+
+    test('a file the agent deleted inside a folder holds its name there only', () => {
+        const { fileService, repository } = setup();
+        repository.ideViewModelRepository.setHunks([
+            {
+                id: 'del',
+                type: 'deleteFile',
+                fileName: 'docs/new.txt',
+                text: 'old content',
+            },
+        ]);
+
+        expect(fileService.calculateNumberFile(null, 'new.txt', 'docs')).toBe(
+            'docs/new(1).txt'
+        );
+        expect(fileService.calculateNumberFile(null, 'new.txt')).toBe(
+            'new.txt'
+        );
+    });
+});

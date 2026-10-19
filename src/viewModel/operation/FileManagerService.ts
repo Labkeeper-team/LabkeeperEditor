@@ -27,6 +27,7 @@ export class FileManagerService {
     textFileEditorService: TextFileEditorService;
     editingLock: EditingLockService;
     observerService: ObserverService;
+    private hunkService: import('./HunkService.ts').HunkService | null = null;
 
     constructor(
         repository: ViewModelRepository,
@@ -49,6 +50,10 @@ export class FileManagerService {
         this.editingLock = editingLock;
         this.observerService = observerService;
     }
+
+    setHunkService = (hunkService: import('./HunkService.ts').HunkService) => {
+        this.hunkService = hunkService;
+    };
 
     private track(event: string, properties?: Record<string, unknown>) {
         trackEvent(this.observerService, this.repository, event, properties);
@@ -711,6 +716,13 @@ export class FileManagerService {
     private renameFilePath = async (oldName: string, newName: string) => {
         const project = this.repository.projectViewModelRepository.project();
         if (!project || oldName === newName) {
+            return;
+        }
+        // GH-188: имя файла, удалённого агентом, человек занял сам, и удаление этим решено
+        if (
+            this.hunkService &&
+            !(await this.hunkService.acceptDeletionOfFileName(newName))
+        ) {
             return;
         }
         this.repository.ideViewModelRepository.setGetFilesRequestState(

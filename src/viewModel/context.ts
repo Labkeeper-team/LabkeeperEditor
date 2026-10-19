@@ -141,6 +141,7 @@ export function setupContext(
         editingLockService
     );
     programEditorService.setHunkService(hunkService);
+    fileManagerService.setHunkService(hunkService);
     const projectPageService: ProjectPageService = new ProjectPageService(
         repository,
         rpi,

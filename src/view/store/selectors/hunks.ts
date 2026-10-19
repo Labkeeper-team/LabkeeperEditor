@@ -12,10 +12,27 @@ import {
     shouldShowGlobalHunkBarFromGroups,
     getPhantomFileNamesFromEntries,
     deletedSegmentsByPosition,
+    withoutStaleFileDeletions,
     type HunkGroup,
 } from '../../../viewModel/utils/hunkGrouping.ts';
 
-const selectHunks = (state: StorageState) => state.ide.hunks;
+const selectStoredHunks = (state: StorageState) => state.ide.hunks;
+const selectProjectFiles = (state: StorageState) => state.project.files;
+
+/**
+ * Ханки, которые видит человек. GH-188: удаление файла, созданного заново под
+ * тем же именем, решать уже не о чем, и кнопок у него нет нигде. Считается на
+ * лету: во время прогона ханки приходят раньше списка файлов
+ */
+export const selectShownHunks = createSelector(
+    [selectStoredHunks, selectProjectFiles],
+    (hunks, files) =>
+        withoutStaleFileDeletions(
+            hunks,
+            files.map((file) => file.fileName)
+        )
+);
+const selectHunks = selectShownHunks;
 const selectPendingHunkIds = (state: StorageState) => state.ide.pendingHunkIds;
 
 export const selectGroupedHunks = createSelector([selectHunks], (hunks) =>
