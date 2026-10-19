@@ -545,6 +545,46 @@ export function buildFileHunkEntries(groups: HunkGroup[]): FileHunkEntry[] {
     });
 }
 
+/**
+ * GH-188: удаления файлов, созданных заново под тем же именем. Файл в проекте
+ * живой, и решать по удалению уже нечего: приём такого ханка на сервере вернул
+ * старое содержимое, а откат затёр бы новый файл. Поэтому на экране и в общих
+ * кнопках их нет. Удаление вместе с созданием в той же правке агента сюда не
+ * входит: это его замена файла, и она видна как созданный файл
+ */
+export function staleFileDeletionIds(
+    hunks: Hunk[],
+    existingFileNames: Iterable<string>
+): Set<string> {
+    const existing = [...existingFileNames];
+    const created = hunks
+        .filter((hunk) => hunk.type === 'addFile' && hunk.fileName != null)
+        .map((hunk) => hunk.fileName!);
+    const ids = new Set<string>();
+    for (const hunk of hunks) {
+        const name = hunk.fileName;
+        if (hunk.type !== 'deleteFile' || name == null) {
+            continue;
+        }
+        if (created.some((other) => projectFilePathsMatch(other, name))) {
+            continue;
+        }
+        if (existing.some((other) => projectFilePathsMatch(other, name))) {
+            ids.add(hunk.id);
+        }
+    }
+    return ids;
+}
+
+/** Ханки, по которым ещё есть что решать: без удалений файлов, созданных заново */
+export function withoutStaleFileDeletions(
+    hunks: Hunk[],
+    existingFileNames: Iterable<string>
+): Hunk[] {
+    const stale = staleFileDeletionIds(hunks, existingFileNames);
+    return stale.size === 0 ? hunks : hunks.filter((h) => !stale.has(h.id));
+}
+
 export function getPhantomFileNamesFromHunks(
     hunks: Hunk[],
     existingFileNames: Iterable<string>

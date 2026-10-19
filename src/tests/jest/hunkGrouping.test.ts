@@ -20,6 +20,7 @@ import {
     hasHunksForFile,
     hasHunksForSegment,
     noOpHunkIds,
+    staleFileDeletionIds,
     trimUnchangedLines,
     type HunkGroupTarget,
 } from '../../viewModel/utils/hunkGrouping.ts';
@@ -1295,5 +1296,40 @@ describe('trimUnchangedLines', () => {
     test('a group without shared edges is returned as is', () => {
         const group = replaceGroup('x', 1, 1);
         expect(trimUnchangedLines(group, docOf('y'))).toBe(group);
+    });
+});
+
+// GH-188: агент удалил файл, а человек создал новый с тем же именем
+describe('staleFileDeletionIds', () => {
+    const deleted: Hunk = {
+        id: 'del',
+        type: 'deleteFile',
+        fileName: 'new.txt',
+        text: 'old content',
+    };
+
+    test('a deletion of a file that exists again has nothing to decide', () => {
+        expect([...staleFileDeletionIds([deleted], ['new.txt'])]).toEqual([
+            'del',
+        ]);
+        // путь приходит и с ведущим слэшем
+        expect([...staleFileDeletionIds([deleted], ['/new.txt'])]).toEqual([
+            'del',
+        ]);
+    });
+
+    test('a deletion of a file that is gone still waits for a decision', () => {
+        expect(staleFileDeletionIds([deleted], ['other.txt']).size).toBe(0);
+    });
+
+    test('a deletion with a creation in the same change is the agent replacing the file', () => {
+        const created: Hunk = {
+            id: 'add',
+            type: 'addFile',
+            fileName: 'new.txt',
+        };
+        expect(staleFileDeletionIds([deleted, created], ['new.txt']).size).toBe(
+            0
+        );
     });
 });

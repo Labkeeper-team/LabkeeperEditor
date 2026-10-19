@@ -502,3 +502,69 @@ test('переименование папки при 423 сообщает, чт�
         'error'
     );
 });
+
+// GH-188: человек назвал файл именем того, что удалил агент
+test('file-manager-rename-to-a-name-the-agent-deleted-accepts-the-deletion-first', async () => {
+    const { startupService, fileManagerService, rpi, repository } =
+        mockContext();
+    mockAuthenticatedStartup(rpi);
+    await startupService.onAppStartup();
+    const calls: string[] = [];
+    rpi.deleteHunkRequest = jest.fn().mockImplementation(async () => {
+        calls.push('accept deletion');
+        return {
+            code: 200,
+            body: {},
+            isOk: true,
+            isUnauth: false,
+            isForbidden: false,
+        };
+    });
+    rpi.renameFileRequest = jest.fn().mockImplementation(async () => {
+        calls.push('rename');
+        return {
+            code: 200,
+            body: '',
+            isOk: true,
+            isUnauth: false,
+            isForbidden: false,
+        };
+    });
+    rpi.listHunksRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        body: { hunks: [] },
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+    });
+    repository.ideViewModelRepository.setHunks([
+        { id: 'del', type: 'deleteFile', fileName: 'new.txt', text: 'old' },
+    ]);
+
+    await fileManagerService.onFileNameChanged('note.txt', 'new.txt');
+
+    // иначе приём удаления пришёлся бы уже на новый файл
+    expect(calls).toEqual(['accept deletion', 'rename']);
+});
+
+test('file-manager-rename-waits-when-the-deletion-could-not-be-accepted', async () => {
+    const { startupService, fileManagerService, rpi, repository } =
+        mockContext();
+    mockAuthenticatedStartup(rpi);
+    await startupService.onAppStartup();
+    rpi.deleteHunkRequest = jest.fn().mockResolvedValue({
+        code: 500,
+        body: {},
+        isOk: false,
+        isUnauth: false,
+        isForbidden: false,
+    });
+    rpi.renameFileRequest = jest.fn();
+    repository.ideViewModelRepository.setHunks([
+        { id: 'del', type: 'deleteFile', fileName: 'new.txt', text: 'old' },
+    ]);
+
+    await fileManagerService.onFileNameChanged('note.txt', 'new.txt');
+
+    expect(rpi.renameFileRequest).not.toHaveBeenCalled();
+});

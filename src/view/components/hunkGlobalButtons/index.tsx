@@ -9,6 +9,7 @@ import { controller } from '../../../main.tsx';
 import {
     selectGroupedHunkCount,
     selectShouldShowGlobalHunkBar,
+    selectShownHunks,
 } from '../../store/selectors/hunks.ts';
 import { ExpandIcon } from '../../icons';
 import './hunkGlobalButtons.scss';
@@ -22,7 +23,7 @@ export const HunkGlobalButtons = memo(() => {
     const isAuthenticated = useSelector(
         (state: StorageState) => state.user.isAuthenticated
     );
-    const hunks = useSelector((state: StorageState) => state.ide.hunks);
+    const hunks = useSelector(selectShownHunks);
     const pendingHunkIds = useSelector(
         (state: StorageState) => state.ide.pendingHunkIds
     );
