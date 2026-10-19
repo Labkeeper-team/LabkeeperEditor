@@ -192,6 +192,8 @@ export class TextFileEditorService {
             this.repository.ideViewModelRepository.setLoadTextFileRequestState(
                 'ok'
             );
+            // GH-179: текст файла теперь известен, и замену на тот же текст видно
+            this.hunkService?.settleNoOpHunks();
         } catch {
             if (
                 loadRequestId !== this.loadRequestId ||

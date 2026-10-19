@@ -6,10 +6,14 @@ import { LoaderService } from '../domain/LoaderService.ts';
 import { TextFileEditorService } from './TextFileEditorService.ts';
 import { EditingLockService } from '../domain/EditingLockService.ts';
 import {
+    documentLines,
     groupHunks,
+    HunkGroupTarget,
     hunksForFile,
     hunksForSegment,
+    noOpHunkIds,
 } from '../utils/hunkGrouping.ts';
+import { projectFilePathsMatch } from '../utils/projectFilePath.ts';
 import {
     Events,
     ObserverService,
@@ -30,6 +34,11 @@ export class HunkService {
     // общая очередь удалений: пути приёма и отката друг о друге не знают,
     // а набор текста запускает приём поверх любого из них
     private deleteChain: Promise<void> = Promise.resolve();
+    // GH-179: ханки без изменений, уже отправленные на приём. Если сервер вернёт их
+    // снова, второй раз не шлём, иначе приём и перечитывание ходили бы по кругу
+    private settledNoOpIds = new Set<string>();
+    // программа ещё не перечитана после отката: сверять с ней ханки нельзя
+    private programStale = false;
 
     constructor(
         private repository: ViewModelRepository,
@@ -83,6 +92,7 @@ export class HunkService {
             await this.textFileEditorService.reloadActiveTextFileIfOpen(
                 nextHunks
             );
+            this.settleNoOpHunks();
             return true;
         }
         if (result.isUnauth) {
@@ -228,12 +238,19 @@ export class HunkService {
         }
         const projectResult = await this.rpi.getProjectRequest(projectId);
         await this.loaderService.loadFiles(projectId);
-        await this.loadHunks();
+        // ханки приходят раньше программы, и до setNewProgram на экране текст до отката
+        this.programStale = true;
+        try {
+            await this.loadHunks();
+        } finally {
+            this.programStale = false;
+        }
         if (projectResult.isOk) {
             this.ideService.setNewProgram(
                 projectResult.body.program,
                 projectResult.body.lastProgramResult
             );
+            this.settleNoOpHunks();
         }
     }
 
@@ -460,6 +477,60 @@ export class HunkService {
             fileName
         ).map((h) => h.id);
         this.acceptHunksInBackground(ids);
+    };
+
+    /**
+     * GH-179: ханк, у которого старые строки совпадают с текущими, ничего не меняет:
+     * так бывает, когда агент вернул прежний текст поверх непринятой правки. На экране
+     * от него остаются кнопки над одинаковыми строками, а «Принять всё» висит над
+     * пустым местом, поэтому такой ханк молча принимаем: принять его значит ничего
+     * не менять. Сверяем только с перечитанной программой. Во время прогона ханки
+     * приезжают раньше программы, и настоящая правка показалась бы пустой
+     */
+    settleNoOpHunks = (): void => {
+        if (
+            this.programStale ||
+            this.editingLock.isLocked() ||
+            this.repository.projectViewModelRepository.projectIsReadonly()
+        ) {
+            return;
+        }
+        const segments =
+            this.repository.projectViewModelRepository.currentProgram()
+                .segments;
+        const linesOf = (target: HunkGroupTarget): string[] | null => {
+            if (target.kind === 'segment') {
+                const text = segments[target.segmentId - 1]?.text;
+                return text == null ? null : documentLines(text);
+            }
+            return this.openFileLines(target.fileName);
+        };
+        const ids = noOpHunkIds(
+            this.repository.ideViewModelRepository.hunks(),
+            linesOf
+        ).filter((id) => !this.settledNoOpIds.has(id));
+        if (ids.length === 0) {
+            return;
+        }
+        ids.forEach((id) => this.settledNoOpIds.add(id));
+        this.acceptHunksInBackground(ids);
+    };
+
+    /**
+     * Текст файла, если он открыт и дочитан. Остальные файлы ради сверки не качаем:
+     * ханки перечитываются и после каждой сборки. Такой файл сверится, когда его откроют
+     */
+    private openFileLines = (fileName: string): string[] | null => {
+        const ide = this.repository.ideViewModelRepository;
+        const active = ide.activeTextFile();
+        if (
+            !active ||
+            !projectFilePathsMatch(active, fileName) ||
+            ide.loadTextFileRequestState() !== 'ok'
+        ) {
+            return null;
+        }
+        return documentLines(ide.textFileContent());
     };
 
     getGroupedHunks = () => {

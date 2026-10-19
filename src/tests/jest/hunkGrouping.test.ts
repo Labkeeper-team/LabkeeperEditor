@@ -19,6 +19,9 @@ import {
     getPhantomFileNamesFromHunks,
     hasHunksForFile,
     hasHunksForSegment,
+    noOpHunkIds,
+    trimUnchangedLines,
+    type HunkGroupTarget,
 } from '../../viewModel/utils/hunkGrouping.ts';
 import { Hunk } from '../../model/domain.ts';
 
@@ -1130,4 +1133,167 @@ test('deleted segments are placed before the segment on their place or after the
     // место за концом программы значит «после последнего сегмента»
     expect(placed.get(3)?.map((h) => h.id)).toEqual(['del-tail']);
     expect([...placed.keys()].sort()).toEqual([1, 3]);
+});
+
+// GH-179: агент вернул прежний текст поверх непринятой правки
+describe('noOpHunkIds', () => {
+    const segmentLines =
+        (
+            bySegment: Record<number, string>,
+            byFile: Record<string, string> = {}
+        ) =>
+        (target: HunkGroupTarget): string[] | null => {
+            const text =
+                target.kind === 'segment'
+                    ? bySegment[target.segmentId]
+                    : byFile[target.fileName];
+            return text == null ? null : text.split('\n');
+        };
+
+    test('a replace whose old lines are the current ones changes nothing', () => {
+        const hunks: Hunk[] = [
+            {
+                id: 'same',
+                type: 'replaceTextInSegment',
+                segmentId: 2,
+                startLine: 3,
+                endLine: 3,
+                text: '{\\large МФТИ}',
+            },
+            {
+                id: 'real',
+                type: 'replaceTextInSegment',
+                segmentId: 2,
+                startLine: 1,
+                endLine: 1,
+                text: 'old title',
+            },
+        ];
+        const lines = segmentLines({
+            2: 'new title\n\\begin{center}\n{\\large МФТИ}',
+        });
+        expect(noOpHunkIds(hunks, lines)).toEqual(['same']);
+    });
+
+    test('an empty string is one empty line, as on the screen', () => {
+        const hunk: Hunk = {
+            id: 'blank',
+            type: 'replaceTextInFile',
+            fileName: 'a.tex',
+            startLine: 2,
+            endLine: 2,
+            text: '',
+        };
+        expect(
+            noOpHunkIds([hunk], segmentLines({}, { 'a.tex': 'x\n\ny' }))
+        ).toEqual(['blank']);
+        expect(
+            noOpHunkIds([hunk], segmentLines({}, { 'a.tex': 'x\nz\ny' }))
+        ).toEqual([]);
+    });
+
+    test('a delete and an add of the same lines on one place change nothing', () => {
+        const pair: Hunk[] = [
+            {
+                id: 'del',
+                type: 'deleteLinesFromSegment',
+                segmentId: 1,
+                startLine: 2,
+                endLine: 3,
+                text: 'b\nc',
+            },
+            {
+                id: 'add',
+                type: 'addLinesToSegment',
+                segmentId: 1,
+                startLine: 2,
+                endLine: 3,
+            },
+        ];
+        expect(noOpHunkIds(pair, segmentLines({ 1: 'a\nb\nc\nd' }))).toEqual([
+            'del',
+            'add',
+        ]);
+        expect(noOpHunkIds(pair, segmentLines({ 1: 'a\nb\nX\nd' }))).toEqual(
+            []
+        );
+    });
+
+    test('new targets, whole deletions and unknown text are left alone', () => {
+        const hunks: Hunk[] = [
+            { id: 'new', type: 'addSegment', segmentId: 4 },
+            {
+                id: 'inside-new',
+                type: 'replaceTextInSegment',
+                segmentId: 4,
+                startLine: 1,
+                endLine: 1,
+                text: 'a',
+            },
+            // удалённый сегмент делит segmentId с соседом, вставшим на его место
+            {
+                id: 'gone',
+                type: 'deleteSegment',
+                segmentId: 1,
+                text: 'a',
+            },
+            {
+                id: 'unknown',
+                type: 'replaceTextInFile',
+                fileName: 'b.txt',
+                startLine: 1,
+                endLine: 1,
+                text: 'a',
+            },
+        ];
+        expect(noOpHunkIds(hunks, segmentLines({ 1: 'a', 4: 'a' }))).toEqual(
+            []
+        );
+    });
+});
+
+describe('trimUnchangedLines', () => {
+    const replaceGroup = (text: string, startLine: number, endLine: number) =>
+        groupHunks([
+            {
+                id: 'r',
+                type: 'replaceTextInSegment',
+                segmentId: 1,
+                startLine,
+                endLine,
+                text,
+            },
+        ])[0];
+    const docOf = (text: string) => {
+        const lines = text.split('\n');
+        return (line: number) => lines[line - 1] ?? null;
+    };
+
+    test('lines equal on both sides are not shown as changed', () => {
+        const group = replaceGroup('keep\nold\ntail', 2, 4);
+        const shown = trimUnchangedLines(group, docOf('a\nkeep\nnew\ntail'));
+        expect(shown?.deletedLines).toEqual(['old']);
+        expect(shown?.addedLineRange).toEqual({ startLine: 3, endLine: 3 });
+        expect(shown?.anchorLine).toBe(3);
+        // кнопки принимают и откатывают ханк целиком
+        expect(shown?.hunks.map((h) => h.id)).toEqual(['r']);
+    });
+
+    test('a replace with nothing changed is not drawn at all', () => {
+        const group = replaceGroup('same', 1, 1);
+        expect(trimUnchangedLines(group, docOf('same'))).toBeNull();
+    });
+
+    test('a pure removal inside a replace stays a removal', () => {
+        const group = replaceGroup('a\nb\nc', 1, 2);
+        const shown = trimUnchangedLines(group, docOf('a\nc'));
+        expect(shown?.deletedLines).toEqual(['b']);
+        expect(shown?.addedLineRange).toBeNull();
+        expect(shown?.anchorLine).toBe(2);
+    });
+
+    test('a group without shared edges is returned as is', () => {
+        const group = replaceGroup('x', 1, 1);
+        expect(trimUnchangedLines(group, docOf('y'))).toBe(group);
+    });
 });

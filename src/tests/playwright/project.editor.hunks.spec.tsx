@@ -542,6 +542,119 @@ test('hunk-replace-in-segment-accept-and-revert-send-their-flag', async ({
     await expect(page.locator('.cm-hunk-added-line')).toHaveCount(0);
 });
 
+// GH-179: агент вернул прежний текст поверх непринятой правки, и замена вышла на ту же строку
+test('hunk-replace-with-the-same-text-is-not-shown-and-is-accepted', async ({
+    page,
+}) => {
+    const deletes = recordHunkDeletes(page);
+    await openProjectWithHunks(page, {
+        program: programOf(
+            mdSegment(1, 'title\n{\\large МФТИ}\nend'),
+            mdSegment(2, 'intro\nnew line\nomega')
+        ),
+        hunks: [
+            {
+                id: 'hunk-same',
+                type: 'replaceTextInSegment',
+                segmentId: 1,
+                startLine: 2,
+                endLine: 2,
+                text: '{\\large МФТИ}',
+            },
+            {
+                id: 'hunk-real',
+                type: 'replaceTextInSegment',
+                segmentId: 2,
+                startLine: 2,
+                endLine: 2,
+                text: 'old line',
+            },
+        ],
+    });
+
+    await expect
+        .poll(() => editorRows(page.locator('#ide-segment-0')))
+        .toEqual([' title', ' {\\large МФТИ}', ' end']);
+    // принять такую замену значит ничего не менять, поэтому она уходит сама
+    await expect
+        .poll(() => deletes)
+        .toEqual([{ hunkId: 'hunk-same', revert: 'false' }]);
+    await expect
+        .poll(() => editorRows(page.locator('#ide-segment-1')))
+        .toEqual([' intro', '-old line', '+new line', HUNK_BUTTONS, ' omega']);
+    await expect(page.getByText('Total 1 changes')).toBeVisible();
+});
+
+test('hunk-replace-hides-lines-equal-before-and-after', async ({ page }) => {
+    await openProjectWithHunks(page, {
+        program: programOf(mdSegment(1, 'intro\nkeep\nnew\ntail\nomega')),
+        hunks: [
+            {
+                id: 'hunk-wide',
+                type: 'replaceTextInSegment',
+                segmentId: 1,
+                startLine: 2,
+                endLine: 4,
+                text: 'keep\nold\ntail',
+            },
+        ],
+    });
+
+    await expect
+        .poll(() => editorRows(page.locator('#ide-segment-0')))
+        .toEqual([
+            ' intro',
+            ' keep',
+            '-old',
+            '+new',
+            HUNK_BUTTONS,
+            ' tail',
+            ' omega',
+        ]);
+});
+
+test('hunk-replace-with-the-same-text-in-a-file-goes-away-once-it-is-open', async ({
+    page,
+}) => {
+    const deletes = recordHunkDeletes(page);
+    await openProjectWithHunks(page, {
+        program: programOf(mdSegment(1, 'intro\nnew line')),
+        files: [{ fileName: 'notes.tex', url: '/files/notes.tex' }],
+        fileContents: [{ urlPath: '/files/notes.tex', content: 'a\nsame\nb' }],
+        hunks: [
+            {
+                id: 'hunk-file-same',
+                type: 'replaceTextInFile',
+                fileName: 'notes.tex',
+                startLine: 2,
+                endLine: 2,
+                text: 'same',
+            },
+            {
+                id: 'hunk-real',
+                type: 'replaceTextInSegment',
+                segmentId: 1,
+                startLine: 2,
+                endLine: 2,
+                text: 'old line',
+            },
+        ],
+    });
+
+    // файлы ради сверки не качаются: текст файла известен, когда его открыли
+    await page.locator('div.file-manager-button').click();
+    await page.getByText('notes.tex').click();
+    await expect
+        .poll(() => editorRows(fileEditor(page)))
+        .toEqual([' a', ' same', ' b']);
+    await expect
+        .poll(() => deletes)
+        .toEqual([{ hunkId: 'hunk-file-same', revert: 'false' }]);
+    const row = page.locator('.tree-file-hunk-wrap', { hasText: 'notes.tex' });
+    await expect(row.locator('.tree-hunk-btn')).toHaveCount(0);
+    await expect(row.locator('.tree-row-file')).not.toHaveClass(/hunk/);
+});
+
 test('hunk-global-bar-is-hidden-on-mobile', async ({ page }) => {
     await openProjectWithHunks(page, {
         program: programOf(mdSegment(1, 'existing line\nadded line')),
@@ -981,13 +1094,11 @@ test('hunk-file-new-lines-are-shown-once', async ({ page }) => {
     for (const line of AGENT_NEW_LINES) {
         expect(shown.filter((text) => text === line)).toHaveLength(1);
     }
-    await expect(fileEditorAddedLines(page)).toHaveText([
-        'alpha',
-        ...AGENT_NEW_LINES,
-    ]);
+    // GH-179: alpha до и после одна и та же, правка в ней только продолжение
+    await expect(fileEditorAddedLines(page)).toHaveText(AGENT_NEW_LINES);
     await expect(
         page.locator('.text-file-editor-panel .cm-hunk-deleted-line')
-    ).toHaveText(['alpha']);
+    ).toHaveCount(0);
 });
 
 test('hunk-file-agent-blank-line-is-added', async ({ page }) => {

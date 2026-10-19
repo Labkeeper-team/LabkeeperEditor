@@ -561,6 +561,8 @@ export class AgentChatService {
                 : { kind: 'notice', reason: 'aborted_nothing' }
         );
         chat.setRequestState('idle');
+        // GH-179: сверка шла под замком, теперь программа перечитана
+        this.hunkService.settleNoOpHunks();
     };
 
     /** Смена проекта: гасим сессию и чистим ленту, чтобы не показывать чужую историю. */
@@ -875,6 +877,9 @@ export class AgentChatService {
             chat.appendMessage({ kind: 'notice', reason: event.stopReason });
         }
         chat.setRequestState('ok');
+        // GH-179: правки прогона приезжали под замком, когда программа отставала. Теперь
+        // она сверена, и ханки, вернувшие прежний текст, можно убрать
+        this.hunkService.settleNoOpHunks();
         // вкладку ставим здесь, а не счётчиком результата: на телефоне он гонялся бы с переходом к правке.
         // GH-165: недоделанный прогон оставляет чат с примечанием, а пустую вкладку не открываем
         if (this.resultInRun && !this.stoppedShort) {
