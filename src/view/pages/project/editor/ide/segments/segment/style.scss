@@ -196,6 +196,8 @@ $segment-editor-min-height: 80px;
     }
     .cm-scroller {
         min-height: $segment-editor-min-height;
+        // Исправляет появление горизонтального скролла в сегментах при выделении текста
+        overflow-x: hidden;
     }
     .cm-gutters {
         min-height: 100%;
