@@ -595,6 +595,12 @@ export class FileManagerService {
             folderPath,
             project.projectId
         );
+        if (
+            this.repository.projectViewModelRepository.project()?.projectId !==
+            project.projectId
+        ) {
+            return;
+        }
         if (result.isUnauth) {
             this.repository.toast(
                 this.repository.dictionary.filemanager.errors.sessionExpired,
@@ -606,6 +612,14 @@ export class FileManagerService {
         }
         if (result.isOk) {
             this.track(Events.EVENT_FOLDER_DELETED, { count: 1 });
+            for (const fileName of [
+                this.repository.ideViewModelRepository.activeTextFile(),
+                this.repository.ideViewModelRepository.activeImageFile(),
+            ]) {
+                if (fileName?.startsWith(`${folderPath}/`)) {
+                    this.textFileEditorService.onOpenFileDeleted(fileName);
+                }
+            }
             this.pruneEphemeralFolders(folderPath);
             this.remapCurrentFolderAfterDelete(folderPath);
             await this.loaderService.loadFiles(project.projectId);
