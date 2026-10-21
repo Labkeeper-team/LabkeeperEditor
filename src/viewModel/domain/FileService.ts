@@ -10,9 +10,21 @@ import { SUPPORTED_EXTENSIONS } from './supportedFileExtensions.ts';
 import { getPhantomFileNamesFromHunks } from '../utils/hunkGrouping.ts';
 import { projectFilePathsMatch } from '../utils/projectFilePath.ts';
 
+const TOKEN_ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyz';
+const TOKEN_LENGTH = 6;
+
+/** Шесть случайных символов: имя вставленного файла с ними не повторяется */
+const randomFileToken = (): string =>
+    Array.from(
+        crypto.getRandomValues(new Uint8Array(TOKEN_LENGTH)),
+        (byte) => TOKEN_ALPHABET[byte % TOKEN_ALPHABET.length]
+    ).join('');
+
 export class FileService {
     repository: ViewModelRepository;
     observerService: ObserverService;
+    /** Хвост имени вставленного файла, в опытах подменяется */
+    createFileToken: () => string = randomFileToken;
 
     constructor(
         repository: ViewModelRepository,
@@ -76,6 +88,8 @@ export class FileService {
     /*
     Если добавление происходит через Ctr+V, то segmentId is number(передается для названия),
     а в случае переименования или добавление через Add Files segmentId undefined(не передается)
+    GH-173: у вставленного файла в имени случайный хвост. Иначе новая картинка получала
+    имя удалённой, ссылка в тексте не менялась, и на странице оставалась старая картинка
      */
     calculateNumberFile = (
         segmentId: number | null,
@@ -91,17 +105,19 @@ export class FileService {
             ? filename.slice(filename.lastIndexOf('/') + 1)
             : filename;
 
+        const pastedName = () =>
+            `file_seg${segmentId}_${this.createFileToken()}`;
         let ext = '';
         let name: string;
         const indexLastDot = basename.lastIndexOf('.');
         if (indexLastDot === -1) {
-            name = segmentId == null ? basename : `file_seg${segmentId}`;
+            name = segmentId == null ? basename : pastedName();
         } else {
             ext = basename.slice(indexLastDot);
             name =
                 segmentId == null
                     ? basename.slice(0, indexLastDot)
-                    : `file_seg${segmentId}`;
+                    : pastedName();
         }
 
         // GH-188: файл, удалённый или созданный агентом, держит имя, пока по правке не решили.
