@@ -15,6 +15,9 @@ const createMathJaxConfig = (): MathJax3Config => ({
         ignoreHtmlClass: 'cm-line',
         skipTags: ['div', 'p'],
     },
+    // формулы набирает каждый компонент в своём элементе; обход всей страницы
+    // при загрузке набирал и редактор, например «до» в правке агента (GH-137)
+    startup: { typeset: false },
     asciimath: { displayMode: true, displaystyle: true },
     TeX: { MAXBUFFER: 25600 },
     tex: {

@@ -836,6 +836,38 @@ test('hunk-deleted-single-blank-line-in-segment-is-shown', async ({ page }) => {
     ).toBeVisible();
 });
 
+// GH-137: MathJax при загрузке набирал всю страницу и превращал формулы в «до»
+// правки агента в картинку, хотя «после» в строках редактора оставалось кодом
+test('hunk-deleted-formula-stays-source-text-when-mathjax-loads', async ({
+    page,
+}) => {
+    const oldLine = 'Old $E = mc^2$ line';
+    await openProjectWithHunks(page, {
+        program: programOf(mdSegment(1, 'New $a^2 + b^2$ line\nomega')),
+        hunks: [
+            {
+                id: 'hunk-replace-formula',
+                type: 'replaceTextInSegment',
+                segmentId: 1,
+                startLine: 1,
+                endLine: 1,
+                text: oldLine,
+            },
+        ],
+    });
+    const deleted = page.locator('#ide-segment-0 .cm-hunk-deleted-block');
+    await expect(deleted).toHaveText(oldLine);
+
+    // формула результата грузит MathJax, пока правка на экране
+    await page.getByRole('tab', { name: 'Final document' }).click();
+    await expect(
+        page.locator('#compile-result mjx-container').first()
+    ).toBeVisible({ timeout: 20_000 });
+
+    await expect(deleted.locator('mjx-container')).toHaveCount(0);
+    await expect(deleted).toHaveText(oldLine);
+});
+
 // Кнопки удаления стоят на месте удалённой строки. Проверяем по вертикали:
 // у пустой строки они должны стоять там же, где у непустой
 test('hunk-deleted-single-blank-line-keeps-buttons-in-place', async ({
