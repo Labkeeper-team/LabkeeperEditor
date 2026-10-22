@@ -97,6 +97,14 @@ export class AgentChatService {
     private programMayBeStale = false;
     /** Текст последнего запроса: слишком длинный вернём в поле, чтобы его сократили */
     private lastPrompt = '';
+    /**
+     * GH-189: перечитывание истории идёт одной очередью. Новый прогон его не
+     * отменяет, а запуск и откат его дожидаются: иначе граница встала бы по
+     * старой истории, и откат унёс бы запись уже принятого прогона
+     */
+    private historySync: Promise<boolean> | null = null;
+    /** Растёт при очистке истории и смене проекта: ответ, ушедший раньше, в ленту не пишется */
+    private historyGeneration = 0;
 
     constructor(
         private repository: ViewModelRepository,
@@ -265,6 +273,12 @@ export class AgentChatService {
         }
         chat.setHistory(result.body.history ?? []);
         chat.setHistoryRequestState('ok');
+        // граница отката могла остаться с прошлого захода или прийти из другой вкладки
+        chat.setCheckpointBase(
+            this.repository.persistenceViewModelRepository.agentCheckpointBase(
+                project.projectId
+            )
+        );
     };
 
     onClearHistoryClicked = async (): Promise<void> => {
@@ -276,6 +290,8 @@ export class AgentChatService {
         ) {
             return;
         }
+        // перечитывание, ушедшее до очистки, не должно вернуть записи на экран
+        this.historyGeneration += 1;
         const result = await this.rpi.clearAgentHistoryRequest(
             project.projectId
         );
@@ -593,7 +609,7 @@ export class AgentChatService {
         // GH-179: сверка шла под замком, теперь программа перечитана
         this.hunkService.settleNoOpHunks();
         // сервер дорабатывает прогон и после обрыва, но то, что успело записаться, привяжем
-        await this.refreshHistoryLinks(token);
+        await this.syncHistory();
     };
 
     /**
@@ -629,46 +645,87 @@ export class AgentChatService {
         ) {
             return;
         }
-        // без загруженной истории последняя запись неизвестна, и старая граница была бы враньём
+        // граница по свежей истории с сервера: в ленте может не быть записи прогона,
+        // прерванного или оборванного, а сервер дописал её позже. Не вышло, значит
+        // граница неизвестна, и откатится одна последняя запись
+        const synced = await this.syncHistory();
+        if (
+            this.repository.projectViewModelRepository.project()?.projectId !==
+            project.projectId
+        ) {
+            return;
+        }
+        const base = synced ? checkpointBaseOf(chat.history()) : undefined;
         this.repository.persistenceViewModelRepository.setAgentCheckpointBase(
             project.projectId,
-            chat.historyRequestState() === 'ok'
-                ? checkpointBaseOf(chat.history())
-                : undefined
+            base
         );
+        chat.setCheckpointBase(base);
     };
 
     /**
      * Запись истории появляется на сервере к концу прогона. Перечитываем
      * историю и привязываем новые записи к запросам ленты: так у прогона
-     * появляется id для отката, а запись не рисуется второй раз
+     * появляется id для отката, а запись не рисуется второй раз. true, если
+     * история на экране совпадает с сервером
      */
-    private refreshHistoryLinks = async (token: number): Promise<void> => {
+    private syncHistory = (): Promise<boolean> => {
+        const chat = this.repository.chatViewModelRepository;
+        const run = () => this.fetchHistoryLinks();
+        // по одному: второй ответ, пришедший раньше первого, перетёр бы свежие привязки старыми
+        const sync = (this.historySync ?? Promise.resolve(true)).then(run, run);
+        this.historySync = sync;
+        chat.setHistorySyncing(true);
+        const finish = () => {
+            if (this.historySync === sync) {
+                this.historySync = null;
+                chat.setHistorySyncing(false);
+            }
+        };
+        sync.then(finish, finish);
+        return sync;
+    };
+
+    private fetchHistoryLinks = async (): Promise<boolean> => {
         const chat = this.repository.chatViewModelRepository;
         const project = this.repository.projectViewModelRepository.project();
         if (
             !project ||
-            !this.repository.userViewModelRepository.isAuthenticated() ||
-            chat.historyRequestState() !== 'ok'
+            !this.repository.userViewModelRepository.isAuthenticated()
         ) {
-            return;
+            return false;
         }
+        const generation = this.historyGeneration;
         const result = await this.rpi.getAgentHistoryRequest(project.projectId);
-        // пока список ехал, начался новый прогон или открылся другой проект
-        if (token !== this.runToken || !result.isOk) {
-            return;
+        // пока список ехал, очистили историю или открыли другой проект
+        if (
+            generation !== this.historyGeneration ||
+            this.repository.projectViewModelRepository.project()?.projectId !==
+                project.projectId ||
+            !result.isOk
+        ) {
+            return false;
         }
         const history = result.body.history ?? [];
         const known = new Set(chat.history().map((entry) => entry.id));
+        const messages = chat.messages();
+        // у идущего прогона записи ещё нет: его запрос не должен забрать чужую с тем же текстом
+        const pending = this.isRunning()
+            ? ([...messages].reverse().find((m) => m.kind === 'request')?.id ??
+              null)
+            : null;
         chat.applyHistoryRefresh(
             history,
             linkHistoryToRequests(
                 known,
                 history,
-                chat.messages(),
-                chat.entryIdByRequestId()
+                messages,
+                chat.entryIdByRequestId(),
+                pending
             )
         );
+        chat.setHistoryRequestState('ok');
+        return true;
     };
 
     /** Что откатится сейчас. Тот же расчёт рисует подсветку в ленте */
@@ -689,9 +746,7 @@ export class AgentChatService {
             links: chat.entryIdByRequestId(),
             messages: chat.messages(),
             fromRequestId: chat.checkpointFromRequestId(),
-            base: this.repository.persistenceViewModelRepository.agentCheckpointBase(
-                project.projectId
-            ),
+            base: chat.checkpointBase(),
         });
     };
 
@@ -715,14 +770,32 @@ export class AgentChatService {
      * иначе в истории не осталось бы запроса, чьи правки ещё в документе
      */
     onCheckpointRevert = async (): Promise<void> => {
-        const view = this.checkpointView();
         const project = this.repository.projectViewModelRepository.project();
         if (
             this.isRunning() ||
-            !view ||
             !project ||
             !this.repository.userViewModelRepository.isAuthenticated()
         ) {
+            return;
+        }
+        const chat = this.repository.chatViewModelRepository;
+        // без свежей истории неизвестно, какие записи удалять: правки тогда не трогаем
+        if (!(await this.syncHistory())) {
+            this.repository.toast(
+                this.repository.dictionary.agent_chat.checkpoint
+                    .history_unavailable,
+                'error'
+            );
+            return;
+        }
+        // граница могла смениться в другой вкладке
+        chat.setCheckpointBase(
+            this.repository.persistenceViewModelRepository.agentCheckpointBase(
+                project.projectId
+            )
+        );
+        const view = this.checkpointView();
+        if (!view || this.isRunning()) {
             return;
         }
         this.track(Events.EVENT_AGENT_CHECKPOINT_REVERTED, {
@@ -739,7 +812,8 @@ export class AgentChatService {
                 project.projectId,
                 entryId
             );
-            if (result.isOk || result.code === 404) {
+            // пропавшую запись сервер пропускает с ответом 200, а 404 значит, что нет проекта
+            if (result.isOk) {
                 deleted.add(entryId);
             } else if (result.isUnauth) {
                 break;
@@ -752,7 +826,6 @@ export class AgentChatService {
         ) {
             return;
         }
-        const chat = this.repository.chatViewModelRepository;
         const links = chat.entryIdByRequestId();
         // прогон без записи на сервере, например оборванный отказом, уходит вместе с куском
         const dropped = view.requestIds.filter(
@@ -775,6 +848,8 @@ export class AgentChatService {
     /** Смена проекта: гасим сессию и чистим ленту, чтобы не показывать чужую историю. */
     onProjectChanged = (): void => {
         this.closeSession();
+        // перечитывание истории старого проекта в новую ленту не пишем
+        this.historyGeneration += 1;
         const chat = this.repository.chatViewModelRepository;
         // вход гостя открывает проект заново, и набранный им запрос обязан это пережить
         const typed = chat.input();
@@ -1104,7 +1179,7 @@ export class AgentChatService {
             compiled: this.compiledInRun,
         });
         await this.showLastChangeInPdf();
-        await this.refreshHistoryLinks(token);
+        await this.syncHistory();
     };
 
     /**
@@ -1302,6 +1377,8 @@ export class AgentChatService {
             reason: reason === 'closed' ? 'disconnected' : reason,
         });
         chat.setRequestState('error');
+        // после обрыва сервер мог записать прогон в историю: у него появится id для отката
+        await this.syncHistory();
     };
 
     private reportClosed = (reason: AgentClosedReason): void => {

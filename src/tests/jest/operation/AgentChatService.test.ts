@@ -3587,37 +3587,59 @@ describe('agent checkpoints', () => {
         createdAt: '2026-10-21T10:00:00Z',
     };
 
-    function checkpointSetup(path = `/project/${PROJECT_ID}/agent`) {
+    /** История на сервере меняется по ходу опыта: прогон дописывает запись к концу */
+    type CheckpointCtx = ReturnType<typeof setup> & {
+        server: { history: (typeof OLD)[] };
+    };
+
+    function checkpointSetup(
+        path = `/project/${PROJECT_ID}/agent`
+    ): CheckpointCtx {
         const ctx = setup();
+        const server = { history: [OLD] };
         ctx.repository.setLocation(path);
         ctx.repository.chatViewModelRepository.setHistory([OLD]);
         ctx.repository.chatViewModelRepository.setHistoryRequestState('ok');
+        ctx.rpi.getAgentHistoryRequest = jest.fn(() =>
+            Promise.resolve(okResult({ history: [...server.history] }))
+        );
         ctx.rpi.deleteHunkRequest = jest.fn().mockResolvedValue(okResult({}));
         ctx.rpi.deleteAgentHistoryEntryRequest = jest
             .fn()
             .mockResolvedValue(okResult({}));
-        return ctx;
+        return Object.assign(ctx, { server });
     }
 
     async function runWithEntry(
-        ctx: ReturnType<typeof setup>,
-        text = 'добавь строку'
+        ctx: CheckpointCtx,
+        entry = NEW,
+        hunks: Hunk[] = [HUNK]
     ) {
-        ctx.rpi.getAgentHistoryRequest = jest
-            .fn()
-            .mockResolvedValue(okResult({ history: [OLD, NEW] }));
+        // правки прогона появляются на сервере только по ходу прогона
         ctx.rpi.listHunksRequest = jest
             .fn()
-            .mockResolvedValue(okResult({ hunks: [HUNK] }));
-        ctx.repository.chatViewModelRepository.setInput(text);
+            .mockResolvedValue(okResult({ hunks: [] }));
+        ctx.repository.chatViewModelRepository.setInput(entry.request);
         await ctx.agentChatService.onPromptSubmit();
+        ctx.rpi.listHunksRequest = jest
+            .fn()
+            .mockResolvedValue(okResult({ hunks }));
         await emit(ctx, { kind: 'toolCall', toolName: 'add_lines_to_segment' });
+        ctx.server.history.push(entry);
         await emit(ctx, {
             kind: 'finished',
             message: 'готово',
             stopReason: 'Done',
         });
     }
+
+    const failed = {
+        code: 500,
+        body: {},
+        isOk: false,
+        isUnauth: false,
+        isForbidden: false,
+    };
 
     test('last-mode-accepts-old-changes-before-the-run-in-agent-mode', async () => {
         const ctx = checkpointSetup();
@@ -3687,7 +3709,7 @@ describe('agent checkpoints', () => {
             PROJECT_ID,
             { entryId: 'x', createdAt: '2026-01-01T00:00:00Z' }
         );
-        ctx.repository.chatViewModelRepository.setHistoryRequestState('error');
+        ctx.rpi.getAgentHistoryRequest = jest.fn().mockResolvedValue(failed);
         ctx.repository.chatViewModelRepository.setInput('дальше');
 
         await ctx.agentChatService.onPromptSubmit();
@@ -3743,13 +3765,7 @@ describe('agent checkpoints', () => {
     test('failed-revert-keeps-the-history', async () => {
         const ctx = checkpointSetup();
         await runWithEntry(ctx);
-        ctx.rpi.deleteHunkRequest = jest.fn().mockResolvedValue({
-            code: 500,
-            body: {},
-            isOk: false,
-            isUnauth: false,
-            isForbidden: false,
-        });
+        ctx.rpi.deleteHunkRequest = jest.fn().mockResolvedValue(failed);
 
         await ctx.agentChatService.onCheckpointRevert();
 
@@ -3765,13 +3781,9 @@ describe('agent checkpoints', () => {
         ctx.rpi.listHunksRequest = jest
             .fn()
             .mockResolvedValue(okResult({ hunks: [] }));
-        ctx.rpi.deleteAgentHistoryEntryRequest = jest.fn().mockResolvedValue({
-            code: 500,
-            body: {},
-            isOk: false,
-            isUnauth: false,
-            isForbidden: false,
-        });
+        ctx.rpi.deleteAgentHistoryEntryRequest = jest
+            .fn()
+            .mockResolvedValue(failed);
 
         await ctx.agentChatService.onCheckpointRevert();
 
@@ -3804,5 +3816,139 @@ describe('agent checkpoints', () => {
             false
         );
         expect(ctx.rpi.deleteAgentHistoryEntryRequest).not.toHaveBeenCalled();
+    });
+
+    // находка разбора: запись прерванного прогона сервер дописывает позже, и граница по ленте её не видит
+    test('base-comes-from-fresh-history-not-from-the-feed', async () => {
+        const ctx = checkpointSetup();
+        const ABORTED = {
+            id: 'eA',
+            request: 'прерванный',
+            response: 'готово',
+            createdAt: '2026-10-21T09:00:00Z',
+        };
+        // запись прогона из другой вкладки или прерванного: лента о ней не знает
+        ctx.server.history.push(ABORTED);
+
+        await runWithEntry(ctx);
+
+        expect(ctx.agentChatService.checkpointView()?.entryIds).toEqual(['e1']);
+    });
+
+    // находка разбора: следующий запрос сразу после конца прогона
+    test('next-request-right-after-a-run-waits-for-the-history', async () => {
+        const ctx = checkpointSetup();
+        await runWithEntry(ctx);
+        const SECOND = {
+            id: 'e2',
+            request: 'ещё строку',
+            response: 'готово',
+            createdAt: '2026-10-21T11:00:00Z',
+        };
+        // лента ещё не знает e1: перечитывание после первого прогона не успело
+        ctx.repository.chatViewModelRepository.applyHistoryRefresh([OLD], {});
+
+        await runWithEntry(ctx, SECOND, [{ ...HUNK, id: 'h2' }]);
+
+        // правки первого прогона приняты сами, его запись откат не трогает
+        expect(ctx.agentChatService.checkpointView()?.entryIds).toEqual(['e2']);
+    });
+
+    test('revert-without-fresh-history-touches-nothing', async () => {
+        const ctx = checkpointSetup();
+        await runWithEntry(ctx);
+        ctx.rpi.getAgentHistoryRequest = jest.fn().mockResolvedValue(failed);
+        (ctx.rpi.deleteHunkRequest as jest.Mock).mockClear();
+
+        await ctx.agentChatService.onCheckpointRevert();
+
+        expect(ctx.rpi.deleteHunkRequest).not.toHaveBeenCalled();
+        expect(ctx.rpi.deleteAgentHistoryEntryRequest).not.toHaveBeenCalled();
+        const shown = toasts(ctx);
+        expect(shown[shown.length - 1]).toEqual({
+            message:
+                ctx.repository.dictionary.agent_chat.checkpoint
+                    .history_unavailable,
+            type: 'error',
+        });
+    });
+
+    // по спеке пропавшую запись сервер пропускает с 200, а 404 значит, что нет проекта
+    test('404-on-entry-delete-is-not-a-deleted-entry', async () => {
+        const ctx = checkpointSetup();
+        await runWithEntry(ctx);
+        ctx.rpi.listHunksRequest = jest
+            .fn()
+            .mockResolvedValue(okResult({ hunks: [] }));
+        ctx.rpi.deleteAgentHistoryEntryRequest = jest
+            .fn()
+            .mockResolvedValue({ ...failed, code: 404 });
+
+        await ctx.agentChatService.onCheckpointRevert();
+
+        expect(
+            ctx.repository.chatViewModelRepository.history().map((e) => e.id)
+        ).toEqual(['old', 'e1']);
+    });
+
+    test('history-cleared-while-reloading-stays-cleared', async () => {
+        const ctx = checkpointSetup();
+        let answer: (value: unknown) => void = () => {};
+        ctx.rpi.getAgentHistoryRequest = jest.fn(
+            () =>
+                new Promise((done) => {
+                    answer = done as (value: unknown) => void;
+                })
+        ) as typeof ctx.rpi.getAgentHistoryRequest;
+        ctx.repository.chatViewModelRepository.setInput('раз');
+        const submit = ctx.agentChatService.onPromptSubmit();
+        // запуск дошёл до перечитывания истории
+        for (
+            let i = 0;
+            i < 50 &&
+            (ctx.rpi.getAgentHistoryRequest as jest.Mock).mock.calls.length ===
+                0;
+            i++
+        ) {
+            await new Promise((done) => setTimeout(done, 0));
+        }
+
+        await ctx.agentChatService.onClearHistoryClicked();
+        answer(okResult({ history: [OLD] }));
+        await submit;
+
+        expect(ctx.repository.chatViewModelRepository.history()).toEqual([]);
+    });
+
+    test('revert-button-waits-while-history-reloads', async () => {
+        const ctx = checkpointSetup();
+        let answer: (value: unknown) => void = () => {};
+        ctx.rpi.getAgentHistoryRequest = jest.fn(
+            () =>
+                new Promise((done) => {
+                    answer = done as (value: unknown) => void;
+                })
+        ) as typeof ctx.rpi.getAgentHistoryRequest;
+        ctx.repository.chatViewModelRepository.setInput('раз');
+        const submit = ctx.agentChatService.onPromptSubmit();
+        // запуск дошёл до перечитывания истории
+        for (
+            let i = 0;
+            i < 50 &&
+            (ctx.rpi.getAgentHistoryRequest as jest.Mock).mock.calls.length ===
+                0;
+            i++
+        ) {
+            await new Promise((done) => setTimeout(done, 0));
+        }
+
+        expect(ctx.repository.chatViewModelRepository.historySyncing()).toBe(
+            true
+        );
+        answer(okResult({ history: [OLD] }));
+        await submit;
+        expect(ctx.repository.chatViewModelRepository.historySyncing()).toBe(
+            false
+        );
     });
 });

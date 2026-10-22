@@ -14,7 +14,7 @@ import { AgentCheckpointView } from '../../../../../viewModel/utils/agentCheckpo
 
 const pluralRules: Record<string, Intl.PluralRules> = {};
 
-const revertLabel = (
+const pluralLabel = (
     forms: Record<'one' | 'few' | 'many' | 'other', string>,
     language: string,
     count: number
@@ -45,6 +45,10 @@ export const CheckpointBar = ({ view }: { view: AgentCheckpointView }) => {
     const pending = useSelector(
         (state: StorageState) => state.ide.pendingHunkIds.length > 0
     );
+    // пока история перечитывается, число записей на кнопке ещё не окончательное
+    const syncing = useSelector(
+        (state: StorageState) => state.chat.historySyncing
+    );
     const changeCount = useSelector(selectGroupedHunkCount);
     const skipConfirm = useSelector(
         (state: StorageState) => state.persistence.skipCheckpointRevertConfirm
@@ -56,9 +60,9 @@ export const CheckpointBar = ({ view }: { view: AgentCheckpointView }) => {
     const entryCount = view.entryIds.length;
     const revertText =
         entryCount > 0
-            ? revertLabel(texts.revert_count, language, entryCount)
+            ? pluralLabel(texts.revert_count, language, entryCount)
             : texts.revert_plain;
-    const busy = isRunning || pending;
+    const busy = isRunning || pending || syncing;
 
     const revert = () => dispatch(controller.onAgentCheckpointRevertRequest());
     const closeConfirm = () => {
@@ -93,10 +97,7 @@ export const CheckpointBar = ({ view }: { view: AgentCheckpointView }) => {
                 </button>
             </div>
             <span className="agent-checkpoint__count">
-                {dictionary.hunks.total_changes.replace(
-                    '{n}',
-                    String(changeCount)
-                )}
+                {pluralLabel(texts.changes_count, language, changeCount)}
             </span>
             {/* окно уводим из ленты: у чата container-type, и fixed внутри него считался бы от колонки, а не от окна */}
             {createPortal(

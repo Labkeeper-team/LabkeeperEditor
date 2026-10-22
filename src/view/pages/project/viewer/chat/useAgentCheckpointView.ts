@@ -32,10 +32,8 @@ export const useAgentCheckpointView = (
     const fromRequestId = useSelector(
         (state: StorageState) => state.chat.checkpointFromRequestId
     );
-    const base = useSelector((state: StorageState) =>
-        projectId
-            ? state.persistence.agentCheckpointBases?.[projectId]
-            : undefined
+    const base = useSelector(
+        (state: StorageState) => state.chat.checkpointBase ?? undefined
     );
     return useMemo(
         () =>

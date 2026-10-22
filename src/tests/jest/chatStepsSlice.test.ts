@@ -1,6 +1,8 @@
 import {
     appendChatMessage,
+    applyChatHistoryRefresh,
     chatSlice,
+    setChatCheckpointFromRequestId,
     setChatMessages,
     toggleChatSteps,
 } from '../../view/store/slices/chat';
@@ -44,4 +46,34 @@ test('cleared-transcript-forgets-expanded-runs', () => {
     const cleared = reduce(expanded, setChatMessages([]));
 
     expect(cleared.expandedStepRequestIds).toEqual([]);
+});
+
+// GH-189: после замены ленты номера идут заново, и привязка ушедшего запроса досталась бы новому
+test('replaced-feed-drops-links-of-gone-requests', () => {
+    let state = reduce(
+        chatInitialState,
+        appendChatMessage({
+            kind: 'request',
+            text: 'раз',
+            createdAt: '2026-10-21T10:00:00Z',
+        })
+    );
+    state = reduce(
+        state,
+        appendChatMessage({
+            kind: 'request',
+            text: 'два',
+            createdAt: '2026-10-21T10:01:00Z',
+        })
+    );
+    state = reduce(
+        state,
+        applyChatHistoryRefresh({ history: [], links: { 1: 'e1', 2: 'e2' } })
+    );
+    state = reduce(state, setChatCheckpointFromRequestId(2));
+
+    state = reduce(state, setChatMessages(state.messages.slice(0, 1)));
+
+    expect(state.entryIdByRequestId).toEqual({ 1: 'e1' });
+    expect(state.checkpointFromRequestId).toBeNull();
 });

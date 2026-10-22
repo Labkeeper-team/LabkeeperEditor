@@ -4,11 +4,7 @@ import { Program } from '../../../../model/domain.ts';
 import { persistenceInitialState } from '../index.ts';
 import { createEmptyProgram } from '../../../../model/repository/ProgramRepository.ts';
 import { AgentRunMode } from '../../../../model/rpi/agentSocket.ts';
-import {
-    AGENT_CHECKPOINT_PROJECTS_LIMIT,
-    AgentCheckpointBase,
-    AgentCheckpointMode,
-} from '../../../../viewModel/utils/agentCheckpoint.ts';
+import { AgentCheckpointMode } from '../../../../viewModel/utils/agentCheckpoint.ts';
 
 export const persistenceSlice = createSlice({
     name: 'persistenceSlice',
@@ -68,29 +64,6 @@ export const persistenceSlice = createSlice({
         ) {
             state.skipCheckpointRevertConfirm = payload;
         },
-        setAgentCheckpointBase(
-            state,
-            {
-                payload,
-            }: PayloadAction<{
-                projectId: string;
-                base: AgentCheckpointBase | undefined;
-            }>
-        ) {
-            // срез, сохранённый до GH-189, поля не имеет
-            const bases = { ...(state.agentCheckpointBases ?? {}) };
-            delete bases[payload.projectId];
-            if (payload.base) {
-                // свежий проект встаёт в конец, а вытесняются самые давние
-                bases[payload.projectId] = payload.base;
-                const ids = Object.keys(bases);
-                ids.slice(
-                    0,
-                    Math.max(0, ids.length - AGENT_CHECKPOINT_PROJECTS_LIMIT)
-                ).forEach((id) => delete bases[id]);
-            }
-            state.agentCheckpointBases = bases;
-        },
     },
 });
 export const {
@@ -108,5 +81,4 @@ export const {
     setSkipClearHistoryConfirm,
     setAgentCheckpointMode,
     setSkipCheckpointRevertConfirm,
-    setAgentCheckpointBase,
 } = persistenceSlice.actions;

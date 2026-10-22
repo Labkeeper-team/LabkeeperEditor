@@ -339,6 +339,9 @@ export interface Translations {
             confirm_dont_ask: string;
             cancel: string;
             history_failed: string;
+            history_unavailable: string;
+            /** Сколько правок в проекте, формы по Intl.PluralRules */
+            changes_count: Record<'one' | 'few' | 'many' | 'other', string>;
             settings_title: string;
             mode_last: string;
             mode_range: string;

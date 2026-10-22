@@ -288,6 +288,8 @@ class MockViewModelRepositoryState {
     chatRecentFiles: string[] = [];
     chatEntryIdByRequestId: Record<number, string> = {};
     chatCheckpointFromRequestId: number | null = null;
+    chatCheckpointBase: AgentCheckpointBase | undefined = undefined;
+    chatHistorySyncing: boolean = false;
     agentCheckpointMode: AgentCheckpointMode = AGENT_DEFAULT_CHECKPOINT_MODE;
     agentCheckpointBases: Record<string, AgentCheckpointBase> = {};
 
@@ -468,6 +470,12 @@ export const mockViewModelState = (): MockViewModelRepository => {
             },
             setCheckpointFromRequestId: (id) =>
                 (mockViewModelState.chatCheckpointFromRequestId = id),
+            checkpointBase: () => mockViewModelState.chatCheckpointBase,
+            setCheckpointBase: (base) =>
+                (mockViewModelState.chatCheckpointBase = base),
+            historySyncing: () => mockViewModelState.chatHistorySyncing,
+            setHistorySyncing: (value) =>
+                (mockViewModelState.chatHistorySyncing = value),
             appendMessage: (message) => {
                 mockViewModelState.chatMessages = [
                     ...mockViewModelState.chatMessages,
@@ -520,6 +528,8 @@ export const mockViewModelState = (): MockViewModelRepository => {
                 mockViewModelState.chatRecentFiles = [];
                 mockViewModelState.chatEntryIdByRequestId = {};
                 mockViewModelState.chatCheckpointFromRequestId = null;
+                mockViewModelState.chatCheckpointBase = undefined;
+                mockViewModelState.chatHistorySyncing = false;
             },
         },
         persistenceViewModelRepository: {
@@ -922,6 +932,12 @@ export interface ChatViewModelRepository {
         links: Record<number, string>
     ) => void;
     setCheckpointFromRequestId: (id: number | null) => void;
+    /** Граница отката открытого проекта: копия из хранилища, по ней рисуется рамка */
+    checkpointBase: () => AgentCheckpointBase | undefined;
+    setCheckpointBase: (base: AgentCheckpointBase | undefined) => void;
+    /** История перечитывается: кнопки отката ждут конца */
+    historySyncing: () => boolean;
+    setHistorySyncing: (value: boolean) => void;
     appendMessage: (message: ChatMessageDraft) => void;
     setMessages: (messages: ChatMessage[]) => void;
     setRequestState: (state: AgentRequestState) => void;

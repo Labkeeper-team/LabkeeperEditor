@@ -173,8 +173,6 @@ interface PersistenceState {
     agentCheckpointMode: AgentCheckpointMode;
     /** Галка «больше не спрашивать» в подтверждении отката */
     skipCheckpointRevertConfirm: boolean;
-    /** Граница отката по проектам: переживает перезагрузку, иначе после F5 откат унёс бы не те записи */
-    agentCheckpointBases: Record<string, AgentCheckpointBase>;
 }
 
 export interface ChatState {
@@ -192,6 +190,10 @@ export interface ChatState {
     entryIdByRequestId: Record<number, string>;
     /** Запрос, отправленный, когда правок агента не было: с него начинается откат */
     checkpointFromRequestId: number | null;
+    /** Граница отката открытого проекта. Хранится отдельным ключом localStorage, здесь копия для экрана */
+    checkpointBase: AgentCheckpointBase | null;
+    /** История перечитывается после прогона: до конца кнопки отката знают не все записи */
+    historySyncing: boolean;
 }
 
 export const authInitialState: AuthState = {
@@ -253,7 +255,6 @@ export const persistenceInitialState: PersistenceState = {
     agentPromptHeight: null,
     agentCheckpointMode: AGENT_DEFAULT_CHECKPOINT_MODE,
     skipCheckpointRevertConfirm: false,
-    agentCheckpointBases: {},
 };
 
 export const chatInitialState: ChatState = {
@@ -267,6 +268,8 @@ export const chatInitialState: ChatState = {
     recentFiles: [],
     entryIdByRequestId: {},
     checkpointFromRequestId: null,
+    checkpointBase: null,
+    historySyncing: false,
 };
 
 export const projectInitialState: ProjectState = {

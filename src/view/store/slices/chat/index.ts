@@ -1,3 +1,4 @@
+import { AgentCheckpointBase } from '../../../../viewModel/utils/agentCheckpoint.ts';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { chatInitialState } from '../index.ts';
 import { AgentHistoryEntry } from '../../../../model/domain.ts';
@@ -88,6 +89,15 @@ export const chatSlice = createSlice({
         ) {
             state.checkpointFromRequestId = payload;
         },
+        setChatCheckpointBase(
+            state,
+            { payload }: PayloadAction<AgentCheckpointBase | null>
+        ) {
+            state.checkpointBase = payload;
+        },
+        setChatHistorySyncing(state, { payload }: PayloadAction<boolean>) {
+            state.historySyncing = payload;
+        },
         setChatRecentFiles(state, { payload }: PayloadAction<string[]>) {
             state.recentFiles = payload;
         },
@@ -114,5 +124,7 @@ export const {
     setChatRecentFiles,
     applyChatHistoryRefresh,
     setChatCheckpointFromRequestId,
+    setChatCheckpointBase,
+    setChatHistorySyncing,
     resetChat,
 } = chatSlice.actions;
