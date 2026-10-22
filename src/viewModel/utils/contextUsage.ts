@@ -6,14 +6,16 @@ export function contextUsagePercent(
     contextTokens: number | null | undefined,
     maxContextTokens: number | null | undefined
 ): number | null {
+    // запись истории приходит без разбора кадра сокета, поэтому проверка та же: целое неотрицательное
     if (
-        typeof contextTokens !== 'number' ||
-        typeof maxContextTokens !== 'number' ||
-        !Number.isFinite(contextTokens) ||
-        !Number.isFinite(maxContextTokens) ||
-        maxContextTokens <= 0
+        !Number.isInteger(contextTokens) ||
+        !Number.isInteger(maxContextTokens) ||
+        (contextTokens as number) < 0 ||
+        (maxContextTokens as number) <= 0
     ) {
         return null;
     }
-    return Math.round((contextTokens / maxContextTokens) * 100);
+    return Math.round(
+        ((contextTokens as number) / (maxContextTokens as number)) * 100
+    );
 }
