@@ -194,12 +194,43 @@ test('finished-run-is-framed-with-revert-and-accept', async ({ page }) => {
     ).toHaveText(['добавь строку']);
     await expect(revertButton(page)).toHaveText('Revert 1 request');
     await expect(acceptButton(page)).toBeVisible();
-    await expect(checkpoint(page)).toContainText('Total 1 changes');
+    await expect(
+        checkpoint(page).locator('.agent-checkpoint__count')
+    ).toHaveText('Total 1 change');
     // запись истории привязана к запросу ленты и второй раз не рисуется
     await expect(page.locator('.agent-chat__request-text')).toHaveText([
         'старый запрос',
         'добавь строку',
     ]);
+});
+
+// находка разбора: до перечитывания истории откат не знает записи прогона и удалил бы не то
+test('buttons-wait-until-the-history-is-reloaded', async ({ page }) => {
+    await openAgentMode(page, { runs: [{ hunkId: 'h1', entryId: 'e1' }] });
+    let release: () => void = () => {};
+    const held = new Promise<void>((done) => (release = done));
+    // первое перечитывание ставит границу при запуске, а держим второе, после конца прогона
+    let calls = 0;
+    await page.route(
+        `**/api/v4/public/project/${uuid}/history`,
+        async (route) => {
+            calls += 1;
+            if (calls > 1) {
+                await held;
+            }
+            await route.fallback();
+        }
+    );
+
+    await promptField(page).fill('добавь строку');
+    await page.getByRole('button', { name: 'Send' }).click();
+    await expect(page.locator('.agent-chat__response-text')).toHaveCount(2);
+
+    await expect(revertButton(page)).toBeDisabled();
+    await expect(acceptButton(page)).toBeDisabled();
+    release();
+    await expect(revertButton(page)).toHaveText('Revert 1 request');
+    await expect(revertButton(page)).toBeEnabled();
 });
 
 test('steps-collapse-right-after-the-run', async ({ page }) => {
@@ -331,7 +362,9 @@ test('range-mode-frames-every-request-since-there-were-no-changes', async ({
         checkpoint(page).locator('.agent-chat__request-text')
     ).toHaveText(['первый', 'второй']);
     await expect(revertButton(page)).toHaveText('Revert 2 requests');
-    await expect(checkpoint(page)).toContainText('Total 2 changes');
+    await expect(
+        checkpoint(page).locator('.agent-checkpoint__count')
+    ).toHaveText('Total 2 changes');
 
     await revertButton(page).click();
     await page

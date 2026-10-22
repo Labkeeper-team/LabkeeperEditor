@@ -30,8 +30,10 @@ const entryTime = (createdAt: string | null): number => {
     return Number.isNaN(time) ? -Infinity : time;
 };
 
-/** Записи от старых к новым. У сервера порядок свой, а сравнивать надо по времени */
-function chronological(history: AgentHistoryEntry[]): AgentHistoryEntry[] {
+/** Записи от старых к новым. Порядок ответа спека не задаёт, поэтому и лента, и откат идут по времени */
+export function chronological(
+    history: AgentHistoryEntry[]
+): AgentHistoryEntry[] {
     return history
         .map((entry, index) => ({ entry, index }))
         .sort(
@@ -79,28 +81,35 @@ export function checkpointEntryIds(
 
 /**
  * Свежие записи истории, которых лента ещё не знает, привязываются к запросам
- * ленты по тексту и по порядку. Так запись, пришедшая после прогона, не
- * рисуется второй раз над тем же запросом, а у запроса появляется id для отката
+ * ленты по тексту. Так запись, пришедшая после прогона, не рисуется второй раз
+ * над тем же запросом, а у запроса появляется id для отката. Пары ищутся с
+ * конца: повтор запроса после отказа, у которого записи нет, получает запись
+ * своего прогона, а не неудачного. Идущий прогон записи ещё не имеет, его
+ * запрос передаётся в pendingRequestId и не участвует
  */
 export function linkHistoryToRequests(
     knownEntryIds: ReadonlySet<string>,
     history: AgentHistoryEntry[],
     messages: ChatMessage[],
-    links: Readonly<Record<number, string>>
+    links: Readonly<Record<number, string>>,
+    pendingRequestId: number | null = null
 ): Record<number, string> {
     const next = { ...links };
     const linkedEntries = new Set(Object.values(links));
     const pool = messages.filter(
         (message): message is Extract<ChatMessage, { kind: 'request' }> =>
-            message.kind === 'request' && next[message.id] === undefined
+            message.kind === 'request' &&
+            next[message.id] === undefined &&
+            message.id !== pendingRequestId
     );
-    for (const entry of chronological(history)) {
+    for (const entry of chronological(history).reverse()) {
         if (knownEntryIds.has(entry.id) || linkedEntries.has(entry.id)) {
             continue;
         }
-        const index = pool.findIndex(
-            (request) => request.text.trim() === entry.request.trim()
-        );
+        let index = pool.length - 1;
+        while (index >= 0 && pool[index].text.trim() !== entry.request.trim()) {
+            index -= 1;
+        }
         if (index < 0) {
             continue;
         }
@@ -134,8 +143,8 @@ export function checkpointStart({
 }): CheckpointStart | null {
     const inRange = new Set(entryIds);
     const linkedEntries = new Set(Object.values(links));
-    // записи истории рисуются выше ленты, поэтому первая из них и есть начало
-    const firstEntry = history.find(
+    // записи истории рисуются выше ленты по времени, поэтому первая из них и есть начало
+    const firstEntry = chronological(history).find(
         (entry) => inRange.has(entry.id) && !linkedEntries.has(entry.id)
     );
     if (firstEntry) {

@@ -19,7 +19,10 @@ import { toggleChatSteps } from '../../../../store/slices/chat';
 import { groupChatSteps } from '../../../../../viewModel/utils/chatSteps.ts';
 import { eventLabel } from './eventLabel.ts';
 import { contextUsagePercent } from '../../../../../viewModel/utils/contextUsage.ts';
-import { liveLinks } from '../../../../../viewModel/utils/agentCheckpoint.ts';
+import {
+    chronological,
+    liveLinks,
+} from '../../../../../viewModel/utils/agentCheckpoint.ts';
 import { CheckpointBar } from './AgentCheckpoint.tsx';
 import { useAgentCheckpointView } from './useAgentCheckpointView.ts';
 
@@ -319,7 +322,8 @@ export const Transcript = ({
     // запись, привязанная к запросу ленты, рисуется там, вторая копия над лентой не нужна
     const shownHistory = useMemo(() => {
         const linked = new Set(Object.values(liveLinks(messages, links)));
-        return history.filter((entry) => !linked.has(entry.id));
+        // по времени, как и откат: порядок ответа сервера спека не задаёт
+        return chronological(history).filter((entry) => !linked.has(entry.id));
     }, [history, messages, links]);
     const isRunning =
         requestState === 'running' || requestState === 'connecting';
@@ -558,6 +562,12 @@ export const Transcript = ({
 
     return (
         <div className="agent-chat__transcript" ref={containerRef}>
+            {/* история не загрузилась, а правки есть: об ошибке всё равно говорим */}
+            {isEmpty && historyRequestState === 'error' && (
+                <span className="agent-chat__hint agent-chat__hint--error">
+                    {dictionary.agent_chat.history_error}
+                </span>
+            )}
             {historyBefore.map((entry) => (
                 <HistoryPair key={entry.id} entry={entry} />
             ))}

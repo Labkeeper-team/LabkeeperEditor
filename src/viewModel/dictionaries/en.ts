@@ -374,6 +374,14 @@ export const en: Translations = {
             cancel: 'Cancel',
             history_failed:
                 'The changes were undone, but some requests could not be removed from the history. Reload the page',
+            history_unavailable:
+                'Could not load the history, so nothing was reverted. Please try again',
+            changes_count: {
+                one: 'Total {n} change',
+                few: 'Total {n} changes',
+                many: 'Total {n} changes',
+                other: 'Total {n} changes',
+            },
             settings_title: 'Reverting changes',
             mode_last: 'Last request',
             mode_range: 'Several requests',

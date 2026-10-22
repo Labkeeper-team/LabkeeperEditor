@@ -73,12 +73,17 @@ import {
     setCrossBorderConsentAcceptedLocally,
     setLastProgram,
     setAgentCheckpointMode,
-    setAgentCheckpointBase,
 } from './slices/persistence';
+import {
+    readAgentCheckpointBase,
+    writeAgentCheckpointBase,
+} from './agentCheckpointBases.ts';
 import {
     appendChatMessage,
     applyChatHistoryRefresh,
     setChatCheckpointFromRequestId,
+    setChatCheckpointBase,
+    setChatHistorySyncing,
     resetChat,
     setChatHistory,
     setChatHistoryRequestState,
@@ -350,6 +355,13 @@ export const createViewModelStateFromStore = (
                 store.dispatch(applyChatHistoryRefresh({ history, links })),
             setCheckpointFromRequestId: (id) =>
                 store.dispatch(setChatCheckpointFromRequestId(id)),
+            checkpointBase: () =>
+                store.getState().chat.checkpointBase ?? undefined,
+            setCheckpointBase: (base) =>
+                store.dispatch(setChatCheckpointBase(base ?? null)),
+            historySyncing: () => store.getState().chat.historySyncing,
+            setHistorySyncing: (value) =>
+                store.dispatch(setChatHistorySyncing(value)),
             reset: () => store.dispatch(resetChat()),
         },
         persistenceViewModelRepository: {
@@ -367,11 +379,11 @@ export const createViewModelStateFromStore = (
             agentCheckpointMode: () =>
                 store.getState().persistence.agentCheckpointMode,
             agentCheckpointBase: (projectId) =>
-                store.getState().persistence.agentCheckpointBases?.[projectId],
+                readAgentCheckpointBase(projectId),
             setAgentCheckpointMode: (value) =>
                 store.dispatch(setAgentCheckpointMode(value)),
             setAgentCheckpointBase: (projectId, base) =>
-                store.dispatch(setAgentCheckpointBase({ projectId, base })),
+                writeAgentCheckpointBase(projectId, base),
             crossBorderConsentAcceptedLocally: () =>
                 store.getState().persistence.crossBorderConsentAcceptedLocally,
 

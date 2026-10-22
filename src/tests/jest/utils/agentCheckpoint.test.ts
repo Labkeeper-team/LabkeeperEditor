@@ -121,6 +121,38 @@ describe('linkHistoryToRequests', () => {
         ).toEqual({ 1: 'e1', 4: 'e2' });
     });
 
+    // находка разбора: повтор после отказа, у которого записи нет, получает запись своего прогона
+    test('repeated-request-after-a-refusal-gets-the-entry', () => {
+        const messages = [
+            request(1, 'одно'),
+            { kind: 'error', id: 2, reason: 'PaymentRequired' } as ChatMessage,
+            request(3, 'одно'),
+            response(4),
+        ];
+
+        expect(
+            linkHistoryToRequests(
+                new Set(),
+                [entry('e1', 1, 'одно')],
+                messages,
+                {}
+            )
+        ).toEqual({ 3: 'e1' });
+    });
+
+    test('running-request-does-not-take-an-entry', () => {
+        // запись прерванного прогона с тем же текстом пришла, пока идёт новый
+        expect(
+            linkHistoryToRequests(
+                new Set(),
+                [entry('eA', 1, 'одно')],
+                [request(1, 'одно'), request(5, 'одно')],
+                {},
+                5
+            )
+        ).toEqual({ 1: 'eA' });
+    });
+
     test('entry-without-a-matching-request-stays-unlinked', () => {
         // запись из другой вкладки: в этой ленте её запроса нет
         expect(
@@ -170,6 +202,18 @@ describe('checkpointStart', () => {
                 fromRequestId: 4,
             })
         ).toEqual({ kind: 'request', requestId: 4 });
+    });
+
+    test('start-follows-time-not-the-server-order', () => {
+        expect(
+            checkpointStart({
+                history: [entry('c', 3), entry('b', 2), entry('a', 1)],
+                entryIds: ['b', 'c'],
+                links: {},
+                messages: [],
+                fromRequestId: null,
+            })
+        ).toEqual({ kind: 'entry', entryId: 'b' });
     });
 
     test('nothing-to-frame-gives-null', () => {
