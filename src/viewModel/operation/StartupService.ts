@@ -128,6 +128,9 @@ export class StartupService {
             await this.rpi.getUserInfoRequest();
 
         if (!result.isOk) {
+            // OpenPanel копит события до профиля: без ответа о пользователе представляемся
+            // гостем, иначе очередь висела бы до закрытия вкладки
+            this.initObservers(undefined);
             this.repository.toast(
                 this.repository.dictionary.filemanager.errors.noNetwork,
                 'error'
@@ -148,12 +151,9 @@ export class StartupService {
             States.STATE_ONLINE,
             String(userInfo.isAuthenticated)
         );
-        // аналитику не ждём: её сеть стояла ровно между «узнали пользователя» и открытием проекта
-        void Promise.resolve(
-            this.observerService.init(
-                userInfo.isAuthenticated ? String(userInfo.id) : undefined
-            )
-        ).catch((error) => reportToSentry('startup.observerInit', error));
+        this.initObservers(
+            userInfo.isAuthenticated ? String(userInfo.id) : undefined
+        );
         this.repository.settingsViewModelRepository.setCaptchaBypassToken(
             captcha
         );
@@ -235,6 +235,13 @@ export class StartupService {
         if (compileQuery) {
             await this.projectPageService?.onRunButtonClicked('button');
         }
+    };
+
+    // аналитику не ждём: её сеть стояла ровно между «узнали пользователя» и открытием проекта
+    private initObservers = (userId: string | undefined) => {
+        void Promise.resolve(this.observerService.init(userId)).catch((error) =>
+            reportToSentry('startup.observerInit', error)
+        );
     };
 
     private loadBillingPricing = async (): Promise<void> => {

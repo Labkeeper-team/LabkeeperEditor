@@ -16,7 +16,9 @@ import {
     captureOpenPanelAttributionFromLocation,
     createGuestSessionId,
     getSessionId,
-    landingSessionAlreadyStarted,
+    guestSessionAlreadyStarted,
+    markGuestSessionStarted,
+    markOpenPanelActivity,
     readOpenPanelAttribution,
     readOrCreateGuestDisplayName,
     resetSessionIdOnLogout,
@@ -52,6 +54,8 @@ export class OpenPanelService implements ObserverService {
             profileId,
             ...(attribution ? { properties: attribution } : {}),
         });
+        // профиль выставлен: очередь, накопленная до ответа getUserInfo, уходит уже с ним
+        this.op.ready();
         if (!this.starting) {
             this.starting = this.startSession(profileId, userId);
         } else if (userId) {
@@ -74,6 +78,8 @@ export class OpenPanelService implements ObserverService {
         const profileId = resetSessionIdOnLogout();
         this.currentProfileId = profileId;
         void this.op.identify({ profileId });
+        // выход без init не бывает, но и тогда события не должны застрять в очереди
+        this.op.ready();
     }
 
     onEvent(event: string, properties?: ObserverEventProperties) {
@@ -112,6 +118,7 @@ export class OpenPanelService implements ObserverService {
         if (!this.op) {
             return Promise.resolve(undefined);
         }
+        markOpenPanelActivity();
         return this.op.track(`${EDITOR_EVENT_PREFIX}${name}`, properties);
     }
 
@@ -136,6 +143,9 @@ export class OpenPanelService implements ObserverService {
             apiUrl,
             trackScreenViews: false,
             trackOutgoingLinks: false,
+            // до профиля события копятся в SDK: без profileId сервер записал бы их на deviceId,
+            // и в OpenPanel появился бы безымянный профиль Anonymous. Открывает очередь init
+            disabled: true,
         });
         // SDK кладёт document.referrer во все события, а после перехода с адреса e2e там токен обхода капчи
         this.op.setGlobalProperties({
@@ -149,12 +159,16 @@ export class OpenPanelService implements ObserverService {
         if (!this.op) {
             return;
         }
-        // лендинг в этой вкладке уже отправил старт: второй Session started
-        // разрезал бы один визит гостя на две сессии. У вошедшего профиль другой.
-        const continueLandingSession =
-            !userId && landingSessionAlreadyStarted();
+        // лендинг или другая вкладка уже отправили старт этого гостя: второй Session started
+        // разрезал бы один визит на две сессии. У вошедшего профиль другой.
+        const continueGuestSession = !userId && guestSessionAlreadyStarted();
         let startError: unknown;
-        if (!continueLandingSession) {
+        if (!continueGuestSession) {
+            if (!userId) {
+                // флаг ставим сразу, как и лендинг: вкладка, открытая, пока запрос в полёте,
+                // второй старт не шлёт
+                markGuestSessionStarted();
+            }
             try {
                 const result = await withTimeout(
                     this.track('Session started', {

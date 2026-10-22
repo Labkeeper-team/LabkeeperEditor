@@ -58,3 +58,23 @@ test('a-broken-analytics-init-does-not-break-startup', async () => {
         })
     );
 });
+
+// OpenPanel копит события до профиля, и без init они не ушли бы до закрытия вкладки
+test('analytics-starts-as-a-guest-when-user-info-did-not-answer', async () => {
+    const { startupService, rpi, observerService } = mockContext();
+    mockAuthenticatedStartup(rpi);
+    rpi.getUserInfoRequest = jest.fn().mockResolvedValue({
+        code: 0,
+        body: undefined,
+        isOk: false,
+        isUnauth: false,
+        isForbidden: false,
+    });
+    observerService.init = jest.fn();
+
+    await startupService.onAppStartup();
+
+    expect(observerService.init).toHaveBeenCalledTimes(1);
+    expect(observerService.init).toHaveBeenCalledWith(undefined);
+    expect(rpi.getDefaultProjectRequest).not.toHaveBeenCalled();
+});
