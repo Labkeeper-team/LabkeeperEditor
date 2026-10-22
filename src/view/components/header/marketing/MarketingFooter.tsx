@@ -102,9 +102,9 @@ export const MarketingFooter = () => {
                         </span>
                         <a
                             className="marketing-footer__contact-link"
-                            href="mailto:contact@labkeeper.io"
+                            href="mailto:labkeeper.io@gmail.com"
                         >
-                            contact@labkeeper.io
+                            labkeeper.io@gmail.com
                         </a>
                     </div>
                 </div>

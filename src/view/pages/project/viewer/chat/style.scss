@@ -620,6 +620,11 @@ body.agent-chat-resizing {
         padding: 0;
     }
 
+    .cm-cursor {
+        border-left: 2px solid $gray-10;
+        margin-left: -1px;
+    }
+
     .cm-placeholder {
         color: $gray-30;
     }
