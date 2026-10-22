@@ -3561,3 +3561,248 @@ test('agent-run-accepts-a-replace-back-to-the-same-text-after-it-ends', async ()
         false
     );
 });
+
+/**
+ * GH-189: откат и приём в агентском режиме. Граница отката ставится при
+ * запуске, а запись истории привязывается к запросу ленты после прогона
+ */
+describe('agent checkpoints', () => {
+    const HUNK: Hunk = {
+        id: 'h1',
+        type: 'addLinesToSegment',
+        segmentId: 1,
+        startLine: 1,
+        endLine: 1,
+    };
+    const OLD = {
+        id: 'old',
+        request: 'старый',
+        response: 'ответ',
+        createdAt: '2026-10-20T10:00:00Z',
+    };
+    const NEW = {
+        id: 'e1',
+        request: 'добавь строку',
+        response: 'готово',
+        createdAt: '2026-10-21T10:00:00Z',
+    };
+
+    function checkpointSetup(path = `/project/${PROJECT_ID}/agent`) {
+        const ctx = setup();
+        ctx.repository.setLocation(path);
+        ctx.repository.chatViewModelRepository.setHistory([OLD]);
+        ctx.repository.chatViewModelRepository.setHistoryRequestState('ok');
+        ctx.rpi.deleteHunkRequest = jest.fn().mockResolvedValue(okResult({}));
+        ctx.rpi.deleteAgentHistoryEntryRequest = jest
+            .fn()
+            .mockResolvedValue(okResult({}));
+        return ctx;
+    }
+
+    async function runWithEntry(
+        ctx: ReturnType<typeof setup>,
+        text = 'добавь строку'
+    ) {
+        ctx.rpi.getAgentHistoryRequest = jest
+            .fn()
+            .mockResolvedValue(okResult({ history: [OLD, NEW] }));
+        ctx.rpi.listHunksRequest = jest
+            .fn()
+            .mockResolvedValue(okResult({ hunks: [HUNK] }));
+        ctx.repository.chatViewModelRepository.setInput(text);
+        await ctx.agentChatService.onPromptSubmit();
+        await emit(ctx, { kind: 'toolCall', toolName: 'add_lines_to_segment' });
+        await emit(ctx, {
+            kind: 'finished',
+            message: 'готово',
+            stopReason: 'Done',
+        });
+    }
+
+    test('last-mode-accepts-old-changes-before-the-run-in-agent-mode', async () => {
+        const ctx = checkpointSetup();
+        ctx.repository.ideViewModelRepository.setHunks([HUNK]);
+        ctx.repository.chatViewModelRepository.setInput('дальше');
+
+        await ctx.agentChatService.onPromptSubmit();
+
+        expect(ctx.rpi.deleteHunkRequest).toHaveBeenCalledWith(
+            PROJECT_ID,
+            'h1',
+            false
+        );
+        expect(ctx.agentSocketState.started).toBeDefined();
+        // правок не осталось: граница встала на последнюю запись
+        expect(
+            ctx.repository.persistenceViewModelRepository.agentCheckpointBase(
+                PROJECT_ID
+            )
+        ).toEqual({ entryId: 'old', createdAt: OLD.createdAt });
+        expect(
+            ctx.repository.chatViewModelRepository.checkpointFromRequestId()
+        ).toBe(1);
+    });
+
+    test('editor-mode-does-not-accept-changes-on-its-own', async () => {
+        const ctx = checkpointSetup(`/project/${PROJECT_ID}`);
+        ctx.repository.ideViewModelRepository.setHunks([HUNK]);
+        ctx.repository.chatViewModelRepository.setInput('дальше');
+
+        await ctx.agentChatService.onPromptSubmit();
+
+        expect(ctx.rpi.deleteHunkRequest).not.toHaveBeenCalled();
+        expect(
+            ctx.repository.persistenceViewModelRepository.agentCheckpointBase(
+                PROJECT_ID
+            )
+        ).toBeUndefined();
+    });
+
+    test('range-mode-keeps-changes-and-the-old-base', async () => {
+        const ctx = checkpointSetup();
+        const base = { entryId: null, createdAt: null };
+        ctx.repository.persistenceViewModelRepository.setAgentCheckpointMode(
+            'range'
+        );
+        ctx.repository.persistenceViewModelRepository.setAgentCheckpointBase(
+            PROJECT_ID,
+            base
+        );
+        ctx.repository.ideViewModelRepository.setHunks([HUNK]);
+        ctx.repository.chatViewModelRepository.setInput('дальше');
+
+        await ctx.agentChatService.onPromptSubmit();
+
+        expect(ctx.rpi.deleteHunkRequest).not.toHaveBeenCalled();
+        expect(
+            ctx.repository.persistenceViewModelRepository.agentCheckpointBase(
+                PROJECT_ID
+            )
+        ).toBe(base);
+    });
+
+    test('unknown-history-forgets-the-base-instead-of-lying', async () => {
+        const ctx = checkpointSetup();
+        ctx.repository.persistenceViewModelRepository.setAgentCheckpointBase(
+            PROJECT_ID,
+            { entryId: 'x', createdAt: '2026-01-01T00:00:00Z' }
+        );
+        ctx.repository.chatViewModelRepository.setHistoryRequestState('error');
+        ctx.repository.chatViewModelRepository.setInput('дальше');
+
+        await ctx.agentChatService.onPromptSubmit();
+
+        expect(
+            ctx.repository.persistenceViewModelRepository.agentCheckpointBase(
+                PROJECT_ID
+            )
+        ).toBeUndefined();
+    });
+
+    test('finished-run-gets-its-history-entry', async () => {
+        const ctx = checkpointSetup();
+
+        await runWithEntry(ctx);
+
+        expect(ctx.repository.chatViewModelRepository.history()).toEqual([
+            OLD,
+            NEW,
+        ]);
+        expect(
+            ctx.repository.chatViewModelRepository.entryIdByRequestId()
+        ).toEqual({ 1: 'e1' });
+        expect(ctx.agentChatService.checkpointView()).toEqual({
+            entryIds: ['e1'],
+            start: { kind: 'request', requestId: 1 },
+            requestIds: [1],
+        });
+    });
+
+    test('revert-undoes-changes-then-deletes-entries-and-the-run', async () => {
+        const ctx = checkpointSetup();
+        await runWithEntry(ctx);
+        ctx.rpi.listHunksRequest = jest
+            .fn()
+            .mockResolvedValue(okResult({ hunks: [] }));
+
+        await ctx.agentChatService.onCheckpointRevert();
+
+        expect(ctx.rpi.deleteHunkRequest).toHaveBeenCalledWith(
+            PROJECT_ID,
+            'h1',
+            true
+        );
+        expect(ctx.rpi.deleteAgentHistoryEntryRequest).toHaveBeenCalledWith(
+            PROJECT_ID,
+            'e1'
+        );
+        expect(ctx.repository.chatViewModelRepository.history()).toEqual([OLD]);
+        expect(ctx.repository.chatViewModelRepository.messages()).toEqual([]);
+    });
+
+    test('failed-revert-keeps-the-history', async () => {
+        const ctx = checkpointSetup();
+        await runWithEntry(ctx);
+        ctx.rpi.deleteHunkRequest = jest.fn().mockResolvedValue({
+            code: 500,
+            body: {},
+            isOk: false,
+            isUnauth: false,
+            isForbidden: false,
+        });
+
+        await ctx.agentChatService.onCheckpointRevert();
+
+        expect(ctx.rpi.deleteAgentHistoryEntryRequest).not.toHaveBeenCalled();
+        expect(
+            ctx.repository.chatViewModelRepository.messages().length
+        ).toBeGreaterThan(0);
+    });
+
+    test('entry-that-could-not-be-deleted-keeps-its-run', async () => {
+        const ctx = checkpointSetup();
+        await runWithEntry(ctx);
+        ctx.rpi.listHunksRequest = jest
+            .fn()
+            .mockResolvedValue(okResult({ hunks: [] }));
+        ctx.rpi.deleteAgentHistoryEntryRequest = jest.fn().mockResolvedValue({
+            code: 500,
+            body: {},
+            isOk: false,
+            isUnauth: false,
+            isForbidden: false,
+        });
+
+        await ctx.agentChatService.onCheckpointRevert();
+
+        expect(ctx.repository.chatViewModelRepository.history()).toEqual([
+            OLD,
+            NEW,
+        ]);
+        expect(
+            ctx.repository.chatViewModelRepository
+                .messages()
+                .filter((m) => m.kind === 'request')
+        ).toHaveLength(1);
+        const shown = toasts(ctx);
+        expect(shown[shown.length - 1]).toEqual({
+            message:
+                ctx.repository.dictionary.agent_chat.checkpoint.history_failed,
+            type: 'error',
+        });
+    });
+
+    test('accept-takes-every-change-and-keeps-the-history', async () => {
+        const ctx = checkpointSetup();
+        await runWithEntry(ctx);
+
+        await ctx.agentChatService.onCheckpointAccept();
+
+        expect(ctx.rpi.deleteHunkRequest).toHaveBeenCalledWith(
+            PROJECT_ID,
+            'h1',
+            false
+        );
+        expect(ctx.rpi.deleteAgentHistoryEntryRequest).not.toHaveBeenCalled();
+    });
+});

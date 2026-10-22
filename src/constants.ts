@@ -28,6 +28,7 @@ export const URLS = {
     listHunks: `${uri}/api/${version}/public/project/{id}/hunk`,
     deleteHunk: `${uri}/api/${version}/public/project/{id}/hunk/{hunkId}`,
     agentHistory: `${uri}/api/${version}/public/project/{id}/history`,
+    agentHistoryEntry: `${uri}/api/${version}/public/project/{id}/history/{entryId}`,
 
     filesGetList: `${uri}/api/${version}/public/project/{id}/file/list`,
     uploadFile: `${uri}/api/${version}/public/project/{id}/file/upload`,

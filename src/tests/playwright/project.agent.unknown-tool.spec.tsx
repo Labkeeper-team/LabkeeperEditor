@@ -82,6 +82,8 @@ test('unknown-tool-names-give-the-common-line-and-the-run-finishes', async ({
     await submitPrompt(page);
 
     await expect(responses(page)).toHaveText('готово');
+    // GH-189: шаги закончившегося прогона свёрнуты под кнопкой
+    await page.locator('.agent-chat__steps-toggle').click();
     await expect(page.locator('.agent-chat__event-label')).toHaveText([
         'Reading the document structure',
         COMMON_LINE,
@@ -136,6 +138,8 @@ test('unknown-writing-tool-edit-reaches-the-editor-and-is-not-overwritten', asyn
     await expect(segment(page).locator('.cm-line')).toHaveText([
         'текст агента',
     ]);
+    // GH-189: шаги закончившегося прогона свёрнуты под кнопкой
+    await page.locator('.agent-chat__steps-toggle').click();
     await expect(page.locator('.agent-chat__event-label')).toHaveText([
         COMMON_LINE,
     ]);
@@ -246,6 +250,8 @@ test('guest-result-with-an-unknown-change-type-is-shown-and-accepted', async ({
     await submitPrompt(page, 'перепиши сегмент');
 
     await expect(responses(page)).toHaveText('готово');
+    // GH-189: шаги закончившегося прогона свёрнуты под кнопкой
+    await page.locator('.agent-chat__steps-toggle').click();
     await expect(page.locator('.agent-chat__event-label')).toHaveText([
         COMMON_LINE,
     ]);

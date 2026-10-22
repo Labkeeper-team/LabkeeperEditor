@@ -41,6 +41,7 @@ jest.mock('../../../constants.ts', () => ({
         listHunks: '/api/v4/public/project/{id}/hunk',
         deleteHunk: '/api/v4/public/project/{id}/hunk/{hunkId}',
         agentHistory: '/api/v4/public/project/{id}/history',
+        agentHistoryEntry: '/api/v4/public/project/{id}/history/{entryId}',
         filesGetList: '/api/v4/public/project/{id}/file/list',
         uploadFile: '/api/v4/public/project/{id}/file/upload',
         renameFile: '/api/v2/public/project/{id}/file/rename',
@@ -399,6 +400,13 @@ const RPI_CASES: RpiCase[] = [
         expects423: false,
         call: (rpi) => rpi.clearAgentHistoryRequest(PROJECT_ID),
     },
+    {
+        method: 'deleteAgentHistoryEntryRequest',
+        source: 'agent_history',
+        scoped: true,
+        expects423: false,
+        call: (rpi) => rpi.deleteAgentHistoryEntryRequest(PROJECT_ID, 'e-1'),
+    },
 ];
 
 const HTTP_METHODS = ['post', 'get', 'delete', 'put'] as const;
@@ -628,6 +636,23 @@ describe('WebRpi', () => {
 
         expect(deleteMock).toHaveBeenCalledWith(
             '/api/v4/public/project/project-id/history'
+        );
+        expect(result.isOk).toBe(true);
+    });
+
+    // GH-189: откат удаляет записи истории по одной
+    test('deleteAgentHistoryEntryRequest deletes one entry of the given project', async () => {
+        const deleteMock = axios.delete as jest.Mock;
+        deleteMock.mockResolvedValue({ status: 200, data: {} });
+        const { rpi } = createRpi();
+
+        const result = await rpi.deleteAgentHistoryEntryRequest(
+            'project-id',
+            '5f0c1c2e-1b7a-4c1e-9d1a-0c2b3d4e5f60'
+        );
+
+        expect(deleteMock).toHaveBeenCalledWith(
+            '/api/v4/public/project/project-id/history/5f0c1c2e-1b7a-4c1e-9d1a-0c2b3d4e5f60'
         );
         expect(result.isOk).toBe(true);
     });

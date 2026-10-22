@@ -261,6 +261,12 @@ export interface Rpi {
 
     clearAgentHistoryRequest(projectId: string): Promise<RequestResult>;
 
+    /** GH-189: удаляет одну запись истории; запись, которой уже нет, сервер молча пропускает */
+    deleteAgentHistoryEntryRequest(
+        projectId: string,
+        entryId: string
+    ): Promise<RequestResult>;
+
     getBillingPricingRequest(): Promise<RequestResult<BillingPricingResponse>>;
 
     createBillingPurchaseRequest(
@@ -378,6 +384,14 @@ export const mockRpi = (): Rpi => {
             Promise.resolve({
                 code: 200,
                 body: { history: [] },
+                isOk: true,
+                isUnauth: false,
+                isForbidden: false,
+            }),
+        deleteAgentHistoryEntryRequest: () =>
+            Promise.resolve({
+                code: 200,
+                body: {},
                 isOk: true,
                 isUnauth: false,
                 isForbidden: false,

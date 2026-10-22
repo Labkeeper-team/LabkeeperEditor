@@ -5,6 +5,11 @@ import {
     AgentRunMode,
     AgentStopReason,
 } from '../../model/rpi/agentSocket.ts';
+import {
+    AGENT_DEFAULT_CHECKPOINT_MODE,
+    AgentCheckpointBase,
+    AgentCheckpointMode,
+} from '../utils/agentCheckpoint.ts';
 
 export type MobileView = 'files' | 'editor' | 'pdf' | 'chat';
 export type ViewerTab = 'pdf' | 'chat';
@@ -281,6 +286,10 @@ class MockViewModelRepositoryState {
     chatHistoryRequestState: HistoryRequestState = 'unknown';
     chatHistory: AgentHistoryEntry[] = [];
     chatRecentFiles: string[] = [];
+    chatEntryIdByRequestId: Record<number, string> = {};
+    chatCheckpointFromRequestId: number | null = null;
+    agentCheckpointMode: AgentCheckpointMode = AGENT_DEFAULT_CHECKPOINT_MODE;
+    agentCheckpointBases: Record<string, AgentCheckpointBase> = {};
 
     toasts: { message: string; type: TypeOptions }[] = [];
 }
@@ -450,6 +459,15 @@ export const mockViewModelState = (): MockViewModelRepository => {
                 mockViewModelState.chatHistoryRequestState,
             history: () => mockViewModelState.chatHistory,
             recentFiles: () => mockViewModelState.chatRecentFiles,
+            entryIdByRequestId: () => mockViewModelState.chatEntryIdByRequestId,
+            checkpointFromRequestId: () =>
+                mockViewModelState.chatCheckpointFromRequestId,
+            applyHistoryRefresh: (history, links) => {
+                mockViewModelState.chatHistory = history;
+                mockViewModelState.chatEntryIdByRequestId = links;
+            },
+            setCheckpointFromRequestId: (id) =>
+                (mockViewModelState.chatCheckpointFromRequestId = id),
             appendMessage: (message) => {
                 mockViewModelState.chatMessages = [
                     ...mockViewModelState.chatMessages,
@@ -460,8 +478,30 @@ export const mockViewModelState = (): MockViewModelRepository => {
                 ];
                 mockViewModelState.chatNextMessageId += 1;
             },
-            setMessages: (messages) =>
-                (mockViewModelState.chatMessages = messages),
+            setMessages: (messages) => {
+                mockViewModelState.chatMessages = messages;
+                mockViewModelState.chatNextMessageId =
+                    messages.reduce((max, m) => Math.max(max, m.id), 0) + 1;
+                // как в слайсе: привязки живут, только пока жив их запрос
+                const requestIds = new Set(
+                    messages
+                        .filter((m) => m.kind === 'request')
+                        .map((m) => m.id)
+                );
+                mockViewModelState.chatEntryIdByRequestId = Object.fromEntries(
+                    Object.entries(
+                        mockViewModelState.chatEntryIdByRequestId
+                    ).filter(([id]) => requestIds.has(Number(id)))
+                );
+                if (
+                    mockViewModelState.chatCheckpointFromRequestId !== null &&
+                    !requestIds.has(
+                        mockViewModelState.chatCheckpointFromRequestId
+                    )
+                ) {
+                    mockViewModelState.chatCheckpointFromRequestId = null;
+                }
+            },
             setRequestState: (state) =>
                 (mockViewModelState.chatRequestState = state),
             setInput: (input) => (mockViewModelState.chatInput = input),
@@ -478,6 +518,8 @@ export const mockViewModelState = (): MockViewModelRepository => {
                 mockViewModelState.chatHistoryRequestState = 'unknown';
                 mockViewModelState.chatHistory = [];
                 mockViewModelState.chatRecentFiles = [];
+                mockViewModelState.chatEntryIdByRequestId = {};
+                mockViewModelState.chatCheckpointFromRequestId = null;
             },
         },
         persistenceViewModelRepository: {
@@ -491,8 +533,22 @@ export const mockViewModelState = (): MockViewModelRepository => {
             agentCompilationAllowed: () =>
                 mockViewModelState.agentCompilationAllowed,
             agentRunMode: () => mockViewModelState.agentRunMode,
+            agentCheckpointMode: () => mockViewModelState.agentCheckpointMode,
+            agentCheckpointBase: (projectId) =>
+                mockViewModelState.agentCheckpointBases[projectId],
             crossBorderConsentAcceptedLocally: () =>
                 mockViewModelState.crossBorderConsentAcceptedLocally,
+            setAgentCheckpointMode: (v) =>
+                (mockViewModelState.agentCheckpointMode = v),
+            setAgentCheckpointBase: (projectId, base) => {
+                const next = { ...mockViewModelState.agentCheckpointBases };
+                if (base) {
+                    next[projectId] = base;
+                } else {
+                    delete next[projectId];
+                }
+                mockViewModelState.agentCheckpointBases = next;
+            },
             setAgentMaxTokens: (v) => (mockViewModelState.agentMaxTokens = v),
             setAgentIterations: (v) => (mockViewModelState.agentIterations = v),
             setAgentCompilationAllowed: (v) =>
@@ -855,7 +911,17 @@ export interface ChatViewModelRepository {
     historyRequestState: () => HistoryRequestState;
     history: () => AgentHistoryEntry[];
     recentFiles: () => string[];
+    /** GH-189: запрос ленты и запись истории, которая появилась от него на сервере */
+    entryIdByRequestId: () => Record<number, string>;
+    /** Запрос этой вкладки, отправленный, когда правок агента не было: с него начинается откат */
+    checkpointFromRequestId: () => number | null;
 
+    /** История и привязка записей к запросам ленты меняются вместе, иначе запись мелькнула бы дважды */
+    applyHistoryRefresh: (
+        history: AgentHistoryEntry[],
+        links: Record<number, string>
+    ) => void;
+    setCheckpointFromRequestId: (id: number | null) => void;
     appendMessage: (message: ChatMessageDraft) => void;
     setMessages: (messages: ChatMessage[]) => void;
     setRequestState: (state: AgentRequestState) => void;
@@ -875,7 +941,16 @@ export interface PersistenceViewModelRepository {
     agentIterations: () => number;
     agentCompilationAllowed: () => boolean;
     agentRunMode: () => AgentRunMode;
+    agentCheckpointMode: () => AgentCheckpointMode;
+    agentCheckpointBase: (projectId: string) => AgentCheckpointBase | undefined;
     crossBorderConsentAcceptedLocally: () => boolean;
+
+    setAgentCheckpointMode: (value: AgentCheckpointMode) => void;
+    /** undefined забывает границу проекта */
+    setAgentCheckpointBase: (
+        projectId: string,
+        base: AgentCheckpointBase | undefined
+    ) => void;
 
     setCrossBorderConsentAcceptedLocally: (value: boolean) => void;
     setAgentMaxTokens: (value: number) => void;

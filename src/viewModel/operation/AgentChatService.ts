@@ -34,6 +34,14 @@ import { logBreadcrumb } from '../utils/logBreadcrumb.ts';
 import { compileErrorsPrompt } from '../utils/compileErrors.ts';
 import { trackEvent } from '../utils/observerContext.ts';
 import { isAgentModePath } from '../utils/agentModePath.ts';
+import {
+    AgentCheckpointMode,
+    AgentCheckpointView,
+    agentCheckpointView,
+    checkpointBaseOf,
+    linkHistoryToRequests,
+    withoutRuns,
+} from '../utils/agentCheckpoint.ts';
 
 /** Причины, при которых показываем ошибку, а не ответ. */
 const ERROR_STOP_REASONS: AgentStopReason[] = [
@@ -213,6 +221,20 @@ export class AgentChatService {
         persistence.setAgentRunMode(value);
         this.track(Events.EVENT_AGENT_SETTINGS_CHANGED, {
             setting: 'mode',
+            value,
+        });
+    };
+
+    /** GH-189: режим отката. Гостю тоже можно: режим не тратит токенов и не трогает сервер */
+    onCheckpointModeChanged = (value: AgentCheckpointMode): void => {
+        if (this.isRunning()) {
+            return;
+        }
+        this.repository.persistenceViewModelRepository.setAgentCheckpointMode(
+            value
+        );
+        this.track(Events.EVENT_AGENT_SETTINGS_CHANGED, {
+            setting: 'checkpoint_mode',
             value,
         });
     };
@@ -420,6 +442,8 @@ export class AgentChatService {
             text: prompt,
             createdAt: new Date().toISOString(),
         });
+        const messages = chat.messages();
+        const requestId = messages[messages.length - 1]?.id ?? null;
 
         // старую программу нельзя сохранять перед запуском: она затрёт правку прошлого прогона
         const synced = await this.resyncProgram(token);
@@ -441,6 +465,11 @@ export class AgentChatService {
             this.track(Events.EVENT_AGENT_FAILED, { reason: 'save_failed' });
             chat.appendMessage({ kind: 'error', reason: 'save_failed' });
             chat.setRequestState('error');
+            return;
+        }
+
+        await this.prepareCheckpoint(requestId);
+        if (token !== this.runToken) {
             return;
         }
 
@@ -563,6 +592,184 @@ export class AgentChatService {
         chat.setRequestState('idle');
         // GH-179: сверка шла под замком, теперь программа перечитана
         this.hunkService.settleNoOpHunks();
+        // сервер дорабатывает прогон и после обрыва, но то, что успело записаться, привяжем
+        await this.refreshHistoryLinks(token);
+    };
+
+    /**
+     * GH-189: граница отката ставится в момент запуска. В режиме last правки
+     * прошлого прогона перед этим принимаются, но только в агентском режиме: в
+     * редакторе они видны и решаются там. Если правок после этого нет, всё,
+     * что будет дальше, откатывается целиком: запоминаем последнюю запись
+     * истории и запрос этой вкладки. Правки остались, значит граница прежняя
+     */
+    private prepareCheckpoint = async (
+        requestId: number | null
+    ): Promise<void> => {
+        if (
+            this.repository.persistenceViewModelRepository.agentCheckpointMode() ===
+                'last' &&
+            isAgentModePath(this.repository.location()) &&
+            this.hunkService.hasShownHunks()
+        ) {
+            this.track(Events.EVENT_AGENT_CHECKPOINT_AUTO_ACCEPTED, {
+                hunk_count: this.hunkService.shownHunkCount(),
+            });
+            await this.hunkService.acceptAllForHistoryChange();
+        }
+        if (this.hunkService.hasShownHunks()) {
+            return;
+        }
+        const chat = this.repository.chatViewModelRepository;
+        chat.setCheckpointFromRequestId(requestId);
+        const project = this.repository.projectViewModelRepository.project();
+        if (
+            !project ||
+            !this.repository.userViewModelRepository.isAuthenticated()
+        ) {
+            return;
+        }
+        // без загруженной истории последняя запись неизвестна, и старая граница была бы враньём
+        this.repository.persistenceViewModelRepository.setAgentCheckpointBase(
+            project.projectId,
+            chat.historyRequestState() === 'ok'
+                ? checkpointBaseOf(chat.history())
+                : undefined
+        );
+    };
+
+    /**
+     * Запись истории появляется на сервере к концу прогона. Перечитываем
+     * историю и привязываем новые записи к запросам ленты: так у прогона
+     * появляется id для отката, а запись не рисуется второй раз
+     */
+    private refreshHistoryLinks = async (token: number): Promise<void> => {
+        const chat = this.repository.chatViewModelRepository;
+        const project = this.repository.projectViewModelRepository.project();
+        if (
+            !project ||
+            !this.repository.userViewModelRepository.isAuthenticated() ||
+            chat.historyRequestState() !== 'ok'
+        ) {
+            return;
+        }
+        const result = await this.rpi.getAgentHistoryRequest(project.projectId);
+        // пока список ехал, начался новый прогон или открылся другой проект
+        if (token !== this.runToken || !result.isOk) {
+            return;
+        }
+        const history = result.body.history ?? [];
+        const known = new Set(chat.history().map((entry) => entry.id));
+        chat.applyHistoryRefresh(
+            history,
+            linkHistoryToRequests(
+                known,
+                history,
+                chat.messages(),
+                chat.entryIdByRequestId()
+            )
+        );
+    };
+
+    /** Что откатится сейчас. Тот же расчёт рисует подсветку в ленте */
+    checkpointView = (): AgentCheckpointView | null => {
+        const chat = this.repository.chatViewModelRepository;
+        const project = this.repository.projectViewModelRepository.project();
+        if (
+            !project ||
+            this.repository.projectViewModelRepository.projectIsReadonly()
+        ) {
+            return null;
+        }
+        return agentCheckpointView({
+            hunkCount: this.hunkService.shownHunkCount(),
+            authenticated:
+                this.repository.userViewModelRepository.isAuthenticated(),
+            history: chat.history(),
+            links: chat.entryIdByRequestId(),
+            messages: chat.messages(),
+            fromRequestId: chat.checkpointFromRequestId(),
+            base: this.repository.persistenceViewModelRepository.agentCheckpointBase(
+                project.projectId
+            ),
+        });
+    };
+
+    /** «Принять» в агентском режиме принимает все правки проекта, а не только подсвеченные */
+    onCheckpointAccept = async (): Promise<void> => {
+        const view = this.checkpointView();
+        if (this.isRunning() || !view) {
+            return;
+        }
+        this.track(Events.EVENT_AGENT_CHECKPOINT_ACCEPTED, {
+            mode: this.repository.persistenceViewModelRepository.agentCheckpointMode(),
+            hunk_count: this.hunkService.shownHunkCount(),
+            entry_count: view.entryIds.length,
+        });
+        await this.hunkService.acceptAll();
+    };
+
+    /**
+     * «Откатить»: все правки откатываются, а записи истории подсвеченного
+     * куска удаляются. Записи трогаем только после удачного отката правок:
+     * иначе в истории не осталось бы запроса, чьи правки ещё в документе
+     */
+    onCheckpointRevert = async (): Promise<void> => {
+        const view = this.checkpointView();
+        const project = this.repository.projectViewModelRepository.project();
+        if (
+            this.isRunning() ||
+            !view ||
+            !project ||
+            !this.repository.userViewModelRepository.isAuthenticated()
+        ) {
+            return;
+        }
+        this.track(Events.EVENT_AGENT_CHECKPOINT_REVERTED, {
+            mode: this.repository.persistenceViewModelRepository.agentCheckpointMode(),
+            hunk_count: this.hunkService.shownHunkCount(),
+            entry_count: view.entryIds.length,
+        });
+        if (!(await this.hunkService.revertAll())) {
+            return;
+        }
+        const deleted = new Set<string>();
+        for (const entryId of view.entryIds) {
+            const result = await this.rpi.deleteAgentHistoryEntryRequest(
+                project.projectId,
+                entryId
+            );
+            if (result.isOk || result.code === 404) {
+                deleted.add(entryId);
+            } else if (result.isUnauth) {
+                break;
+            }
+        }
+        // пока шли запросы, могли открыть другой проект: его ленту не трогаем
+        if (
+            this.repository.projectViewModelRepository.project()?.projectId !==
+            project.projectId
+        ) {
+            return;
+        }
+        const chat = this.repository.chatViewModelRepository;
+        const links = chat.entryIdByRequestId();
+        // прогон без записи на сервере, например оборванный отказом, уходит вместе с куском
+        const dropped = view.requestIds.filter(
+            (id) => links[id] === undefined || deleted.has(links[id])
+        );
+        chat.applyHistoryRefresh(
+            chat.history().filter((entry) => !deleted.has(entry.id)),
+            links
+        );
+        chat.setMessages(withoutRuns(chat.messages(), dropped));
+        chat.setCheckpointFromRequestId(null);
+        if (deleted.size < view.entryIds.length) {
+            this.repository.toast(
+                this.repository.dictionary.agent_chat.checkpoint.history_failed,
+                'error'
+            );
+        }
     };
 
     /** Смена проекта: гасим сессию и чистим ленту, чтобы не показывать чужую историю. */
@@ -897,6 +1104,7 @@ export class AgentChatService {
             compiled: this.compiledInRun,
         });
         await this.showLastChangeInPdf();
+        await this.refreshHistoryLinks(token);
     };
 
     /**

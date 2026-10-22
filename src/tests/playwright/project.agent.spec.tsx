@@ -1595,6 +1595,8 @@ test('repeated-edit-of-one-segment-reaches-the-editor', async ({ page }) => {
     await expect(segment(page, 0).locator('.cm-hunk-added-line')).toHaveCount(
         2
     );
+    // GH-189: шаги закончившегося прогона свёрнуты под кнопкой
+    await page.locator('.agent-chat__steps-toggle').click();
     await expect(page.locator('.agent-chat__event-label')).toHaveText([
         'Changes have been made to segment №1',
         'Changes have been made to segment №1',

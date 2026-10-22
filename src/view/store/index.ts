@@ -72,9 +72,13 @@ import {
     setAgentRunMode,
     setCrossBorderConsentAcceptedLocally,
     setLastProgram,
+    setAgentCheckpointMode,
+    setAgentCheckpointBase,
 } from './slices/persistence';
 import {
     appendChatMessage,
+    applyChatHistoryRefresh,
+    setChatCheckpointFromRequestId,
     resetChat,
     setChatHistory,
     setChatHistoryRequestState,
@@ -339,6 +343,13 @@ export const createViewModelStateFromStore = (
             setHistory: (history) => store.dispatch(setChatHistory(history)),
             setRecentFiles: (names) =>
                 store.dispatch(setChatRecentFiles(names)),
+            entryIdByRequestId: () => store.getState().chat.entryIdByRequestId,
+            checkpointFromRequestId: () =>
+                store.getState().chat.checkpointFromRequestId,
+            applyHistoryRefresh: (history, links) =>
+                store.dispatch(applyChatHistoryRefresh({ history, links })),
+            setCheckpointFromRequestId: (id) =>
+                store.dispatch(setChatCheckpointFromRequestId(id)),
             reset: () => store.dispatch(resetChat()),
         },
         persistenceViewModelRepository: {
@@ -353,6 +364,14 @@ export const createViewModelStateFromStore = (
             agentCompilationAllowed: () =>
                 store.getState().persistence.agentCompilationAllowed,
             agentRunMode: () => store.getState().persistence.agentRunMode,
+            agentCheckpointMode: () =>
+                store.getState().persistence.agentCheckpointMode,
+            agentCheckpointBase: (projectId) =>
+                store.getState().persistence.agentCheckpointBases?.[projectId],
+            setAgentCheckpointMode: (value) =>
+                store.dispatch(setAgentCheckpointMode(value)),
+            setAgentCheckpointBase: (projectId, base) =>
+                store.dispatch(setAgentCheckpointBase({ projectId, base })),
             crossBorderConsentAcceptedLocally: () =>
                 store.getState().persistence.crossBorderConsentAcceptedLocally,
 
