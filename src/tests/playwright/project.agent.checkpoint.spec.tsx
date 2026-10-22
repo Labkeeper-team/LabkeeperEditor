@@ -209,6 +209,10 @@ test('buttons-wait-until-the-history-is-reloaded', async ({ page }) => {
     await openAgentMode(page, { runs: [{ hunkId: 'h1', entryId: 'e1' }] });
     let release: () => void = () => {};
     const held = new Promise<void>((done) => (release = done));
+    // первичная загрузка чата позади: иначе она тоже попала бы в счёт
+    await expect(page.locator('.agent-chat__request-text')).toHaveText([
+        'старый запрос',
+    ]);
     // первое перечитывание ставит границу при запуске, а держим второе, после конца прогона
     let calls = 0;
     await page.route(
