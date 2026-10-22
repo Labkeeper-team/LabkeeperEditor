@@ -19,6 +19,9 @@ import { toggleChatSteps } from '../../../../store/slices/chat';
 import { groupChatSteps } from '../../../../../viewModel/utils/chatSteps.ts';
 import { eventLabel } from './eventLabel.ts';
 import { contextUsagePercent } from '../../../../../viewModel/utils/contextUsage.ts';
+import { liveLinks } from '../../../../../viewModel/utils/agentCheckpoint.ts';
+import { CheckpointBar } from './AgentCheckpoint.tsx';
+import { useAgentCheckpointView } from './useAgentCheckpointView.ts';
 
 /** Насколько близко к низу считаем, что пользователь «внизу» и можно доскроллить */
 const STICK_TO_BOTTOM_PX = 40;
@@ -290,7 +293,12 @@ const HistoryPair = ({ entry }: { entry: AgentHistoryEntry }) => (
     </div>
 );
 
-export const Transcript = () => {
+/** withCheckpoint: подсветка и кнопки отката, они есть только в агентском режиме */
+export const Transcript = ({
+    withCheckpoint = false,
+}: {
+    withCheckpoint?: boolean;
+}) => {
     const dispatch = useDispatch<AppDispatch>();
     const dictionary = useSelector(useDictionary);
     const messages = useSelector((state: StorageState) => state.chat.messages);
@@ -304,7 +312,21 @@ export const Transcript = () => {
     const expandedSteps = useSelector(
         (state: StorageState) => state.chat.expandedStepRequestIds
     );
-    const steps = useMemo(() => groupChatSteps(messages), [messages]);
+    const links = useSelector(
+        (state: StorageState) => state.chat.entryIdByRequestId
+    );
+    const checkpoint = useAgentCheckpointView(withCheckpoint);
+    // запись, привязанная к запросу ленты, рисуется там, вторая копия над лентой не нужна
+    const shownHistory = useMemo(() => {
+        const linked = new Set(Object.values(liveLinks(messages, links)));
+        return history.filter((entry) => !linked.has(entry.id));
+    }, [history, messages, links]);
+    const isRunning =
+        requestState === 'running' || requestState === 'connecting';
+    const steps = useMemo(
+        () => groupChatSteps(messages, isRunning),
+        [messages, isRunning]
+    );
 
     const containerRef = useRef<HTMLDivElement>(null);
     const stickToBottom = useRef(true);
@@ -400,8 +422,6 @@ export const Transcript = () => {
         });
     };
 
-    const isRunning =
-        requestState === 'running' || requestState === 'connecting';
     const lastIndex = messages.length - 1;
     // пока событий ещё нет, спиннеру не на чем висеть, показываем его отдельной строкой
     const lastMessageIsNotEvent =
@@ -423,7 +443,8 @@ export const Transcript = () => {
         );
     }
 
-    if (isEmpty && !isRunning) {
+    // правки есть, а ленты нет: кнопки всё равно нужны, иначе решить их в агентском режиме нечем
+    if (isEmpty && !isRunning && !checkpoint) {
         return (
             <div
                 className="agent-chat__transcript agent-chat__transcript--empty"
@@ -438,83 +459,130 @@ export const Transcript = () => {
         );
     }
 
+    // первая строка куска, обведённого для отката: перед ней разделитель не нужен, рамка сама отделяет
+    const blockFirstRequestId =
+        checkpoint?.start?.kind === 'request'
+            ? checkpoint.start.requestId
+            : null;
+
+    const renderMessage = (message: ChatMessage, index: number) => {
+        const pending = isRunning && index === lastIndex;
+        switch (message.kind) {
+            case 'request': {
+                const stepCount = steps.pastStepCounts[message.id] ?? 0;
+                return (
+                    <Fragment key={message.id}>
+                        {/* между парами в ленте разделитель, как в макете */}
+                        {(index > 0 || shownHistory.length > 0) &&
+                            message.id !== blockFirstRequestId && (
+                                <div className="agent-chat__separator" />
+                            )}
+                        <RequestCard
+                            text={message.text}
+                            createdAt={message.createdAt}
+                        />
+                        {stepCount > 0 && (
+                            <StepsToggle
+                                count={stepCount}
+                                expanded={expandedSteps.includes(message.id)}
+                                onToggle={() => onToggleSteps(message.id)}
+                            />
+                        )}
+                    </Fragment>
+                );
+            }
+            case 'response':
+                return (
+                    <ResponseBlock
+                        key={message.id}
+                        text={message.text}
+                        contextTokens={message.contextTokens}
+                        maxContextTokens={message.maxContextTokens}
+                    />
+                );
+            case 'error':
+                return <ErrorBlock key={message.id} reason={message.reason} />;
+            case 'notice':
+                return (
+                    <NoticeBlock
+                        key={message.id}
+                        reason={message.reason}
+                        changes={message.changes}
+                    />
+                );
+            case 'event': {
+                const owner = steps.stepOwner[index];
+                // шаги прошлого прогона ждут под кнопкой у его запроса
+                if (owner !== null && !expandedSteps.includes(owner)) {
+                    return null;
+                }
+                return (
+                    <EventRow
+                        key={message.id}
+                        message={message}
+                        pending={pending}
+                    />
+                );
+            }
+        }
+    };
+
+    // GH-189: всё ниже начала отката обведено рамкой, кнопки стоят в её конце
+    const historySplit =
+        checkpoint?.start?.kind === 'entry'
+            ? shownHistory.findIndex(
+                  (entry) =>
+                      checkpoint.start?.kind === 'entry' &&
+                      entry.id === checkpoint.start.entryId
+              )
+            : -1;
+    const messageSplit =
+        checkpoint?.start?.kind === 'entry'
+            ? 0
+            : blockFirstRequestId !== null
+              ? messages.findIndex(
+                    (message) => message.id === blockFirstRequestId
+                )
+              : -1;
+    const historyBefore =
+        historySplit >= 0 ? shownHistory.slice(0, historySplit) : shownHistory;
+    const historyInside =
+        historySplit >= 0 ? shownHistory.slice(historySplit) : [];
+    const splitAt = messageSplit >= 0 ? messageSplit : messages.length;
+    const spinner = isRunning && lastMessageIsNotEvent && (
+        <div className="agent-chat__event">
+            <span className="agent-chat__spinner" aria-hidden />
+        </div>
+    );
+    const hasBlock = historySplit >= 0 || messageSplit >= 0;
+
     return (
         <div className="agent-chat__transcript" ref={containerRef}>
-            {history.map((entry) => (
+            {historyBefore.map((entry) => (
                 <HistoryPair key={entry.id} entry={entry} />
             ))}
-            {messages.map((message, index) => {
-                const pending = isRunning && index === lastIndex;
-                switch (message.kind) {
-                    case 'request': {
-                        const stepCount = steps.pastStepCounts[message.id] ?? 0;
-                        return (
-                            <Fragment key={message.id}>
-                                {/* между парами в ленте разделитель, как в макете */}
-                                {(index > 0 || history.length > 0) && (
-                                    <div className="agent-chat__separator" />
-                                )}
-                                <RequestCard
-                                    text={message.text}
-                                    createdAt={message.createdAt}
-                                />
-                                {stepCount > 0 && (
-                                    <StepsToggle
-                                        count={stepCount}
-                                        expanded={expandedSteps.includes(
-                                            message.id
-                                        )}
-                                        onToggle={() =>
-                                            onToggleSteps(message.id)
-                                        }
-                                    />
-                                )}
-                            </Fragment>
-                        );
-                    }
-                    case 'response':
-                        return (
-                            <ResponseBlock
-                                key={message.id}
-                                text={message.text}
-                                contextTokens={message.contextTokens}
-                                maxContextTokens={message.maxContextTokens}
-                            />
-                        );
-                    case 'error':
-                        return (
-                            <ErrorBlock
-                                key={message.id}
-                                reason={message.reason}
-                            />
-                        );
-                    case 'notice':
-                        return (
-                            <NoticeBlock
-                                key={message.id}
-                                reason={message.reason}
-                                changes={message.changes}
-                            />
-                        );
-                    case 'event': {
-                        const owner = steps.stepOwner[index];
-                        // шаги прошлого прогона ждут под кнопкой у его запроса
-                        if (owner !== null && !expandedSteps.includes(owner)) {
-                            return null;
-                        }
-                        return (
-                            <EventRow
-                                key={message.id}
-                                message={message}
-                                pending={pending}
-                            />
-                        );
-                    }
-                }
-            })}
-            {isRunning && lastMessageIsNotEvent && (
-                <div className="agent-chat__event">
-                    <span className="agent-chat__spinner" aria-hidden />
+            {messages
+                .slice(0, splitAt)
+                .map((message, index) => renderMessage(message, index))}
+            {!hasBlock && spinner}
+            {checkpoint && (
+                <div
+                    className={classNames('agent-checkpoint', {
+                        'agent-checkpoint--detached': !hasBlock,
+                    })}
+                    role="group"
+                    aria-label={dictionary.agent_chat.checkpoint.region}
+                >
+                    {historyInside.map((entry) => (
+                        <HistoryPair key={entry.id} entry={entry} />
+                    ))}
+                    {messages
+                        .slice(splitAt)
+                        .map((message, offset) =>
+                            renderMessage(message, splitAt + offset)
+                        )}
+                    {hasBlock && spinner}
+                    <CheckpointBar view={checkpoint} />
                 </div>
             )}
         </div>

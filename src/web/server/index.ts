@@ -91,6 +91,7 @@ const RPI_SOURCES: Record<keyof Rpi, string> = {
     deleteHunkRequest: 'hunk',
     getAgentHistoryRequest: 'agent_history',
     clearAgentHistoryRequest: 'agent_history',
+    deleteAgentHistoryEntryRequest: 'agent_history',
 };
 
 export class WebRpi implements Rpi {
@@ -725,6 +726,24 @@ export class WebRpi implements Rpi {
             'getAgentHistoryRequest',
             [200, 401],
             () => axios.get(URLS.agentHistory.replace('{id}', projectId)),
+            projectId
+        );
+    }
+
+    async deleteAgentHistoryEntryRequest(
+        projectId: string,
+        entryId: string
+    ): Promise<RequestResult> {
+        // 403 и 404 из спеки не ожидаем, как у ханков: такие ответы должны доходить до Sentry
+        return this.requestWrapper(
+            'deleteAgentHistoryEntryRequest',
+            [200, 401],
+            () =>
+                axios.delete(
+                    URLS.agentHistoryEntry
+                        .replace('{id}', projectId)
+                        .replace('{entryId}', encodeURIComponent(entryId))
+                ),
             projectId
         );
     }

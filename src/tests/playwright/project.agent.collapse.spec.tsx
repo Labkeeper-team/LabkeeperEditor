@@ -83,7 +83,9 @@ async function startSecondRun(page: Page) {
     await expect(
         page.locator('.agent-chat__response-text', { hasText: 'первый ответ' })
     ).toBeVisible();
-    await expect(stepLabels(page)).toHaveText(FIRST_RUN_STEPS);
+    // GH-189: шаги закончившегося прогона свёрнуты сразу, нового запроса не ждут
+    await expect(toggles(page)).toHaveText(['Agent steps: 3']);
+    await expect(stepLabels(page)).toHaveCount(0);
     await submitPrompt(page, 'второй');
     await expect(stopButton(page)).toBeVisible();
 }
@@ -138,7 +140,10 @@ test('expanded-run-collapses-again-on-the-next-request', async ({ page }) => {
     await expect(
         page.locator('.agent-chat__response-text', { hasText: 'второй ответ' })
     ).toBeVisible();
-    await toggles(page).click();
+    // оба прогона закончены и свёрнуты, разворачиваем оба
+    for (const toggle of await toggles(page).all()) {
+        await toggle.click();
+    }
     await expect(stepLabels(page)).toHaveCount(4);
 
     await submitPrompt(page, 'третий');
@@ -230,8 +235,13 @@ test('run-after-clearing-does-not-inherit-an-expanded-id', async ({ page }) => {
 
     // id сообщений идут заново, и первый новый прогон получает id развёрнутого прежде
     await submitPrompt(page, 'третий');
-    await expect(stepLabels(page)).toHaveCount(2);
     await expect(sendButton(page)).toBeVisible();
+
+    // закончившийся прогон свёрнут, а не развёрнут чужой отметкой
+    await expect(toggles(page)).toHaveText(['Agent steps: 2']);
+    await expect(toggles(page)).toHaveAttribute('aria-expanded', 'false');
+    await expect(stepLabels(page)).toHaveCount(0);
+
     await submitPrompt(page, 'четвёртый');
 
     await expect(toggles(page)).toHaveText(['Agent steps: 2']);
@@ -383,7 +393,8 @@ test('toggle-stays-put-while-the-current-run-goes-on', async ({ page }) => {
     await submitPrompt(page, 'второй');
     await expect(stepLabels(page)).toHaveText(['Reading a file']);
     await expect.poll(() => distanceToBottom(page)).toBeLessThanOrEqual(1);
-    const toggle = toggles(page);
+    // после прерывания свернётся и второй прогон, и кнопок станет две
+    const toggle = toggles(page).first();
     await toggle.click();
     await expect(stepLabels(page)).toHaveCount(7);
     await afterTwoFrames(page);

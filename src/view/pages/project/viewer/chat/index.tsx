@@ -9,7 +9,7 @@ import { PromptField } from './PromptField';
 import { AgentFiles } from './AgentFiles.tsx';
 import './style.scss';
 
-/** withFiles: файлы прямо в чате, они нужны там, где нет файлового менеджера, то есть в агентском режиме */
+/** withFiles: файлы прямо в чате, они нужны там, где нет файлового менеджера, то есть в агентском режиме. Там же и откат правок (GH-189): редактора с его кнопками в этом режиме нет */
 export const AgentChat = ({ withFiles = false }: { withFiles?: boolean }) => {
     const dispatch = useDispatch<AppDispatch>();
     const dictionary = useSelector(useDictionary);
@@ -37,7 +37,7 @@ export const AgentChat = ({ withFiles = false }: { withFiles?: boolean }) => {
                 'agent-chat--files': withFiles,
             })}
         >
-            <Transcript />
+            <Transcript withCheckpoint={withFiles} />
             {withFiles && <AgentFiles isEmpty={isEmpty} />}
             <PromptField isEmpty={isEmpty} />
             {isEmpty && (

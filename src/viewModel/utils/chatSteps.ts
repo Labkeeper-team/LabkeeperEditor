@@ -3,18 +3,27 @@ import { ChatMessage } from '../repository';
 export interface ChatStepGroups {
     /** По индексу ленты: id запроса, под которым строка шага свёрнута, или null, если она всегда на виду */
     stepOwner: (number | null)[];
-    /** Сколько строк шагов у каждого прошлого прогона по id его запроса; прогоны без строк и текущий сюда не попадают */
+    /** Сколько строк шагов у каждого прошлого прогона по id его запроса; прогоны без строк и идущий сюда не попадают */
     pastStepCounts: Record<number, number>;
 }
 
-/** Прошлые прогоны это те, после которых уже отправлен новый запрос; прячутся только их строки шагов, а ответ, ошибка и оговорка с перечнем изменений остаются на виду */
-export function groupChatSteps(messages: ChatMessage[]): ChatStepGroups {
-    let lastRequestIndex = -1;
-    messages.forEach((message, index) => {
-        if (message.kind === 'request') {
-            lastRequestIndex = index;
-        }
-    });
+/**
+ * Прошлые прогоны это все, кроме идущего: GH-189 просит сворачивать шаги сразу
+ * после конца прогона. Прячутся только строки шагов, а ответ, ошибка и оговорка
+ * с перечнем изменений остаются на виду
+ */
+export function groupChatSteps(
+    messages: ChatMessage[],
+    running: boolean
+): ChatStepGroups {
+    let lastRequestIndex = messages.length;
+    if (running) {
+        messages.forEach((message, index) => {
+            if (message.kind === 'request') {
+                lastRequestIndex = index;
+            }
+        });
+    }
 
     const stepOwner: (number | null)[] = [];
     const pastStepCounts: Record<number, number> = {};

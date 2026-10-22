@@ -18,11 +18,19 @@ const response = (id: number): ChatMessage => ({
     text: 'готово',
 });
 
-test('current-run-is-never-collapsed', () => {
-    // прогон закончился, но нового запроса ещё нет: шаги остаются на виду
-    expect(groupChatSteps([request(1), step(2), step(3), response(4)])).toEqual(
-        { stepOwner: [null, null, null, null], pastStepCounts: {} }
-    );
+test('running-run-is-never-collapsed', () => {
+    // агент ещё работает: шаги идущего прогона на виду
+    expect(groupChatSteps([request(1), step(2), step(3)], true)).toEqual({
+        stepOwner: [null, null, null],
+        pastStepCounts: {},
+    });
+});
+
+// GH-189: размышления сворачиваются сразу после конца прогона, не дожидаясь нового запроса
+test('finished-run-collapses-at-once', () => {
+    expect(
+        groupChatSteps([request(1), step(2), step(3), response(4)], false)
+    ).toEqual({ stepOwner: [null, 1, 1, null], pastStepCounts: { 1: 2 } });
 });
 
 test('new-request-collapses-only-steps-of-the-previous-run', () => {
@@ -35,7 +43,7 @@ test('new-request-collapses-only-steps-of-the-previous-run', () => {
         step(6),
     ];
 
-    expect(groupChatSteps(messages)).toEqual({
+    expect(groupChatSteps(messages, true)).toEqual({
         stepOwner: [null, 1, 1, null, null, null],
         pastStepCounts: { 1: 2 },
     });
@@ -49,7 +57,7 @@ test('run-without-steps-gets-no-toggle', () => {
         request(3),
     ];
 
-    expect(groupChatSteps(messages)).toEqual({
+    expect(groupChatSteps(messages, false)).toEqual({
         stepOwner: [null, null, null],
         pastStepCounts: {},
     });
@@ -68,7 +76,7 @@ test('stopped-run-keeps-its-list-of-changes-visible', () => {
         request(4),
     ];
 
-    expect(groupChatSteps(messages)).toEqual({
+    expect(groupChatSteps(messages, false)).toEqual({
         stepOwner: [null, 1, null, null],
         pastStepCounts: { 1: 1 },
     });
@@ -87,7 +95,7 @@ test('each-past-run-counts-its-own-steps', () => {
         request(9),
     ];
 
-    expect(groupChatSteps(messages)).toEqual({
+    expect(groupChatSteps(messages, false)).toEqual({
         stepOwner: [null, 1, null, null, 4, 4, 4, null, null],
         pastStepCounts: { 1: 1, 4: 3 },
     });
@@ -95,7 +103,7 @@ test('each-past-run-counts-its-own-steps', () => {
 
 test('steps-before-any-request-stay-visible', () => {
     // очистка истории оставляет ленту пустой, но если строка всё же пришла без запроса, прятать её не под чем
-    expect(groupChatSteps([step(1), request(2), step(3)])).toEqual({
+    expect(groupChatSteps([step(1), request(2), step(3)], true)).toEqual({
         stepOwner: [null, null, null],
         pastStepCounts: {},
     });

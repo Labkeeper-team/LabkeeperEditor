@@ -82,6 +82,9 @@ export const Events = {
     EVENT_AGENT_ABORTED: 'agent_aborted',
     EVENT_AGENT_SETTINGS_CHANGED: 'agent_settings_changed',
     EVENT_CHAT_HISTORY_CLEARED: 'chat_history_cleared',
+    EVENT_AGENT_CHECKPOINT_ACCEPTED: 'agent_checkpoint_accepted',
+    EVENT_AGENT_CHECKPOINT_REVERTED: 'agent_checkpoint_reverted',
+    EVENT_AGENT_CHECKPOINT_AUTO_ACCEPTED: 'agent_checkpoint_auto_accepted',
     EVENT_AGENT_CHANGE_CLICKED: 'agent_change_clicked',
     EVENT_CROSS_BORDER_CONSENT_SHOWN: 'cross_border_consent_shown',
     EVENT_CROSS_BORDER_CONSENT_ACCEPTED: 'cross_border_consent_accepted',
@@ -220,6 +223,10 @@ export const OPENPANEL_EVENT_NAMES: Record<string, string> = {
     [Events.EVENT_AGENT_ABORTED]: 'Agent aborted',
     [Events.EVENT_AGENT_SETTINGS_CHANGED]: 'Agent settings changed',
     [Events.EVENT_CHAT_HISTORY_CLEARED]: 'Chat history cleared',
+    [Events.EVENT_AGENT_CHECKPOINT_ACCEPTED]: 'Agent checkpoint accepted',
+    [Events.EVENT_AGENT_CHECKPOINT_REVERTED]: 'Agent checkpoint reverted',
+    [Events.EVENT_AGENT_CHECKPOINT_AUTO_ACCEPTED]:
+        'Agent checkpoint auto accepted',
     [Events.EVENT_AGENT_CHANGE_CLICKED]: 'Agent change clicked',
     [Events.EVENT_CROSS_BORDER_CONSENT_SHOWN]: 'Cross-border consent shown',
     [Events.EVENT_CROSS_BORDER_CONSENT_ACCEPTED]:

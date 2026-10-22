@@ -186,6 +186,106 @@
     }
 }
 
+// GH-189: кусок ленты, который уйдёт при откате, обведён, а кнопки стоят в его конце
+.agent-checkpoint {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex-shrink: 0;
+    padding: 10px 10px 0;
+    border: 1px solid $blue-10;
+    border-radius: 10px;
+    background: rgba(68, 105, 224, 0.06);
+
+    // подсвечивать нечего: например, правки остались от запросов, которых в истории уже нет
+    &--detached {
+        padding-top: 0;
+    }
+}
+
+// панель прилипает к низу ленты: длинный кусок не уводит кнопки за край
+.agent-checkpoint__bar {
+    position: sticky;
+    bottom: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 12px;
+    margin: 0 -10px;
+    padding: 8px 10px;
+    border-top: 1px solid $blue-20;
+    border-radius: 0 0 9px 9px;
+    background: #e6ecff;
+
+    .agent-checkpoint--detached & {
+        border-top: none;
+        border-radius: 9px;
+    }
+}
+
+.agent-checkpoint__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.agent-checkpoint__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 32px;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 13px;
+    line-height: 1.2;
+    white-space: nowrap;
+    cursor: pointer;
+    touch-action: manipulation;
+
+    &:disabled {
+        cursor: default;
+        opacity: 0.55;
+    }
+
+    &--revert {
+        border: 1px solid $gray-40;
+        background: $white;
+        color: $gray-10;
+
+        &:hover:not(:disabled) {
+            border-color: $red-30;
+            color: $red-30;
+        }
+    }
+
+    &--accept {
+        border: 1px solid $blue-10;
+        background: $blue-10;
+        color: $white;
+
+        &:hover:not(:disabled) {
+            background: $button-action-blue;
+            border-color: $button-action-blue;
+        }
+    }
+}
+
+.agent-checkpoint__count {
+    font-size: 12px;
+    line-height: 16px;
+    color: $gray-20;
+}
+
+.agent-checkpoint__confirm-text {
+    max-width: 360px;
+    margin: 12px 0 0;
+    font-size: 14px;
+    line-height: 18px;
+    color: $gray-20;
+}
+
 .agent-chat__pair {
     display: flex;
     flex-direction: column;

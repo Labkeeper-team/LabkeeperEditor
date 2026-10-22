@@ -1,4 +1,9 @@
 import {
+    AGENT_DEFAULT_CHECKPOINT_MODE,
+    AgentCheckpointBase,
+    AgentCheckpointMode,
+} from '../../../viewModel/utils/agentCheckpoint.ts';
+import {
     AgentHistoryEntry,
     CompileErrorResultList,
     CompileSuccessResult,
@@ -164,6 +169,12 @@ interface PersistenceState {
     skipClearHistoryConfirm: boolean;
     /** Высота панели запроса, выставленная ручкой; null значит авторост */
     agentPromptHeight: number | null;
+    /** GH-189: режим отката в агентском режиме; срез, сохранённый до него, получит last */
+    agentCheckpointMode: AgentCheckpointMode;
+    /** Галка «больше не спрашивать» в подтверждении отката */
+    skipCheckpointRevertConfirm: boolean;
+    /** Граница отката по проектам: переживает перезагрузку, иначе после F5 откат унёс бы не те записи */
+    agentCheckpointBases: Record<string, AgentCheckpointBase>;
 }
 
 export interface ChatState {
@@ -177,6 +188,10 @@ export interface ChatState {
     expandedStepRequestIds: number[];
     /** Файлы, загруженные из чата в этом проекте, свежие первыми: их ряд над запросом показывает раньше прочих */
     recentFiles: string[];
+    /** GH-189: запрос ленты и запись истории, которая от него появилась */
+    entryIdByRequestId: Record<number, string>;
+    /** Запрос, отправленный, когда правок агента не было: с него начинается откат */
+    checkpointFromRequestId: number | null;
 }
 
 export const authInitialState: AuthState = {
@@ -236,6 +251,9 @@ export const persistenceInitialState: PersistenceState = {
     crossBorderConsentAcceptedLocally: false,
     skipClearHistoryConfirm: false,
     agentPromptHeight: null,
+    agentCheckpointMode: AGENT_DEFAULT_CHECKPOINT_MODE,
+    skipCheckpointRevertConfirm: false,
+    agentCheckpointBases: {},
 };
 
 export const chatInitialState: ChatState = {
@@ -247,6 +265,8 @@ export const chatInitialState: ChatState = {
     history: [],
     expandedStepRequestIds: [],
     recentFiles: [],
+    entryIdByRequestId: {},
+    checkpointFromRequestId: null,
 };
 
 export const projectInitialState: ProjectState = {

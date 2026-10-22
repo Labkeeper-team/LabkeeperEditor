@@ -17,6 +17,8 @@ import { controller } from '../../../../../main.tsx';
 import { AGENT_ITERATION_OPTIONS } from '../../../../../model/rpi/agentSocket.ts';
 import { SegmentedControl } from '../../../../components/segmentedControl';
 import { CloseIcon, CodeSettingsIcon } from '../../../../icons';
+import { setSkipCheckpointRevertConfirm } from '../../../../store/slices/persistence';
+import { AgentCheckpointMode } from '../../../../../viewModel/utils/agentCheckpoint.ts';
 
 const PANEL_ID = 'agent-chat-settings';
 /** Зазор между панелью и рядом кнопок */
@@ -104,6 +106,12 @@ export const AgentSettings = ({
     );
     const compilationAllowed = useSelector(
         (state: StorageState) => state.persistence.agentCompilationAllowed
+    );
+    const checkpointMode = useSelector(
+        (state: StorageState) => state.persistence.agentCheckpointMode
+    );
+    const askBeforeRevert = useSelector(
+        (state: StorageState) => !state.persistence.skipCheckpointRevertConfirm
     );
     const [open, setOpen] = useState(false);
     const [place, setPlace] = useState<PanelPlace | null>(null);
@@ -273,6 +281,61 @@ export const AgentSettings = ({
                                 />
                                 <span>
                                     {dictionary.agent_chat.compilation_allowed}
+                                </span>
+                            </label>
+                        </SettingsSection>
+                        {/* GH-189: откат правок агентского режима */}
+                        <SettingsSection
+                            title={
+                                dictionary.agent_chat.checkpoint.settings_title
+                            }
+                            hint={dictionary.agent_chat.checkpoint.mode_hint}
+                        >
+                            <SegmentedControl<AgentCheckpointMode>
+                                ariaLabel={
+                                    dictionary.agent_chat.checkpoint
+                                        .settings_title
+                                }
+                                options={[
+                                    {
+                                        value: 'last',
+                                        label: dictionary.agent_chat.checkpoint
+                                            .mode_last,
+                                    },
+                                    {
+                                        value: 'range',
+                                        label: dictionary.agent_chat.checkpoint
+                                            .mode_range,
+                                    },
+                                ]}
+                                value={checkpointMode}
+                                disabled={isRunning}
+                                onChange={(value) =>
+                                    dispatch(
+                                        controller.onAgentCheckpointModeChangedRequest(
+                                            { value }
+                                        )
+                                    )
+                                }
+                            />
+                            {/* здесь возвращают вопрос, снятый галкой «больше не спрашивать» */}
+                            <label className="agent-settings__check">
+                                <input
+                                    type="checkbox"
+                                    checked={askBeforeRevert}
+                                    onChange={(event) =>
+                                        dispatch(
+                                            setSkipCheckpointRevertConfirm(
+                                                !event.target.checked
+                                            )
+                                        )
+                                    }
+                                />
+                                <span>
+                                    {
+                                        dictionary.agent_chat.checkpoint
+                                            .confirm_setting
+                                    }
                                 </span>
                             </label>
                         </SettingsSection>

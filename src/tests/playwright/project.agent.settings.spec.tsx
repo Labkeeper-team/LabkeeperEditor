@@ -607,10 +607,22 @@ for (const size of LAYOUTS) {
                 const compilationRow = panel(page)
                     .locator('label')
                     .filter({ hasText: 'Allow the agent to compile' });
-                // Firefox за одно событие колеса прокручивает не больше высоты тела панели, поэтому колесо крутится, пока строка не покажется целиком
+                // Firefox за одно событие колеса прокручивает не больше высоты тела панели, поэтому колесо крутится, пока строка не покажется целиком.
+                // Шаг меньше высоты тела: ниже галки секция отката (GH-189), и крупный шаг её проскакивал бы
+                await expect(async () => {
+                    await page.mouse.wheel(0, 60);
+                    await expect(compilationRow).toBeInViewport({
+                        ratio: 1,
+                        timeout: 500,
+                    });
+                }).toPass({ timeout: 10000 });
+                // последняя строка панели тоже докручивается целиком
+                const lastRow = panel(page)
+                    .locator('label')
+                    .filter({ hasText: 'Ask before reverting' });
                 await expect(async () => {
                     await page.mouse.wheel(0, 400);
-                    await expect(compilationRow).toBeInViewport({
+                    await expect(lastRow).toBeInViewport({
                         ratio: 1,
                         timeout: 500,
                     });

@@ -355,6 +355,32 @@ export const en: Translations = {
         },
         context_usage: 'Context {percent}% full',
         context_usage_hint: '{used} of {max} context tokens used',
+        checkpoint: {
+            region: 'Agent changes',
+            accept: 'Accept',
+            revert_count: {
+                one: 'Revert {n} request',
+                few: 'Revert {n} requests',
+                many: 'Revert {n} requests',
+                other: 'Revert {n} requests',
+            },
+            revert_plain: 'Revert changes',
+            confirm_title: 'Revert the changes?',
+            confirm_text:
+                'The agent changes in the document will be undone and the highlighted requests removed from the history. This cannot be undone',
+            confirm_text_plain:
+                'The agent changes in the document will be undone. This cannot be undone',
+            confirm_dont_ask: "Don't ask again",
+            cancel: 'Cancel',
+            history_failed:
+                'The changes were undone, but some requests could not be removed from the history. Reload the page',
+            settings_title: 'Reverting changes',
+            mode_last: 'Last request',
+            mode_range: 'Several requests',
+            mode_hint:
+                'Last request: a new request accepts the previous changes, so only the last one can be reverted. Several requests: changes pile up, and reverting removes every request since there were no changes',
+            confirm_setting: 'Ask before reverting',
+        },
         steps_toggle: 'Agent steps: {count}',
         files: {
             drop_title: 'Drag a file here',

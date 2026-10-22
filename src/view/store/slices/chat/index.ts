@@ -30,6 +30,21 @@ export const chatSlice = createSlice({
                 payload.reduce((max, m) => Math.max(max, m.id), 0) + 1;
             // id пойдут заново с 1, и старая развёрнутость досталась бы чужому прогону
             state.expandedStepRequestIds = [];
+            // по той же причине привязки к записям истории и начало отката живут, только пока жив их запрос
+            const requestIds = new Set(
+                payload.filter((m) => m.kind === 'request').map((m) => m.id)
+            );
+            state.entryIdByRequestId = Object.fromEntries(
+                Object.entries(state.entryIdByRequestId).filter(([id]) =>
+                    requestIds.has(Number(id))
+                )
+            );
+            if (
+                state.checkpointFromRequestId !== null &&
+                !requestIds.has(state.checkpointFromRequestId)
+            ) {
+                state.checkpointFromRequestId = null;
+            }
         },
         setChatRequestState(
             state,
@@ -55,6 +70,24 @@ export const chatSlice = createSlice({
                 ? expanded.filter((id) => id !== payload)
                 : [...expanded, payload];
         },
+        applyChatHistoryRefresh(
+            state,
+            {
+                payload,
+            }: PayloadAction<{
+                history: AgentHistoryEntry[];
+                links: Record<number, string>;
+            }>
+        ) {
+            state.history = payload.history;
+            state.entryIdByRequestId = payload.links;
+        },
+        setChatCheckpointFromRequestId(
+            state,
+            { payload }: PayloadAction<number | null>
+        ) {
+            state.checkpointFromRequestId = payload;
+        },
         setChatRecentFiles(state, { payload }: PayloadAction<string[]>) {
             state.recentFiles = payload;
         },
@@ -64,6 +97,7 @@ export const chatSlice = createSlice({
                 messages: [],
                 history: [],
                 recentFiles: [],
+                entryIdByRequestId: {},
             };
         },
     },
@@ -78,5 +112,7 @@ export const {
     setChatHistory,
     toggleChatSteps,
     setChatRecentFiles,
+    applyChatHistoryRefresh,
+    setChatCheckpointFromRequestId,
     resetChat,
 } = chatSlice.actions;

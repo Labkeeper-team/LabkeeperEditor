@@ -70,6 +70,11 @@ export class HunkService {
         return this.shouldShowHunks();
     };
 
+    /** GH-189: есть ли правки, по которым человеку есть что решать */
+    hasShownHunks = (): boolean => this.shownHunks().length > 0;
+
+    shownHunkCount = (): number => this.shownHunks().length;
+
     /** false, если список на экране может расходиться с сервером */
     loadHunks = async (): Promise<boolean> => {
         if (!this.shouldShowHunks()) {
@@ -418,12 +423,13 @@ export class HunkService {
         this.reportAcceptFailure(outcome);
     };
 
-    revertAll = async (): Promise<void> => {
+    /** true, если всё откатилось: откат агентского режима после этого удаляет записи истории */
+    revertAll = async (): Promise<boolean> => {
         if (this.editingLock.rejectEdit()) {
-            return;
+            return false;
         }
         if (!this.canRevertHunks()) {
-            return;
+            return false;
         }
         const ids = this.shownHunks().map((h) => h.id);
         this.track(Events.EVENT_HUNKS_REVERTED_ALL, {
@@ -433,7 +439,7 @@ export class HunkService {
         try {
             const projectId = this.getProjectId();
             if (!projectId) {
-                return;
+                return false;
             }
             const outcome = await this.deleteHunksOneByOne(
                 projectId,
@@ -442,6 +448,9 @@ export class HunkService {
             );
             await this.refreshAfterRevert();
             this.reportRevertFailure(outcome);
+            return (
+                !outcome.unauth && !outcome.forbidden && outcome.failed === 0
+            );
         } finally {
             this.unmarkPending(ids);
         }

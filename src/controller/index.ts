@@ -1,3 +1,4 @@
+import { AgentCheckpointMode } from '../viewModel/utils/agentCheckpoint.ts';
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import {
     CompileErrorResult,
@@ -1050,6 +1051,33 @@ export class Controller {
         async () => {
             await this.wrapper('onAgentRunModeToggled', () =>
                 this.agentChatService.onRunModeToggled()
+            );
+        }
+    );
+
+    onAgentCheckpointModeChangedRequest = createAsyncThunk(
+        'onAgentCheckpointModeChanged',
+        async ({ value }: { value: AgentCheckpointMode }) => {
+            await this.wrapper('onAgentCheckpointModeChanged', () =>
+                this.agentChatService.onCheckpointModeChanged(value)
+            );
+        }
+    );
+
+    onAgentCheckpointAcceptRequest = createAsyncThunk(
+        'onAgentCheckpointAccept',
+        async () => {
+            await this.wrapper('onAgentCheckpointAccept', () =>
+                this.agentChatService.onCheckpointAccept()
+            );
+        }
+    );
+
+    onAgentCheckpointRevertRequest = createAsyncThunk(
+        'onAgentCheckpointRevert',
+        async () => {
+            await this.wrapper('onAgentCheckpointRevert', () =>
+                this.agentChatService.onCheckpointRevert()
             );
         }
     );

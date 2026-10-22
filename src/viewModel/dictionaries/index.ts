@@ -327,6 +327,24 @@ export interface Translations {
         };
         context_usage: string;
         context_usage_hint: string;
+        checkpoint: {
+            region: string;
+            accept: string;
+            /** Число записей истории, которые уйдут: формы по Intl.PluralRules */
+            revert_count: Record<'one' | 'few' | 'many' | 'other', string>;
+            revert_plain: string;
+            confirm_title: string;
+            confirm_text: string;
+            confirm_text_plain: string;
+            confirm_dont_ask: string;
+            cancel: string;
+            history_failed: string;
+            settings_title: string;
+            mode_last: string;
+            mode_range: string;
+            mode_hint: string;
+            confirm_setting: string;
+        };
         steps_toggle: string;
         files: {
             drop_title: string;
