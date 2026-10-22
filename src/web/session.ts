@@ -55,16 +55,18 @@ export function getSessionId(): string | undefined {
 
 // хранилище гостя, из которого уже убрано всё от истёкшей сессии. Время из будущего
 // тоже считается истёкшим: после перевода часов назад иначе гость жил бы лишние часы
+function guestWindowIsOpen(storage: Storage): boolean {
+    const lastActivity = Number(
+        storage.getItem(OPENPANEL_LAST_ACTIVITY_STORAGE_KEY)
+    );
+    const idle = Date.now() - lastActivity;
+    return lastActivity > 0 && idle >= 0 && idle <= OPENPANEL_SESSION_IDLE_MS;
+}
+
 function guestStorage(): Storage | undefined {
     try {
         const storage = window.localStorage;
-        const lastActivity = Number(
-            storage.getItem(OPENPANEL_LAST_ACTIVITY_STORAGE_KEY)
-        );
-        const idle = Date.now() - lastActivity;
-        const fresh =
-            lastActivity > 0 && idle >= 0 && idle <= OPENPANEL_SESSION_IDLE_MS;
-        if (!fresh) {
+        if (!guestWindowIsOpen(storage)) {
             removeGuestKeys(storage);
         }
         return storage;
@@ -112,6 +114,38 @@ export function markOpenPanelActivity() {
         );
     } catch {
         // без хранилища окно не продлится, а событие всё равно уйдёт
+    }
+}
+
+/**
+ * Вкладка гостя пережила паузу дольше окна: хранилище истекло, а вкладка
+ * по-прежнему шлёт события своим гостем, и подменить его нельзя. Возвращаем
+ * её гостя в хранилище, чтобы лендинг и новые вкладки продолжили его, а не
+ * завели второго в той же сессии устройства. true, если окно было закрыто:
+ * у OpenPanel это новая сессия, и вкладке пора отправить её старт
+ */
+export function reclaimGuestWindow(
+    profileId: string,
+    firstName: string | undefined
+): boolean {
+    try {
+        const storage = window.localStorage;
+        if (guestWindowIsOpen(storage)) {
+            return false;
+        }
+        removeGuestKeys(storage);
+        storage.setItem(OPENPANEL_PROFILE_STORAGE_KEY, profileId);
+        if (firstName) {
+            storage.setItem(OPENPANEL_FIRST_NAME_STORAGE_KEY, firstName);
+        }
+        storage.setItem(OPENPANEL_SESSION_STARTED_KEY, '1');
+        storage.setItem(
+            OPENPANEL_LAST_ACTIVITY_STORAGE_KEY,
+            String(Date.now())
+        );
+        return true;
+    } catch {
+        return false;
     }
 }
 

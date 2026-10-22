@@ -316,3 +316,29 @@ test('session-query-is-appended-with-the-right-separator', () => {
         'ws://host/path?a=1&sessionId=s%201'
     );
 });
+
+// находка разбора: простоявшая вкладка не должна оставлять хранилище пустым для лендинга
+test('an-idle-tab-reclaims-the-window-with-its-guest', () => {
+    const first = session.createGuestSessionId();
+    jest.advanceTimersByTime(session.OPENPANEL_SESSION_IDLE_MS + MINUTE);
+
+    expect(session.reclaimGuestWindow(first, 'anonymous000007')).toBe(true);
+
+    expect(stored(session.OPENPANEL_PROFILE_STORAGE_KEY)).toBe(first);
+    expect(stored(session.OPENPANEL_FIRST_NAME_STORAGE_KEY)).toBe(
+        'anonymous000007'
+    );
+    expect(session.guestSessionAlreadyStarted()).toBe(true);
+    // окно снова открыто, второй раз сессия не начинается
+    expect(session.reclaimGuestWindow(first, 'anonymous000007')).toBe(false);
+});
+
+test('an-open-window-is-not-taken-over', () => {
+    seedGuest({ [session.OPENPANEL_PROFILE_STORAGE_KEY]: 'landingprofile' });
+
+    expect(session.reclaimGuestWindow('tabprofile', undefined)).toBe(false);
+
+    expect(stored(session.OPENPANEL_PROFILE_STORAGE_KEY)).toBe(
+        'landingprofile'
+    );
+});

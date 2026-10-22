@@ -19,6 +19,7 @@ import {
     guestSessionAlreadyStarted,
     markGuestSessionStarted,
     markOpenPanelActivity,
+    reclaimGuestWindow,
     readOpenPanelAttribution,
     readOrCreateGuestDisplayName,
     resetSessionIdOnLogout,
@@ -40,6 +41,9 @@ export class OpenPanelService implements ObserverService {
     // профиль, от имени которого вкладка работает сейчас: хвост первой инициализации доходит
     // до сети уже после входа или выхода, и представляться устаревшим профилем ему нельзя
     private currentProfileId: string | undefined;
+    // вкладка работает гостем: только его она возвращает в хранилище после долгой паузы
+    private guestProfile = false;
+    private guestName: string | undefined;
 
     async init(userId?: string) {
         if (!this.ensureClient() || !this.op) {
@@ -49,6 +53,7 @@ export class OpenPanelService implements ObserverService {
         // дальнейшие события уже несут profileId, а гость сразу получает значение заголовка
         const profileId = userId ?? createGuestSessionId();
         this.currentProfileId = profileId;
+        this.guestProfile = !userId;
         const attribution = readOpenPanelAttribution();
         void this.op.identify({
             profileId,
@@ -77,6 +82,8 @@ export class OpenPanelService implements ObserverService {
         // после выхода вкладка продолжает работу как гостевая, и профиль в SDK тоже гостевой
         const profileId = resetSessionIdOnLogout();
         this.currentProfileId = profileId;
+        this.guestProfile = true;
+        this.guestName = undefined;
         void this.op.identify({ profileId });
         // выход без init не бывает, но и тогда события не должны застрять в очереди
         this.op.ready();
@@ -118,8 +125,35 @@ export class OpenPanelService implements ObserverService {
         if (!this.op) {
             return Promise.resolve(undefined);
         }
+        this.reclaimGuestSession();
         markOpenPanelActivity();
         return this.op.track(`${EDITOR_EVENT_PREFIX}${name}`, properties);
+    }
+
+    /**
+     * Вкладка гостя простояла дольше окна сессии: возвращаем её гостя в общее
+     * хранилище и открываем новую сессию его стартом. Иначе лендинг или новая
+     * вкладка завели бы второго гостя рядом с этим (случай 4 из GH-197)
+     */
+    private reclaimGuestSession() {
+        const profileId = this.currentProfileId;
+        if (
+            !this.op ||
+            !this.guestProfile ||
+            !profileId ||
+            !reclaimGuestWindow(profileId, this.guestName)
+        ) {
+            return;
+        }
+        void Promise.resolve(
+            this.op.track(`${EDITOR_EVENT_PREFIX}Session started`, {
+                __path: window.location.pathname,
+                __title: document.title,
+                profileId,
+            })
+        ).catch((error) => {
+            logBreadcrumb('openpanel', 'session restart failed', { error });
+        });
     }
 
     private ensureClient(): boolean {
@@ -201,9 +235,10 @@ export class OpenPanelService implements ObserverService {
                 attributionIdentifyOptions(authenticatedDisplayName(userId))
             );
         } else {
+            this.guestName = readOrCreateGuestDisplayName();
             await this.identify(
                 profileId,
-                attributionIdentifyOptions(readOrCreateGuestDisplayName())
+                attributionIdentifyOptions(this.guestName)
             );
         }
     }
