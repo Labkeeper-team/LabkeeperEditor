@@ -37,15 +37,16 @@ export const SettingsButton = () => {
 
     return (
         <div
-            className={classNames(
-                InterfaceTourAnchorClassnames.CodeSettings,
-                'code-settings-header-container',
-                {
-                    'code-settings-header-container--mobile': isMobile,
-                }
-            )}
+            className={classNames('code-settings-header-container', {
+                'code-settings-header-container--mobile': isMobile,
+            })}
         >
-            <div className="action-button">
+            <div
+                className={classNames(
+                    'action-button',
+                    InterfaceTourAnchorClassnames.CodeSettings
+                )}
+            >
                 <DropdownMenu icon={<CodeSettingsIcon />} fullScreenOnMobile>
                     {showSearch ? null : <ProjectSettings />}
                 </DropdownMenu>

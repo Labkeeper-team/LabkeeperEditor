@@ -59,7 +59,6 @@ export const AddBlock = (props: AddBlockProps) => {
         return (
             <div className="empty-project-placeholder-container">
                 <Button
-                    classname={InterfaceTourAnchorClassnames.AddCode}
                     title={dictionary.label_add_latex}
                     color="gray"
                     onPress={() => onAddSegment('latex')}
@@ -73,6 +72,7 @@ export const AddBlock = (props: AddBlockProps) => {
                     title={addMoreTitle}
                     value="computational"
                     onChange={(value) => onAddSegment(value as SegmentType)}
+                    containerClassName={InterfaceTourAnchorClassnames.AddCode}
                     className={SelectClassNames.Computation}
                     minimize={false}
                 />

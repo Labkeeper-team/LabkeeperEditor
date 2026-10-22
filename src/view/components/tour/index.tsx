@@ -1,7 +1,8 @@
 import { useDispatch, useSelector } from 'react-redux';
+import { createPortal } from 'react-dom';
 import './style.scss';
 import { Hint } from './hint';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, type MouseEvent } from 'react';
 import { getPosition, InterfaceTourAnchorClassnames } from './helpers';
 import { setTourVisibility } from '../../store/slices/settings';
 import { useShowTour } from '../../store/selectors/program';
@@ -12,9 +13,15 @@ export const InterfaceTour = () => {
     const showTour = useSelector(useShowTour);
     const dictionary = useSelector(useDictionary);
 
-    const onClick = useCallback(() => {
-        dispatch(setTourVisibility(false));
-    }, [dispatch]);
+    const onClick = useCallback(
+        (event: MouseEvent<HTMLDivElement>) => {
+            if ((event.target as HTMLElement).closest('.hint-container')) {
+                return;
+            }
+            dispatch(setTourVisibility(false));
+        },
+        [dispatch]
+    );
 
     const runButtonPosition = useMemo(() => {
         if (!showTour) {
@@ -72,12 +79,25 @@ export const InterfaceTour = () => {
         return getPosition(InterfaceTourAnchorClassnames.Ide);
     }, [showTour]);
 
+    const mobileNavigationPosition = useMemo(() => {
+        if (!showTour) {
+            return {};
+        }
+        return getPosition(InterfaceTourAnchorClassnames.MobileNavigation);
+    }, [showTour]);
+
     if (!showTour) {
         return;
     }
 
-    return (
+    return createPortal(
         <div onClick={onClick} className="interface-tour-container">
+            <Hint
+                text={dictionary.interface_tour.info_mobile_navigation}
+                anchor="mobile-navigation-anchor"
+                hintPosition="bottom"
+                position={mobileNavigationPosition}
+            />
             <Hint
                 text={dictionary.interface_tour.info_history_button}
                 anchor="history-anchor"
@@ -128,6 +148,45 @@ export const InterfaceTour = () => {
                 hintPosition="top"
                 position={idePosition}
             />
-        </div>
+            <Hint
+                text={dictionary.interface_tour.info_agent_prompt}
+                anchor="agent-prompt-anchor"
+                hintPosition="top"
+                position={getPosition(
+                    InterfaceTourAnchorClassnames.AgentPrompt
+                )}
+            />
+            <Hint
+                text={dictionary.interface_tour.info_agent_files}
+                anchor="agent-files-anchor"
+                hintPosition="top"
+                position={getPosition(InterfaceTourAnchorClassnames.AgentFiles)}
+            />
+            <Hint
+                text={dictionary.interface_tour.info_agent_settings}
+                anchor="agent-settings-anchor"
+                hintPosition="top"
+                position={getPosition(
+                    InterfaceTourAnchorClassnames.AgentSettings
+                )}
+            />
+            <Hint
+                text={dictionary.interface_tour.info_enter_agent_mode}
+                anchor="enter-agent-mode-anchor"
+                hintPosition="bottom"
+                position={getPosition(
+                    InterfaceTourAnchorClassnames.EnterAgentMode
+                )}
+            />
+            <Hint
+                text={dictionary.interface_tour.info_leave_agent_mode}
+                anchor="leave-agent-mode-anchor"
+                hintPosition="bottom"
+                position={getPosition(
+                    InterfaceTourAnchorClassnames.LeaveAgentMode
+                )}
+            />
+        </div>,
+        document.body
     );
 };
