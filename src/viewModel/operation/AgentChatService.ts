@@ -843,6 +843,10 @@ export class AgentChatService {
                 'error'
             );
         }
+        // в агентском режиме кнопки «Выполнить» нет, и без сборки PDF показывал бы откаченные правки
+        if (isAgentModePath(this.repository.location())) {
+            await this.compilationService.runCompilation();
+        }
     };
 
     /** Смена проекта: гасим сессию и чистим ленту, чтобы не показывать чужую историю. */
