@@ -2,13 +2,27 @@ import { logBreadcrumb } from '../viewModel/utils/logBreadcrumb.ts';
 
 export const LABKEEPER_SESSION_HEADER = 'X-Labkeeper-Session-Id';
 
-// ключи вкладки общие с лендингом: переход в редактор не начинает нового человека
+// ключи гостя общие с лендингом и лежат в localStorage устройства: вкладка, открытая
+// с лендинга через target="_blank", и возврат на лендинг продолжают того же гостя.
+// Имена прежние: в sessionStorage старые значения просто остаются без чтения.
 export const OPENPANEL_PROFILE_STORAGE_KEY = 'labkeeper.openpanel.profileId';
 export const OPENPANEL_SESSION_STARTED_KEY =
     'labkeeper.openpanel.sessionStarted';
 export const OPENPANEL_ATTRIBUTION_STORAGE_KEY =
     'labkeeper.openpanel.attribution';
 export const OPENPANEL_FIRST_NAME_STORAGE_KEY = 'labkeeper.openpanel.firstName';
+export const OPENPANEL_LAST_ACTIVITY_STORAGE_KEY =
+    'labkeeper.openpanel.lastActivity';
+// столько OpenPanel держит сессию без событий: после такой паузы гость начинается заново
+export const OPENPANEL_SESSION_IDLE_MS = 30 * 60 * 1000;
+
+const GUEST_STORAGE_KEYS = [
+    OPENPANEL_PROFILE_STORAGE_KEY,
+    OPENPANEL_SESSION_STARTED_KEY,
+    OPENPANEL_ATTRIBUTION_STORAGE_KEY,
+    OPENPANEL_FIRST_NAME_STORAGE_KEY,
+    OPENPANEL_LAST_ACTIVITY_STORAGE_KEY,
+];
 
 const CAMPAIGN_PARAM_NAMES = [
     'utm_source',
@@ -39,34 +53,78 @@ export function getSessionId(): string | undefined {
     return sessionId;
 }
 
-function readStoredGuestSessionId(): string | undefined {
+// хранилище гостя, из которого уже убрано всё от истёкшей сессии. Время из будущего
+// тоже считается истёкшим: после перевода часов назад иначе гость жил бы лишние часы
+function guestStorage(): Storage | undefined {
     try {
-        const stored = sessionStorage.getItem(OPENPANEL_PROFILE_STORAGE_KEY);
-        if (stored && PROFILE_ID_PATTERN.test(stored)) {
-            return stored;
+        const storage = window.localStorage;
+        const lastActivity = Number(
+            storage.getItem(OPENPANEL_LAST_ACTIVITY_STORAGE_KEY)
+        );
+        const idle = Date.now() - lastActivity;
+        const fresh =
+            lastActivity > 0 && idle >= 0 && idle <= OPENPANEL_SESSION_IDLE_MS;
+        if (!fresh) {
+            removeGuestKeys(storage);
         }
+        return storage;
     } catch {
-        // приватный режим не должен ронять вкладку: id останется только в памяти
-    }
-    return undefined;
-}
-
-function writeStoredGuestSessionId(id: string) {
-    try {
-        sessionStorage.setItem(OPENPANEL_PROFILE_STORAGE_KEY, id);
-    } catch {
-        // без хранилища лендинг и редактор не склеят профиль, запросы редактора живы
+        // приватный режим не должен ронять вкладку: гость останется только в памяти
+        return undefined;
     }
 }
 
-function clearOpenPanelTabStorage() {
+function removeGuestKeys(storage: Storage) {
+    for (const key of GUEST_STORAGE_KEYS) {
+        storage.removeItem(key);
+    }
+}
+
+function readGuestValue(key: string): string | null {
     try {
-        sessionStorage.removeItem(OPENPANEL_PROFILE_STORAGE_KEY);
-        sessionStorage.removeItem(OPENPANEL_SESSION_STARTED_KEY);
-        sessionStorage.removeItem(OPENPANEL_ATTRIBUTION_STORAGE_KEY);
-        sessionStorage.removeItem(OPENPANEL_FIRST_NAME_STORAGE_KEY);
+        return guestStorage()?.getItem(key) ?? null;
     } catch {
-        // выход не зависит от того, доступно ли хранилище вкладки
+        return null;
+    }
+}
+
+function writeGuestValue(key: string, value: string) {
+    const storage = guestStorage();
+    try {
+        storage?.setItem(key, value);
+        // запись тоже продлевает окно: иначе следующее чтение сочло бы её истёкшей
+        storage?.setItem(
+            OPENPANEL_LAST_ACTIVITY_STORAGE_KEY,
+            String(Date.now())
+        );
+    } catch {
+        // без хранилища лендинг и другие вкладки не склеят профиль, запросы редактора живы
+    }
+}
+
+// каждое событие в OpenPanel продлевает окно гостя для всех вкладок и лендинга
+export function markOpenPanelActivity() {
+    const storage = guestStorage();
+    try {
+        storage?.setItem(
+            OPENPANEL_LAST_ACTIVITY_STORAGE_KEY,
+            String(Date.now())
+        );
+    } catch {
+        // без хранилища окно не продлится, а событие всё равно уйдёт
+    }
+}
+
+function readStoredGuestSessionId(): string | undefined {
+    const stored = readGuestValue(OPENPANEL_PROFILE_STORAGE_KEY);
+    return stored && PROFILE_ID_PATTERN.test(stored) ? stored : undefined;
+}
+
+function clearGuestStorage() {
+    try {
+        removeGuestKeys(window.localStorage);
+    } catch {
+        // выход не зависит от того, доступно ли хранилище
     }
 }
 
@@ -75,36 +133,29 @@ function newAnonymousDisplayName(): string {
     return `anonymous${String(suffix).padStart(6, '0')}`;
 }
 
-// имя гостя живёт вместе с профилем вкладки: переход между страницами его не меняет
+// имя гостя живёт вместе с его профилем: переход между страницами и вкладками его не меняет
 export function readOrCreateGuestDisplayName(): string {
-    try {
-        const stored = sessionStorage.getItem(OPENPANEL_FIRST_NAME_STORAGE_KEY);
-        if (stored && ANONYMOUS_NAME_PATTERN.test(stored)) {
-            return stored;
-        }
-    } catch {
-        return newAnonymousDisplayName();
+    const stored = readGuestValue(OPENPANEL_FIRST_NAME_STORAGE_KEY);
+    if (stored && ANONYMOUS_NAME_PATTERN.test(stored)) {
+        return stored;
     }
     const name = newAnonymousDisplayName();
-    try {
-        sessionStorage.setItem(OPENPANEL_FIRST_NAME_STORAGE_KEY, name);
-    } catch {
-        // без хранилища имя останется только в этом identify
-    }
+    writeGuestValue(OPENPANEL_FIRST_NAME_STORAGE_KEY, name);
     return name;
 }
 
-export function landingSessionAlreadyStarted(): boolean {
-    try {
-        return sessionStorage.getItem(OPENPANEL_SESSION_STARTED_KEY) === '1';
-    } catch {
-        return false;
-    }
+// флаг ставит тот, кто первым отправил старт сессии гостя: лендинг или редактор
+export function guestSessionAlreadyStarted(): boolean {
+    return readGuestValue(OPENPANEL_SESSION_STARTED_KEY) === '1';
+}
+
+export function markGuestSessionStarted() {
+    writeGuestValue(OPENPANEL_SESSION_STARTED_KEY, '1');
 }
 
 export function readOpenPanelAttribution(): Record<string, string> | undefined {
     try {
-        const raw = sessionStorage.getItem(OPENPANEL_ATTRIBUTION_STORAGE_KEY);
+        const raw = readGuestValue(OPENPANEL_ATTRIBUTION_STORAGE_KEY);
         if (!raw) {
             return undefined;
         }
@@ -121,8 +172,8 @@ export function readOpenPanelAttribution(): Record<string, string> | undefined {
     }
 }
 
-// прямой заход в редактор несёт метки кампании в адресе. Запись лендинга уже лежит
-// в хранилище вкладки, и второй раз её подменять нельзя.
+// прямой заход в редактор несёт метки кампании в адресе. Запись лендинга этой сессии
+// уже лежит в хранилище, и второй раз её подменять нельзя.
 export function captureOpenPanelAttributionFromLocation() {
     if (readOpenPanelAttribution()) {
         return;
@@ -134,14 +185,10 @@ export function captureOpenPanelAttributionFromLocation() {
     if (!properties) {
         return;
     }
-    try {
-        sessionStorage.setItem(
-            OPENPANEL_ATTRIBUTION_STORAGE_KEY,
-            JSON.stringify(properties)
-        );
-    } catch {
-        // приватный режим не должен ронять вкладку: без хранилища метки не доедут до событий
-    }
+    writeGuestValue(
+        OPENPANEL_ATTRIBUTION_STORAGE_KEY,
+        JSON.stringify(properties)
+    );
 }
 
 function campaignProperties(
@@ -164,12 +211,12 @@ function campaignProperties(
 
 export function createGuestSessionId(): string {
     if (!sessionId) {
-        // id вкладки лежит в sessionStorage: заход с лендинга и обновление редактора
-        // не рвут цепочку, а подмена посреди работы по-прежнему запрещена
+        // id гостя общий для вкладок в пределах окна сессии: заход с лендинга, новая
+        // вкладка и обновление редактора не рвут цепочку, а подмена посреди работы запрещена
         sessionId =
             readStoredGuestSessionId() ??
             sessionIdAsProfileId(crypto.randomUUID());
-        writeStoredGuestSessionId(sessionId);
+        writeGuestValue(OPENPANEL_PROFILE_STORAGE_KEY, sessionId);
     }
     return sessionId;
 }
@@ -201,7 +248,7 @@ export function resetSessionIdOnLogout(): string {
         previous: sessionId,
     });
     sessionId = undefined;
-    clearOpenPanelTabStorage();
+    clearGuestStorage();
     return createGuestSessionId();
 }
 

@@ -10,11 +10,13 @@ jest.mock('@sentry/react', () => ({
 
 const track = jest.fn();
 const identify = jest.fn();
+const ready = jest.fn();
 
 jest.mock('@openpanel/web', () => ({
     OpenPanel: jest.fn(() => ({
         track,
         identify,
+        ready,
         setGlobalProperties: jest.fn(),
     })),
 }));
@@ -50,6 +52,22 @@ const flushMicrotasks = async () => {
 
 const sessionStartCalls = () =>
     track.mock.calls.filter(([name]) => name === '[E] Session started');
+
+/** Ключ гостя со свежей отметкой активности: так его оставляет лендинг или соседняя вкладка */
+function seedGuest(key: string, value: string) {
+    window.localStorage.setItem(key, value);
+    window.localStorage.setItem(
+        session.OPENPANEL_LAST_ACTIVITY_STORAGE_KEY,
+        String(Date.now())
+    );
+}
+
+/** Свежие копии модулей при том же localStorage: так открывается ещё одна вкладка */
+async function openAnotherTab() {
+    jest.resetModules();
+    openpanel = await import('../../../web/openpanel');
+    session = await import('../../../web/session.ts');
+}
 
 const identifyPayloads = () => identify.mock.calls.map(([payload]) => payload);
 
@@ -236,15 +254,9 @@ test('a-remembered-flag-does-not-start-a-session', async () => {
 });
 
 test('a-guest-from-the-landing-keeps-the-profile-and-skips-a-second-start', async () => {
-    window.sessionStorage.setItem(
-        session.OPENPANEL_PROFILE_STORAGE_KEY,
-        'landingprofile'
-    );
-    window.sessionStorage.setItem(session.OPENPANEL_SESSION_STARTED_KEY, '1');
-    window.sessionStorage.setItem(
-        session.OPENPANEL_FIRST_NAME_STORAGE_KEY,
-        'anonymous000042'
-    );
+    seedGuest(session.OPENPANEL_PROFILE_STORAGE_KEY, 'landingprofile');
+    seedGuest(session.OPENPANEL_SESSION_STARTED_KEY, '1');
+    seedGuest(session.OPENPANEL_FIRST_NAME_STORAGE_KEY, 'anonymous000042');
     const service = new openpanel.OpenPanelService();
 
     await service.init();
@@ -258,11 +270,8 @@ test('a-guest-from-the-landing-keeps-the-profile-and-skips-a-second-start', asyn
 });
 
 test('an-authorized-visit-still-starts-a-session-after-the-landing', async () => {
-    window.sessionStorage.setItem(session.OPENPANEL_SESSION_STARTED_KEY, '1');
-    window.sessionStorage.setItem(
-        session.OPENPANEL_PROFILE_STORAGE_KEY,
-        'landingprofile'
-    );
+    seedGuest(session.OPENPANEL_SESSION_STARTED_KEY, '1');
+    seedGuest(session.OPENPANEL_PROFILE_STORAGE_KEY, 'landingprofile');
     const service = new openpanel.OpenPanelService();
 
     await service.init('user-1');
@@ -275,7 +284,7 @@ test('an-authorized-visit-still-starts-a-session-after-the-landing', async () =>
 });
 
 test('campaign-properties-from-the-landing-stick-to-the-guest-profile', async () => {
-    window.sessionStorage.setItem(
+    seedGuest(
         session.OPENPANEL_ATTRIBUTION_STORAGE_KEY,
         JSON.stringify({
             utm_campaign: 'spring',
@@ -348,7 +357,7 @@ test('a-direct-visit-sends-campaign-parameters-from-the-address', async () => {
     };
     expect(
         JSON.parse(
-            window.sessionStorage.getItem(
+            window.localStorage.getItem(
                 session.OPENPANEL_ATTRIBUTION_STORAGE_KEY
             ) ?? 'null'
         )
@@ -387,10 +396,7 @@ test('a-direct-visit-does-not-replace-attribution-saved-by-the-landing', async (
         utm_source: 'landing',
         utm_campaign: 'from-landing',
     });
-    window.sessionStorage.setItem(
-        session.OPENPANEL_ATTRIBUTION_STORAGE_KEY,
-        stored
-    );
+    seedGuest(session.OPENPANEL_ATTRIBUTION_STORAGE_KEY, stored);
     window.history.replaceState(
         {},
         '',
@@ -401,7 +407,7 @@ test('a-direct-visit-does-not-replace-attribution-saved-by-the-landing', async (
     await service.init();
 
     expect(
-        window.sessionStorage.getItem(session.OPENPANEL_ATTRIBUTION_STORAGE_KEY)
+        window.localStorage.getItem(session.OPENPANEL_ATTRIBUTION_STORAGE_KEY)
     ).toBe(stored);
     const { OpenPanel } = jest.requireMock('@openpanel/web') as {
         OpenPanel: jest.Mock;
@@ -427,7 +433,7 @@ test('a-direct-visit-does-not-replace-attribution-saved-by-the-landing', async (
 });
 
 test('campaign-properties-from-the-landing-stick-to-the-signed-in-profile', async () => {
-    window.sessionStorage.setItem(
+    seedGuest(
         session.OPENPANEL_ATTRIBUTION_STORAGE_KEY,
         JSON.stringify({ utm_source: 'yandex', utm_campaign: 'spring' })
     );
@@ -453,4 +459,105 @@ test('logout-drops-the-id-of-the-user-who-left', async () => {
     expect(afterLogout).toEqual(expect.any(String));
     expect(afterLogout).not.toBe('s-1');
     expect(lastIdentifyPayload()).toEqual({ profileId: afterLogout });
+});
+
+// GH-197: без профиля сервер записал бы событие на deviceId и завёл бы профиль Anonymous
+test('events-wait-in-the-sdk-until-init-gives-a-profile', async () => {
+    const { OpenPanel } = jest.requireMock('@openpanel/web') as {
+        OpenPanel: jest.Mock;
+    };
+    const service = new openpanel.OpenPanelService();
+
+    service.onEvent('page_viewed', { path: '/project/default' });
+
+    expect(OpenPanel).toHaveBeenCalledWith(
+        expect.objectContaining({ disabled: true })
+    );
+    expect(ready).not.toHaveBeenCalled();
+
+    const starting = service.init();
+
+    const guestId = session.getSessionId();
+    expect(ready).toHaveBeenCalledTimes(1);
+    expect(identify).toHaveBeenCalledWith({ profileId: guestId });
+    expect(identify.mock.invocationCallOrder[0]).toBeLessThan(
+        ready.mock.invocationCallOrder[0]
+    );
+    await starting;
+});
+
+test('a-signed-in-user-opens-the-queue-with-the-own-profile', async () => {
+    track.mockResolvedValue({ sessionId: 's-1' });
+    const service = new openpanel.OpenPanelService();
+
+    await service.init('111');
+
+    expect(identify.mock.calls[0][0]).toEqual({ profileId: '111' });
+    expect(identify.mock.invocationCallOrder[0]).toBeLessThan(
+        ready.mock.invocationCallOrder[0]
+    );
+    expect(identifyPayloads()).not.toContainEqual(
+        expect.objectContaining({
+            firstName: expect.stringMatching(/^anonymous/),
+        })
+    );
+});
+
+test('logout-opens-the-queue-for-the-new-guest', () => {
+    const service = new openpanel.OpenPanelService();
+    service.onEvent('page_viewed');
+
+    service.onLogout();
+
+    expect(lastIdentifyPayload()).toEqual({
+        profileId: session.getSessionId(),
+    });
+    expect(ready).toHaveBeenCalledTimes(1);
+});
+
+// случай 2 из GH-197: прямой заход заводит гостя, а следующие вкладки старт не повторяют
+test('a-guest-start-in-the-editor-is-not-repeated-by-another-tab', async () => {
+    const service = new openpanel.OpenPanelService();
+    await service.init();
+    const guestId = session.getSessionId();
+
+    expect(sessionStartCalls()).toHaveLength(1);
+    expect(
+        window.localStorage.getItem(session.OPENPANEL_SESSION_STARTED_KEY)
+    ).toBe('1');
+    const guestName = lastIdentifyPayload().firstName;
+    expect(guestName).toMatch(/^anonymous\d{6}$/);
+
+    window.sessionStorage.clear();
+    await openAnotherTab();
+    await new openpanel.OpenPanelService().init();
+
+    expect(sessionStartCalls()).toHaveLength(1);
+    expect(session.getSessionId()).toBe(guestId);
+    expect(lastIdentifyPayload()).toEqual({
+        profileId: guestId,
+        firstName: guestName,
+    });
+});
+
+test('a-signed-in-start-does-not-mark-the-guest-session', async () => {
+    track.mockResolvedValue({ sessionId: 's-1' });
+
+    await new openpanel.OpenPanelService().init('111');
+
+    expect(
+        window.localStorage.getItem(session.OPENPANEL_SESSION_STARTED_KEY)
+    ).toBeNull();
+});
+
+test('an-event-moves-the-guest-window-forward', () => {
+    jest.useFakeTimers({ now: Date.parse('2026-10-22T12:00:00Z') });
+    const service = new openpanel.OpenPanelService();
+    jest.advanceTimersByTime(60 * 1000);
+
+    service.onEvent('start_run');
+
+    expect(
+        window.localStorage.getItem(session.OPENPANEL_LAST_ACTIVITY_STORAGE_KEY)
+    ).toBe(String(Date.parse('2026-10-22T12:01:00Z')));
 });
