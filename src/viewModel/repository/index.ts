@@ -83,7 +83,14 @@ export type HistoryRequestState = 'unknown' | 'loading' | 'ok' | 'error';
  */
 export type ChatMessage =
     | { kind: 'request'; id: number; text: string; createdAt: string }
-    | { kind: 'response'; id: number; text: string }
+    | {
+          kind: 'response';
+          id: number;
+          text: string;
+          /** Заполненность контекста после прогона, как у записи истории */
+          contextTokens?: number | null;
+          maxContextTokens?: number | null;
+      }
     | { kind: 'error'; id: number; reason: AgentErrorReason }
     /** Прогон дошёл до конца, но с оговоркой: изменения применены, а не отменены */
     | {

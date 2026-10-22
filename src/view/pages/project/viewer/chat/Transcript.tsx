@@ -18,6 +18,7 @@ import { ExpandIcon } from '../../../../icons';
 import { toggleChatSteps } from '../../../../store/slices/chat';
 import { groupChatSteps } from '../../../../../viewModel/utils/chatSteps.ts';
 import { eventLabel } from './eventLabel.ts';
+import { contextUsagePercent } from '../../../../../viewModel/utils/contextUsage.ts';
 
 /** Насколько близко к низу считаем, что пользователь «внизу» и можно доскроллить */
 const STICK_TO_BOTTOM_PX = 40;
@@ -48,8 +49,17 @@ const RequestCard = ({
     </div>
 );
 
-const ResponseBlock = ({ text }: { text: string }) => {
+const ResponseBlock = ({
+    text,
+    contextTokens,
+    maxContextTokens,
+}: {
+    text: string;
+    contextTokens?: number | null;
+    maxContextTokens?: number | null;
+}) => {
     const dictionary = useSelector(useDictionary);
+    const percent = contextUsagePercent(contextTokens, maxContextTokens);
     return (
         <div className="agent-chat__response">
             <div className="agent-chat__response-label">
@@ -58,6 +68,20 @@ const ResponseBlock = ({ text }: { text: string }) => {
             <div className="agent-chat__response-text">
                 <AgentMarkdown text={text} />
             </div>
+            {/* GH-191: проценты видны текстом, точные числа в подсказке */}
+            {percent !== null && (
+                <div
+                    className="agent-chat__context-usage"
+                    title={dictionary.agent_chat.context_usage_hint
+                        .replace('{used}', String(contextTokens))
+                        .replace('{max}', String(maxContextTokens))}
+                >
+                    {dictionary.agent_chat.context_usage.replace(
+                        '{percent}',
+                        String(percent)
+                    )}
+                </div>
+            )}
         </div>
     );
 };
@@ -258,7 +282,11 @@ const StepsToggle = ({
 const HistoryPair = ({ entry }: { entry: AgentHistoryEntry }) => (
     <div className="agent-chat__pair">
         <RequestCard text={entry.request} createdAt={entry.createdAt} />
-        <ResponseBlock text={entry.response} />
+        <ResponseBlock
+            text={entry.response}
+            contextTokens={entry.contextTokens}
+            maxContextTokens={entry.maxContextTokens}
+        />
     </div>
 );
 
@@ -449,6 +477,8 @@ export const Transcript = () => {
                             <ResponseBlock
                                 key={message.id}
                                 text={message.text}
+                                contextTokens={message.contextTokens}
+                                maxContextTokens={message.maxContextTokens}
                             />
                         );
                     case 'error':

@@ -30,6 +30,8 @@ type ServerFrame = {
     stopReason?: AgentStopReason;
     program?: Program;
     hunks?: Hunk[];
+    contextTokens?: unknown;
+    maxContextTokens?: unknown;
     // кадры компиляции разбираются защитно: вместо отсутствующего поля сервер шлёт null
     pdf?: unknown;
     markdown?: unknown;
@@ -64,6 +66,12 @@ function field(value: unknown, name: string): unknown {
 
 const asString = (value: unknown): string | undefined =>
     typeof value === 'string' ? value : undefined;
+
+/** Число токенов из кадра: всё, что не целое неотрицательное число, считается пустым полем */
+const asTokenCount = (value: unknown): number | undefined =>
+    typeof value === 'number' && Number.isInteger(value) && value >= 0
+        ? value
+        : undefined;
 
 function toCompilationFinished(frame: ServerFrame): AgentEvent {
     const pdfUri = asString(field(frame.pdf, 'pdfUri'));
@@ -119,6 +127,8 @@ function toEvent(frame: ServerFrame): AgentEvent | null {
                 stopReason: toStopReason(frame.stopReason),
                 program: frame.program,
                 hunks: frame.hunks,
+                contextTokens: asTokenCount(frame.contextTokens),
+                maxContextTokens: asTokenCount(frame.maxContextTokens),
             };
         case 'compilationStarted':
             return { kind: 'compilationStarted' };

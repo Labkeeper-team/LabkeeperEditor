@@ -869,7 +869,12 @@ export class AgentChatService {
         }
 
         if (event.message) {
-            chat.appendMessage({ kind: 'response', text: event.message });
+            chat.appendMessage({
+                kind: 'response',
+                text: event.message,
+                contextTokens: event.contextTokens,
+                maxContextTokens: event.maxContextTokens,
+            });
         }
         this.stoppedShort = PARTIAL_STOP_REASONS.includes(event.stopReason);
         if (this.stoppedShort) {

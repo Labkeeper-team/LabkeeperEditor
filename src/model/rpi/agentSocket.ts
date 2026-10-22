@@ -100,6 +100,9 @@ export type AgentEvent =
           program?: Program;
           /** Только у неавторизованного: hunks приезжают одним куском */
           hunks?: Hunk[];
+          /** Заполненность контекста в конце прогона: null, если до модели дело не дошло */
+          contextTokens?: number | null;
+          maxContextTokens?: number | null;
       };
 
 /**

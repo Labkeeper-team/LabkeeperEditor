@@ -354,6 +354,8 @@ export const ru: Translations = {
             aborted_unsynced:
                 'Прогон прерван, но перечитать документ не удалось, поэтому что успел изменить агент, выяснить не вышло. Обновите страницу',
         },
+        context_usage: 'Контекст заполнен на {percent}%',
+        context_usage_hint: 'Занято {used} из {max} токенов контекста',
         steps_toggle: 'Шаги агента: {count}',
         files: {
             drop_title: 'Перетащите файл сюда',
