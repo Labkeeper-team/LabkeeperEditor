@@ -438,6 +438,30 @@ test('agent-finished-done-appends-response-and-unlocks', async () => {
     expect(ctx.agentChatService.isRunning()).toBe(false);
 });
 
+// GH-191: процент контекста рисуется под ответом, поэтому числа едут вместе с ним
+test('agent-finished-response-keeps-the-context-usage', async () => {
+    const ctx = setup();
+    ctx.repository.chatViewModelRepository.setInput('привет');
+
+    await ctx.agentChatService.onPromptSubmit();
+    await emit(ctx, {
+        kind: 'finished',
+        message: 'готово',
+        stopReason: 'Done',
+        contextTokens: 31000,
+        maxContextTokens: 100000,
+    });
+
+    const messages = ctx.repository.chatViewModelRepository.messages();
+    expect(messages[messages.length - 1]).toEqual(
+        expect.objectContaining({
+            kind: 'response',
+            contextTokens: 31000,
+            maxContextTokens: 100000,
+        })
+    );
+});
+
 test.each([
     ['PaymentRequired'],
     ['Locked'],

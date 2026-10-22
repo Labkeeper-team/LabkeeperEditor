@@ -325,6 +325,8 @@ export interface Translations {
             aborted_guest: string;
             aborted_unsynced: string;
         };
+        context_usage: string;
+        context_usage_hint: string;
         steps_toggle: string;
         files: {
             drop_title: string;

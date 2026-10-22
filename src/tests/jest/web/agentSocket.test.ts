@@ -1014,3 +1014,68 @@ test('compilation-events-wait-for-a-slow-tool-call', async () => {
         'конец compilationFinished',
     ]);
 });
+
+// GH-191: заполненность контекста приезжает в финале обоих каналов
+test.each([
+    ['agentFinished', false],
+    ['agentFinishedUnauthorized', true],
+] as const)(
+    'final-event-%s-carries-the-context-usage',
+    async (type, unauthorized) => {
+        const handlers = makeHandlers();
+        if (unauthorized) {
+            new WebAgentSocket().startAgentUnauthorized(
+                { ...PARAMS, program: PROGRAM },
+                handlers
+            );
+        } else {
+            new WebAgentSocket().startAgent('project-42', PARAMS, handlers);
+        }
+        const socket = lastSocket();
+        socket.fireOpen();
+
+        socket.fireMessage({
+            type,
+            message: 'готово',
+            stopReason: 'Done',
+            contextTokens: 31000,
+            maxContextTokens: 100000,
+        });
+        await flush();
+
+        expect(handlers.onEvent).toHaveBeenCalledWith(
+            expect.objectContaining({
+                kind: 'finished',
+                contextTokens: 31000,
+                maxContextTokens: 100000,
+            })
+        );
+    }
+);
+
+// по спеке поля могут быть null, а кривое значение не должно превратиться в процент
+test.each([[null], ['31000'], [-5], [1.5]])(
+    'context-tokens-%p-are-treated-as-missing',
+    async (value) => {
+        const handlers = makeHandlers();
+        new WebAgentSocket().startAgent('project-42', PARAMS, handlers);
+        const socket = lastSocket();
+        socket.fireOpen();
+
+        socket.fireMessage({
+            type: 'agentFinished',
+            message: 'готово',
+            stopReason: 'Done',
+            contextTokens: value,
+            maxContextTokens: value,
+        });
+        await flush();
+
+        // toHaveBeenCalledWith не отличает отсутствующее поле от undefined, но null и строку отличит
+        expect(handlers.onEvent).toHaveBeenCalledWith({
+            kind: 'finished',
+            message: 'готово',
+            stopReason: 'Done',
+        });
+    }
+);

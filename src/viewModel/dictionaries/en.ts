@@ -353,6 +353,8 @@ export const en: Translations = {
             aborted_unsynced:
                 'The run was stopped, but the document could not be re-read, so there is no way to tell what the agent changed. Reload the page',
         },
+        context_usage: 'Context {percent}% full',
+        context_usage_hint: '{used} of {max} context tokens used',
         steps_toggle: 'Agent steps: {count}',
         files: {
             drop_title: 'Drag a file here',

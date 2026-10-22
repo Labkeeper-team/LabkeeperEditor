@@ -94,6 +94,10 @@ export interface AgentHistoryEntry {
     request: string;
     response: string;
     createdAt: string;
+    /** Сколько токенов занимал контекст модели в конце прогона. У старых записей поля нет */
+    contextTokens?: number | null;
+    /** Окно контекста модели этого прогона */
+    maxContextTokens?: number | null;
 }
 
 export interface Segment {

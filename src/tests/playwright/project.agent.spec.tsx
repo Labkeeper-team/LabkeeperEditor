@@ -439,6 +439,65 @@ test('agent-history-loads-into-chat', async ({ page }) => {
     );
 });
 
+// GH-191: под ответом видно, насколько заполнен контекст модели
+test('context-usage-shows-under-live-and-history-answers', async ({ page }) => {
+    await openChat(page, {
+        history: [
+            {
+                id: '1',
+                request: 'старый запрос',
+                response: 'старый ответ',
+                createdAt: '2026-09-08T10:00:00Z',
+                contextTokens: 12400,
+                maxContextTokens: 200000,
+            },
+            {
+                // запись до появления полей: процента под ней нет
+                id: '2',
+                request: 'запрос без чисел',
+                response: 'ответ без чисел',
+                createdAt: '2026-09-08T10:05:00Z',
+            },
+        ],
+        frames: [
+            {
+                ...finished('Done'),
+                contextTokens: 31500,
+                maxContextTokens: 100000,
+            },
+        ],
+    });
+    const usage = page.locator('.agent-chat__context-usage');
+    await expect(usage).toHaveText(['Context 6% full']);
+    await expect(usage).toHaveAttribute(
+        'title',
+        '12400 of 200000 context tokens used'
+    );
+
+    await submitPrompt(page);
+
+    await expect(page.locator('.agent-chat__response-text')).toHaveCount(3);
+    await expect(usage).toHaveText(['Context 6% full', 'Context 32% full']);
+});
+
+test('context-usage-is-hidden-when-a-field-is-missing', async ({ page }) => {
+    await openChat(page, {
+        frames: [
+            {
+                ...finished('Done'),
+                contextTokens: 31500,
+                maxContextTokens: null,
+            },
+        ],
+    });
+    await submitPrompt(page);
+
+    await expect(page.locator('.agent-chat__response-text')).toHaveText(
+        'готово'
+    );
+    await expect(page.locator('.agent-chat__context-usage')).toHaveCount(0);
+});
+
 test('agent-response-renders-markdown', async ({ page }) => {
     const answer = [
         'Сделал **таблицу** и добавил `код`:',
