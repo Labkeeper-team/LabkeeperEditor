@@ -276,3 +276,50 @@ test('logout-sends-the-next-events-as-a-new-guest', async () => {
     expect(guestId).not.toBe('111');
     expectEverythingSentAs(guestId);
 });
+
+// находка разбора: вкладка простояла дольше окна, и следующий заход на лендинг завёл бы второго гостя
+test('an-idle-tab-keeps-the-device-on-its-guest-and-starts-a-new-session', async () => {
+    const service = new openpanel.OpenPanelService();
+    await service.init();
+    await flushNetwork();
+    const guestId = session.getSessionId() ?? '';
+    const name = window.localStorage.getItem(
+        session.OPENPANEL_FIRST_NAME_STORAGE_KEY
+    );
+    // пауза дольше окна: отметка активности ушла в прошлое
+    window.localStorage.setItem(
+        session.OPENPANEL_LAST_ACTIVITY_STORAGE_KEY,
+        String(Date.now() - 31 * MINUTE)
+    );
+    fetchMock.mockClear();
+
+    service.onEvent('start_run');
+    await flushNetwork();
+
+    expectEverythingSentAs(guestId);
+    expect(tracked('[E] Session started')).toHaveLength(1);
+    // новая вкладка или лендинг продолжают того же гостя и старт не повторяют
+    await openTab();
+    expect(session.createGuestSessionId()).toBe(guestId);
+    expect(session.readOrCreateGuestDisplayName()).toBe(name);
+    expect(session.guestSessionAlreadyStarted()).toBe(true);
+});
+
+test('an-idle-signed-in-tab-does-not-hand-its-user-to-the-landing', async () => {
+    const service = new openpanel.OpenPanelService();
+    await service.init('111');
+    await flushNetwork();
+    window.localStorage.setItem(
+        session.OPENPANEL_LAST_ACTIVITY_STORAGE_KEY,
+        String(Date.now() - 31 * MINUTE)
+    );
+    fetchMock.mockClear();
+
+    service.onEvent('start_run');
+    await flushNetwork();
+
+    expect(tracked('[E] Session started')).toHaveLength(0);
+    expect(
+        window.localStorage.getItem(session.OPENPANEL_PROFILE_STORAGE_KEY)
+    ).toBeNull();
+});
