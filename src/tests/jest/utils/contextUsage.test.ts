@@ -21,3 +21,13 @@ test.each([
 ])('context-%p-of-%p-gives-no-percent', (used, max) => {
     expect(contextUsagePercent(used, max)).toBeNull();
 });
+
+// находка разбора: запись истории приходит без разбора кадра, и кривое число не должно стать процентом
+test.each([
+    [-5, 100000],
+    [31000.5, 100000],
+    [31000, 100000.5],
+    [Number.NaN, 100000],
+])('context-%p-of-%p-from-the-history-gives-no-percent', (used, max) => {
+    expect(contextUsagePercent(used, max)).toBeNull();
+});
