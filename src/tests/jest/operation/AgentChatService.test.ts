@@ -3590,6 +3590,7 @@ describe('agent checkpoints', () => {
     /** История на сервере меняется по ходу опыта: прогон дописывает запись к концу */
     type CheckpointCtx = ReturnType<typeof setup> & {
         server: { history: (typeof OLD)[] };
+        compile: jest.Mock;
     };
 
     function checkpointSetup(
@@ -3607,7 +3608,12 @@ describe('agent checkpoints', () => {
         ctx.rpi.deleteAgentHistoryEntryRequest = jest
             .fn()
             .mockResolvedValue(okResult({}));
-        return Object.assign(ctx, { server });
+        // откат в агентском режиме собирает документ
+        const compile = jest.fn().mockResolvedValue(okResult({ segments: [] }));
+        ctx.rpi.compileProjectRequest = compile;
+        ctx.rpi.compileProjectPdfRequest = compile;
+        mockUserInfoWithDefaultUser(ctx.rpi);
+        return Object.assign(ctx, { server, compile });
     }
 
     async function runWithEntry(
@@ -3950,5 +3956,47 @@ describe('agent checkpoints', () => {
         expect(ctx.repository.chatViewModelRepository.historySyncing()).toBe(
             false
         );
+    });
+
+    /** Сборка после отката: кнопки «Выполнить» в агентском режиме нет */
+    function mockCompile(ctx: CheckpointCtx) {
+        ctx.rpi.listHunksRequest = jest
+            .fn()
+            .mockResolvedValue(okResult({ hunks: [] }));
+        ctx.compile.mockClear();
+        return ctx.compile;
+    }
+
+    test('revert-in-agent-mode-compiles-the-document', async () => {
+        const ctx = checkpointSetup();
+        await runWithEntry(ctx);
+        const compile = mockCompile(ctx);
+
+        await ctx.agentChatService.onCheckpointRevert();
+
+        expect(compile).toHaveBeenCalledTimes(1);
+        expect(compile).toHaveBeenCalledWith(PROJECT_ID);
+    });
+
+    test('revert-from-the-editor-does-not-compile', async () => {
+        const ctx = checkpointSetup(`/project/${PROJECT_ID}`);
+        await runWithEntry(ctx);
+        const compile = mockCompile(ctx);
+
+        await ctx.agentChatService.onCheckpointRevert();
+
+        expect(ctx.rpi.deleteAgentHistoryEntryRequest).toHaveBeenCalled();
+        expect(compile).not.toHaveBeenCalled();
+    });
+
+    test('failed-revert-does-not-compile', async () => {
+        const ctx = checkpointSetup();
+        await runWithEntry(ctx);
+        const compile = mockCompile(ctx);
+        ctx.rpi.deleteHunkRequest = jest.fn().mockResolvedValue(failed);
+
+        await ctx.agentChatService.onCheckpointRevert();
+
+        expect(compile).not.toHaveBeenCalled();
     });
 });

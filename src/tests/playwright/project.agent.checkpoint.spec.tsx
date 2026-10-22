@@ -39,6 +39,8 @@ type Server = {
     hunkDeletes: { id: string; revert: boolean }[];
     entryDeletes: string[];
     starts: number;
+    /** Сколько раз собирали документ: в агентском режиме сборку запускает откат */
+    compiles: number;
 };
 
 /** Прогон агента: что он оставит на сервере и какой ответ пришлёт */
@@ -66,6 +68,7 @@ async function openAgentMode(
         hunkDeletes: [],
         entryDeletes: [],
         starts: 0,
+        compiles: 0,
     };
     const routeSetup = new RouteSetup(page);
     await routeSetup.setupGetUserInfoRequest(authenticated);
@@ -74,6 +77,14 @@ async function openAgentMode(
     await routeSetup.setupGetAllProjectsRequest();
     await routeSetup.setupSaveProgramRequest();
     await routeSetup.setupListFilesRequest(200, 'emptyFiles');
+    await routeSetup.setupCompileProjectRequest(
+        200,
+        'defaultMd',
+        undefined,
+        'собранный после отката',
+        undefined,
+        () => (server.compiles += 1)
+    );
 
     await page.route(`**/api/v4/public/project/${uuid}/hunk`, (route) =>
         route.fulfill({ json: { hunks: server.hunks } })
@@ -276,6 +287,11 @@ test('revert-asks-then-undoes-changes-and-removes-the-request', async ({
     await expect(page.locator('.agent-chat__request-text')).toHaveText([
         'старый запрос',
     ]);
+    // кнопки «Выполнить» в агентском режиме нет: документ собирается сам
+    await expect.poll(() => server.compiles).toBe(1);
+    await expect(page.locator('.viewer-container')).toContainText(
+        'собранный после отката'
+    );
 });
 
 test('cancel-in-the-dialog-keeps-everything', async ({ page }) => {
@@ -292,6 +308,7 @@ test('cancel-in-the-dialog-keeps-everything', async ({ page }) => {
 
     await expect(checkpoint(page)).toBeVisible();
     await expect.poll(() => server.hunkDeletes).toEqual([]);
+    expect(server.compiles).toBe(0);
     await expect.poll(() => server.entryDeletes).toEqual([]);
 });
 
