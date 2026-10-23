@@ -84,6 +84,7 @@ import {
     setChatCheckpointFromRequestId,
     setChatCheckpointBase,
     setChatHistorySyncing,
+    setChatCheckpointAction,
     resetChat,
     setChatHistory,
     setChatHistoryRequestState,
@@ -362,6 +363,9 @@ export const createViewModelStateFromStore = (
             historySyncing: () => store.getState().chat.historySyncing,
             setHistorySyncing: (value) =>
                 store.dispatch(setChatHistorySyncing(value)),
+            checkpointAction: () => store.getState().chat.checkpointAction,
+            setCheckpointAction: (action) =>
+                store.dispatch(setChatCheckpointAction(action)),
             reset: () => store.dispatch(resetChat()),
         },
         persistenceViewModelRepository: {

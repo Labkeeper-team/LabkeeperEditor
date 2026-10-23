@@ -294,6 +294,47 @@ test('revert-asks-then-undoes-changes-and-removes-the-request', async ({
     );
 });
 
+// вопрос заказчика: пока откат в сети, нажатая кнопка показывает загрузку, а второе нажатие невозможно
+test('revert-in-flight-shows-a-spinner-and-locks-the-buttons', async ({
+    page,
+}) => {
+    const server = await openAgentMode(page, {
+        runs: [{ hunkId: 'h1', entryId: 'e1' }],
+    });
+    await submitPrompt(page, 'добавь строку');
+    let release: () => void = () => {};
+    const held = new Promise<void>((done) => (release = done));
+    await page.route(
+        `**/api/v4/public/project/${uuid}/hunk/*`,
+        async (route) => {
+            await held;
+            await route.fallback();
+        }
+    );
+
+    await revertButton(page).click();
+    await page
+        .getByRole('dialog', { name: 'Revert the changes?' })
+        .getByRole('button', { name: 'Revert 1 request' })
+        .click();
+
+    await expect(revertButton(page)).toHaveAttribute('aria-busy', 'true');
+    await expect(
+        revertButton(page).locator('.agent-checkpoint__spinner')
+    ).toBeVisible();
+    await expect(revertButton(page)).toBeDisabled();
+    await expect(acceptButton(page)).toBeDisabled();
+    await expect(
+        acceptButton(page).locator('.agent-checkpoint__spinner')
+    ).toHaveCount(0);
+
+    release();
+    await expect(checkpoint(page)).toHaveCount(0);
+    await expect
+        .poll(() => server.hunkDeletes)
+        .toEqual([{ id: 'h1', revert: true }]);
+});
+
 test('cancel-in-the-dialog-keeps-everything', async ({ page }) => {
     const server = await openAgentMode(page, {
         runs: [{ hunkId: 'h1', entryId: 'e1' }],

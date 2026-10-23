@@ -751,7 +751,33 @@ export class AgentChatService {
     };
 
     /** «Принять» в агентском режиме принимает все правки проекта, а не только подсвеченные */
-    onCheckpointAccept = async (): Promise<void> => {
+    onCheckpointAccept = (): Promise<void> =>
+        this.withCheckpointAction('accept', this.acceptCheckpoint);
+
+    onCheckpointRevert = (): Promise<void> =>
+        this.withCheckpointAction('revert', this.revertCheckpoint);
+
+    /**
+     * Приём и откат идут по одному: второе нажатие, пока первое ещё в сети,
+     * ничего не делает. Нажатая кнопка показывает загрузку до конца действия
+     */
+    private withCheckpointAction = async (
+        action: 'accept' | 'revert',
+        run: () => Promise<void>
+    ): Promise<void> => {
+        const chat = this.repository.chatViewModelRepository;
+        if (chat.checkpointAction() !== null) {
+            return;
+        }
+        chat.setCheckpointAction(action);
+        try {
+            await run();
+        } finally {
+            chat.setCheckpointAction(null);
+        }
+    };
+
+    private acceptCheckpoint = async (): Promise<void> => {
         const view = this.checkpointView();
         if (this.isRunning() || !view) {
             return;
@@ -769,7 +795,7 @@ export class AgentChatService {
      * куска удаляются. Записи трогаем только после удачного отката правок:
      * иначе в истории не осталось бы запроса, чьи правки ещё в документе
      */
-    onCheckpointRevert = async (): Promise<void> => {
+    private revertCheckpoint = async (): Promise<void> => {
         const project = this.repository.projectViewModelRepository.project();
         if (
             this.isRunning() ||

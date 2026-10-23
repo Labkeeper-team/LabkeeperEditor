@@ -3999,4 +3999,60 @@ describe('agent checkpoints', () => {
 
         expect(compile).not.toHaveBeenCalled();
     });
+
+    // вопрос заказчика: второе нажатие, пока первое в сети, не шлёт запросы ещё раз
+    test('double-revert-goes-to-the-server-once', async () => {
+        const ctx = checkpointSetup();
+        await runWithEntry(ctx);
+        mockCompile(ctx);
+        (ctx.rpi.deleteHunkRequest as jest.Mock).mockClear();
+
+        const first = ctx.agentChatService.onCheckpointRevert();
+        expect(ctx.repository.chatViewModelRepository.checkpointAction()).toBe(
+            'revert'
+        );
+        await ctx.agentChatService.onCheckpointRevert();
+        await first;
+
+        expect(ctx.rpi.deleteHunkRequest).toHaveBeenCalledTimes(1);
+        expect(ctx.rpi.deleteAgentHistoryEntryRequest).toHaveBeenCalledTimes(1);
+        expect(ctx.compile).toHaveBeenCalledTimes(1);
+        expect(
+            ctx.repository.chatViewModelRepository.checkpointAction()
+        ).toBeNull();
+    });
+
+    test('accept-while-revert-is-going-does-nothing', async () => {
+        const ctx = checkpointSetup();
+        await runWithEntry(ctx);
+        mockCompile(ctx);
+        (ctx.rpi.deleteHunkRequest as jest.Mock).mockClear();
+
+        const revert = ctx.agentChatService.onCheckpointRevert();
+        await ctx.agentChatService.onCheckpointAccept();
+        await revert;
+
+        expect(ctx.rpi.deleteHunkRequest).toHaveBeenCalledTimes(1);
+        expect(ctx.rpi.deleteHunkRequest).toHaveBeenCalledWith(
+            PROJECT_ID,
+            'h1',
+            true
+        );
+    });
+
+    test('failed-action-frees-the-buttons', async () => {
+        const ctx = checkpointSetup();
+        await runWithEntry(ctx);
+        ctx.rpi.getAgentHistoryRequest = jest
+            .fn()
+            .mockRejectedValue(new Error('network'));
+
+        await expect(ctx.agentChatService.onCheckpointRevert()).rejects.toThrow(
+            'network'
+        );
+
+        expect(
+            ctx.repository.chatViewModelRepository.checkpointAction()
+        ).toBeNull();
+    });
 });

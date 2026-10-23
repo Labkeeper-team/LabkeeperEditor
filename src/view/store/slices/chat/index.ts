@@ -98,6 +98,12 @@ export const chatSlice = createSlice({
         setChatHistorySyncing(state, { payload }: PayloadAction<boolean>) {
             state.historySyncing = payload;
         },
+        setChatCheckpointAction(
+            state,
+            { payload }: PayloadAction<'accept' | 'revert' | null>
+        ) {
+            state.checkpointAction = payload;
+        },
         setChatRecentFiles(state, { payload }: PayloadAction<string[]>) {
             state.recentFiles = payload;
         },
@@ -126,5 +132,6 @@ export const {
     setChatCheckpointFromRequestId,
     setChatCheckpointBase,
     setChatHistorySyncing,
+    setChatCheckpointAction,
     resetChat,
 } = chatSlice.actions;
