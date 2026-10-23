@@ -67,13 +67,13 @@ export const en: Translations = {
         info_history_button:
             'History buttons are necessary to navigate to older versions of the code',
         info_computed_segment:
-            'You can add a computed segment.\nIn it, you can create variables, execute functions, and evaluate expressions.\nThe computation results will appear in the segments on the right.',
+            'Add segments with computations, Markdown text, formulas, and diagrams.',
         info_project_settings:
             'Configure your project by selecting from the available options',
         info_run:
-            'This button starts the computation process.\nFormulas and functions from your segments on the left are computed and rendered on the right.',
+            'Build the document or run computations. The result appears in the preview panel.',
         info_result:
-            'The execution and rendering result of your code.\nHere, you will find computation results, formulas, and graphs.',
+            'View the finished document: a PDF or rendered text, formulas, graphs, and diagrams.',
         info_pdf:
             'If you want to save or print the computation results, you can convert them to a PDF.',
         info_error: 'A list of errors found in your code during compilation.',
@@ -81,6 +81,16 @@ export const en: Translations = {
             'You can add a segment with markdown text.\nVariable values can also be inserted using ${NAME}.',
         info_canvas:
             'This is where the segments that make up your program are located.',
+        info_mobile_navigation:
+            'Switch between the available project sections using this menu. The options depend on the project mode.',
+        info_agent_prompt: 'Describe a task or ask the agent a question',
+        info_agent_files:
+            'Upload project files for the agent to use in its work. Sign in to upload files.',
+        info_agent_settings: 'Adjust the agent settings to suit your tasks.',
+        info_enter_agent_mode:
+            'Open agent mode to create a document with AI: describe what you need, and the agent will prepare the text and formatting.',
+        info_leave_agent_mode:
+            'Return to the full layout with the code editor, project files, and preview.',
     },
     label_no_result_part1: 'Add the code or markdown',
     label_no_result_part2: 'and click "RUN"', //Add the code or markdown and click "RUN"

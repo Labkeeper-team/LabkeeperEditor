@@ -57,6 +57,7 @@ export const HeaderMenu = () => {
     const [showLogoutModal, setShowLogoutModal] = useState(false);
     const isEditorPage =
         matchPath(Routes.Project, location.pathname) !== null ||
+        matchPath(Routes.ProjectAgent, location.pathname) !== null ||
         location.pathname === Routes.ProjectDefault;
 
     const openExternal = useCallback((url: string) => {

@@ -77,6 +77,12 @@ export interface Translations {
         info_error: string;
         info_add_markdown: string;
         info_canvas: string;
+        info_mobile_navigation: string;
+        info_agent_prompt: string;
+        info_agent_files: string;
+        info_agent_settings: string;
+        info_enter_agent_mode: string;
+        info_leave_agent_mode: string;
     };
     label_no_result_part1: string;
     label_no_result_part2: string; //Add the code or markdown and click "RUN"
