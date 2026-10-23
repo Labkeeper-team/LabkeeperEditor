@@ -12,6 +12,11 @@ import { Button } from '../../../../components/button';
 import { colors } from '../../../../styles/colors';
 import { AgentCheckpointView } from '../../../../../viewModel/utils/agentCheckpoint.ts';
 
+/** Загрузка на нажатой кнопке: текст остаётся, чтобы кнопка не меняла ширину */
+const ButtonSpinner = () => (
+    <span className="agent-checkpoint__spinner" aria-hidden />
+);
+
 const pluralRules: Record<string, Intl.PluralRules> = {};
 
 const pluralLabel = (
@@ -49,6 +54,9 @@ export const CheckpointBar = ({ view }: { view: AgentCheckpointView }) => {
     const syncing = useSelector(
         (state: StorageState) => state.chat.historySyncing
     );
+    const action = useSelector(
+        (state: StorageState) => state.chat.checkpointAction
+    );
     const changeCount = useSelector(selectGroupedHunkCount);
     const skipConfirm = useSelector(
         (state: StorageState) => state.persistence.skipCheckpointRevertConfirm
@@ -62,7 +70,7 @@ export const CheckpointBar = ({ view }: { view: AgentCheckpointView }) => {
         entryCount > 0
             ? pluralLabel(texts.revert_count, language, entryCount)
             : texts.revert_plain;
-    const busy = isRunning || pending || syncing;
+    const busy = isRunning || pending || syncing || action !== null;
 
     const revert = () => dispatch(controller.onAgentCheckpointRevertRequest());
     const closeConfirm = () => {
@@ -78,10 +86,12 @@ export const CheckpointBar = ({ view }: { view: AgentCheckpointView }) => {
                         type="button"
                         className="agent-checkpoint__button agent-checkpoint__button--revert"
                         disabled={busy}
+                        aria-busy={action === 'revert'}
                         onClick={() =>
                             skipConfirm ? revert() : setConfirming(true)
                         }
                     >
+                        {action === 'revert' && <ButtonSpinner />}
                         {revertText}
                     </button>
                 )}
@@ -89,10 +99,12 @@ export const CheckpointBar = ({ view }: { view: AgentCheckpointView }) => {
                     type="button"
                     className="agent-checkpoint__button agent-checkpoint__button--accept"
                     disabled={busy}
+                    aria-busy={action === 'accept'}
                     onClick={() =>
                         dispatch(controller.onAgentCheckpointAcceptRequest())
                     }
                 >
+                    {action === 'accept' && <ButtonSpinner />}
                     {texts.accept}
                 </button>
             </div>

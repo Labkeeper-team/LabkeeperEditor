@@ -290,6 +290,7 @@ class MockViewModelRepositoryState {
     chatCheckpointFromRequestId: number | null = null;
     chatCheckpointBase: AgentCheckpointBase | undefined = undefined;
     chatHistorySyncing: boolean = false;
+    chatCheckpointAction: 'accept' | 'revert' | null = null;
     agentCheckpointMode: AgentCheckpointMode = AGENT_DEFAULT_CHECKPOINT_MODE;
     agentCheckpointBases: Record<string, AgentCheckpointBase> = {};
 
@@ -476,6 +477,9 @@ export const mockViewModelState = (): MockViewModelRepository => {
             historySyncing: () => mockViewModelState.chatHistorySyncing,
             setHistorySyncing: (value) =>
                 (mockViewModelState.chatHistorySyncing = value),
+            checkpointAction: () => mockViewModelState.chatCheckpointAction,
+            setCheckpointAction: (action) =>
+                (mockViewModelState.chatCheckpointAction = action),
             appendMessage: (message) => {
                 mockViewModelState.chatMessages = [
                     ...mockViewModelState.chatMessages,
@@ -530,6 +534,7 @@ export const mockViewModelState = (): MockViewModelRepository => {
                 mockViewModelState.chatCheckpointFromRequestId = null;
                 mockViewModelState.chatCheckpointBase = undefined;
                 mockViewModelState.chatHistorySyncing = false;
+                mockViewModelState.chatCheckpointAction = null;
             },
         },
         persistenceViewModelRepository: {
@@ -938,6 +943,9 @@ export interface ChatViewModelRepository {
     /** История перечитывается: кнопки отката ждут конца */
     historySyncing: () => boolean;
     setHistorySyncing: (value: boolean) => void;
+    /** Идущее действие рамки отката: второе нажатие, пока оно идёт, ничего не делает */
+    checkpointAction: () => 'accept' | 'revert' | null;
+    setCheckpointAction: (action: 'accept' | 'revert' | null) => void;
     appendMessage: (message: ChatMessageDraft) => void;
     setMessages: (messages: ChatMessage[]) => void;
     setRequestState: (state: AgentRequestState) => void;

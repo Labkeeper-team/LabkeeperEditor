@@ -194,6 +194,8 @@ export interface ChatState {
     checkpointBase: AgentCheckpointBase | null;
     /** История перечитывается после прогона: до конца кнопки отката знают не все записи */
     historySyncing: boolean;
+    /** Какое действие рамки отката сейчас идёт: на его кнопке загрузка, обе кнопки выключены */
+    checkpointAction: 'accept' | 'revert' | null;
 }
 
 export const authInitialState: AuthState = {
@@ -270,6 +272,7 @@ export const chatInitialState: ChatState = {
     checkpointFromRequestId: null,
     checkpointBase: null,
     historySyncing: false,
+    checkpointAction: null,
 };
 
 export const projectInitialState: ProjectState = {
