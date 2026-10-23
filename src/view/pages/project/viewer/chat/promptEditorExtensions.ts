@@ -12,7 +12,12 @@ import {
     type AnnotationType,
     type Extension,
 } from '@codemirror/state';
-import { EditorView, keymap, type KeyBinding } from '@codemirror/view';
+import {
+    drawSelection,
+    EditorView,
+    keymap,
+    type KeyBinding,
+} from '@codemirror/view';
 import { ExternalChange } from '@uiw/react-codemirror';
 
 export type PromptEditorOptions = {
@@ -64,6 +69,7 @@ export const promptEditorExtensions = (
     options: PromptEditorOptions
 ): Extension[] => [
     history(),
+    drawSelection(),
     KEEP_EXTERNAL_CHANGES_OUT_OF_HISTORY,
     // highest, иначе Enter достался бы standardKeymap и вместо отправки переносил строку
     Prec.highest(
