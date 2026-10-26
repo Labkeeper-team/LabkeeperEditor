@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import svgr from 'vite-plugin-svgr';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
+import { lowerClassStaticBlocks } from './scripts/vite/lowerClassStaticBlocks.ts';
 
 const DEFAULT_MAJOR = '4';
 const DEFAULT_MINOR = '';
@@ -43,6 +44,7 @@ export default defineConfig(() => {
         plugins: [
             react(),
             svgr(),
+            lowerClassStaticBlocks(),
             viteStaticCopy({
                 targets: [
                     {
@@ -53,6 +55,10 @@ export default defineConfig(() => {
                 ],
             }),
         ],
+        // воркер pdf.js собирается отдельно, и static-блок в нём тот же
+        worker: {
+            plugins: () => [lowerClassStaticBlocks()],
+        },
         resolve: {
             dedupe: ['react', 'react-dom'],
         },
