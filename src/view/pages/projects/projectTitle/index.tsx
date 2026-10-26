@@ -15,7 +15,11 @@ import {
 import { AppDispatch } from '../../../store';
 import { controller } from '../../../../main.tsx';
 
-export const ProjectTitle = (props: { project: ProjectShort }) => {
+export const ProjectTitle = (props: {
+    project: ProjectShort;
+    /** GH-207: подсказка с полным названием, если оно не влезло */
+    tooltipId?: string;
+}) => {
     const ref = useRef<HTMLInputElement>(null);
     const [editMode, setEditMode] = useState(false);
     const [currentTitle, setCurrentTitle] = useState(props.project.title);
@@ -75,6 +79,8 @@ export const ProjectTitle = (props: { project: ProjectShort }) => {
                     <Typography
                         className="project-title-text"
                         color={colors.gray10}
+                        data-tooltip-content={currentTitle}
+                        data-tooltip-id={props.tooltipId}
                         text={currentTitle}
                         type="body-large"
                     />

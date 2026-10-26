@@ -53,8 +53,14 @@ export class RouteSetup {
     /** Свой проект по умолчанию уже собирали: экран при входе проверяется отдельно */
     private neverCompiled = false;
     private projectType: ProjectType = 'markdown';
+    private projectTitle = 'Default Project';
 
     constructor(private page: Page) {}
+
+    /** Своё название проекта: обрезку длинного названия проверяют отдельно */
+    setupProjectTitle(title: string) {
+        this.projectTitle = title;
+    }
 
     /** Проект без lastProgramResult, как у ни разу не собранного: он открывается на агенте */
     setupNeverCompiledProject() {
@@ -111,7 +117,7 @@ export class RouteSetup {
             return {
                 projectId: uuid,
                 userId: defaultUserId,
-                title: 'Default Project',
+                title: this.projectTitle,
                 lastModified: new Date().toISOString(),
                 isPublic: false,
                 program: programOverride,
@@ -124,7 +130,7 @@ export class RouteSetup {
                 projectId: uuid,
                 userId: anotherUserId,
                 isPublic: true,
-                title: 'Default Project',
+                title: this.projectTitle,
                 lastModified: new Date().toISOString(),
                 program: {
                     segments: [
@@ -155,7 +161,7 @@ export class RouteSetup {
             return {
                 projectId: uuid,
                 userId: defaultUserId,
-                title: 'Default Project',
+                title: this.projectTitle,
                 lastModified: new Date().toISOString(),
                 program: {
                     segments: [],
@@ -172,7 +178,7 @@ export class RouteSetup {
             return {
                 projectId: uuid,
                 userId: anotherUserId,
-                title: 'Default Project',
+                title: this.projectTitle,
                 lastModified: new Date().toISOString(),
                 isPublic: true,
                 program: {
@@ -882,7 +888,7 @@ export class RouteSetup {
         );
     }
 
-    async setupGetAllProjectsRequest() {
+    async setupGetAllProjectsRequest(title = 'Тестовый проект') {
         await this.page.route(
             `**/api/${version}/public/project/all**`,
             async (route) => {
@@ -894,7 +900,7 @@ export class RouteSetup {
                             {
                                 projectId: uuid,
                                 userId: defaultUserId,
-                                title: 'Тестовый проект',
+                                title,
                                 lastModified: '2024-03-20T12:00:00',
                                 projectType: 'markdown',
                             },

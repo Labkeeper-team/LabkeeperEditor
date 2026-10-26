@@ -23,10 +23,13 @@ import { controller } from '../../../main.tsx';
 import { Events } from '../../../model/service/ObserverService.ts';
 import { useIsMobile } from '../../hooks/useMobile';
 import { Select } from '../../components/select';
+import { TruncatedTextTooltip } from '../../components/truncatedTextTooltip';
 
 type SortMode = 'time' | 'title';
 type SortDirection = 'asc' | 'desc';
 type SortOption = `${SortMode}-${SortDirection}`;
+
+const PROJECT_TITLE_TOOLTIP_ID = 'projects-title-tooltip';
 
 export const ProjectsPage = () => {
     const [showAddModal, setShowAddModal] = useState(false);
@@ -432,7 +435,12 @@ export const ProjectsPage = () => {
                                                         minWidth: '40ch',
                                                     }}
                                                 >
-                                                    <ProjectTitle project={p} />
+                                                    <ProjectTitle
+                                                        project={p}
+                                                        tooltipId={
+                                                            PROJECT_TITLE_TOOLTIP_ID
+                                                        }
+                                                    />
                                                 </td>
                                                 <td>
                                                     <Typography
@@ -476,6 +484,10 @@ export const ProjectsPage = () => {
                                             </tr>
                                         ))}
                                     </table>
+                                    <TruncatedTextTooltip
+                                        id={PROJECT_TITLE_TOOLTIP_ID}
+                                        isMobile={false}
+                                    />
                                 </div>
                             )}
                         </div>
