@@ -12,10 +12,9 @@ import { AppDispatch, StorageState } from '../../../store';
 import { setEditModeForProjectTitle } from '../../../store/slices/settings';
 import { controller } from '../../../../main.tsx';
 import { PROJECT_TITLE_MAX_LENGTH } from '../../../../model/domain.ts';
-import { Tooltip } from 'react-tooltip';
 import { Typography } from '../../typography';
 import { colors } from '../../../styles/colors.ts';
-import { isElementTextTruncated } from '../../../helpers/index.ts';
+import { TruncatedTextTooltip } from '../../truncatedTextTooltip';
 
 const PROJECT_TITLE_TOOLTIP_ID = 'header-project-title-tooltip';
 
@@ -114,6 +113,13 @@ export const ProjectTitle = ({ isMobile }: { isMobile: boolean }) => {
                         onBlur={editMode ? onInputBlur : undefined}
                         onKeyDown={editMode ? onKeyDown : undefined}
                         disabled={!editMode}
+                        // GH-207: пока название не правят, полное видно при наведении
+                        data-tooltip-content={
+                            editMode ? undefined : project.title
+                        }
+                        data-tooltip-id={
+                            editMode ? undefined : PROJECT_TITLE_TOOLTIP_ID
+                        }
                         maxLength={PROJECT_TITLE_MAX_LENGTH}
                         className={`${classNames('change-title-input', { disabled: !editMode })}`}
                     />
@@ -132,30 +138,9 @@ export const ProjectTitle = ({ isMobile }: { isMobile: boolean }) => {
                         </div>
                     ))}
             </div>
-            <Tooltip
+            <TruncatedTextTooltip
                 id={PROJECT_TITLE_TOOLTIP_ID}
-                closeEvents={isMobile ? {} : { blur: true, mouseleave: true }}
-                disableTooltip={(anchor) => !isElementTextTruncated(anchor)}
-                globalCloseEvents={{
-                    clickOutsideAnchor: true,
-                    escape: true,
-                    resize: true,
-                    scroll: true,
-                }}
-                openEvents={
-                    isMobile
-                        ? { click: true }
-                        : { focus: true, mouseenter: true }
-                }
-                place="bottom"
-                positionStrategy="fixed"
-                variant="light"
-                style={{
-                    maxWidth: 'min(480px, calc(100vw - 32px))',
-                    overflowWrap: 'anywhere',
-                    zIndex: 1000,
-                }}
-                wrapper="div"
+                isMobile={isMobile}
             />
         </>
     );
