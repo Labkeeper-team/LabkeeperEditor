@@ -401,7 +401,7 @@ export class WebRpi implements Rpi {
     ): Promise<RequestResult<RichProject>> {
         return this.requestWrapper(
             'getProjectRequest',
-            [200, 401, 403, 404],
+            [200, 400, 401, 403, 404],
             async () => axios.get(URLS.getProject.replace('{id}', projectId)),
             projectId
         );
@@ -547,7 +547,7 @@ export class WebRpi implements Rpi {
     ): Promise<RequestResult> {
         return this.requestWrapper(
             'sendEmailWithCodeRequest',
-            [200, 400, 404, 409],
+            [200, 400, 404, 406, 409],
             () =>
                 axios.post(URLS.Email, null, {
                     params: { email, registration, captcha },

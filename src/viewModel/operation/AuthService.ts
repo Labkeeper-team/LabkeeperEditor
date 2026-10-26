@@ -210,6 +210,16 @@ export class AuthService {
             this.repository.authViewModelRepository.setEmailRequest(
                 'validationError'
             );
+        } else if (result.code === 406) {
+            // в спеке кода нет, так сервер ответил на адрес одноразовой почты
+            this.track(Events.EVENT_AUTH_EMAIL_SENT, {
+                flow,
+                ok: false,
+                reason: 'emailNotAccepted',
+            });
+            this.repository.authViewModelRepository.setEmailRequest(
+                'emailNotAccepted'
+            );
         } else {
             this.track(Events.EVENT_AUTH_EMAIL_SENT, {
                 flow,

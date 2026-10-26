@@ -724,6 +724,41 @@ describe('WebRpi', () => {
         );
     });
 
+    // Bugsink: в адрес проекта вписали текст вместо id, сервер ответил 400 Type mismatch
+    test('ожидаемый 400 от getProjectRequest не идёт в мониторинг', async () => {
+        respondWith(400);
+        const { rpi, observerService } = createRpi();
+
+        const result = await rpi.getProjectRequest('Ссылканадляавтора');
+
+        expect(result.code).toBe(400);
+        expect(Sentry.captureException).not.toHaveBeenCalled();
+        expect(observerService.onEvent).not.toHaveBeenCalledWith(
+            Events.EVENT_RPI_UNKNOWN,
+            expect.anything()
+        );
+    });
+
+    // Bugsink: на адрес одноразовой почты сервер ответил 406
+    test('ожидаемый 406 от sendEmailWithCodeRequest не идёт в мониторинг', async () => {
+        respondWith(406);
+        const { rpi, observerService } = createRpi();
+
+        const result = await rpi.sendEmailWithCodeRequest(
+            'a@moblha.com',
+            true,
+            'ru',
+            'captcha'
+        );
+
+        expect(result.code).toBe(406);
+        expect(Sentry.captureException).not.toHaveBeenCalled();
+        expect(observerService.onEvent).not.toHaveBeenCalledWith(
+            Events.EVENT_RPI_UNKNOWN,
+            expect.anything()
+        );
+    });
+
     // Прочие коды этих же запросов мониторинг по-прежнему видит
     test('неожиданный 410 от другого запроса по-прежнему идёт в мониторинг', async () => {
         respondWith(410);

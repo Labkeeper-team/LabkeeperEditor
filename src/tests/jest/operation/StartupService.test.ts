@@ -12,6 +12,7 @@ import {
 import { Program } from '../../../model/domain.ts';
 import { RichProject } from '../../../model/rpi';
 import { Routes } from '../../../viewModel/routes.ts';
+import { MockViewModelRepository } from '../../../viewModel/repository';
 
 /*
 Сценарий:
@@ -801,4 +802,38 @@ test('empty-latex-query-does-not-add-a-segment', async () => {
             .currentProgram()
             .segments.map((segment) => segment.text)
     ).toEqual(['черновик']);
+});
+
+// Bugsink: в адрес вписали текст вместо id, сервер ответил 400 Type mismatch.
+// Для человека это тот же «проект не найден», а не пустая страница
+test('project-address-without-an-id-opens-as-not-found', async () => {
+    const { startupService, rpi, repository } = mockContext();
+    mockUserInfoWithDefaultUser(rpi);
+    rpi.getProjectRequest = jest.fn().mockResolvedValue({
+        code: 400,
+        body: 'Type mismatch.',
+        isOk: false,
+        isUnauth: false,
+        isForbidden: false,
+    });
+    rpi.getAllProjectsRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        body: { projects: [] },
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+    });
+    repository.setLocation('/project/Ссылканадляавтора');
+
+    await startupService.onAppStartup();
+
+    expect(repository.ideViewModelRepository.getProjectRequestState()).toBe(
+        'not_found'
+    );
+    expect(
+        (repository as MockViewModelRepository).mockState().toasts
+    ).toContainEqual({
+        message: repository.dictionary.filemanager.errors.notFound,
+        type: 'error',
+    });
 });

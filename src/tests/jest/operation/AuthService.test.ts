@@ -103,6 +103,27 @@ test('registration-email-sends-the-captcha-bypass-token', async () => {
     expect(repository.authViewModelRepository.currentView()).toBe('code');
 });
 
+// Bugsink: на адрес одноразовой почты сервер ответил 406. Человек должен
+// увидеть, что адрес не подходит, а не «Неизвестная ошибка»
+test('email-rejected-with-406-asks-for-another-address', async () => {
+    const { authService, repository, rpi } = mockContext();
+    repository.authViewModelRepository.setIsRegistration(true);
+    rpi.sendEmailWithCodeRequest = jest.fn().mockResolvedValue({
+        code: 406,
+        body: '',
+        isOk: false,
+        isUnauth: false,
+        isForbidden: false,
+    });
+
+    await authService.onEmailSendButtonClicked('a@moblha.com', 'captcha');
+
+    expect(repository.authViewModelRepository.emailRequest()).toBe(
+        'emailNotAccepted'
+    );
+    expect(repository.authViewModelRepository.currentView()).not.toBe('code');
+});
+
 test('logout-tells-analytics-to-drop-the-session', async () => {
     const { authService, observerService, rpi } = mockContext();
     const onLogout = jest.spyOn(observerService, 'onLogout');

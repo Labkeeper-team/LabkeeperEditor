@@ -42,6 +42,7 @@ export type EmailRequestState =
     | 'userNotFound'
     | 'userExists'
     | 'validationError'
+    | 'emailNotAccepted'
     | 'unknownError';
 export type CodeRequestState =
     'unknown' | 'loading' | 'ok' | 'invalid' | 'unknownError';
