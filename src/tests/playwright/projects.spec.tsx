@@ -42,8 +42,8 @@ test('rename-project-via-enter', async ({ page }) => {
 
     await page.locator('input.input-base').first().press('Enter');
 
-    // проверяем, что запрос был сделан
-    expect(requestMade).toBeTruthy();
+    // запрос уходит асинхронно после нажатия, поэтому его ждём, а не проверяем сразу
+    await expect.poll(() => requestMade).toBeTruthy();
 });
 
 /*
@@ -85,6 +85,6 @@ test('rename-project-via-press', async ({ page }) => {
 
     await page.locator('div.project-content-container').click();
 
-    // проверяем, что запрос был сделан
-    expect(requestMade).toBeTruthy();
+    // запрос уходит асинхронно после нажатия, поэтому его ждём, а не проверяем сразу
+    await expect.poll(() => requestMade).toBeTruthy();
 });
