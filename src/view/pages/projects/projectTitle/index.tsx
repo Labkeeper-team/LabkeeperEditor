@@ -17,6 +17,8 @@ import { controller } from '../../../../main.tsx';
 
 export const ProjectTitle = (props: {
     project: ProjectShort;
+    /** GH-208: адрес проекта, чтобы его можно было открыть в новой вкладке */
+    href: string;
     /** GH-207: подсказка с полным названием, если оно не влезло */
     tooltipId?: string;
 }) => {
@@ -76,14 +78,16 @@ export const ProjectTitle = (props: {
                 />
             ) : (
                 <>
-                    <Typography
-                        className="project-title-text"
-                        color={colors.gray10}
-                        data-tooltip-content={currentTitle}
-                        data-tooltip-id={props.tooltipId}
-                        text={currentTitle}
-                        type="body-large"
-                    />
+                    <a className="project-title-link" href={props.href}>
+                        <Typography
+                            className="project-title-text"
+                            color={colors.gray10}
+                            data-tooltip-content={currentTitle}
+                            data-tooltip-id={props.tooltipId}
+                            text={currentTitle}
+                            type="body-large"
+                        />
+                    </a>
                     <div
                         onClick={onClickChange}
                         className="change-icon-container"

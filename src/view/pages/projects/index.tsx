@@ -24,12 +24,16 @@ import { Events } from '../../../model/service/ObserverService.ts';
 import { useIsMobile } from '../../hooks/useMobile';
 import { Select } from '../../components/select';
 import { TruncatedTextTooltip } from '../../components/truncatedTextTooltip';
+import { Routes } from '../../../viewModel/routes.ts';
 
 type SortMode = 'time' | 'title';
 type SortDirection = 'asc' | 'desc';
 type SortOption = `${SortMode}-${SortDirection}`;
 
 const PROJECT_TITLE_TOOLTIP_ID = 'projects-title-tooltip';
+
+const projectHref = (projectId?: string) =>
+    Routes.Project.replace(':id', projectId ?? '');
 
 export const ProjectsPage = () => {
     const [showAddModal, setShowAddModal] = useState(false);
@@ -152,6 +156,36 @@ export const ProjectsPage = () => {
         [dispatch]
     );
 
+    /**
+     * GH-208: проект открывается как обычная ссылка. Ctrl, Cmd и средняя кнопка
+     * открывают его в новой вкладке, правая кнопка над названием и датой даёт
+     * меню ссылки. Простой щелчок открывает проект без перезагрузки страницы
+     */
+    const onProjectClick = useCallback(
+        (e: React.MouseEvent<HTMLElement>, projectId?: string) => {
+            if (!projectId || (e.button !== 0 && e.button !== 1)) {
+                return;
+            }
+            const inNewTab = e.button === 1 || e.ctrlKey || e.metaKey;
+            if (!inNewTab) {
+                e.preventDefault();
+                openProject(projectId);
+                return;
+            }
+            controller.trackUiEvent(Events.EVENT_PROJECT_OPENED, {
+                project_id: projectId,
+                source: 'list_new_tab',
+            });
+            // ссылку браузер откроет сам, а мимо неё открываем мы
+            const onLink =
+                e.target instanceof Element && !!e.target.closest('a[href]');
+            if (!onLink) {
+                window.open(projectHref(projectId), '_blank', 'noopener');
+            }
+        },
+        [openProject]
+    );
+
     return (
         <>
             <div className="projects-container">
@@ -232,12 +266,26 @@ export const ProjectsPage = () => {
                                             <div
                                                 key={`${p.projectId}-${p.title}`}
                                                 className="projects-card"
-                                                onClick={() =>
-                                                    openProject(p.projectId)
+                                                onClick={(e) =>
+                                                    onProjectClick(
+                                                        e,
+                                                        p.projectId
+                                                    )
+                                                }
+                                                onAuxClick={(e) =>
+                                                    onProjectClick(
+                                                        e,
+                                                        p.projectId
+                                                    )
                                                 }
                                             >
                                                 <div className="projects-card__main">
-                                                    <ProjectTitle project={p} />
+                                                    <ProjectTitle
+                                                        href={projectHref(
+                                                            p.projectId
+                                                        )}
+                                                        project={p}
+                                                    />
                                                     <Typography
                                                         color={colors.gray30}
                                                         text={formatDistance(
@@ -423,8 +471,17 @@ export const ProjectsPage = () => {
                                         </tr>
                                         {sortedProjects.map((p) => (
                                             <tr
-                                                onClick={() =>
-                                                    openProject(p.projectId)
+                                                onClick={(e) =>
+                                                    onProjectClick(
+                                                        e,
+                                                        p.projectId
+                                                    )
+                                                }
+                                                onAuxClick={(e) =>
+                                                    onProjectClick(
+                                                        e,
+                                                        p.projectId
+                                                    )
                                                 }
                                                 key={`${p.projectId}-${p.title}`}
                                             >
@@ -436,6 +493,9 @@ export const ProjectsPage = () => {
                                                     }}
                                                 >
                                                     <ProjectTitle
+                                                        href={projectHref(
+                                                            p.projectId
+                                                        )}
                                                         project={p}
                                                         tooltipId={
                                                             PROJECT_TITLE_TOOLTIP_ID
@@ -443,17 +503,30 @@ export const ProjectsPage = () => {
                                                     />
                                                 </td>
                                                 <td>
-                                                    <Typography
-                                                        color={colors.gray30}
-                                                        text={formatDistance(
-                                                            new Date(),
-                                                            new Date(
-                                                                p.lastModified!
-                                                            ),
-                                                            { locale: localize }
+                                                    <a
+                                                        className="projects-row-link"
+                                                        href={projectHref(
+                                                            p.projectId
                                                         )}
-                                                        type="body-large"
-                                                    />
+                                                        // та же ссылка, что у названия: Tab по ней второй раз не ходит
+                                                        tabIndex={-1}
+                                                    >
+                                                        <Typography
+                                                            color={
+                                                                colors.gray30
+                                                            }
+                                                            text={formatDistance(
+                                                                new Date(),
+                                                                new Date(
+                                                                    p.lastModified!
+                                                                ),
+                                                                {
+                                                                    locale: localize,
+                                                                }
+                                                            )}
+                                                            type="body-large"
+                                                        />
+                                                    </a>
                                                 </td>
                                                 <td>
                                                     <div
