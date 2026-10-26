@@ -103,9 +103,9 @@ test('registration-email-sends-the-captcha-bypass-token', async () => {
     expect(repository.authViewModelRepository.currentView()).toBe('code');
 });
 
-// Bugsink: на адрес одноразовой почты сервер ответил 406. Человек должен
-// увидеть, что адрес не подходит, а не «Неизвестная ошибка»
-test('email-rejected-with-406-asks-for-another-address', async () => {
+// Bugsink: сервер ответил 406, он так отвечает, когда не разобрал токен капчи.
+// Человек должен увидеть, что капча не прошла, а не «Неизвестная ошибка»
+test('email-rejected-with-406-reports-a-captcha-error', async () => {
     const { authService, repository, rpi } = mockContext();
     repository.authViewModelRepository.setIsRegistration(true);
     rpi.sendEmailWithCodeRequest = jest.fn().mockResolvedValue({
@@ -116,10 +116,10 @@ test('email-rejected-with-406-asks-for-another-address', async () => {
         isForbidden: false,
     });
 
-    await authService.onEmailSendButtonClicked('a@moblha.com', 'captcha');
+    await authService.onEmailSendButtonClicked('a@gmail.com', 'captcha');
 
     expect(repository.authViewModelRepository.emailRequest()).toBe(
-        'emailNotAccepted'
+        'captchaError'
     );
     expect(repository.authViewModelRepository.currentView()).not.toBe('code');
 });

@@ -524,7 +524,7 @@ export interface Translations {
             userExists: string;
             userNotFound: string;
             invalidEmail: string;
-            emailNotAccepted: string;
+            captchaError: string;
             invalidCode: string;
             invalidPassword: string;
             passwordsDontMatch: string;

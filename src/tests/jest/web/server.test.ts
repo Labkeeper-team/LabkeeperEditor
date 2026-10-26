@@ -739,13 +739,13 @@ describe('WebRpi', () => {
         );
     });
 
-    // Bugsink: на адрес одноразовой почты сервер ответил 406
+    // Bugsink: сервер отвечает 406, когда не разобрал токен капчи
     test('ожидаемый 406 от sendEmailWithCodeRequest не идёт в мониторинг', async () => {
         respondWith(406);
         const { rpi, observerService } = createRpi();
 
         const result = await rpi.sendEmailWithCodeRequest(
-            'a@moblha.com',
+            'a@gmail.com',
             true,
             'ru',
             'captcha'
