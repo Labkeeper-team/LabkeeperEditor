@@ -203,6 +203,22 @@ export const joinFolderPath = (
     return `${folderPrefix}/${fileName}`;
 };
 
+// GH-209: загрузить можно любой текстовый файл, а открываются в редакторе вот эти
+const LATEX_TEXT_EXTENSIONS = [
+    '.tex',
+    '.ltx',
+    '.latex',
+    '.sty',
+    '.cls',
+    '.clo',
+    '.def',
+    '.ldf',
+    '.fd',
+    '.dtx',
+    '.ins',
+    '.tikz',
+];
+
 const TEXT_FILE_EXTENSIONS = [
     '.txt',
     '.text',
@@ -226,11 +242,7 @@ const TEXT_FILE_EXTENSIONS = [
     '.py',
     '.r',
     '.m',
-    '.tex',
-    '.ltx',
-    '.latex',
-    '.sty',
-    '.cls',
+    ...LATEX_TEXT_EXTENSIONS,
     '.bib',
     '.bst',
     '.bbl',
@@ -252,19 +264,19 @@ const TEXT_FILE_EXTENSIONS = [
     '.alg',
     '.fls',
     '.fdb_latexmk',
+    '.cfg',
+    '.bbx',
+    '.cbx',
+    '.lbx',
+    '.dbx',
+    '.dat',
 ];
 
 const TEXT_FILE_NAMES = ['latexmkrc', '.latexmkrc'];
 
 export const isLatexTextFilePath = (path: string): boolean => {
     const lower = path.toLowerCase();
-    return (
-        lower.endsWith('.tex') ||
-        lower.endsWith('.ltx') ||
-        lower.endsWith('.latex') ||
-        lower.endsWith('.sty') ||
-        lower.endsWith('.cls')
-    );
+    return LATEX_TEXT_EXTENSIONS.some((extension) => lower.endsWith(extension));
 };
 
 export const isTextFilePath = (path: string): boolean => {

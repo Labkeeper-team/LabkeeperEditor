@@ -2,9 +2,10 @@ import { expect, test, type Page } from '@playwright/test';
 import { RouteSetup } from './mock.routeSetUp.tsx';
 
 /**
- * Загрузка классов и пакетов LaTeX. Проверяем весь путь до сервера: файл не
- * отклоняется проверкой формата и уходит с тем именем и расширением, с каким
- * его выбрали, иначе компилятору подключать будет нечего
+ * Загрузка классов и пакетов LaTeX и прочих текстовых файлов (GH-209).
+ * Проверяем весь путь до сервера: файл не отклоняется проверкой формата и
+ * уходит с тем именем и расширением, с каким его выбрали, иначе компилятору
+ * подключать будет нечего
  */
 
 test.use({ viewport: { width: 1360, height: 900 } });
@@ -57,19 +58,40 @@ async function pickFile(
 
 const toasts = (page: Page) => page.locator('div.Toastify__toast');
 
-// Браузер отдаёт полю выбора только те расширения, что перечислены в accept:
-// если список разъедется с проверкой формата, файл нельзя будет даже выбрать
-test('поле выбора файлов принимает классы и пакеты LaTeX', async ({ page }) => {
+// GH-209: текст принимается с любым расширением, а accept в диалоге отсеял бы
+// всё, чего нет в списке: файл нельзя было бы даже выбрать
+test('поле выбора файлов не ограничивает расширения', async ({ page }) => {
     await openFileManager(page);
 
-    const accept = await page
-        .locator('input[type=file]')
-        .first()
-        .getAttribute('accept');
-
-    expect(accept).toContain('.cls');
-    expect(accept).toContain('.sty');
+    await expect(page.locator('input[type=file]').first()).not.toHaveAttribute(
+        'accept'
+    );
 });
+
+// GH-209: файлы, которых раньше не было в списке
+for (const file of [
+    {
+        name: 'russian.ldf',
+        mimeType: '',
+        body: '\\ProvidesFile{russian.ldf}\n',
+    },
+    {
+        name: 'figure.eps',
+        mimeType: 'application/postscript',
+        // у EPS бывает двоичный заголовок превью с нулевыми байтами
+        body: '\u00c5\u00d0\u00d3\u00c6\u0000\u0000%!PS-Adobe-3.0 EPSF-3.0\n',
+    },
+]) {
+    test(`${file.name} загружается без ошибки формата`, async ({ page }) => {
+        const uploads = recordUploads(page);
+        await openFileManager(page);
+
+        await pickFile(page, file);
+
+        await expect.poll(() => uploads).toEqual([file.name]);
+        await expect(toasts(page)).toHaveCount(0);
+    });
+}
 
 // У .cls и .sty браузер обычно не определяет MIME, поэтому решает расширение
 for (const { name, mimeType } of [
@@ -96,7 +118,7 @@ for (const { name, mimeType } of [
     });
 }
 
-test('неподдерживаемый формат по-прежнему отклоняется и на сервер не уходит', async ({
+test('двоичный файл неизвестного формата отклоняется и на сервер не уходит', async ({
     page,
 }) => {
     const uploads = recordUploads(page);
@@ -105,7 +127,7 @@ test('неподдерживаемый формат по-прежнему отк
     await pickFile(page, {
         name: 'archive.zip',
         mimeType: 'application/zip',
-        body: 'PK\u0003\u0004',
+        body: 'PK\u0003\u0004\u0014\u0000\u0000\u0000',
     });
 
     await expect(toasts(page)).toBeVisible();
@@ -172,7 +194,7 @@ test('класс LaTeX перетаскиванием загружается б�
     await expect(toasts(page)).toHaveCount(0);
 });
 
-test('неподдерживаемый формат перетаскиванием отклоняется', async ({
+test('двоичный файл неизвестного формата перетаскиванием отклоняется', async ({
     page,
 }) => {
     const uploads = recordUploads(page);
@@ -181,7 +203,7 @@ test('неподдерживаемый формат перетаскивание
     await dropFileToRoot(page, {
         name: 'archive.zip',
         mimeType: 'application/zip',
-        body: 'PK',
+        body: 'PK\u0003\u0004\u0014\u0000\u0000\u0000',
     });
 
     await expect(toasts(page)).toContainText('Media type is not supported');

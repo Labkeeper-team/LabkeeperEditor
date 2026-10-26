@@ -9,8 +9,9 @@ import { isMentionedOnUpload } from '../../../viewModel/operation/AgentFilesServ
 const mention = (name: string) =>
     `Add the file ${name} that I uploaded to the document`;
 
+// проверка формата читает начало файла, поэтому файл настоящий
 const fileOf = (name: string, type: string) =>
-    ({ name, size: 128, type }) as File;
+    new File(['content'], name, { type });
 
 const uploadResult = (code: number) => ({
     code,

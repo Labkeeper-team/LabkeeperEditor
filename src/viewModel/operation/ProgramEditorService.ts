@@ -130,7 +130,12 @@ export class ProgramEditorService {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const thisCopy = this;
         let itemIndex = 0;
-        for (const item of items) {
+        // GH-209: проверка формата ждёт чтения файла, а после первого await вставка уже недоступна
+        const entries = Array.from(items, (item) => ({
+            kind: item.kind,
+            file: item.kind === 'file' ? item.getAsFile() : null,
+        }));
+        for (const item of entries) {
             if (item.kind === 'file') {
                 const project =
                     this.repository.projectViewModelRepository.project();
@@ -145,15 +150,15 @@ export class ProgramEditorService {
                     );
                     return;
                 }
-                const file = item.getAsFile();
+                const file = item.file;
                 if (!file) {
                     return;
                 }
                 if (
-                    !this.fileService.checkFile(
+                    !(await this.fileService.checkFile(
                         file,
                         this.repository.dictionary
-                    )
+                    ))
                 ) {
                     continue;
                 }
