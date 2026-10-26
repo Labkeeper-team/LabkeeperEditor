@@ -40,14 +40,9 @@ declare global {
 
 let checkoutWidgetScriptPromise: Promise<void> | null = null;
 
-const createPaymentFormId = (): string => {
-    const randomValue =
-        typeof crypto !== 'undefined' && crypto.randomUUID
-            ? crypto.randomUUID()
-            : Math.random().toString(36).slice(2);
-
-    return `yoomoney-payment-form-${randomValue}`;
-};
+// у старых браузеров crypto.randomUUID подставляет legacyBrowserPolyfills
+const createPaymentFormId = (): string =>
+    `yoomoney-payment-form-${crypto.randomUUID()}`;
 
 const loadCheckoutWidgetScript = (): Promise<void> => {
     if (window.YooMoneyCheckoutWidget) {
