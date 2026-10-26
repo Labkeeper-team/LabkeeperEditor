@@ -4,7 +4,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, StorageState } from '../../../../store';
 import { useDictionary } from '../../../../store/selectors/translations';
 import { controller } from '../../../../../main.tsx';
-import { SUPPORTED_EXTENSIONS_ACCEPT } from '../../../../../viewModel/domain/supportedFileExtensions.ts';
 
 /** Больше в строку над запросом не помещается, остальные файлы не показываем */
 const VISIBLE_FILES = 3;
@@ -146,7 +145,7 @@ export const AgentFiles = ({ isEmpty }: { isEmpty: boolean }) => {
                     ref={inputRef}
                     type="file"
                     multiple
-                    accept={SUPPORTED_EXTENSIONS_ACCEPT}
+                    // GH-209: без accept, текст берём с любым расширением, формат проверяет FileService
                     className="agent-files__input"
                     data-testid="agent-files-input"
                     onChange={(event) => {

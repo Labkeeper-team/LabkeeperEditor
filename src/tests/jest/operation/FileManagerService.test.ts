@@ -60,11 +60,7 @@ test('file-manager-test-onUploadFiles-csv-with-empty-mime', async () => {
         isForbidden: false,
     });
 
-    const file = {
-        name: 'Frequency.csv',
-        size: 1024,
-        type: '',
-    } as File;
+    const file = new File(['x,y\n1,2\n'], 'Frequency.csv', { type: '' });
 
     await fileManagerService.onUploadFiles([file]);
 
@@ -85,11 +81,7 @@ test('file-manager-test-onUploadFiles-with-folder-prefix', async () => {
         isForbidden: false,
     });
 
-    const file = {
-        name: 'note.txt',
-        size: 128,
-        type: 'text/plain',
-    } as File;
+    const file = new File(['x,y\n1,2\n'], 'note.txt', { type: 'text/plain' });
 
     await fileManagerService.onUploadFiles([file], 'my_folder');
 
@@ -116,11 +108,7 @@ test('file-manager-test-onUploadFiles-with-empty-folder-prefix', async () => {
         isForbidden: false,
     });
 
-    const file = {
-        name: 'note.txt',
-        size: 128,
-        type: 'text/plain',
-    } as File;
+    const file = new File(['x,y\n1,2\n'], 'note.txt', { type: 'text/plain' });
 
     await fileManagerService.onUploadFiles([file], '');
 
@@ -149,11 +137,7 @@ test('file-manager-test-onUploadFiles-resets-stale-current-folder', async () => 
         isForbidden: false,
     });
 
-    const file = {
-        name: 'note.txt',
-        size: 128,
-        type: 'text/plain',
-    } as File;
+    const file = new File(['x,y\n1,2\n'], 'note.txt', { type: 'text/plain' });
 
     await fileManagerService.onUploadFiles([file]);
 
@@ -178,11 +162,7 @@ test('file-manager-test-onUploadFiles-rejects-invalid-file-name', async () => {
         isUnauth: false,
         isForbidden: false,
     });
-    const file = {
-        name: 'a/.txt',
-        size: 128,
-        type: 'text/plain',
-    } as File;
+    const file = new File(['x,y\n1,2\n'], 'a/.txt', { type: 'text/plain' });
     const toastSpy = jest.spyOn(repository, 'toast');
 
     await fileManagerService.onUploadFiles([file]);

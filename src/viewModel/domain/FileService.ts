@@ -6,7 +6,10 @@ import {
     ObserverService,
 } from '../../model/service/ObserverService.ts';
 import { fileExtension, trackEvent } from '../utils/observerContext.ts';
-import { SUPPORTED_EXTENSIONS } from './supportedFileExtensions.ts';
+import {
+    hasBinaryExtension,
+    looksLikeTextFile,
+} from './supportedFileExtensions.ts';
 import { getPhantomFileNamesFromHunks } from '../utils/hunkGrouping.ts';
 import { projectFilePathsMatch } from '../utils/projectFilePath.ts';
 
@@ -49,7 +52,10 @@ export class FileService {
         );
     };
 
-    checkFile = (file: File, dictionary: Translations): boolean => {
+    checkFile = async (
+        file: File,
+        dictionary: Translations
+    ): Promise<boolean> => {
         const mbInBytes = 1048576;
         const maxSizeInMb = 5;
         if (file.size > mbInBytes * maxSizeInMb) {
@@ -63,19 +69,12 @@ export class FileService {
             );
             return false;
         }
-        const fileName = file.name.toLowerCase();
-        const hasSupportedExtension = SUPPORTED_EXTENSIONS.some((ext) =>
-            fileName.endsWith(ext)
-        );
-        if (
-            !file.type.startsWith('image/') &&
-            !file.type.startsWith('text/csv') &&
-            !file.type.startsWith('text/plain') &&
-            !file.type.startsWith('application/x-tex') &&
-            !file.type.startsWith('application/x-bibtex') &&
-            !file.type.startsWith('application/bibtex') &&
-            !hasSupportedExtension
-        ) {
+        // GH-209: текст принимаем с любым расширением, двоичное только из списка
+        const isSupported =
+            file.type.startsWith('image/') ||
+            hasBinaryExtension(file.name) ||
+            (await looksLikeTextFile(file).catch(() => false));
+        if (!isSupported) {
             this.trackRejected(file, 'format');
             toast(dictionary.filemanager.errors.notSupported, {
                 type: 'error',

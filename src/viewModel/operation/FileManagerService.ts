@@ -258,10 +258,10 @@ export class FileManagerService {
                     continue;
                 }
                 if (
-                    !this.fileService.checkFile(
+                    !(await this.fileService.checkFile(
                         file,
                         this.repository.dictionary
-                    )
+                    ))
                 ) {
                     continue;
                 }

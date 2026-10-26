@@ -1,27 +1,38 @@
 /**
- * Расширения, которые редактор принимает в проект. Классы и пакеты LaTeX
- * (`.cls`, `.sty`) нужны шаблонам вроде AltaCV: без них проект не собирается
+ * Двоичные форматы, которые редактор принимает в проект: картинки для LaTeX и
+ * Markdown. PDF вставляется в LaTeX как картинка, и агенту его дают прямо из чата.
+ * EPS и PS бывают с двоичным заголовком превью, поэтому тоже в списке
  *
- * PDF вставляется в LaTeX как картинка, и агенту его дают прямо из чата
- *
- * Один список на проверку файла и на атрибут `accept` поля выбора: когда они
- * разъезжаются, проверка пропускает формат, который браузер в диалоге уже
- * отсеял, и пользователь видит, что файл просто нельзя выбрать
+ * Текстовые файлы принимаются с любым расширением, их отличают по содержимому
+ * (GH-209): классы, пакеты, стили библиографии и данные не приходится
+ * добавлять в список по одному
  */
-export const SUPPORTED_EXTENSIONS = [
+export const BINARY_EXTENSIONS = [
     '.png',
     '.jpg',
     '.jpeg',
     '.svg',
     '.pdf',
-    '.txt',
-    '.csv',
-    '.tex',
-    '.bib',
-    '.bst',
-    '.cls',
-    '.sty',
+    '.eps',
+    '.ps',
 ] as const;
 
-/** Значение для атрибута `accept` у input[type=file] */
-export const SUPPORTED_EXTENSIONS_ACCEPT = SUPPORTED_EXTENSIONS.join(', ');
+/** Сколько байт смотреть, как git: в двоичном файле нулевой байт встречается в самом начале */
+const TEXT_SNIFF_BYTES = 8000;
+
+export const hasBinaryExtension = (fileName: string): boolean => {
+    const lower = fileName.toLowerCase();
+    return BINARY_EXTENSIONS.some((ext) => lower.endsWith(ext));
+};
+
+const readHead = (file: Blob): Promise<ArrayBuffer> =>
+    new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as ArrayBuffer);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsArrayBuffer(file.slice(0, TEXT_SNIFF_BYTES));
+    });
+
+/** Текст ли это: в начале файла нет нулевых байтов. Пустой файл тоже текст */
+export const looksLikeTextFile = async (file: Blob): Promise<boolean> =>
+    !new Uint8Array(await readHead(file)).includes(0);
