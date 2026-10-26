@@ -158,9 +158,16 @@ export class TextFileEditorService {
             );
         }
 
+        // fetch отклоняется, когда до хранилища не достучаться: это сеть человека, а не ошибка редактора
+        let unreachable = false;
         try {
             logBreadcrumb('file', `load ${fileName}`, { fileName });
-            const response = await fetch(file.url, { cache: 'no-store' });
+            const response = await fetch(file.url, { cache: 'no-store' }).catch(
+                (error: unknown) => {
+                    unreachable = true;
+                    throw error;
+                }
+            );
             if (!response.ok) {
                 logBreadcrumb(
                     'file',
@@ -205,11 +212,19 @@ export class TextFileEditorService {
             if (silent) {
                 return;
             }
-            this.failTextFileLoad();
+            if (unreachable) {
+                logBreadcrumb(
+                    'file',
+                    `load unreachable ${fileName}`,
+                    { fileName },
+                    'warning'
+                );
+            }
+            this.failTextFileLoad(unreachable);
         }
     };
 
-    private failTextFileLoad = () => {
+    private failTextFileLoad = (unreachable: boolean) => {
         this.loadRequestId += 1;
         this.repository.ideViewModelRepository.setActiveTextFile(null);
         this.repository.ideViewModelRepository.setTextFileContent('');
@@ -220,10 +235,14 @@ export class TextFileEditorService {
             'unknown'
         );
         this.repository.ideViewModelRepository.resetTextFileRevisions();
+        const errors = this.repository.dictionary.filemanager.errors;
         this.repository.toast(
-            this.repository.dictionary.filemanager.errors.internalError,
+            unreachable ? errors.noNetwork : errors.internalError,
             'error'
         );
+        if (unreachable) {
+            return;
+        }
         reportUnexpectedError(
             this.observerService,
             'textFile.load',
