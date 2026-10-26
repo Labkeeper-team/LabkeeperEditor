@@ -49,6 +49,20 @@ export function automationTags(): Record<string, string> {
     };
 }
 
+/**
+ * Чужие ошибки, которые браузер или расширение роняют на нашей странице.
+ * Brave и Firefox на iOS вставляют в страницу свой скрипт режима чтения, он
+ * ищет window.__firefox__ и падает, когда его нет
+ */
+export const FOREIGN_ERRORS: RegExp[] = [/__firefox__/];
+
+/**
+ * Свои воркеры мы грузим файлами из /assets. Из blob: их создают расширения,
+ * которые перехватывают Worker и дописывают в него свой код: так в Edge
+ * падало «fetch is not defined» в blob:, хотя наш воркер пришёл файлом
+ */
+export const FOREIGN_SCRIPT_URLS: RegExp[] = [/^blob:/];
+
 /** Опции Sentry.init без dsn: main.tsx и опыт с настоящим SDK берут одну и ту же проводку. */
 export function sentryOptions(
     onEvent: (event: ErrorEvent) => void
@@ -56,6 +70,8 @@ export function sentryOptions(
     return {
         maxBreadcrumbs: 100,
         initialScope: { tags: automationTags() },
+        ignoreErrors: FOREIGN_ERRORS,
+        denyUrls: FOREIGN_SCRIPT_URLS,
         // e2e открывает приложение с токеном обхода капчи в адресе, а адрес SDK кладёт и в событие, и в крошки
         beforeBreadcrumb: scrubBreadcrumb,
         beforeSend: createBeforeSend(onEvent),
