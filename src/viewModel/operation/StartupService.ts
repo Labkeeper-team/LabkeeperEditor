@@ -406,7 +406,8 @@ export class StartupService {
             this.repository.projectViewModelRepository.setReadOnly(true);
             return;
         }
-        if (result.code === 404) {
+        // 400: в адресе не id проекта, а произвольный текст, для человека это тот же «не найден»
+        if (result.code === 404 || result.code === 400) {
             this.repository.ideViewModelRepository.setGetProjectRequestState(
                 'not_found'
             );

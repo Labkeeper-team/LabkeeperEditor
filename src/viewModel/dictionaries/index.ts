@@ -524,6 +524,7 @@ export interface Translations {
             userExists: string;
             userNotFound: string;
             invalidEmail: string;
+            emailNotAccepted: string;
             invalidCode: string;
             invalidPassword: string;
             passwordsDontMatch: string;

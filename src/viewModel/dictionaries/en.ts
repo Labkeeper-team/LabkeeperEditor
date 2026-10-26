@@ -596,6 +596,8 @@ export const en: Translations = {
             userExists: 'User with this email already exists',
             userNotFound: 'User not found',
             invalidEmail: 'Invalid email format',
+            emailNotAccepted:
+                'This email address cannot be used, please enter another one',
             invalidCode: 'Invalid code',
             invalidPassword: 'Password must contain at least 8 characters',
             passwordsDontMatch: 'Passwords do not match',

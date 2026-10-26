@@ -391,6 +391,7 @@ const EmailView = () => {
             (status === 'userExists' ||
                 status === 'userNotFound' ||
                 status === 'validationError' ||
+                status === 'emailNotAccepted' ||
                 status === 'unknownError') &&
             !!Secrets.yandexCaptchaSiteKey
         ) {
@@ -426,6 +427,9 @@ const EmailView = () => {
         }
         if (status === 'validationError') {
             return dictionary.authorization.errors.invalidEmail;
+        }
+        if (status === 'emailNotAccepted') {
+            return dictionary.authorization.errors.emailNotAccepted;
         }
         if (status === 'unknownError') {
             return dictionary.authorization.errors.unknownError;

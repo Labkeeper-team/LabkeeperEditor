@@ -602,6 +602,7 @@ export const ru: Translations = {
             userExists: 'Пользователь с таким email уже существует',
             userNotFound: 'Пользователь не найден',
             invalidEmail: 'Неверный формат email',
+            emailNotAccepted: 'Этот email не подходит, укажите другой',
             invalidCode: 'Неверный код',
             invalidPassword: 'Пароль должен содержать минимум 8 символов',
             passwordsDontMatch: 'Пароли не совпадают',
