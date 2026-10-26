@@ -211,14 +211,14 @@ export class AuthService {
                 'validationError'
             );
         } else if (result.code === 406) {
-            // в спеке кода нет, так сервер ответил на адрес одноразовой почты
+            // в спеке кода нет: так сервер отвечает, когда не смог разобрать токен капчи
             this.track(Events.EVENT_AUTH_EMAIL_SENT, {
                 flow,
                 ok: false,
-                reason: 'emailNotAccepted',
+                reason: 'captchaError',
             });
             this.repository.authViewModelRepository.setEmailRequest(
-                'emailNotAccepted'
+                'captchaError'
             );
         } else {
             this.track(Events.EVENT_AUTH_EMAIL_SENT, {
