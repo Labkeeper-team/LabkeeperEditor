@@ -20,6 +20,8 @@ export const URLS = {
     createProject: `${uri}/api/${version}/public/project/create`,
     cloneProject: `${uri}/api/${version}/public/project/{id}/clone`,
     deleteProject: `${uri}/api/${version}/public/project/{id}/delete`,
+    exportProject: `${uri}/api/${version}/public/project/{id}/export`,
+    exportProjectTex: `${uri}/api/${version}/public/project/{id}/export/tex`,
     getProject: `${uri}/api/${version}/public/project/{id}/get`,
     setProgram: `${uri}/api/${version}/public/project/{id}/program`,
     setTitle: `${uri}/api/${version}/public/project/{id}/title`,

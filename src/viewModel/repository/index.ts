@@ -22,6 +22,7 @@ import {
     OutputSegment,
     Program,
     Project,
+    ProjectExportFormat,
     ProjectType,
     ProjectShort,
     UserInfo,
@@ -308,6 +309,7 @@ export const mockViewModelState = (): MockViewModelRepository => {
     let savedProgramRevision = 0;
     let textFileChangeRevision = 0;
     let savedTextFileRevision = 0;
+    let exportingProject: ProjectExportFormat | null = null;
     return {
         mockState: () => mockViewModelState,
         scrollEditorToBottom: () => ({}),
@@ -690,6 +692,11 @@ export const mockViewModelState = (): MockViewModelRepository => {
                 (mockViewModelState.editModeForProjectTitle = v),
             setIsCompiling: (v: boolean) =>
                 (mockViewModelState.isAutocompleteLoading = v),
+            // вне состояния заглушки: иначе поле попало бы во все снимки репозитория
+            exportingProject: () => exportingProject,
+            setExportingProject: (format: ProjectExportFormat | null) => {
+                exportingProject = format;
+            },
             setIsFileDraggedToFileManager: (v: boolean) =>
                 (mockViewModelState.isFileDraggedToManager = v),
             setFilesToDelete: (v: LabkeeperFile[]) =>
@@ -731,6 +738,7 @@ export const mockViewModelState = (): MockViewModelRepository => {
         dictionary: en,
         toast: (message: string, type: TypeOptions) =>
             mockViewModelState.toasts.push({ message, type }),
+        downloadFile: async () => undefined,
     };
 };
 
@@ -846,6 +854,8 @@ export interface SettingsViewModelRepository {
     editModeForFilename: () => boolean;
     isFileDraggedToManager: () => boolean;
     isAutocompleteLoading: () => boolean;
+    /** GH-211: какой архив проекта сейчас готовится */
+    exportingProject: () => ProjectExportFormat | null;
     showShareModal: () => boolean;
     captchaBypassToken: () => string | undefined;
     filesToDelete: () => LabkeeperFile[];
@@ -862,6 +872,7 @@ export interface SettingsViewModelRepository {
     setExpandProblemViewer: (expandProblemViewer: boolean) => void;
     setShowFileManager: (showFileManager: boolean) => void;
     setIsCompiling: (value: boolean) => void;
+    setExportingProject: (format: ProjectExportFormat | null) => void;
     setIsFileDraggedToFileManager: (value: boolean) => void;
     setFilesToDelete: (files: LabkeeperFile[]) => void;
     setCurrentFolderPath: (path: string) => void;
@@ -1005,6 +1016,8 @@ export interface ViewModelRepository {
     chatViewModelRepository: ChatViewModelRepository;
     setLocation: (url: string, options?: SetLocationOptions) => void;
     toast: (message: string, type: TypeOptions) => void;
+    /** Скачивает файл по адресу под именем fileName */
+    downloadFile: (url: string, fileName: string) => Promise<void>;
     dictionary: Translations;
     location: () => string;
     scrollEditorToBottom: () => void;

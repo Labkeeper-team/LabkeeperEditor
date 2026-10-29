@@ -36,6 +36,8 @@ export const segmentAcceptsFiles = (type: SegmentType | undefined): boolean =>
 
 // Viewer/Project display mode for result rendering
 export type ProjectType = 'markdown' | 'latex';
+/** GH-211: архив проекта для Labkeeper или LaTeX-архив с main.tex */
+export type ProjectExportFormat = 'labkeeper' | 'tex';
 export const PROJECT_TITLE_MAX_LENGTH = 60;
 export type StatementType =
     | 'assignment'

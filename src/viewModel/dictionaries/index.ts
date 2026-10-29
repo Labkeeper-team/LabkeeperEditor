@@ -219,6 +219,15 @@ export interface Translations {
             chat_mode: string;
         };
     };
+    project_export: {
+        label: string;
+        labkeeper: string;
+        labkeeper_hint: string;
+        tex: string;
+        tex_hint: string;
+        preparing: string;
+        program_errors: string;
+    };
     agent_mode: {
         leave: string;
         enter: string;

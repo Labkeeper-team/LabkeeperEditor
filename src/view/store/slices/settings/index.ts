@@ -1,6 +1,9 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { MobileView, settingsInitialState, ViewerTab } from '../index.ts';
-import { LabkeeperFile } from '../../../../model/domain.ts';
+import {
+    LabkeeperFile,
+    ProjectExportFormat,
+} from '../../../../model/domain.ts';
 
 export const settingsSlice = createSlice({
     name: 'settingsSlice',
@@ -14,6 +17,12 @@ export const settingsSlice = createSlice({
         },
         setIsCompiling: (state, { payload }: PayloadAction<boolean>) => {
             state.isCompiling = payload;
+        },
+        setExportingProject: (
+            state,
+            { payload }: PayloadAction<ProjectExportFormat | null>
+        ) => {
+            state.exportingProject = payload;
         },
         setEditModeForProjectTitle: (
             state,
@@ -97,6 +106,7 @@ export const settingsSlice = createSlice({
 export const {
     setEditModeForProjectTitle,
     setIsCompiling,
+    setExportingProject,
     setEditModeForFilename,
     setShowSearch,
     setShowHotkeysHelp,

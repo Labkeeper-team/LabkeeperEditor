@@ -229,6 +229,18 @@ export const en: Translations = {
             chat_mode: 'Agent or Ask mode',
         },
     },
+    project_export: {
+        label: 'Export',
+        labkeeper: 'Labkeeper archive',
+        labkeeper_hint:
+            'A copy of the project as it is: segments, settings and your files',
+        tex: 'LaTeX archive',
+        tex_hint:
+            'main.tex made of all segments, your files and the result images. It builds in any LaTeX editor, Overleaf for example. Before the export the project runs like with the Run button and spends tokens',
+        preparing: 'Preparing the archive…',
+        program_errors:
+            'The program has errors, the LaTeX archive was not built. They are shown in the problems list',
+    },
     agent_mode: {
         leave: 'Open the full code editor',
         enter: 'Agent mode',

@@ -41,6 +41,8 @@ export const Events = {
     EVENT_PROJECT_CREATE_FAILED: 'project_create_failed',
     EVENT_PROJECT_OPENED: 'project_opened',
     EVENT_PROJECT_DELETED: 'project_deleted',
+    // GH-211: архив проекта, format labkeeper или tex
+    EVENT_PROJECT_EXPORTED: 'project_exported',
     EVENT_PROJECT_DELETE_CANCELLED: 'project_delete_cancelled',
     EVENT_PROJECT_TITLE_CHANGED: 'project_title_changed',
     EVENT_BACK_TO_PROJECTS: 'back_to_projects',
@@ -189,6 +191,7 @@ export const OPENPANEL_EVENT_NAMES: Record<string, string> = {
     [Events.EVENT_PROJECT_CREATE_FAILED]: 'Project create failed',
     [Events.EVENT_PROJECT_OPENED]: 'Project opened',
     [Events.EVENT_PROJECT_DELETED]: 'Project deleted',
+    [Events.EVENT_PROJECT_EXPORTED]: 'Project exported',
     [Events.EVENT_PROJECT_DELETE_CANCELLED]: 'Project delete cancelled',
     [Events.EVENT_PROJECT_TITLE_CHANGED]: 'Project title changed',
     [Events.EVENT_BACK_TO_PROJECTS]: 'Back to projects',
