@@ -30,6 +30,10 @@ export const isDiagramSegmentType = (
 ): type is DiagramSegmentType =>
     DIAGRAM_SEGMENT_TYPES.includes(type as DiagramSegmentType);
 
+/** GH-213: файл вставляется ссылкой в текст, а в исходник формулы и схемы ссылку не вставить */
+export const segmentAcceptsFiles = (type: SegmentType | undefined): boolean =>
+    type !== 'asciimath' && !isDiagramSegmentType(type);
+
 // Viewer/Project display mode for result rendering
 export type ProjectType = 'markdown' | 'latex';
 export const PROJECT_TITLE_MAX_LENGTH = 60;

@@ -138,6 +138,7 @@ export interface Translations {
         hide_infl_assignment_with_values: string;
         errors: {
             non_authorized_paste_image: string;
+            paste_file_not_supported: string;
         };
         no_computation_result: string;
         run_to_view: string;

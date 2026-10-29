@@ -143,6 +143,8 @@ export const en: Translations = {
             'Hide the error formula with substituted numbers',
         errors: {
             non_authorized_paste_image: 'You need authorize to paste images',
+            paste_file_not_supported:
+                'Files cannot be pasted into a ${replace1} segment. Images and files go into Markdown, Latex and Computation segments',
         },
         latex: 'latex',
         asciimath: 'simple-formula',
