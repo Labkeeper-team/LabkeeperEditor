@@ -5,6 +5,9 @@ import {
     mockContext,
     mockSaveProgramRequest,
     mockUserInfoForUnauthorized,
+    PROJECT_ID,
+    PROJECT_TITLE,
+    USER_ID,
 } from '../common.ts';
 import {
     CompileSuccessResult,
@@ -695,4 +698,70 @@ describe('вставка из буфера в сегмент', () => {
         await paste();
         expect(pasteEvents(onEvent)).toHaveLength(4);
     });
+});
+
+// GH-213: в формулу и схемы файл не вставить. Раньше он всё равно уходил на сервер,
+// а менеджер файлов оставался в загрузке навсегда
+describe('файл, вставленный в сегмент без файлов', () => {
+    const imageClipboard = () =>
+        [
+            {
+                kind: 'file',
+                type: 'image/png',
+                getAsFile: () =>
+                    new File(['png'], 'image.png', { type: 'image/png' }),
+            },
+        ] as unknown as DataTransferItemList;
+
+    test.each(['asciimath', 'mermaid', 'plantuml', 'drawio'] as const)(
+        'в %s не грузится и не вешает менеджер файлов',
+        async (type) => {
+            const { programEditorService, programService, repository, rpi } =
+                mockContext();
+            programService.setNewProgram({
+                segments: [{ type, text: 'a', parameters: { visible: true } }],
+                parameters: { roundStrategy: 'noRound' },
+            });
+            repository.projectViewModelRepository.setProject({
+                projectId: PROJECT_ID,
+                userId: USER_ID,
+                title: PROJECT_TITLE,
+                lastModified: '2026-10-29T12:00:00Z',
+                isPublic: false,
+                projectType: 'markdown',
+                program: {
+                    segments: [],
+                    parameters: { roundStrategy: 'noRound' },
+                },
+            });
+            repository.projectViewModelRepository.setReadOnly(false);
+            rpi.uploadFileRequest = jest.fn().mockResolvedValue({
+                code: 200,
+                body: 'https://files.test/image.png',
+                isOk: true,
+                isUnauth: false,
+                isForbidden: false,
+            });
+            const toast = jest.spyOn(repository, 'toast');
+
+            await programEditorService.onAddedFilesToSegmentEditor(
+                imageClipboard(),
+                0,
+                0
+            );
+            // файл читается FileReader, и загрузка уходит уже после его onload
+            await new Promise((resolve) => setTimeout(resolve, 50));
+
+            expect(rpi.uploadFileRequest).not.toHaveBeenCalled();
+            expect(
+                repository.ideViewModelRepository.getFilesRequestState()
+            ).not.toBe('loading');
+            expect(toast).toHaveBeenCalledWith(
+                expect.stringContaining(
+                    repository.dictionary.short_segment[type]
+                ),
+                'info'
+            );
+        }
+    );
 });

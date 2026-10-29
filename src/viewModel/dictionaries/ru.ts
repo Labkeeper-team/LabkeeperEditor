@@ -150,6 +150,8 @@ export const ru: Translations = {
         errors: {
             non_authorized_paste_image:
                 'Что бы вставить изображение вам необходимо авторизоваться',
+            paste_file_not_supported:
+                'В сегмент «${replace1}» файл не вставить. Картинки и файлы вставляются в Маркдаун, Latex и Вычисление',
         },
         latex: 'latex',
         asciimath: 'простая формула',
