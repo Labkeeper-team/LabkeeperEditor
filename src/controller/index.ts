@@ -4,6 +4,7 @@ import {
     CompileErrorResult,
     OpenParams,
     ProgramRoundStrategy,
+    ProjectExportFormat,
     ProjectType,
     SegmentType,
 } from '../model/domain.ts';
@@ -278,6 +279,15 @@ export class Controller {
         async (trigger?: 'button' | 'hotkey') => {
             await this.wrapper('onRunButtonPressed', () =>
                 this.projectPageService.onRunButtonClicked(trigger ?? 'button')
+            );
+        }
+    );
+
+    onExportProjectRequest = createAsyncThunk(
+        'onExportProject',
+        async (format: ProjectExportFormat) => {
+            await this.wrapper('onExportProject', () =>
+                this.projectPageService.onExportProject(format)
             );
         }
     );

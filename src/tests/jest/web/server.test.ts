@@ -33,6 +33,8 @@ jest.mock('../../../constants.ts', () => ({
         createProject: '/api/v4/public/project/create',
         cloneProject: '/api/v4/public/project/{id}/clone',
         deleteProject: '/api/v4/public/project/{id}/delete',
+        exportProject: '/api/v4/public/project/{id}/export',
+        exportProjectTex: '/api/v4/public/project/{id}/export/tex',
         getProject: '/api/v4/public/project/{id}/get',
         setProgram: '/api/v4/public/project/{id}/program',
         setTitle: '/api/v4/public/project/{id}/title',
@@ -103,7 +105,7 @@ type RpiCase = {
     scoped: boolean;
     // 423 в списке ожидаемых кодов метода
     expects423: boolean;
-    call: (rpi: WebRpi) => Promise<RequestResult<object>>;
+    call: (rpi: WebRpi) => Promise<RequestResult<unknown>>;
 };
 
 // все методы Rpi: забытый projectId или источник в одном из них иначе проходит молча
@@ -215,6 +217,21 @@ const RPI_CASES: RpiCase[] = [
         scoped: true,
         expects423: false,
         call: (rpi) => rpi.getProjectRequest(PROJECT_ID),
+    },
+    {
+        method: 'exportProjectRequest',
+        source: 'project',
+        scoped: true,
+        expects423: false,
+        call: (rpi) => rpi.exportProjectRequest(PROJECT_ID),
+    },
+    {
+        method: 'exportProjectTexRequest',
+        source: 'compile',
+        scoped: true,
+        // LaTeX-архив выполняет программу, и сессия сборки может быть занята
+        expects423: true,
+        call: (rpi) => rpi.exportProjectTexRequest(PROJECT_ID),
     },
     {
         method: 'renameFileRequest',

@@ -11,12 +11,31 @@ import { HeaderHelpItem } from '../../model/help';
 import { Routes } from '../routes.ts';
 import { CompilationService } from '../domain/CompilationService.ts';
 import { ResetService } from '../domain/ResetService.ts';
-import { ProjectType } from '../../model/domain.ts';
+import {
+    CompileErrorResultList,
+    ProjectExportFormat,
+    ProjectType,
+} from '../../model/domain.ts';
+import { ExportProjectResponse, RequestResult } from '../../model/rpi';
 import { TextFileEditorService } from './TextFileEditorService.ts';
 import { SearchService } from '../domain/SearchService.ts';
 import { HunkService } from './HunkService.ts';
 import { EditingLockService } from '../domain/EditingLockService.ts';
 import { segmentCreateEvent, trackEvent } from '../utils/observerContext.ts';
+
+// в имени файла не бывает этих знаков ни на одной системе
+const UNSAFE_FILE_NAME = /[\\/:*?"<>|]+/g;
+
+/** Имя архива по названию проекта: «Лабораторная 3.zip», «Лабораторная 3 (LaTeX).zip» */
+export const exportFileName = (
+    title: string,
+    format: ProjectExportFormat
+): string => {
+    const base =
+        title.replace(UNSAFE_FILE_NAME, ' ').replace(/\s+/g, ' ').trim() ||
+        'labkeeper';
+    return format === 'tex' ? `${base} (LaTeX).zip` : `${base}.zip`;
+};
 
 export class ProjectPageService {
     repository: ViewModelRepository;
@@ -478,6 +497,106 @@ export class ProjectPageService {
                     ),
                 1000
             );
+        }
+    };
+
+    /**
+     * GH-211: архив проекта. Набранное, но ещё не сохранённое уходит на сервер
+     * до запроса, иначе в архив попала бы прошлая версия. LaTeX-архив сервер
+     * собирает, выполняя программу как сборку, поэтому и ответы у него те же:
+     * ошибки программы, нехватка токенов и замок агента
+     */
+    onExportProject = async (format: ProjectExportFormat): Promise<void> => {
+        // у гостя проекта на сервере нет, экспортировать нечего, пока он не вошёл
+        if (!this.repository.userViewModelRepository.isAuthenticated()) {
+            this.track(Events.EVENT_AUTH_MODAL_OPENED, { source: 'export' });
+            this.repository.authViewModelRepository.setCurrentView('login');
+            return;
+        }
+        const settings = this.repository.settingsViewModelRepository;
+        const project = this.repository.projectViewModelRepository.project();
+        if (!project || settings.exportingProject()) {
+            return;
+        }
+        settings.setExportingProject(format);
+        try {
+            await this.saveBeforeExport();
+            const result =
+                format === 'tex'
+                    ? await this.rpi.exportProjectTexRequest(project.projectId)
+                    : await this.rpi.exportProjectRequest(project.projectId);
+            this.track(Events.EVENT_PROJECT_EXPORTED, {
+                format,
+                ok: result.code === 201,
+                http_code: result.code,
+            });
+            await this.applyExportResult(format, project.title, result);
+        } finally {
+            settings.setExportingProject(null);
+        }
+    };
+
+    private saveBeforeExport = async () => {
+        if (this.repository.ideViewModelRepository.activeTextFile()) {
+            await this.textFileEditorService.onTextFileSaveTimeout();
+        }
+        if (
+            !this.repository.projectViewModelRepository.projectIsReadonly() &&
+            this.programService.getCurrentProgram()
+        ) {
+            await this.loaderService.segmentEditorSaveProgram();
+        }
+    };
+
+    private applyExportResult = async (
+        format: ProjectExportFormat,
+        title: string,
+        result: RequestResult<ExportProjectResponse>
+    ) => {
+        const errors = this.repository.dictionary.filemanager.errors;
+        switch (result.code) {
+            case 201:
+                await this.repository.downloadFile(
+                    result.body as string,
+                    exportFileName(title, format)
+                );
+                return;
+            case 203:
+                this.compilationService.applyCompileErrors(
+                    result.body as CompileErrorResultList
+                );
+                this.repository.toast(
+                    this.repository.dictionary.project_export.program_errors,
+                    'error'
+                );
+                return;
+            case 401:
+                this.repository.toast(errors.sessionExpired, 'error');
+                this.ideService.resetEditor();
+                return;
+            case 402:
+                this.track(Events.EVENT_PAYMENT_REQUIRED, { source: 'export' });
+                this.repository.toast(
+                    this.repository.dictionary.prompt_modal.errors
+                        .payment_required,
+                    'error'
+                );
+                return;
+            case 403:
+                this.repository.toast(errors.notEnoughRights, 'error');
+                return;
+            case 404:
+                this.repository.toast(errors.notFound, 'error');
+                return;
+            // занята сессия сборки, как у кнопки Run
+            case 423:
+                this.repository.toast(
+                    this.repository.dictionary.synctex.errors.locked,
+                    'error'
+                );
+                return;
+            default:
+                this.repository.toast(errors.internalError, 'error');
         }
     };
 

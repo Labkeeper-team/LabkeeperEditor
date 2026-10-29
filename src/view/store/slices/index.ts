@@ -9,6 +9,7 @@ import {
     CompileSuccessResult,
     Hunk,
     LabkeeperFile,
+    ProjectExportFormat,
     Program,
     Project,
     ProjectShort,
@@ -64,6 +65,7 @@ interface SettingsState {
     editModeForFilename: boolean;
     isFileDraggedToManager: boolean;
     isCompiling: boolean;
+    exportingProject: ProjectExportFormat | null;
     showShareModal: boolean;
     showHotkeysHelp: boolean;
     showContactModal: boolean;
@@ -308,6 +310,7 @@ export const settingsInitialState: SettingsState = {
     expandProblemViewer: false,
     isFileDraggedToManager: false,
     isCompiling: false,
+    exportingProject: null,
     showShareModal: false,
     showHotkeysHelp: false,
     showContactModal: false,
