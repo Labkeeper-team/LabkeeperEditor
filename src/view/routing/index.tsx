@@ -12,11 +12,12 @@ import { lazy, Suspense } from 'react';
 
 import './style.scss';
 import { SuspenseLoader } from '../components/suspenseLoader/index.tsx';
+import { reloadOnChunkError } from './reloadOnChunkError.ts';
 
 // eslint-disable-next-line react-refresh/only-export-components
 const ProjectPage = lazy(() => {
     return Promise.all([
-        import('../pages/project'),
+        reloadOnChunkError(() => import('../pages/project')),
         new Promise((resolve) => setTimeout(resolve, 1000)),
     ]).then(([moduleExport]) => moduleExport);
 });
