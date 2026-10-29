@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import svgr from 'vite-plugin-svgr';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 import { lowerClassStaticBlocks } from './scripts/vite/lowerClassStaticBlocks.ts';
+import { guardRegexLookbehind } from './scripts/vite/guardRegexLookbehind.ts';
 
 const DEFAULT_MAJOR = '4';
 const DEFAULT_MINOR = '';
@@ -45,6 +46,7 @@ export default defineConfig(() => {
             react(),
             svgr(),
             lowerClassStaticBlocks(),
+            guardRegexLookbehind(),
             viteStaticCopy({
                 targets: [
                     {
@@ -55,9 +57,9 @@ export default defineConfig(() => {
                 ],
             }),
         ],
-        // воркер pdf.js собирается отдельно, и static-блок в нём тот же
+        // воркер pdf.js собирается отдельно, и старым браузерам нужно то же самое
         worker: {
-            plugins: () => [lowerClassStaticBlocks()],
+            plugins: () => [lowerClassStaticBlocks(), guardRegexLookbehind()],
         },
         resolve: {
             dedupe: ['react', 'react-dom'],
