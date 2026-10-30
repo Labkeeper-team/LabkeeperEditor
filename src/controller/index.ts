@@ -225,6 +225,7 @@ export class Controller {
             captcha,
             open,
             compute,
+            computeVisible,
             latex,
             markdown,
         }: {
@@ -234,6 +235,7 @@ export class Controller {
             await this.wrapper('onAppEnter', () =>
                 this.startupService.onAppStartup(captcha, open, {
                     compute,
+                    computeVisible,
                     latex,
                     markdown,
                 })
