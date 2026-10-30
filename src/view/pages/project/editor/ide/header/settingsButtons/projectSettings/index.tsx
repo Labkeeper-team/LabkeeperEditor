@@ -15,6 +15,10 @@ import {
 } from '../../../../../../../../model/domain.ts';
 import { useAgentModeNavigation } from '../../../../../../../hooks/useAgentMode';
 import { useIsProjectReadonly } from '../../../../../../../store/selectors/program';
+import { useIsMobile } from '../../../../../../../hooks/useMobile';
+import { HintTooltip } from '../../../../../../../components/hintTooltip';
+
+const EXPORT_HINT_TOOLTIP_ID = 'project-export-hint';
 
 const EXPORT_FORMATS: {
     format: ProjectExportFormat;
@@ -34,6 +38,7 @@ export const ProjectSettings = () => {
     const exporting = useSelector(
         (state: StorageState) => state.settings.exportingProject
     );
+    const isMobile = useIsMobile();
     const { enterAgentMode } = useAgentModeNavigation();
 
     const dispatch = useDispatch<AppDispatch>();
@@ -159,7 +164,7 @@ export const ProjectSettings = () => {
                     title={dictionary.rounding_mode.first_digit}
                 />
             </div>
-            {/* GH-211: у каждого формата плашка с тем, что окажется в архиве */}
+            {/* GH-211: у каждого формата описание, что окажется в архиве */}
             <Typography
                 type="body-large"
                 text={dictionary.project_export.label}
@@ -175,6 +180,15 @@ export const ProjectSettings = () => {
                                 exporting === format,
                         })}
                         data-export-format={format}
+                        // на компьютере описание всплывает, чтобы кнопки не занимали полменю
+                        data-tooltip-content={
+                            isMobile
+                                ? undefined
+                                : dictionary.project_export[hint]
+                        }
+                        data-tooltip-id={
+                            isMobile ? undefined : EXPORT_HINT_TOOLTIP_ID
+                        }
                         disabled={exporting !== null}
                         onClick={() =>
                             dispatch(controller.onExportProjectRequest(format))
@@ -185,11 +199,24 @@ export const ProjectSettings = () => {
                                 ? dictionary.project_export.preparing
                                 : dictionary.project_export[title]}
                         </strong>
-                        <small className="project-export__hint">
-                            {dictionary.project_export[hint]}
-                        </small>
+                        {/* на телефоне наведения нет, а меню во весь экран: описание прямо под названием */}
+                        {isMobile ? (
+                            <small className="project-export__hint">
+                                {dictionary.project_export[hint]}
+                            </small>
+                        ) : null}
                     </button>
                 ))}
+                {isMobile ? null : (
+                    <HintTooltip
+                        id={EXPORT_HINT_TOOLTIP_ID}
+                        isMobile={false}
+                        place="right"
+                        // тёмная, как подсказки с сочетаниями: светлая сливается с редактором
+                        variant="dark"
+                        maxWidth={300}
+                    />
+                )}
             </div>
             {/* на чужом проекте агента запускать некуда, как и на вкладке агента */}
             {isReadonly ? null : (
