@@ -39,19 +39,39 @@ async function openSettings(page: Page) {
 const exportOption = (page: Page, format: 'labkeeper' | 'tex') =>
     page.locator(`.project-export__option[data-export-format="${format}"]`);
 
-// GH-211: у каждого формата плашка с тем, что окажется в архиве
-test('в настройках проекта два формата экспорта с описанием', async ({
-    page,
-}) => {
+const hint = (page: Page) => page.locator('#project-export-hint');
+
+// GH-211: кнопки короткие, а что окажется в архиве, всплывает при наведении
+test('описание формата всплывает при наведении на кнопку', async ({ page }) => {
     await openProject(page);
     await openSettings(page);
 
-    await expect(exportOption(page, 'labkeeper')).toContainText(
+    await expect(exportOption(page, 'labkeeper')).toHaveText(
         'Labkeeper archive'
     );
-    await expect(exportOption(page, 'labkeeper')).toContainText('your files');
-    await expect(exportOption(page, 'tex')).toContainText('LaTeX archive');
-    await expect(exportOption(page, 'tex')).toContainText('spends tokens');
+    await expect(exportOption(page, 'tex')).toHaveText('LaTeX archive');
+
+    await exportOption(page, 'labkeeper').hover();
+    await expect(hint(page)).toBeVisible();
+    await expect(hint(page)).toContainText('your files');
+
+    await exportOption(page, 'tex').hover();
+    await expect(hint(page)).toContainText('spends tokens');
+});
+
+// на телефоне наведения нет, а меню во весь экран: описание прямо под названием
+test.describe('phone', () => {
+    test.use({ viewport: { width: 390, height: 844 } });
+
+    test('описание формата видно под названием', async ({ page }) => {
+        await openProject(page);
+        await openSettings(page);
+
+        await expect(exportOption(page, 'labkeeper')).toContainText(
+            'your files'
+        );
+        await expect(exportOption(page, 'tex')).toContainText('spends tokens');
+    });
 });
 
 for (const { format, path, fileName } of [
