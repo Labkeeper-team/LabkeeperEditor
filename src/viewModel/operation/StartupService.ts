@@ -32,6 +32,7 @@ const projectPagePattern = /\/project\/\S+/i;
 /** Текст сегментов из query: compute, затем latex, затем markdown. Пустая строка сегмент не добавляет. */
 export type StartupQuery = {
     compute?: string;
+    computeVisible?: boolean;
     latex?: string;
     markdown?: string;
 };
@@ -552,7 +553,12 @@ export class StartupService {
                 text: isAuthenticated
                     ? addition.text
                     : `${addition.comment}\n${addition.text}`,
-                parameters: { visible: true },
+                parameters: {
+                    visible:
+                        addition.type === 'computational'
+                            ? query.computeVisible !== false
+                            : true,
+                },
             });
         }
         return program;

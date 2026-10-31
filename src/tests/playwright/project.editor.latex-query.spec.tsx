@@ -218,6 +218,65 @@ test('compute-latex-markdown-params-appear-in-that-order', async ({ page }) => {
     ]);
 });
 
+test('computeVisible=false-hides-only-imported-compute-and-survives-reload', async ({
+    page,
+}) => {
+    const routeSetup = new RouteSetup(page);
+    await routeSetup.setupApi();
+    await routeSetup.setupGetUserInfoRequest(false);
+    const compiled = await captureGuestCompile(page);
+    await seedSavedProgram(page, {
+        ...savedProgram,
+        segments: [
+            ...savedProgram.segments,
+            {
+                type: 'computational',
+                text: 'personal = 5',
+                parameters: { visible: true },
+            },
+        ],
+    });
+    const query = new URLSearchParams({
+        open: 'latex',
+        computeVisible: 'false',
+        compute: 'a = 1',
+        latex: '\\[a=${a}\\]',
+        markdown: '# Result',
+    });
+
+    await page.goto('/project/default?' + query);
+    await expect(editors(page)).toHaveCount(5, { timeout: 30_000 });
+    await expect.poll(() => compiled.length).toBe(1);
+    expect(
+        compiled[0].segments.map(({ type, parameters }) => ({
+            type,
+            visible: parameters.visible,
+        }))
+    ).toEqual([
+        { type: 'md', visible: true },
+        { type: 'computational', visible: true },
+        { type: 'computational', visible: false },
+        { type: 'latex', visible: true },
+        { type: 'md', visible: true },
+    ]);
+    expect(compiled[0].segments[2].text).toContain('a = 1');
+    expect(compiled[0].segments[3].text).toContain('${a}');
+    await expect(page).toHaveURL(/\/project\/default$/);
+    const visibility = async () =>
+        (await savedDraft(page)).segments.map(
+            ({ parameters }) => parameters.visible
+        );
+    await expect.poll(visibility).toEqual([true, true, false, true, true]);
+
+    await page.reload();
+    await expect(editors(page)).toHaveCount(5, { timeout: 30_000 });
+    await expectSegmentText(
+        editors(page).nth(2),
+        '// Labkeeper: query compute\na = 1'
+    );
+    await expect.poll(visibility).toEqual([true, true, false, true, true]);
+});
+
 async function savedDraft(page: Page): Promise<Program> {
     return page.evaluate(() => {
         const persisted = JSON.parse(
