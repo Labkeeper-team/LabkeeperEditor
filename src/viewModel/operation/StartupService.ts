@@ -1,12 +1,6 @@
 import { ViewModelRepository } from '../repository';
 import { Routes } from '../routes.ts';
-import {
-    OpenParams,
-    Program,
-    Project,
-    SegmentType,
-    UserInfo,
-} from '../../model/domain.ts';
+import { OpenParams, Program, Project, UserInfo } from '../../model/domain.ts';
 import { RequestResult, RichProject, Rpi } from '../../model/rpi';
 import { ProgramService } from '../../model/service/ProgramService.ts';
 import { LoaderService } from '../domain/LoaderService.ts';
@@ -29,12 +23,10 @@ import { AGENT_MODE_SUFFIX } from '../utils/agentModePath.ts';
 const qrPagePattern = /\/qr\/v\d+/i;
 const projectPagePattern = /\/project\/\S+/i;
 
-/** Текст сегментов из query: compute, затем latex, затем markdown. Пустая строка сегмент не добавляет. */
+/** Программа примера загружается по slug, без текста в query. */
 export type StartupQuery = {
-    compute?: string;
-    computeVisible?: boolean;
-    latex?: string;
-    markdown?: string;
+    example?: string;
+    exampleProgram?: Program;
 };
 
 export class StartupService {
@@ -116,12 +108,15 @@ export class StartupService {
         open?: OpenParams,
         query: StartupQuery = {}
     ): Promise<void> => {
+        if (query.example) {
+            const loaded = await this.loadExampleProgram(query.example);
+            query = loaded.query;
+            open = open ?? loaded.open;
+        }
         logBreadcrumb('startup', 'onAppStartup', {
             location: this.repository.location(),
             hasCaptcha: Boolean(captcha),
-            hasCompute: Boolean(query.compute),
-            hasLatex: Boolean(query.latex),
-            hasMarkdown: Boolean(query.markdown),
+            hasExample: Boolean(query.exampleProgram),
         });
         await this.loadBillingPricing();
 
@@ -169,7 +164,7 @@ export class StartupService {
             qrPagePattern.test(locationWithoutLastSlash)
         ) {
             await this.openDefaultProject(userInfo, open, query);
-            compileQuery = this.hasQueryText(query);
+            compileQuery = this.hasExampleProgram(query);
         }
 
         // OAUTH
@@ -181,7 +176,7 @@ export class StartupService {
             );
             if (!lastOpenedProjectUuid) {
                 await this.openDefaultProject(userInfo, open, query);
-                compileQuery = this.hasQueryText(query);
+                compileQuery = this.hasExampleProgram(query);
             } else {
                 await this.openProjectById(userInfo, lastOpenedProjectUuid);
             }
@@ -194,7 +189,7 @@ export class StartupService {
             Routes.ProjectDefault
         ) {
             await this.openDefaultProject(userInfo, open, query);
-            compileQuery = this.hasQueryText(query);
+            compileQuery = this.hasExampleProgram(query);
         }
 
         // PAY PAGE ENTER
@@ -218,7 +213,7 @@ export class StartupService {
         else if (locationWithoutLastSlash === Routes.Projects) {
             if (!userInfo.isAuthenticated) {
                 await this.openDefaultProject(userInfo, open, query);
-                compileQuery = this.hasQueryText(query);
+                compileQuery = this.hasExampleProgram(query);
             }
         }
 
@@ -493,75 +488,30 @@ export class StartupService {
         }
     }
 
-    private hasQueryText(query: StartupQuery): boolean {
-        return Boolean(query.compute || query.latex || query.markdown);
+    private hasExampleProgram(query: StartupQuery): boolean {
+        return query.exampleProgram != null;
     }
 
-    /**
-     * Дописывает сегменты из query в конец локальной программы.
-     * Порядок: compute, latex, markdown. Пустой параметр сегмент не добавляет.
-     * У гостя удаляет весь предыдущий пример по комментариям в первой строке,
-     * включая типы, которых нет в новой ссылке. Немаркированные сегменты
-     * и программа вошедшего не очищаются.
-     * У вошедшего программа целиком уходит в запрос проекта по умолчанию,
-     * у гостя сразу показывается в редакторе.
-     */
-    private programWithQuerySegments(
-        query: StartupQuery,
-        isAuthenticated: boolean
-    ): Program {
-        const program = structuredClone(
-            this.repository.persistenceViewModelRepository.lastProgram()
+    /** Программа примера берётся из API целиком: сегменты, параметры и округление. */
+    private async loadExampleProgram(slug: string): Promise<{
+        query: StartupQuery;
+        open?: OpenParams;
+    }> {
+        const result = await this.rpi.getBlogExampleProgramRequest(slug);
+        if (!result.isOk) return { query: {} };
+        const exampleProgram = structuredClone(result.body);
+        const opensLatex = exampleProgram.segments.some(
+            (segment) =>
+                segment.type === 'latex' || segment.type === 'computational'
         );
-        const additions: {
-            type: SegmentType;
-            text: string | undefined;
-            comment: string;
-        }[] = [
-            {
-                type: 'computational',
-                text: query.compute,
-                comment: '// Labkeeper: query compute',
-            },
-            {
-                type: 'latex',
-                text: query.latex,
-                comment: '% Labkeeper: query latex',
-            },
-            {
-                type: 'md',
-                text: query.markdown,
-                comment: '<!-- Labkeeper: query markdown -->',
-            },
-        ];
-        if (!isAuthenticated && this.hasQueryText(query)) {
-            program.segments = program.segments.filter(
-                (segment) =>
-                    !additions.some(
-                        ({ type, comment }) =>
-                            segment.type === type &&
-                            segment.text.split(/\r?\n/, 1)[0] === comment
-                    )
-            );
-        }
-        for (const addition of additions) {
-            if (!addition.text) {
-                continue;
-            }
-            program.segments.push({
-                type: addition.type,
-                text: isAuthenticated
-                    ? addition.text
-                    : `${addition.comment}\n${addition.text}`,
-                parameters: {
-                    visible:
-                        addition.type === 'computational'
-                            ? query.computeVisible !== false
-                            : true,
-                },
-            });
-        }
-        return program;
+        return {
+            query: { exampleProgram },
+            open: opensLatex
+                ? 'latex'
+                : exampleProgram.segments.length
+                  ? 'markdown'
+                  : undefined,
+        };
     }
 
     private focusLastSegment(): void {
@@ -579,8 +529,11 @@ export class StartupService {
         query: StartupQuery = {}
     ): Promise<void> {
         this.repository.projectViewModelRepository.setReadOnly(false);
-        const program = this.hasQueryText(query)
-            ? this.programWithQuerySegments(query, userInfo.isAuthenticated)
+        if (query.exampleProgram && (open === 'latex' || open === 'markdown')) {
+            this.repository.projectViewModelRepository.setProjectType(open);
+        }
+        const program = query.exampleProgram
+            ? structuredClone(query.exampleProgram)
             : this.repository.persistenceViewModelRepository.lastProgram();
         if (userInfo.isAuthenticated) {
             const result = await this.rpi.getDefaultProjectRequest(
@@ -617,7 +570,7 @@ export class StartupService {
                     Routes.Project.replace(':id', project.projectId)
                 );
                 // сегмент из ссылки должен быть на экране, а не под чатом агента
-                if (this.hasQueryText(query)) {
+                if (this.hasExampleProgram(query)) {
                     this.focusLastSegment();
                 } else {
                     // у проекта по умолчанию pdf из файлов не берётся, поэтому решаем до их загрузки
@@ -656,7 +609,7 @@ export class StartupService {
             }
             this.setEditorLocation(Routes.ProjectDefault);
             this.programService.setNewProgram(program);
-            if (this.hasQueryText(query)) {
+            if (this.hasExampleProgram(query)) {
                 this.focusLastSegment();
             } else {
                 this.showAgentIfNeverCompiled();

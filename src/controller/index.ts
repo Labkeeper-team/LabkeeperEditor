@@ -17,10 +17,7 @@ import { TextFileEditorService } from '../viewModel/operation/TextFileEditorServ
 import { ProgramEditorService } from '../viewModel/operation/ProgramEditorService.ts';
 import { ProjectPageService } from '../viewModel/operation/ProjectPageService.ts';
 import { ProjectsPageService } from '../viewModel/operation/ProjectsPageService.ts';
-import {
-    StartupQuery,
-    StartupService,
-} from '../viewModel/operation/StartupService.ts';
+import { StartupService } from '../viewModel/operation/StartupService.ts';
 import { TokenPageService } from '../viewModel/operation/TokenPageService.ts';
 import { HunkService } from '../viewModel/operation/HunkService.ts';
 import { AgentChatService } from '../viewModel/operation/AgentChatService.ts';
@@ -224,20 +221,15 @@ export class Controller {
         async ({
             captcha,
             open,
-            compute,
-            computeVisible,
-            latex,
-            markdown,
+            example,
         }: {
             captcha?: string;
             open?: OpenParams;
-        } & StartupQuery) => {
+            example?: string;
+        }) => {
             await this.wrapper('onAppEnter', () =>
                 this.startupService.onAppStartup(captcha, open, {
-                    compute,
-                    computeVisible,
-                    latex,
-                    markdown,
+                    example,
                 })
             );
         }

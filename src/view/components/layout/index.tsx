@@ -32,10 +32,7 @@ export const BaseLayout = () => {
     const isLandingPage =
         location.pathname === Routes.Tokens || location.pathname === Routes.Pay;
     const open = (searchParams.get('open') as OpenParams) || undefined;
-    const compute = searchParams.get('compute') ?? undefined;
-    const computeVisible = searchParams.get('computeVisible') !== 'false';
-    const latex = searchParams.get('latex') ?? undefined;
-    const markdown = searchParams.get('markdown') ?? undefined;
+    const example = searchParams.get('example') ?? undefined;
 
     /*
     GLOBAL STATE
@@ -92,10 +89,7 @@ export const BaseLayout = () => {
                     controller.onAppEnterRequest({
                         captcha,
                         open,
-                        compute,
-                        computeVisible,
-                        latex,
-                        markdown,
+                        example,
                     })
                 );
             }

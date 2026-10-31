@@ -17,6 +17,7 @@ export const URLS = {
     navigationPdfToDoc: `${uri}/api/${version}/public/project/{id}/navigation/doc`,
     getAllProjects: `${uri}/api/${version}/public/project/all`,
     getDefaultProject: `${uri}/api/${version}/public/project/default`,
+    blogExampleProgram: `${uri}/api/${version}/public/blog/{slug}/program`,
     createProject: `${uri}/api/${version}/public/project/create`,
     cloneProject: `${uri}/api/${version}/public/project/{id}/clone`,
     deleteProject: `${uri}/api/${version}/public/project/{id}/delete`,
