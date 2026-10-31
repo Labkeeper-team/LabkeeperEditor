@@ -9,29 +9,11 @@ const pdf = readFileSync(
     new URL('./fixtures/pdf-links-selection.pdf', import.meta.url)
 );
 
-const exampleProgram: Program = {
-    parameters: { roundStrategy: 'threeDigits' },
-    segments: [
-        {
-            id: 0,
-            type: 'computational',
-            text: 'a = 1',
-            parameters: { visible: true, hideValue: true },
-        },
-        {
-            id: 1,
-            type: 'latex',
-            text: 'E=mc^2',
-            parameters: { visible: true, hideAssignment: true },
-        },
-        {
-            id: 2,
-            type: 'md',
-            text: 'текст',
-            parameters: { visible: true },
-        },
-    ],
-};
+test.beforeEach(async ({ page }) => {
+    await page.route('**/files/query.pdf', (route) =>
+        route.fulfill({ contentType: 'application/pdf', body: pdf })
+    );
+});
 
 const savedProgram: Program = {
     segments: [
@@ -41,24 +23,8 @@ const savedProgram: Program = {
             parameters: { visible: true },
         },
     ],
-    parameters: { roundStrategy: 'noRound' },
+    parameters: { roundStrategy: 'threeDigits' },
 };
-
-test.beforeEach(async ({ page }) => {
-    await page.route('**/files/query.pdf', (route) =>
-        route.fulfill({ contentType: 'application/pdf', body: pdf })
-    );
-});
-
-async function mockExampleProgram(page: Page) {
-    await page.route('**/api/v4/public/blog/*/program', async (route) => {
-        await route.fulfill({
-            status: 200,
-            contentType: 'application/json',
-            body: JSON.stringify(exampleProgram),
-        });
-    });
-}
 
 async function seedSavedProgram(page: Page, program: Program) {
     await page.addInitScript(
@@ -102,68 +68,77 @@ async function captureGuestCompile(page: Page) {
     return programs;
 }
 
-test('guest example slug replaces the draft with the whole program', async ({
-    page,
-}) => {
+test('guest-with-a-saved-program-sees-the-latex-segment', async ({ page }) => {
     const routeSetup = new RouteSetup(page);
     await routeSetup.setupApi();
-    await mockExampleProgram(page);
     await routeSetup.setupGetUserInfoRequest(false);
     const compiled = await captureGuestCompile(page);
     await seedSavedProgram(page, savedProgram);
 
-    await page.goto('/project/default?example=many-segments');
+    await page.goto(`/?latex=${encodeURIComponent('E=mc^2')}`);
 
     const fields = editors(page);
-    await expect(fields).toHaveCount(3, { timeout: 30_000 });
-    await expectSegmentText(fields.nth(0), 'a = 1');
-    await expectSegmentText(fields.nth(1), 'E=mc^2');
-    await expectSegmentText(fields.nth(2), 'текст');
-    await expect.poll(() => compiled.length).toBe(1);
-    expect(compiled[0].parameters).toEqual(exampleProgram.parameters);
-    expect(
-        compiled[0].segments.map(({ type, text, parameters }) => ({
-            type,
-            text,
-            parameters,
-        }))
-    ).toEqual(
-        exampleProgram.segments.map(({ type, text, parameters }) => ({
-            type,
-            text,
-            parameters,
-        }))
-    );
+    await expect(fields).toHaveCount(2, { timeout: 30_000 });
+    await expect(fields.nth(0)).toHaveText('черновик');
+    await expectSegmentText(fields.nth(1), '% Labkeeper: query latex\nE=mc^2');
+    await expect
+        .poll(() =>
+            compiled.map((program) =>
+                program.segments.map((segment) => segment.text)
+            )
+        )
+        .toEqual([['черновик', '% Labkeeper: query latex\nE=mc^2']]);
 });
 
-test('code query params do not insert a segment', async ({ page }) => {
-    const routeSetup = new RouteSetup(page);
-    await routeSetup.setupApi();
-    await routeSetup.setupGetUserInfoRequest(false);
-    await captureGuestCompile(page);
-    await seedSavedProgram(page, savedProgram);
-
-    await page.goto(
-        `/?compute=${encodeURIComponent('a = 1')}&latex=${encodeURIComponent('E=mc^2')}&markdown=${encodeURIComponent('текст')}`
-    );
-
-    const fields = editors(page);
-    await expect(fields).toHaveCount(1, { timeout: 30_000 });
-    await expect(fields).toHaveText('черновик');
-});
-
-test('signed-in example slug sends the whole program to the default project', async ({
+test('guest-without-a-saved-program-sees-one-latex-segment', async ({
     page,
 }) => {
     const routeSetup = new RouteSetup(page);
     await routeSetup.setupApi();
-    await mockExampleProgram(page);
+    await routeSetup.setupGetUserInfoRequest(false);
+    const compiled = await captureGuestCompile(page);
+
+    await page.goto(`/?latex=${encodeURIComponent('\\alpha+\\beta')}`);
+
+    const fields = editors(page);
+    await expect(fields).toHaveCount(1, { timeout: 30_000 });
+    await expectSegmentText(fields, '% Labkeeper: query latex\n\\alpha+\\beta');
+    await expect.poll(() => compiled.length).toBe(1);
+    expect(compiled[0].segments.map((segment) => segment.text)).toEqual([
+        '% Labkeeper: query latex\n\\alpha+\\beta',
+    ]);
+});
+
+test('signed-in-default-project-request-includes-the-latex-segment', async ({
+    page,
+}) => {
+    const routeSetup = new RouteSetup(page);
+    await routeSetup.setupApi();
     await routeSetup.setupGetUserInfoRequest(true);
     await routeSetup.setupListFilesRequest(200, 'emptyFiles');
     await routeSetup.setupGetAllProjectsRequest();
     await routeSetup.setupListHunksRequest();
     await routeSetup.setupAgentHistoryRequest([]);
     await seedSavedProgram(page, savedProgram);
+
+    const saved: Program[] = [];
+    let compiledProject = false;
+    await routeSetup.setupSaveProgramRequest(200, 'empty', (route) => {
+        saved.push(route.request().postDataJSON() as Program);
+    });
+    await page.route(
+        `**/api/v4/public/project/${uuid}/compile/pdf**`,
+        async (route) => {
+            compiledProject = true;
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({
+                    pdfUri: '/files/query.pdf',
+                }),
+            });
+        }
+    );
 
     let posted: Program | undefined;
     await page.route('**/api/v4/public/project/default**', async (route) => {
@@ -183,25 +158,277 @@ test('signed-in example slug sends the whole program to the default project', as
         });
     });
 
-    await page.goto('/?example=many-segments');
+    await page.goto(`/?latex=${encodeURIComponent('E=mc^2')}`);
+
+    const fields = editors(page);
+    await expect(fields).toHaveCount(2, { timeout: 30_000 });
+    expect(
+        posted?.segments.map((segment) => ({
+            type: segment.type,
+            text: segment.text,
+        }))
+    ).toEqual([
+        { type: 'md', text: 'черновик' },
+        { type: 'latex', text: 'E=mc^2' },
+    ]);
+    await expect(fields.nth(0)).toHaveText('черновик');
+    await expect(fields.nth(1)).toHaveText('E=mc^2');
+    await expect.poll(() => compiledProject).toBe(true);
+    expect(saved.length).toBeGreaterThan(0);
+    // Автосохранение при смене фокуса может отправить тот же документ повторно.
+    for (const program of saved) {
+        expect(program.segments.map((segment) => segment.text)).toEqual([
+            'черновик',
+            'E=mc^2',
+        ]);
+    }
+});
+
+test('compute-latex-markdown-params-appear-in-that-order', async ({ page }) => {
+    const routeSetup = new RouteSetup(page);
+    await routeSetup.setupApi();
+    await routeSetup.setupGetUserInfoRequest(false);
+    const compiled = await captureGuestCompile(page);
+
+    await page.goto(
+        `/?compute=${encodeURIComponent('a = 1')}&latex=${encodeURIComponent('E=mc^2')}&markdown=${encodeURIComponent('текст')}`
+    );
 
     const fields = editors(page);
     await expect(fields).toHaveCount(3, { timeout: 30_000 });
-    expect(posted?.parameters).toEqual(exampleProgram.parameters);
-    expect(
-        posted?.segments.map(({ type, text, parameters }) => ({
-            type,
-            text,
-            parameters,
-        }))
-    ).toEqual(
-        exampleProgram.segments.map(({ type, text, parameters }) => ({
-            type,
-            text,
-            parameters,
-        }))
+    await expectSegmentText(
+        fields.nth(0),
+        '// Labkeeper: query compute\na = 1'
     );
-    await expectSegmentText(fields.nth(0), 'a = 1');
-    await expectSegmentText(fields.nth(1), 'E=mc^2');
-    await expectSegmentText(fields.nth(2), 'текст');
+    await expectSegmentText(fields.nth(1), '% Labkeeper: query latex\nE=mc^2');
+    await expectSegmentText(
+        fields.nth(2),
+        '<!-- Labkeeper: query markdown -->\nтекст'
+    );
+    await expect.poll(() => compiled.length).toBe(1);
+    expect(
+        compiled[0]?.segments.map((segment) => ({
+            type: segment.type,
+            text: segment.text,
+        }))
+    ).toEqual([
+        { type: 'computational', text: '// Labkeeper: query compute\na = 1' },
+        { type: 'latex', text: '% Labkeeper: query latex\nE=mc^2' },
+        { type: 'md', text: '<!-- Labkeeper: query markdown -->\nтекст' },
+    ]);
+});
+
+test('computeVisible=false-hides-only-imported-compute-and-survives-reload', async ({
+    page,
+}) => {
+    const routeSetup = new RouteSetup(page);
+    await routeSetup.setupApi();
+    await routeSetup.setupGetUserInfoRequest(false);
+    const compiled = await captureGuestCompile(page);
+    await seedSavedProgram(page, {
+        ...savedProgram,
+        segments: [
+            ...savedProgram.segments,
+            {
+                type: 'computational',
+                text: 'personal = 5',
+                parameters: { visible: true },
+            },
+        ],
+    });
+    const query = new URLSearchParams({
+        open: 'latex',
+        computeVisible: 'false',
+        compute: 'a = 1',
+        latex: '\\[a=${a}\\]',
+        markdown: '# Result',
+    });
+
+    await page.goto('/project/default?' + query);
+    await expect(editors(page)).toHaveCount(5, { timeout: 30_000 });
+    await expect.poll(() => compiled.length).toBe(1);
+    expect(
+        compiled[0].segments.map(({ type, parameters }) => ({
+            type,
+            visible: parameters.visible,
+        }))
+    ).toEqual([
+        { type: 'md', visible: true },
+        { type: 'computational', visible: true },
+        { type: 'computational', visible: false },
+        { type: 'latex', visible: true },
+        { type: 'md', visible: true },
+    ]);
+    expect(compiled[0].segments[2].text).toContain('a = 1');
+    expect(compiled[0].segments[3].text).toContain('${a}');
+    await expect(page).toHaveURL(/\/project\/default$/);
+    const visibility = async () =>
+        (await savedDraft(page)).segments.map(
+            ({ parameters }) => parameters.visible
+        );
+    await expect.poll(visibility).toEqual([true, true, false, true, true]);
+
+    await page.reload();
+    await expect(editors(page)).toHaveCount(5, { timeout: 30_000 });
+    await expectSegmentText(
+        editors(page).nth(2),
+        '// Labkeeper: query compute\na = 1'
+    );
+    await expect.poll(visibility).toEqual([true, true, false, true, true]);
+});
+
+async function savedDraft(page: Page): Promise<Program> {
+    return page.evaluate(() => {
+        const persisted = JSON.parse(
+            localStorage.getItem('persist:PERSISTENCE')!
+        );
+        return JSON.parse(persisted.lastProgram);
+    });
+}
+
+for (const [key, comment] of [
+    ['compute', '// Labkeeper: query compute'],
+    ['latex', '% Labkeeper: query latex'],
+    ['markdown', '<!-- Labkeeper: query markdown -->'],
+]) {
+    test(
+        'guest replaces the previous ' +
+            key +
+            ' example and persists the result',
+        async ({ page }) => {
+            const routeSetup = new RouteSetup(page);
+            await routeSetup.setupApi();
+            await routeSetup.setupGetUserInfoRequest(false);
+            const compiled = await captureGuestCompile(page);
+            await seedSavedProgram(page, savedProgram);
+
+            for (const [index, value] of [
+                'first',
+                'second',
+                'second',
+            ].entries()) {
+                const query = new URLSearchParams({
+                    open: 'latex',
+                    [key]: value,
+                });
+                await page.goto('/project/default?' + query);
+                await expect(editors(page)).toHaveCount(2, { timeout: 30_000 });
+                await expect(editors(page).first()).toHaveText('черновик');
+                await expectSegmentText(
+                    editors(page).last(),
+                    comment + '\n' + value
+                );
+                await expect
+                    .poll(async () =>
+                        (await savedDraft(page)).segments.map((s) => s.text)
+                    )
+                    .toEqual(['черновик', comment + '\n' + value]);
+                await expect.poll(() => compiled.length).toBe(index + 1);
+                await expect(page).toHaveURL(/\/project\/default$/);
+            }
+            await expect.poll(() => compiled.length).toBe(3);
+            expect(compiled.map((p) => p.segments.map((s) => s.text))).toEqual([
+                ['черновик', comment + '\nfirst'],
+                ['черновик', comment + '\nsecond'],
+                ['черновик', comment + '\nsecond'],
+            ]);
+            await page.reload();
+            await expect(editors(page)).toHaveCount(2);
+            await expectSegmentText(editors(page).last(), comment + '\nsecond');
+        }
+    );
+}
+
+test('guest switches between example types without keeping old marked segments', async ({
+    page,
+}) => {
+    const routeSetup = new RouteSetup(page);
+    await routeSetup.setupApi();
+    await routeSetup.setupGetUserInfoRequest(false);
+    const compiled = await captureGuestCompile(page);
+    await seedSavedProgram(page, savedProgram);
+
+    const examples = [
+        { compute: 'x = 2', latex: '\\[x=${x}\\]', markdown: '# Result' },
+        {
+            latex: '\\documentclass{article}\n\\begin{document}\nNew example\n\\end{document}',
+        },
+        { markdown: '# Another example' },
+        { compute: 'y = 3' },
+    ];
+    const expectedTexts = [
+        [
+            'черновик',
+            '// Labkeeper: query compute\nx = 2',
+            '% Labkeeper: query latex\n\\[x=${x}\\]',
+            '<!-- Labkeeper: query markdown -->\n# Result',
+        ],
+        [
+            'черновик',
+            '% Labkeeper: query latex\n\\documentclass{article}\n\\begin{document}\nNew example\n\\end{document}',
+        ],
+        ['черновик', '<!-- Labkeeper: query markdown -->\n# Another example'],
+        ['черновик', '// Labkeeper: query compute\ny = 3'],
+    ];
+    for (const [index, example] of examples.entries()) {
+        const query = new URLSearchParams({ open: 'latex' });
+        for (const [key, value] of Object.entries(example)) {
+            query.set(key, value);
+        }
+        await page.goto('/project/default?' + query);
+        await expect(editors(page)).toHaveCount(expectedTexts[index].length, {
+            timeout: 30_000,
+        });
+        for (const [position, text] of expectedTexts[index].entries()) {
+            await expectSegmentText(editors(page).nth(position), text);
+        }
+        await expect
+            .poll(async () =>
+                (await savedDraft(page)).segments.map((segment) => segment.text)
+            )
+            .toEqual(expectedTexts[index]);
+        await expect.poll(() => compiled.length).toBe(index + 1);
+    }
+    expect(compiled.map((p) => p.segments.map((s) => s.text))).toEqual(
+        expectedTexts
+    );
+    await page.reload();
+    await expect(editors(page)).toHaveCount(2);
+    await expectSegmentText(editors(page).last(), expectedTexts[3][1]);
+});
+
+test('guest keeps an edited example after removing its marker', async ({
+    page,
+}) => {
+    const routeSetup = new RouteSetup(page);
+    await routeSetup.setupApi();
+    await routeSetup.setupGetUserInfoRequest(false);
+    await captureGuestCompile(page);
+    await page.goto('/project/default?latex=first');
+    await expect(editors(page)).toHaveCount(1);
+    await expectSegmentText(editors(page), '% Labkeeper: query latex\nfirst');
+    await editors(page).click();
+    const selectAll = await page.evaluate(() =>
+        /Mac/.test(navigator.platform) ||
+        /iPhone|iPad|iPod/.test(navigator.userAgent)
+            ? 'Meta+a'
+            : 'Control+a'
+    );
+    await editors(page).press(selectAll);
+    await editors(page).press('Backspace');
+    await expectSegmentText(editors(page), '');
+    await page.keyboard.insertText('my saved work');
+    await expectSegmentText(editors(page), 'my saved work');
+    await editors(page).blur();
+    await expect
+        .poll(async () => (await savedDraft(page)).segments[0].text)
+        .toBe('my saved work');
+
+    await page.goto('/project/default?latex=second');
+    await expect(editors(page)).toHaveCount(2);
+    await expect(editors(page).first()).toHaveText('my saved work');
+    await expectSegmentText(
+        editors(page).last(),
+        '% Labkeeper: query latex\nsecond'
+    );
 });
