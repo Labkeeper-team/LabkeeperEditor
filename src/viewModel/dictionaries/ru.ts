@@ -190,6 +190,7 @@ export const ru: Translations = {
     header_menu: {
         menu: 'Меню',
         examples: 'Примеры проектов',
+        templates: 'Шаблоны',
         privacy_policy: 'Политика конфиденциальности',
         tokens: 'Токены',
         top_up_balance: 'Пополнить баланс',

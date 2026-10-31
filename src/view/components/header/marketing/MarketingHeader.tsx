@@ -65,12 +65,6 @@ export const MarketingHeader = () => {
 
     const navItems = [
         {
-            key: 'examples',
-            title: dictionary.tokens_page.navigation.examples,
-            action: () => openSitePath('/#examples'),
-            isActive: false,
-        },
-        {
             key: 'templates',
             title: dictionary.tokens_page.navigation.templates,
             action: () => openSitePath('/templates'),

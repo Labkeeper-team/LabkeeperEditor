@@ -38,7 +38,7 @@ type HeaderMenuItem = {
 
 const SITE_ORIGIN = window.location.origin;
 const ABOUT_URL = `${SITE_ORIGIN}/about`;
-const EXAMPLES_URL = `${SITE_ORIGIN}/#examples`;
+const TEMPLATES_URL = `${SITE_ORIGIN}/templates`;
 
 const LANGUAGE_OPTIONS: { label: string; value: Language }[] = [
     { label: 'English', value: 'en' },
@@ -81,13 +81,6 @@ export const HeaderMenu = () => {
     const openAuthModal = useCallback(() => {
         dispatch(controller.onAuthButtonClickedRequest('menu'));
     }, [dispatch]);
-
-    const openLandingAnchor = useCallback(
-        (anchor: string) => {
-            openExternal(`${SITE_ORIGIN}/#${anchor}`);
-        },
-        [openExternal]
-    );
 
     const isProjectPage = location.pathname.startsWith('/project/');
 
@@ -132,9 +125,9 @@ export const HeaderMenu = () => {
         () =>
             withMobileLanguageItem([
                 {
-                    title: dictionary.header_menu.examples,
-                    item: 'examples',
-                    onClick: () => openExternal(EXAMPLES_URL),
+                    title: dictionary.header_menu.templates,
+                    item: 'templates',
+                    onClick: () => openExternal(TEMPLATES_URL),
                 },
                 {
                     title: dictionary.header_menu.tokens,
@@ -251,9 +244,9 @@ export const HeaderMenu = () => {
                     onClick: () => openExternal(ABOUT_URL),
                 },
                 {
-                    title: dictionary.header_menu.examples,
-                    item: 'examples',
-                    onClick: () => openExternal(EXAMPLES_URL),
+                    title: dictionary.header_menu.templates,
+                    item: 'templates',
+                    onClick: () => openExternal(TEMPLATES_URL),
                     separatorAfter: true,
                 },
                 {
@@ -281,11 +274,6 @@ export const HeaderMenu = () => {
     const tokensPageMenuItems: HeaderMenuItem[] = useMemo(
         () =>
             withMobileLanguageItem([
-                {
-                    title: dictionary.tokens_page.navigation.examples,
-                    item: 'examples',
-                    onClick: () => openLandingAnchor('examples'),
-                },
                 {
                     title: dictionary.tokens_page.navigation.templates,
                     item: 'templates',
@@ -347,7 +335,6 @@ export const HeaderMenu = () => {
             navigate,
             openAuthModal,
             openExternal,
-            openLandingAnchor,
             withMobileLanguageItem,
         ]
     );
