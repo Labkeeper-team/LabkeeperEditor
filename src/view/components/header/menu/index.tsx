@@ -282,29 +282,24 @@ export const HeaderMenu = () => {
         () =>
             withMobileLanguageItem([
                 {
-                    title: dictionary.tokens_page.navigation.advantages,
-                    item: 'advantages',
-                    onClick: () => openLandingAnchor('advantages'),
-                },
-                {
-                    title: dictionary.tokens_page.navigation.features,
-                    item: 'features',
-                    onClick: () => openLandingAnchor('features'),
-                },
-                {
-                    title: dictionary.tokens_page.navigation.for_whom,
-                    item: 'for_whom',
-                    onClick: () => openLandingAnchor('for-whom'),
-                },
-                {
                     title: dictionary.tokens_page.navigation.examples,
                     item: 'examples',
                     onClick: () => openLandingAnchor('examples'),
                 },
                 {
+                    title: dictionary.tokens_page.navigation.templates,
+                    item: 'templates',
+                    onClick: () => openExternal(`${SITE_ORIGIN}/templates`),
+                },
+                {
                     title: dictionary.tokens_page.navigation.tokens,
                     item: 'tokens',
                     onClick: () => navigate(Routes.Tokens),
+                },
+                {
+                    title: dictionary.tokens_page.navigation.blog,
+                    item: 'blog',
+                    onClick: () => openExternal(`${SITE_ORIGIN}/blog`),
                 },
                 {
                     title: dictionary.tokens_page.navigation.about,

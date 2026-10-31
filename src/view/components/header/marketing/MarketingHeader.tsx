@@ -50,14 +50,6 @@ export const MarketingHeader = () => {
         action();
     };
 
-    const onAnchorNav = (anchor: string) => {
-        window.location.href = `https://labkeeper.io/#${anchor}`;
-    };
-
-    const onAboutNav = () => {
-        window.location.href = 'https://labkeeper.io/about';
-    };
-
     const onLanguageSelect = (lang: Language) => {
         controller.trackUiEvent(Events.EVENT_LANGUAGE_CHANGED, {
             from: language,
@@ -67,35 +59,39 @@ export const MarketingHeader = () => {
     };
 
     const isTokensRoute = location.pathname === Routes.Tokens;
+    const openSitePath = (path: string) => {
+        window.location.assign(path);
+    };
+
     const navItems = [
         {
-            title: dictionary.tokens_page.navigation.advantages,
-            action: () => onAnchorNav('features'),
-            isActive: false,
-        },
-        {
-            title: dictionary.tokens_page.navigation.features,
-            action: () => onAnchorNav('advantages'),
-            isActive: false,
-        },
-        {
-            title: dictionary.tokens_page.navigation.for_whom,
-            action: () => onAnchorNav('audience'),
-            isActive: false,
-        },
-        {
+            key: 'examples',
             title: dictionary.tokens_page.navigation.examples,
-            action: () => onAnchorNav('examples'),
+            action: () => openSitePath('/#examples'),
             isActive: false,
         },
         {
+            key: 'templates',
+            title: dictionary.tokens_page.navigation.templates,
+            action: () => openSitePath('/templates'),
+            isActive: false,
+        },
+        {
+            key: 'tokens',
             title: dictionary.tokens_page.navigation.tokens,
             action: () => navigate(Routes.Tokens),
             isActive: isTokensRoute,
         },
         {
+            key: 'blog',
+            title: dictionary.tokens_page.navigation.blog,
+            action: () => openSitePath('/blog'),
+            isActive: false,
+        },
+        {
+            key: 'about',
             title: dictionary.tokens_page.navigation.about,
-            action: onAboutNav,
+            action: () => openSitePath('/about'),
             isActive: false,
         },
     ];
@@ -158,7 +154,7 @@ export const MarketingHeader = () => {
                                             ? ' marketing-header__nav-item--active'
                                             : ''
                                     }`}
-                                    key={item.title}
+                                    key={item.key}
                                 >
                                     <button
                                         className={`marketing-header__nav-link${

@@ -427,6 +427,8 @@ export interface Translations {
             features: string;
             for_whom: string;
             examples: string;
+            templates: string;
+            blog: string;
             tokens: string;
             about: string;
             login: string;
