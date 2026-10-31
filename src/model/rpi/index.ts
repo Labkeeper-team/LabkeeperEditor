@@ -23,6 +23,9 @@ export type CompilationResponse = CompileSuccessResult | CompileErrorResultList;
 export type PdfCompilationResponse =
     CompileSuccessPdfResponse | CompileErrorResultList;
 
+/** GH-211: адрес архива во временном хранилище, у LaTeX ещё ошибки программы (203) */
+export type ExportProjectResponse = string | CompileErrorResultList;
+
 export interface UploadFileResponse {
     url: string;
 }
@@ -195,6 +198,14 @@ export interface Rpi {
 
     deleteProjectRequest(projectId: string): Promise<RequestResult>;
 
+    exportProjectRequest(
+        projectId: string
+    ): Promise<RequestResult<ExportProjectResponse>>;
+
+    exportProjectTexRequest(
+        projectId: string
+    ): Promise<RequestResult<ExportProjectResponse>>;
+
     saveProgramRequest(
         projectId: string,
         program: Program
@@ -324,6 +335,12 @@ export const mockRpi = (): Rpi => {
             throw new Error('Not implemented');
         },
         deleteProjectRequest: () => {
+            throw new Error('Not implemented');
+        },
+        exportProjectRequest: () => {
+            throw new Error('Not implemented');
+        },
+        exportProjectTexRequest: () => {
             throw new Error('Not implemented');
         },
         saveProgramRequest: () => {

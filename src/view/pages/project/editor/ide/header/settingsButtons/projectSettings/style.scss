@@ -3,6 +3,12 @@
 .project-settings-dropdown {
     width: max-content;
 
+    // GH-211: с экспортом меню выше, на низком экране оно прокручивается само
+    @media screen and (min-width: 768px) {
+        max-height: calc(100vh - 140px);
+        overflow-y: auto;
+    }
+
     @media screen and (max-width: 767px) {
         width: 100%;
     }
@@ -55,5 +61,50 @@
     &:hover {
         background: $blue-10;
         color: $white;
+    }
+}
+
+// GH-211: формат экспорта кнопкой, описание всплывает при наведении, на телефоне под названием
+.project-export {
+    &__option {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        width: 100%;
+        padding: 6px 10px;
+        border: 1px solid $gray-50;
+        border-radius: 8px;
+        background: $white;
+        font-family: inherit;
+        text-align: left;
+        cursor: pointer;
+        box-sizing: border-box;
+
+        &:hover:not(:disabled) {
+            border-color: $blue-10;
+        }
+
+        &:disabled {
+            cursor: default;
+            opacity: 0.6;
+        }
+
+        &--busy:disabled {
+            opacity: 1;
+        }
+    }
+
+    &__title {
+        color: $gray-10;
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 18px;
+    }
+
+    &__hint {
+        color: $gray-30;
+        font-size: 12px;
+        line-height: 16px;
+        white-space: normal;
     }
 }

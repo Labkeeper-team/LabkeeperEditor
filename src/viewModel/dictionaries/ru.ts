@@ -150,6 +150,8 @@ export const ru: Translations = {
         errors: {
             non_authorized_paste_image:
                 'Что бы вставить изображение вам необходимо авторизоваться',
+            paste_file_not_supported:
+                'В сегмент «${replace1}» файл не вставить. Картинки и файлы вставляются в Маркдаун, Latex и Вычисление',
         },
         latex: 'latex',
         asciimath: 'простая формула',
@@ -234,6 +236,18 @@ export const ru: Translations = {
             chat_newline: 'Новая строка',
             chat_mode: 'Режим «Агент» или «Вопрос»',
         },
+    },
+    project_export: {
+        label: 'Экспорт',
+        labkeeper: 'Архив Labkeeper',
+        labkeeper_hint:
+            'Копия проекта как есть: сегменты, настройки и ваши файлы',
+        tex: 'Архив LaTeX',
+        tex_hint:
+            'main.tex из всех сегментов, ваши файлы и картинки результата. Собирается в любом редакторе LaTeX, например в Overleaf. Перед выгрузкой проект выполняется, как по кнопке «Выполнить», и тратит токены',
+        preparing: 'Готовим архив…',
+        program_errors:
+            'В программе есть ошибки, архив LaTeX не собран. Они показаны в списке проблем',
     },
     agent_mode: {
         leave: 'Открыть полный редактор кода',

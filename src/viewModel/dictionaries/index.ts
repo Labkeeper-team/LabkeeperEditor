@@ -138,6 +138,7 @@ export interface Translations {
         hide_infl_assignment_with_values: string;
         errors: {
             non_authorized_paste_image: string;
+            paste_file_not_supported: string;
         };
         no_computation_result: string;
         run_to_view: string;
@@ -218,6 +219,15 @@ export interface Translations {
             chat_newline: string;
             chat_mode: string;
         };
+    };
+    project_export: {
+        label: string;
+        labkeeper: string;
+        labkeeper_hint: string;
+        tex: string;
+        tex_hint: string;
+        preparing: string;
+        program_errors: string;
     };
     agent_mode: {
         leave: string;

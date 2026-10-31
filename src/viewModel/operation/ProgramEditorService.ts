@@ -17,6 +17,7 @@ import {
     ProgramRoundStrategy,
     Segment,
     SegmentType,
+    segmentAcceptsFiles,
 } from '../../model/domain.ts';
 import { UndoRedoCursorHint } from '../../model/service/ProgramService.ts';
 import { getIdeSegmentEditorView } from '../../view/pages/project/editor/ide/segments/ideSegmentEditorView';
@@ -127,6 +128,22 @@ export class ProgramEditorService {
                 file_count: fileCount,
             });
         }
+        // GH-213: в исходник формулы и схемы файл не вставить. Раньше он всё равно
+        // уходил на сервер, и менеджер файлов оставался в загрузке навсегда
+        const pastedInto =
+            this.programService.getCurrentProgram()?.segments[segmentIndex]
+                ?.type;
+        if (fileCount > 0 && pastedInto && !segmentAcceptsFiles(pastedInto)) {
+            const segmentNames = this.repository.dictionary.short_segment;
+            this.repository.toast(
+                this.repository.dictionary.segment.errors.paste_file_not_supported.replace(
+                    '${replace1}',
+                    segmentNames[pastedInto as keyof typeof segmentNames]
+                ),
+                'info'
+            );
+            return;
+        }
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const thisCopy = this;
         let itemIndex = 0;
@@ -224,12 +241,6 @@ export class ProgramEditorService {
                                 }
                                 break;
                             }
-                            // GH-171: в исходник схемы картинку не вставить
-                            case 'asciimath':
-                            case 'mermaid':
-                            case 'plantuml':
-                            case 'drawio':
-                                return;
                         }
                         await thisCopy.loaderService.loadFiles(
                             project.projectId

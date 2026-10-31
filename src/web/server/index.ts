@@ -26,6 +26,7 @@ import {
     BillingPurchaseResponse,
     BillingPurchasesListResponse,
     BillingPricingResponse,
+    ExportProjectResponse,
 } from '../../model/rpi';
 import * as Sentry from '@sentry/react';
 import {
@@ -73,6 +74,9 @@ const RPI_SOURCES: Record<keyof Rpi, string> = {
     createProjectRequest: 'project',
     cloneProjectRequest: 'project',
     deleteProjectRequest: 'project',
+    exportProjectRequest: 'project',
+    // LaTeX-архив выполняет программу, как сборка: замок агента на нём штатный
+    exportProjectTexRequest: 'compile',
     saveProgramRequest: 'program',
     setProjectVisibilityRequest: 'project',
     sendEmailWithCodeRequest: 'auth',
@@ -521,6 +525,30 @@ export class WebRpi implements Rpi {
             [200, 401],
             async () =>
                 axios.delete(URLS.deleteProject.replace('{id}', projectId)),
+            projectId
+        );
+    }
+
+    async exportProjectRequest(
+        projectId: string
+    ): Promise<RequestResult<ExportProjectResponse>> {
+        return this.requestWrapper(
+            'exportProjectRequest',
+            [201, 400, 401, 403, 404],
+            async () =>
+                axios.post(URLS.exportProject.replace('{id}', projectId)),
+            projectId
+        );
+    }
+
+    async exportProjectTexRequest(
+        projectId: string
+    ): Promise<RequestResult<ExportProjectResponse>> {
+        return this.requestWrapper(
+            'exportProjectTexRequest',
+            [201, 203, 400, 401, 402, 403, 404, 423],
+            async () =>
+                axios.post(URLS.exportProjectTex.replace('{id}', projectId)),
             projectId
         );
     }

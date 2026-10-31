@@ -112,9 +112,11 @@ import {
     LabkeeperFile,
     OutputSegment,
     Project,
+    ProjectExportFormat,
     ProjectType,
     ProjectShort,
 } from '../../model/domain.ts';
+import { downloadFile } from '../utils/downloadFile.ts';
 import { setProjects } from './slices/projects';
 import {
     setBillingPaymentWidgetToken,
@@ -129,6 +131,7 @@ import {
     setExpandProblemViewer,
     setFilesToDelete,
     setIsCompiling,
+    setExportingProject,
     setIsFileDraggedToFileManager,
     setShoFileManager,
     setShowPrivacyPolicyAcceptanceModal,
@@ -476,6 +479,7 @@ export const createViewModelStateFromStore = (
         },
         settingsViewModelRepository: {
             isAutocompleteLoading: () => store.getState().settings.isCompiling,
+            exportingProject: () => store.getState().settings.exportingProject,
             editModeForFilename: () =>
                 store.getState().settings.editModeForFilename,
             editModeForProjectTitle: () =>
@@ -515,6 +519,8 @@ export const createViewModelStateFromStore = (
                 store.dispatch(setEditModeForProjectTitle(edit)),
             setIsCompiling: (value: boolean) =>
                 store.dispatch(setIsCompiling(value)),
+            setExportingProject: (format: ProjectExportFormat | null) =>
+                store.dispatch(setExportingProject(format)),
             setIsFileDraggedToFileManager: (edit: boolean) =>
                 store.dispatch(setIsFileDraggedToFileManager(edit)),
             setFilesToDelete: (files: LabkeeperFile[]) =>
@@ -549,6 +555,7 @@ export const createViewModelStateFromStore = (
         toast: (message: string, type: TypeOptions) => {
             toast(message, { type });
         },
+        downloadFile,
         scrollEditorToBottom: () =>
             store.dispatch(setScrollEditorToBottom(true)),
     };
