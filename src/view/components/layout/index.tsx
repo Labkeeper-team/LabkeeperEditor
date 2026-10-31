@@ -35,6 +35,7 @@ export const BaseLayout = () => {
     const compute = searchParams.get('compute') ?? undefined;
     const latex = searchParams.get('latex') ?? undefined;
     const markdown = searchParams.get('markdown') ?? undefined;
+    const example = searchParams.get('example') ?? undefined;
 
     /*
     GLOBAL STATE
@@ -94,6 +95,7 @@ export const BaseLayout = () => {
                         compute,
                         latex,
                         markdown,
+                        example,
                     })
                 );
             }

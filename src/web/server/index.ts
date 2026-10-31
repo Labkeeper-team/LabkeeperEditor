@@ -64,6 +64,7 @@ const RPI_SOURCES: Record<keyof Rpi, string> = {
     listFilesRequest: 'file',
     setTitleRequest: 'project',
     getDefaultProjectRequest: 'project',
+    getBlogExampleProgramRequest: 'blog',
     getProjectRequest: 'project',
     renameFileRequest: 'file',
     renameFolderRequest: 'file',
@@ -392,6 +393,22 @@ export class WebRpi implements Rpi {
                             'Accept-Language': lang || 'en',
                         },
                     }
+                )
+        );
+    }
+
+    async getBlogExampleProgramRequest(
+        slug: string
+    ): Promise<RequestResult<Program>> {
+        return this.requestWrapper(
+            'getBlogExampleProgramRequest',
+            [200, 404],
+            async () =>
+                axios.get(
+                    URLS.blogExampleProgram.replace(
+                        '{slug}',
+                        encodeURIComponent(slug)
+                    )
                 )
         );
     }

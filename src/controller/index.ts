@@ -226,6 +226,7 @@ export class Controller {
             compute,
             latex,
             markdown,
+            example,
         }: {
             captcha?: string;
             open?: OpenParams;
@@ -235,6 +236,7 @@ export class Controller {
                     compute,
                     latex,
                     markdown,
+                    example,
                 })
             );
         }

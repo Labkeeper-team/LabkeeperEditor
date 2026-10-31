@@ -159,6 +159,8 @@ export interface Rpi {
         projectType: ProjectType
     ): Promise<RequestResult<RichProject>>;
 
+    getBlogExampleProgramRequest(slug: string): Promise<RequestResult<Program>>;
+
     getProjectRequest(projectId: string): Promise<RequestResult<RichProject>>;
 
     renameFileRequest(

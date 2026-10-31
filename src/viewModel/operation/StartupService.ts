@@ -4,6 +4,7 @@ import {
     OpenParams,
     Program,
     Project,
+    Segment,
     SegmentType,
     UserInfo,
 } from '../../model/domain.ts';
@@ -29,11 +30,13 @@ import { AGENT_MODE_SUFFIX } from '../utils/agentModePath.ts';
 const qrPagePattern = /\/qr\/v\d+/i;
 const projectPagePattern = /\/project\/\S+/i;
 
-/** Текст сегментов из query: compute, затем latex, затем markdown. Пустая строка сегмент не добавляет. */
+/** Текст сегментов из query либо сегменты примера, загруженные по slug. */
 export type StartupQuery = {
     compute?: string;
     latex?: string;
     markdown?: string;
+    example?: string;
+    exampleSegments?: Segment[];
 };
 
 export class StartupService {
@@ -115,6 +118,11 @@ export class StartupService {
         open?: OpenParams,
         query: StartupQuery = {}
     ): Promise<void> => {
+        if (query.example) {
+            const loaded = await this.loadExampleProgram(query.example);
+            query = loaded.query;
+            open = open ?? loaded.open;
+        }
         logBreadcrumb('startup', 'onAppStartup', {
             location: this.repository.location(),
             hasCaptcha: Boolean(captcha),
@@ -493,7 +501,62 @@ export class StartupService {
     }
 
     private hasQueryText(query: StartupQuery): boolean {
-        return Boolean(query.compute || query.latex || query.markdown);
+        return Boolean(
+            query.compute ||
+            query.latex ||
+            query.markdown ||
+            query.exampleSegments?.length
+        );
+    }
+
+    /** Программа примера берётся из YAML статьи по slug, а не из query. */
+    private async loadExampleProgram(slug: string): Promise<{
+        query: StartupQuery;
+        open?: OpenParams;
+    }> {
+        const result = await this.rpi.getBlogExampleProgramRequest(slug);
+        if (!result.isOk) return { query: {} };
+        const exampleSegments = result.body.segments.map(
+            (segment): Segment => ({
+                id: segment.id,
+                type: segment.type,
+                text: segment.text,
+                parameters: { ...segment.parameters },
+            })
+        );
+        const opensLatex = exampleSegments.some(
+            (segment) =>
+                segment.type === 'latex' || segment.type === 'computational'
+        );
+        return {
+            query: { exampleSegments },
+            open: opensLatex
+                ? 'latex'
+                : exampleSegments.length
+                  ? 'markdown'
+                  : undefined,
+        };
+    }
+
+    private exampleComment(type: SegmentType): string | undefined {
+        switch (type) {
+            case 'computational':
+                return '// Labkeeper: query compute';
+            case 'latex':
+                return '% Labkeeper: query latex';
+            case 'md':
+                return '<!-- Labkeeper: query markdown -->';
+            case 'asciimath':
+                return '% Labkeeper: query asciimath';
+            case 'mermaid':
+                return '<!-- Labkeeper: query mermaid -->';
+            case 'plantuml':
+                return '<!-- Labkeeper: query plantuml -->';
+            case 'drawio':
+                return '<!-- Labkeeper: query drawio -->';
+            default:
+                return undefined;
+        }
     }
 
     /**
@@ -512,6 +575,14 @@ export class StartupService {
         const program = structuredClone(
             this.repository.persistenceViewModelRepository.lastProgram()
         );
+        if (query.exampleSegments?.length) {
+            this.appendExampleSegments(
+                program,
+                query.exampleSegments,
+                isAuthenticated
+            );
+            return program;
+        }
         const additions: {
             type: SegmentType;
             text: string | undefined;
@@ -556,6 +627,37 @@ export class StartupService {
             });
         }
         return program;
+    }
+
+    private appendExampleSegments(
+        program: Program,
+        segments: Segment[],
+        isAuthenticated: boolean
+    ): void {
+        const marked =
+            (type: SegmentType, comment: string) => (segment: Segment) =>
+                segment.type === type &&
+                segment.text.split(/\r?\n/, 1)[0] === comment;
+        if (!isAuthenticated) {
+            program.segments = program.segments.filter((segment) => {
+                const comment = this.exampleComment(segment.type);
+                return !comment || !marked(segment.type, comment)(segment);
+            });
+        }
+        for (const segment of segments) {
+            const comment = this.exampleComment(segment.type);
+            program.segments.push({
+                type: segment.type,
+                text:
+                    isAuthenticated || !comment
+                        ? segment.text
+                        : `${comment}\n${segment.text}`,
+                parameters: {
+                    ...segment.parameters,
+                    visible: segment.parameters.visible ?? true,
+                },
+            });
+        }
     }
 
     private focusLastSegment(): void {

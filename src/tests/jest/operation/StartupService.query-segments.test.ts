@@ -241,3 +241,61 @@ test.each(querySegments)(
         );
     }
 );
+
+test('an article example keeps every segment and its parameters', async () => {
+    const ctx = queryContext([segment('md', 'personal draft')]);
+    ctx.rpi.getBlogExampleProgramRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        isOk: true,
+        body: {
+            parameters: { roundStrategy: 'threeDigits' },
+            segments: [
+                {
+                    id: 0,
+                    type: 'computational',
+                    text: 'a = 1',
+                    parameters: { visible: true, hideValue: true },
+                },
+                {
+                    id: 1,
+                    type: 'latex',
+                    text: 'first',
+                    parameters: { visible: true },
+                },
+                {
+                    id: 2,
+                    type: 'latex',
+                    text: 'second',
+                    parameters: { visible: false, hideAssignment: true },
+                },
+            ],
+        },
+    });
+
+    await ctx.startupService.onAppStartup(undefined, undefined, {
+        example: 'many-segments',
+    });
+
+    expect(ctx.programService.getCurrentProgram().segments).toEqual([
+        segment('md', 'personal draft'),
+        {
+            type: 'computational',
+            text: '// Labkeeper: query compute\na = 1',
+            parameters: { visible: true, hideValue: true },
+        },
+        {
+            type: 'latex',
+            text: '% Labkeeper: query latex\nfirst',
+            parameters: { visible: true },
+        },
+        {
+            type: 'latex',
+            text: '% Labkeeper: query latex\nsecond',
+            parameters: { visible: false, hideAssignment: true },
+        },
+    ]);
+    expect(ctx.programService.getCurrentProgram().parameters).toEqual({
+        roundStrategy: 'noRound',
+    });
+    expect(ctx.repository.projectViewModelRepository.mode()).toBe('latex');
+});
