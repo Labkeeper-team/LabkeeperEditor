@@ -13,9 +13,7 @@ export const WikiButton = () => {
             rounded
             minimize
             titleIcon={() => <GithubIcon />}
-            onPress={() => {
-                window.location.assign(WikiLinks.home);
-            }}
+            onPress={() => window.open(WikiLinks.home, '_blank')}
             color={'gray'}
         />
     );

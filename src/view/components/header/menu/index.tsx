@@ -38,7 +38,7 @@ type HeaderMenuItem = {
 
 const SITE_ORIGIN = window.location.origin;
 const ABOUT_URL = `${SITE_ORIGIN}/about`;
-const TEMPLATES_URL = `${SITE_ORIGIN}/templates`;
+const EXAMPLES_URL = `${SITE_ORIGIN}/#examples`;
 
 const LANGUAGE_OPTIONS: { label: string; value: Language }[] = [
     { label: 'English', value: 'en' },
@@ -81,6 +81,13 @@ export const HeaderMenu = () => {
     const openAuthModal = useCallback(() => {
         dispatch(controller.onAuthButtonClickedRequest('menu'));
     }, [dispatch]);
+
+    const openLandingAnchor = useCallback(
+        (anchor: string) => {
+            openExternal(`${SITE_ORIGIN}/#${anchor}`);
+        },
+        [openExternal]
+    );
 
     const isProjectPage = location.pathname.startsWith('/project/');
 
@@ -125,9 +132,9 @@ export const HeaderMenu = () => {
         () =>
             withMobileLanguageItem([
                 {
-                    title: dictionary.header_menu.templates,
-                    item: 'templates',
-                    onClick: () => openExternal(TEMPLATES_URL),
+                    title: dictionary.header_menu.examples,
+                    item: 'examples',
+                    onClick: () => openExternal(EXAMPLES_URL),
                 },
                 {
                     title: dictionary.header_menu.tokens,
@@ -244,9 +251,9 @@ export const HeaderMenu = () => {
                     onClick: () => openExternal(ABOUT_URL),
                 },
                 {
-                    title: dictionary.header_menu.templates,
-                    item: 'templates',
-                    onClick: () => openExternal(TEMPLATES_URL),
+                    title: dictionary.header_menu.examples,
+                    item: 'examples',
+                    onClick: () => openExternal(EXAMPLES_URL),
                     separatorAfter: true,
                 },
                 {
@@ -275,19 +282,29 @@ export const HeaderMenu = () => {
         () =>
             withMobileLanguageItem([
                 {
-                    title: dictionary.tokens_page.navigation.templates,
-                    item: 'templates',
-                    onClick: () => openExternal(`${SITE_ORIGIN}/templates`),
+                    title: dictionary.tokens_page.navigation.advantages,
+                    item: 'advantages',
+                    onClick: () => openLandingAnchor('advantages'),
+                },
+                {
+                    title: dictionary.tokens_page.navigation.features,
+                    item: 'features',
+                    onClick: () => openLandingAnchor('features'),
+                },
+                {
+                    title: dictionary.tokens_page.navigation.for_whom,
+                    item: 'for_whom',
+                    onClick: () => openLandingAnchor('for-whom'),
+                },
+                {
+                    title: dictionary.tokens_page.navigation.examples,
+                    item: 'examples',
+                    onClick: () => openLandingAnchor('examples'),
                 },
                 {
                     title: dictionary.tokens_page.navigation.tokens,
                     item: 'tokens',
                     onClick: () => navigate(Routes.Tokens),
-                },
-                {
-                    title: dictionary.tokens_page.navigation.blog,
-                    item: 'blog',
-                    onClick: () => openExternal(`${SITE_ORIGIN}/blog`),
                 },
                 {
                     title: dictionary.tokens_page.navigation.about,
@@ -335,6 +352,7 @@ export const HeaderMenu = () => {
             navigate,
             openAuthModal,
             openExternal,
+            openLandingAnchor,
             withMobileLanguageItem,
         ]
     );

@@ -173,7 +173,6 @@ export interface Translations {
     header_menu: {
         menu: string;
         examples: string;
-        templates: string;
         privacy_policy: string;
         tokens: string;
         top_up_balance: string;
@@ -438,8 +437,6 @@ export interface Translations {
             features: string;
             for_whom: string;
             examples: string;
-            templates: string;
-            blog: string;
             tokens: string;
             about: string;
             login: string;

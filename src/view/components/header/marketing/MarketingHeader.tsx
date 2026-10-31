@@ -50,6 +50,14 @@ export const MarketingHeader = () => {
         action();
     };
 
+    const onAnchorNav = (anchor: string) => {
+        window.location.href = `https://labkeeper.io/#${anchor}`;
+    };
+
+    const onAboutNav = () => {
+        window.location.href = 'https://labkeeper.io/about';
+    };
+
     const onLanguageSelect = (lang: Language) => {
         controller.trackUiEvent(Events.EVENT_LANGUAGE_CHANGED, {
             from: language,
@@ -59,33 +67,35 @@ export const MarketingHeader = () => {
     };
 
     const isTokensRoute = location.pathname === Routes.Tokens;
-    const openSitePath = (path: string) => {
-        window.location.assign(path);
-    };
-
     const navItems = [
         {
-            key: 'templates',
-            title: dictionary.tokens_page.navigation.templates,
-            action: () => openSitePath('/templates'),
+            title: dictionary.tokens_page.navigation.advantages,
+            action: () => onAnchorNav('features'),
             isActive: false,
         },
         {
-            key: 'tokens',
+            title: dictionary.tokens_page.navigation.features,
+            action: () => onAnchorNav('advantages'),
+            isActive: false,
+        },
+        {
+            title: dictionary.tokens_page.navigation.for_whom,
+            action: () => onAnchorNav('audience'),
+            isActive: false,
+        },
+        {
+            title: dictionary.tokens_page.navigation.examples,
+            action: () => onAnchorNav('examples'),
+            isActive: false,
+        },
+        {
             title: dictionary.tokens_page.navigation.tokens,
             action: () => navigate(Routes.Tokens),
             isActive: isTokensRoute,
         },
         {
-            key: 'blog',
-            title: dictionary.tokens_page.navigation.blog,
-            action: () => openSitePath('/blog'),
-            isActive: false,
-        },
-        {
-            key: 'about',
             title: dictionary.tokens_page.navigation.about,
-            action: () => openSitePath('/about'),
+            action: onAboutNav,
             isActive: false,
         },
     ];
@@ -148,7 +158,7 @@ export const MarketingHeader = () => {
                                             ? ' marketing-header__nav-item--active'
                                             : ''
                                     }`}
-                                    key={item.key}
+                                    key={item.title}
                                 >
                                     <button
                                         className={`marketing-header__nav-link${
