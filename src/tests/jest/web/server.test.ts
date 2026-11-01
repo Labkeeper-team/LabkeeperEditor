@@ -30,6 +30,7 @@ jest.mock('../../../constants.ts', () => ({
         navigationPdfToDoc: '/api/v4/public/project/{id}/navigation/doc',
         getAllProjects: '/api/v4/public/project/all',
         getDefaultProject: '/api/v4/public/project/default',
+        blogExampleProgram: '/api/v4/public/blog/{slug}/program',
         createProject: '/api/v4/public/project/create',
         cloneProject: '/api/v4/public/project/{id}/clone',
         deleteProject: '/api/v4/public/project/{id}/delete',
@@ -210,6 +211,13 @@ const RPI_CASES: RpiCase[] = [
         scoped: false,
         expects423: false,
         call: (rpi) => rpi.getDefaultProjectRequest('en', program, 'latex'),
+    },
+    {
+        method: 'getBlogExampleProgramRequest',
+        source: 'blog',
+        scoped: false,
+        expects423: false,
+        call: (rpi) => rpi.getBlogExampleProgramRequest('latex-formulas'),
     },
     {
         method: 'getProjectRequest',
