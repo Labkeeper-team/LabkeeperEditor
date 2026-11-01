@@ -81,6 +81,13 @@ for (const file of [
         // у EPS бывает двоичный заголовок превью с нулевыми байтами
         body: '\u00c5\u00d0\u00d3\u00c6\u0000\u0000%!PS-Adobe-3.0 EPSF-3.0\n',
     },
+    {
+        // GH-214: агент читает документы Word, а docx по содержимому это zip
+        name: 'report.docx',
+        mimeType:
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        body: 'PK\u0003\u0004\u0014\u0000\u0006\u0000',
+    },
 ]) {
     test(`${file.name} загружается без ошибки формата`, async ({ page }) => {
         const uploads = recordUploads(page);
