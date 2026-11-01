@@ -69,6 +69,60 @@ test('an error from a blob: script of an extension is not reported', async () =>
     expect(events).toEqual([]);
 });
 
+const eventWithFrames = (
+    frames: { filename?: string; function?: string }[]
+) => ({
+    exception: {
+        values: [
+            {
+                type: 'RangeError',
+                value: 'Maximum call stack size exceeded',
+                stacktrace: { frames },
+            },
+        ],
+    },
+});
+
+// Bugsink: в Edge 155 расширение подменило Object.getOwnPropertyDescriptor и ушло в рекурсию
+test('a stack without a single file of a page script is not reported', async () => {
+    const events = await sentEvents(() => {
+        Sentry.captureEvent(
+            eventWithFrames([
+                { function: 'Array.includes' },
+                {
+                    filename: '<anonymous>',
+                    function:
+                        'Object.getOwnPropertyDescriptor [as _getOwnPropertyDescriptor]',
+                },
+                {
+                    filename: '<anonymous>',
+                    function:
+                        'Object.getOwnPropertyDescriptor [as _getOwnPropertyDescriptor]',
+                },
+            ])
+        );
+    });
+
+    expect(events).toEqual([]);
+});
+
+// JSON.parse и другие встроенные функции тоже <anonymous>, но под ними наш код
+test('an error thrown by a built-in called from our bundle is still reported', async () => {
+    const events = await sentEvents(() => {
+        Sentry.captureEvent(
+            eventWithFrames([
+                {
+                    filename: 'https://labkeeper.io/assets/index-DYdH554R.js',
+                    function: 'readProject',
+                },
+                { filename: '<anonymous>', function: 'JSON.parse' },
+            ])
+        );
+    });
+
+    expect(events).toHaveLength(1);
+});
+
 test('an error of our own bundle is still reported', async () => {
     const events = await sentEvents(() => {
         Sentry.captureEvent(
