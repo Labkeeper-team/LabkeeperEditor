@@ -28,11 +28,36 @@ export function scrubBreadcrumb(breadcrumb: Breadcrumb): Breadcrumb {
     };
 }
 
+/**
+ * В стеке ни одного кадра из файла: только <anonymous> и встроенные функции.
+ * Так выглядит код, который расширение вставило через eval. В Edge 155 чужая
+ * подмена Object.getOwnPropertyDescriptor вызывала сама себя до переполнения
+ * стека, и в событии не было ни строчки нашего кода. denyUrls такое не
+ * отсеет: он пропускает безымянные кадры и смотрит первый с адресом
+ */
+export function hasOnlyForeignFrames(event: ErrorEvent): boolean {
+    const frames = (event.exception?.values ?? []).flatMap(
+        (value) => value.stacktrace?.frames ?? []
+    );
+    return (
+        frames.length > 0 &&
+        frames.every(
+            (frame) =>
+                !frame.filename ||
+                frame.filename === '<anonymous>' ||
+                frame.filename === '[native code]'
+        )
+    );
+}
+
 /** beforeSend: одно и то же вычищенное событие уходит и в Sentry, и в onEvent. */
 export function createBeforeSend(onEvent: (event: ErrorEvent) => void) {
     return (event: ErrorEvent): ErrorEvent | null => {
         if (window?.location?.host?.includes('localhost')) {
             console.log('Error event is dropped due to dev hostname');
+            return null;
+        }
+        if (hasOnlyForeignFrames(event)) {
             return null;
         }
         const scrubbed = scrubCaptchaDeep(event);
