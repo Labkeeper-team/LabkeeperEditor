@@ -16,6 +16,8 @@ export function isNativeMobileLayoutPath() {
     const pathname = window.location.pathname;
     return (
         layoutViewportWidth() <= MOBILE_BREAKPOINT &&
-        (pathname === Routes.Projects || /^\/project\//.test(pathname))
+        (pathname === Routes.Projects ||
+            pathname === Routes.NewProject ||
+            /^\/project\//.test(pathname))
     );
 }

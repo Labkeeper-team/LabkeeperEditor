@@ -16,6 +16,7 @@ import {
     HunkListResponse,
     ListFilesResponse,
     ListProjectsResponse,
+    ListTemplatesResponse,
     RequestResult,
     RichProject,
     Rpi,
@@ -73,6 +74,7 @@ const RPI_SOURCES: Record<keyof Rpi, string> = {
     getAllProjectsRequest: 'project',
     createProjectRequest: 'project',
     cloneProjectRequest: 'project',
+    listTemplatesRequest: 'template',
     deleteProjectRequest: 'project',
     exportProjectRequest: 'project',
     // LaTeX-архив выполняет программу, как сборка: замок агента на нём штатный
@@ -374,7 +376,7 @@ export class WebRpi implements Rpi {
             [200, 401],
             async () =>
                 axios.post(
-                    `${URLS.setTitle.replace('{id}', projectId)}?name=${title}`
+                    `${URLS.setTitle.replace('{id}', projectId)}?name=${encodeURIComponent(title)}`
                 ),
             projectId
         );
@@ -501,7 +503,7 @@ export class WebRpi implements Rpi {
             [200, 201, 401, 417],
             async () =>
                 axios.put(
-                    `${URLS.createProject}?name=${projectName}&type=${projectType}`,
+                    `${URLS.createProject}?name=${encodeURIComponent(projectName)}&type=${projectType}`,
                     withIds(program)
                 )
         );
@@ -512,10 +514,20 @@ export class WebRpi implements Rpi {
     ): Promise<RequestResult<Project>> {
         return this.requestWrapper(
             'cloneProjectRequest',
-            [200, 201, 401, 417],
+            // 403 и 404: проект шаблона закрыли или удалили
+            [200, 201, 401, 403, 404, 417],
             async () =>
                 axios.post(`${URLS.cloneProject.replace('{id}', projectId)}`),
             projectId
+        );
+    }
+
+    async listTemplatesRequest(params: {
+        page: number;
+        size: number;
+    }): Promise<RequestResult<ListTemplatesResponse>> {
+        return this.requestWrapper('listTemplatesRequest', [200, 400], () =>
+            axios.get(URLS.listTemplates, { params })
         );
     }
 

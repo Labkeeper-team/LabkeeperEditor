@@ -335,9 +335,11 @@ test('remove-readonly-when-project-is-create-test', async () => {
     await projectPageService.onBackButtonClicked();
 
     await projectsPageService.onProjectCreate(
-        'biba',
-        'markdown',
-        () => {},
+        {
+            projectName: 'biba',
+            projectType: 'markdown',
+            agentMode: false,
+        },
         () => {}
     );
 
@@ -470,9 +472,11 @@ test('display-name-new-project-test', async () => {
         },
     } as RequestResult<ListProjectsResponse>); //запрос остальных проектов
     await projectsPageService.onProjectCreate(
-        'New Project',
-        'markdown',
-        () => {},
+        {
+            projectName: 'New Project',
+            projectType: 'markdown',
+            agentMode: false,
+        },
         () => {}
     ); // создать новый проект
     await projectPageService.onBackButtonClicked(); // перейти на экран с проектами

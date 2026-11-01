@@ -99,16 +99,41 @@ export const ru: Translations = {
     label_no_result_part1: 'Добавьте код или маркдаун',
     label_no_result_part2: 'и нажмите "Выполнить"', //Add the code or markdown and click "RUN"
     delete_modal: 'Вы уверены, что хотите удалить',
-    create_modal: {
-        label: 'Создать новый проект',
-        create: 'Создать',
+    new_project: {
+        title: 'Новый проект',
+        back: 'Мои проекты',
         name: 'Имя проекта',
         project_type: 'Тип проекта',
-        type_markdown: 'Markdown',
         type_latex: 'LaTeX',
+        type_latex_hint:
+            'Сегменты собираются в LaTeX, и сервер компилирует PDF. Доступны все возможности LaTeX, сборка идёт чуть дольше',
+        type_markdown: 'Markdown',
+        type_markdown_hint:
+            'Сегменты превращаются в Markdown и показываются прямо в браузере. Быстро, но сложный LaTeX выглядит проще',
+        type_from_template:
+            'Тип задан шаблоном. Чтобы выбрать его самому, возьмите пустой проект',
+        template: 'С чего начать',
+        empty_project: 'Пустой проект',
+        empty_project_hint: 'Чистый лист выбранного типа',
+        all_templates: 'Все шаблоны',
+        categories: {
+            labs: 'Лабораторные работы',
+            diploma: 'Дипломные работы',
+            cv: 'Резюме / CV',
+        },
+        templates_loading: 'Загружаем шаблоны…',
+        templates_error: 'Не удалось загрузить шаблоны',
+        templates_retry: 'Повторить',
+        template_page: 'О шаблоне',
+        agent_mode: 'Открыть в агентском режиме',
+        agent_mode_hint: 'Опишите документ, и агент соберёт его сам',
+        create: 'Создать проект',
+        creating: 'Создаём…',
         error: {
             empty_name: 'Введите имя проекта',
             too_many_projects: 'Слишком много проектов',
+            template_unavailable: 'Шаблон сейчас недоступен, выберите другой',
+            failed: 'Не удалось создать проект, попробуйте ещё раз',
         },
     },
     rounding_mode: {

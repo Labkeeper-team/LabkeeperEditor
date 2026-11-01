@@ -13,6 +13,7 @@ import {
     Program,
     Project,
     ProjectShort,
+    ProjectTemplate,
     ProjectType,
     UserInfo,
 } from '../../../model/domain.ts';
@@ -30,6 +31,7 @@ import {
     PasswordRequestState,
     PendingSegmentEditorCursor,
     SaveProjectRequestState,
+    TemplatesRequestState,
 } from '../../../viewModel/repository';
 import { createEmptyProgram } from '../../../model/repository/ProgramRepository.ts';
 import {
@@ -81,6 +83,8 @@ interface SettingsState {
 
 interface ProjectsState {
     projects: ProjectShort[];
+    templates: ProjectTemplate[];
+    templatesRequestState: TemplatesRequestState;
 }
 
 interface BillingState {
@@ -289,6 +293,8 @@ export const projectInitialState: ProjectState = {
 
 export const projectsInitialState: ProjectsState = {
     projects: [],
+    templates: [],
+    templatesRequestState: 'unknown',
 };
 
 export type BillingPricingRequestState = 'unknown' | 'loading' | 'ok' | 'error';

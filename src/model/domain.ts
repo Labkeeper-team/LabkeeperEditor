@@ -170,6 +170,23 @@ export interface ProjectShort {
     lastModified: string;
 }
 
+/**
+ * Шаблон из каталога: открытый проект, который клонируется в новый. Тип
+ * проекта сервер отдельным полем не присылает, он лежит среди категорий
+ * (latex или markdown) рядом с темой: labs, cv, журнал
+ */
+export interface ProjectTemplate {
+    slug: string;
+    projectId: string;
+    title: string;
+    description: string;
+    categories: string[];
+    /** Страница шаблона на сайте, например /templates/altacv */
+    path: string;
+    /** Картинка первой страницы PDF на сайте, например /assets/img/templates/altacv.png */
+    previewImage?: string;
+}
+
 export enum CompileError {
     // TOKENIZER
     CODE_NO_END_QUOTES = 100,

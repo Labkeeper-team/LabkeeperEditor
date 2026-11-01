@@ -444,7 +444,7 @@ export class ProjectPageService {
             );
             if (result.code === 417) {
                 this.repository.toast(
-                    this.repository.dictionary.create_modal.error
+                    this.repository.dictionary.new_project.error
                         .too_many_projects,
                     'error'
                 );

@@ -115,9 +115,14 @@ import {
     ProjectExportFormat,
     ProjectType,
     ProjectShort,
+    ProjectTemplate,
 } from '../../model/domain.ts';
 import { downloadFile } from '../utils/downloadFile.ts';
-import { setProjects } from './slices/projects';
+import {
+    setProjects,
+    setTemplates,
+    setTemplatesRequestState,
+} from './slices/projects';
 import {
     setBillingPaymentWidgetToken,
     setBillingPricing,
@@ -159,6 +164,7 @@ import {
     SaveProjectRequestState,
     SearchCurrentMatch,
     SetLocationOptions,
+    TemplatesRequestState,
     ViewModelRepository,
 } from '../../viewModel/repository';
 
@@ -459,6 +465,13 @@ export const createViewModelStateFromStore = (
 
             setProjects: (projects: ProjectShort[]) =>
                 store.dispatch(setProjects(projects)),
+            templates: () => store.getState().projects.templates,
+            setTemplates: (templates: ProjectTemplate[]) =>
+                store.dispatch(setTemplates(templates)),
+            templatesRequestState: () =>
+                store.getState().projects.templatesRequestState,
+            setTemplatesRequestState: (state: TemplatesRequestState) =>
+                store.dispatch(setTemplatesRequestState(state)),
         },
         billingViewModelRepository: {
             paymentWidgetToken: () =>

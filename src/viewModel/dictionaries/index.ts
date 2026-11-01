@@ -87,16 +87,39 @@ export interface Translations {
     label_no_result_part1: string;
     label_no_result_part2: string; //Add the code or markdown and click "RUN"
     delete_modal: string;
-    create_modal: {
-        label: string;
-        create: string;
+    new_project: {
+        title: string;
+        back: string;
         name: string;
         project_type: string;
-        type_markdown: string;
         type_latex: string;
+        type_latex_hint: string;
+        type_markdown: string;
+        type_markdown_hint: string;
+        type_from_template: string;
+        template: string;
+        empty_project: string;
+        empty_project_hint: string;
+        all_templates: string;
+        /** Темы каталога, по которым его можно отфильтровать, как на сайте */
+        categories: {
+            labs: string;
+            diploma: string;
+            cv: string;
+        };
+        templates_loading: string;
+        templates_error: string;
+        templates_retry: string;
+        template_page: string;
+        agent_mode: string;
+        agent_mode_hint: string;
+        create: string;
+        creating: string;
         error: {
             empty_name: string;
             too_many_projects: string;
+            template_unavailable: string;
+            failed: string;
         };
     };
     rounding_mode: {

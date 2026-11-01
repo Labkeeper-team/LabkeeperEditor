@@ -2,13 +2,13 @@ import { useDispatch, useSelector } from 'react-redux';
 import { formatDistance } from 'date-fns';
 import { enGB, ru } from 'date-fns/locale';
 import React, { useCallback, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import './style.scss';
 import { Typography } from '../../components/typography';
 import { Button } from '../../components/button';
 import { PlusIcon } from '../../icons';
 import { Modal } from '../../components/modal';
-import { AddProjectModal } from './addProjectModal';
 import { DeleteProjectModal } from './deleteProjectModal';
 import { ProjectShort } from '../../../model/domain';
 import { ProjectTitle } from './projectTitle';
@@ -36,7 +36,6 @@ const projectHref = (projectId?: string) =>
     Routes.Project.replace(':id', projectId ?? '');
 
 export const ProjectsPage = () => {
-    const [showAddModal, setShowAddModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState<
         false | ProjectShort
     >(false);
@@ -50,6 +49,7 @@ export const ProjectsPage = () => {
         (state: StorageState) => state.ide.getProjectsRequestState
     );
     const dispatch = useDispatch<AppDispatch>();
+    const navigate = useNavigate();
     const isMobile = useIsMobile();
 
     const localize = useMemo(() => {
@@ -67,8 +67,8 @@ export const ProjectsPage = () => {
         controller.trackUiEvent(Events.EVENT_CREATE_PROJECT_CLICKED, {
             projects_count: projects.length,
         });
-        setShowAddModal(true);
-    }, [projects.length]);
+        navigate(Routes.NewProject);
+    }, [navigate, projects.length]);
 
     const onClickDeleteProject = useCallback(
         (e: React.MouseEvent<HTMLElement, unknown>, project: ProjectShort) => {
@@ -579,12 +579,6 @@ export const ProjectsPage = () => {
                     ) : null}
                 </div>
             </div>
-            <Modal
-                onClose={() => setShowAddModal(false)}
-                showModal={showAddModal}
-            >
-                <AddProjectModal onClose={() => setShowAddModal(false)} />
-            </Modal>
             <Modal
                 onClose={() => setShowDeleteModal(false)}
                 showModal={!!showDeleteModal}

@@ -1,0 +1,341 @@
+import { expect, test, type Page, type Request } from '@playwright/test';
+import { RouteSetup } from './mock.routeSetUp.tsx';
+
+/** GH-217: новый проект создаётся на своей странице, пустым или из шаблона */
+
+const uuid = '2cd18704-6c3f-48cb-96f1-9a923930f8cb';
+
+// прозрачная картинка 1×1: превью шаблонов живут на сайте, а не в редакторе
+const PNG = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+    'base64'
+);
+
+const TEMPLATES = [
+    {
+        slug: 'altacv',
+        projectId: '11111111-1111-4111-8111-111111111111',
+        title: 'Резюме AltaCV',
+        description: 'Резюме в две колонки на LaTeX',
+        categories: ['latex', 'cv'],
+        path: '/templates/altacv',
+        previewImage: '/assets/img/templates/altacv.png',
+    },
+    {
+        slug: 'radiatsionnyi-fon',
+        projectId: '22222222-2222-4222-8222-222222222222',
+        title: 'Радиационный фон',
+        description: 'Лабораторная работа с расчётом погрешностей',
+        categories: ['markdown', 'labs'],
+        path: '/templates/radiatsionnyi-fon',
+        previewImage: '/assets/img/templates/radiatsionnyi-fon.png',
+    },
+    {
+        slug: 'mdpi',
+        projectId: '33333333-3333-4333-8333-333333333333',
+        title: 'Статья MDPI',
+        description: 'Шаблон статьи для журналов MDPI',
+        categories: ['latex', 'mdpi'],
+        path: '/templates/mdpi',
+    },
+];
+
+const createdProject = (projectType: string) => ({
+    projectId: uuid,
+    userId: 1,
+    title: 'Default Project',
+    lastModified: new Date().toISOString(),
+    isPublic: false,
+    program: { segments: [], parameters: { roundStrategy: 'noRound' } },
+    projectType,
+});
+
+type Calls = {
+    create: Request[];
+    clone: Request[];
+    title: Request[];
+};
+
+async function openNewProject(
+    page: Page,
+    options: {
+        authenticated?: boolean;
+        templatesStatus?: number;
+        /** Ответ user-info придёт, только когда исполнится обещание */
+        holdUserInfo?: Promise<void>;
+    } = {}
+): Promise<Calls> {
+    const routeSetup = new RouteSetup(page);
+    await routeSetup.setupProject();
+    await routeSetup.setupListFilesRequest();
+    await routeSetup.setupGetUserInfoRequest(options.authenticated ?? true);
+    await routeSetup.setupGetAllProjectsRequest();
+    const { holdUserInfo } = options;
+    if (holdUserInfo) {
+        await page.route('**/api/v4/public/user-info**', async (route) => {
+            await holdUserInfo;
+            await route.fallback();
+        });
+    }
+
+    const calls: Calls = { create: [], clone: [], title: [] };
+    await page.route('**/api/v4/public/templates**', (route) =>
+        route.fulfill({
+            status: options.templatesStatus ?? 200,
+            contentType: 'application/json',
+            body: JSON.stringify({ templates: TEMPLATES }),
+        })
+    );
+    await page.route('**/assets/img/templates/**', (route) =>
+        route.fulfill({ contentType: 'image/png', body: PNG })
+    );
+    await page.route('**/api/v4/public/project/create**', (route) => {
+        calls.create.push(route.request());
+        if (options.authenticated === false) {
+            return route.fulfill({ status: 401, body: '' });
+        }
+        const type = new URL(route.request().url()).searchParams.get('type');
+        return route.fulfill({
+            status: 201,
+            contentType: 'application/json',
+            body: JSON.stringify(createdProject(type ?? 'latex')),
+        });
+    });
+    await page.route('**/api/v4/public/project/*/clone', (route) => {
+        calls.clone.push(route.request());
+        return route.fulfill({
+            status: 201,
+            contentType: 'application/json',
+            body: JSON.stringify({
+                ...createdProject('markdown'),
+                title: 'Радиационный фон',
+            }),
+        });
+    });
+    await page.route(`**/api/v4/public/project/${uuid}/title**`, (route) => {
+        calls.title.push(route.request());
+        return route.fulfill({ status: 200, body: '' });
+    });
+
+    await page.goto('/projects/new');
+    await expect(page.locator('.new-project__title')).toHaveText('New project');
+    return calls;
+}
+
+const card = (page: Page, slug: string) =>
+    page.locator(`.new-project__card[data-template="${slug}"]`);
+
+const typeButton = (page: Page, name: string) =>
+    page.locator('.new-project__type', {
+        has: page.locator('.new-project__type-name', {
+            hasText: new RegExp(`^${name}$`),
+        }),
+    });
+
+test.use({ viewport: { width: 1360, height: 900 } });
+
+test('кнопка в списке проектов ведёт на страницу нового проекта', async ({
+    page,
+}) => {
+    const routeSetup = new RouteSetup(page);
+    await routeSetup.setupProject();
+    await routeSetup.setupListFilesRequest();
+    await routeSetup.setupGetUserInfoRequest(true);
+    await routeSetup.setupGetAllProjectsRequest();
+    await page.route('**/api/v4/public/templates**', (route) =>
+        route.fulfill({
+            contentType: 'application/json',
+            body: JSON.stringify({ templates: TEMPLATES }),
+        })
+    );
+    await page.goto('/projects');
+
+    await page.getByRole('button', { name: 'Add', exact: true }).click();
+
+    await expect(page).toHaveURL(/\/projects\/new$/);
+    await expect(page.locator('.modal')).toHaveCount(0);
+    await expect(card(page, 'altacv')).toBeVisible();
+});
+
+test('пустой проект создаётся с выбранным типом и введённым именем', async ({
+    page,
+}) => {
+    const calls = await openNewProject(page);
+
+    await expect(typeButton(page, 'LaTeX')).toHaveAttribute(
+        'aria-pressed',
+        'true'
+    );
+    await expect(typeButton(page, 'Markdown')).toContainText(
+        'render right in the browser'
+    );
+    await typeButton(page, 'Markdown').click();
+    await page.getByRole('textbox').fill('Лаба #3 & выводы');
+    await page.getByRole('button', { name: 'Create project' }).click();
+
+    await expect(page).toHaveURL(`/project/${uuid}`);
+    expect(calls.clone).toHaveLength(0);
+    expect(calls.create).toHaveLength(1);
+    const url = new URL(calls.create[0].url());
+    expect(url.searchParams.get('name')).toBe('Лаба #3 & выводы');
+    expect(url.searchParams.get('type')).toBe('markdown');
+});
+
+test('проект из шаблона клонируется, переименовывается и открывается в агентском режиме', async ({
+    page,
+}) => {
+    const calls = await openNewProject(page);
+
+    await card(page, 'radiatsionnyi-fon')
+        .locator('.new-project__card-select')
+        .click();
+
+    // имя подставилось из шаблона, тип задан шаблоном и не меняется
+    await expect(page.getByRole('textbox')).toHaveValue('Радиационный фон');
+    await expect(typeButton(page, 'Markdown')).toHaveAttribute(
+        'aria-pressed',
+        'true'
+    );
+    await expect(typeButton(page, 'LaTeX')).toBeDisabled();
+    await expect(page.locator('.new-project__note')).toBeVisible();
+    // картинка первой страницы видна на карточке
+    await expect
+        .poll(() =>
+            card(page, 'radiatsionnyi-fon')
+                .locator('img')
+                .evaluate((img: HTMLImageElement) => img.naturalWidth)
+        )
+        .toBeGreaterThan(0);
+    await expect(
+        card(page, 'radiatsionnyi-fon').getByRole('link')
+    ).toHaveAttribute('href', '/templates/radiatsionnyi-fon');
+
+    await page.getByRole('textbox').fill('Моя лабораторная');
+    await page.getByLabel('Open in agent mode').check();
+    await page.getByRole('button', { name: 'Create project' }).click();
+
+    await expect(page).toHaveURL(`/project/${uuid}/agent`);
+    expect(calls.create).toHaveLength(0);
+    expect(
+        calls.clone.map((request) => new URL(request.url()).pathname)
+    ).toEqual([
+        '/api/v4/public/project/22222222-2222-4222-8222-222222222222/clone',
+    ]);
+    expect(new URL(calls.title[0].url()).searchParams.get('name')).toBe(
+        'Моя лабораторная'
+    );
+});
+
+test('выбор пустого проекта после шаблона возвращает тип и убирает имя шаблона', async ({
+    page,
+}) => {
+    await openNewProject(page);
+
+    await card(page, 'altacv').locator('.new-project__card-select').click();
+    await expect(page.getByRole('textbox')).toHaveValue('Резюме AltaCV');
+
+    await page
+        .locator('.new-project__card', { hasText: 'Empty project' })
+        .locator('.new-project__card-select')
+        .click();
+
+    await expect(page.getByRole('textbox')).toHaveValue('');
+    await expect(typeButton(page, 'Markdown')).toBeEnabled();
+    await expect(page.locator('.new-project__note')).toHaveCount(0);
+});
+
+test('фильтр показывает только темы каталога, журналы остаются среди всех', async ({
+    page,
+}) => {
+    await openNewProject(page);
+
+    const filters = page.locator('.new-project__filter');
+    await expect(filters).toHaveText([
+        'All templates',
+        'Lab reports',
+        'Resume / CV',
+    ]);
+
+    await filters.filter({ hasText: 'Resume / CV' }).click();
+    await expect(page.locator('.new-project__card[data-template]')).toHaveCount(
+        1
+    );
+    await expect(card(page, 'altacv')).toBeVisible();
+
+    await filters.filter({ hasText: 'All templates' }).click();
+    await expect(page.locator('.new-project__card[data-template]')).toHaveCount(
+        3
+    );
+});
+
+test('без каталога можно создать пустой проект и повторить загрузку', async ({
+    page,
+}) => {
+    await openNewProject(page, { templatesStatus: 404 });
+
+    await expect(page.locator('.new-project__status')).toContainText(
+        'Could not load templates'
+    );
+    await expect(
+        page.locator('.new-project__card', { hasText: 'Empty project' })
+    ).toBeVisible();
+
+    await page.unroute('**/api/v4/public/templates**');
+    await page.route('**/api/v4/public/templates**', (route) =>
+        route.fulfill({
+            contentType: 'application/json',
+            body: JSON.stringify({ templates: TEMPLATES }),
+        })
+    );
+    await page.getByRole('button', { name: 'Try again' }).click();
+
+    await expect(card(page, 'altacv')).toBeVisible();
+    await expect(page.locator('.new-project__status')).toHaveCount(0);
+});
+
+// вход проверяет сервер: вошедший человек, нажавший до ответа user-info, получит проект
+test('гостю создание предлагает войти', async ({ page }) => {
+    const calls = await openNewProject(page, { authenticated: false });
+
+    await page.getByRole('textbox').fill('Отчёт');
+    await page.getByRole('button', { name: 'Create project' }).click();
+
+    await expect(page.getByText('Authorization')).toBeVisible();
+    expect(calls.create).toHaveLength(1);
+    await expect(page).toHaveURL(/\/projects\/new$/);
+    await expect(page.locator('.new-project__error')).toHaveCount(0);
+});
+
+test('нажатие до ответа user-info всё равно создаёт проект', async ({
+    page,
+}) => {
+    let releaseUser: () => void = () => {};
+    const userHeld = new Promise<void>((resolve) => {
+        releaseUser = resolve;
+    });
+    const calls = await openNewProject(page, { holdUserInfo: userHeld });
+
+    await page.getByRole('textbox').fill('Отчёт');
+    await page.getByRole('button', { name: 'Create project' }).click();
+
+    await expect(page).toHaveURL(`/project/${uuid}`);
+    expect(calls.create).toHaveLength(1);
+    await expect(page.getByText('Authorization')).toHaveCount(0);
+    releaseUser();
+});
+
+test('на телефоне страница не шире экрана, а кнопка создания видна', async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openNewProject(page);
+
+    await expect(card(page, 'altacv')).toBeVisible();
+    const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth - window.innerWidth
+    );
+    expect(overflow).toBeLessThanOrEqual(0);
+    await expect(
+        page.getByRole('button', { name: 'Create project' })
+    ).toBeInViewport();
+});
