@@ -50,12 +50,9 @@ export const MarketingHeader = () => {
         action();
     };
 
-    const onAnchorNav = (anchor: string) => {
-        window.location.href = `https://labkeeper.io/#${anchor}`;
-    };
-
-    const onAboutNav = () => {
-        window.location.href = 'https://labkeeper.io/about';
+    // страницы сайта на том же адресе, что и редактор: с препрода не уводит на прод
+    const openSitePage = (path: string) => {
+        window.location.assign(path);
     };
 
     const onLanguageSelect = (lang: Language) => {
@@ -67,25 +64,11 @@ export const MarketingHeader = () => {
     };
 
     const isTokensRoute = location.pathname === Routes.Tokens;
+    // те же пункты, что в шапке сайта
     const navItems = [
         {
-            title: dictionary.tokens_page.navigation.advantages,
-            action: () => onAnchorNav('features'),
-            isActive: false,
-        },
-        {
-            title: dictionary.tokens_page.navigation.features,
-            action: () => onAnchorNav('advantages'),
-            isActive: false,
-        },
-        {
-            title: dictionary.tokens_page.navigation.for_whom,
-            action: () => onAnchorNav('audience'),
-            isActive: false,
-        },
-        {
-            title: dictionary.tokens_page.navigation.examples,
-            action: () => onAnchorNav('examples'),
+            title: dictionary.tokens_page.navigation.templates,
+            action: () => openSitePage('/templates'),
             isActive: false,
         },
         {
@@ -94,8 +77,13 @@ export const MarketingHeader = () => {
             isActive: isTokensRoute,
         },
         {
+            title: dictionary.tokens_page.navigation.blog,
+            action: () => openSitePage('/blog'),
+            isActive: false,
+        },
+        {
             title: dictionary.tokens_page.navigation.about,
-            action: onAboutNav,
+            action: () => openSitePage('/about'),
             isActive: false,
         },
     ];

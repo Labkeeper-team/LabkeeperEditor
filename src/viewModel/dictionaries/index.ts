@@ -433,11 +433,11 @@ export interface Translations {
             widget_error: string;
         };
         navigation: {
+            templates: string;
+            tokens: string;
+            blog: string;
             advantages: string;
             features: string;
-            for_whom: string;
-            examples: string;
-            tokens: string;
             about: string;
             login: string;
             logout: string;

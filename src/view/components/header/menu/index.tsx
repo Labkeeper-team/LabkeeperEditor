@@ -79,17 +79,6 @@ export const HeaderMenu = () => {
         dispatch(setShowShareModal(true));
     }, [dispatch]);
 
-    const openAuthModal = useCallback(() => {
-        dispatch(controller.onAuthButtonClickedRequest('menu'));
-    }, [dispatch]);
-
-    const openLandingAnchor = useCallback(
-        (anchor: string) => {
-            openExternal(`${SITE_ORIGIN}/#${anchor}`);
-        },
-        [openExternal]
-    );
-
     const isProjectPage = location.pathname.startsWith('/project/');
 
     const alternateLanguage = LANGUAGE_OPTIONS.find(
@@ -279,91 +268,8 @@ export const HeaderMenu = () => {
         ]
     );
 
-    const tokensPageMenuItems: HeaderMenuItem[] = useMemo(
-        () =>
-            withMobileLanguageItem([
-                {
-                    title: dictionary.tokens_page.navigation.advantages,
-                    item: 'advantages',
-                    onClick: () => openLandingAnchor('advantages'),
-                },
-                {
-                    title: dictionary.tokens_page.navigation.features,
-                    item: 'features',
-                    onClick: () => openLandingAnchor('features'),
-                },
-                {
-                    title: dictionary.tokens_page.navigation.for_whom,
-                    item: 'for_whom',
-                    onClick: () => openLandingAnchor('for-whom'),
-                },
-                {
-                    title: dictionary.tokens_page.navigation.examples,
-                    item: 'examples',
-                    onClick: () => openLandingAnchor('examples'),
-                },
-                {
-                    title: dictionary.tokens_page.navigation.tokens,
-                    item: 'tokens',
-                    onClick: () => navigate(Routes.Tokens),
-                },
-                {
-                    title: dictionary.tokens_page.navigation.about,
-                    item: 'about',
-                    onClick: () => openExternal(ABOUT_URL),
-                    separatorAfter: true,
-                },
-                ...(isAuthenticated
-                    ? [
-                          {
-                              title: dictionary.tokens_page.navigation.logout,
-                              item: 'logout',
-                              onClick: () => setShowLogoutModal(true),
-                          },
-                      ]
-                    : [
-                          {
-                              title: dictionary.tokens_page.navigation.login,
-                              item: 'login',
-                              onClick: openAuthModal,
-                          },
-                      ]),
-                {
-                    title: dictionary.tokens_page.navigation.editor,
-                    item: 'editor',
-                    onClick: () =>
-                        dispatch(
-                            controller.onOpenEditorAfterSpaNavigationRequest()
-                        ),
-                },
-                ...(isAuthenticated
-                    ? [
-                          {
-                              title: dictionary.tokens_page.navigation.projects,
-                              item: 'projects',
-                              onClick: () => navigate(Routes.Projects),
-                          },
-                      ]
-                    : []),
-            ]),
-        [
-            dictionary,
-            dispatch,
-            isAuthenticated,
-            navigate,
-            openAuthModal,
-            openExternal,
-            openLandingAnchor,
-            withMobileLanguageItem,
-        ]
-    );
-
-    const isTokensPage = location.pathname === Routes.Tokens;
-    const items = isTokensPage
-        ? tokensPageMenuItems
-        : isAuthenticated
-          ? authenticatedMenuItems
-          : publicMenuItems;
+    // на страницах токенов и оплаты шапка своя, MarketingHeader, этого меню там нет
+    const items = isAuthenticated ? authenticatedMenuItems : publicMenuItems;
     const useIconTrigger = isMobile;
     const showsEmailInTrigger = Boolean(
         !useIconTrigger && isAuthenticated && email

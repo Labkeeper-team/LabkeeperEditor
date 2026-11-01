@@ -14,7 +14,7 @@ export const MarketingFooter = () => {
     const nav = dictionary.tokens_page.navigation;
     const footer = dictionary.tokens_page.footer;
 
-    /** Same links as labkeeper.io footer (anchors + wiki + about). */
+    /** Те же ссылки, что в подвале сайта, на том же адресе, что и редактор */
     const navItems: {
         key: string;
         label: string;
@@ -24,12 +24,17 @@ export const MarketingFooter = () => {
         {
             key: 'advantages',
             label: nav.advantages,
-            href: 'https://labkeeper.io/#features',
+            href: '/#features',
         },
         {
             key: 'features',
             label: nav.features,
-            href: 'https://labkeeper.io/#advantages',
+            href: '/#advantages',
+        },
+        {
+            key: 'tokens',
+            label: nav.tokens,
+            href: Routes.Tokens,
         },
         {
             key: 'wiki',
@@ -38,9 +43,14 @@ export const MarketingFooter = () => {
             external: true,
         },
         {
+            key: 'blog',
+            label: nav.blog,
+            href: '/blog',
+        },
+        {
             key: 'about',
             label: nav.about,
-            href: 'https://labkeeper.io/about',
+            href: '/about',
         },
     ];
 
