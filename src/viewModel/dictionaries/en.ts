@@ -184,7 +184,7 @@ export const en: Translations = {
     },
     header_menu: {
         menu: 'Menu',
-        examples: 'Project examples',
+        templates: 'Templates',
         privacy_policy: 'Privacy policy',
         tokens: 'Tokens',
         top_up_balance: 'Top up balance',
