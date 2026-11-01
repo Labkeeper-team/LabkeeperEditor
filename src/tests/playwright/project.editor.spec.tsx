@@ -2,6 +2,7 @@ import { test, expect, Page } from '@playwright/test';
 import { RouteSetup } from './mock.routeSetUp.tsx';
 import { Program } from '../../model/domain.ts';
 import { ExternalLinks } from '../../viewModel/externalLinks.ts';
+import { Routes } from '../../viewModel/routes.ts';
 
 const uuid = '2cd18704-6c3f-48cb-96f1-9a923930f8cb';
 
@@ -1669,16 +1670,19 @@ test('oauth2-code-offline-provider', async ({ page }) => {
 });
 
 /** Открывает проект по умолчанию: тестам про шапку хватает пустого */
-async function openProjectForHeaderTests(page: Page) {
+async function openProjectForHeaderTests(page: Page, isAuthenticated = true) {
     const routeSetup = new RouteSetup(page);
-    await routeSetup.setupGetUserInfoRequest();
+    await routeSetup.setupGetUserInfoRequest(isAuthenticated);
     await routeSetup.setupGetDefaultProjectRequest();
     await routeSetup.setupGetProjectRequest();
     await routeSetup.setupListFilesRequest();
 
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
-    await expect(page).toHaveURL(`/project/${uuid}`);
+    // гость остаётся в проекте по умолчанию, у вошедшего он открывается по id
+    await expect(page).toHaveURL(
+        isAuthenticated ? `/project/${uuid}` : Routes.ProjectDefault
+    );
 }
 
 /*
@@ -1720,3 +1724,32 @@ test('github-link-moves-to-menu-on-mobile', async ({ page }) => {
         page.getByRole('listitem').filter({ hasText: /^GitHub$/ })
     ).toBeVisible();
 });
+
+/*
+Тест на меню: вместо примеров на главной пункт «Шаблоны» открывает каталог шаблонов
+в новой вкладке, и у гостя, и после входа
+ */
+for (const isAuthenticated of [false, true]) {
+    const who = isAuthenticated ? 'user' : 'guest';
+    test(`templates-menu-item-opens-catalog-${who}`, async ({
+        page,
+        context,
+    }) => {
+        await page.setViewportSize({ width: 1280, height: 900 });
+        // каталог живёт на лендинге, а не в редакторе: вместо него пустая страница
+        await context.route('**/templates', (route) =>
+            route.fulfill({ contentType: 'text/html', body: '<html></html>' })
+        );
+        await openProjectForHeaderTests(page, isAuthenticated);
+
+        await page.locator('.header-menu-select .select-header').click();
+        const items = page.getByRole('listitem');
+        await expect(items.filter({ hasText: /^Templates$/ })).toBeVisible();
+        await expect(items.filter({ hasText: /examples/i })).toHaveCount(0);
+
+        const popup = context.waitForEvent('page');
+        await items.filter({ hasText: /^Templates$/ }).click();
+        const tab = await popup;
+        await expect(tab).toHaveURL(/^http:\/\/localhost:\d+\/templates$/);
+    });
+}
