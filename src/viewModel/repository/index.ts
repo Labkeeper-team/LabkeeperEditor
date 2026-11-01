@@ -25,6 +25,7 @@ import {
     ProjectExportFormat,
     ProjectType,
     ProjectShort,
+    ProjectTemplate,
     UserInfo,
 } from '../../model/domain.ts';
 import { BillingPricingResponse } from '../../model/rpi';
@@ -76,6 +77,8 @@ export type GetProjectsRequestState =
 export type SaveProjectRequestState = 'unknown' | 'ok' | 'error' | 'loading';
 
 export type BillingPricingRequestState = 'unknown' | 'loading' | 'ok' | 'error';
+
+export type TemplatesRequestState = 'unknown' | 'loading' | 'ok' | 'error';
 
 /** Стадия прогона агента. Блокировка правок и спиннер в ленте — производные от неё */
 export type AgentRequestState =
@@ -310,6 +313,8 @@ export const mockViewModelState = (): MockViewModelRepository => {
     let textFileChangeRevision = 0;
     let savedTextFileRevision = 0;
     let exportingProject: ProjectExportFormat | null = null;
+    let templates: ProjectTemplate[] = [];
+    let templatesRequestState: TemplatesRequestState = 'unknown';
     return {
         mockState: () => mockViewModelState,
         scrollEditorToBottom: () => ({}),
@@ -636,6 +641,12 @@ export const mockViewModelState = (): MockViewModelRepository => {
 
             setProjects: (v: ProjectShort[]) =>
                 (mockViewModelState.projects = structuredClone(v)),
+            templates: () => templates,
+            setTemplates: (v: ProjectTemplate[]) =>
+                (templates = structuredClone(v)),
+            templatesRequestState: () => templatesRequestState,
+            setTemplatesRequestState: (v: TemplatesRequestState) =>
+                (templatesRequestState = v),
         },
         billingViewModelRepository: {
             paymentWidgetToken: () =>
@@ -887,6 +898,15 @@ export interface ProjectsViewModelRepository {
     projects: () => ProjectShort[];
 
     setProjects: (projects: ProjectShort[]) => void;
+
+    /** Каталог шаблонов для страницы нового проекта */
+    templates: () => ProjectTemplate[];
+
+    setTemplates: (templates: ProjectTemplate[]) => void;
+
+    templatesRequestState: () => TemplatesRequestState;
+
+    setTemplatesRequestState: (state: TemplatesRequestState) => void;
 }
 
 export interface BillingViewModelRepository {

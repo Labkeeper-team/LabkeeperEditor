@@ -16,7 +16,10 @@ import { FileManagerService } from '../viewModel/operation/FileManagerService.ts
 import { TextFileEditorService } from '../viewModel/operation/TextFileEditorService.ts';
 import { ProgramEditorService } from '../viewModel/operation/ProgramEditorService.ts';
 import { ProjectPageService } from '../viewModel/operation/ProjectPageService.ts';
-import { ProjectsPageService } from '../viewModel/operation/ProjectsPageService.ts';
+import {
+    NewProjectRequest,
+    ProjectsPageService,
+} from '../viewModel/operation/ProjectsPageService.ts';
 import { StartupService } from '../viewModel/operation/StartupService.ts';
 import { TokenPageService } from '../viewModel/operation/TokenPageService.ts';
 import { HunkService } from '../viewModel/operation/HunkService.ts';
@@ -870,23 +873,20 @@ export class Controller {
     onProjectCreateRequest = createAsyncThunk(
         'onProjectCreateRequest',
         async ({
-            projectName,
-            projectType,
-            errorCallback,
-            okCallback,
-        }: {
-            projectName: string;
-            projectType: ProjectType;
-            okCallback: () => void;
-            errorCallback: (message: string) => void;
-        }) => {
+            onFinished,
+            ...request
+        }: NewProjectRequest & { onFinished: (error?: string) => void }) => {
             await this.wrapper('onProjectCreateRequest', () =>
-                this.projectsPageService.onProjectCreate(
-                    projectName,
-                    projectType,
-                    okCallback,
-                    errorCallback
-                )
+                this.projectsPageService.onProjectCreate(request, onFinished)
+            );
+        }
+    );
+
+    onNewProjectPageOpenedRequest = createAsyncThunk(
+        'onNewProjectPageOpenedRequest',
+        async () => {
+            await this.wrapper('onNewProjectPageOpenedRequest', () =>
+                this.projectsPageService.loadTemplates()
             );
         }
     );

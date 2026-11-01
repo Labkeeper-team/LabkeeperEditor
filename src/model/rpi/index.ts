@@ -7,6 +7,7 @@ import {
     Program,
     Project,
     ProjectShort,
+    ProjectTemplate,
     ProjectType,
     UserInfo,
 } from '../domain.ts';
@@ -54,6 +55,11 @@ export interface ListFilesResponse {
 
 export interface ListProjectsResponse {
     projects: ProjectShort[];
+}
+
+export interface ListTemplatesResponse {
+    /** В порядке каталога */
+    templates: ProjectTemplate[];
 }
 
 export interface CodeValidationResponse {
@@ -196,6 +202,11 @@ export interface Rpi {
 
     cloneProjectRequest(projectId: string): Promise<RequestResult<Project>>;
 
+    listTemplatesRequest(params: {
+        page: number;
+        size: number;
+    }): Promise<RequestResult<ListTemplatesResponse>>;
+
     deleteProjectRequest(projectId: string): Promise<RequestResult>;
 
     exportProjectRequest(
@@ -332,6 +343,9 @@ export const mockRpi = (): Rpi => {
             throw new Error('Not implemented');
         },
         createProjectRequest: () => {
+            throw new Error('Not implemented');
+        },
+        listTemplatesRequest: () => {
             throw new Error('Not implemented');
         },
         deleteProjectRequest: () => {

@@ -33,6 +33,7 @@ jest.mock('../../../constants.ts', () => ({
         blogExampleProgram: '/api/v4/public/blog/{slug}/program',
         createProject: '/api/v4/public/project/create',
         cloneProject: '/api/v4/public/project/{id}/clone',
+        listTemplates: '/api/v4/public/templates',
         deleteProject: '/api/v4/public/project/{id}/delete',
         exportProject: '/api/v4/public/project/{id}/export',
         exportProjectTex: '/api/v4/public/project/{id}/export/tex',
@@ -285,6 +286,13 @@ const RPI_CASES: RpiCase[] = [
         call: (rpi) => rpi.cloneProjectRequest(PROJECT_ID),
     },
     {
+        method: 'listTemplatesRequest',
+        source: 'template',
+        scoped: false,
+        expects423: false,
+        call: (rpi) => rpi.listTemplatesRequest({ page: 0, size: 100 }),
+    },
+    {
         method: 'deleteProjectRequest',
         source: 'project',
         scoped: true,
@@ -475,6 +483,51 @@ describe('WebRpi', () => {
         expect(postMock).toHaveBeenCalledWith(
             expect.stringContaining('old=note.txt&new=folder name/<>?.txt')
         );
+    });
+
+    // GH-217: имя вводит человек, и & или # в нём не должны обрезать запрос
+    test('createProjectRequest and setTitleRequest encode the project name', async () => {
+        const putMock = axios.put as jest.Mock;
+        const postMock = axios.post as jest.Mock;
+        putMock.mockResolvedValue({ status: 201, data: {} });
+        postMock.mockResolvedValue({ status: 200, data: {} });
+        const { rpi } = createRpi();
+
+        await rpi.createProjectRequest('Лаба #3 & выводы', program, 'latex');
+        await rpi.setTitleRequest('project-id', 'Лаба #3 & выводы');
+
+        const encoded = encodeURIComponent('Лаба #3 & выводы');
+        expect(putMock).toHaveBeenCalledWith(
+            `/api/v4/public/project/create?name=${encoded}&type=latex`,
+            expect.anything()
+        );
+        expect(postMock).toHaveBeenCalledWith(
+            `/api/v4/public/project/project-id/title?name=${encoded}`
+        );
+    });
+
+    test('listTemplatesRequest asks one page of the catalog', async () => {
+        const getMock = axios.get as jest.Mock;
+        const templates = [
+            {
+                slug: 'altacv',
+                projectId: '0b9d6f1e-3c1a-4f53-9a51-6f0e2c3b7d10',
+                title: 'AltaCV',
+                description: 'Резюме в две колонки',
+                categories: ['latex', 'cv'],
+                path: '/templates/altacv',
+                previewImage: '/assets/img/templates/altacv.png',
+            },
+        ];
+        getMock.mockResolvedValue({ status: 200, data: { templates } });
+        const { rpi } = createRpi();
+
+        const result = await rpi.listTemplatesRequest({ page: 1, size: 50 });
+
+        expect(getMock).toHaveBeenCalledWith('/api/v4/public/templates', {
+            params: { page: 1, size: 50 },
+        });
+        expect(result.body.templates).toEqual(templates);
     });
 
     test('getBillingPricingRequest loads billing pricing', async () => {

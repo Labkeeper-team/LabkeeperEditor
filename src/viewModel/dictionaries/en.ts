@@ -95,16 +95,42 @@ export const en: Translations = {
     label_no_result_part1: 'Add the code or markdown',
     label_no_result_part2: 'and click "RUN"', //Add the code or markdown and click "RUN"
     delete_modal: 'Are you sure want to delete',
-    create_modal: {
-        label: 'Creating a new project',
-        create: 'Create',
+    new_project: {
+        title: 'New project',
+        back: 'My projects',
         name: 'Project name',
         project_type: 'Project type',
-        type_markdown: 'Markdown',
         type_latex: 'LaTeX',
+        type_latex_hint:
+            'Segments are assembled into LaTeX and the server compiles a PDF. Every LaTeX feature is available, building takes a little longer',
+        type_markdown: 'Markdown',
+        type_markdown_hint:
+            'Segments turn into Markdown and render right in the browser. Fast, but complex LaTeX looks simpler',
+        type_from_template:
+            'The type comes with the template. To choose it yourself, pick an empty project',
+        template: 'Start from',
+        empty_project: 'Empty project',
+        empty_project_hint: 'A blank page of the chosen type',
+        all_templates: 'All templates',
+        categories: {
+            labs: 'Lab reports',
+            diploma: 'Theses',
+            cv: 'Resume / CV',
+        },
+        templates_loading: 'Loading templates…',
+        templates_error: 'Could not load templates',
+        templates_retry: 'Try again',
+        template_page: 'About the template',
+        agent_mode: 'Open in agent mode',
+        agent_mode_hint: 'Describe the document and the agent will build it',
+        create: 'Create project',
+        creating: 'Creating…',
         error: {
             empty_name: 'Please input the project name',
             too_many_projects: 'Too many projects',
+            template_unavailable:
+                'This template is unavailable now, please pick another one',
+            failed: 'Could not create the project, please try again',
         },
     },
     rounding_mode: {

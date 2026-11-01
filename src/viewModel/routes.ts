@@ -2,6 +2,7 @@ export enum Routes {
     // Pages
     Home = '/',
     Projects = '/projects',
+    NewProject = '/projects/new',
     Tokens = '/tokens',
     Pay = '/pay',
     Project = '/project/:id',

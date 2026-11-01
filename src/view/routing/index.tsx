@@ -3,6 +3,7 @@ import { Routes } from '../../viewModel/routes.ts';
 import { BaseLayout } from '../components/layout';
 import { HomePage } from '../pages/home';
 import { ProjectsPage } from '../pages/projects';
+import { NewProjectPage } from '../pages/newProject';
 import { CodePage } from '../pages/code';
 import { QrPage } from '../pages/qr';
 import { RouterErrorBoundary } from '../pages/error';
@@ -61,6 +62,10 @@ export const appRouter = createBrowserRouter([
             {
                 path: Routes.Projects,
                 element: <ProjectsPage />,
+            },
+            {
+                path: Routes.NewProject,
+                element: <NewProjectPage />,
             },
             {
                 path: Routes.Tokens,
