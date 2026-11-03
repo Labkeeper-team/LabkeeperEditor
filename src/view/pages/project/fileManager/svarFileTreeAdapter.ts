@@ -290,14 +290,12 @@ export const isTextFilePath = (path: string): boolean => {
     );
 };
 
+// GH-228: WebP открывается в редакторе, как PNG, а не новой вкладкой браузера
+const IMAGE_FILE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.svg', '.webp'];
+
 export const isImageFilePath = (path: string): boolean => {
     const lower = path.toLowerCase();
-    return (
-        lower.endsWith('.png') ||
-        lower.endsWith('.jpg') ||
-        lower.endsWith('.jpeg') ||
-        lower.endsWith('.svg')
-    );
+    return IMAGE_FILE_EXTENSIONS.some((extension) => lower.endsWith(extension));
 };
 
 export const normalizeFileTreeNodeName = (name: string): string | null => {
