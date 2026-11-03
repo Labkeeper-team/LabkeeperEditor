@@ -202,6 +202,9 @@ export interface Rpi {
 
     cloneProjectRequest(projectId: string): Promise<RequestResult<Project>>;
 
+    /** GH-234: проект из архива экспорта или из zip с main.tex */
+    importProjectRequest(archive: File): Promise<RequestResult<Project>>;
+
     listTemplatesRequest(params: {
         page: number;
         size: number;
@@ -343,6 +346,9 @@ export const mockRpi = (): Rpi => {
             throw new Error('Not implemented');
         },
         createProjectRequest: () => {
+            throw new Error('Not implemented');
+        },
+        importProjectRequest: () => {
             throw new Error('Not implemented');
         },
         listTemplatesRequest: () => {

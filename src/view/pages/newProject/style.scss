@@ -296,6 +296,10 @@
         }
     }
 
+    &__archive-input {
+        display: none;
+    }
+
     &__card-link {
         padding: 0 12px 12px;
         color: $blue-10;

@@ -571,3 +571,160 @@ describe('GH-231 сборка проекта из шаблона', () => {
         );
     });
 });
+
+describe('GH-234 проект из архива', () => {
+    const archive = () =>
+        new File(['PK'], 'Лаба 3.zip', { type: 'application/zip' });
+
+    const imported = (title = 'Лаба 3') => ({
+        ...clonedProject('imported', title),
+        projectType: 'latex' as const,
+    });
+
+    test('архив импортируется, получает введённое имя и сразу собирается', async () => {
+        const { projectsPageService, repository, rpi, observerService } =
+            signedIn();
+        const onEvent = jest.spyOn(observerService, 'onEvent');
+        const file = archive();
+        rpi.importProjectRequest = jest
+            .fn()
+            .mockResolvedValue(ok(imported('Из project.json'), 201));
+        rpi.setTitleRequest = jest.fn().mockResolvedValue(ok({}));
+        rpi.createProjectRequest = jest.fn();
+        rpi.cloneProjectRequest = jest.fn();
+        const onFinished = jest.fn();
+
+        await projectsPageService.onProjectCreate(
+            {
+                projectName: ' Лаба 3 ',
+                // выбранный на странице тип не действует: тип пришёл из архива
+                projectType: 'markdown',
+                archive: file,
+                agentMode: true,
+            },
+            onFinished
+        );
+
+        expect(rpi.importProjectRequest).toHaveBeenCalledWith(file);
+        expect(rpi.createProjectRequest).not.toHaveBeenCalled();
+        expect(rpi.cloneProjectRequest).not.toHaveBeenCalled();
+        expect(rpi.setTitleRequest).toHaveBeenCalledWith('imported', 'Лаба 3');
+        expect(repository.location()).toBe('/project/imported/agent');
+        expect(repository.projectViewModelRepository.mode()).toBe('latex');
+        expect(repository.projectViewModelRepository.project()?.title).toBe(
+            'Лаба 3'
+        );
+        expect(rpi.listFilesRequest).toHaveBeenCalledWith('imported');
+        expect(rpi.compileProjectPdfRequest).toHaveBeenCalledWith('imported');
+        expect(onEvent).toHaveBeenCalledWith(
+            Events.EVENT_CREATE_PROJECT,
+            expect.objectContaining({
+                project_id: 'imported',
+                project_type: 'latex',
+                source: 'archive',
+                agent_mode: true,
+            })
+        );
+        expect(onEvent).toHaveBeenCalledWith(
+            'auto_run',
+            expect.objectContaining({ reason: 'import' })
+        );
+        expect(onFinished).toHaveBeenCalledWith();
+    });
+
+    test('имя из архива не переименовывается вторым запросом', async () => {
+        const { projectsPageService, rpi } = signedIn();
+        rpi.importProjectRequest = jest
+            .fn()
+            .mockResolvedValue(ok(imported('Лаба 3'), 201));
+        rpi.setTitleRequest = jest.fn();
+
+        await projectsPageService.onProjectCreate(
+            {
+                projectName: 'Лаба 3',
+                projectType: 'latex',
+                archive: archive(),
+                agentMode: false,
+            },
+            () => {}
+        );
+
+        expect(rpi.setTitleRequest).not.toHaveBeenCalled();
+    });
+
+    test.each([
+        [
+            400,
+            'This is not a project archive: use a Labkeeper export zip or an archive with main.tex',
+        ],
+        [409, 'The archive has too many files'],
+        [413, 'The archive or a file in it is too large'],
+        [417, 'Too many projects'],
+        [500, 'Could not create the project, please try again'],
+    ])(
+        'ответ %i на импорт архива даёт понятную ошибку',
+        async (code, message) => {
+            const { projectsPageService, repository, rpi } = signedIn();
+            rpi.importProjectRequest = jest
+                .fn()
+                .mockResolvedValue(failed(code));
+            rpi.setTitleRequest = jest.fn();
+            const onFinished = jest.fn();
+            const before = repository.location();
+
+            await projectsPageService.onProjectCreate(
+                {
+                    projectName: 'Лаба 3',
+                    projectType: 'latex',
+                    archive: archive(),
+                    agentMode: false,
+                },
+                onFinished
+            );
+
+            expect(onFinished).toHaveBeenCalledWith(message);
+            expect(rpi.setTitleRequest).not.toHaveBeenCalled();
+            expect(repository.location()).toBe(before);
+        }
+    );
+
+    // 400 и 404 у шаблона значат другое: текст про архив туда не попадает
+    test('ошибки архива не путаются с ошибками шаблона', async () => {
+        const { projectsPageService, rpi } = signedIn();
+        rpi.cloneProjectRequest = jest.fn().mockResolvedValue(failed(400));
+        const onFinished = jest.fn();
+
+        await projectsPageService.onProjectCreate(
+            {
+                projectName: 'Резюме',
+                projectType: 'latex',
+                template: template('cv'),
+                agentMode: false,
+            },
+            onFinished
+        );
+
+        expect(onFinished).toHaveBeenCalledWith(
+            'Could not create the project, please try again'
+        );
+    });
+
+    test('401 на импорт открывает вход', async () => {
+        const { projectsPageService, repository, rpi } = mockContext();
+        rpi.importProjectRequest = jest.fn().mockResolvedValue(failed(401));
+        const onFinished = jest.fn();
+
+        await projectsPageService.onProjectCreate(
+            {
+                projectName: 'Лаба 3',
+                projectType: 'latex',
+                archive: archive(),
+                agentMode: false,
+            },
+            onFinished
+        );
+
+        expect(repository.authViewModelRepository.currentView()).toBe('login');
+        expect(onFinished).toHaveBeenCalledWith();
+    });
+});

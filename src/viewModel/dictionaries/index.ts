@@ -97,9 +97,12 @@ export interface Translations {
         type_markdown: string;
         type_markdown_hint: string;
         type_from_template: string;
+        type_from_archive: string;
         template: string;
         empty_project: string;
         empty_project_hint: string;
+        archive: string;
+        archive_hint: string;
         all_templates: string;
         /** Темы каталога, по которым его можно отфильтровать, как на сайте */
         categories: {
@@ -119,6 +122,9 @@ export interface Translations {
             empty_name: string;
             too_many_projects: string;
             template_unavailable: string;
+            archive_invalid: string;
+            archive_too_many_files: string;
+            archive_too_big: string;
             failed: string;
         };
     };

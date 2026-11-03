@@ -108,9 +108,13 @@ export const en: Translations = {
             'Segments turn into Markdown and render right in the browser. Fast, but complex LaTeX looks simpler',
         type_from_template:
             'The type comes with the template. To choose it yourself, pick an empty project',
+        type_from_archive:
+            'The type comes with the archive. To choose it yourself, pick an empty project',
         template: 'Start from',
         empty_project: 'Empty project',
         empty_project_hint: 'A blank page of the chosen type',
+        archive: 'From an archive',
+        archive_hint: 'A Labkeeper export zip or an archive with main.tex',
         all_templates: 'All templates',
         categories: {
             labs: 'Lab reports',
@@ -130,6 +134,10 @@ export const en: Translations = {
             too_many_projects: 'Too many projects',
             template_unavailable:
                 'This template is unavailable now, please pick another one',
+            archive_invalid:
+                'This is not a project archive: use a Labkeeper export zip or an archive with main.tex',
+            archive_too_many_files: 'The archive has too many files',
+            archive_too_big: 'The archive or a file in it is too large',
             failed: 'Could not create the project, please try again',
         },
     },

@@ -25,9 +25,10 @@ import { trackEvent } from '../utils/observerContext.ts';
 
 /**
  * Сборка, которую запускает не человек: пример с сайта открылся, агент
- * откатил правки, проект создан из шаблона
+ * откатил правки, проект создан из шаблона или из архива
  */
-export type AutoCompileReason = 'example' | 'agent_rollback' | 'template';
+export type AutoCompileReason =
+    'example' | 'agent_rollback' | 'template' | 'import';
 
 /**
  * GH-219: кто запустил сборку. Человек кнопкой «Выполнить» или сочетанием

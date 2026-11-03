@@ -60,6 +60,7 @@ type Calls = {
     create: Request[];
     clone: Request[];
     title: Request[];
+    import: Request[];
 };
 
 async function openNewProject(
@@ -67,6 +68,7 @@ async function openNewProject(
     options: {
         authenticated?: boolean;
         templatesStatus?: number;
+        importStatus?: number;
         /** Ответ user-info придёт, только когда исполнится обещание */
         holdUserInfo?: Promise<void>;
     } = {}
@@ -84,7 +86,7 @@ async function openNewProject(
         });
     }
 
-    const calls: Calls = { create: [], clone: [], title: [] };
+    const calls: Calls = { create: [], clone: [], title: [], import: [] };
     await page.route('**/api/v4/public/templates**', (route) =>
         route.fulfill({
             status: options.templatesStatus ?? 200,
@@ -115,6 +117,21 @@ async function openNewProject(
             body: JSON.stringify({
                 ...createdProject('markdown'),
                 title: 'Радиационный фон',
+            }),
+        });
+    });
+    await page.route('**/api/v4/public/project/import', (route) => {
+        calls.import.push(route.request());
+        const status = options.importStatus ?? 201;
+        if (status !== 201) {
+            return route.fulfill({ status, body: '' });
+        }
+        return route.fulfill({
+            status,
+            contentType: 'application/json',
+            body: JSON.stringify({
+                ...createdProject('latex'),
+                title: 'Из project.json',
             }),
         });
     });
@@ -545,4 +562,120 @@ test.describe('на телефоне', () => {
 
         await expect(pdfPage(page)).toBeVisible();
     });
+});
+
+/** GH-234: карточка «Из архива» открывает выбор файла */
+async function pickArchive(
+    page: Page,
+    name: string,
+    mimeType = 'application/zip'
+) {
+    const chooser = page.waitForEvent('filechooser');
+    await page
+        .locator('.new-project__card[data-source="archive"]')
+        .locator('.new-project__card-select')
+        .click();
+    await (
+        await chooser
+    ).setFiles({ name, mimeType, buffer: Buffer.from('PK\u0003\u0004') });
+}
+
+const archiveCard = (page: Page) =>
+    page.locator('.new-project__card[data-source="archive"]');
+
+test('проект из архива импортируется с именем из файла и типом из архива', async ({
+    page,
+}) => {
+    const calls = await openNewProject(page);
+    const cardSelector = '.new-project__card[data-template="altacv"]';
+    const before = await offsetInPage(page, cardSelector);
+
+    await pickArchive(page, 'Лаба 3 (LaTeX).zip');
+
+    // имя без хвоста экспорта, тип не выбрать: он придёт из архива
+    await expect(page.getByRole('textbox')).toHaveValue('Лаба 3');
+    await expect(archiveCard(page)).toContainText('Лаба 3 (LaTeX).zip');
+    await expect(
+        archiveCard(page).locator('.new-project__card-select')
+    ).toHaveAttribute('aria-pressed', 'true');
+    await expect(typeButton(page, 'LaTeX')).toBeDisabled();
+    await expect(typeButton(page, 'Markdown')).toBeDisabled();
+    await expect(page.locator('.new-project__note')).toHaveText(
+        'The type comes with the archive. To choose it yourself, pick an empty project'
+    );
+    // как и шаблон, архив не сдвигает карточки
+    expect(await offsetInPage(page, cardSelector)).toBe(before);
+
+    await page.getByRole('button', { name: 'Create project' }).click();
+
+    await expect(page).toHaveURL(`/project/${uuid}`);
+    expect(calls.create).toHaveLength(0);
+    expect(calls.clone).toHaveLength(0);
+    expect(calls.import).toHaveLength(1);
+    const upload = calls.import[0];
+    expect(upload.method()).toBe('POST');
+    expect(upload.headers()['content-type']).toContain('multipart/form-data');
+    expect(upload.postDataBuffer()?.toString()).toContain(
+        'name="file"; filename="Лаба 3 (LaTeX).zip"'
+    );
+    // архив пришёл со своим именем, введённое ставится вторым запросом
+    expect(new URL(calls.title[0].url()).searchParams.get('name')).toBe(
+        'Лаба 3'
+    );
+});
+
+test('не zip отклоняется до загрузки', async ({ page }) => {
+    const calls = await openNewProject(page);
+
+    await pickArchive(page, 'report.pdf', 'application/pdf');
+
+    await expect(page.locator('.new-project__error')).toHaveText(
+        'This is not a project archive: use a Labkeeper export zip or an archive with main.tex'
+    );
+    await expect(
+        archiveCard(page).locator('.new-project__card-select')
+    ).toHaveAttribute('aria-pressed', 'false');
+    await expect(typeButton(page, 'LaTeX')).toBeEnabled();
+    expect(calls.import).toHaveLength(0);
+});
+
+test('шаблон или пустой проект снимают выбранный архив', async ({ page }) => {
+    await openNewProject(page);
+
+    await pickArchive(page, 'Лаба 3.zip');
+    await card(page, 'altacv').locator('.new-project__card-select').click();
+
+    // имя из архива сменилось именем шаблона, архив больше не выбран
+    await expect(page.getByRole('textbox')).toHaveValue('Резюме AltaCV');
+    await expect(archiveCard(page)).not.toContainText('Лаба 3.zip');
+    await expect(
+        archiveCard(page).locator('.new-project__card-select')
+    ).toHaveAttribute('aria-pressed', 'false');
+
+    await pickArchive(page, 'Лаба 3.zip');
+    await page
+        .locator('.new-project__card', { hasText: 'Empty project' })
+        .locator('.new-project__card-select')
+        .click();
+
+    await expect(page.getByRole('textbox')).toHaveValue('');
+    await expect(typeButton(page, 'LaTeX')).toBeEnabled();
+    await expect(page.locator('.new-project__note')).toBeHidden();
+});
+
+test('слишком большой архив даёт понятную ошибку и оставляет страницу', async ({
+    page,
+}) => {
+    await openNewProject(page, { importStatus: 413 });
+
+    await pickArchive(page, 'Лаба 3.zip');
+    await page.getByRole('button', { name: 'Create project' }).click();
+
+    await expect(page.locator('.new-project__error')).toHaveText(
+        'The archive or a file in it is too large'
+    );
+    await expect(page).toHaveURL(/\/projects\/new$/);
+    await expect(
+        page.getByRole('button', { name: 'Create project' })
+    ).toBeEnabled();
 });

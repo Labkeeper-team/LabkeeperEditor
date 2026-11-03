@@ -74,6 +74,7 @@ const RPI_SOURCES: Record<keyof Rpi, string> = {
     getAllProjectsRequest: 'project',
     createProjectRequest: 'project',
     cloneProjectRequest: 'project',
+    importProjectRequest: 'project',
     listTemplatesRequest: 'template',
     deleteProjectRequest: 'project',
     exportProjectRequest: 'project',
@@ -519,6 +520,24 @@ export class WebRpi implements Rpi {
             async () =>
                 axios.post(`${URLS.cloneProject.replace('{id}', projectId)}`),
             projectId
+        );
+    }
+
+    async importProjectRequest(archive: File): Promise<RequestResult<Project>> {
+        const formData = new FormData();
+        formData.append('file', archive);
+        return this.requestWrapper(
+            'importProjectRequest',
+            // в спеке 201, а сервер препрода описывает ответ как 200: годятся оба, как у клонирования.
+            // 400 не тот архив, 409 слишком много файлов, 413 слишком большой, 417 лимит проектов
+            [200, 201, 400, 401, 409, 413, 417],
+            async () =>
+                axios.post(URLS.importProject, formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                        Accept: '*/*',
+                    },
+                })
         );
     }
 

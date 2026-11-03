@@ -112,9 +112,13 @@ export const ru: Translations = {
             'Сегменты превращаются в Markdown и показываются прямо в браузере. Быстро, но сложный LaTeX выглядит проще',
         type_from_template:
             'Тип задан шаблоном. Чтобы выбрать его самому, возьмите пустой проект',
+        type_from_archive:
+            'Тип возьмём из архива. Чтобы выбрать его самому, возьмите пустой проект',
         template: 'С чего начать',
         empty_project: 'Пустой проект',
         empty_project_hint: 'Чистый лист выбранного типа',
+        archive: 'Из архива',
+        archive_hint: 'Zip из экспорта Labkeeper или архив с main.tex',
         all_templates: 'Все шаблоны',
         categories: {
             labs: 'Лабораторные работы',
@@ -133,6 +137,10 @@ export const ru: Translations = {
             empty_name: 'Введите имя проекта',
             too_many_projects: 'Слишком много проектов',
             template_unavailable: 'Шаблон сейчас недоступен, выберите другой',
+            archive_invalid:
+                'Это не архив проекта: нужен zip из экспорта Labkeeper или архив с main.tex',
+            archive_too_many_files: 'В архиве слишком много файлов',
+            archive_too_big: 'Архив или файл в нём слишком большой',
             failed: 'Не удалось создать проект, попробуйте ещё раз',
         },
     },
