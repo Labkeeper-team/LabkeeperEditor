@@ -27,7 +27,8 @@ afterEach(() => {
 const promptView = (
     onSubmit: () => void = () => {},
     extra: Extension = [],
-    onToggleMode: () => void = () => {}
+    onToggleMode: () => void = () => {},
+    submitOnEnter = true
 ) => {
     const view = new EditorView({
         state: EditorState.create({
@@ -37,6 +38,7 @@ const promptView = (
                     label: PLACEHOLDER,
                     onSubmit,
                     onToggleMode,
+                    submitOnEnter,
                 }),
                 extra,
             ],
@@ -168,6 +170,24 @@ test('Enter не отправляет пустой запрос и запрос 
     expect(submits).toEqual([]);
     // Enter всё равно съеден, переноса строки в поле не появилось
     expect(running.state.doc.toString()).toBe('запрос');
+});
+
+// GH-235: на телефоне у экранной клавиатуры одна клавиша ввода, и ею переносят строку
+test('без клавиатуры Enter переносит строку и запрос не отправляет', () => {
+    const submits: string[] = [];
+    const view = promptView(
+        () => submits.push(view.state.doc.toString()),
+        [],
+        () => {},
+        false
+    );
+    type(view, 'первая');
+
+    press(view, { key: 'Enter', code: 'Enter', keyCode: 13 });
+    type(view, 'вторая');
+
+    expect(submits).toEqual([]);
+    expect(view.state.doc.toString()).toBe('первая\nвторая');
 });
 
 const shiftTab: KeyboardEventInit = {
