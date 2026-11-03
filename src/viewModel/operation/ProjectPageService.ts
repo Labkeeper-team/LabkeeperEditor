@@ -9,7 +9,11 @@ import { LoaderService } from '../domain/LoaderService.ts';
 import { IdeService } from '../domain/IdeService.ts';
 import { HeaderHelpItem } from '../../model/help';
 import { Routes } from '../routes.ts';
-import { CompilationService } from '../domain/CompilationService.ts';
+import {
+    AutoCompileReason,
+    CompilationService,
+    CompileStart,
+} from '../domain/CompilationService.ts';
 import { ResetService } from '../domain/ResetService.ts';
 import {
     CompileErrorResultList,
@@ -457,9 +461,15 @@ export class ProjectPageService {
         }
     };
 
-    onRunButtonClicked = async (
+    onRunButtonClicked = (
         trigger: 'button' | 'hotkey' = 'button'
-    ): Promise<void> => {
+    ): Promise<void> => this.run({ trigger });
+
+    /** GH-219: сборка без нажатия, в аналитике она не считается нажатием «Выполнить» */
+    runAutomatically = (reason: AutoCompileReason): Promise<void> =>
+        this.run({ reason });
+
+    private run = async (start: CompileStart): Promise<void> => {
         if (this.editingLock.rejectEdit()) {
             return;
         }
@@ -480,15 +490,7 @@ export class ProjectPageService {
             ) {
                 await this.loaderService.segmentEditorSaveProgram();
             }
-            const files = this.repository.projectViewModelRepository.files();
-            this.track(Events.EVENT_RUN, {
-                trigger,
-                segment_count: lastProgram?.segments.length ?? 0,
-                has_tex_file: files.some((file) =>
-                    file.fileName.toLowerCase().endsWith('.tex')
-                ),
-            });
-            await this.compilationService.runCompilation();
+            await this.compilationService.runCompilation(start);
         } finally {
             setTimeout(
                 () =>

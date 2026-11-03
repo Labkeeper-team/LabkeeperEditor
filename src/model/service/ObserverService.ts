@@ -6,6 +6,8 @@ export const Events = {
     // GH-171: mermaid, plantuml и drawio, какой из них, скажет segment_type
     EVENT_CREATE_DIAGRAM_SEGMENT: 'create_diagram',
     EVENT_RUN: 'start_run',
+    // GH-219: сборка без нажатия «Выполнить», причина в параметре reason
+    EVENT_AUTO_RUN: 'auto_run',
     EVENT_ERROR: 'run_error',
     EVENT_MOVE_SEGMENT: 'segment_move',
     EVENT_INSERT_SEGMENT_BETWEEN: 'segment_insert_between',
@@ -160,6 +162,7 @@ export const OPENPANEL_EVENT_NAMES: Record<string, string> = {
     [Events.EVENT_CREATE_DIAGRAM_SEGMENT]: 'Segment added',
     [Events.EVENT_INSERT_SEGMENT_BETWEEN]: 'Segment added',
     [Events.EVENT_RUN]: 'Run clicked',
+    [Events.EVENT_AUTO_RUN]: 'Auto run',
     [Events.EVENT_ERROR]: 'Run error',
     [Events.EVENT_MOVE_SEGMENT]: 'Segment moved',
     [Events.EVENT_PRINT]: 'Save PDF clicked',

@@ -3978,6 +3978,23 @@ describe('agent checkpoints', () => {
         expect(compile).toHaveBeenCalledWith(PROJECT_ID);
     });
 
+    // GH-219: сборку после отката запускает не человек, в аналитике это не нажатие «Выполнить»
+    test('revert-build-is-tracked-as-an-auto-run', async () => {
+        const ctx = checkpointSetup();
+        await runWithEntry(ctx);
+        mockCompile(ctx);
+        const onEvent = jest.spyOn(ctx.observerService, 'onEvent');
+
+        await ctx.agentChatService.onCheckpointRevert();
+
+        const runs = onEvent.mock.calls.filter(
+            ([name]) => name === 'start_run' || name === 'auto_run'
+        );
+        expect(runs).toEqual([
+            ['auto_run', expect.objectContaining({ reason: 'agent_rollback' })],
+        ]);
+    });
+
     test('revert-from-the-editor-does-not-compile', async () => {
         const ctx = checkpointSetup(`/project/${PROJECT_ID}`);
         await runWithEntry(ctx);
