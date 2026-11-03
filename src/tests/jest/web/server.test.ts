@@ -33,6 +33,7 @@ jest.mock('../../../constants.ts', () => ({
         blogExampleProgram: '/api/v4/public/blog/{slug}/program',
         createProject: '/api/v4/public/project/create',
         cloneProject: '/api/v4/public/project/{id}/clone',
+        importProject: '/api/v4/public/project/import',
         listTemplates: '/api/v4/public/templates',
         deleteProject: '/api/v4/public/project/{id}/delete',
         exportProject: '/api/v4/public/project/{id}/export',
@@ -286,6 +287,16 @@ const RPI_CASES: RpiCase[] = [
         call: (rpi) => rpi.cloneProjectRequest(PROJECT_ID),
     },
     {
+        method: 'importProjectRequest',
+        source: 'project',
+        scoped: false,
+        expects423: false,
+        call: (rpi) =>
+            rpi.importProjectRequest(
+                new File(['PK'], 'report.zip', { type: 'application/zip' })
+            ),
+    },
+    {
         method: 'listTemplatesRequest',
         source: 'template',
         scoped: false,
@@ -505,6 +516,43 @@ describe('WebRpi', () => {
             `/api/v4/public/project/project-id/title?name=${encoded}`
         );
     });
+
+    // GH-234: архив уходит файлом в поле file, как в спеке
+    test('importProjectRequest sends the archive as the file field', async () => {
+        const postMock = axios.post as jest.Mock;
+        postMock.mockResolvedValue({ status: 201, data: { projectId: 'new' } });
+        const { rpi } = createRpi();
+        const archive = new File(['PK'], 'Лаба 3.zip', {
+            type: 'application/zip',
+        });
+
+        const result = await rpi.importProjectRequest(archive);
+
+        expect(result.isOk).toBe(true);
+        const [url, body, config] = postMock.mock.calls[0];
+        expect(url).toBe('/api/v4/public/project/import');
+        expect((body as FormData).get('file')).toBe(archive);
+        expect(config.headers['Content-Type']).toBe('multipart/form-data');
+    });
+
+    test.each([200, 201, 400, 409, 413, 417])(
+        'ответ %i на импорт архива штатный и в мониторинг не идёт',
+        async (code) => {
+            respondWith(code);
+            const { rpi, observerService } = createRpi();
+
+            const result = await rpi.importProjectRequest(
+                new File(['PK'], 'a.zip')
+            );
+
+            expect(result.code).toBe(code);
+            expect(Sentry.captureException).not.toHaveBeenCalled();
+            expect(observerService.onEvent).not.toHaveBeenCalledWith(
+                Events.EVENT_RPI_UNKNOWN,
+                expect.anything()
+            );
+        }
+    );
 
     test('listTemplatesRequest asks one page of the catalog', async () => {
         const getMock = axios.get as jest.Mock;

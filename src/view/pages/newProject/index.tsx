@@ -1,5 +1,13 @@
 import classNames from 'classnames';
-import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import {
+    ChangeEvent,
+    FormEvent,
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 
@@ -15,6 +23,10 @@ import {
     TemplateFilter,
     templateProjectType,
 } from '../../../viewModel/domain/projectTemplates.ts';
+import {
+    archiveProjectName,
+    isZipArchive,
+} from '../../../viewModel/domain/projectArchive.ts';
 import { Routes } from '../../../viewModel/routes.ts';
 import { Button } from '../../components/button';
 import { Input } from '../../components/input';
@@ -24,6 +36,25 @@ import { useDictionary } from '../../store/selectors/translations';
 import './style.scss';
 
 const PROJECT_TYPES: ProjectType[] = ['latex', 'markdown'];
+
+/** Архив со стрелкой наверх: проект приходит из файла */
+const ArchiveIcon = () => (
+    <svg
+        width="32"
+        height="32"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+    >
+        <path d="M4 8h16v11a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z" />
+        <path d="M3 4h18v4H3z" />
+        <path d="M12 17v-6M9.5 13.5 12 11l2.5 2.5" />
+    </svg>
+);
 
 const TemplatePreview = ({
     template,
@@ -57,7 +88,8 @@ const TemplatePreview = ({
 /**
  * GH-217: новый проект создаётся на отдельной странице. Пустой проект
  * создаётся с выбранным типом, проект из шаблона клонируется, и тип у него
- * тот, что у шаблона
+ * тот, что у шаблона. GH-234: проект из архива импортируется, тип берётся
+ * из архива
  */
 export const NewProjectPage = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -71,10 +103,12 @@ export const NewProjectPage = () => {
     );
 
     const [name, setName] = useState('');
-    // имя, подставленное из шаблона, меняется вместе с шаблоном, а введённое остаётся
-    const [nameFromTemplate, setNameFromTemplate] = useState(false);
+    // имя, подставленное из шаблона или архива, меняется вместе с ними, а введённое остаётся
+    const [nameFromSource, setNameFromSource] = useState(false);
     const [projectType, setProjectType] = useState<ProjectType>('latex');
     const [templateSlug, setTemplateSlug] = useState<string | null>(null);
+    const [archive, setArchive] = useState<File | null>(null);
+    const archiveInputRef = useRef<HTMLInputElement>(null);
     const [filter, setFilter] = useState<TemplateFilter | 'all'>('all');
     const [agentMode, setAgentMode] = useState(false);
     const [error, setError] = useState<string>();
@@ -85,7 +119,13 @@ export const NewProjectPage = () => {
     }, [dispatch]);
 
     const template = templates.find((item) => item.slug === templateSlug);
-    const shownType = template ? templateProjectType(template) : projectType;
+    // тип архива узнаем только после импорта, до тех пор не подсвечен ни один
+    const shownType = template
+        ? templateProjectType(template)
+        : archive
+          ? undefined
+          : projectType;
+    const typeFixed = Boolean(template || archive);
     const filters = useMemo(
         () => availableTemplateFilters(templates),
         [templates]
@@ -102,13 +142,35 @@ export const NewProjectPage = () => {
               ? texts.type_latex
               : undefined;
 
+    const nameFrom = (sourceName: string | null) => {
+        if (!name.trim() || nameFromSource) {
+            setName(sourceName ?? '');
+            setNameFromSource(sourceName !== null);
+        }
+    };
+
     const chooseTemplate = (next: ProjectTemplate | null) => {
         setTemplateSlug(next?.slug ?? null);
+        setArchive(null);
         setError(undefined);
-        if (!name.trim() || nameFromTemplate) {
-            setName(next?.title.slice(0, PROJECT_TITLE_MAX_LENGTH) ?? '');
-            setNameFromTemplate(next !== null);
+        nameFrom(next?.title.slice(0, PROJECT_TITLE_MAX_LENGTH) ?? null);
+    };
+
+    const chooseArchive = (event: ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        // тот же файл можно выбрать снова, например после ошибки
+        event.target.value = '';
+        if (!file) {
+            return;
         }
+        if (!isZipArchive(file)) {
+            setError(texts.error.archive_invalid);
+            return;
+        }
+        setArchive(file);
+        setTemplateSlug(null);
+        setError(undefined);
+        nameFrom(archiveProjectName(file.name) || null);
     };
 
     const onCreate = useCallback(
@@ -124,6 +186,7 @@ export const NewProjectPage = () => {
                     projectName: name,
                     projectType,
                     template,
+                    archive: archive ?? undefined,
                     agentMode,
                     onFinished: (message) => {
                         setCreating(false);
@@ -132,7 +195,7 @@ export const NewProjectPage = () => {
                 })
             );
         },
-        [agentMode, creating, dispatch, name, projectType, template]
+        [agentMode, archive, creating, dispatch, name, projectType, template]
     );
 
     return (
@@ -150,7 +213,7 @@ export const NewProjectPage = () => {
                         value={name}
                         onChange={(event) => {
                             setName(event.target.value);
-                            setNameFromTemplate(false);
+                            setNameFromSource(false);
                             setError(undefined);
                         }}
                         maxLength={PROJECT_TITLE_MAX_LENGTH}
@@ -176,7 +239,7 @@ export const NewProjectPage = () => {
                                             shownType === type,
                                     })}
                                     aria-pressed={shownType === type}
-                                    disabled={!!template}
+                                    disabled={typeFixed}
                                     onClick={() => setProjectType(type)}
                                 >
                                     <span className="new-project__type-name">
@@ -194,11 +257,13 @@ export const NewProjectPage = () => {
                             выбор шаблона сдвигал карточки под курсором */}
                         <p
                             className={classNames('new-project__note', {
-                                'new-project__note--hidden': !template,
+                                'new-project__note--hidden': !typeFixed,
                             })}
-                            aria-hidden={!template}
+                            aria-hidden={!typeFixed}
                         >
-                            {texts.type_from_template}
+                            {archive
+                                ? texts.type_from_archive
+                                : texts.type_from_template}
                         </p>
                     </section>
 
@@ -232,13 +297,13 @@ export const NewProjectPage = () => {
                         <div className="new-project__templates">
                             <div
                                 className={classNames('new-project__card', {
-                                    'new-project__card--active': !template,
+                                    'new-project__card--active': !typeFixed,
                                 })}
                             >
                                 <button
                                     type="button"
                                     className="new-project__card-select"
-                                    aria-pressed={!template}
+                                    aria-pressed={!typeFixed}
                                     onClick={() => chooseTemplate(null)}
                                 >
                                     <span className="new-project__preview new-project__preview--empty">
@@ -251,6 +316,41 @@ export const NewProjectPage = () => {
                                         {texts.empty_project_hint}
                                     </span>
                                 </button>
+                            </div>
+                            {/* GH-234: проект из архива экспорта или из zip с main.tex */}
+                            <div
+                                className={classNames('new-project__card', {
+                                    'new-project__card--active': !!archive,
+                                })}
+                                data-source="archive"
+                            >
+                                <button
+                                    type="button"
+                                    className="new-project__card-select"
+                                    aria-pressed={!!archive}
+                                    onClick={() =>
+                                        archiveInputRef.current?.click()
+                                    }
+                                >
+                                    <span className="new-project__preview new-project__preview--empty">
+                                        <ArchiveIcon />
+                                    </span>
+                                    <span className="new-project__card-title">
+                                        {texts.archive}
+                                    </span>
+                                    <span className="new-project__card-text">
+                                        {archive?.name ?? texts.archive_hint}
+                                    </span>
+                                </button>
+                                <input
+                                    ref={archiveInputRef}
+                                    className="new-project__archive-input"
+                                    type="file"
+                                    accept=".zip,application/zip"
+                                    tabIndex={-1}
+                                    aria-hidden="true"
+                                    onChange={chooseArchive}
+                                />
                             </div>
                             {shownTemplates.map((item) => (
                                 <div

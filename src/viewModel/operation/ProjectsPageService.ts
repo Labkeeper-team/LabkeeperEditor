@@ -12,7 +12,10 @@ import {
     ObserverService,
 } from '../../model/service/ObserverService.ts';
 import { ResetService } from '../domain/ResetService.ts';
-import { CompilationService } from '../domain/CompilationService.ts';
+import {
+    AutoCompileReason,
+    CompilationService,
+} from '../domain/CompilationService.ts';
 import { trackEvent } from '../utils/observerContext.ts';
 
 // с запасом: каталог обычно приходит одним запросом
@@ -20,11 +23,27 @@ const TEMPLATES_PAGE_SIZE = 100;
 // страховка на случай, если сервер станет отдавать страницы бесконечно
 const TEMPLATES_MAX_PAGES = 10;
 
+type ProjectSource = 'empty' | 'template' | 'archive';
+
+/** GH-234: ответы импорта, о которых человеку есть что сказать, кроме «не вышло» */
+const ARCHIVE_ERRORS: Partial<
+    Record<
+        number,
+        'archive_invalid' | 'archive_too_many_files' | 'archive_too_big'
+    >
+> = {
+    400: 'archive_invalid',
+    409: 'archive_too_many_files',
+    413: 'archive_too_big',
+};
+
 export interface NewProjectRequest {
     projectName: string;
-    /** Тип пустого проекта, у проекта из шаблона тип задан шаблоном */
+    /** Тип пустого проекта, у проекта из шаблона или архива тип свой */
     projectType: ProjectType;
     template?: ProjectTemplate;
+    /** GH-234: архив экспорта или zip с main.tex */
+    archive?: File;
     /** Открыть созданный проект сразу в агентском режиме */
     agentMode: boolean;
 }
@@ -131,12 +150,19 @@ export class ProjectsPageService {
     };
 
     /**
-     * Пустой проект создаётся с выбранным типом. Проект из шаблона клонируется
-     * и получает введённое имя: клонирование имени не принимает, поэтому оно
-     * задаётся вторым запросом. onFinished получает текст ошибки или ничего
+     * Пустой проект создаётся с выбранным типом. Проект из шаблона клонируется,
+     * а из архива импортируется, и оба получают введённое имя: эти запросы
+     * имени не принимают, поэтому оно задаётся вторым. onFinished получает
+     * текст ошибки или ничего
      */
     onProjectCreate = async (
-        { projectName, projectType, template, agentMode }: NewProjectRequest,
+        {
+            projectName,
+            projectType,
+            template,
+            archive,
+            agentMode,
+        }: NewProjectRequest,
         onFinished: (error?: string) => void
     ) => {
         const errors = this.repository.dictionary.new_project.error;
@@ -149,34 +175,53 @@ export class ProjectsPageService {
             return;
         }
 
-        const result = template
-            ? await this.cloneTemplate(template, title)
-            : await this.rpi.createProjectRequest(
-                  title,
-                  createEmptyProgram(),
-                  projectType
-              );
+        const source: ProjectSource = archive
+            ? 'archive'
+            : template
+              ? 'template'
+              : 'empty';
+        const result = archive
+            ? await this.withTitle(
+                  await this.rpi.importProjectRequest(archive),
+                  title
+              )
+            : template
+              ? await this.withTitle(
+                    await this.rpi.cloneProjectRequest(template.projectId),
+                    title
+                )
+              : await this.rpi.createProjectRequest(
+                    title,
+                    createEmptyProgram(),
+                    projectType
+                );
+        const templateSlug =
+            source === 'template' && template
+                ? { template: template.slug }
+                : {};
 
         if (result.isOk) {
-            // у пустого проекта тип тот, что выбран, у клона тот, что у шаблона
-            const project = template
-                ? result.body
-                : { ...result.body, projectType };
+            // у пустого проекта тип тот, что выбран, у копии шаблона и у импорта свой
+            const project =
+                source === 'empty'
+                    ? { ...result.body, projectType }
+                    : result.body;
             this.track(Events.EVENT_CREATE_PROJECT, {
                 project_id: project.projectId,
                 project_type: project.projectType,
                 agent_mode: agentMode,
-                ...(template ? { template: template.slug } : {}),
+                source,
+                ...templateSlug,
             });
-            await this.openCreatedProject(
-                project,
-                agentMode,
-                Boolean(template)
-            );
+            const build = source !== 'empty';
+            await this.openCreatedProject(project, agentMode, build);
             onFinished();
             // страница создания ждёт только открытия, собирается проект уже в редакторе
-            if (template) {
-                await this.buildCreatedProject(project);
+            if (build) {
+                await this.buildCreatedProject(
+                    project,
+                    source === 'archive' ? 'import' : 'template'
+                );
             }
             return;
         }
@@ -184,8 +229,11 @@ export class ProjectsPageService {
         this.track(Events.EVENT_PROJECT_CREATE_FAILED, {
             reason:
                 result.code === 417 ? 'too_many_projects' : String(result.code),
-            ...(template ? { template: template.slug } : {}),
+            source,
+            ...templateSlug,
         });
+        const archiveError =
+            source === 'archive' ? ARCHIVE_ERRORS[result.code] : undefined;
         if (result.isUnauth) {
             // Вход проверяет сервер, а не страница: ответ user-info мог ещё не
             // прийти, и вошедший человек выглядел бы гостем
@@ -197,18 +245,23 @@ export class ProjectsPageService {
             onFinished();
         } else if (result.code === 417) {
             onFinished(errors.too_many_projects);
-        } else if (template && (result.code === 403 || result.code === 404)) {
+        } else if (archiveError) {
+            onFinished(errors[archiveError]);
+        } else if (
+            source === 'template' &&
+            (result.code === 403 || result.code === 404)
+        ) {
             onFinished(errors.template_unavailable);
         } else {
             onFinished(errors.failed);
         }
     };
 
-    private cloneTemplate = async (
-        template: ProjectTemplate,
+    /** Копия шаблона и импорт приходят со своим именем, введённое ставится вторым запросом */
+    private withTitle = async (
+        result: RequestResult<Project>,
         title: string
     ): Promise<RequestResult<Project>> => {
-        const result = await this.rpi.cloneProjectRequest(template.projectId);
         if (!result.isOk || result.body.title === title) {
             return result;
         }
@@ -251,12 +304,16 @@ export class ProjectsPageService {
 
     /**
      * GH-231: проект из шаблона собирается сразу, иначе в агентском режиме,
-     * где кнопки «Выполнить» нет, PDF было бы не получить
+     * где кнопки «Выполнить» нет, PDF было бы не получить. GH-234: проект
+     * из архива тоже
      */
-    private buildCreatedProject = async (project: Project) => {
-        // у копии шаблона свои файлы: картинки, классы, библиография
+    private buildCreatedProject = async (
+        project: Project,
+        reason: AutoCompileReason
+    ) => {
+        // у копии шаблона и у импорта свои файлы: картинки, классы, библиография
         await this.loaderService.loadFiles(project.projectId);
-        await this.compilationService.runCompilation({ reason: 'template' });
+        await this.compilationService.runCompilation({ reason });
     };
 
     onRowClickedInProjectsList = async (projectId: string) => {

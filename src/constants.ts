@@ -20,6 +20,7 @@ export const URLS = {
     blogExampleProgram: `${uri}/api/${version}/public/blog/{slug}/program`,
     createProject: `${uri}/api/${version}/public/project/create`,
     cloneProject: `${uri}/api/${version}/public/project/{id}/clone`,
+    importProject: `${uri}/api/${version}/public/project/import`,
     listTemplates: `${uri}/api/${version}/public/templates`,
     deleteProject: `${uri}/api/${version}/public/project/{id}/delete`,
     exportProject: `${uri}/api/${version}/public/project/{id}/export`,
