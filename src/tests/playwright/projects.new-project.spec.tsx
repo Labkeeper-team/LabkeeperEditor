@@ -241,7 +241,7 @@ test('выбор пустого проекта после шаблона воз�
 
     await expect(page.getByRole('textbox')).toHaveValue('');
     await expect(typeButton(page, 'Markdown')).toBeEnabled();
-    await expect(page.locator('.new-project__note')).toHaveCount(0);
+    await expect(page.locator('.new-project__note')).toBeHidden();
 });
 
 test('фильтр показывает только темы каталога, журналы остаются среди всех', async ({
@@ -266,6 +266,83 @@ test('фильтр показывает только темы каталога, 
     await expect(page.locator('.new-project__card[data-template]')).toHaveCount(
         3
     );
+});
+
+/** Где элемент внутри страницы, без учёта прокрутки: клик сам докручивает до карточки */
+const offsetInPage = (page: Page, selector: string) =>
+    page.evaluate((target) => {
+        const content = document.querySelector('.new-project__content')!;
+        return Math.round(
+            document.querySelector(target)!.getBoundingClientRect().top -
+                content.getBoundingClientRect().top
+        );
+    }, selector);
+
+// GH-232: под кнопками типа появлялась подсказка и сдвигала карточки под курсором
+for (const viewport of [
+    { width: 1360, height: 900 },
+    { width: 390, height: 844 },
+]) {
+    test(`выбор шаблона не сдвигает карточки на ${viewport.width}px`, async ({
+        page,
+    }) => {
+        await page.setViewportSize(viewport);
+        await openNewProject(page);
+        const cardSelector =
+            '.new-project__card[data-template="radiatsionnyi-fon"]';
+        const before = await offsetInPage(page, cardSelector);
+        const filtersBefore = await offsetInPage(page, '.new-project__filters');
+
+        await card(page, 'radiatsionnyi-fon')
+            .locator('.new-project__card-select')
+            .click();
+
+        await expect(page.locator('.new-project__note')).toBeVisible();
+        await expect(page.getByRole('textbox')).toHaveValue('Радиационный фон');
+        expect(await offsetInPage(page, cardSelector)).toBe(before);
+        expect(await offsetInPage(page, '.new-project__filters')).toBe(
+            filtersBefore
+        );
+    });
+}
+
+// GH-232: карточка работает как кнопка выбора, картинку и ссылку из неё не утащить
+test('картинку и ссылку карточки нельзя утащить мышью', async ({ page }) => {
+    await openNewProject(page);
+    await page.evaluate(() => {
+        const drags: string[] = [];
+        (window as unknown as { drags: string[] }).drags = drags;
+        document.addEventListener('dragstart', (event) =>
+            drags.push((event.target as Element).tagName)
+        );
+    });
+    const target = card(page, 'radiatsionnyi-fon');
+    await expect
+        .poll(() =>
+            target
+                .locator('img')
+                .evaluate((img: HTMLImageElement) => img.naturalWidth)
+        )
+        .toBeGreaterThan(0);
+
+    const box = (await target.locator('img').boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(box.x + 200, box.y + 150, { steps: 8 });
+    await page.mouse.up();
+
+    expect(
+        await page.evaluate(
+            () => (window as unknown as { drags: string[] }).drags
+        )
+    ).toEqual([]);
+    // перетаскивание ссылки Playwright не воспроизводит, поэтому смотрим на само свойство:
+    // у ссылки оно по умолчанию включено
+    expect(
+        await target
+            .getByRole('link')
+            .evaluate((link: HTMLAnchorElement) => link.draggable)
+    ).toBe(false);
 });
 
 test('без каталога можно создать пустой проект и повторить загрузку', async ({

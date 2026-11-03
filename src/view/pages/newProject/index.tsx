@@ -47,6 +47,8 @@ const TemplatePreview = ({
             src={template.previewImage}
             alt=""
             loading="lazy"
+            // GH-232: карточка это кнопка выбора, утащить из неё картинку нельзя
+            draggable={false}
             onError={() => setBroken(true)}
         />
     );
@@ -188,11 +190,16 @@ export const NewProjectPage = () => {
                                 </button>
                             ))}
                         </div>
-                        {template && (
-                            <p className="new-project__note">
-                                {texts.type_from_template}
-                            </p>
-                        )}
+                        {/* GH-232: место под подсказку есть всегда, иначе
+                            выбор шаблона сдвигал карточки под курсором */}
+                        <p
+                            className={classNames('new-project__note', {
+                                'new-project__note--hidden': !template,
+                            })}
+                            aria-hidden={!template}
+                        >
+                            {texts.type_from_template}
+                        </p>
                     </section>
 
                     <section className="new-project__section">
@@ -287,6 +294,7 @@ export const NewProjectPage = () => {
                                         href={item.path}
                                         target="_blank"
                                         rel="noopener"
+                                        draggable={false}
                                     >
                                         {texts.template_page} ↗
                                     </a>

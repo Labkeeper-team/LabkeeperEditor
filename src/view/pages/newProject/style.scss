@@ -132,6 +132,10 @@
         margin: 0;
         color: $gray-30;
         font-size: 13px;
+
+        &--hidden {
+            visibility: hidden;
+        }
     }
 
     &__filters {
