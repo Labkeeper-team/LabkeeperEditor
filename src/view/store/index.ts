@@ -15,6 +15,7 @@ import {
     REGISTER,
 } from 'redux-persist';
 import { createRootReducer } from './reducers';
+import { syncSharedLanguage } from './sharedLanguage.ts';
 import { appRouter } from '../routing';
 import {
     setCodeCheckRequest,
@@ -188,7 +189,10 @@ export const store = configureStore({
 
 setupListeners(store.dispatch);
 
-export const persist = persistStore(store);
+// GH-175: язык редактора и сайта один, сверяем его, когда срез восстановлен
+export const persist = persistStore(store, null, () =>
+    syncSharedLanguage(store)
+);
 
 export type StorageState = ReturnType<ReturnType<typeof createRootReducer>>;
 
