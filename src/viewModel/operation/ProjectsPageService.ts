@@ -12,6 +12,7 @@ import {
     ObserverService,
 } from '../../model/service/ObserverService.ts';
 import { ResetService } from '../domain/ResetService.ts';
+import { CompilationService } from '../domain/CompilationService.ts';
 import { trackEvent } from '../utils/observerContext.ts';
 
 // с запасом: каталог обычно приходит одним запросом
@@ -36,6 +37,7 @@ export class ProjectsPageService {
     startupService: StartupService;
     observerService: ObserverService;
     resetService: ResetService;
+    compilationService: CompilationService;
 
     constructor(
         repository: ViewModelRepository,
@@ -44,7 +46,8 @@ export class ProjectsPageService {
         ideService: IdeService,
         startupService: StartupService,
         observerService: ObserverService,
-        resetService: ResetService
+        resetService: ResetService,
+        compilationService: CompilationService
     ) {
         this.rpi = rpi;
         this.loaderService = loaderService;
@@ -53,6 +56,7 @@ export class ProjectsPageService {
         this.repository = repository;
         this.observerService = observerService;
         this.resetService = resetService;
+        this.compilationService = compilationService;
     }
 
     private track(event: string, properties?: Record<string, unknown>) {
@@ -164,8 +168,16 @@ export class ProjectsPageService {
                 agent_mode: agentMode,
                 ...(template ? { template: template.slug } : {}),
             });
-            await this.openCreatedProject(project, agentMode);
+            await this.openCreatedProject(
+                project,
+                agentMode,
+                Boolean(template)
+            );
             onFinished();
+            // страница создания ждёт только открытия, собирается проект уже в редакторе
+            if (template) {
+                await this.buildCreatedProject(project);
+            }
             return;
         }
 
@@ -210,20 +222,41 @@ export class ProjectsPageService {
             : result;
     };
 
+    /**
+     * Прежний проект уходит целиком: его лента агента, PDF и файлы к новому
+     * не относятся. Проект, который сейчас соберётся, открывается на PDF:
+     * на телефоне вместо пустого чата агента виден ход сборки
+     */
     private openCreatedProject = async (
         project: Project,
-        agentMode: boolean
+        agentMode: boolean,
+        build: boolean
     ) => {
         const route = agentMode ? Routes.ProjectAgent : Routes.Project;
+        const projects = this.repository.projectViewModelRepository;
+        this.resetService.resetProject();
         this.repository.setLocation(route.replace(':id', project.projectId));
-        this.resetService.resetFileManagerProjectState();
-        this.repository.projectViewModelRepository.setProject(project);
+        projects.setProject(project);
+        projects.setReadOnly(false);
+        projects.setProjectType(project.projectType);
         this.ideService.setNewProgram(project.program);
+        this.repository.ideViewModelRepository.setGetProjectRequestState('ok');
+        if (build) {
+            const settings = this.repository.settingsViewModelRepository;
+            settings.setViewerTab('pdf');
+            settings.setMobileView('pdf');
+        }
         await this.loaderService.loadProjects();
-        this.repository.projectViewModelRepository.setReadOnly(false);
-        this.repository.projectViewModelRepository.setProjectType(
-            project.projectType
-        );
+    };
+
+    /**
+     * GH-231: проект из шаблона собирается сразу, иначе в агентском режиме,
+     * где кнопки «Выполнить» нет, PDF было бы не получить
+     */
+    private buildCreatedProject = async (project: Project) => {
+        // у копии шаблона свои файлы: картинки, классы, библиография
+        await this.loaderService.loadFiles(project.projectId);
+        await this.compilationService.runCompilation({ reason: 'template' });
     };
 
     onRowClickedInProjectsList = async (projectId: string) => {

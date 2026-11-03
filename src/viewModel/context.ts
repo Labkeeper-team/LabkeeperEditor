@@ -188,7 +188,8 @@ export function setupContext(
         ideService,
         startupService,
         observerService,
-        resetService
+        resetService,
+        compilationService
     );
 
     /*

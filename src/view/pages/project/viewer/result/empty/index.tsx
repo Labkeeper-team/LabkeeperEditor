@@ -1,10 +1,14 @@
 import { useSelector } from 'react-redux';
 import { useDictionary } from '../../../../../store/selectors/translations';
 import { useIsAgentMode } from '../../../../../hooks/useAgentMode';
+import { StorageState } from '../../../../../store';
 
 export const EmptyResultContainer = () => {
     const dictionary = useSelector(useDictionary);
     const isAgentMode = useIsAgentMode();
+    const isCompiling = useSelector(
+        (state: StorageState) => state.settings.isCompiling
+    );
     return (
         <div
             style={{
@@ -18,7 +22,9 @@ export const EmptyResultContainer = () => {
             }}
         >
             {/* в агентском режиме кнопки «Выполнить» нет, документ собирает агент */}
-            {isAgentMode ? (
+            {isCompiling ? (
+                dictionary.viewer.compiling
+            ) : isAgentMode ? (
                 dictionary.agent_mode.no_pdf
             ) : (
                 <>

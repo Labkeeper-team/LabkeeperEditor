@@ -195,6 +195,7 @@ export const ru: Translations = {
 
     viewer: {
         no_pdf: 'Нажмите кнопку  "Выполнить", для отображения PDF файла',
+        compiling: 'Собираем документ…',
         pdf_loading: 'Загрузка PDF…',
         mode: {
             label: 'Тип проекта',

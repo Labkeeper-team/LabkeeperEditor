@@ -145,6 +145,31 @@ const signedIn = () => {
     context.rpi.getAllProjectsRequest = jest
         .fn()
         .mockResolvedValue(ok({ projects: [] }));
+    // копия шаблона после открытия подтягивает свои файлы и собирается
+    context.rpi.listFilesRequest = jest
+        .fn()
+        .mockResolvedValue(
+            ok({ files: [{ fileName: 'altacv.cls', url: '/f/altacv.cls' }] })
+        );
+    context.rpi.listHunksRequest = jest
+        .fn()
+        .mockResolvedValue(ok({ hunks: [] }));
+    context.rpi.getUserInfoRequest = jest.fn().mockResolvedValue(
+        ok({
+            email: USER_EMAIL,
+            id: USER_ID,
+            isAuthenticated: true,
+            privacyPolicyAccepted: true,
+            crossBorderDataTransferPolicyAccepted: true,
+            tokenBalance: 0,
+        })
+    );
+    context.rpi.compileProjectRequest = jest
+        .fn()
+        .mockResolvedValue(ok({ segments: [] }));
+    context.rpi.compileProjectPdfRequest = jest
+        .fn()
+        .mockResolvedValue(ok({ pdfUri: 'https://files.test/copy.pdf' }));
     return context;
 };
 
@@ -394,4 +419,155 @@ describe('создание проекта', () => {
             expect(repository.location()).toBe(before);
         }
     );
+});
+
+describe('GH-231 сборка проекта из шаблона', () => {
+    const fromTemplate = (agentMode: boolean) => ({
+        projectName: 'Моё резюме',
+        projectType: 'latex' as const,
+        template: template('cv', ['latex', 'cv']),
+        agentMode,
+    });
+
+    const latexCopy = () => ({
+        ...clonedProject('copy', 'Моё резюме'),
+        projectType: 'latex' as const,
+    });
+
+    test('копия шаблона сразу собирается и показывает PDF', async () => {
+        const { projectsPageService, repository, rpi, observerService } =
+            signedIn();
+        const onEvent = jest.spyOn(observerService, 'onEvent');
+        rpi.cloneProjectRequest = jest
+            .fn()
+            .mockResolvedValue(ok(latexCopy(), 201));
+        rpi.setTitleRequest = jest.fn();
+        let filesWhileBuilding: string[] = [];
+        rpi.compileProjectPdfRequest = jest.fn().mockImplementation(() => {
+            filesWhileBuilding = repository.projectViewModelRepository
+                .files()
+                .map((file) => file.fileName);
+            return Promise.resolve(
+                ok({ pdfUri: 'https://files.test/copy.pdf' })
+            );
+        });
+
+        await projectsPageService.onProjectCreate(fromTemplate(true), () => {});
+
+        expect(rpi.compileProjectPdfRequest).toHaveBeenCalledWith('copy');
+        expect(repository.projectViewModelRepository.pdfUri()).toBe(
+            'https://files.test/copy.pdf'
+        );
+        // файлы шаблона видны в дереве ещё до конца сборки
+        expect(filesWhileBuilding).toEqual(['altacv.cls']);
+        // в аналитике это не нажатие «Выполнить»
+        const runs = onEvent.mock.calls.filter(
+            ([name]) => name === 'start_run' || name === 'auto_run'
+        );
+        expect(runs).toEqual([
+            ['auto_run', expect.objectContaining({ reason: 'template' })],
+        ]);
+    });
+
+    test('на телефоне вместо пустого чата агента открывается PDF', async () => {
+        const { projectsPageService, repository, rpi } = signedIn();
+        const settings = repository.settingsViewModelRepository;
+        const steps: string[] = [];
+        jest.spyOn(settings, 'setMobileView').mockImplementation((view) =>
+            steps.push(`mobile:${view}`)
+        );
+        jest.spyOn(settings, 'setViewerTab').mockImplementation((tab) =>
+            steps.push(`tab:${tab}`)
+        );
+        rpi.cloneProjectRequest = jest
+            .fn()
+            .mockResolvedValue(ok(latexCopy(), 201));
+        rpi.compileProjectPdfRequest = jest.fn().mockImplementation(() => {
+            steps.push('compile');
+            return Promise.resolve(
+                ok({ pdfUri: 'https://files.test/copy.pdf' })
+            );
+        });
+
+        await projectsPageService.onProjectCreate(fromTemplate(true), () => {});
+
+        // PDF открыт уже на время сборки, а не только после неё
+        expect(steps.slice(0, 3)).toEqual(['tab:pdf', 'mobile:pdf', 'compile']);
+    });
+
+    test('страница создания освобождается до конца сборки', async () => {
+        const { projectsPageService, rpi, repository } = signedIn();
+        rpi.cloneProjectRequest = jest
+            .fn()
+            .mockResolvedValue(ok(latexCopy(), 201));
+        let finishedBeforeBuild = false;
+        const onFinished = jest.fn();
+        rpi.compileProjectPdfRequest = jest.fn().mockImplementation(() => {
+            finishedBeforeBuild = onFinished.mock.calls.length === 1;
+            return Promise.resolve(
+                ok({ pdfUri: 'https://files.test/copy.pdf' })
+            );
+        });
+
+        await projectsPageService.onProjectCreate(
+            fromTemplate(false),
+            onFinished
+        );
+
+        expect(finishedBeforeBuild).toBe(true);
+        expect(repository.location()).toBe('/project/copy');
+    });
+
+    test('пустой проект не собирается', async () => {
+        const { projectsPageService, rpi } = signedIn();
+        rpi.createProjectRequest = jest
+            .fn()
+            .mockResolvedValue(ok(clonedProject('new', 'Отчёт'), 201));
+
+        await projectsPageService.onProjectCreate(
+            { projectName: 'Отчёт', projectType: 'latex', agentMode: true },
+            () => {}
+        );
+
+        expect(rpi.compileProjectPdfRequest).not.toHaveBeenCalled();
+        expect(rpi.compileProjectRequest).not.toHaveBeenCalled();
+    });
+
+    // прежний проект оставлял в новом свою ленту агента, PDF и ошибку загрузки
+    test('созданный проект не наследует прежний', async () => {
+        const { projectsPageService, repository, rpi } = signedIn();
+        repository.projectViewModelRepository.setPdfUri(
+            'https://files.test/old.pdf'
+        );
+        repository.ideViewModelRepository.setGetProjectRequestState(
+            'not_found'
+        );
+        repository.chatViewModelRepository.setHistory([
+            {
+                id: 'old',
+                request: 'старый запрос',
+                response: 'старый ответ',
+                createdAt: '2026-11-01T10:00:00Z',
+            },
+        ]);
+        repository.chatViewModelRepository.setHistoryRequestState('ok');
+        rpi.createProjectRequest = jest
+            .fn()
+            .mockResolvedValue(ok(clonedProject('new', 'Отчёт'), 201));
+
+        await projectsPageService.onProjectCreate(
+            { projectName: 'Отчёт', projectType: 'latex', agentMode: false },
+            () => {}
+        );
+
+        expect(repository.projectViewModelRepository.pdfUri()).toBeUndefined();
+        expect(repository.chatViewModelRepository.history()).toEqual([]);
+        // история нового проекта подтянется при открытии чата
+        expect(repository.chatViewModelRepository.historyRequestState()).toBe(
+            'unknown'
+        );
+        expect(repository.ideViewModelRepository.getProjectRequestState()).toBe(
+            'ok'
+        );
+    });
 });

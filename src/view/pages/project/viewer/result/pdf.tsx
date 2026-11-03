@@ -105,6 +105,9 @@ export const PdfResultViewer = () => {
     const pdfUri = useSelector((state: StorageState) => state.project.pdfUri);
     const dictionary = useSelector(useDictionary);
     const isAgentMode = useIsAgentMode();
+    const isCompiling = useSelector(
+        (state: StorageState) => state.settings.isCompiling
+    );
     const pdfNavigationTarget = useSelector(
         (state: StorageState) => state.ide.pdfNavigationTarget
     );
@@ -654,9 +657,11 @@ export const PdfResultViewer = () => {
                     {/* в агентском режиме кнопки «Выполнить» нет, PDF собирает агент */}
                     <Typography
                         text={
-                            isAgentMode
-                                ? dictionary.agent_mode.no_pdf
-                                : dictionary.viewer.no_pdf
+                            isCompiling
+                                ? dictionary.viewer.compiling
+                                : isAgentMode
+                                  ? dictionary.agent_mode.no_pdf
+                                  : dictionary.viewer.no_pdf
                         }
                     />
                 </div>

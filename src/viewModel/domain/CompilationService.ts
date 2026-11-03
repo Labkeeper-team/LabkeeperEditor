@@ -23,8 +23,11 @@ import { HunkService } from '../operation/HunkService.ts';
 import { logBreadcrumb } from '../utils/logBreadcrumb.ts';
 import { trackEvent } from '../utils/observerContext.ts';
 
-/** Сборка, которую запускает не человек: пример с сайта открылся, агент откатил правки */
-export type AutoCompileReason = 'example' | 'agent_rollback';
+/**
+ * Сборка, которую запускает не человек: пример с сайта открылся, агент
+ * откатил правки, проект создан из шаблона
+ */
+export type AutoCompileReason = 'example' | 'agent_rollback' | 'template';
 
 /**
  * GH-219: кто запустил сборку. Человек кнопкой «Выполнить» или сочетанием

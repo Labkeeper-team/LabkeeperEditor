@@ -1,4 +1,5 @@
 import { expect, test, type Page, type Request } from '@playwright/test';
+import { readFileSync } from 'fs';
 import { RouteSetup } from './mock.routeSetUp.tsx';
 
 /** GH-217: новый проект создаётся на своей странице, пустым или из шаблона */
@@ -9,6 +10,11 @@ const uuid = '2cd18704-6c3f-48cb-96f1-9a923930f8cb';
 const PNG = Buffer.from(
     'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
     'base64'
+);
+
+// настоящий PDF из соседнего опыта: окно результата должно его нарисовать
+const PDF = readFileSync(
+    new URL('./fixtures/pdf-links-selection.pdf', import.meta.url)
 );
 
 const TEMPLATES = [
@@ -415,4 +421,128 @@ test('на телефоне страница не шире экрана, а кн
     await expect(
         page.getByRole('button', { name: 'Create project' })
     ).toBeInViewport();
+});
+
+/**
+ * GH-231: копия шаблона сразу собирается. В агентском режиме кнопки
+ * «Выполнить» нет, а на телефоне открывалась пустая вкладка агента
+ */
+async function holdTemplateBuild(page: Page) {
+    await page.route('**/api/v4/public/project/*/clone', (route) =>
+        route.fulfill({
+            status: 201,
+            contentType: 'application/json',
+            body: JSON.stringify({
+                ...createdProject('latex'),
+                title: 'Резюме AltaCV',
+            }),
+        })
+    );
+    let release: () => void = () => {};
+    const held = new Promise<void>((resolve) => (release = resolve));
+    const builds: string[] = [];
+    await page.route(
+        `**/api/v4/public/project/${uuid}/compile/pdf**`,
+        async (route) => {
+            builds.push(route.request().url());
+            await held;
+            await route.fulfill({
+                contentType: 'application/json',
+                body: JSON.stringify({ pdfUri: '/files/altacv.pdf' }),
+            });
+        }
+    );
+    await page.route('**/files/altacv.pdf', (route) =>
+        route.fulfill({ contentType: 'application/pdf', body: PDF })
+    );
+    return { builds, release };
+}
+
+const pdfPage = (page: Page) =>
+    page.locator('.project-pane--pdf [data-pdf-page="0"] canvas');
+
+test('проект из шаблона сразу собирается и показывает PDF', async ({
+    page,
+}) => {
+    await openNewProject(page);
+    const build = await holdTemplateBuild(page);
+
+    await card(page, 'altacv').locator('.new-project__card-select').click();
+    await page.getByRole('button', { name: 'Create project' }).click();
+
+    await expect(page).toHaveURL(`/project/${uuid}`);
+    await expect.poll(() => build.builds.length).toBe(1);
+    // пока документа нет, окно результата говорит, что он собирается
+    await expect(
+        page.locator('.project-pane--pdf').getByText('Building the document…')
+    ).toBeVisible();
+
+    build.release();
+
+    await expect(pdfPage(page)).toBeVisible();
+});
+
+test('markdown-проект из шаблона тоже показывает, что собирается', async ({
+    page,
+}) => {
+    await openNewProject(page);
+    let release: () => void = () => {};
+    const held = new Promise<void>((resolve) => (release = resolve));
+    await page.route(
+        (url) => url.pathname === `/api/v4/public/project/${uuid}/compile`,
+        async (route) => {
+            await held;
+            await route.fulfill({
+                contentType: 'application/json',
+                body: JSON.stringify({ segments: [] }),
+            });
+        }
+    );
+
+    await card(page, 'radiatsionnyi-fon')
+        .locator('.new-project__card-select')
+        .click();
+    await page.getByRole('button', { name: 'Create project' }).click();
+
+    await expect(page).toHaveURL(`/project/${uuid}`);
+    const result = page.locator('.project-pane--pdf .result-container');
+    await expect(result.getByText('Building the document…')).toBeVisible();
+
+    release();
+
+    await expect(result.getByText('Building the document…')).toHaveCount(0);
+});
+
+test.describe('на телефоне', () => {
+    // Firefox не умеет isMobile, ему хватает сенсорного экрана без мыши
+    test.use({
+        viewport: { width: 390, height: 844 },
+        hasTouch: true,
+        isMobile: async ({ browserName }, provide) =>
+            provide(browserName !== 'firefox'),
+    });
+
+    test('проект из шаблона в агентском режиме открывается на собираемом PDF', async ({
+        page,
+    }) => {
+        await openNewProject(page);
+        const build = await holdTemplateBuild(page);
+
+        await card(page, 'altacv').locator('.new-project__card-select').tap();
+        await page.getByLabel('Open in agent mode').check();
+        await page.getByRole('button', { name: 'Create project' }).tap();
+
+        await expect(page).toHaveURL(`/project/${uuid}/agent`);
+        // не пустая вкладка агента, а PDF, который уже собирается
+        await expect(
+            page
+                .locator('.project-pane--pdf')
+                .getByText('Building the document…')
+        ).toBeVisible();
+        await expect(page.locator('.project-pane--agent')).toBeHidden();
+
+        build.release();
+
+        await expect(pdfPage(page)).toBeVisible();
+    });
 });
