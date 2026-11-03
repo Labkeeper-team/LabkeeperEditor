@@ -85,8 +85,14 @@ export const FOREIGN_ERRORS: RegExp[] = [/__firefox__/];
  * Свои воркеры мы грузим файлами из /assets. Из blob: их создают расширения,
  * которые перехватывают Worker и дописывают в него свой код: так в Edge
  * падало «fetch is not defined» в blob:, хотя наш воркер пришёл файлом
+ *
+ * Скрипты самих расширений лежат по адресам chrome-extension://,
+ * moz-extension://, safari-web-extension:// и подобным. В Edge 156
+ * пользовательский скрипт Picviewer CE+ падал на нашей странице дважды за
+ * загрузку. SDK смотрит на кадр, где ошибка возникла: наша ошибка, вызванная
+ * через обёртку расширения, по-прежнему уходит
  */
-export const FOREIGN_SCRIPT_URLS: RegExp[] = [/^blob:/];
+export const FOREIGN_SCRIPT_URLS: RegExp[] = [/^blob:/, /^[a-z-]+-extension:/];
 
 /** Опции Sentry.init без dsn: main.tsx и опыт с настоящим SDK берут одну и ту же проводку. */
 export function sentryOptions(
