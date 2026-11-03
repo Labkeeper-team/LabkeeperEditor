@@ -83,6 +83,44 @@ const eventWithFrames = (
     },
 });
 
+const PICVIEWER =
+    'chrome-extension://liilgpjgabokdklappibcjfablkpcekh/Picviewer%20CE+.user.js';
+
+// Bugsink: пользовательский скрипт Picviewer CE+ в Edge 156 падал дважды за загрузку страницы
+test.each([
+    PICVIEWER,
+    'moz-extension://0c3a8a2e-56a0-4c43-9a43-0b1e1b0a7c11/content.js',
+    'safari-web-extension://8F1C2E61-6D7A-4C3B-9E0F-3B5A1D2C4E6F/script.js',
+])('an error of an extension script %s is not reported', async (filename) => {
+    const events = await sentEvents(() => {
+        Sentry.captureEvent(
+            eventWithFrames([
+                { filename, function: 'init' },
+                { filename, function: 'initLang' },
+            ])
+        );
+    });
+
+    expect(events).toEqual([]);
+});
+
+// расширение обернуло наш обработчик: ошибка возникла в нашем коде, её надо видеть
+test('an error of our bundle called through an extension wrapper is still reported', async () => {
+    const events = await sentEvents(() => {
+        Sentry.captureEvent(
+            eventWithFrames([
+                { filename: PICVIEWER, function: 'checkFloatBar' },
+                {
+                    filename: 'https://labkeeper.io/assets/index-DYdH554R.js',
+                    function: 'onPaste',
+                },
+            ])
+        );
+    });
+
+    expect(events).toHaveLength(1);
+});
+
 // Bugsink: в Edge 155 расширение подменило Object.getOwnPropertyDescriptor и ушло в рекурсию
 test('a stack without a single file of a page script is not reported', async () => {
     const events = await sentEvents(() => {
