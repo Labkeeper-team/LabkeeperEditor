@@ -188,6 +188,7 @@ export const en: Translations = {
 
     viewer: {
         no_pdf: 'Click the "Run" button to display the PDF file.',
+        compiling: 'Building the document…',
         pdf_loading: 'Loading PDF…',
         mode: {
             label: 'Project type',

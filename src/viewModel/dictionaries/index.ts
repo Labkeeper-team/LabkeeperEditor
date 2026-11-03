@@ -174,6 +174,8 @@ export interface Translations {
 
     viewer: {
         no_pdf: string;
+        /** Пока идёт сборка, а документа ещё нет: проект из шаблона собирается сам */
+        compiling: string;
         pdf_loading: string;
         mode: {
             label: string;
