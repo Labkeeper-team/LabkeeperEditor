@@ -871,7 +871,9 @@ export class AgentChatService {
         }
         // в агентском режиме кнопки «Выполнить» нет, и без сборки PDF показывал бы откаченные правки
         if (isAgentModePath(this.repository.location())) {
-            await this.compilationService.runCompilation();
+            await this.compilationService.runCompilation({
+                reason: 'agent_rollback',
+            });
         }
     };
 

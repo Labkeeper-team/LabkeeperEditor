@@ -10,6 +10,7 @@ import {
     CompileError,
     CompileErrorResultList,
     CompileSuccessResult,
+    Program,
 } from '../../model/domain.ts';
 import {
     Events,
@@ -21,6 +22,17 @@ import { IdeService } from './IdeService.ts';
 import { HunkService } from '../operation/HunkService.ts';
 import { logBreadcrumb } from '../utils/logBreadcrumb.ts';
 import { trackEvent } from '../utils/observerContext.ts';
+
+/** Сборка, которую запускает не человек: пример с сайта открылся, агент откатил правки */
+export type AutoCompileReason = 'example' | 'agent_rollback';
+
+/**
+ * GH-219: кто запустил сборку. Человек кнопкой «Выполнить» или сочетанием
+ * клавиш, тогда уходит start_run. Остальные запуски автоматические и уходят
+ * событием auto_run с причиной, иначе в аналитике они считались нажатиями
+ */
+export type CompileStart =
+    { trigger: 'button' | 'hotkey' } | { reason: AutoCompileReason };
 
 export class CompilationService {
     repository: ViewModelRepository;
@@ -54,6 +66,26 @@ export class CompilationService {
     private track(event: string, properties?: Record<string, unknown>) {
         trackEvent(this.observerService, this.repository, event, properties);
     }
+
+    private trackStart = (start: CompileStart, program?: Program) => {
+        const properties = {
+            segment_count: program?.segments.length ?? 0,
+            has_tex_file: this.repository.projectViewModelRepository
+                .files()
+                .some((file) => file.fileName.toLowerCase().endsWith('.tex')),
+        };
+        if ('trigger' in start) {
+            this.track(Events.EVENT_RUN, {
+                trigger: start.trigger,
+                ...properties,
+            });
+        } else {
+            this.track(Events.EVENT_AUTO_RUN, {
+                reason: start.reason,
+                ...properties,
+            });
+        }
+    };
 
     private refreshProjectFiles = async (projectId: string) => {
         if (!this.repository.userViewModelRepository.isAuthenticated()) {
@@ -120,10 +152,11 @@ export class CompilationService {
         );
     };
 
-    runCompilation = async () => {
+    runCompilation = async (start: CompileStart) => {
         const projectId =
             this.repository.projectViewModelRepository.project()?.projectId;
         const program = this.programService.getCurrentProgram();
+        this.trackStart(start, program);
 
         if (!program) {
             return;

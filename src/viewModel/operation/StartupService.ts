@@ -229,7 +229,7 @@ export class StartupService {
 
         this.ideService.onProgramUpdated();
         if (compileQuery) {
-            await this.projectPageService?.onRunButtonClicked('button');
+            await this.projectPageService?.runAutomatically('example');
         }
     };
 
