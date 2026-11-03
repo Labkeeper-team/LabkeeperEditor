@@ -26,6 +26,13 @@ export type PromptEditorOptions = {
     onSubmit: () => void;
     /** Shift+Tab: переключить режим «Агент» и «Вопрос», как в Cursor */
     onToggleMode: () => void;
+    /**
+     * GH-235: Enter отправляет запрос только там, где есть клавиатура. На
+     * телефоне клавиша ввода экранной клавиатуры одна, и перенести строку
+     * было нечем: она сразу отправляла запрос. Там Enter переносит строку,
+     * а отправляет кнопка
+     */
+    submitOnEnter: boolean;
 };
 
 /**
@@ -77,18 +84,20 @@ export const promptEditorExtensions = (
             ...PROMPT_HISTORY_KEYMAP,
             {
                 key: 'Enter',
-                run: (view) => {
-                    // пустой запрос никуда не идёт, а на время прогона поле только на чтение;
-                    // preventDefault всё равно съест Enter, и переноса строки не будет
-                    if (
-                        view.state.readOnly ||
-                        !view.state.doc.toString().trim()
-                    ) {
-                        return false;
-                    }
-                    options.onSubmit();
-                    return true;
-                },
+                run: options.submitOnEnter
+                    ? (view) => {
+                          // пустой запрос никуда не идёт, а на время прогона поле только на чтение;
+                          // preventDefault всё равно съест Enter, и переноса строки не будет
+                          if (
+                              view.state.readOnly ||
+                              !view.state.doc.toString().trim()
+                          ) {
+                              return false;
+                          }
+                          options.onSubmit();
+                          return true;
+                      }
+                    : insertNewlineAndIndent,
                 shift: insertNewlineAndIndent,
                 preventDefault: true,
             },

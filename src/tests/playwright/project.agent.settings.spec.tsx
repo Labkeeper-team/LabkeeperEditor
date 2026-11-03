@@ -350,7 +350,9 @@ const modeButton = (page: Page, name: 'Agent' | 'Ask') =>
 
 test('ask-mode-by-button-and-shift-tab-reaches-the-agent-and-survives-reload', async ({
     page,
+    hasTouch,
 }) => {
+    test.skip(hasTouch, 'на сенсорном экране Enter переносит строку, GH-235');
     const sent = await openChat(page, { frames: [DONE] });
 
     await modeButton(page, 'Agent').click();

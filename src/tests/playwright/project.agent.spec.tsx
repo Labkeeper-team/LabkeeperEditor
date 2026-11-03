@@ -309,7 +309,9 @@ test('agent-prompt-undo-stays-in-the-chat', async ({ page }) => {
 
 test('agent-prompt-undo-does-not-bring-back-a-sent-prompt', async ({
     page,
+    hasTouch,
 }) => {
+    test.skip(hasTouch, 'на сенсорном экране Enter переносит строку, GH-235');
     await openChat(page, { frames: [finished('Done')] });
 
     await promptField(page).click();
@@ -331,7 +333,9 @@ test('agent-prompt-undo-does-not-bring-back-a-sent-prompt', async ({
 
 test('agent-prompt-enter-sends-and-shift-enter-adds-a-line', async ({
     page,
+    hasTouch,
 }) => {
+    test.skip(hasTouch, 'на сенсорном экране Enter переносит строку, GH-235');
     const sent = await openChat(page, { frames: [finished('Done')] });
 
     await promptField(page).click();

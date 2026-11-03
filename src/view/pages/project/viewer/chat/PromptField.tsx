@@ -27,6 +27,8 @@ export const PromptField = ({ isEmpty }: { isEmpty: boolean }) => {
     const hasFinePointer = useHasFinePointer();
     // ручка только при мыши или тачпаде: телефону, даже повёрнутому, она ни к чему
     const resizable = !isMobile && hasFinePointer;
+    // мышь или тачпад есть там, где есть и клавиатура: телефону и планшету Enter нужен для переноса строки
+    const submitOnEnter = hasFinePointer;
     const fieldRef = useRef<HTMLDivElement>(null);
     const controlsRef = useRef<HTMLDivElement>(null);
     const viewRef = useRef<EditorView | null>(null);
@@ -94,8 +96,9 @@ export const PromptField = ({ isEmpty }: { isEmpty: boolean }) => {
                 label: placeholder,
                 onSubmit: submit,
                 onToggleMode: toggleMode,
+                submitOnEnter,
             }),
-        [placeholder, submit, toggleMode]
+        [placeholder, submit, submitOnEnter, toggleMode]
     );
 
     const onChange = useCallback(
