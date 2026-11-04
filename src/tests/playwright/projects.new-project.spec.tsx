@@ -499,6 +499,49 @@ test('проект из шаблона сразу собирается и пок
     await expect(pdfPage(page)).toBeVisible();
 });
 
+// «Создать» нажали до ответа user-info. Запуск редактора читал адрес уже после
+// ответа, открывал созданный проект второй раз и уводил его на вкладку агента
+test('проект из шаблона, созданный до ответа user-info, остаётся на собираемом PDF', async ({
+    page,
+}) => {
+    let releaseUser: () => void = () => {};
+    const userHeld = new Promise<void>((resolve) => {
+        releaseUser = resolve;
+    });
+    await openNewProject(page, { holdUserInfo: userHeld });
+    const build = await holdTemplateBuild(page);
+    const reopened: string[] = [];
+    const listed: string[] = [];
+    page.on('request', (request) => {
+        const path = new URL(request.url()).pathname;
+        if (path.endsWith(`/project/${uuid}/get`)) {
+            reopened.push(path);
+        }
+        if (path.endsWith('/project/all')) {
+            listed.push(path);
+        }
+    });
+
+    await card(page, 'altacv').locator('.new-project__card-select').click();
+    await page.getByRole('button', { name: 'Create project' }).click();
+    await expect(page).toHaveURL(`/project/${uuid}`);
+    await expect.poll(() => build.builds.length).toBe(1);
+    const listedBefore = listed.length;
+
+    releaseUser();
+    // запуск редактора всегда заканчивается загрузкой списка проектов
+    await expect.poll(() => listed.length).toBeGreaterThan(listedBefore);
+
+    await expect(
+        page.locator('.project-pane--pdf').getByText('Building the document…')
+    ).toBeVisible();
+    expect(reopened).toEqual([]);
+
+    build.release();
+
+    await expect(pdfPage(page)).toBeVisible();
+});
+
 test('markdown-проект из шаблона тоже показывает, что собирается', async ({
     page,
 }) => {

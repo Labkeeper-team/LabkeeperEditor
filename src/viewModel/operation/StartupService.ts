@@ -108,6 +108,10 @@ export class StartupService {
         open?: OpenParams,
         query: StartupQuery = {}
     ): Promise<void> => {
+        // Открываем то, с чем пришли на страницу. Пока ждём user-info, человек
+        // мог уйти дальше по приложению, например создать проект: тот уже
+        // открыт и собирается, и по новому адресу его открыли бы второй раз
+        const entryLocation = this.repository.location();
         if (query.example) {
             const loaded = await this.loadExampleProgram(query.example);
             query = loaded.query;
@@ -154,9 +158,7 @@ export class StartupService {
             captcha
         );
 
-        const locationWithoutLastSlash = this.cutOfLastSlash(
-            this.repository.location()
-        );
+        const locationWithoutLastSlash = this.cutOfLastSlash(entryLocation);
         let compileQuery = false;
         // HOME PAGE ENTER
         if (
@@ -219,7 +221,7 @@ export class StartupService {
 
         // PROJECT BY ID PAGE ENTER
         else if (projectPagePattern.test(locationWithoutLastSlash)) {
-            const id = this.extractProjectIdFromUrl(this.repository.location());
+            const id = this.extractProjectIdFromUrl(entryLocation);
             await this.openProjectById(userInfo, id);
         }
 
