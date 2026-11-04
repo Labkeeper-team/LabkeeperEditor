@@ -296,6 +296,124 @@
         }
     }
 
+    // GH-234: импорт отдельной полосой над формой, а не карточкой среди шаблонов
+    &__archive {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        max-width: 760px;
+        padding: 14px 16px;
+        border: 1px solid $gray-50;
+        border-radius: 8px;
+        background: $gray-60;
+        transition:
+            border-color 0.15s,
+            box-shadow 0.15s;
+
+        &--active {
+            border-color: $blue-10;
+            box-shadow: 0 0 0 1px $blue-10;
+        }
+
+        @media screen and (max-width: $mobile-breakpoint) {
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+    }
+
+    &__archive-icon {
+        display: flex;
+        flex-shrink: 0;
+        color: $blue-10;
+
+        svg {
+            width: 28px;
+            height: 28px;
+        }
+    }
+
+    &__archive-text {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+    }
+
+    // имя файла бывает длинным, а высота полосы не меняется: иначе форма под ней прыгала бы
+    &__archive-title {
+        overflow: hidden;
+        color: $gray-10;
+        font-size: 15px;
+        font-weight: 600;
+        line-height: 20px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    &__archive-hint {
+        color: $gray-20;
+        font-size: 13px;
+        line-height: 18px;
+    }
+
+    &__archive-actions {
+        display: flex;
+        flex-shrink: 0;
+        gap: 8px;
+
+        @media screen and (max-width: $mobile-breakpoint) {
+            width: 100%;
+        }
+    }
+
+    &__archive-choose,
+    &__archive-remove {
+        min-height: 38px;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font: inherit;
+        font-size: 14px;
+        cursor: pointer;
+
+        &:focus-visible {
+            outline: 2px solid $blue-10;
+            outline-offset: 2px;
+        }
+    }
+
+    &__archive-choose {
+        border: 1px solid $blue-10;
+        background: $white;
+        color: $blue-10;
+        font-weight: 600;
+
+        // на сенсорном экране подсветка после нажатия залипала бы
+        @media (hover: hover) {
+            &:hover {
+                background: $blue-10;
+                color: $white;
+            }
+        }
+
+        @media screen and (max-width: $mobile-breakpoint) {
+            flex: 1;
+        }
+    }
+
+    &__archive-remove {
+        border: 1px solid $gray-50;
+        background: $white;
+        color: $gray-20;
+
+        @media (hover: hover) {
+            &:hover {
+                border-color: $gray-30;
+                color: $gray-10;
+            }
+        }
+    }
+
     &__archive-input {
         display: none;
     }

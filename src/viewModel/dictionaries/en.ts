@@ -113,8 +113,11 @@ export const en: Translations = {
         template: 'Start from',
         empty_project: 'Empty project',
         empty_project_hint: 'A blank page of the chosen type',
-        archive: 'From an archive',
+        archive: 'Project from an archive',
         archive_hint: 'A Labkeeper export zip or an archive with main.tex',
+        archive_choose: 'Upload an archive',
+        archive_replace: 'Another archive',
+        archive_remove: 'Remove',
         all_templates: 'All templates',
         categories: {
             labs: 'Lab reports',

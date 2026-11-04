@@ -207,6 +207,57 @@ export const NewProjectPage = () => {
                     </Link>
                     <h1 className="new-project__title">{texts.title}</h1>
 
+                    {/* GH-234: проект из архива экспорта или из zip с main.tex.
+                        Это не шаблон, поэтому у импорта своё место над формой */}
+                    <div
+                        className={classNames('new-project__archive', {
+                            'new-project__archive--active': !!archive,
+                        })}
+                        role="group"
+                        aria-label={texts.archive}
+                    >
+                        <span className="new-project__archive-icon">
+                            <ArchiveIcon />
+                        </span>
+                        <span className="new-project__archive-text">
+                            <span className="new-project__archive-title">
+                                {archive?.name ?? texts.archive}
+                            </span>
+                            <span className="new-project__archive-hint">
+                                {texts.archive_hint}
+                            </span>
+                        </span>
+                        <span className="new-project__archive-actions">
+                            <button
+                                type="button"
+                                className="new-project__archive-choose"
+                                onClick={() => archiveInputRef.current?.click()}
+                            >
+                                {archive
+                                    ? texts.archive_replace
+                                    : texts.archive_choose}
+                            </button>
+                            {archive && (
+                                <button
+                                    type="button"
+                                    className="new-project__archive-remove"
+                                    onClick={() => chooseTemplate(null)}
+                                >
+                                    {texts.archive_remove}
+                                </button>
+                            )}
+                        </span>
+                        <input
+                            ref={archiveInputRef}
+                            className="new-project__archive-input"
+                            type="file"
+                            accept=".zip,application/zip"
+                            tabIndex={-1}
+                            aria-hidden="true"
+                            onChange={chooseArchive}
+                        />
+                    </div>
+
                     <Input
                         className="new-project__name"
                         title={texts.name}
@@ -316,41 +367,6 @@ export const NewProjectPage = () => {
                                         {texts.empty_project_hint}
                                     </span>
                                 </button>
-                            </div>
-                            {/* GH-234: проект из архива экспорта или из zip с main.tex */}
-                            <div
-                                className={classNames('new-project__card', {
-                                    'new-project__card--active': !!archive,
-                                })}
-                                data-source="archive"
-                            >
-                                <button
-                                    type="button"
-                                    className="new-project__card-select"
-                                    aria-pressed={!!archive}
-                                    onClick={() =>
-                                        archiveInputRef.current?.click()
-                                    }
-                                >
-                                    <span className="new-project__preview new-project__preview--empty">
-                                        <ArchiveIcon />
-                                    </span>
-                                    <span className="new-project__card-title">
-                                        {texts.archive}
-                                    </span>
-                                    <span className="new-project__card-text">
-                                        {archive?.name ?? texts.archive_hint}
-                                    </span>
-                                </button>
-                                <input
-                                    ref={archiveInputRef}
-                                    className="new-project__archive-input"
-                                    type="file"
-                                    accept=".zip,application/zip"
-                                    tabIndex={-1}
-                                    aria-hidden="true"
-                                    onChange={chooseArchive}
-                                />
                             </div>
                             {shownTemplates.map((item) => (
                                 <div

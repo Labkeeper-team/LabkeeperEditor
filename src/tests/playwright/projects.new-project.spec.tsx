@@ -564,24 +564,68 @@ test.describe('на телефоне', () => {
     });
 });
 
-/** GH-234: карточка «Из архива» открывает выбор файла */
+/** GH-234: импорт стоит своей полосой над формой, отдельно от шаблонов */
+const archiveBox = (page: Page) =>
+    page.getByRole('group', { name: 'Project from an archive' });
+const archiveTitle = (page: Page) =>
+    archiveBox(page).locator('.new-project__archive-title');
+
+/** Кнопка полосы открывает выбор файла: «Upload an archive», а после выбора «Another archive» */
 async function pickArchive(
     page: Page,
     name: string,
     mimeType = 'application/zip'
 ) {
     const chooser = page.waitForEvent('filechooser');
-    await page
-        .locator('.new-project__card[data-source="archive"]')
-        .locator('.new-project__card-select')
-        .click();
+    await archiveBox(page).locator('.new-project__archive-choose').click();
     await (
         await chooser
     ).setFiles({ name, mimeType, buffer: Buffer.from('PK\u0003\u0004') });
 }
 
-const archiveCard = (page: Page) =>
-    page.locator('.new-project__card[data-source="archive"]');
+// Импорт искали среди шаблонов и не находили: теперь он над формой и виден сразу
+for (const viewport of [
+    { width: 1360, height: 900 },
+    { width: 390, height: 844 },
+]) {
+    test(`импорт виден сразу и стоит отдельно от шаблонов на ${viewport.width}px`, async ({
+        page,
+    }) => {
+        await page.setViewportSize(viewport);
+        await openNewProject(page);
+
+        await expect(archiveBox(page)).toBeInViewport({ ratio: 1 });
+        await expect(archiveTitle(page)).toHaveText('Project from an archive');
+        await expect(archiveBox(page)).toContainText(
+            'A Labkeeper export zip or an archive with main.tex'
+        );
+        await expect(
+            archiveBox(page).getByRole('button', { name: 'Upload an archive' })
+        ).toBeVisible();
+        // среди карточек импорта нет, и стоит он выше имени проекта
+        await expect(
+            page.locator('.new-project__templates').getByRole('group')
+        ).toHaveCount(0);
+        await expect(
+            page.locator('.new-project__templates .new-project__card')
+        ).toHaveCount(4);
+        const box = await archiveBox(page).boundingBox();
+        const name = await page.getByRole('textbox').boundingBox();
+        expect(box!.y + box!.height).toBeLessThanOrEqual(name!.y);
+
+        // выбранный архив меняет надписи, но не высоту полосы: форма под ней не прыгает
+        const cardSelector = '.new-project__card[data-template="altacv"]';
+        const before = await offsetInPage(page, cardSelector);
+        await pickArchive(
+            page,
+            'Очень длинное имя архива лабораторной работы по физике (LaTeX).zip'
+        );
+        await expect(archiveBox(page)).toHaveClass(
+            /new-project__archive--active/
+        );
+        expect(await offsetInPage(page, cardSelector)).toBe(before);
+    });
+}
 
 test('проект из архива импортируется с именем из файла и типом из архива', async ({
     page,
@@ -594,10 +638,17 @@ test('проект из архива импортируется с именем 
 
     // имя без хвоста экспорта, тип не выбрать: он придёт из архива
     await expect(page.getByRole('textbox')).toHaveValue('Лаба 3');
-    await expect(archiveCard(page)).toContainText('Лаба 3 (LaTeX).zip');
+    await expect(archiveTitle(page)).toHaveText('Лаба 3 (LaTeX).zip');
+    await expect(archiveBox(page)).toHaveClass(/new-project__archive--active/);
     await expect(
-        archiveCard(page).locator('.new-project__card-select')
-    ).toHaveAttribute('aria-pressed', 'true');
+        archiveBox(page).getByRole('button', { name: 'Another archive' })
+    ).toBeVisible();
+    // пустой проект больше не выбран
+    await expect(
+        page
+            .locator('.new-project__card', { hasText: 'Empty project' })
+            .locator('.new-project__card-select')
+    ).toHaveAttribute('aria-pressed', 'false');
     await expect(typeButton(page, 'LaTeX')).toBeDisabled();
     await expect(typeButton(page, 'Markdown')).toBeDisabled();
     await expect(page.locator('.new-project__note')).toHaveText(
@@ -632,9 +683,10 @@ test('не zip отклоняется до загрузки', async ({ page }) =
     await expect(page.locator('.new-project__error')).toHaveText(
         'This is not a project archive: use a Labkeeper export zip or an archive with main.tex'
     );
-    await expect(
-        archiveCard(page).locator('.new-project__card-select')
-    ).toHaveAttribute('aria-pressed', 'false');
+    await expect(archiveBox(page)).not.toHaveClass(
+        /new-project__archive--active/
+    );
+    await expect(archiveTitle(page)).toHaveText('Project from an archive');
     await expect(typeButton(page, 'LaTeX')).toBeEnabled();
     expect(calls.import).toHaveLength(0);
 });
@@ -647,10 +699,10 @@ test('шаблон или пустой проект снимают выбран�
 
     // имя из архива сменилось именем шаблона, архив больше не выбран
     await expect(page.getByRole('textbox')).toHaveValue('Резюме AltaCV');
-    await expect(archiveCard(page)).not.toContainText('Лаба 3.zip');
-    await expect(
-        archiveCard(page).locator('.new-project__card-select')
-    ).toHaveAttribute('aria-pressed', 'false');
+    await expect(archiveTitle(page)).toHaveText('Project from an archive');
+    await expect(archiveBox(page)).not.toHaveClass(
+        /new-project__archive--active/
+    );
 
     await pickArchive(page, 'Лаба 3.zip');
     await page
@@ -661,6 +713,32 @@ test('шаблон или пустой проект снимают выбран�
     await expect(page.getByRole('textbox')).toHaveValue('');
     await expect(typeButton(page, 'LaTeX')).toBeEnabled();
     await expect(page.locator('.new-project__note')).toBeHidden();
+});
+
+test('кнопка Remove снимает архив и возвращает пустой проект', async ({
+    page,
+}) => {
+    await openNewProject(page);
+
+    await pickArchive(page, 'Лаба 3.zip');
+    await expect(page.getByRole('textbox')).toHaveValue('Лаба 3');
+    await archiveBox(page).getByRole('button', { name: 'Remove' }).click();
+
+    await expect(archiveTitle(page)).toHaveText('Project from an archive');
+    await expect(archiveBox(page)).not.toHaveClass(
+        /new-project__archive--active/
+    );
+    await expect(
+        archiveBox(page).getByRole('button', { name: 'Remove' })
+    ).toHaveCount(0);
+    await expect(page.getByRole('textbox')).toHaveValue('');
+    await expect(typeButton(page, 'LaTeX')).toBeEnabled();
+    await expect(page.locator('.new-project__note')).toBeHidden();
+    await expect(
+        page
+            .locator('.new-project__card', { hasText: 'Empty project' })
+            .locator('.new-project__card-select')
+    ).toHaveAttribute('aria-pressed', 'true');
 });
 
 test('слишком большой архив даёт понятную ошибку и оставляет страницу', async ({
