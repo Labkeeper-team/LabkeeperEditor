@@ -103,6 +103,9 @@ export interface Translations {
         empty_project_hint: string;
         archive: string;
         archive_hint: string;
+        archive_choose: string;
+        archive_replace: string;
+        archive_remove: string;
         all_templates: string;
         /** Темы каталога, по которым его можно отфильтровать, как на сайте */
         categories: {

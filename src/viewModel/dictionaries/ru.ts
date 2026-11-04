@@ -117,8 +117,11 @@ export const ru: Translations = {
         template: 'С чего начать',
         empty_project: 'Пустой проект',
         empty_project_hint: 'Чистый лист выбранного типа',
-        archive: 'Из архива',
+        archive: 'Проект из архива',
         archive_hint: 'Zip из экспорта Labkeeper или архив с main.tex',
+        archive_choose: 'Загрузить архив',
+        archive_replace: 'Другой архив',
+        archive_remove: 'Убрать',
         all_templates: 'Все шаблоны',
         categories: {
             labs: 'Лабораторные работы',
