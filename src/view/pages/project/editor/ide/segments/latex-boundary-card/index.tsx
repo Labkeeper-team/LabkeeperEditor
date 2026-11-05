@@ -11,7 +11,7 @@ import './style.scss';
 
 const LATEX_HEADER_TEXT = String.raw`\documentclass[a4paper,12pt]{article}
 \usepackage{comment,cmap,amsmath,longtable,mathtools}
-\usepackage{booktabs,geometry,graphicx,listings}
+\usepackage{booktabs,geometry,graphicx,listings,soul}
 \usepackage[T2A]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage[english,russian]{babel}
