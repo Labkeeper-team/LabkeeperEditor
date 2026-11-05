@@ -31,35 +31,31 @@ describe('MetrikaService whitelist', () => {
         delete (window as { ym?: unknown }).ym;
     });
 
-    test('reachGoal is sent only for current Metrika events', () => {
+    test('only the business goals go to Metrika', () => {
         const service = new MetrikaService();
 
         service.onEvent(Events.EVENT_RUN);
-        service.onEvent(Events.EVENT_CREATE_PROJECT);
         service.onEvent(Events.EVENT_AGENT_STARTED);
+        service.onEvent(Events.EVENT_PAYMENT_SUCCESS);
 
-        expect(ym).toHaveBeenCalledTimes(3);
-        expect(ym).toHaveBeenCalledWith(METRIKA_KEY, 'reachGoal', 'start_run');
-        expect(ym).toHaveBeenCalledWith(
-            METRIKA_KEY,
-            'reachGoal',
-            'create_project'
-        );
-        expect(ym).toHaveBeenCalledWith(
-            METRIKA_KEY,
-            'reachGoal',
-            'agent_started'
-        );
+        expect(ym.mock.calls).toEqual([
+            [METRIKA_KEY, 'reachGoal', 'start_run'],
+            [METRIKA_KEY, 'reachGoal', 'agent_started'],
+            [METRIKA_KEY, 'reachGoal', 'payment_success'],
+        ]);
     });
 
-    test('new OpenPanel-only keys do not go to ym', () => {
+    test('other events do not go to Metrika', () => {
         const service = new MetrikaService();
 
+        service.onEvent(Events.EVENT_CREATE_PROJECT);
+        service.onEvent(Events.EVENT_PAYMENT_REQUIRED);
+        service.onEvent(Events.EVENT_PAYMENT_STARTED);
+        service.onEvent(Events.EVENT_AGENT_FINISHED);
+        service.onEvent(Events.EVENT_ERROR);
+        service.onEvent(Events.FRONTEND_ERROR);
         service.onEvent(Events.EVENT_COMPILE_SUCCEEDED);
-        service.onEvent(Events.EVENT_LOGIN_SUCCEEDED);
         service.onEvent(Events.EVENT_PAGE_VIEWED);
-        service.onEvent(Events.EVENT_AGENT_FAILED);
-        service.onEvent(Events.EVENT_PROJECT_LOCKED);
 
         expect(ym).not.toHaveBeenCalled();
     });

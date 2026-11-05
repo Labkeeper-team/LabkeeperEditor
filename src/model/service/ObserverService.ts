@@ -131,27 +131,12 @@ export const Events = {
 
 export type EventValues = (typeof Events)[keyof typeof Events];
 
+// Only the main business goals go to Metrika: a compilation, an agent run and a payment.
+// Everything else goes to OpenPanel.
 export const METRIKA_EVENTS: ReadonlySet<string> = new Set([
-    Events.EVENT_CREATE_MD_SEGMENT,
-    Events.EVENT_CREATE_COMP_SEGMENT,
-    Events.EVENT_CREATE_LATEX_SEGMENT,
-    Events.EVENT_CREATE_ASCIIMATH_SEGMENT,
-    Events.EVENT_CREATE_DIAGRAM_SEGMENT,
     Events.EVENT_RUN,
-    Events.EVENT_ERROR,
-    Events.EVENT_MOVE_SEGMENT,
-    Events.EVENT_INSERT_SEGMENT_BETWEEN,
-    Events.EVENT_PRINT,
-    Events.EVENT_QR_V1,
-    Events.EVENT_PAYMENT_REQUIRED,
-    Events.EVENT_PAYMENT_STARTED,
-    Events.EVENT_PAYMENT_SUCCESS,
-    Events.EVENT_CREATE_PROJECT,
     Events.EVENT_AGENT_STARTED,
-    Events.EVENT_AGENT_FINISHED,
-    Events.EVENT_AGENT_TIMEOUT,
-    Events.FRONTEND_ERROR,
-    Events.EVENT_RPI_UNKNOWN,
+    Events.EVENT_PAYMENT_SUCCESS,
 ]);
 
 export const OPENPANEL_EVENT_NAMES: Record<string, string> = {
