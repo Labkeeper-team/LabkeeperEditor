@@ -1168,6 +1168,19 @@ export class AgentChatService {
         }
 
         if (isError) {
+            // токены кончились посреди прогона: сервер успел спросить у агента итог и положил его в историю
+            const summary =
+                event.stopReason === 'PaymentRequired'
+                    ? event.message
+                    : undefined;
+            if (summary) {
+                chat.appendMessage({
+                    kind: 'response',
+                    text: summary,
+                    contextTokens: event.contextTokens,
+                    maxContextTokens: event.maxContextTokens,
+                });
+            }
             chat.appendMessage({ kind: 'error', reason: event.stopReason });
             // длинный запрос возвращаем, чтобы было что сокращать, а гостю возвращаем любой:
             // под ошибкой ему предлагают войти, а вход оставляет от ленты только поле ввода
@@ -1179,6 +1192,9 @@ export class AgentChatService {
             }
             chat.setRequestState('error');
             this.reportStopReason(event.stopReason);
+            if (summary) {
+                await this.syncHistory();
+            }
             return;
         }
 
