@@ -483,6 +483,41 @@ test.each([
     expect(ctx.repository.chatViewModelRepository.requestState()).toBe('error');
 });
 
+// токены кончились посреди прогона: итог агента идёт ответом, под ним ошибка с покупкой
+test('agent-stop-reason-PaymentRequired-with-summary-shows-it-before-the-error', async () => {
+    const ctx = setup();
+    ctx.repository.chatViewModelRepository.setInput('привет');
+
+    await ctx.agentChatService.onPromptSubmit();
+    await emit(ctx, {
+        kind: 'finished',
+        message: 'добавил таблицу, собрать не успел',
+        stopReason: 'PaymentRequired',
+    });
+
+    const messages = ctx.repository.chatViewModelRepository.messages();
+    expect(messages.slice(-2)).toMatchObject([
+        { kind: 'response', text: 'добавил таблицу, собрать не успел' },
+        { kind: 'error', reason: 'PaymentRequired' },
+    ]);
+    expect(ctx.repository.chatViewModelRepository.requestState()).toBe('error');
+});
+
+test('agent-stop-reason-Locked-with-message-shows-only-the-error', async () => {
+    const ctx = setup();
+    ctx.repository.chatViewModelRepository.setInput('привет');
+
+    await ctx.agentChatService.onPromptSubmit();
+    await emit(ctx, {
+        kind: 'finished',
+        message: 'текст',
+        stopReason: 'Locked',
+    });
+
+    const messages = ctx.repository.chatViewModelRepository.messages();
+    expect(messages.some((message) => message.kind === 'response')).toBe(false);
+});
+
 test.each([
     ['IterationLimit'],
     ['ContextOverflow'],
