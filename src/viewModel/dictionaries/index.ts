@@ -171,6 +171,14 @@ export interface Translations {
         errors: {
             non_authorized_paste_image: string;
             paste_file_not_supported: string;
+            paste_file_unsupported: string;
+            paste_file_kinds: {
+                image: string;
+                csv: string;
+                tex: string;
+                and: string;
+            };
+            paste_tex_markdown_project: string;
         };
         no_computation_result: string;
         run_to_view: string;

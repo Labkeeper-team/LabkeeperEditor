@@ -54,6 +54,7 @@ import { useBlockedEditNotice } from '../../../../../../hooks/useBlockedEditNoti
 import classNames from 'classnames';
 import { colors } from '../../../../../../styles/colors';
 import { DropdownMenuContent } from './dropdownMenuContent';
+import { isFileDrag, segmentDropPosition } from './segmentFileDrop.ts';
 import { useDictionary } from '../../../../../../store/selectors/translations.ts';
 import { controller } from '../../../../../../../main.tsx';
 import { LRUMap } from 'lru_map';
@@ -428,6 +429,44 @@ export const SegmentEditor = memo(
                 })
             );
         }, [props.index, dispatch]);
+
+        // GH-230: файл можно бросить на любое место поля сегмента, и он
+        // вставляется так же, как по Ctrl+V. Пустое место под строками само
+        // перетаскивание не принимает, а CodeMirror вставлял текст файла
+        const onFileDragOver = useCallback((event: React.DragEvent) => {
+            if (!isFileDrag(event.dataTransfer)) {
+                return;
+            }
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'copy';
+        }, []);
+
+        const onFileDropCapture = useCallback(
+            (event: React.DragEvent) => {
+                if (!isFileDrag(event.dataTransfer)) {
+                    return;
+                }
+                // CodeMirror пропускает событие, которое уже обработано, и не
+                // вставит текст файла. Дальше оно идёт как обычно: раскладка
+                // гасит подсветку менеджера файлов, а редактор свой курсор
+                event.preventDefault();
+                const view = editor.current?.view;
+                dispatch(
+                    controller.onAddedFilesToSegmentEditorRequest({
+                        items: event.dataTransfer.items,
+                        segmentIndex: props.index,
+                        cursorPosition: view
+                            ? segmentDropPosition(
+                                  view,
+                                  event.clientX,
+                                  event.clientY
+                              )
+                            : 0,
+                    })
+                );
+            },
+            [dispatch, props.index]
+        );
 
         const onSegmentMouseDownCapture = useCallback(
             (event: React.MouseEvent) => {
@@ -920,6 +959,8 @@ export const SegmentEditor = memo(
                     })}
                     onMouseDownCapture={onSegmentMouseDownCapture}
                     onKeyDownCapture={onBlockedEditKeyDown}
+                    onDragOver={onFileDragOver}
+                    onDropCapture={onFileDropCapture}
                 >
                     <CodeMirror
                         ref={editor as LegacyRef<ReactCodeMirrorRef>}

@@ -188,6 +188,16 @@ export const ru: Translations = {
                 'Что бы вставить изображение вам необходимо авторизоваться',
             paste_file_not_supported:
                 'В сегмент «${replace1}» файл не вставить. Картинки и файлы вставляются в Маркдаун, Latex и Вычисление',
+            paste_file_unsupported:
+                'Файл «${file}» не вставить в сегмент «${segment}»: сюда вставляются ${allowed}. Остальные файлы добавляйте через менеджер файлов',
+            paste_file_kinds: {
+                image: 'картинки',
+                csv: 'таблицы .csv',
+                tex: 'файлы .tex',
+                and: ' и ',
+            },
+            paste_tex_markdown_project:
+                'Файл .tex подключается только в проекте LaTeX. Тип проекта меняется в настройках над сегментами',
         },
         latex: 'latex',
         asciimath: 'простая формула',

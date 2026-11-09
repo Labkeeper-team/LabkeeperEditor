@@ -37,7 +37,12 @@ export class FileService {
         this.observerService = observerService;
     }
 
-    private trackRejected = (file: File, reason: 'too_big' | 'format') => {
+    /** segment: файл вставили в сегмент, где для него нет разметки (GH-230) */
+    trackRejected = (
+        file: File,
+        reason: 'too_big' | 'format' | 'segment',
+        segmentType?: string
+    ) => {
         trackEvent(
             this.observerService,
             this.repository,
@@ -48,6 +53,7 @@ export class FileService {
                 extension: fileExtension(file.name) ?? '',
                 mime_type: file.type,
                 size: file.size,
+                ...(segmentType ? { segment_type: segmentType } : {}),
             }
         );
     };

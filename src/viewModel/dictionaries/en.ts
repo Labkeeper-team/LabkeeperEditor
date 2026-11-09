@@ -182,6 +182,16 @@ export const en: Translations = {
             non_authorized_paste_image: 'You need authorize to paste images',
             paste_file_not_supported:
                 'Files cannot be pasted into a ${replace1} segment. Images and files go into Markdown, Latex and Computation segments',
+            paste_file_unsupported:
+                'The file ${file} cannot be pasted into a ${segment} segment: it takes ${allowed}. Add other files in the file manager',
+            paste_file_kinds: {
+                image: 'images',
+                csv: '.csv tables',
+                tex: '.tex files',
+                and: ' and ',
+            },
+            paste_tex_markdown_project:
+                'A .tex file is included only in a LaTeX project. Change the project type in the settings above the segments',
         },
         latex: 'latex',
         asciimath: 'simple-formula',

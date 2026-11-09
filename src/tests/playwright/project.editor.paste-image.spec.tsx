@@ -139,3 +139,105 @@ test('pasted-image-after-a-deleted-one-shows-the-new-picture', async ({
     expect(await resultPicture(page).getAttribute('src')).not.toBe(firstSrc);
     expect(new Set(store.uploads).size).toBe(2);
 });
+
+/** Бросает файл в точку экрана так, как это делает браузер: dragover, затем drop */
+async function dropFile(
+    page: Page,
+    point: { x: number; y: number },
+    file: { name: string; type: string; content: string }
+) {
+    await page.evaluate(
+        ({ x, y, name, type, content }) => {
+            const target = document.elementFromPoint(x, y);
+            if (!target) {
+                throw new Error(`nothing at ${x},${y}`);
+            }
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(new File([content], name, { type }));
+            for (const kind of ['dragenter', 'dragover', 'drop']) {
+                target.dispatchEvent(
+                    new DragEvent(kind, {
+                        dataTransfer,
+                        clientX: x,
+                        clientY: y,
+                        bubbles: true,
+                        cancelable: true,
+                    })
+                );
+            }
+        },
+        { ...point, ...file }
+    );
+}
+
+const TEX_FILE = {
+    name: 'chapter.tex',
+    type: 'application/x-tex',
+    content: '\\section{Глава}\nТекст главы',
+};
+
+async function openSegment(page: Page, type: 'latex' | 'computational') {
+    const routeSetup = new RouteSetup(page);
+    routeSetup.setupLatexProject();
+    await routeSetup.setupGetUserInfoRequest(true);
+    await routeSetup.setupGetProjectRequest(200, 'default', {
+        segments: [
+            {
+                id: 1,
+                type,
+                text: type === 'latex' ? 'Текст' : 'a = 1',
+                parameters: { visible: true },
+            },
+        ],
+        parameters: { roundStrategy: 'noRound' },
+    });
+    await routeSetup.setupGetAllProjectsRequest();
+    await routeSetup.setupSaveProgramRequest();
+    const store = await setupFileStore(page);
+    await page.goto(`/project/${uuid}`);
+    await expect(page.locator('#ide-segment-0 .cm-content')).toBeVisible({
+        timeout: 15_000,
+    });
+    const field = await page
+        .locator('.segment-editor-container')
+        .first()
+        .boundingBox();
+    expect(field).not.toBeNull();
+    // пустое место поля под строкой, где раньше бросок ничего не делал
+    const emptyArea = {
+        x: field!.x + field!.width / 2,
+        y: field!.y + field!.height - 8,
+    };
+    return { store, emptyArea };
+}
+
+// GH-230: бросок файла работает на всём поле сегмента, а .tex в LaTeX-сегменте
+// подключается командой \input, без пустых строк и без текста файла в сегменте
+test('tex-file-dropped-below-the-text-is-included-with-input', async ({
+    page,
+}) => {
+    const { store, emptyArea } = await openSegment(page, 'latex');
+
+    await dropFile(page, emptyArea, TEX_FILE);
+
+    await expect.poll(() => store.uploads).toHaveLength(1);
+    expect(store.uploads[0]).toMatch(/^file_seg1_[0-9a-z]{6}\.tex$/);
+    await expect(page.locator('#ide-segment-0 .cm-line')).toHaveText([
+        'Текст',
+        `\\input{${store.uploads[0]}}`,
+    ]);
+});
+
+test('tex-file-dropped-into-a-computation-is-refused-with-a-notice', async ({
+    page,
+}) => {
+    const { store, emptyArea } = await openSegment(page, 'computational');
+
+    await dropFile(page, emptyArea, TEX_FILE);
+
+    await expect(
+        page.getByText('cannot be pasted into a Computation')
+    ).toBeVisible();
+    expect(store.uploads).toEqual([]);
+    await expect(page.locator('#ide-segment-0 .cm-line')).toHaveText(['a = 1']);
+});
