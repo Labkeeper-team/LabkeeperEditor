@@ -570,6 +570,11 @@ export class AgentChatService {
         const token = ++this.runToken;
         this.session?.close();
         this.session = null;
+        // GH-239: остановленный запрос возвращается в поле, чтобы его можно было поправить.
+        // Новый текст, набранный за время прогона, не затираем
+        if (!chat.input().trim()) {
+            chat.setInput(this.lastPrompt);
+        }
 
         if (!started) {
             // запуск не состоялся, менять на сервере было нечему

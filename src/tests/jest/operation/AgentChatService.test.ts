@@ -2460,6 +2460,34 @@ test('abort-picks-up-what-the-last-tool-call-changed', async () => {
     });
 });
 
+// GH-239: остановленный запрос возвращается в поле, чтобы его поправить и отправить снова
+test.each([
+    ['authenticated', true],
+    ['guest', false],
+] as const)('abort-returns-the-prompt-to-the-field-%s', async (_, auth) => {
+    const ctx = setup(auth);
+    await runningAgent(ctx, 'сделай таблицу');
+    expect(ctx.repository.chatViewModelRepository.input()).toBe('');
+
+    await ctx.agentChatService.onAbortClicked();
+
+    expect(ctx.repository.chatViewModelRepository.input()).toBe(
+        'сделай таблицу'
+    );
+});
+
+test('abort-keeps-the-text-typed-during-the-run', async () => {
+    const ctx = setup();
+    await runningAgent(ctx, 'сделай таблицу');
+    ctx.repository.chatViewModelRepository.setInput('и подпиши оси');
+
+    await ctx.agentChatService.onAbortClicked();
+
+    expect(ctx.repository.chatViewModelRepository.input()).toBe(
+        'и подпиши оси'
+    );
+});
+
 test('abort-of-a-guest-run-says-the-result-is-lost', async () => {
     const ctx = setup(false);
     await runningAgent(ctx);
