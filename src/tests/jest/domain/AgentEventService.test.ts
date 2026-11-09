@@ -273,6 +273,52 @@ test('describe-tool-call-of-delete-segment-names-the-segment-without-a-jump', ()
     ]);
 });
 
+// GH-242: смена параметров подписана сегментом, и по ней прокручиваем к его карточке
+test('describe-tool-call-of-set-segment-parameters-names-the-segment', () => {
+    const service = new AgentEventService();
+
+    expect(
+        service.describeToolCall('set_segment_parameters', [
+            hunkOf('changeSegmentParameters', {
+                segmentId: 2,
+                previousParameters: { hideValue: false },
+            }),
+        ])
+    ).toEqual([
+        {
+            kind: 'event',
+            labelKey: 'set_segment_parameters',
+            file: undefined,
+            segmentId: 2,
+            lines: undefined,
+            target: { segmentIndex: 1, line: 1, focus: false },
+        },
+    ]);
+});
+
+test('changed-hunks-include-a-parameter-hunk-that-changed-one-more-parameter', () => {
+    const service = new AgentEventService();
+    const before = hunkOf('changeSegmentParameters', {
+        id: 'p',
+        segmentId: 1,
+        previousParameters: { hideValue: false, visible: null },
+    });
+    // сервер дописывает повторную смену того же сегмента в прежний hunk
+    const after = {
+        ...before,
+        previousParameters: { hideValue: false, hideInfl: false },
+    };
+
+    expect(service.changedHunks([before], [after])).toEqual([after]);
+    // null и отсутствие поля значат одно и то же: параметр не трогали
+    expect(
+        service.changedHunks(
+            [before],
+            [{ ...before, previousParameters: { hideValue: false } }]
+        )
+    ).toEqual([]);
+});
+
 test('describe-tool-call-of-delete-file-names-the-file-without-a-jump', () => {
     const service = new AgentEventService();
 
@@ -632,6 +678,7 @@ test.each([
     ['delete_lines_from_segment'],
     ['replace_text_in_segment'],
     ['delete_segment'],
+    ['set_segment_parameters'],
 ] as const)(
     'reload-scope-of-%s-asks-for-the-program-even-without-hunk-changes',
     (tool) => {
@@ -680,6 +727,7 @@ test.each([
     ['deleteLinesFromSegment'],
     ['replaceTextInSegment'],
     ['deleteSegment'],
+    ['changeSegmentParameters'],
 ] as const)('reload-scope-of-%s-asks-for-the-program-only', (type) => {
     const service = new AgentEventService();
 

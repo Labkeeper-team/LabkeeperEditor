@@ -377,6 +377,9 @@ export const en: Translations = {
             delete_file: 'Deleted file',
             delete_segment_plain: 'Deleted a segment',
             delete_file_plain: 'Deleted a file',
+            set_segment_parameters:
+                'Changed the parameters of segment №{segment}',
+            set_segment_parameters_plain: 'Changed segment parameters',
             list_workspace: 'Reading the document structure',
             read_segment: 'Reading a segment',
             read_segments: 'Reading segments',
@@ -787,6 +790,9 @@ export const en: Translations = {
         deleted: 'deleted',
         collapse_bar: 'Collapse changes bar',
         expand_bar: 'Expand changes bar',
+        parameters_changed: 'The agent changed parameters:',
+        parameter_yes: 'yes',
+        parameter_no: 'no',
         errors: {
             accept_failed: 'Some changes could not be accepted, try again',
             revert_failed: 'Some changes could not be reverted, try again',

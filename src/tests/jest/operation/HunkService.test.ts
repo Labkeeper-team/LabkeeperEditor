@@ -777,3 +777,167 @@ describe('deletion of a file created again', () => {
         expect(toasts(repository)).toHaveLength(1);
     });
 });
+
+// GH-242: агент сменил параметры сегмента
+describe('segment parameter hunks', () => {
+    const parameterHunk: Hunk = {
+        id: 'params',
+        type: 'changeSegmentParameters',
+        segmentId: 1,
+        // так их присылает сервер: нетронутые поля приходят со значением null
+        previousParameters: {
+            visible: null,
+            hideAssignmentWithValues: false,
+            hideGeneralFormula: false,
+            hideValue: null,
+        },
+    };
+    const programWithParameters = (
+        parameters: Record<string, boolean>,
+        text = 'a = 10 # 1'
+    ) => ({
+        segments: [
+            {
+                id: 1,
+                type: 'computational' as const,
+                text,
+                parameters: { visible: true, ...parameters },
+            },
+        ],
+        parameters: { roundStrategy: 'noRound' as const },
+    });
+
+    test('typing in the segment accepts its line edits but keeps the parameter change', async () => {
+        const { hunkService, rpi, repository } = mockContext();
+        setOwnAuthenticatedProject(repository);
+        repository.ideViewModelRepository.setHunks([sampleHunk, parameterHunk]);
+        mockListHunksRequestWithHunks(rpi, [parameterHunk]);
+        rpi.deleteHunkRequest = jest.fn().mockResolvedValue(deleteResult(200));
+
+        hunkService.acceptHunksForSegment(1);
+        await settle();
+
+        expect(rpi.deleteHunkRequest).toHaveBeenCalledTimes(1);
+        expect(rpi.deleteHunkRequest).toHaveBeenCalledWith(
+            PROJECT_ID,
+            'h1',
+            false
+        );
+        expect(
+            repository.ideViewModelRepository.hunks().map((h) => h.id)
+        ).toEqual(['params']);
+    });
+
+    test('a parameter set by hand accepts the agent change of that segment', async () => {
+        const { programEditorService, programService, rpi, repository } =
+            mockContext();
+        setOwnAuthenticatedProject(repository);
+        programService.setNewProgram(
+            programWithParameters({
+                hideAssignmentWithValues: true,
+                hideGeneralFormula: true,
+            })
+        );
+        const otherSegment: Hunk = {
+            ...parameterHunk,
+            id: 'other',
+            segmentId: 2,
+        };
+        repository.ideViewModelRepository.setHunks([
+            sampleHunk,
+            parameterHunk,
+            otherSegment,
+        ]);
+        mockSaveProgramRequest(rpi);
+        mockListHunksRequestWithHunks(rpi, [sampleHunk, otherSegment]);
+        rpi.deleteHunkRequest = jest.fn().mockResolvedValue(deleteResult(200));
+
+        await programEditorService.segmentEditorChangeSegmentVisibility(
+            false,
+            'hideGeneralFormula',
+            0
+        );
+        await settle();
+
+        // откат поверх затёр бы выбор человека, а правка текста и чужой сегмент ни при чём
+        expect(rpi.deleteHunkRequest).toHaveBeenCalledTimes(1);
+        expect(rpi.deleteHunkRequest).toHaveBeenCalledWith(
+            PROJECT_ID,
+            'params',
+            false
+        );
+    });
+
+    test('revert of a new segment restores its parameters before removing it', async () => {
+        const { hunkService, rpi, repository } = mockContext();
+        setOwnAuthenticatedProject(repository);
+        const addSegment: Hunk = {
+            id: 'add',
+            type: 'addSegment',
+            segmentId: 1,
+        };
+        const addLines: Hunk = { ...sampleHunk, id: 'lines' };
+        repository.ideViewModelRepository.setHunks([
+            addSegment,
+            addLines,
+            parameterHunk,
+        ]);
+        mockGetProjectRequestWithDefaultProject(rpi);
+        mockListFilesRequestWithDefaultFile(rpi);
+        mockListHunksRequestWithHunks(rpi, []);
+        rpi.deleteHunkRequest = jest.fn().mockResolvedValue(deleteResult(200));
+
+        await hunkService.revertGroup(['add', 'lines', 'params']);
+
+        // номер сегмента у параметров это место: после отката сегмента там стоял бы сосед
+        expect(
+            jest.mocked(rpi.deleteHunkRequest).mock.calls.map((call) => call[1])
+        ).toEqual(['params', 'add', 'lines']);
+    });
+
+    test('a parameter change the segment already undid is accepted quietly', async () => {
+        const { hunkService, rpi, repository } = mockContext();
+        setOwnAuthenticatedProject(repository);
+        repository.projectViewModelRepository.setCurrentProgram(
+            programWithParameters({
+                hideAssignmentWithValues: false,
+                hideGeneralFormula: false,
+            })
+        );
+        rpi.listHunksRequest = jest
+            .fn()
+            .mockResolvedValueOnce(hunkListResult([parameterHunk]))
+            .mockResolvedValue(hunkListResult([]));
+        rpi.deleteHunkRequest = jest.fn().mockResolvedValue(deleteResult(200));
+
+        await hunkService.loadHunks();
+        await settle();
+
+        expect(rpi.deleteHunkRequest).toHaveBeenCalledWith(
+            PROJECT_ID,
+            'params',
+            false
+        );
+    });
+
+    test('a real parameter change stays for the person to decide', async () => {
+        const { hunkService, rpi, repository } = mockContext();
+        setOwnAuthenticatedProject(repository);
+        repository.projectViewModelRepository.setCurrentProgram(
+            programWithParameters({
+                hideAssignmentWithValues: true,
+                hideGeneralFormula: false,
+            })
+        );
+        mockListHunksRequestWithHunks(rpi, [parameterHunk]);
+        rpi.deleteHunkRequest = jest.fn().mockResolvedValue(deleteResult(200));
+
+        await hunkService.loadHunks();
+        await settle();
+
+        expect(rpi.deleteHunkRequest).not.toHaveBeenCalled();
+        expect(
+            repository.ideViewModelRepository.hunks().map((h) => h.id)
+        ).toEqual(['params']);
+    });
+});

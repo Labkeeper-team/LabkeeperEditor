@@ -543,6 +543,12 @@ export class ProgramEditorService {
             visible,
             segment_index: segmentIndex,
         });
+        this.hunkService?.acceptParameterHunksForSegment(
+            resolveSegmentId(
+                this.programService.getCurrentProgram().segments,
+                segmentIndex
+            )
+        );
         this.programService.changeSegmentVisibility(
             visible,
             parameterName,

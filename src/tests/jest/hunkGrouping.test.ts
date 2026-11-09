@@ -20,7 +20,11 @@ import {
     hasHunksForFile,
     hasHunksForSegment,
     noOpHunkIds,
+    noOpParameterHunkIds,
+    parameterChanges,
+    parameterHunksFirst,
     staleFileDeletionIds,
+    textHunksForSegment,
     trimUnchangedLines,
     type HunkGroupTarget,
 } from '../../viewModel/utils/hunkGrouping.ts';
@@ -126,6 +130,7 @@ test('resolveControlsLine uses hunk text length when endLine is overstated', () 
         isNewSegment: false,
         isDeletedSegment: false,
         isDeletedFile: false,
+        isParameterChange: false,
     };
     expect(resolveControlsLine(group, 10)).toBe(5);
 });
@@ -1331,5 +1336,94 @@ describe('staleFileDeletionIds', () => {
         expect(staleFileDeletionIds([deleted, created], ['new.txt']).size).toBe(
             0
         );
+    });
+});
+
+// GH-242: смена параметров сегмента
+describe('segment parameter hunks', () => {
+    const parameterHunk: Hunk = {
+        id: 'p',
+        type: 'changeSegmentParameters',
+        segmentId: 2,
+        previousParameters: {
+            visible: null,
+            hideAssignmentWithValues: false,
+            hideGeneralFormula: false,
+            hideInflAssignmentWithValues: false,
+        },
+    };
+    const lineHunk: Hunk = {
+        id: 'l',
+        type: 'addLinesToSegment',
+        segmentId: 2,
+        startLine: 1,
+        endLine: 1,
+        text: 'b = a ^ 2',
+    };
+
+    test('get their own group and stay out of the segment editor', () => {
+        const groups = groupHunks([lineHunk, parameterHunk]);
+
+        expect(groups).toHaveLength(2);
+        const parameterGroup = groups.find((g) => g.isParameterChange);
+        expect(parameterGroup?.hunks.map((h) => h.id)).toEqual(['p']);
+        // без исключения редактор нарисовал бы кнопки правки у первой строки сегмента
+        expect(
+            filterHunkGroupsForSegment(expandGroupsForDisplay(groups), 2).map(
+                (g) => g.hunks.map((h) => h.id)
+            )
+        ).toEqual([['l']]);
+    });
+
+    test('list only the parameters the agent changed, with the value now in the segment', () => {
+        expect(
+            parameterChanges(parameterHunk.previousParameters, {
+                visible: true,
+                hideAssignmentWithValues: true,
+                hideGeneralFormula: true,
+                // прежнее значение совпало с текущим: менять тут нечего
+                hideInflAssignmentWithValues: false,
+            })
+        ).toEqual([
+            { name: 'hideAssignmentWithValues', from: false, to: true },
+            { name: 'hideGeneralFormula', from: false, to: true },
+        ]);
+        expect(parameterChanges(null, { visible: true })).toEqual([]);
+    });
+
+    test('change nothing when every previous value is back in the segment', () => {
+        const parametersOf = (segmentId: number) =>
+            segmentId === 2
+                ? { visible: true, hideGeneralFormula: false }
+                : undefined;
+        const elsewhere: Hunk = { ...parameterHunk, id: 'q', segmentId: 5 };
+
+        expect(
+            noOpParameterHunkIds(
+                [lineHunk, parameterHunk, elsewhere],
+                parametersOf
+            )
+        ).toEqual(['p']);
+        expect(
+            noOpParameterHunkIds([parameterHunk], () => ({
+                hideAssignmentWithValues: true,
+            }))
+        ).toEqual([]);
+    });
+
+    test('are left out of the line check and of typing in the segment', () => {
+        expect(noOpHunkIds([parameterHunk], () => ['b = a ^ 2'])).toEqual([]);
+        expect(
+            textHunksForSegment([lineHunk, parameterHunk], 2).map((h) => h.id)
+        ).toEqual(['l']);
+        expect(
+            hunksForSegment([lineHunk, parameterHunk], 2).map((h) => h.id)
+        ).toEqual(['l', 'p']);
+    });
+
+    test('are reverted before the other hunks of the group', () => {
+        expect(
+            parameterHunksFirst(['a', 'l', 'p'], [lineHunk, parameterHunk])
+        ).toEqual(['p', 'a', 'l']);
     });
 });

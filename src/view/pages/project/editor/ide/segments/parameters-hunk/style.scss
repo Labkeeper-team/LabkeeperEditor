@@ -1,0 +1,50 @@
+@use '../../../../../../styles/colors' as *;
+
+// GH-242: под сегментом, рамка и кнопки как у остальных правок агента
+.parameters-hunk {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 16px;
+    box-sizing: border-box;
+    width: 100%;
+    margin-top: 6px;
+    padding: 8px 10px 8px 12px;
+    border: 1px solid $blue-20;
+    border-left: 3px solid $blue-10;
+    background: $gray-60;
+}
+
+.parameters-hunk__body {
+    flex: 1 1 260px;
+    min-width: 0;
+    color: $gray-10;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.parameters-hunk__title {
+    font-weight: 600;
+}
+
+.parameters-hunk__list {
+    margin: 2px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.parameters-hunk__item {
+    overflow-wrap: anywhere;
+}
+
+.parameters-hunk__from {
+    color: $gray-30;
+}
+
+.parameters-hunk__actions {
+    display: flex;
+    flex-shrink: 0;
+    gap: 6px;
+    margin-left: auto;
+}

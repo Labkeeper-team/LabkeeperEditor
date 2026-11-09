@@ -10,9 +10,12 @@ import {
     groupHunks,
     HunkGroupTarget,
     hunksForFile,
-    hunksForSegment,
     noOpHunkIds,
+    noOpParameterHunkIds,
+    parameterHunksFirst,
+    parameterHunksForSegment,
     staleFileDeletionIds,
+    textHunksForSegment,
     withoutStaleFileDeletions,
 } from '../utils/hunkGrouping.ts';
 import { projectFilePathsMatch } from '../utils/projectFilePath.ts';
@@ -384,7 +387,10 @@ export class HunkService {
             }
             const outcome = await this.deleteHunksOneByOne(
                 projectId,
-                hunkIds,
+                parameterHunksFirst(
+                    hunkIds,
+                    this.repository.ideViewModelRepository.hunks()
+                ),
                 true
             );
             await this.refreshAfterRevert();
@@ -443,7 +449,10 @@ export class HunkService {
             }
             const outcome = await this.deleteHunksOneByOne(
                 projectId,
-                ids,
+                parameterHunksFirst(
+                    ids,
+                    this.repository.ideViewModelRepository.hunks()
+                ),
                 true
             );
             await this.refreshAfterRevert();
@@ -528,8 +537,21 @@ export class HunkService {
         this.acceptHunksInBackground(ids);
     };
 
+    /** Набор текста в сегменте: правки его строк устарели, а смена параметров нет (GH-242) */
     acceptHunksForSegment = (segmentId: number): void => {
-        const ids = hunksForSegment(
+        const ids = textHunksForSegment(
+            this.repository.ideViewModelRepository.hunks(),
+            segmentId
+        ).map((h) => h.id);
+        this.acceptHunksInBackground(ids);
+    };
+
+    /**
+     * GH-242: человек сам поменял параметр сегмента. Решение по смене
+     * параметров агентом этим принято, а откат поверх затёр бы выбор человека
+     */
+    acceptParameterHunksForSegment = (segmentId: number): void => {
+        const ids = parameterHunksForSegment(
             this.repository.ideViewModelRepository.hunks(),
             segmentId
         ).map((h) => h.id);
@@ -570,10 +592,14 @@ export class HunkService {
             }
             return this.openFileLines(target.fileName);
         };
-        const ids = noOpHunkIds(
-            this.repository.ideViewModelRepository.hunks(),
-            linesOf
-        ).filter((id) => !this.settledNoOpIds.has(id));
+        const hunks = this.repository.ideViewModelRepository.hunks();
+        const ids = [
+            ...noOpHunkIds(hunks, linesOf),
+            ...noOpParameterHunkIds(
+                hunks,
+                (segmentId) => segments[segmentId - 1]?.parameters
+            ),
+        ].filter((id) => !this.settledNoOpIds.has(id));
         if (ids.length === 0) {
             return;
         }

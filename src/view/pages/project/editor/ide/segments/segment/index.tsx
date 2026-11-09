@@ -55,6 +55,7 @@ import classNames from 'classnames';
 import { colors } from '../../../../../../styles/colors';
 import { DropdownMenuContent } from './dropdownMenuContent';
 import { isFileDrag, segmentDropPosition } from './segmentFileDrop.ts';
+import { SegmentParameterHunks } from '../parameters-hunk';
 import { useDictionary } from '../../../../../../store/selectors/translations.ts';
 import { controller } from '../../../../../../../main.tsx';
 import { LRUMap } from 'lru_map';
@@ -1097,6 +1098,13 @@ export const SegmentEditor = memo(
                         ) : null}
                     </div>
                 ) : null}
+                {/* в чужом проекте правок агента не показываем, как и у добавленных сегментов */}
+                {projectIsReadonly ? null : (
+                    <SegmentParameterHunks
+                        segmentId={segmentId}
+                        parameters={segment?.parameters}
+                    />
+                )}
             </div>
         );
     }

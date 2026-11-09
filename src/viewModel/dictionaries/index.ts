@@ -350,6 +350,8 @@ export interface Translations {
             delete_file: string;
             delete_segment_plain: string;
             delete_file_plain: string;
+            set_segment_parameters: string;
+            set_segment_parameters_plain: string;
             list_workspace: string;
             read_segment: string;
             read_segments: string;
@@ -703,6 +705,9 @@ export interface Translations {
         deleted: string;
         collapse_bar: string;
         expand_bar: string;
+        parameters_changed: string;
+        parameter_yes: string;
+        parameter_no: string;
         errors: {
             accept_failed: string;
             revert_failed: string;

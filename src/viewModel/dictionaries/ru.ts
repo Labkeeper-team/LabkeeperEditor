@@ -381,6 +381,8 @@ export const ru: Translations = {
             delete_file: 'Удалён файл',
             delete_segment_plain: 'Удалён сегмент',
             delete_file_plain: 'Удалён файл',
+            set_segment_parameters: 'Изменены параметры сегмента №{segment}',
+            set_segment_parameters_plain: 'Изменены параметры сегмента',
             list_workspace: 'Просмотр структуры документа',
             read_segment: 'Чтение сегмента',
             read_segments: 'Чтение сегментов',
@@ -797,6 +799,9 @@ export const ru: Translations = {
         deleted: 'удалено',
         collapse_bar: 'Свернуть плашку изменений',
         expand_bar: 'Развернуть плашку изменений',
+        parameters_changed: 'Агент изменил параметры:',
+        parameter_yes: 'да',
+        parameter_no: 'нет',
         errors: {
             accept_failed:
                 'Не все изменения удалось принять, попробуйте ещё раз',

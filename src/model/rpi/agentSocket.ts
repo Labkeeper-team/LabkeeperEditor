@@ -74,6 +74,7 @@ export const AGENT_TOOL_NAMES = [
     'delete_lines_from_file',
     'replace_text_in_file',
     'delete_file',
+    'set_segment_parameters',
     'done',
 ] as const;
 
