@@ -1,4 +1,4 @@
-import { Hunk } from '../../model/domain.ts';
+import { Hunk, SEGMENT_PARAMETER_NAMES } from '../../model/domain.ts';
 import { AgentEvent, AgentToolName } from '../../model/rpi/agentSocket.ts';
 import { AgentChangeSummary, ChatMessage } from '../repository';
 
@@ -28,6 +28,7 @@ const HUNK_LABELS = new Map<string, string>([
     ['replaceTextInFile', 'replace_text_in_file'],
     ['deleteSegment', 'delete_segment'],
     ['deleteFile', 'delete_file'],
+    ['changeSegmentParameters', 'set_segment_parameters'],
 ]);
 
 const SEGMENT_TOOLS = new Set<string>([
@@ -36,6 +37,7 @@ const SEGMENT_TOOLS = new Set<string>([
     'delete_lines_from_segment',
     'replace_text_in_segment',
     'delete_segment',
+    'set_segment_parameters',
 ] satisfies AgentToolName[]);
 
 const FILE_TOOLS = new Set<string>([
@@ -89,7 +91,18 @@ const isSameChange = (a: Hunk, b: Hunk) =>
     (a.type === 'deleteSegment' || a.segmentId === b.segmentId) &&
     a.fileName === b.fileName &&
     a.text === b.text &&
-    lineSpan(a) === lineSpan(b);
+    lineSpan(a) === lineSpan(b) &&
+    // GH-242: повторная смена параметров того же сегмента дописывается в прежний hunk
+    sameParameters(a.previousParameters, b.previousParameters);
+
+function sameParameters(
+    a: Hunk['previousParameters'],
+    b: Hunk['previousParameters']
+): boolean {
+    return SEGMENT_PARAMETER_NAMES.every(
+        (name) => (a?.[name] ?? null) === (b?.[name] ?? null)
+    );
+}
 
 /**
  * Та же правка, только сегмент сменил номер, потому что в этом же вызове
@@ -129,6 +142,8 @@ const NAVIGABLE_HUNK_TYPES = new Set([
     'addSegment',
     'addLinesToSegment',
     'replaceTextInSegment',
+    // карточка с параметрами стоит под сегментом, к нему и прокручиваем
+    'changeSegmentParameters',
     'addFile',
     'addLinesToFile',
     'replaceTextInFile',
@@ -296,7 +311,8 @@ export class AgentEventService {
                 hunk.type === 'addLinesToSegment' ||
                 hunk.type === 'deleteLinesFromSegment' ||
                 hunk.type === 'replaceTextInSegment' ||
-                hunk.type === 'deleteSegment'
+                hunk.type === 'deleteSegment' ||
+                hunk.type === 'changeSegmentParameters'
             ) {
                 program = true;
             }

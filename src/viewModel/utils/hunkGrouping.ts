@@ -1,4 +1,10 @@
-import { Hunk } from '../../model/domain.ts';
+import {
+    Hunk,
+    HunkPreviousParameters,
+    SEGMENT_PARAMETER_NAMES,
+    Segment,
+    SegmentParameterName,
+} from '../../model/domain.ts';
 import {
     normalizeProjectFilePath,
     projectFilePathsMatch,
@@ -32,6 +38,11 @@ export interface HunkGroup {
      */
     isDeletedSegment: boolean;
     isDeletedFile: boolean;
+    /**
+     * GH-242: смена параметров сегмента. Строк у неё нет, и в редактор она
+     * не попадает: под сегментом стоит своя карточка с прежними и новыми значениями
+     */
+    isParameterChange: boolean;
 }
 
 /** Строки текста hunk: сервер склеивает строки без завершающего перевода, поэтому \n в конце обычно значит пустую последнюю строку */
@@ -64,6 +75,8 @@ const isCreation = (t: Hunk['type']) => t === 'addFile' || t === 'addSegment';
 /** Удаление целиком: правка не внутри сегмента или файла, а самого их места в проекте */
 const isWholeDeletion = (t: Hunk['type']) =>
     t === 'deleteSegment' || t === 'deleteFile';
+export const isParameterChange = (t: Hunk['type']) =>
+    t === 'changeSegmentParameters';
 
 function targetKey(hunk: Hunk): string | null {
     if (hunk.segmentId != null) {
@@ -136,9 +149,14 @@ function buildGroup(hunks: Hunk[]): HunkGroup | null {
     let isNewSegment = false;
     let isDeletedSegment = false;
     let isDeletedFile = false;
+    let parameterChange = false;
     const inCreation = hunks.some((hunk) => isCreation(hunk.type));
 
     for (const hunk of hunks) {
+        if (isParameterChange(hunk.type)) {
+            parameterChange = true;
+            continue;
+        }
         if (hunk.type === 'deleteSegment') {
             isDeletedSegment = true;
             continue;
@@ -230,6 +248,7 @@ function buildGroup(hunks: Hunk[]): HunkGroup | null {
         isNewSegment,
         isDeletedSegment,
         isDeletedFile,
+        isParameterChange: parameterChange,
     };
 }
 
@@ -447,7 +466,8 @@ export function filterHunkGroupsForSegment(
         (g) =>
             g.target.kind === 'segment' &&
             g.target.segmentId === segmentId &&
-            !g.isDeletedSegment
+            !g.isDeletedSegment &&
+            !g.isParameterChange
     );
 }
 
@@ -708,7 +728,12 @@ export function noOpHunkIds(
     const byTarget = new Map<string, Hunk[]>();
     for (const hunk of hunks) {
         const key = targetKey(hunk);
-        if (key == null || isWholeDeletion(hunk.type)) {
+        // параметры сверяются отдельно, в noOpParameterHunkIds
+        if (
+            key == null ||
+            isWholeDeletion(hunk.type) ||
+            isParameterChange(hunk.type)
+        ) {
             continue;
         }
         byTarget.set(key, [...(byTarget.get(key) ?? []), hunk]);
@@ -831,6 +856,95 @@ export function hunksForSegment(hunks: Hunk[], segmentId: number): Hunk[] {
     return hunks.filter(
         (h) => h.segmentId === segmentId && !isWholeDeletion(h.type)
     );
+}
+
+/** GH-242: правки текста сегмента. Смена параметров от набора текста не устаревает */
+export function textHunksForSegment(hunks: Hunk[], segmentId: number): Hunk[] {
+    return hunksForSegment(hunks, segmentId).filter(
+        (h) => !isParameterChange(h.type)
+    );
+}
+
+export function parameterHunksForSegment(
+    hunks: Hunk[],
+    segmentId: number
+): Hunk[] {
+    return hunks.filter(
+        (h) => h.segmentId === segmentId && isParameterChange(h.type)
+    );
+}
+
+export interface ParameterChange {
+    name: SegmentParameterName;
+    from: boolean;
+    to: boolean;
+}
+
+/**
+ * GH-242: что поменял ханк параметров: прежнее значение и то, что стоит в
+ * сегменте сейчас. Параметр без прежнего значения агент не трогал, а
+ * совпавшие значения ничего не меняют, и обоих в списке нет
+ */
+export function parameterChanges(
+    previous: HunkPreviousParameters | null | undefined,
+    current: Segment['parameters'] | undefined
+): ParameterChange[] {
+    if (!previous) {
+        return [];
+    }
+    const changes: ParameterChange[] = [];
+    for (const name of SEGMENT_PARAMETER_NAMES) {
+        const from = previous[name];
+        if (from == null) {
+            continue;
+        }
+        const to = Boolean(current?.[name]);
+        if (from !== to) {
+            changes.push({ name, from, to });
+        }
+    }
+    return changes;
+}
+
+/**
+ * GH-179 для параметров: ханк, у которого все прежние значения совпадают с
+ * текущими, ничего не меняет. parametersOf отдаёт параметры сегмента по его
+ * номеру или undefined, если сегмента нет и сверять не с чем
+ */
+export function noOpParameterHunkIds(
+    hunks: Hunk[],
+    parametersOf: (segmentId: number) => Segment['parameters'] | undefined
+): string[] {
+    return hunks
+        .filter((hunk) => {
+            if (!isParameterChange(hunk.type) || hunk.segmentId == null) {
+                return false;
+            }
+            const current = parametersOf(hunk.segmentId);
+            return (
+                current !== undefined &&
+                parameterChanges(hunk.previousParameters, current).length === 0
+            );
+        })
+        .map((hunk) => hunk.id);
+}
+
+/**
+ * Порядок отката: сначала параметры. Их номер сегмента это место в текущей
+ * программе, и откат нового или удалённого сегмента раньше них сдвинул бы
+ * соседей: прежние параметры легли бы на чужой сегмент
+ */
+export function parameterHunksFirst(
+    hunkIds: string[],
+    hunks: Hunk[]
+): string[] {
+    const parameterIds = new Set(
+        hunks.filter((h) => isParameterChange(h.type)).map((h) => h.id)
+    );
+    return [
+        ...hunkIds.filter((id) => parameterIds.has(id)),
+        ...hunkIds.filter((id) => !parameterIds.has(id)),
+    ];
 }
 
 export function hunksForFile(hunks: Hunk[], fileName: string): Hunk[] {

@@ -82,7 +82,31 @@ export type HunkType =
     /** Сегмент удалён целиком: segmentId это место, куда он вернётся при откате, text его текст */
     | 'deleteSegment'
     /** Текстовый файл удалён целиком, text его содержимое */
-    | 'deleteFile';
+    | 'deleteFile'
+    /** Агент сменил параметры сегмента: previousParameters прежние значения, новые стоят в сегменте */
+    | 'changeSegmentParameters';
+
+/** Параметры сегмента в порядке меню сегмента */
+export const SEGMENT_PARAMETER_NAMES = [
+    'visible',
+    'hideAssignment',
+    'hideAssignmentWithValues',
+    'hideValue',
+    'hideGeneralFormula',
+    'hideInflAssignment',
+    'hideInflAssignmentWithValues',
+    'hideInfl',
+] as const;
+
+export type SegmentParameterName = (typeof SEGMENT_PARAMETER_NAMES)[number];
+
+/**
+ * Прежние значения параметров. По спеке нетронутого поля нет, а сервер
+ * присылает его со значением null: и то и другое значит, что параметр не менялся
+ */
+export type HunkPreviousParameters = Partial<
+    Record<SegmentParameterName, boolean | null>
+>;
 
 export interface Hunk {
     id: string;
@@ -92,6 +116,7 @@ export interface Hunk {
     startLine?: number;
     endLine?: number;
     text?: string | null;
+    previousParameters?: HunkPreviousParameters | null;
 }
 
 /** Одна пара «запрос пользователя, ответ агента» из истории проекта. */
@@ -109,16 +134,7 @@ export interface AgentHistoryEntry {
 export interface Segment {
     id?: number;
     type: SegmentType;
-    parameters: {
-        visible?: boolean;
-        hideAssignment?: boolean;
-        hideAssignmentWithValues?: boolean;
-        hideValue?: boolean;
-        hideGeneralFormula?: boolean;
-        hideInflAssignment?: boolean;
-        hideInflAssignmentWithValues?: boolean;
-        hideInfl?: boolean;
-    };
+    parameters: Partial<Record<SegmentParameterName, boolean>>;
     text: string;
 }
 
