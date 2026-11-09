@@ -71,3 +71,25 @@ test('settings-menu-keeps-its-width-where-it-fits', async ({ page }) => {
 
     await expect(menu(page)).not.toHaveClass(/--constrained/);
 });
+
+// GH-240: подсказка лежит внутри меню, а оно на широком экране держит пункты в
+// одну строку. Текст подсказки шёл одной строкой и обрезался краем
+test('export-hint-wraps-inside-its-width-on-a-wide-screen', async ({
+    page,
+}) => {
+    await openProject(page, 1700);
+    await openSettings(page);
+
+    await page
+        .locator('.project-export__option[data-export-format="labkeeper"]')
+        .hover();
+    const hint = page.locator('#project-export-hint');
+    await expect(hint).toBeVisible();
+
+    const { overflow, right } = await hint.evaluate((element) => ({
+        overflow: element.scrollWidth - element.clientWidth,
+        right: element.getBoundingClientRect().right,
+    }));
+    expect(overflow).toBeLessThanOrEqual(0);
+    expect(right).toBeLessThanOrEqual(1700);
+});
