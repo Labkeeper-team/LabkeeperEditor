@@ -520,6 +520,17 @@ export class ProjectPageService {
         if (!project || settings.exportingProject()) {
             return;
         }
+        // GH-241: в меню Markdown-проекта этой кнопки нет, а запрос сервер отклонит кодом 400
+        if (
+            format === 'tex' &&
+            this.repository.projectViewModelRepository.mode() === 'markdown'
+        ) {
+            this.repository.toast(
+                this.repository.dictionary.project_export.tex_latex_only,
+                'info'
+            );
+            return;
+        }
         settings.setExportingProject(format);
         try {
             await this.saveBeforeExport();
@@ -581,6 +592,16 @@ export class ProjectPageService {
                 this.repository.toast(
                     this.repository.dictionary.prompt_modal.errors
                         .payment_required,
+                    'error'
+                );
+                return;
+            // GH-241: проект успели переключить на Markdown в другой вкладке
+            case 400:
+                this.repository.toast(
+                    format === 'tex'
+                        ? this.repository.dictionary.project_export
+                              .tex_latex_only
+                        : errors.internalError,
                     'error'
                 );
                 return;

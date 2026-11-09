@@ -6,8 +6,15 @@ const ARCHIVE_URL = 'https://files.labkeeper.test/tmp/exports/0f7a.zip';
 
 test.use({ viewport: { width: 1360, height: 900 } });
 
-async function openProject(page: Page, authenticated = true) {
+async function openProject(
+    page: Page,
+    authenticated = true,
+    projectType: 'latex' | 'markdown' = 'latex'
+) {
     const routeSetup = new RouteSetup(page);
+    if (projectType === 'latex') {
+        routeSetup.setupLatexProject();
+    }
     await routeSetup.setupGetUserInfoRequest(authenticated);
     await routeSetup.acceptCrossBorderConsentLocally();
     await routeSetup.setupGetDefaultProjectRequest();
@@ -25,8 +32,16 @@ async function openProject(page: Page, authenticated = true) {
         })
     );
     await page.goto(authenticated ? `/project/${uuid}` : '/');
+    // несобранный LaTeX-проект телефон открывает чатом агента, а меню живёт в шапке редактора
+    const switcher = page.locator('.mobile-view-switcher-bar__toggle');
+    if (authenticated && projectType === 'latex' && isPhone(page)) {
+        await switcher.click();
+        await page.getByRole('option', { name: 'Editor' }).click();
+    }
     await page.locator('.ide-header').waitFor();
 }
+
+const isPhone = (page: Page) => (page.viewportSize()?.width ?? 0) <= 767;
 
 async function openSettings(page: Page) {
     // настройки проекта живут в первом выпадающем меню шапки редактора
@@ -117,6 +132,30 @@ for (const { format, path, fileName } of [
         await expect(exportOption(page, format)).toBeEnabled();
     });
 }
+
+// GH-241: main.tex собирается только из проекта LaTeX, Markdown сервер в tex не выгружает
+test('в проекте markdown архива LaTeX в меню нет', async ({ page }) => {
+    await openProject(page, true, 'markdown');
+    await openSettings(page);
+
+    await expect(exportOption(page, 'labkeeper')).toBeVisible();
+    await expect(exportOption(page, 'tex')).toHaveCount(0);
+});
+
+test('после смены типа на latex архив LaTeX появляется', async ({ page }) => {
+    const routeSetup = new RouteSetup(page);
+    await routeSetup.setupSetProjectTypeRequest();
+    await openProject(page, true, 'markdown');
+    await openSettings(page);
+
+    await page
+        .locator('.project-settings-dropdown .labkeeper-radio', {
+            hasText: /^latex$/,
+        })
+        .click();
+
+    await expect(exportOption(page, 'tex')).toBeVisible();
+});
 
 test('гостю экспорт предлагает войти', async ({ page }) => {
     let exported = false;

@@ -261,6 +261,7 @@ export interface Translations {
         tex_hint: string;
         preparing: string;
         program_errors: string;
+        tex_latex_only: string;
     };
     agent_mode: {
         leave: string;

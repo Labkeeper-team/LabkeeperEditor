@@ -29,6 +29,12 @@ const EXPORT_FORMATS: {
     { format: 'tex', title: 'tex', hint: 'tex_hint' },
 ];
 
+// GH-241: main.tex собирается только из проекта LaTeX, Markdown сервер не выгружает в tex
+const exportFormatsFor = (mode: ProjectType) =>
+    mode === 'markdown'
+        ? EXPORT_FORMATS.filter(({ format }) => format !== 'tex')
+        : EXPORT_FORMATS;
+
 export const ProjectSettings = () => {
     const activeProgram = useSelector(useCurrentProgram);
     const dictionary = useSelector(useDictionary);
@@ -171,7 +177,7 @@ export const ProjectSettings = () => {
                 color={colors.gray10}
             />
             <div className="project-settings-dropdown__section project-export">
-                {EXPORT_FORMATS.map(({ format, title, hint }) => (
+                {exportFormatsFor(mode).map(({ format, title, hint }) => (
                     <button
                         key={format}
                         type="button"
