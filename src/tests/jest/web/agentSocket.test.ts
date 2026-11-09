@@ -17,7 +17,11 @@ jest.mock('../../../viewModel/utils/logBreadcrumb.ts', () => ({
 }));
 
 import { logBreadcrumb } from '../../../viewModel/utils/logBreadcrumb.ts';
-import { WebAgentSocket } from '../../../web/server/agentSocket.ts';
+import {
+    AGENT_CONNECT_ATTEMPTS,
+    AGENT_RECONNECT_DELAY_MS,
+    WebAgentSocket,
+} from '../../../web/server/agentSocket.ts';
 import {
     AGENT_TIMEOUT_MS,
     AgentEvent,
@@ -481,13 +485,79 @@ test('drop-after-open-gives-closed', async () => {
     expect(handlers.onClosed).toHaveBeenCalledTimes(1);
 });
 
-test('drop-before-open-gives-connect-failed', () => {
+/** Каждая попытка подключения падает до открытия, последняя тоже */
+const failEveryConnect = async (fail: (socket: FakeWebSocket) => void) => {
+    for (let attempt = 1; attempt <= AGENT_CONNECT_ATTEMPTS; attempt++) {
+        expect(FakeWebSocket.instances).toHaveLength(attempt);
+        fail(lastSocket());
+        if (attempt < AGENT_CONNECT_ATTEMPTS) {
+            await jest.advanceTimersByTimeAsync(AGENT_RECONNECT_DELAY_MS);
+        }
+    }
+};
+
+test('drop-before-open-gives-connect-failed', async () => {
     const handlers = makeHandlers();
     new WebAgentSocket().startAgent('project-42', PARAMS, handlers);
 
-    lastSocket().fireClose();
+    await failEveryConnect((socket) => socket.fireClose());
 
     expect(handlers.onClosed.mock.calls).toEqual([['connect_failed']]);
+});
+
+// Sentry 4907df3a: на телефоне сокет гостя не открылся, и человек получил
+// ошибку там, где хватило бы второй попытки
+test('failed-connect-is-retried-and-the-request-goes-to-the-new-socket', async () => {
+    const handlers = makeHandlers();
+    new WebAgentSocket().startAgent('project-42', PARAMS, handlers);
+    const first = lastSocket();
+
+    first.fireError();
+    first.fireClose();
+
+    expect(handlers.onClosed).not.toHaveBeenCalled();
+    expect(FakeWebSocket.instances).toHaveLength(1);
+    await jest.advanceTimersByTimeAsync(AGENT_RECONNECT_DELAY_MS);
+    const second = lastSocket();
+    expect(second).not.toBe(first);
+    expect(second.url).toBe(first.url);
+
+    second.fireOpen();
+
+    expect(first.sent).toEqual([]);
+    expect(parseStartFrame(second).prompt).toBe(PARAMS.prompt);
+    expect(handlers.onClosed).not.toHaveBeenCalled();
+});
+
+test('drop-after-open-is-not-retried', async () => {
+    const handlers = makeHandlers();
+    new WebAgentSocket().startAgent('project-42', PARAMS, handlers);
+    const socket = lastSocket();
+    socket.fireOpen();
+
+    socket.fireClose();
+    await jest.advanceTimersByTimeAsync(AGENT_RECONNECT_DELAY_MS);
+
+    // запрос уже ушёл: второй сокет запустил бы агента ещё раз
+    expect(FakeWebSocket.instances).toHaveLength(1);
+    expect(handlers.onClosed.mock.calls).toEqual([['closed']]);
+});
+
+test('close-during-reconnect-pause-stops-the-retry', async () => {
+    const handlers = makeHandlers();
+    const session = new WebAgentSocket().startAgent(
+        'project-42',
+        PARAMS,
+        handlers
+    );
+    lastSocket().fireClose();
+
+    session.close();
+    await jest.advanceTimersByTimeAsync(AGENT_RECONNECT_DELAY_MS);
+
+    expect(FakeWebSocket.instances).toHaveLength(1);
+    expect(handlers.onClosed).not.toHaveBeenCalled();
+    expect(jest.getTimerCount()).toBe(0);
 });
 
 test('socket-error-after-open-gives-closed', () => {
@@ -502,11 +572,11 @@ test('socket-error-after-open-gives-closed', () => {
     expect(socket.closeCodes).toEqual([1000]);
 });
 
-test('socket-error-before-open-gives-connect-failed', () => {
+test('socket-error-before-open-gives-connect-failed', async () => {
     const handlers = makeHandlers();
     new WebAgentSocket().startAgent('project-42', PARAMS, handlers);
 
-    lastSocket().fireError();
+    await failEveryConnect((socket) => socket.fireError());
 
     expect(handlers.onClosed.mock.calls).toEqual([['connect_failed']]);
 });

@@ -45,6 +45,13 @@ const okResult = <T>(body: T) => ({
     isForbidden: false,
 });
 
+const lastChatMessage = (ctx: {
+    repository: { chatViewModelRepository: { messages: () => unknown[] } };
+}) => {
+    const list = ctx.repository.chatViewModelRepository.messages();
+    return list[list.length - 1];
+};
+
 function setup(authenticated = true) {
     const ctx = mockContext();
     ctx.repository.userViewModelRepository.setUserInfo({
@@ -575,6 +582,36 @@ test('agent-connection-drop-unlocks-and-reports', async () => {
     expect(ctx.agentChatService.isRunning()).toBe(false);
     expect(events).toContain(Events.EVENT_RPI_UNKNOWN);
     expect(Sentry.captureException).toHaveBeenCalled();
+});
+
+// Sentry 4907df3a: сокет не открылся и со второй попытки. Это сеть или сервер,
+// человек видит ошибку, аналитика считает сбой, а в Bugsink ошибкой кода он не уходит
+test('agent-connect-failure-is-shown-and-counted-but-not-sent-to-bugsink', async () => {
+    const ctx = setup(false);
+    const events: { event: string; properties?: unknown }[] = [];
+    ctx.observerService.onEvent = (event: string, properties?: unknown) =>
+        events.push({ event, properties });
+    ctx.repository.chatViewModelRepository.setInput('привет');
+
+    await ctx.agentChatService.onPromptSubmit();
+    ctx.agentSocketState.handlers?.onClosed('connect_failed');
+    await settled();
+
+    expect(lastChatMessage(ctx)).toMatchObject({
+        kind: 'error',
+        reason: 'connect_failed',
+    });
+    expect(ctx.agentChatService.isRunning()).toBe(false);
+    expect(events).toContainEqual(
+        expect.objectContaining({
+            event: Events.EVENT_AGENT_FAILED,
+            properties: expect.objectContaining({ reason: 'connect_failed' }),
+        })
+    );
+    expect(events.map(({ event }) => event)).not.toContain(
+        Events.EVENT_RPI_UNKNOWN
+    );
+    expect(Sentry.captureException).not.toHaveBeenCalled();
 });
 
 test('agent-timeout-unlocks-and-reports', async () => {
