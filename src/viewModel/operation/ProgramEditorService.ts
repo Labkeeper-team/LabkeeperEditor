@@ -31,6 +31,13 @@ import {
 import { resolveSegmentId } from '../utils/segmentId.ts';
 import { segmentCreateEvent, trackEvent } from '../utils/observerContext.ts';
 import { createRateLimiter } from '../utils/rateLimit.ts';
+import {
+    insertOnOwnLine,
+    segmentAcceptedFileKinds,
+    segmentFileKind,
+    segmentFileSnippet,
+    type SegmentFileKind,
+} from '../utils/segmentFileInsertion.ts';
 
 /** Вставок в сегмент в аналитике не больше трёх в минуту: зажатый Ctrl+V залил бы ленту событий */
 const SEGMENT_PASTE_EVENTS_PER_MINUTE = 3;
@@ -144,6 +151,10 @@ export class ProgramEditorService {
             );
             return;
         }
+        const acceptedKinds = segmentAcceptedFileKinds(
+            pastedInto,
+            this.repository.projectViewModelRepository.mode()
+        );
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const thisCopy = this;
         let itemIndex = 0;
@@ -170,6 +181,11 @@ export class ProgramEditorService {
                 const file = item.file;
                 if (!file) {
                     return;
+                }
+                const kind = segmentFileKind(file.name, file.type);
+                if (!kind || !acceptedKinds.includes(kind)) {
+                    this.rejectFileForSegment(file, kind, pastedInto);
+                    continue;
                 }
                 if (
                     !(await this.fileService.checkFile(
@@ -214,47 +230,28 @@ export class ProgramEditorService {
                     );
 
                     if (res.isOk) {
-                        const lastProgram =
-                            thisCopy.programService.getCurrentProgram();
-                        const url = res.body;
-                        const segmentType =
-                            lastProgram.segments[segmentIndex]?.type;
-                        let itemToInsert = '';
-                        switch (segmentType) {
-                            case 'md':
-                                if (file.type.includes('image')) {
-                                    itemToInsert = `!['image.png'](${url})`;
-                                }
-                                break;
-                            case 'latex':
-                                if (file.type.includes('image')) {
-                                    itemToInsert = `\\begin{center}
-\\includegraphics{${url}}
-\\end{center}`;
-                                }
-                                break;
-                            case 'computational': {
-                                if (file.type.includes('image')) {
-                                    itemToInsert = `image("${url}")`;
-                                } else {
-                                    itemToInsert = `load_csv("${filename}")`;
-                                }
-                                break;
-                            }
-                        }
+                        const itemToInsert = segmentFileSnippet(
+                            kind,
+                            pastedInto,
+                            // по спеке тело ответа это адрес строкой, а не UploadFileResponse
+                            String(res.body),
+                            filename
+                        );
                         await thisCopy.loaderService.loadFiles(
                             project.projectId
                         );
                         const segmentText =
                             thisCopy.programService.getCurrentProgram()
-                                ?.segments[segmentIndex]?.text;
-                        const before = segmentText.slice(0, cursorPosition);
-                        const inserted = `\n${itemToInsert}\n`;
-                        const composed = `${before}${inserted}${segmentText.slice(cursorPosition)}`;
+                                ?.segments[segmentIndex]?.text ?? '';
+                        const inserted = insertOnOwnLine(
+                            segmentText,
+                            cursorPosition,
+                            itemToInsert
+                        );
                         await thisCopy.onSegmentTextEdited(
                             segmentIndex,
-                            composed,
-                            before.length + inserted.length
+                            inserted.text,
+                            inserted.cursor
                         );
                     } else if (res.code === 413) {
                         thisCopy.repository.ideViewModelRepository.setGetFilesRequestState(
@@ -312,6 +309,58 @@ export class ProgramEditorService {
                 itemIndex++;
             }
         }
+    };
+
+    /**
+     * GH-230: файл, которому в этом сегменте нет разметки, не загружаем.
+     * Человек узнаёт, что сюда вставляется, и где добавить остальное
+     */
+    private rejectFileForSegment = (
+        file: File,
+        kind: SegmentFileKind | null,
+        segmentType: SegmentType | undefined
+    ) => {
+        this.fileService.trackRejected(file, 'segment', segmentType);
+        const dictionary = this.repository.dictionary.segment.errors;
+        if (
+            kind === 'tex' &&
+            segmentType === 'latex' &&
+            this.repository.projectViewModelRepository.mode() === 'markdown'
+        ) {
+            this.repository.toast(
+                dictionary.paste_tex_markdown_project,
+                'info'
+            );
+            return;
+        }
+        const kinds = segmentAcceptedFileKinds(
+            segmentType,
+            this.repository.projectViewModelRepository.mode()
+        ).map((accepted) => dictionary.paste_file_kinds[accepted]);
+        const segmentNames = this.repository.dictionary.short_segment;
+        const segmentName =
+            segmentNames[segmentType as keyof typeof segmentNames] ?? '';
+        if (kinds.length === 0) {
+            this.repository.toast(
+                dictionary.paste_file_not_supported.replace(
+                    '${replace1}',
+                    segmentName
+                ),
+                'info'
+            );
+            return;
+        }
+        const allowed =
+            kinds.length > 1
+                ? `${kinds.slice(0, -1).join(', ')}${dictionary.paste_file_kinds.and}${kinds[kinds.length - 1]}`
+                : kinds[0];
+        this.repository.toast(
+            dictionary.paste_file_unsupported
+                .replace('${file}', file.name)
+                .replace('${segment}', segmentName)
+                .replace('${allowed}', allowed),
+            'info'
+        );
     };
 
     onPrevVersionButtonClicked = async () => {

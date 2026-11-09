@@ -3,6 +3,7 @@ import {
     matchRepositorySnapshot,
     mockAuthenticatedStartup,
     mockContext,
+    mockListFilesRequestWithDefaultFile,
     mockSaveProgramRequest,
     mockUserInfoForUnauthorized,
     PROJECT_ID,
@@ -764,4 +765,151 @@ describe('файл, вставленный в сегмент без файлов
             );
         }
     );
+});
+
+// GH-230: .tex в «Вычислении» становился load_csv и падал при выполнении, а в
+// LaTeX вместо файла вставлялись пустые строки. Теперь у каждого файла своя
+// разметка, а без неё файл не грузится и человек узнаёт, что сюда вставляется
+describe('файл .tex и таблица .csv в сегменте', () => {
+    const fileClipboard = (name: string, type = '') =>
+        [
+            {
+                kind: 'file',
+                type,
+                getAsFile: () => new File(['content'], name, { type }),
+            },
+        ] as unknown as DataTransferItemList;
+
+    function setup(
+        segmentType: 'latex' | 'computational' | 'md',
+        projectType: 'latex' | 'markdown' = 'latex',
+        text = ''
+    ) {
+        const ctx = mockContext();
+        const { programService, repository, rpi } = ctx;
+        repository.projectViewModelRepository.setProject({
+            projectId: PROJECT_ID,
+            userId: USER_ID,
+            title: PROJECT_TITLE,
+            lastModified: '2026-11-09T12:00:00Z',
+            isPublic: false,
+            projectType,
+            program: { segments: [], parameters: { roundStrategy: 'noRound' } },
+        });
+        const program = {
+            segments: [
+                { type: segmentType, text, parameters: { visible: true } },
+            ],
+            parameters: { roundStrategy: 'noRound' as const },
+        };
+        programService.setNewProgram(program);
+        // экран держит свою копию программы, правка сегмента пишет и в неё
+        repository.projectViewModelRepository.setCurrentProgram(
+            structuredClone(program)
+        );
+        repository.projectViewModelRepository.setProjectType(projectType);
+        repository.projectViewModelRepository.setReadOnly(false);
+        ctx.fileService.createFileToken = () => 'tok123';
+        rpi.uploadFileRequest = jest.fn().mockResolvedValue({
+            code: 201,
+            body: 'https://files.test/uploaded',
+            isOk: true,
+            isUnauth: false,
+            isForbidden: false,
+        });
+        mockListFilesRequestWithDefaultFile(rpi);
+        mockSaveProgramRequest(rpi);
+        return { ...ctx, toast: jest.spyOn(repository, 'toast') };
+    }
+
+    // файл читается FileReader, и загрузка уходит уже после его onload
+    const afterUpload = () => new Promise((resolve) => setTimeout(resolve, 50));
+
+    test('.tex в LaTeX-сегменте проекта LaTeX подключается через \\input без пустых строк', async () => {
+        const { programEditorService, programService, rpi, toast } =
+            setup('latex');
+
+        await programEditorService.onAddedFilesToSegmentEditor(
+            fileClipboard('chapter.tex', 'application/x-tex'),
+            0,
+            0
+        );
+        await afterUpload();
+
+        expect(rpi.uploadFileRequest).toHaveBeenCalledTimes(1);
+        expect(programService.getCurrentProgram().segments[0].text).toBe(
+            '\\input{file_seg1_tok123.tex}'
+        );
+        expect(toast).not.toHaveBeenCalled();
+    });
+
+    test('.tex в «Вычислении» не грузится и не становится load_csv', async () => {
+        const { programEditorService, programService, rpi, toast, repository } =
+            setup('computational', 'latex', 'a = 1');
+
+        await programEditorService.onAddedFilesToSegmentEditor(
+            fileClipboard('chapter.tex'),
+            0,
+            0
+        );
+        await afterUpload();
+
+        expect(rpi.uploadFileRequest).not.toHaveBeenCalled();
+        expect(programService.getCurrentProgram().segments[0].text).toBe(
+            'a = 1'
+        );
+        const errors = repository.dictionary.segment.errors;
+        expect(toast).toHaveBeenCalledWith(
+            errors.paste_file_unsupported
+                .replace('${file}', 'chapter.tex')
+                .replace(
+                    '${segment}',
+                    repository.dictionary.short_segment.computational
+                )
+                .replace(
+                    '${allowed}',
+                    `${errors.paste_file_kinds.image}${errors.paste_file_kinds.and}${errors.paste_file_kinds.csv}`
+                ),
+            'info'
+        );
+    });
+
+    test('.tex в LaTeX-сегменте проекта Markdown объясняет, где он подключается', async () => {
+        const { programEditorService, rpi, toast, repository } = setup(
+            'latex',
+            'markdown'
+        );
+
+        await programEditorService.onAddedFilesToSegmentEditor(
+            fileClipboard('chapter.tex'),
+            0,
+            0
+        );
+        await afterUpload();
+
+        expect(rpi.uploadFileRequest).not.toHaveBeenCalled();
+        expect(toast).toHaveBeenCalledWith(
+            repository.dictionary.segment.errors.paste_tex_markdown_project,
+            'info'
+        );
+    });
+
+    test('.csv в «Вычислении» вставляется вызовом load_csv на своей строке', async () => {
+        const { programEditorService, programService } = setup(
+            'computational',
+            'latex',
+            'a = 1'
+        );
+
+        await programEditorService.onAddedFilesToSegmentEditor(
+            fileClipboard('data.csv', 'text/csv'),
+            0,
+            5
+        );
+        await afterUpload();
+
+        expect(programService.getCurrentProgram().segments[0].text).toBe(
+            'a = 1\nload_csv("file_seg1_tok123.csv")'
+        );
+    });
 });
