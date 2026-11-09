@@ -2,6 +2,8 @@
 
 .project-settings-dropdown {
     width: max-content;
+    // GH-236: меню сужается по колонке редактора, и пункты переносятся внутри него
+    max-width: 100%;
 
     // GH-211: с экспортом меню выше, на низком экране оно прокручивается само
     @media screen and (min-width: 768px) {
