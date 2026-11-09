@@ -215,6 +215,42 @@ $segment-editor-min-height: 80px;
         > .cm-line ~ .cm-line ~ .cm-line {
             padding-right: 0;
         }
+        /*
+         * GH-187: удалённые строки правки агента стоят блоком между строками
+         * текста, а кнопки правки держит блок нулевой высоты. Правило выше
+         * считает все div подряд: удалённые строки под плашку не попадали, а
+         * строка за кнопками считалась третьей и тоже уходила под плашку.
+         * Здесь первые две полосы считаются по строкам и удалённым блокам.
+         * Красный блок остаётся во всю ширину, а отступ получают его первые
+         * строки, как первые строки текста. Браузер без `of` в nth-child эти
+         * правила пропустит и останется на правиле выше
+         */
+        > .cm-line:nth-child(-n + 2 of .cm-line, .cm-hunk-deleted-wrap) {
+            padding-right: $segment-editor-rules-right-gutter;
+        }
+        > .cm-line:nth-child(n + 3 of .cm-line, .cm-hunk-deleted-wrap) {
+            padding-right: 0;
+        }
+        > .cm-hunk-deleted-wrap:nth-child(
+                -n + 2 of .cm-line,
+                .cm-hunk-deleted-wrap
+            )
+            .cm-hunk-deleted-line:nth-child(-n + 2) {
+            padding-right: $segment-editor-rules-right-gutter;
+        }
+        // кнопки правки после первой строки встают ниже плашки, а не на неё;
+        // запас обрезки блока кнопок растёт на тот же сдвиг, иначе низ кнопок срезался бы
+        > .cm-hunk-controls-host:nth-child(
+                -n + 2 of .cm-line,
+                .cm-hunk-deleted-wrap,
+                .cm-hunk-controls-host
+            ) {
+            overflow-clip-margin: 46px;
+
+            .cm-hunk-controls {
+                top: 14px;
+            }
+        }
     }
     .highlight-text-editor {
         background: yellow;

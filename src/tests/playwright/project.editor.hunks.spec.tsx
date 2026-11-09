@@ -266,6 +266,103 @@ test('hunk-delete-multiline-line', async ({ page }) => {
     await expectFullPageHunkSnapshot(page, 'hunk-delete-multiline-line');
 });
 
+/** Куски текста первого сегмента, которые стоят под плашкой с типом и номером */
+async function textUnderSegmentRules(page: Page): Promise<string[]> {
+    return page.evaluate(() => {
+        const container = document.querySelector('.segment-editor-container');
+        const rules = container
+            ?.querySelector('.editor-rules')
+            ?.getBoundingClientRect();
+        const content = container?.querySelector('.cm-content');
+        if (!rules || !content) {
+            return ['segment not found'];
+        }
+        const hidden: string[] = [];
+        const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
+        for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+            if (!node.textContent?.trim()) {
+                continue;
+            }
+            const range = document.createRange();
+            range.selectNodeContents(node);
+            for (const rect of Array.from(range.getClientRects())) {
+                if (
+                    rect.right > rules.left &&
+                    rect.left < rules.right &&
+                    rect.bottom > rules.top &&
+                    rect.top < rules.bottom
+                ) {
+                    hidden.push(node.textContent.slice(0, 40));
+                }
+            }
+        }
+        return hidden;
+    });
+}
+
+// GH-187: удалённые строки правки встают сразу под первой строкой и шли
+// под плашку сегмента, а обычные первые строки её обходят
+test('deleted-lines-near-the-top-wrap-before-the-segment-rules', async ({
+    page,
+}) => {
+    await openProjectWithHunks(page, {
+        program: programOf(mdSegment(1, 'keep start\nkeep end')),
+        hunks: [
+            {
+                id: 'hunk-multiline-delete',
+                type: 'deleteLinesFromSegment',
+                segmentId: 1,
+                startLine: 2,
+                endLine: 4,
+                text: MULTILINE_TEXT,
+            },
+        ],
+    });
+    await expect(page.locator('.cm-hunk-deleted-line')).toHaveCount(3);
+
+    expect(await textUnderSegmentRules(page)).toEqual([]);
+});
+
+// GH-187: кнопки правки держит блок нулевой высоты, и вторая строка текста
+// за ним считалась третьей, то есть шла во всю ширину под плашку. Сами кнопки
+// после первой строки тоже заезжали на плашку
+test('second-line-after-hunk-buttons-wraps-before-the-segment-rules', async ({
+    page,
+}) => {
+    await openProjectWithHunks(page, {
+        program: programOf(mdSegment(1, `added\n${LONG_LINE}`)),
+        hunks: [
+            {
+                id: 'hunk-first-line',
+                type: 'addLinesToSegment',
+                segmentId: 1,
+                startLine: 1,
+                endLine: 1,
+                text: 'added',
+            },
+        ],
+    });
+    await expect(page.locator('.cm-hunk-added-line')).toHaveCount(1);
+
+    expect(await textUnderSegmentRules(page)).toEqual([]);
+    // сдвинутые кнопки целы: низ кнопки не срезан блоком, который их держит
+    const bottomHitsButton = await page.evaluate(() => {
+        const button = document.querySelector(
+            '.segment-editor-container .cm-hunk-btn'
+        );
+        const rect = button?.getBoundingClientRect();
+        if (!button || !rect) {
+            return false;
+        }
+        const hit = document.elementFromPoint(
+            rect.left + rect.width / 2,
+            rect.bottom - 2
+        );
+        return button.contains(hit);
+    });
+    expect(bottomHitsButton).toBe(true);
+});
+
 test('hunk-delete-first-middle-last-lines', async ({ page }) => {
     const remaining = numberedLines(LINE_COUNT)
         .split('\n')
