@@ -284,6 +284,8 @@ export const ru: Translations = {
         preparing: 'Готовим архив…',
         program_errors:
             'В программе есть ошибки, архив LaTeX не собран. Они показаны в списке проблем',
+        tex_latex_only:
+            'Архив LaTeX собирается только из проекта LaTeX. Тип проекта меняется в этом же меню',
     },
     agent_mode: {
         leave: 'Открыть полный редактор кода',

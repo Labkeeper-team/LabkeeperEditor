@@ -278,6 +278,8 @@ export const en: Translations = {
         preparing: 'Preparing the archive…',
         program_errors:
             'The program has errors, the LaTeX archive was not built. They are shown in the problems list',
+        tex_latex_only:
+            'A LaTeX archive is built only from a LaTeX project. Switch the project type to LaTeX in this menu',
     },
     agent_mode: {
         leave: 'Open the full code editor',
