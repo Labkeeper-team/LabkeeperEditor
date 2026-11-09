@@ -145,6 +145,16 @@ function toEvent(frame: ServerFrame): AgentEvent | null {
 }
 
 /**
+ * Сколько раз пробуем открыть сокет, прежде чем сдаться. Запрос уходит только
+ * после открытия, поэтому повтор ничего не задвоит. На телефоне сокет бывает не
+ * открывается с первого раза: сеть или прокси оператора рвут рукопожатие, и
+ * человек видел ошибку там, где хватило бы второй попытки
+ */
+export const AGENT_CONNECT_ATTEMPTS = 2;
+/** Пауза перед повтором: мгновенный повтор после отказа сервера упал бы так же */
+export const AGENT_RECONNECT_DELAY_MS = 1000;
+
+/**
  * Одна сессия агента поверх WebSocket.
  * Завершиться можно четырьмя способами: финальным событием, таймаутом, обрывом и ошибкой.
  * Все они сходятся в settle(), иначе получим либо двойное завершение,
@@ -161,12 +171,27 @@ function openSession(
     // после закрытия сессии очередь не должна дописывать события: смена проекта
     // гасит сокет, а висящий в очереди обработчик написал бы уже в чужую ленту
     let cancelled = false;
-    let socket: WebSocket;
+    let socket: WebSocket | null = null;
+    let attempt = 0;
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
     // события обрабатываются асинхронно (на toolCall уходит запрос за hunks),
     // поэтому очередь, иначе финальный ответ обгонит строки ленты
     let queue: Promise<void> = Promise.resolve();
 
     const timer = setTimeout(() => settle('timeout'), timeoutMs);
+
+    function detach(target: WebSocket): void {
+        target.onopen = null;
+        target.onmessage = null;
+        target.onclose = null;
+        target.onerror = null;
+        if (
+            target.readyState === WebSocket.OPEN ||
+            target.readyState === WebSocket.CONNECTING
+        ) {
+            target.close(1000);
+        }
+    }
 
     function settle(reason?: AgentClosedReason): void {
         if (settled) {
@@ -182,46 +207,19 @@ function openSession(
             {
                 reason: reason ?? (cancelled ? 'cancelled' : 'finished'),
                 opened,
+                attempt,
             },
             reason && reason !== 'timeout' ? 'warning' : 'info'
         );
         clearTimeout(timer);
+        clearTimeout(retryTimer);
         if (socket) {
-            socket.onopen = null;
-            socket.onmessage = null;
-            socket.onclose = null;
-            socket.onerror = null;
-            if (
-                socket.readyState === WebSocket.OPEN ||
-                socket.readyState === WebSocket.CONNECTING
-            ) {
-                socket.close(1000);
-            }
+            detach(socket);
         }
         if (reason) {
             handlers.onClosed(reason);
         }
     }
-
-    try {
-        logBreadcrumb('agent', 'connect', { url });
-        socket = new WebSocket(url);
-    } catch {
-        clearTimeout(timer);
-        settled = true;
-        cancelled = true;
-        logBreadcrumb('agent', 'connect_failed', { url }, 'error');
-        // отложенно: вызывающий ещё не получил сессию, и сброс session
-        // внутри onClosed был бы тут же перезатёрт присваиванием
-        queueMicrotask(() => handlers.onClosed('connect_failed'));
-        return { close: () => {} };
-    }
-
-    socket.onopen = () => {
-        opened = true;
-        logBreadcrumb('agent', 'open', { url });
-        socket.send(JSON.stringify(startFrame));
-    };
 
     const enqueue = (event: AgentEvent) => {
         queue = queue
@@ -229,7 +227,7 @@ function openSession(
             .catch(() => {});
     };
 
-    socket.onmessage = (raw) => {
+    const onMessage = (raw: MessageEvent) => {
         let frame: ServerFrame;
         try {
             frame = JSON.parse(String(raw.data));
@@ -261,8 +259,55 @@ function openSession(
         enqueue(event);
     };
 
-    socket.onerror = () => settle(opened ? 'closed' : 'connect_failed');
-    socket.onclose = () => settle(opened ? 'closed' : 'connect_failed');
+    // ошибка и закрытие приходят парой, но обработчики снимаются на первом из них
+    const onGone = () => {
+        if (opened || attempt >= AGENT_CONNECT_ATTEMPTS) {
+            settle(opened ? 'closed' : 'connect_failed');
+            return;
+        }
+        if (socket) {
+            detach(socket);
+            socket = null;
+        }
+        logBreadcrumb('agent', 'connect retry', { url, attempt }, 'warning');
+        retryTimer = setTimeout(connect, AGENT_RECONNECT_DELAY_MS);
+    };
+
+    /** false, если сокет не создать вовсе: такой адрес повтор не исправит */
+    function connect(): boolean {
+        if (settled) {
+            return false;
+        }
+        attempt += 1;
+        let created: WebSocket;
+        try {
+            logBreadcrumb('agent', 'connect', { url, attempt });
+            created = new WebSocket(url);
+        } catch {
+            clearTimeout(timer);
+            settled = true;
+            cancelled = true;
+            logBreadcrumb('agent', 'connect_failed', { url, attempt }, 'error');
+            // отложенно: вызывающий ещё не получил сессию, и сброс session
+            // внутри onClosed был бы тут же перезатёрт присваиванием
+            queueMicrotask(() => handlers.onClosed('connect_failed'));
+            return false;
+        }
+        socket = created;
+        created.onopen = () => {
+            opened = true;
+            logBreadcrumb('agent', 'open', { url, attempt });
+            created.send(JSON.stringify(startFrame));
+        };
+        created.onmessage = onMessage;
+        created.onerror = onGone;
+        created.onclose = onGone;
+        return true;
+    }
+
+    if (!connect()) {
+        return { close: () => {} };
+    }
 
     return {
         close: () => {
