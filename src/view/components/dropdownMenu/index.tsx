@@ -2,6 +2,7 @@ import {
     PropsWithChildren,
     ReactNode,
     useEffect,
+    useLayoutEffect,
     useRef,
     useState,
 } from 'react';
@@ -13,6 +14,37 @@ import classNames from 'classnames';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { useIsMobile } from '../../hooks/useMobile';
 import { DropdownCloseContext } from './context';
+
+/** Зазор между меню и краем колонки, которая его обрезает */
+const MENU_EDGE_GAP = 8;
+
+/** Ближайший предок, который обрезает содержимое по горизонтали */
+function horizontalClipOf(element: HTMLElement): HTMLElement | null {
+    for (
+        let parent = element.parentElement;
+        parent && parent !== document.body;
+        parent = parent.parentElement
+    ) {
+        if (getComputedStyle(parent).overflowX !== 'visible') {
+            return parent;
+        }
+    }
+    return null;
+}
+
+/**
+ * GH-236: меню прижато правым краем к кнопке и растёт влево. Колонка
+ * редактора с открытым менеджером файлов уже меню, и его левый край уходил
+ * под обрезку колонки. Сколько места до её левого края, столько меню и
+ * может занять, в пикселях раскладки: под масштабом окна они меньше экранных
+ */
+function availableMenuWidth(root: HTMLElement): number {
+    const rootRect = root.getBoundingClientRect();
+    const scale = root.offsetWidth > 0 ? rootRect.width / root.offsetWidth : 1;
+    const clip = horizontalClipOf(root);
+    const left = clip ? clip.getBoundingClientRect().left : 0;
+    return (rootRect.right - left) / (scale || 1) - MENU_EDGE_GAP;
+}
 
 export const DropdownMenu = (
     props: PropsWithChildren<{
@@ -77,6 +109,22 @@ export const DropdownMenu = (
     };
 
     const isMenuVisible = showMenu && props.children;
+    const isPopover = Boolean(isMenuVisible) && !useFullScreen;
+    const [constrainedWidth, setConstrainedWidth] = useState<number | null>(
+        null
+    );
+
+    // до отрисовки: меню, которое не влезает, сразу появляется суженным
+    useLayoutEffect(() => {
+        const root = rootRef.current;
+        const menu = ref.current;
+        if (!isPopover || !root || !menu) {
+            setConstrainedWidth(null);
+            return;
+        }
+        const available = Math.floor(availableMenuWidth(root));
+        setConstrainedWidth(menu.offsetWidth > available ? available : null);
+    }, [isPopover]);
 
     useHotkeys(
         'esc',
@@ -97,8 +145,15 @@ export const DropdownMenu = (
                     'dropdown-menu-content-container',
                     useFullScreen &&
                         'dropdown-menu-content-container--fullscreen',
+                    constrainedWidth !== null &&
+                        'dropdown-menu-content-container--constrained',
                     props.containerClassname
                 )}
+                style={
+                    constrainedWidth !== null
+                        ? { maxWidth: constrainedWidth }
+                        : undefined
+                }
             >
                 {props.children}
             </div>
