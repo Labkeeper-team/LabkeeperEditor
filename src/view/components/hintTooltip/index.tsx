@@ -41,6 +41,10 @@ export const HintTooltip = ({
         style={{
             maxWidth: `min(${maxWidth}px, calc(100vw - 32px))`,
             overflowWrap: 'anywhere',
+            // GH-240: подсказка лежит внутри выпадающего меню, а оно на широком
+            // экране держит пункты в одну строку. Без этого текст шёл одной
+            // строкой мимо maxWidth и обрезался краем экрана
+            whiteSpace: 'normal',
             zIndex: 1000,
         }}
         wrapper="div"
