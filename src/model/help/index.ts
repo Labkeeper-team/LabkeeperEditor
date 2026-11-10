@@ -5,11 +5,13 @@ export interface HeaderHelpItem {
     description: {
         ru: string;
         en: string;
+        zh: string;
     };
     segmentType: SegmentType;
     text: {
         ru: string;
         en: string;
+        zh: string;
     };
 }
 
@@ -21,6 +23,7 @@ export interface EditorHelpItem {
 export interface LocalizedInstructionItem {
     ru: InstructionItem;
     en: InstructionItem;
+    zh: InstructionItem;
 }
 
 export interface InstructionItem {
@@ -37,36 +40,45 @@ export const headerHelpItems: HeaderHelpItem[] = [
         description: {
             ru: 'Массив',
             en: 'Array',
+            zh: '数组',
         },
         segmentType: 'computational',
         text: {
             ru: `my_array = [1, 2, 3, 4]`,
             en: `my_array = [1, 2, 3, 4]`,
+            zh: `my_array = [1, 2, 3, 4]`,
         },
     },
     {
         description: {
             ru: 'Переменная с погрешностью',
             en: 'Variable with error',
+            zh: '带误差的变量',
         },
         segmentType: 'computational',
         text: {
             ru: `my_var = 10 # 1`,
             en: `my_var = 10 # 1`,
+            zh: `my_var = 10 # 1`,
         },
     },
     {
         description: {
             ru: 'Нарисовать график',
             en: 'Draw plot',
+            zh: '绘制图表',
         },
         segmentType: 'computational',
         text: {
             ru: `plot(
-    x1=[1, 2, 3], y1=[2, 3, 1], type1="line", color1="red", 
+    x1=[1, 2, 3], y1=[2, 3, 1], type1="line", color1="red",
     x2=[1, 2, 3], y2=[3,4,1], type2="scatter", color2="blue"
 )`,
             en: `plot(
+    x1=[1, 2, 3], y1=[2, 3, 1], type1="line", color1="red",
+    x2=[1, 2, 3], y2=[3,4,1], type2="scatter", color2="blue"
+)`,
+            zh: `plot(
     x1=[1, 2, 3], y1=[2, 3, 1], type1="line", color1="red",
     x2=[1, 2, 3], y2=[3,4,1], type2="scatter", color2="blue"
 )`,
@@ -76,28 +88,33 @@ export const headerHelpItems: HeaderHelpItem[] = [
         description: {
             ru: 'Нарисовать таблицу',
             en: 'Draw table',
+            zh: '绘制表格',
         },
         segmentType: 'computational',
         text: {
             ru: `var_1 = [1, 2, 3]\ntable(var_1, [4, 5, 6], name_2="текст")`,
             en: `var_1 = [1, 2, 3]\ntable(var_1, [4, 5, 6], name_2="text")`,
+            zh: `var_1 = [1, 2, 3]\ntable(var_1, [4, 5, 6], name_2="文本")`,
         },
     },
     {
         description: {
             ru: 'Сумма',
             en: 'Sum',
+            zh: '求和',
         },
         segmentType: 'computational',
         text: {
             ru: `s = sum([1, 2, 3])`,
             en: `s = sum([1, 2, 3])`,
+            zh: `s = sum([1, 2, 3])`,
         },
     },
     {
         description: {
             ru: 'МНК',
             en: 'LSM',
+            zh: '最小二乘法',
         },
         segmentType: 'computational',
         text: {
@@ -121,34 +138,49 @@ Y = a * x + b
 
 plot(x_1 = x, y_1 = y, color1="blue", x_2 = x, y_2 = Y, color2="red", type2="line")
             `,
+            zh: `x = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] # 0.1 // 你的 x 值
+y = [1, 3, 2, 3.5, 2, 3.6, 7, 5, 3, 4] # 0.2 // 你的 y 值
+
+least_squares(x, y)
+a = a # 0 // 将误差置零，使直线平滑
+b = b # 0
+Y = a * x + b
+
+plot(x_1 = x, y_1 = y, color1="blue", x_2 = x, y_2 = Y, color2="red", type2="line")
+            `,
         },
     },
     {
         description: {
             ru: 'Формула',
             en: 'Formula',
+            zh: '公式',
         },
         segmentType: 'md',
         text: {
             ru: '$$\n\\int f(x) dx = F(x)\n$$',
             en: '$$\n\\int f(x) dx = F(x)\n$$',
+            zh: '$$\n\\int f(x) dx = F(x)\n$$',
         },
     },
     {
         description: {
             ru: 'Строчная формула',
             en: 'Inline formula',
+            zh: '行内公式',
         },
         segmentType: 'md',
         text: {
             ru: 'Формула с интегралом: $\\int f(x) dx = F(x)$',
             en: 'My formula with integral: $\\int f(x) dx = F(x)$',
+            zh: '含积分的公式：$\\int f(x) dx = F(x)$',
         },
     },
     {
         description: {
             ru: 'Загрузить csv',
             en: 'Load csv',
+            zh: '加载 csv',
         },
         segmentType: 'computational',
         text: {
@@ -158,12 +190,16 @@ load_csv(file_name = "myfile.csv")
             en: `// Add file with such via file manager
 load_csv(file_name = "myfile.csv")
             `,
+            zh: `// 请通过文件管理器添加同名文件
+load_csv(file_name = "myfile.csv")
+            `,
         },
     },
     {
         description: {
             ru: 'Сохранить csv',
             en: 'Save csv',
+            zh: '保存 csv',
         },
         segmentType: 'computational',
         text: {
@@ -171,6 +207,9 @@ load_csv(file_name = "myfile.csv")
 save_csv(a)
             `,
             en: `a = [1, 2, 3] // your data
+save_csv(a)
+            `,
+            zh: `a = [1, 2, 3] // 你的数据
 save_csv(a)
             `,
         },
@@ -216,6 +255,7 @@ export const editorHelpItems: EditorHelpItem[] = [
 
 const basicEndingRu = 'Больше информации доступно на';
 const basicEndingEn = 'More information on';
+const basicEndingZh = '更多信息请参见';
 
 export const agentModeInstructions: LocalizedInstructionItem[] = [
     {
@@ -234,6 +274,15 @@ export const agentModeInstructions: LocalizedInstructionItem[] = [
                 'Describe the document you need in the chat and send the message.',
                 'The agent writes and edits the document. You do not type the code.',
                 'To edit the document by hand, press the button that opens the full editor.',
+            ],
+            image: '/instructions/agent_mode.svg',
+        },
+        zh: {
+            title: '智能体模式',
+            points: [
+                '在聊天中描述你需要的文档并发送消息。',
+                '智能体会自行编写和修改文档，你无需输入代码。',
+                '如需手动编辑文档，请点击进入完整编辑器的按钮。',
             ],
             image: '/instructions/agent_mode.svg',
         },
@@ -265,6 +314,17 @@ export const instructions: LocalizedInstructionItem[] = [
             wikiLink: WikiLinks.home,
             image: '/instructions/welcome.png',
         },
+        zh: {
+            title: '创建你的第一个文档',
+            points: [
+                '添加 Markdown、LaTeX 或“计算”片段，并输入文本、公式或计算。',
+                '或者向 AI 智能体描述文档：它会为你编写项目。',
+                '点击“运行”：结果会显示在右侧，并可保存为 PDF。',
+            ],
+            ending: basicEndingZh,
+            wikiLink: WikiLinks.home,
+            image: '/instructions/welcome.png',
+        },
     },
     agentModeInstructions[0],
     {
@@ -283,6 +343,15 @@ export const instructions: LocalizedInstructionItem[] = [
                 'Full LaTeX support',
                 'If your text does not contain the ```\\begin{document}``` operator, it will be added automatically with standard configuration at the beginning of the document',
                 'If your text does not contain the ```\\end{document}``` operator, it will be added automatically at the end of the document',
+            ],
+            image: '/instructions/latex_hint.png',
+        },
+        zh: {
+            title: 'LaTeX',
+            points: [
+                '基于 texlive 的完整 LaTeX 支持',
+                '如果文本中没有 ```\\begin{document}```，它会连同标准配置一起自动添加到文档开头',
+                '如果文本中没有 ```\\end{document}```，它会自动添加到文档末尾',
             ],
             image: '/instructions/latex_hint.png',
         },
@@ -310,6 +379,17 @@ export const instructions: LocalizedInstructionItem[] = [
             wikiLink: WikiLinks.examples,
             image: '/instructions/quick_start.png',
         },
+        zh: {
+            title: 'Markdown',
+            points: [
+                '标题、列表、表格和链接会直接在浏览器中渲染，无需点击“运行”。',
+                '公式使用 LaTeX 语法：行内用 ```$...$```，独立块用 ```$$...$$```。',
+                '文本中的 HTML 也会被渲染。',
+            ],
+            ending: basicEndingZh,
+            wikiLink: WikiLinks.examples,
+            image: '/instructions/quick_start.png',
+        },
     },
     {
         ru: {
@@ -332,6 +412,17 @@ export const instructions: LocalizedInstructionItem[] = [
             ],
             image: '/instructions/md_insert.png',
             ending: basicEndingEn,
+            wikiLink: WikiLinks.valueSubstitution,
+        },
+        zh: {
+            title: '在文本中插入计算结果',
+            points: [
+                '创建计算片段和 Markdown 片段',
+                '添加变量，并用 ${} 运算符引用它',
+                '点击“运行”按钮',
+            ],
+            image: '/instructions/md_insert.png',
+            ending: basicEndingZh,
             wikiLink: WikiLinks.valueSubstitution,
         },
     },
@@ -358,6 +449,17 @@ export const instructions: LocalizedInstructionItem[] = [
             ending: basicEndingEn,
             wikiLink: WikiLinks.segments,
         },
+        zh: {
+            title: '插入图片',
+            points: [
+                '将图片复制到剪贴板（在文件上按 CTRL+C，或在浏览器中复制图片）',
+                '创建 Markdown 片段并按 CTRL+V',
+                '点击“运行”按钮',
+            ],
+            image: '/instructions/image_insert.png',
+            ending: basicEndingZh,
+            wikiLink: WikiLinks.segments,
+        },
     },
     {
         ru: {
@@ -380,6 +482,17 @@ export const instructions: LocalizedInstructionItem[] = [
             ],
             image: '/instructions/simple_formula.png',
             ending: basicEndingEn,
+            wikiLink: WikiLinks.mathRenderingExamples,
+        },
+        zh: {
+            title: '使用简易公式片段',
+            points: [
+                '创建一个简易公式片段',
+                '用简化格式（无需 LaTeX 标签）书写数学表达式',
+                '点击“运行”按钮',
+            ],
+            image: '/instructions/simple_formula.png',
+            ending: basicEndingZh,
             wikiLink: WikiLinks.mathRenderingExamples,
         },
     },
@@ -409,6 +522,17 @@ export const instructions: LocalizedInstructionItem[] = [
             ending: basicEndingEn,
             wikiLink: WikiLinks.errorOperator,
         },
+        zh: {
+            title: '误差',
+            points: [
+                '任何复杂公式的误差都会根据其中各变量的误差自动计算',
+                '默认情况下，所有变量的误差为 0',
+                '所有误差计算过程都会自动显示，可在片段设置中关闭显示',
+            ],
+            image: '/instructions/error.png',
+            ending: basicEndingZh,
+            wikiLink: WikiLinks.errorOperator,
+        },
     },
     {
         ru: {
@@ -431,6 +555,17 @@ export const instructions: LocalizedInstructionItem[] = [
             ],
             image: '/instructions/draw_plot.png',
             ending: basicEndingEn,
+            wikiLink: WikiLinks.plot,
+        },
+        zh: {
+            title: '绘制图表',
+            points: [
+                '创建计算片段并使用 plot 函数',
+                '点击“运行”按钮',
+                'plot 函数可以绘制多条曲线，并指定类型和颜色：plot(x1=, y1=, x2=, y2=, type1="line")',
+            ],
+            image: '/instructions/draw_plot.png',
+            ending: basicEndingZh,
             wikiLink: WikiLinks.plot,
         },
     },
@@ -457,6 +592,18 @@ export const instructions: LocalizedInstructionItem[] = [
             ],
             image: '/instructions/print_pdf.png',
             ending: basicEndingEn,
+            wikiLink: WikiLinks.home,
+        },
+        zh: {
+            title: '打印为 PDF',
+            points: [
+                '创建几个片段',
+                '点击“运行”按钮',
+                '点击“打印为 PDF”按钮，然后即可保存生成的文件',
+                '注意！请务必选择“另存为 PDF”，否则文字将无法选中',
+            ],
+            image: '/instructions/print_pdf.png',
+            ending: basicEndingZh,
             wikiLink: WikiLinks.home,
         },
     },

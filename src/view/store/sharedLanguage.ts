@@ -1,6 +1,7 @@
 import type { Store } from '@reduxjs/toolkit';
-import type { Language } from '../../viewModel/dictionaries';
+import { isLanguage, type Language } from '../../viewModel/dictionaries';
 import { setLanguage } from './slices/persistence';
+import { setRequestLanguage } from '../../web/requestLanguage.ts';
 
 /**
  * GH-175: язык общий у редактора и страниц сайта. Сайт хранит его в
@@ -10,9 +11,6 @@ import { setLanguage } from './slices/persistence';
  */
 export const SHARED_LANGUAGE_KEY = 'labkeeper_lang';
 
-const isLanguage = (value: unknown): value is Language =>
-    value === 'ru' || value === 'en';
-
 export const readSharedLanguage = (): Language | null => {
     try {
         const value = window.localStorage.getItem(SHARED_LANGUAGE_KEY);
@@ -21,6 +19,13 @@ export const readSharedLanguage = (): Language | null => {
         // хранилище закрыто, например в приватном окне Safari: остаётся язык редактора
         return null;
     }
+};
+
+/** Язык страницы для браузера: по нему выбираются начертания иероглифов, чтение вслух и предложение перевести */
+const HTML_LANG: Record<Language, string> = {
+    ru: 'ru',
+    en: 'en',
+    zh: 'zh-CN',
 };
 
 const writeSharedLanguage = (language: Language) => {
@@ -39,7 +44,8 @@ type LanguageStore = Pick<
 /**
  * Зовётся, когда срез редактора восстановлен. Язык, выбранный на сайте,
  * главнее сохранённого в редакторе. Дальше язык редактора, выбранный
- * человеком или взятый из браузера, уходит сайту при каждой смене
+ * человеком или взятый из браузера, уходит сайту, запросам к серверу и
+ * атрибуту lang страницы при каждой смене
  */
 export const syncSharedLanguage = (store: LanguageStore) => {
     const shared = readSharedLanguage();
@@ -52,6 +58,8 @@ export const syncSharedLanguage = (store: LanguageStore) => {
         if (language !== written) {
             written = language;
             writeSharedLanguage(language);
+            setRequestLanguage(language);
+            document.documentElement.lang = HTML_LANG[language];
         }
     };
     write();

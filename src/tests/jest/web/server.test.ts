@@ -8,6 +8,7 @@ import {
     adoptAnalyticsSessionId,
     LABKEEPER_SESSION_HEADER,
 } from '../../../web/session.ts';
+import { setRequestLanguage } from '../../../web/requestLanguage.ts';
 
 const createRpi = () => {
     const observerService = {
@@ -948,6 +949,24 @@ describe('WebRpi', () => {
         await rpi.saveProgramRequest(PROJECT_ID, program);
 
         expect(lockedEvents(observerService.onEvent)).toEqual([]);
+    });
+
+    // язык тоже живёт в модульной переменной, поэтому тест в конце файла
+    test('every request carries the language of the interface', () => {
+        expect(
+            attachSessionHeader({ headers: {} }).headers['Accept-Language']
+        ).toBeUndefined();
+
+        setRequestLanguage('zh');
+
+        expect(
+            attachSessionHeader({ headers: {} }).headers['Accept-Language']
+        ).toBe('zh');
+        // заголовок, заданный самим запросом, остаётся
+        expect(
+            attachSessionHeader({ headers: { 'Accept-Language': 'en' } })
+                .headers['Accept-Language']
+        ).toBe('en');
     });
 
     // последним в файле: sessionId лежит в модульной переменной и живёт до конца прогона

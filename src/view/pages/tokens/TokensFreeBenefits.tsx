@@ -1,9 +1,12 @@
-import type { Translations } from '../../../viewModel/dictionaries/index.ts';
+import type {
+    Language,
+    Translations,
+} from '../../../viewModel/dictionaries/index.ts';
 import { formatRefillPeriod, formatTokenNumber } from './constant.ts';
 
 type TokensFreeBenefitsProps = {
     page: Translations['tokens_page'];
-    language: 'ru' | 'en';
+    language: Language;
     initialTokensCount: number;
     refillTokensAmount: number;
     refillPeriodSeconds: number;

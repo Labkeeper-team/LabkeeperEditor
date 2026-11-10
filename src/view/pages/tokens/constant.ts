@@ -1,4 +1,11 @@
 import { TokenPrice } from '../../../model/rpi';
+import { Language } from '../../../viewModel/dictionaries';
+
+const NUMBER_LOCALES: Record<Language, string> = {
+    ru: 'ru-RU',
+    en: 'en-US',
+    zh: 'zh-CN',
+};
 
 export type TokenPackage = {
     key: string;
@@ -9,9 +16,9 @@ export type TokenPackage = {
 
 export const formatTokenPackagePrice = (
     price: number,
-    language: 'ru' | 'en'
+    language: Language
 ): string =>
-    new Intl.NumberFormat(language === 'ru' ? 'ru-RU' : 'en-US', {
+    new Intl.NumberFormat(NUMBER_LOCALES[language], {
         style: 'currency',
         currency: 'RUB',
         maximumFractionDigits: 0,
@@ -19,15 +26,18 @@ export const formatTokenPackagePrice = (
 
 export const formatTokenAmount = (
     amount: number,
-    language: 'ru' | 'en'
+    language: Language
 ): string => {
-    const formattedAmount = new Intl.NumberFormat(
-        language === 'ru' ? 'ru-RU' : 'en-US',
-        { maximumFractionDigits: 2 }
-    ).format(amount);
+    const formattedAmount = new Intl.NumberFormat(NUMBER_LOCALES[language], {
+        maximumFractionDigits: 2,
+    }).format(amount);
 
     if (language === 'en') {
         return `${formattedAmount} ${amount === 1 ? 'token' : 'tokens'}`;
+    }
+
+    if (language === 'zh') {
+        return `${formattedAmount} 个代币`;
     }
 
     if (!Number.isInteger(amount)) {
@@ -50,11 +60,8 @@ export const formatTokenAmount = (
     return `${formattedAmount} токенов`;
 };
 
-export const formatTokenNumber = (
-    amount: number,
-    language: 'ru' | 'en'
-): string =>
-    new Intl.NumberFormat(language === 'ru' ? 'ru-RU' : 'en-US', {
+export const formatTokenNumber = (amount: number, language: Language): string =>
+    new Intl.NumberFormat(NUMBER_LOCALES[language], {
         maximumFractionDigits: 2,
     }).format(amount);
 
@@ -82,10 +89,10 @@ const pluralRu = (
 /** Human-readable refill interval from API seconds (e.g. 30d → "30 дней"). */
 export const formatRefillPeriod = (
     periodSeconds: number,
-    language: 'ru' | 'en'
+    language: Language
 ): string => {
     if (!Number.isFinite(periodSeconds) || periodSeconds <= 0) {
-        return language === 'ru' ? 'регулярно' : 'regularly';
+        return { ru: 'регулярно', en: 'regularly', zh: '定期' }[language];
     }
 
     const minute = 60;
@@ -95,27 +102,34 @@ export const formatRefillPeriod = (
         seconds: number;
         en: [string, string];
         ru: [string, string, string];
+        zh: string;
     }[] = [
         {
             seconds: day,
             en: ['day', 'days'],
             ru: ['день', 'дня', 'дней'],
+            zh: '天',
         },
         {
             seconds: hour,
             en: ['hour', 'hours'],
             ru: ['час', 'часа', 'часов'],
+            zh: '小时',
         },
         {
             seconds: minute,
             en: ['minute', 'minutes'],
             ru: ['минуту', 'минуты', 'минут'],
+            zh: '分钟',
         },
     ];
 
     for (const unit of units) {
         if (periodSeconds % unit.seconds === 0) {
             const count = periodSeconds / unit.seconds;
+            if (language === 'zh') {
+                return `${count} ${unit.zh}`;
+            }
             if (language === 'en') {
                 const word = count === 1 ? unit.en[0] : unit.en[1];
                 return `${count} ${word}`;
@@ -125,6 +139,9 @@ export const formatRefillPeriod = (
     }
 
     const days = Math.max(1, Math.round(periodSeconds / day));
+    if (language === 'zh') {
+        return `${days} 天`;
+    }
     if (language === 'en') {
         return `${days} ${days === 1 ? 'day' : 'days'}`;
     }

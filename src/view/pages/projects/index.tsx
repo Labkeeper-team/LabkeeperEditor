@@ -1,6 +1,6 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { formatDistance } from 'date-fns';
-import { enGB, ru } from 'date-fns/locale';
+import { enGB, ru, zhCN } from 'date-fns/locale';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -57,6 +57,9 @@ export const ProjectsPage = () => {
             case 'ru': {
                 return ru;
             }
+            case 'zh': {
+                return zhCN;
+            }
             default: {
                 return enGB;
             }
@@ -86,10 +89,14 @@ export const ProjectsPage = () => {
             const timestamp = new Date(value).getTime();
             return Number.isNaN(timestamp) ? 0 : timestamp;
         };
-        const titleCollator = new Intl.Collator(['en', 'ru'], {
-            sensitivity: 'base',
-            numeric: true,
-        });
+        // китайские названия упорядочиваем по пиньиню, для остальных порядок прежний
+        const titleCollator = new Intl.Collator(
+            lang === 'zh' ? ['zh-CN', 'en'] : ['en', 'ru'],
+            {
+                sensitivity: 'base',
+                numeric: true,
+            }
+        );
         const byTimeDesc = (a: ProjectShort, b: ProjectShort) =>
             toTimestamp(b.lastModified) - toTimestamp(a.lastModified);
         const byTimeAsc = (a: ProjectShort, b: ProjectShort) =>
@@ -108,7 +115,7 @@ export const ProjectsPage = () => {
         return projectsCopy.sort(
             sortDirection === 'asc' ? byTimeAsc : byTimeDesc
         );
-    }, [projects, sortMode, sortDirection]);
+    }, [projects, sortMode, sortDirection, lang]);
 
     const sortOptions = useMemo(
         () => [

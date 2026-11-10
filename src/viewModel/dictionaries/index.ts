@@ -1,8 +1,21 @@
 import { CompileError } from '../../model/domain.ts';
 import { en } from './en.ts';
 import { ru } from './ru.ts';
+import { zh } from './zh.ts';
 
-export type Language = 'ru' | 'en';
+export type Language = 'ru' | 'en' | 'zh';
+
+export const LANGUAGES: readonly Language[] = ['ru', 'en', 'zh'];
+
+export const isLanguage = (value: unknown): value is Language =>
+    LANGUAGES.includes(value as Language);
+
+/** Название языка на нём самом: так его находит человек, не знающий текущего */
+export const LANGUAGE_NAMES: Record<Language, string> = {
+    en: 'English',
+    ru: 'Русский',
+    zh: '中文',
+};
 
 export interface Translations {
     or: string;
@@ -721,4 +734,5 @@ export interface Translations {
 export const dictionary: Record<Language, Translations> = {
     ru: ru,
     en: en,
+    zh: zh,
 };

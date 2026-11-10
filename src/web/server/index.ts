@@ -7,7 +7,11 @@ import {
     UserInfo,
 } from '../../model/domain.ts';
 import { withSegmentIds } from '../../viewModel/utils/segmentId.ts';
-import axios, { AxiosError, AxiosResponse } from 'axios';
+import axios, {
+    AxiosError,
+    AxiosResponse,
+    InternalAxiosRequestConfig,
+} from 'axios';
 import { URLS } from '../../constants.ts';
 import {
     AgentHistoryResponse,
@@ -36,14 +40,24 @@ import {
 } from '../../model/service/ObserverService.ts';
 import { logBreadcrumb } from '../../viewModel/utils/logBreadcrumb.ts';
 import { getSessionId, LABKEEPER_SESSION_HEADER } from '../session.ts';
+import { getRequestLanguage } from '../requestLanguage.ts';
 
-axios.interceptors.request.use((config) => {
+function withRequestHeaders(
+    config: InternalAxiosRequestConfig
+): InternalAxiosRequestConfig {
     const sessionId = getSessionId();
     if (sessionId) {
         config.headers[LABKEEPER_SESSION_HEADER] = sessionId;
     }
+    // заголовок, заданный самим запросом, главнее
+    const language = getRequestLanguage();
+    if (language && !config.headers['Accept-Language']) {
+        config.headers['Accept-Language'] = language;
+    }
     return config;
-});
+}
+
+axios.interceptors.request.use(withRequestHeaders);
 
 function withIds(program: Program): Program {
     return withSegmentIds(program);

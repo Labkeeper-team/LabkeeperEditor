@@ -17,7 +17,7 @@ import {
 import { setLanguage } from '../../../store/slices/persistence';
 import { Select } from '../../select';
 import { ProjectTitle } from '../projectTitle';
-import { Language } from '../../../../viewModel/dictionaries';
+import { Language, LANGUAGE_NAMES } from '../../../../viewModel/dictionaries';
 import { AuthModal } from '../../../pages/project/auth';
 import { ShareModal } from '../share/modal';
 import { AppDispatch } from '../../../store';
@@ -33,10 +33,10 @@ import '../style.scss';
 import { PrivacyPolicyAcceptanceModal } from '../../../pages/project/modals/privacy-policy-acceptance';
 import { CrossBorderConsentModal } from '../../../pages/project/modals/cross-border-consent';
 
-const languageOptions = [
-    { label: 'English', value: 'en' },
-    { label: 'Русский', value: 'ru' },
-];
+const languageOptions = (['en', 'ru', 'zh'] as const).map((value) => ({
+    label: LANGUAGE_NAMES[value],
+    value,
+}));
 
 export const AppHeader = () => {
     const dispatch = useDispatch<AppDispatch>();

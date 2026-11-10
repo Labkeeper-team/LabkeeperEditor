@@ -229,7 +229,7 @@ const LoginView = () => {
                         !!Secrets.yandexCaptchaSiteKey && (
                             <SmartCaptcha
                                 key={captchaInstanceKey}
-                                language={language}
+                                language={language === 'zh' ? 'en' : language}
                                 sitekey={Secrets.yandexCaptchaSiteKey}
                                 onSuccess={setToken}
                             />
@@ -522,7 +522,7 @@ const EmailView = () => {
                 {Secrets.yandexCaptchaSiteKey && showCaptcha && (
                     <SmartCaptcha
                         key={captchaInstanceKey}
-                        language={language}
+                        language={language === 'zh' ? 'en' : language}
                         sitekey={Secrets.yandexCaptchaSiteKey}
                         onSuccess={setToken}
                     />

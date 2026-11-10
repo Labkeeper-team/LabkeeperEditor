@@ -221,7 +221,7 @@ class MockViewModelRepositoryState {
     pdfUri: string | undefined;
     mode: ProjectType = 'latex';
     instructionExpanded = false;
-    language: 'ru' | 'en' = 'ru';
+    language: Language = 'ru';
     lastProgram: Program = {
         segments: [],
         parameters: {

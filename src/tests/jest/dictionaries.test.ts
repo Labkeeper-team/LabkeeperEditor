@@ -5,10 +5,12 @@ import {
 } from '../../model/rpi/agentSocket.ts';
 import { ru } from '../../viewModel/dictionaries/ru.ts';
 import { en } from '../../viewModel/dictionaries/en.ts';
+import { zh } from '../../viewModel/dictionaries/zh.ts';
 
 const DICTIONARIES = [
     ['ru', ru],
     ['en', en],
+    ['zh', zh],
 ] as const;
 
 /** Ключи, которые лента собирает сама, поэтому типом они не проверяются */
@@ -101,7 +103,7 @@ test.each(DICTIONARIES)(
 
 /** Срок прогона назван в тексте словами, здесь сверяем, что они не разъехались */
 const TIMEOUT_WORDS: Record<number, Record<string, string>> = {
-    10: { ru: 'десять минут', en: 'ten minutes' },
+    10: { ru: 'десять минут', en: 'ten minutes', zh: '十分钟' },
 };
 
 test.each(DICTIONARIES)(
