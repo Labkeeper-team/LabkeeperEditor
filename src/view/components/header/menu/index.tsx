@@ -24,7 +24,7 @@ import {
     setTourVisibility,
 } from '../../../store/slices/settings';
 import { setLanguage } from '../../../store/slices/persistence';
-import { Language } from '../../../../viewModel/dictionaries';
+import { Language, LANGUAGE_NAMES } from '../../../../viewModel/dictionaries';
 import { useIsMobile } from '../../../hooks/useMobile';
 import { DotssIcon } from '../../../icons';
 import { LogoutConfirmModal } from '../logout-confirm-modal';
@@ -41,10 +41,9 @@ const ABOUT_URL = `${SITE_ORIGIN}/about`;
 // каталог шаблонов на лендинге, страница шаблона /templates/<slug>
 const TEMPLATES_URL = `${SITE_ORIGIN}/templates`;
 
-const LANGUAGE_OPTIONS: { label: string; value: Language }[] = [
-    { label: 'English', value: 'en' },
-    { label: 'Русский', value: 'ru' },
-];
+const LANGUAGE_OPTIONS: { label: string; value: Language }[] = (
+    ['en', 'ru', 'zh'] as const
+).map((value) => ({ label: LANGUAGE_NAMES[value], value }));
 
 export const HeaderMenu = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -81,31 +80,28 @@ export const HeaderMenu = () => {
 
     const isProjectPage = location.pathname.startsWith('/project/');
 
-    const alternateLanguage = LANGUAGE_OPTIONS.find(
-        (option) => option.value !== language
-    );
-
-    const languageMenuItem = useMemo((): HeaderMenuItem | null => {
-        if (!isMobile || !alternateLanguage) {
-            return null;
+    const languageMenuItems = useMemo((): HeaderMenuItem[] => {
+        if (!isMobile) {
+            return [];
         }
 
-        return {
+        return LANGUAGE_OPTIONS.filter(
+            (option) => option.value !== language
+        ).map((option) => ({
             title: dictionary.header_menu.change_language_to.replace(
                 '{language}',
-                alternateLanguage.label
+                option.label
             ),
-            item: 'language',
+            item: `language-${option.value}`,
             onClick: () => {
                 controller.trackUiEvent(Events.EVENT_LANGUAGE_CHANGED, {
                     from: language,
-                    to: alternateLanguage.value,
+                    to: option.value,
                 });
-                dispatch(setLanguage(alternateLanguage.value));
+                dispatch(setLanguage(option.value));
             },
-        };
+        }));
     }, [
-        alternateLanguage,
         dictionary.header_menu.change_language_to,
         dispatch,
         isMobile,
@@ -113,9 +109,8 @@ export const HeaderMenu = () => {
     ]);
 
     const withMobileLanguageItem = useCallback(
-        (menuItems: HeaderMenuItem[]) =>
-            languageMenuItem ? [languageMenuItem, ...menuItems] : menuItems,
-        [languageMenuItem]
+        (menuItems: HeaderMenuItem[]) => [...languageMenuItems, ...menuItems],
+        [languageMenuItems]
     );
 
     const publicMenuItems: HeaderMenuItem[] = useMemo(

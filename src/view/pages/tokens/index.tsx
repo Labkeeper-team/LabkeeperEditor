@@ -14,7 +14,7 @@ import { MarketingFooter } from '../../components/header/marketing/MarketingFoot
 import { Modal } from '../../components/modal';
 import { ServicePrices } from '../../../model/rpi';
 import { BillingPricingRequestState } from '../../../viewModel/repository';
-import { Translations } from '../../../viewModel/dictionaries';
+import { Language, Translations } from '../../../viewModel/dictionaries';
 
 import './style.scss';
 import {
@@ -44,7 +44,7 @@ const getUsageItemsWithPrices = (
     page: Translations['tokens_page'],
     servicePrices: ServicePrices | undefined,
     pricingRequestState: BillingPricingRequestState,
-    language: 'ru' | 'en'
+    language: Language
 ) => {
     if (!servicePrices) {
         return page.usage_items.map((item, index) =>

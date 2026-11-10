@@ -7,10 +7,12 @@ import {
     SHARED_LANGUAGE_KEY,
     syncSharedLanguage,
 } from '../../../view/store/sharedLanguage.ts';
+import type { Language } from '../../../viewModel/dictionaries';
+import { getRequestLanguage } from '../../../web/requestLanguage.ts';
 
 /** GH-175: язык общий у редактора и сайта, сайт держит его в labkeeper_lang */
 
-const storeWith = (language: 'ru' | 'en') => {
+const storeWith = (language: Language) => {
     const store = configureStore({
         reducer: { persistence: persistenceSlice.reducer },
     });
@@ -59,4 +61,32 @@ test('чужое значение под ключом не меняет язык
 
     expect(store.getState().persistence.language).toBe('ru');
     expect(window.localStorage.getItem(SHARED_LANGUAGE_KEY)).toBe('ru');
+});
+
+test('китайский, выбранный на сайте, доходит до редактора', () => {
+    window.localStorage.setItem(SHARED_LANGUAGE_KEY, 'zh');
+    const store = storeWith('en');
+
+    syncSharedLanguage(store);
+
+    expect(store.getState().persistence.language).toBe('zh');
+});
+
+test('атрибут lang страницы следует за языком редактора', () => {
+    const store = storeWith('zh');
+    syncSharedLanguage(store);
+    expect(document.documentElement.lang).toBe('zh-CN');
+
+    store.dispatch(setLanguage('ru'));
+    expect(document.documentElement.lang).toBe('ru');
+});
+
+// без этого сервер брал язык браузера: копия проекта и письмо об оплате приходили не на том языке
+test('язык редактора уходит в Accept-Language запросов к серверу', () => {
+    const store = storeWith('zh');
+    syncSharedLanguage(store);
+    expect(getRequestLanguage()).toBe('zh');
+
+    store.dispatch(setLanguage('en'));
+    expect(getRequestLanguage()).toBe('en');
 });

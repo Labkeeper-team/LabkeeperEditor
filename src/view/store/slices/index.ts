@@ -249,8 +249,20 @@ export const ideInitialState: IdeState = {
     pendingHunkIds: [],
 };
 
+/** Язык по браузеру: русский и китайский узнаём, иначе английский */
+const detectBrowserLanguage = (): Language => {
+    const browser = navigator.language.toLowerCase();
+    if (browser.includes('ru')) {
+        return 'ru';
+    }
+    if (browser.startsWith('zh')) {
+        return 'zh';
+    }
+    return 'en';
+};
+
 export const persistenceInitialState: PersistenceState = {
-    language: navigator.language.includes('ru') ? 'ru' : 'en',
+    language: detectBrowserLanguage(),
     lastProgram: createEmptyProgram(),
     instructionExpanded: true,
     lastOpenedProjectUuid: undefined,
