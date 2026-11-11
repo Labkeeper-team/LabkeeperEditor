@@ -69,10 +69,17 @@ test('поиск находит проекты по словам из назва
     await page.keyboard.type('лаб диплом');
 
     await expectTitles(page, ['Лабораторная 10']);
-    await expect(page.locator('.projects-summary')).toContainText('1');
+    // «N из M» стоит в счётчике у заголовка, а список под фильтрами не сдвигается
+    const list = page.locator('.projects-list-wrapper');
+    const top = (await list.boundingBox())!.y;
+    await expect(page.locator('.projects-header__count--filtered')).toHaveText(
+        /1 of 3/
+    );
+    expect((await list.boundingBox())!.y).toBe(top);
 
-    await page.getByRole('button', { name: 'Reset filters' }).click();
+    await page.getByRole('button', { name: /Reset filters/ }).click();
     await expect(page.locator('tbody tr')).toHaveCount(3);
+    expect((await list.boundingBox())!.y).toBe(top);
 });
 
 const sidebar = (page: Page) => page.locator('.projects-sidebar');
@@ -406,4 +413,84 @@ test('«Назад» из открытого проекта сразу возв�
 
     await page.goBack();
     await expect(page).toHaveURL(/\/projects$/);
+});
+
+test('метка, снятая со всех проектов, не выбирается сама, когда появится снова', async ({
+    page,
+}) => {
+    await openProjects(page);
+    await page.route('**/api/v4/public/project/*/tags', (route) =>
+        route.fulfill({
+            contentType: 'application/json',
+            body: route.request().postData()!,
+        })
+    );
+    const editTags = async (title: string) => {
+        const row = page.locator('tbody tr', { hasText: title });
+        await row.hover();
+        await row.getByRole('button', { name: 'Project actions' }).click();
+        await page.getByRole('menuitem', { name: 'Tags…' }).click();
+        return page.locator('.tags-modal');
+    };
+
+    await sidebarItem(page, 'Диплом').click();
+    await expectTitles(page, ['Лабораторная 10']);
+
+    let modal = await editTags('Лабораторная 10');
+    await modal.getByRole('button', { name: /Delete Диплом/ }).click();
+    await modal.getByRole('button', { name: 'Save' }).click();
+    await expect(page.locator('tbody tr')).toHaveCount(3);
+
+    modal = await editTags('Конспект');
+    await modal.getByRole('textbox').fill('Диплом');
+    await modal.getByRole('button', { name: 'Save' }).click();
+
+    await expect(sidebarItem(page, 'Диплом')).toContainText('1');
+    await expect(page.locator('tbody tr')).toHaveCount(3);
+    await expect(sidebarItem(page, 'Диплом')).toHaveAttribute(
+        'aria-pressed',
+        'false'
+    );
+});
+
+test('неудачное переименование метки оставляет её выбранной', async ({
+    page,
+}) => {
+    await openProjects(page);
+    await page.route('**/api/v4/public/project/*/tags', (route) =>
+        route.fulfill({ status: 500, body: '{}' })
+    );
+
+    await sidebarItem(page, 'Физика').click();
+    const physics = sidebarRow(page, 'Физика');
+    await physics.hover();
+    await physics.getByRole('button', { name: /Tag actions/ }).click();
+    await page.getByRole('menuitem', { name: 'Edit' }).click();
+    const modal = page.locator('.tag-edit-modal');
+    await modal.getByRole('textbox').fill('Химия');
+    await modal.getByRole('button', { name: 'Save' }).click();
+
+    await expect(sidebarItem(page, 'Физика')).toHaveAttribute(
+        'aria-pressed',
+        'true'
+    );
+    await expectTitles(page, ['Лабораторная 2', 'Лабораторная 10']);
+});
+
+test('поле переименования не меняет высоту строки и не шире ячейки', async ({
+    page,
+}) => {
+    await openProjects(page);
+    const row = page.locator('tbody tr').first();
+    const before = (await row.boundingBox())!;
+    await row.hover();
+    await row.getByRole('button', { name: 'Project actions' }).click();
+    await page.getByRole('menuitem', { name: 'Rename' }).click();
+
+    const input = row.locator('input.input-base');
+    await expect(input).toBeFocused();
+    const cell = (await row.locator('td').first().boundingBox())!;
+    const field = (await input.boundingBox())!;
+    expect(field.x + field.width).toBeLessThanOrEqual(cell.x + cell.width);
+    expect(Math.abs((await row.boundingBox())!.height - before.height)).toBe(0);
 });

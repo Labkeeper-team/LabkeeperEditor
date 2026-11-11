@@ -47,6 +47,28 @@
             line-height: 24px;
             text-align: center;
             box-sizing: border-box;
+            white-space: nowrap;
+        }
+
+        // при фильтре счётчик показывает «N из M» и по щелчку сбрасывает фильтры
+        &__count--filtered {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: none;
+            background: rgba($blue-10, 0.12);
+            color: $blue-10;
+            font-family: inherit;
+            cursor: pointer;
+
+            &:hover {
+                background: rgba($blue-10, 0.2);
+            }
+
+            &:focus-visible {
+                outline: 2px solid $blue-10;
+                outline-offset: 2px;
+            }
         }
 
         &__add {
@@ -209,21 +231,6 @@
 
         &::-webkit-scrollbar {
             display: none;
-        }
-    }
-
-    // «N из M» стоит в конце строки фильтров: при выборе фильтра список не сдвигается
-    .projects-summary {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin-left: auto;
-        color: $gray-30;
-        font-size: 13px;
-        white-space: nowrap;
-
-        @media screen and (max-width: $mobile-breakpoint) {
-            margin: 10px 0 0;
         }
     }
 
@@ -429,6 +436,8 @@
         table-layout: fixed;
 
         th {
+            // ширины колонок ниже вместе с отступами
+            box-sizing: border-box;
             position: sticky;
             top: 0;
             z-index: 1;
@@ -503,11 +512,11 @@
         }
 
         .projects-col-date {
-            width: 170px;
+            width: 160px;
         }
 
         .projects-col-type {
-            width: 104px;
+            width: 100px;
         }
 
         .projects-col-access {
@@ -521,7 +530,7 @@
         }
 
         // на узком окне дата создания уступает место названию
-        @media screen and (max-width: 1280px) {
+        @media screen and (max-width: 1440px) {
             .projects-col-created {
                 display: none;
             }

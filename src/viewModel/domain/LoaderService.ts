@@ -138,6 +138,14 @@ export class LoaderService {
         }
     };
 
+    /**
+     * Списки, запрошенные до этого момента, уже устарели: например, в них
+     * есть только что удалённый проект или они пришли после истечения сессии
+     */
+    discardEarlierLists = () => {
+        this.shownListRequestedAt = ++this.clock;
+    };
+
     writeStarted = (key: string) => {
         this.pendingWrites.set(key, (this.pendingWrites.get(key) ?? 0) + 1);
     };
@@ -212,6 +220,7 @@ export class LoaderService {
             );
             state.setGetProjectsRequestState('ok');
         } else if (result.isUnauth) {
+            this.shownListRequestedAt = requestedAt;
             state.setGetProjectsRequestState('unauth');
         } else if (!silent) {
             state.setGetProjectsRequestState('error');

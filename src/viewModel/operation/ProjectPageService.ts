@@ -340,7 +340,12 @@ export class ProjectPageService {
         okCallback: () => void,
         failCallback: () => void
     ) => {
-        if (this.editingLock.rejectEdit()) {
+        // агент правит только открытый в редакторе проект: другой из списка
+        // переименовать можно, а отказ возвращает в поле прежнее имя
+        const opened =
+            this.repository.projectViewModelRepository.project()?.projectId;
+        if (opened === projectId && this.editingLock.rejectEdit()) {
+            failCallback();
             return;
         }
         const titleToSend = title.trim();
@@ -360,6 +365,7 @@ export class ProjectPageService {
                 'error'
             );
             this.ideService.resetEditor();
+            this.loaderService.discardEarlierLists();
             this.repository.ideViewModelRepository.setGetProjectsRequestState(
                 'unauth'
             );

@@ -156,6 +156,7 @@ export class ProjectsPageService {
             'error'
         );
         this.ideService.resetEditor();
+        this.loaderService.discardEarlierLists();
         this.repository.ideViewModelRepository.setGetProjectsRequestState(
             'unauth'
         );
@@ -307,7 +308,8 @@ export class ProjectsPageService {
             });
         } else if (result.isUnauth) {
             this.sessionExpired();
-        } else {
+        } else if (this.listedProject(projectId)) {
+            // проект удалили, пока метки сохранялись: жаловаться не на что
             this.repository.toast(
                 this.repository.dictionary.projects.errors.tags_failed,
                 'error'
@@ -350,7 +352,12 @@ export class ProjectsPageService {
         );
         if (results.some((result) => result.isUnauth)) {
             this.sessionExpired();
-        } else if (results.some((result) => !result.isOk)) {
+        } else if (
+            results.some(
+                (result, i) =>
+                    !result.isOk && this.listedProject(projects[i].projectId)
+            )
+        ) {
             this.repository.toast(
                 this.repository.dictionary.projects.errors.tags_failed,
                 'error'
@@ -571,7 +578,9 @@ export class ProjectsPageService {
                     project_id: projectId,
                 });
                 okCallback();
-                // проект пропадает сразу, не дожидаясь нового списка
+                // проект пропадает сразу, не дожидаясь нового списка, и не
+                // возвращается из ответа, запрошенного до удаления
+                this.loaderService.discardEarlierLists();
                 this.repository.projectsViewModelRepository.setProjects(
                     this.repository.projectsViewModelRepository
                         .projects()

@@ -640,3 +640,93 @@ test('tags-are-counted-once-per-project-whatever-the-case', () => {
     expect(tags.map((tag) => `${tag.name}:${tag.count}`)).toEqual(['Физика:2']);
     expect(uniqueTags([PHYSICS, PHYSICS, THESIS])).toEqual([PHYSICS, THESIS]);
 });
+
+test('a-list-requested-before-a-delete-does-not-bring-the-project-back', async () => {
+    const ctx = setup();
+    const older = deferred<RequestResult<object>>();
+    ctx.rpi.getAllProjectsRequest = jest
+        .fn()
+        .mockReturnValueOnce(older.promise)
+        .mockResolvedValueOnce(fail(500));
+    ctx.rpi.deleteProjectRequest = jest.fn().mockResolvedValue(ok({}));
+
+    const loading = ctx.projectsPageService.loaderService.loadProjects({
+        silent: true,
+    });
+    await ctx.projectsPageService.onDeleteProject('a', () => undefined);
+    older.resolve(ok({ projects: [...LIST].reverse() }));
+    await loading;
+
+    expect(ctx.listed('a')).toBeUndefined();
+});
+
+test('a-list-requested-before-the-session-expired-does-not-hide-it', async () => {
+    const ctx = setup();
+    const older = deferred<RequestResult<object>>();
+    ctx.rpi.getAllProjectsRequest = jest.fn().mockReturnValue(older.promise);
+    ctx.rpi.setProjectTagsRequest = jest.fn().mockResolvedValue(fail(401));
+
+    const loading = ctx.projectsPageService.loaderService.loadProjects({
+        silent: true,
+    });
+    await ctx.projectsPageService.onProjectTagsChange('c', [THESIS]);
+    older.resolve(ok({ projects: [...LIST].reverse() }));
+    await loading;
+
+    expect(
+        ctx.repository.ideViewModelRepository.getProjectsRequestState()
+    ).toBe('unauth');
+    expect(ctx.repository.projectsViewModelRepository.projects()).toEqual([]);
+});
+
+test('a-project-from-the-list-can-be-renamed-while-the-agent-edits-another', async () => {
+    const ctx = setup();
+    ctx.repository.chatViewModelRepository.setRequestState('running');
+    ctx.repository.projectViewModelRepository.setProject({
+        ...LIST[0],
+        program: { segments: [] },
+    } as never);
+    ctx.rpi.setTitleRequest = jest.fn().mockResolvedValue(ok({}));
+    ctx.rpi.getAllProjectsRequest = jest
+        .fn()
+        .mockResolvedValue(ok({ projects: [...LIST].reverse() }));
+    const failed = jest.fn();
+
+    await ctx.projectPageService.onProjectTitleChanged(
+        'b',
+        'Другое',
+        () => undefined,
+        () => undefined
+    );
+    expect(ctx.rpi.setTitleRequest).toHaveBeenCalledWith('b', 'Другое');
+
+    // открытый проект агент правит: его переименование отклоняется с откатом
+    await ctx.projectPageService.onProjectTitleChanged(
+        'a',
+        'Третье',
+        () => undefined,
+        failed
+    );
+    expect(ctx.rpi.setTitleRequest).toHaveBeenCalledTimes(1);
+    expect(failed).toHaveBeenCalled();
+});
+
+test('no-tags-error-for-a-project-deleted-while-its-tags-were-saving', async () => {
+    const ctx = setup();
+    const save = deferred<RequestResult<object>>();
+    ctx.rpi.setProjectTagsRequest = jest.fn().mockReturnValue(save.promise);
+    ctx.rpi.deleteProjectRequest = jest.fn().mockResolvedValue(ok({}));
+    ctx.rpi.getAllProjectsRequest = jest.fn().mockResolvedValue(
+        ok({
+            projects: [...LIST.filter((p) => p.projectId !== 'c')].reverse(),
+        })
+    );
+
+    const saving = ctx.projectsPageService.onProjectTagsChange('c', [THESIS]);
+    await ctx.projectsPageService.onDeleteProject('c', () => undefined);
+    save.resolve(fail(404));
+    await saving;
+
+    expect(ctx.toasts().some((t) => t.type === 'error')).toBe(false);
+    expect(ctx.listed('c')).toBeUndefined();
+});

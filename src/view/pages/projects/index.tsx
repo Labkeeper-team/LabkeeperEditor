@@ -94,6 +94,17 @@ const copyText = async (text: string) => {
     }
 };
 
+/** Что известно о выбранной метке, см. ProjectsPage */
+interface TagMemory {
+    tag: string | null;
+    /** Прежнее имя переименованной метки, пока сервер не ответил */
+    fallback: string | null;
+    /** Метку уже видели в списке */
+    seen: boolean;
+}
+
+const NO_TAG_MEMORY: TagMemory = { tag: null, fallback: null, seen: false };
+
 const toDate = (value?: string): Date | null => {
     if (!value) {
         return null;
@@ -163,12 +174,45 @@ export const ProjectsPage = () => {
     );
 
     // метку сняли со всех проектов: фильтровать по ней больше нельзя
-    const filter = useMemo<ProjectsFilter>(() => {
-        const known = knownTags.some(
-            (tag) => tagKey(tag.name) === rawFilter.tag
-        );
-        return known ? rawFilter : { ...rawFilter, tag: null };
-    }, [rawFilter, knownTags]);
+    const knownKeys = useMemo(
+        () => new Set(knownTags.map((tag) => tagKey(tag.name))),
+        [knownTags]
+    );
+
+    /*
+     * Выбранная метка может пропасть: её сняли со всех проектов или её
+     * переименование не удалось. Метку, которую уже видели в списке, тогда
+     * снимаем совсем, а не прячем: иначе выбор сам включился бы, когда метка
+     * с тем же именем появится снова. После неудачного переименования выбор
+     * возвращается к прежнему имени
+     */
+    const [tagMemory, setTagMemory] = useState<TagMemory>(NO_TAG_MEMORY);
+    const memory =
+        tagMemory.tag === rawFilter.tag
+            ? tagMemory
+            : { tag: rawFilter.tag, fallback: null, seen: false };
+    const tagKnown = rawFilter.tag !== null && knownKeys.has(rawFilter.tag);
+    const fallbackKnown =
+        memory.fallback !== null && knownKeys.has(memory.fallback);
+    if (tagKnown && (!memory.seen || memory !== tagMemory)) {
+        setTagMemory({ ...memory, seen: true });
+    } else if (rawFilter.tag !== null && !tagKnown && memory.seen) {
+        const next = fallbackKnown ? memory.fallback : null;
+        setFilter((current) => ({ ...current, tag: next }));
+        setTagMemory({ tag: next, fallback: null, seen: next !== null });
+    }
+    const selectedTag = tagKnown
+        ? rawFilter.tag
+        : fallbackKnown
+          ? memory.fallback
+          : null;
+    const filter = useMemo<ProjectsFilter>(
+        () =>
+            selectedTag === rawFilter.tag
+                ? rawFilter
+                : { ...rawFilter, tag: selectedTag },
+        [rawFilter, selectedTag]
+    );
 
     const visibleProjects = useMemo(
         () =>
@@ -384,16 +428,21 @@ export const ProjectsPage = () => {
     /** Выбранная метка идёт за переименованием, а не сбрасывается */
     const onTagSaved = useCallback(
         (previousName: string | undefined, name: string) => {
-            if (previousName === undefined) {
+            if (
+                previousName === undefined ||
+                rawFilter.tag !== tagKey(previousName)
+            ) {
                 return;
             }
-            setFilter((current) =>
-                current.tag === tagKey(previousName)
-                    ? { ...current, tag: tagKey(name) }
-                    : current
-            );
+            // прежнее имя запоминаем: если сервер откажет, выбор вернётся к нему
+            setFilter((current) => ({ ...current, tag: tagKey(name) }));
+            setTagMemory({
+                tag: tagKey(name),
+                fallback: tagKey(previousName),
+                seen: false,
+            });
         },
-        []
+        [rawFilter.tag]
     );
 
     /** Удалённая метка перестаёт быть выбранной, даже если появится снова */
@@ -626,23 +675,9 @@ export const ProjectsPage = () => {
         );
     };
 
-    const summary =
-        filterActive && visibleProjects.length ? (
-            <div className="projects-summary">
-                <span>
-                    {texts.shown
-                        .replace('${shown}', `${visibleProjects.length}`)
-                        .replace('${total}', `${projects.length}`)}
-                </span>
-                <button
-                    type="button"
-                    className="projects-link-button"
-                    onClick={resetFilters}
-                >
-                    {texts.reset_filters}
-                </button>
-            </div>
-        ) : null;
+    const shownText = texts.shown
+        .replace('${shown}', `${visibleProjects.length}`)
+        .replace('${total}', `${projects.length}`);
 
     const toolbar = (
         <div className="projects-toolbar">
@@ -715,7 +750,6 @@ export const ProjectsPage = () => {
                     />
                 </div>
             ) : null}
-            {isMobile ? null : summary}
         </div>
     );
 
@@ -899,7 +933,20 @@ export const ProjectsPage = () => {
                             text={texts.label}
                             color={colors.black}
                         />
-                        {projects.length ? (
+                        {filterActive && visibleProjects.length ? (
+                            // «N из M» в счётчике: строка заголовка от фильтра не
+                            // меняет высоту, и список под ним не сдвигается
+                            <button
+                                type="button"
+                                className="projects-header__count projects-header__count--filtered"
+                                title={texts.reset_filters}
+                                aria-label={`${shownText}. ${texts.reset_filters}`}
+                                onClick={resetFilters}
+                            >
+                                {shownText}
+                                <span aria-hidden>×</span>
+                            </button>
+                        ) : projects.length ? (
                             <span className="projects-header__count">
                                 {projects.length}
                             </span>
@@ -921,8 +968,6 @@ export const ProjectsPage = () => {
                         <>
                             {toolbar}
                             {tagFilter}
-                            {/* на телефоне под лентой меток: лента под пальцем не съезжает */}
-                            {isMobile ? summary : null}
                             <div
                                 className="projects-list-wrapper"
                                 onPointerDownCapture={() => {
