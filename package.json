@@ -99,7 +99,7 @@
         "jest-preview": "^0.3.3",
         "prettier": "^3.9.10",
         "lint-staged": "^17.6.0",
-        "sass-embedded": "1.108.0",
+        "sass-embedded": "1.107.0",
         "ts-jest": "^29.4.15",
         "ts-node": "^10.9.2",
         "typescript": "npm:@typescript/typescript6@^6.0.2",
