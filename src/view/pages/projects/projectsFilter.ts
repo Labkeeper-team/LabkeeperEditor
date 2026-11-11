@@ -64,6 +64,21 @@ const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 
 export const tagKey = (name: string) => name.trim().toLocaleLowerCase();
 
+/**
+ * Метки проекта без точных повторов имени. Сервер их не допускает, но если
+ * повтор всё же пришёл, показывать его дважды незачем
+ */
+export const uniqueTags = (tags: ProjectTag[] = []): ProjectTag[] => {
+    const seen = new Set<string>();
+    return tags.filter((tag) => {
+        if (seen.has(tag.name)) {
+            return false;
+        }
+        seen.add(tag.name);
+        return true;
+    });
+};
+
 /** Цвет новой метки по её имени: у одинаковых имён одинаковый */
 export const defaultTagColor = (name: string): string => {
     let hash = 0;
@@ -159,8 +174,14 @@ export const collectTags = (
 ): KnownTag[] => {
     const tags = new Map<string, KnownTag>();
     for (const project of projects) {
+        // «Физика» и «физика» у одного проекта считаются одним проектом
+        const counted = new Set<string>();
         for (const tag of project.tags ?? []) {
             const key = tagKey(tag.name);
+            if (counted.has(key)) {
+                continue;
+            }
+            counted.add(key);
             const known = tags.get(key);
             if (known) {
                 known.count += 1;

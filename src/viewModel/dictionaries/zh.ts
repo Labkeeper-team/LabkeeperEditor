@@ -243,6 +243,11 @@ export const zh: Translations = {
                 '\u65E0\u6CD5\u66F4\u6539\u8BBF\u95EE\u6743\u9650',
             duplicate_failed: '\u65E0\u6CD5\u590D\u5236\u9879\u76EE',
             download_failed: '\u65E0\u6CD5\u4E0B\u8F7D\u538B\u7F29\u5305',
+            rename_failed: '\u65E0\u6CD5\u91CD\u547D\u540D\u9879\u76EE',
+            delete_failed: '\u65E0\u6CD5\u5220\u9664\u9879\u76EE',
+            copy_link_failed: '\u65E0\u6CD5\u590D\u5236\u94FE\u63A5',
+            project_busy:
+                '\u9879\u76EE\u6B63\u5FD9\uFF0C\u8BF7\u7A0D\u540E\u518D\u8BD5',
         },
     },
     segment: {

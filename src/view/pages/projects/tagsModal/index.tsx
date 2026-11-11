@@ -21,6 +21,7 @@ import {
     TAG_COLORS,
     defaultTagColor,
     tagKey,
+    uniqueTags,
 } from '../projectsFilter.ts';
 
 /**
@@ -37,7 +38,9 @@ export const TagsModal = (props: {
     const dispatch = useDispatch<AppDispatch>();
     const inputRef = useRef<HTMLInputElement>(null);
 
-    const [tags, setTags] = useState<ProjectTag[]>(props.project.tags ?? []);
+    const [tags, setTags] = useState<ProjectTag[]>(() =>
+        uniqueTags(props.project.tags)
+    );
     const [name, setName] = useState('');
     // цвет, выбранный руками; пока его нет, цвет берётся от имени
     const [pickedColor, setPickedColor] = useState<string | null>(null);
@@ -116,18 +119,14 @@ export const TagsModal = (props: {
 
             <div className="tags-modal__current">
                 {tags.length ? (
-                    tags.map((tag) => (
+                    // имена различаются хотя бы регистром: «Физика» и «физика» две метки
+                    tags.map((tag, index) => (
                         <TagChip
-                            key={tagKey(tag.name)}
+                            key={tag.name}
                             tag={tag}
                             removeLabel={dictionary.delete}
                             onRemove={() => {
-                                setTags(
-                                    tags.filter(
-                                        (t) =>
-                                            tagKey(t.name) !== tagKey(tag.name)
-                                    )
-                                );
+                                setTags(tags.filter((_, i) => i !== index));
                                 setError(null);
                             }}
                         />

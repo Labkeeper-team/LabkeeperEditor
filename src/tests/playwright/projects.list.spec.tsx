@@ -39,7 +39,7 @@ const PROJECTS = [
     },
 ];
 
-async function openProjects(page: Page) {
+async function openProjects(page: Page, projects = PROJECTS) {
     const routeSetup = new RouteSetup(page);
     await routeSetup.setupProject();
     await routeSetup.setupListFilesRequest();
@@ -48,7 +48,7 @@ async function openProjects(page: Page) {
         route.fulfill({
             contentType: 'application/json',
             // сервер отдаёт старые первыми, страница переворачивает
-            body: JSON.stringify({ projects: [...PROJECTS].reverse() }),
+            body: JSON.stringify({ projects: [...projects].reverse() }),
         })
     );
     await page.goto('/projects');
@@ -76,8 +76,19 @@ test('поиск находит проекты по словам из назва
 });
 
 const sidebar = (page: Page) => page.locator('.projects-sidebar');
-const sidebarItem = (page: Page, name: string | RegExp) =>
-    sidebar(page).locator('.projects-sidebar__button', { hasText: name });
+// имя целиком: «Физ» не должно находить «Физика»
+const exactly = (name: string) =>
+    new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`);
+const sidebarLabel = (page: Page, name: string) =>
+    page.locator('.projects-sidebar__label', { hasText: exactly(name) });
+const sidebarItem = (page: Page, name: string) =>
+    sidebar(page).locator('.projects-sidebar__button', {
+        has: sidebarLabel(page, name),
+    });
+const sidebarRow = (page: Page, name: string) =>
+    sidebar(page).locator('.projects-sidebar__item', {
+        has: sidebarLabel(page, name),
+    });
 
 test('метка в боковой панели и в строке фильтрует список', async ({ page }) => {
     await openProjects(page);
@@ -128,7 +139,7 @@ test('новый тег из боковой панели ставится на �
     await modal.getByRole('button', { name: 'Save' }).click();
 
     await expect(sidebarItem(page, 'Черновик')).toContainText('1');
-    expect(Object.keys(sent)).toEqual([PROJECTS[2].projectId]);
+    await expect.poll(() => Object.keys(sent)).toEqual([PROJECTS[2].projectId]);
     await expect(
         page
             .locator('tbody tr', { hasText: 'Конспект' })
@@ -147,9 +158,9 @@ test('тег переименовывается и удаляется из ег�
         });
     });
 
-    const physics = sidebar(page).locator('.projects-sidebar__item', {
-        hasText: 'Физика',
-    });
+    // выбранная метка остаётся выбранной и после переименования
+    await sidebarItem(page, 'Физика').click();
+    const physics = sidebarRow(page, 'Физика');
     await physics.hover();
     await physics.getByRole('button', { name: /Tag actions/ }).click();
     await page.getByRole('menuitem', { name: 'Edit' }).click();
@@ -159,18 +170,26 @@ test('тег переименовывается и удаляется из ег�
 
     await expect(sidebarItem(page, 'Физ')).toContainText('2');
     await expect(sidebarItem(page, 'Физика')).toHaveCount(0);
-    expect(calls).toHaveLength(2);
+    await expect(sidebarItem(page, 'Физ')).toHaveAttribute(
+        'aria-pressed',
+        'true'
+    );
+    await expect(page.locator('tbody tr')).toHaveCount(2);
+    await expect.poll(() => calls).toHaveLength(2);
 
-    const renamed = sidebar(page).locator('.projects-sidebar__item', {
-        hasText: 'Физ',
-    });
+    const renamed = sidebarRow(page, 'Физ');
     await renamed.hover();
     await renamed.getByRole('button', { name: /Tag actions/ }).click();
     await page.getByRole('menuitem', { name: 'Delete' }).click();
     await page.getByRole('button', { name: 'Yes' }).click();
 
+    // удалённая метка больше не выбрана: видны все проекты
     await expect(sidebarItem(page, 'Физ')).toHaveCount(0);
     await expect(page.locator('tbody tr')).toHaveCount(3);
+    await expect(sidebarItem(page, 'All projects')).toHaveAttribute(
+        'aria-pressed',
+        'true'
+    );
 });
 
 test('фильтр по типу и доступу', async ({ page }) => {
@@ -337,4 +356,54 @@ test('щелчок по строке, которым закончили пере
     // следующий щелчок открывает проект как обычно
     await row.locator('.projects-col-type').click();
     await expect(page).toHaveURL(/\/project\/[0-9a-f-]+$/);
+});
+
+test('после переименования, законченного щелчком по метке, Enter открывает проект', async ({
+    page,
+}) => {
+    await openProjects(page);
+    await page.route('**/api/v4/public/project/*/title**', (route) =>
+        route.fulfill({ contentType: 'application/json', body: '{}' })
+    );
+
+    // по номеру: в поле ввода названия нет текста, по которому искать строку
+    const row = page.locator('tbody tr').nth(2);
+    await expect(row).toContainText('Лабораторная 10');
+    await row.hover();
+    await row.getByRole('button', { name: 'Project actions' }).click();
+    await page.getByRole('menuitem', { name: 'Rename' }).click();
+    await row.locator('input.input-base').fill('Лабораторная 11');
+    // щелчок по метке в строке выше завершает переименование и выбирает
+    // метку; эта строка от конца переименования не сдвигается
+    await page
+        .locator('tbody tr')
+        .first()
+        .getByRole('button', { name: /Физика/ })
+        .click();
+    await expectTitles(page, ['Лабораторная 2', 'Лабораторная 11']);
+
+    await page
+        .locator('tbody tr', { hasText: 'Лабораторная 11' })
+        .locator('a.project-title-link')
+        .focus();
+    await page.keyboard.press('Enter');
+    await expect(page).toHaveURL(/\/project\/[0-9a-f-]+$/);
+});
+
+test('«Назад» из открытого проекта сразу возвращает к списку', async ({
+    page,
+}) => {
+    // мок открытия проекта отдаёт проект с этим id: открываем в списке его же
+    const opened = '2cd18704-6c3f-48cb-96f1-9a923930f8cb';
+    await openProjects(page, [{ ...PROJECTS[0], projectId: opened }]);
+    await page
+        .locator('tbody tr')
+        .first()
+        .locator('.projects-col-type')
+        .click();
+    await expect(page).toHaveURL(new RegExp(`/project/${opened}$`));
+    await page.waitForTimeout(500);
+
+    await page.goBack();
+    await expect(page).toHaveURL(/\/projects$/);
 });

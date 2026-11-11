@@ -56,6 +56,7 @@ import {
     saveSort,
     sortProjects,
     tagKey,
+    uniqueTags,
 } from './projectsFilter.ts';
 
 const PROJECT_TITLE_TOOLTIP_ID = 'projects-title-tooltip';
@@ -67,6 +68,31 @@ const TYPE_LABELS: Record<string, string> = {
 
 const projectHref = (projectId?: string) =>
     Routes.Project.replace(':id', projectId ?? '');
+
+/**
+ * Текст в буфер обмена. navigator.clipboard есть только на HTTPS и
+ * localhost, поэтому без него копируем через выделенное поле
+ */
+const copyText = async (text: string) => {
+    if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        return;
+    }
+    const field = document.createElement('textarea');
+    field.value = text;
+    field.setAttribute('readonly', '');
+    field.style.position = 'fixed';
+    field.style.opacity = '0';
+    document.body.appendChild(field);
+    field.select();
+    try {
+        if (!document.execCommand('copy')) {
+            throw new Error('copy rejected');
+        }
+    } finally {
+        field.remove();
+    }
+};
 
 const toDate = (value?: string): Date | null => {
     if (!value) {
@@ -83,9 +109,15 @@ export const ProjectsPage = () => {
     /**
      * Шло ли переименование, когда человек нажал кнопку мыши. Нажатие мимо
      * поля сначала завершает переименование (blur), и к щелчку renamingId уже
-     * пуст; без этой отметки тот же щелчок открыл бы проект
+     * пуст; без этой отметки тот же щелчок открыл бы проект. Отметка живёт
+     * до ближайшего щелчка, а щелчок с клавиатуры (detail 0) её не смотрит
      */
     const pressedWhileRenaming = useRef(false);
+    const clickEndsRename = useRef(false);
+    const takePress = (e: React.MouseEvent) => {
+        clickEndsRename.current = e.detail > 0 && pressedWhileRenaming.current;
+        pressedWhileRenaming.current = false;
+    };
     // окно метки из боковой панели: {} создаёт новую, { tag } правит её
     const [tagEdit, setTagEdit] = useState<{ tag?: ProjectTag } | null>(null);
     const [tagToDelete, setTagToDelete] = useState<ProjectTag | null>(null);
@@ -302,8 +334,8 @@ export const ProjectsPage = () => {
                 return;
             }
             // щелчок, которым закончили переименование, проект не открывает
-            if (pressedWhileRenaming.current || renamingId === projectId) {
-                pressedWhileRenaming.current = false;
+            if (clickEndsRename.current || renamingId === projectId) {
+                clickEndsRename.current = false;
                 return;
             }
             const inNewTab = e.button === 1 || e.ctrlKey || e.metaKey;
@@ -330,8 +362,7 @@ export const ProjectsPage = () => {
     const copyLink = useCallback(
         (projectId: string) => {
             const url = `${window.location.origin}${projectHref(projectId)}`;
-            navigator.clipboard
-                .writeText(url)
+            copyText(url)
                 .then(() => {
                     controller.trackUiEvent(Events.EVENT_SHARE_LINK_COPIED, {
                         ok: true,
@@ -344,9 +375,38 @@ export const ProjectsPage = () => {
                         ok: false,
                         source: 'list',
                     });
+                    toast(texts.errors.copy_link_failed, { type: 'error' });
                 });
         },
-        [texts.link_copied]
+        [texts.link_copied, texts.errors.copy_link_failed]
+    );
+
+    /** Выбранная метка идёт за переименованием, а не сбрасывается */
+    const onTagSaved = useCallback(
+        (previousName: string | undefined, name: string) => {
+            if (previousName === undefined) {
+                return;
+            }
+            setFilter((current) =>
+                current.tag === tagKey(previousName)
+                    ? { ...current, tag: tagKey(name) }
+                    : current
+            );
+        },
+        []
+    );
+
+    /** Удалённая метка перестаёт быть выбранной, даже если появится снова */
+    const deleteTag = useCallback(
+        (name: string) => {
+            setFilter((current) =>
+                current.tag === tagKey(name)
+                    ? { ...current, tag: null }
+                    : current
+            );
+            dispatch(controller.onTagDeleteRequest({ name }));
+        },
+        [dispatch]
     );
 
     const actionsFor = useCallback(
@@ -459,9 +519,10 @@ export const ProjectsPage = () => {
     const rowTags = (project: ProjectShort) =>
         project.tags?.length ? (
             <div className="projects-row-tags">
-                {project.tags.map((tag) => (
+                {uniqueTags(project.tags).map((tag) => (
                     <TagChip
-                        key={tagKey(tag.name)}
+                        // ключ по точному имени: «Физика» и «физика» две метки
+                        key={tag.name}
                         tag={tag}
                         small
                         active={filter.tag === tagKey(tag.name)}
@@ -510,21 +571,30 @@ export const ProjectsPage = () => {
         [texts.last_modified, texts.created, texts.title]
     );
 
+    // на компьютере панель есть и пока список грузится: иначе с её
+    // появлением вся страница съехала бы вправо
+    const showSidebar =
+        !isMobile &&
+        (projects.length > 0 ||
+            getProjectsRequestState === 'loading' ||
+            getProjectsRequestState === 'unknown');
+
     const renderState = (): ReactNode => {
         if (projects.length) {
             return null;
         }
-        if (getProjectsRequestState === 'loading') {
+        // до первого ответа список ещё не известен: это загрузка, а не «проектов нет»
+        if (
+            getProjectsRequestState === 'loading' ||
+            getProjectsRequestState === 'unknown'
+        ) {
             return (
                 <div className="projects-loading-wrapper" aria-hidden>
                     <span className="projects-loading-spinner" />
                 </div>
             );
         }
-        if (
-            getProjectsRequestState !== 'ok' &&
-            getProjectsRequestState !== 'unknown'
-        ) {
+        if (getProjectsRequestState !== 'ok') {
             return (
                 <div className="projects-loading-wrapper" aria-hidden>
                     <div className="projects-loading-icon-with-text">
@@ -555,6 +625,24 @@ export const ProjectsPage = () => {
             </div>
         );
     };
+
+    const summary =
+        filterActive && visibleProjects.length ? (
+            <div className="projects-summary">
+                <span>
+                    {texts.shown
+                        .replace('${shown}', `${visibleProjects.length}`)
+                        .replace('${total}', `${projects.length}`)}
+                </span>
+                <button
+                    type="button"
+                    className="projects-link-button"
+                    onClick={resetFilters}
+                >
+                    {texts.reset_filters}
+                </button>
+            </div>
+        ) : null;
 
     const toolbar = (
         <div className="projects-toolbar">
@@ -627,6 +715,7 @@ export const ProjectsPage = () => {
                     />
                 </div>
             ) : null}
+            {isMobile ? null : summary}
         </div>
     );
 
@@ -644,24 +733,6 @@ export const ProjectsPage = () => {
                         onClick={() => toggleTag(tag.name)}
                     />
                 ))}
-            </div>
-        ) : null;
-
-    const summary =
-        filterActive && visibleProjects.length ? (
-            <div className="projects-summary">
-                <span>
-                    {texts.shown
-                        .replace('${shown}', `${visibleProjects.length}`)
-                        .replace('${total}', `${projects.length}`)}
-                </span>
-                <button
-                    type="button"
-                    className="projects-link-button"
-                    onClick={resetFilters}
-                >
-                    {texts.reset_filters}
-                </button>
             </div>
         ) : null;
 
@@ -805,7 +876,7 @@ export const ProjectsPage = () => {
     return (
         <>
             <div className="projects-container">
-                {!isMobile && projects.length ? (
+                {showSidebar ? (
                     <ProjectsSidebar
                         projects={projects}
                         knownTags={knownTags}
@@ -850,13 +921,16 @@ export const ProjectsPage = () => {
                         <>
                             {toolbar}
                             {tagFilter}
-                            {summary}
+                            {/* на телефоне под лентой меток: лента под пальцем не съезжает */}
+                            {isMobile ? summary : null}
                             <div
                                 className="projects-list-wrapper"
                                 onPointerDownCapture={() => {
                                     pressedWhileRenaming.current =
                                         renamingId !== null;
                                 }}
+                                onClickCapture={takePress}
+                                onAuxClickCapture={takePress}
                             >
                                 {!visibleProjects.length
                                     ? noMatches
@@ -890,6 +964,7 @@ export const ProjectsPage = () => {
                             collator
                         )}
                         knownTags={knownTags}
+                        onSaved={onTagSaved}
                         onClose={() => setTagEdit(null)}
                     />
                 ) : null}
@@ -912,11 +987,7 @@ export const ProjectsPage = () => {
                         <Button
                             classname="delete-project-modal-button"
                             onPress={() => {
-                                dispatch(
-                                    controller.onTagDeleteRequest({
-                                        name: tagToDelete.name,
-                                    })
-                                );
+                                deleteTag(tagToDelete.name);
                                 setTagToDelete(null);
                             }}
                             title={dictionary.yes}

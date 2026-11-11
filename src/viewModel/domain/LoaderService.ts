@@ -10,6 +10,17 @@ export class LoaderService {
     ideService: IdeService;
     programService: ProgramService;
     private saveProgramPromise: Promise<void> | null = null;
+    /**
+     * Правки полей проектов из списка (`<id>:tags`, `<id>:public`), которые
+     * ещё идут. Пока правка идёт, список с сервера её поле не трогает: ответ
+     * мог уйти раньше, чем сервер её принял
+     */
+    private pendingWrites = new Map<string, number>();
+    /** Когда по часам clock завершилась последняя правка поля */
+    private settledWrites = new Map<string, number>();
+    private clock = 0;
+    /** Когда ушёл запрос, чей список сейчас показан */
+    private shownListRequestedAt = 0;
     private saveProgramRequested = false;
 
     constructor(
@@ -127,26 +138,84 @@ export class LoaderService {
         }
     };
 
-    loadProjects = async () => {
-        this.repository.ideViewModelRepository.setGetProjectsRequestState(
-            'loading'
-        );
-        const result = await this.rpi.getAllProjectsRequest();
-        if (result.isOk) {
-            this.repository.projectsViewModelRepository.setProjects(
-                (result.body as { projects: ProjectShort[] }).projects.reverse()
-            );
-            this.repository.ideViewModelRepository.setGetProjectsRequestState(
-                'ok'
-            );
-        } else if (result.isUnauth) {
-            this.repository.ideViewModelRepository.setGetProjectsRequestState(
-                'unauth'
-            );
+    writeStarted = (key: string) => {
+        this.pendingWrites.set(key, (this.pendingWrites.get(key) ?? 0) + 1);
+    };
+
+    writeSettled = (key: string) => {
+        const left = (this.pendingWrites.get(key) ?? 1) - 1;
+        if (left > 0) {
+            this.pendingWrites.set(key, left);
         } else {
-            this.repository.ideViewModelRepository.setGetProjectsRequestState(
-                'error'
-            );
+            this.pendingWrites.delete(key);
         }
+        this.settledWrites.set(key, ++this.clock);
+    };
+
+    /**
+     * Поле проекта, которое правят сейчас или поправили после того, как
+     * ушёл запрос списка, берётся из показанного списка, а не из ответа
+     */
+    private keepLocalFields = (
+        projects: ProjectShort[],
+        requestedAt: number
+    ): ProjectShort[] => {
+        const local = new Map(
+            this.repository.projectsViewModelRepository
+                .projects()
+                .map((project) => [project.projectId, project])
+        );
+        const fresh = (key: string) =>
+            !this.pendingWrites.has(key) &&
+            (this.settledWrites.get(key) ?? 0) < requestedAt;
+        return projects.map((project) => {
+            const own = local.get(project.projectId);
+            if (!own) {
+                return project;
+            }
+            const patch: Partial<ProjectShort> = {};
+            if (!fresh(`${project.projectId}:tags`)) {
+                patch.tags = own.tags;
+            }
+            if (!fresh(`${project.projectId}:public`)) {
+                patch.isPublic = own.isPublic;
+            }
+            return { ...project, ...patch };
+        });
+    };
+
+    /**
+     * Список проектов. silent не показывает загрузку и при ошибке оставляет
+     * прежний список. Ответ, который пришёл позже ответа на более новый
+     * запрос, отбрасывается
+     */
+    loadProjects = async ({ silent = false }: { silent?: boolean } = {}) => {
+        const requestedAt = ++this.clock;
+        const state = this.repository.ideViewModelRepository;
+        if (!silent) {
+            state.setGetProjectsRequestState('loading');
+        }
+        const result = await this.rpi.getAllProjectsRequest();
+        if (requestedAt < this.shownListRequestedAt) {
+            return result;
+        }
+        if (result.isOk) {
+            this.shownListRequestedAt = requestedAt;
+            this.repository.projectsViewModelRepository.setProjects(
+                this.keepLocalFields(
+                    [
+                        ...(result.body as { projects: ProjectShort[] })
+                            .projects,
+                    ].reverse(),
+                    requestedAt
+                )
+            );
+            state.setGetProjectsRequestState('ok');
+        } else if (result.isUnauth) {
+            state.setGetProjectsRequestState('unauth');
+        } else if (!silent) {
+            state.setGetProjectsRequestState('error');
+        }
+        return result;
     };
 }

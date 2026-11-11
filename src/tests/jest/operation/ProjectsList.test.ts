@@ -10,6 +10,7 @@ import {
     defaultTagColor,
     tagColors,
     isFilterActive,
+    uniqueTags,
     matchesFilter,
     sortProjects,
 } from '../../../view/pages/projects/projectsFilter.ts';
@@ -452,6 +453,8 @@ test('list-refresh-keeps-tags-that-are-still-being-saved', async () => {
         { name: 'Новая', color: '#000000' },
     ]);
     await ctx.projectsPageService.onDuplicateProject('a');
+    // список с сервером уже пришёл, а сохранение ещё идёт
+    expect(ctx.rpi.getAllProjectsRequest).toHaveBeenCalledTimes(1);
     expect(tagNames(ctx, 'c')).toEqual(['Новая:#000000']);
 
     save.resolve(ok({ tags: [{ name: 'Новая', color: '#000000' }] }));
@@ -472,6 +475,168 @@ test('download-explains-payment-and-lock-errors', async () => {
     );
     await ctx.projectsPageService.onDownloadProject('a');
     expect(lastToast(ctx)?.message).toBe(
-        ctx.repository.dictionary.synctex.errors.locked
+        ctx.repository.dictionary.projects.errors.project_busy
     );
+});
+
+test('a-refused-tag-change-is-not-saved-by-a-queued-sidebar-edit', async () => {
+    const ctx = setup();
+    const first = deferred<RequestResult<object>>();
+    const sent: string[] = [];
+    ctx.rpi.setProjectTagsRequest = jest
+        .fn()
+        .mockImplementation(async (id: string, tags: { name: string }[]) => {
+            sent.push(`${id}:${tags.map((tag) => tag.name).join(',')}`);
+            return sent.length === 1 ? first.promise : ok({ tags });
+        });
+
+    const refused = ctx.projectsPageService.onProjectTagsChange('a', [
+        PHYSICS,
+        { name: 'Новая', color: '#000000' },
+    ]);
+    const renamed = ctx.projectsPageService.onTagSave({
+        previousName: 'Физика',
+        name: 'Физ',
+        color: PHYSICS.color,
+        projectIds: ['a', 'b'],
+    });
+    // пока первая правка идёт, видны обе
+    expect(tagNames(ctx, 'a')).toEqual(['Физ:#4469e0', 'Новая:#000000']);
+    first.resolve(fail(500));
+    await Promise.all([refused, renamed]);
+
+    // переименование применилось к тому, что хранит сервер, без «Новой»
+    expect(sent).toContain('a:Физ');
+    expect(tagNames(ctx, 'a')).toEqual(['Физ:#4469e0']);
+});
+
+test('a-list-requested-before-a-save-finished-does-not-undo-it', async () => {
+    const ctx = setup();
+    const list = deferred<RequestResult<object>>();
+    ctx.rpi.getAllProjectsRequest = jest.fn().mockReturnValue(list.promise);
+    ctx.rpi.setProjectTagsRequest = echoTags();
+    ctx.rpi.setProjectVisibilityRequest = jest.fn().mockResolvedValue(ok({}));
+
+    const loading = ctx.projectsPageService.loaderService.loadProjects({
+        silent: true,
+    });
+    await ctx.projectsPageService.onProjectTagsChange('c', [THESIS]);
+    await ctx.projectsPageService.onListedProjectVisibilityChange('c', true);
+    // ответ ушёл до сохранения: в нём старые метки и доступ
+    list.resolve(ok({ projects: [...LIST].reverse() }));
+    await loading;
+
+    expect(tagNames(ctx, 'c')).toEqual(['Диплом:#1ca852']);
+    expect(ctx.listed('c').isPublic).toBe(true);
+});
+
+test('an-older-list-response-does-not-replace-a-newer-one', async () => {
+    const ctx = setup();
+    const older = deferred<RequestResult<object>>();
+    const renamed = LIST.map((p) =>
+        p.projectId === 'a' ? { ...p, title: 'Новое имя' } : p
+    );
+    ctx.rpi.getAllProjectsRequest = jest
+        .fn()
+        .mockReturnValueOnce(older.promise)
+        .mockResolvedValueOnce(ok({ projects: [...renamed].reverse() }));
+    const loader = ctx.projectsPageService.loaderService;
+
+    const first = loader.loadProjects({ silent: true });
+    await loader.loadProjects({ silent: true });
+    older.resolve(ok({ projects: [...LIST].reverse() }));
+    await first;
+
+    expect(ctx.listed('a').title).toBe('Новое имя');
+});
+
+test('renaming-from-the-list-trims-the-name-and-keeps-unsaved-tags', async () => {
+    const ctx = setup();
+    const save = deferred<RequestResult<object>>();
+    ctx.rpi.setProjectTagsRequest = jest.fn().mockReturnValue(save.promise);
+    ctx.rpi.setTitleRequest = jest.fn().mockResolvedValue(ok({}));
+    // сервер уже знает новое имя, но ещё не знает новую метку
+    const renamed = LIST.map((p) =>
+        p.projectId === 'c' ? { ...p, title: 'Конспект' } : p
+    );
+    ctx.rpi.getAllProjectsRequest = jest
+        .fn()
+        .mockResolvedValue(ok({ projects: [...renamed].reverse() }));
+
+    const saving = ctx.projectsPageService.onProjectTagsChange('c', [THESIS]);
+    await ctx.projectPageService.onProjectTitleChanged(
+        'c',
+        '  Конспект  ',
+        () => undefined,
+        () => undefined
+    );
+
+    expect(ctx.rpi.setTitleRequest).toHaveBeenCalledWith('c', 'Конспект');
+    expect(ctx.listed('c').title).toBe('Конспект');
+    // список пришёл без метки, которая ещё сохраняется
+    expect(tagNames(ctx, 'c')).toEqual(['Диплом:#1ca852']);
+    save.resolve(ok({ tags: [THESIS] }));
+    await saving;
+});
+
+test('a-failed-rename-says-so', async () => {
+    const ctx = setup();
+    ctx.rpi.setTitleRequest = jest.fn().mockResolvedValue(fail(500));
+    const failCallback = jest.fn();
+
+    await ctx.projectPageService.onProjectTitleChanged(
+        'a',
+        'Другое',
+        () => undefined,
+        failCallback
+    );
+
+    expect(failCallback).toHaveBeenCalled();
+    expect(lastToast(ctx)?.message).toBe(
+        ctx.repository.dictionary.projects.errors.rename_failed
+    );
+});
+
+test('delete-is-sent-once-and-a-failure-is-reported', async () => {
+    const ctx = setup();
+    const answer = deferred<RequestResult<object>>();
+    ctx.rpi.deleteProjectRequest = jest.fn().mockReturnValue(answer.promise);
+    const closed = jest.fn();
+
+    const first = ctx.projectsPageService.onDeleteProject('a', closed);
+    await ctx.projectsPageService.onDeleteProject('a', closed);
+    answer.resolve(fail(500));
+    await first;
+
+    expect(ctx.rpi.deleteProjectRequest).toHaveBeenCalledTimes(1);
+    expect(closed).not.toHaveBeenCalled();
+    expect(ctx.listed('a')).toBeDefined();
+    expect(lastToast(ctx)?.message).toBe(
+        ctx.repository.dictionary.projects.errors.delete_failed
+    );
+});
+
+test('expired-session-on-the-list-is-not-shown-as-an-empty-list', async () => {
+    const ctx = setup();
+    ctx.rpi.setProjectTagsRequest = jest.fn().mockResolvedValue(fail(401));
+
+    await ctx.projectsPageService.onProjectTagsChange('c', [THESIS]);
+
+    expect(
+        ctx.repository.ideViewModelRepository.getProjectsRequestState()
+    ).toBe('unauth');
+});
+
+test('tags-are-counted-once-per-project-whatever-the-case', () => {
+    const tags = collectTags(
+        [
+            project('x', {
+                tags: [PHYSICS, { name: 'физика', color: '#000000' }, PHYSICS],
+            }),
+            project('y', { tags: [PHYSICS] }),
+        ],
+        collator
+    );
+    expect(tags.map((tag) => `${tag.name}:${tag.count}`)).toEqual(['Физика:2']);
+    expect(uniqueTags([PHYSICS, PHYSICS, THESIS])).toEqual([PHYSICS, THESIS]);
 });

@@ -224,6 +224,10 @@ export interface Translations {
             visibility_failed: string;
             duplicate_failed: string;
             download_failed: string;
+            rename_failed: string;
+            delete_failed: string;
+            copy_link_failed: string;
+            project_busy: string;
         };
     };
     segment: {

@@ -231,6 +231,10 @@ export const ru: Translations = {
             visibility_failed: 'Не удалось изменить доступ',
             duplicate_failed: 'Не удалось скопировать проект',
             download_failed: 'Не удалось скачать архив',
+            rename_failed: 'Не удалось переименовать проект',
+            delete_failed: 'Не удалось удалить проект',
+            copy_link_failed: 'Не удалось скопировать ссылку',
+            project_busy: 'Проект сейчас занят. Попробуйте через минуту',
         },
     },
     segment: {

@@ -227,6 +227,11 @@ export const en: Translations = {
             visibility_failed: 'Could not change the access',
             duplicate_failed: 'Could not copy the project',
             download_failed: 'Could not download the archive',
+            rename_failed: 'Could not rename the project',
+            delete_failed: 'Could not delete the project',
+            copy_link_failed: 'Could not copy the link',
+            project_busy:
+                'The project is busy right now. Try again in a minute',
         },
     },
     segment: {

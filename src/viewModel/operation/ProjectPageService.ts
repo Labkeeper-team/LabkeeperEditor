@@ -353,35 +353,51 @@ export class ProjectPageService {
             return;
         }
 
-        const result = await this.rpi.setTitleRequest(projectId, title);
+        const result = await this.rpi.setTitleRequest(projectId, titleToSend);
         if (result.isUnauth) {
             this.repository.toast(
                 this.repository.dictionary.filemanager.errors.sessionExpired,
                 'error'
             );
             this.ideService.resetEditor();
+            this.repository.ideViewModelRepository.setGetProjectsRequestState(
+                'unauth'
+            );
             failCallback();
             return;
         }
         if (!result.isOk) {
+            this.repository.toast(
+                this.repository.dictionary.projects.errors.rename_failed,
+                'error'
+            );
             failCallback();
             return;
         }
-        if (result.isOk) {
-            const project =
-                this.repository.projectViewModelRepository.project();
-            if (project) {
-                this.repository.projectViewModelRepository.setProject({
-                    ...project,
-                    title: title,
-                });
-                this.repository.projectViewModelRepository.setReadOnly(false);
-            }
-            this.track(Events.EVENT_PROJECT_TITLE_CHANGED);
-            okCallback();
+        const project = this.repository.projectViewModelRepository.project();
+        // открытый в редакторе проект может быть другим, если переименовали из списка
+        if (project?.projectId === projectId) {
+            this.repository.projectViewModelRepository.setProject({
+                ...project,
+                title: titleToSend,
+            });
+            this.repository.projectViewModelRepository.setReadOnly(false);
         }
+        const projects = this.repository.projectsViewModelRepository;
+        projects.setProjects(
+            projects
+                .projects()
+                .map((listed) =>
+                    listed.projectId === projectId
+                        ? { ...listed, title: titleToSend }
+                        : listed
+                )
+        );
+        this.track(Events.EVENT_PROJECT_TITLE_CHANGED);
+        okCallback();
 
-        await this.loaderService.loadProjects();
+        // список уже верный: обновляем его без спиннера
+        await this.loaderService.loadProjects({ silent: true });
     };
 
     onProjectVisibilityChange = async (visible: boolean) => {

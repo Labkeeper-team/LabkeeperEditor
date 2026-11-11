@@ -438,12 +438,18 @@ export class StartupService {
             this.repository.projectViewModelRepository.setProjectType(
                 project.projectType
             );
-            // адрес нормализуем под открытый проект, но режим сохраняем
-            this.repository.setLocation(
-                this.keepingAgentMode(
-                    Routes.Project.replace(':id', project.projectId)
-                )
+            // адрес нормализуем под открытый проект, но режим сохраняем. Если
+            // адрес уже этого проекта (например, его открыли из списка), второй
+            // записи в истории не делаем, иначе «Назад» пришлось бы жать дважды
+            const projectPath = Routes.Project.replace(
+                ':id',
+                project.projectId
             );
+            this.repository.setLocation(this.keepingAgentMode(projectPath), {
+                replace:
+                    this.withoutAgentMode(this.repository.location()) ===
+                    projectPath,
+            });
             this.observerService.setUserState(
                 States.STATE_PROJECT,
                 project.projectId

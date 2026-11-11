@@ -71,7 +71,9 @@ export const ProjectTitle = (props: {
             return;
         }
         setEditMode(false);
-        if (currentTitle === props.project.title) {
+        // пробелы по краям сервер не хранит: без них название могло не измениться
+        if (currentTitle.trim() === props.project.title) {
+            setCurrentTitle(props.project.title);
             return;
         }
         dispatch(

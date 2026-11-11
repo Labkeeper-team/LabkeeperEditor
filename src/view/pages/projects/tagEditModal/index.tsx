@@ -38,6 +38,8 @@ export const TagEditModal = (props: {
     preselected?: string[];
     projects: ProjectShort[];
     knownTags: KnownTag[];
+    /** Метку сохранили под этим именем: выбор в списке должен пойти за ней */
+    onSaved?: (previousName: string | undefined, name: string) => void;
     onClose: () => void;
 }) => {
     const dictionary = useSelector(useDictionary);
@@ -134,6 +136,7 @@ export const TagEditModal = (props: {
         if (!canSave) {
             return;
         }
+        props.onSaved?.(props.tag?.name, name.trim());
         dispatch(
             controller.onTagSaveRequest({
                 previousName: props.tag?.name,
