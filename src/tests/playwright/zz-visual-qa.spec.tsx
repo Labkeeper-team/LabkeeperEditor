@@ -25,10 +25,7 @@ const tag = (i: number) => ({
 const uuid = (i: number) =>
     `00000000-0000-4000-8000-${String(i).padStart(12, '0')}`;
 
-function make(
-    n: number,
-    opts: { long?: boolean; tags?: boolean; manyOn?: number } = {}
-) {
+function make(n: number, opts: { long?: boolean; manyOn?: number } = {}) {
     return Array.from({ length: n }, (_, i) => ({
         projectId: uuid(i + 1),
         userId: 1,
@@ -40,13 +37,11 @@ function make(
         isPublic: i % 3 === 0,
         projectType: i % 4 === 0 ? 'markdown' : 'latex',
         tags:
-            opts.tags === false
-                ? []
-                : i === (opts.manyOn ?? -1)
-                  ? Array.from({ length: 12 }, (_, k) => tag(k))
-                  : [tag(i % 25), tag((i * 7) % 25)].filter(
-                        (t, k, a) => a.findIndex((x) => x.name === t.name) === k
-                    ),
+            i === (opts.manyOn ?? -1)
+                ? Array.from({ length: 12 }, (_, k) => tag(k))
+                : [tag(i % 25), tag((i * 7) % 25)].filter(
+                      (t, k, a) => a.findIndex((x) => x.name === t.name) === k
+                  ),
     }));
 }
 
@@ -73,8 +68,8 @@ async function open(page: Page, projects: unknown[], w: number, h = 900) {
         await page.locator('.project-title-text').first().waitFor();
     await page.waitForTimeout(1000);
 }
-const shot = (page: Page, name: string, full = false) =>
-    page.screenshot({ path: OUT + name + '.png', fullPage: full });
+const shot = (page: Page, name: string) =>
+    page.screenshot({ path: OUT + name + '.png' });
 async function lang(page: Page, l: string) {
     const s = page.locator('.labkeeper_header__language');
     await s.locator('.select-header').click();
@@ -82,138 +77,89 @@ async function lang(page: Page, l: string) {
     await page.waitForTimeout(600);
 }
 
-const mixed = make(25, { long: true, manyOn: 1 });
-for (const w of [1440, 1280, 1024, 800, 390, 320]) {
-    test(`widths ${w}`, async ({ page }) => {
-        await open(page, mixed, w);
-        await shot(page, `w${w}-mixed`);
-        await shot(page, `w${w}-mixed-full`, true);
-        await lang(page, 'Русский');
-        await shot(page, `w${w}-ru`);
-        await lang(page, '中文');
-        await shot(page, `w${w}-zh`);
+for (const [l, code] of [
+    ['Русский', 'ru'],
+    ['中文', 'zh'],
+]) {
+    test(`mobile ${code}`, async ({ page }) => {
+        await open(page, make(25, { long: true, manyOn: 24 }), 1280);
+        await lang(page, l);
+        for (const w of [390, 320]) {
+            await page.setViewportSize({ width: w, height: 800 });
+            await page.waitForTimeout(700);
+            await shot(page, `m${w}-${code}`);
+        }
     });
 }
 
-test('one project', async ({ page }) => {
-    await open(page, make(1), 1440);
-    await shot(page, 'one-1440');
-});
-test('no tags', async ({ page }) => {
-    await open(page, make(5, { tags: false }), 1440);
-    await shot(page, 'notags-1440');
-});
-test('empty', async ({ page }) => {
-    await open(page, [], 1440);
-    await shot(page, 'empty-1440');
-    await page.setViewportSize({ width: 390, height: 800 });
-    await shot(page, 'empty-390');
-});
-
-test('60 projects scroll', async ({ page }) => {
-    const p = make(60, { manyOn: 59 });
-    await open(page, p, 1280, 800);
-    await shot(page, 'p60-top');
-    await page.mouse.move(700, 500);
-    await page.mouse.wheel(0, 1500);
-    await page.waitForTimeout(500);
-    await shot(page, 'p60-scrolled');
-    await page.mouse.move(100, 600);
-    await page.mouse.wheel(0, 3000);
-    await page.waitForTimeout(500);
-    await shot(page, 'p60-sidebar-scrolled');
-    const rows = page.locator('tbody tr');
-    const n = await rows.count();
-    let target = rows.nth(0);
-    for (let i = 0; i < n; i++) {
-        const b = await rows.nth(i).boundingBox();
-        if (b && b.y + b.height > 730 && b.y + b.height < 800) {
-            target = rows.nth(i);
-            break;
-        }
-    }
-    await target.hover();
-    await shot(page, 'p60-row-hover');
-    await target.getByRole('button', { name: 'Project actions' }).click();
+test('mobile menus', async ({ page }) => {
+    await open(page, make(25, { long: true, manyOn: 24 }), 390, 800);
+    await shot(page, 'm390-many-top');
+    const card = page.locator('.projects-card').nth(2);
+    await card.getByRole('button', { name: 'Project actions' }).click();
     await page.waitForTimeout(300);
-    await shot(page, 'p60-menu-bottom');
-    await page.keyboard.press('Escape');
-    await page.setViewportSize({ width: 390, height: 800 });
-    await page.waitForTimeout(400);
-    await shot(page, 'p60-390');
-});
-
-test('modals', async ({ page }) => {
-    const p = make(60, { long: true, manyOn: 0 });
-    await open(page, p, 1280, 800);
-    const sb = page.locator('.projects-sidebar');
-    await sb.getByRole('button', { name: 'New tag' }).click();
-    await page.waitForTimeout(400);
-    await shot(page, 'modal-newtag');
-    await page
-        .locator('.tag-edit-modal')
-        .getByRole('textbox')
-        .fill(LONGTAG + LONGTAG);
-    await shot(page, 'modal-newtag-long');
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(300);
-    const item = sb
-        .locator('.projects-sidebar__item')
-        .filter({ hasText: 'Метка 1' })
-        .first();
-    await item.hover();
-    await shot(page, 'sidebar-item-hover');
-    await item.getByRole('button', { name: /Tag actions/ }).click();
-    await page.waitForTimeout(300);
-    await shot(page, 'sidebar-tag-menu');
-    await page.getByRole('menuitem', { name: 'Edit' }).click();
-    await page.waitForTimeout(400);
-    await shot(page, 'modal-edittag');
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(300);
-    const last = sb.locator('.projects-sidebar__item').last();
-    await last.scrollIntoViewIfNeeded();
-    await last.hover();
-    const btn = last.getByRole('button', { name: /Tag actions/ });
-    if (await btn.count()) {
-        await btn.click();
-        await page.waitForTimeout(300);
-        await shot(page, 'sidebar-tag-menu-last');
-        await page.keyboard.press('Escape');
-    }
-    await page.mouse.wheel(0, -5000);
-    const row = page.locator('tbody tr').first();
-    await row.hover();
-    await row.getByRole('button', { name: 'Project actions' }).click();
-    await shot(page, 'project-menu-top');
+    await shot(page, 'm390-menu');
     await page.getByRole('menuitem', { name: 'Tags…' }).click();
     await page.waitForTimeout(400);
-    await shot(page, 'modal-projecttags');
-    await page.locator('.tags-modal').getByRole('textbox').fill(LONGTAG);
-    await page.waitForTimeout(300);
-    await shot(page, 'modal-projecttags-typing');
+    await shot(page, 'm390-tagsmodal');
     await page.keyboard.press('Escape');
     await page.waitForTimeout(300);
-    await page.setViewportSize({ width: 390, height: 800 });
+    // last card menu
+    await page.locator('.projects-card').last().scrollIntoViewIfNeeded();
     await page.waitForTimeout(300);
-    await shot(page, 'after-modals-390');
+    await page
+        .locator('.projects-card')
+        .last()
+        .getByRole('button', { name: 'Project actions' })
+        .click();
+    await page.waitForTimeout(300);
+    await shot(page, 'm390-menu-last');
+    await page.keyboard.press('Escape');
+    await page.setViewportSize({ width: 320, height: 640 });
+    await page.waitForTimeout(500);
+    await shot(page, 'm320-640');
+    // tag strip scroll
+    const strip = page.locator('.projects-tags-filter');
+    const info = await strip.evaluate((e) => ({
+        sh: e.scrollHeight,
+        ch: e.clientHeight,
+        ov: getComputedStyle(e).overflowY,
+    }));
+    console.log('STRIP', JSON.stringify(info));
 });
 
-test('filter no matches + focus', async ({ page }) => {
-    await open(page, mixed, 1280);
-    await page.keyboard.press('/');
-    await page.keyboard.type('zzzzqqq');
+test('desktop extra', async ({ page }) => {
+    await open(page, make(25, { long: true, manyOn: 24 }), 1440);
+    await shot(page, 'd1440-many');
+    // hover long sidebar tag + hover long title
+    await page
+        .locator('.projects-sidebar__item', { hasText: 'СуперДлинное' })
+        .hover();
+    await shot(page, 'd-hover-longtag');
+    // non-hex tag edit
+    const item = page
+        .locator('.projects-sidebar__item', { hasText: 'Метка 4' })
+        .first();
+    await item.hover();
+    await item.getByRole('button', { name: /Tag actions/ }).click();
+    await page.getByRole('menuitem', { name: 'Edit' }).click();
     await page.waitForTimeout(400);
-    await shot(page, 'nomatch-1280');
-    await page.setViewportSize({ width: 390, height: 800 });
-    await shot(page, 'nomatch-390');
-    await page.setViewportSize({ width: 1280, height: 900 });
-    await page.keyboard.press('Control+a');
-    await page.keyboard.press('Backspace');
-    await page.waitForTimeout(300);
-    for (let i = 0; i < 30; i++) {
-        await page.keyboard.press('Tab');
-        if ([1, 3, 6, 10, 14, 18, 22, 26, 29].includes(i))
-            await shot(page, `focus-${String(i).padStart(2, '0')}`);
-    }
+    await shot(page, 'd-edit-red');
+    await page.keyboard.press('Escape');
+    // click a tag filter -> active chip
+    await page
+        .locator('.projects-sidebar__button', { hasText: 'Метка 9' })
+        .first()
+        .click();
+    await page.waitForTimeout(400);
+    await shot(page, 'd-filter-lightyellow');
+    await page
+        .locator('.projects-sidebar__button', { hasText: 'Метка 13' })
+        .first()
+        .click();
+    await page.waitForTimeout(400);
+    await shot(page, 'd-filter-white');
+    await page.setViewportSize({ width: 1024, height: 768 });
+    await page.waitForTimeout(500);
+    await shot(page, 'd1024-filter');
 });
