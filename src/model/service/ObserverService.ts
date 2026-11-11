@@ -115,6 +115,9 @@ export const Events = {
     EVENT_PROJECT_VISIBILITY_CHANGED: 'project_visibility_changed',
     EVENT_SHARE_LINK_COPIED: 'share_link_copied',
     EVENT_PROJECT_CLONED: 'project_cloned',
+    EVENT_PROJECT_TAGS_CHANGED: 'project_tags_changed',
+    // в списке проектов сменили поиск, фильтр или сортировку
+    EVENT_PROJECTS_FILTERED: 'projects_filtered',
 
     EVENT_TOKEN_PACKAGE_SELECTED: 'token_package_selected',
     EVENT_PAYMENT_WIDGET_FAILED: 'payment_widget_failed',
@@ -240,6 +243,8 @@ export const OPENPANEL_EVENT_NAMES: Record<string, string> = {
     [Events.EVENT_PROJECT_VISIBILITY_CHANGED]: 'Project visibility changed',
     [Events.EVENT_SHARE_LINK_COPIED]: 'Share link copied',
     [Events.EVENT_PROJECT_CLONED]: 'Project cloned',
+    [Events.EVENT_PROJECT_TAGS_CHANGED]: 'Project tags changed',
+    [Events.EVENT_PROJECTS_FILTERED]: 'Projects filtered',
     [Events.EVENT_TOKEN_PACKAGE_SELECTED]: 'Token package selected',
     [Events.EVENT_PAYMENT_WIDGET_FAILED]: 'Payment widget failed',
     [Events.EVENT_TOKENS_TOPUP_CLICKED]: 'Tokens top-up clicked',

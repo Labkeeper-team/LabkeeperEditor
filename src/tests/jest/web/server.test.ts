@@ -44,6 +44,7 @@ jest.mock('../../../constants.ts', () => ({
         setTitle: '/api/v4/public/project/{id}/title',
         setVisibility: '/api/v4/public/project/{id}/visibility',
         setType: '/api/v4/public/project/{id}/type',
+        setTags: '/api/v4/public/project/{id}/tags',
         listHunks: '/api/v4/public/project/{id}/hunk',
         deleteHunk: '/api/v4/public/project/{id}/hunk/{hunkId}',
         agentHistory: '/api/v4/public/project/{id}/history',
@@ -324,6 +325,16 @@ const RPI_CASES: RpiCase[] = [
         scoped: true,
         expects423: false,
         call: (rpi) => rpi.setProjectVisibilityRequest(PROJECT_ID, true),
+    },
+    {
+        method: 'setProjectTagsRequest',
+        source: 'project',
+        scoped: true,
+        expects423: false,
+        call: (rpi) =>
+            rpi.setProjectTagsRequest(PROJECT_ID, [
+                { name: 'Физика', color: '#4469e0' },
+            ]),
     },
     {
         method: 'sendEmailWithCodeRequest',

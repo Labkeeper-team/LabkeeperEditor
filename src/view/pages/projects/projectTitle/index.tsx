@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { PencilIcon } from '../../../icons';
 
 import './style.scss';
@@ -21,25 +21,57 @@ export const ProjectTitle = (props: {
     href: string;
     /** GH-207: подсказка с полным названием, если оно не влезло */
     tooltipId?: string;
+    /** Переименование, начатое снаружи, например из меню проекта */
+    editing?: boolean;
+    onEditingChange?: (editing: boolean) => void;
 }) => {
     const ref = useRef<HTMLInputElement>(null);
-    const [editMode, setEditMode] = useState(false);
+    const [ownEditMode, setOwnEditMode] = useState(false);
+    const editMode = props.editing ?? ownEditMode;
+    const setEditMode = (value: boolean) => {
+        setOwnEditMode(value);
+        props.onEditingChange?.(value);
+    };
     const [currentTitle, setCurrentTitle] = useState(props.project.title);
     const dispatch = useDispatch<AppDispatch>();
+
+    // список пришёл заново: название могли сменить в редакторе или другой вкладке
+    const [syncedTitle, setSyncedTitle] = useState(props.project.title);
+    if (syncedTitle !== props.project.title) {
+        setSyncedTitle(props.project.title);
+        if (!editMode) {
+            setCurrentTitle(props.project.title);
+        }
+    }
+
+    useEffect(() => {
+        if (editMode) {
+            const timer = setTimeout(() => {
+                const input = ref.current;
+                input?.focus();
+                // выделяем, только пока ничего не напечатали поверх
+                if (input && input.value === props.project.title) {
+                    input.select();
+                }
+            }, 50);
+            return () => clearTimeout(timer);
+        }
+    }, [editMode, props.project.title]);
 
     const onClickChange = (e: { stopPropagation: () => void }) => {
         e.stopPropagation();
         setEditMode(true);
-        setTimeout(() => {
-            ref.current?.focus();
-        }, 100);
     };
 
     /*
     Когда заканчивает ввод названия
      */
     const onInputBlur = async () => {
-        if (!props.project.projectId) {
+        if (!props.project.projectId || !editMode) {
+            return;
+        }
+        setEditMode(false);
+        if (currentTitle === props.project.title) {
             return;
         }
         dispatch(
@@ -50,12 +82,14 @@ export const ProjectTitle = (props: {
                 failCallback: () => setCurrentTitle(props.project.title),
             })
         );
-        setEditMode(false);
     };
 
     useHotkeys(
         'esc',
         () => {
+            if (!editMode) {
+                return;
+            }
             setCurrentTitle(props.project.title);
             setEditMode(false);
         },

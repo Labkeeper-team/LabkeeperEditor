@@ -5,6 +5,7 @@ import {
     OpenParams,
     ProgramRoundStrategy,
     ProjectExportFormat,
+    ProjectTag,
     ProjectType,
     SegmentType,
 } from '../model/domain.ts';
@@ -18,6 +19,7 @@ import { ProgramEditorService } from '../viewModel/operation/ProgramEditorServic
 import { ProjectPageService } from '../viewModel/operation/ProjectPageService.ts';
 import {
     NewProjectRequest,
+    TagSaveRequest,
     ProjectsPageService,
 } from '../viewModel/operation/ProjectsPageService.ts';
 import { StartupService } from '../viewModel/operation/StartupService.ts';
@@ -920,6 +922,75 @@ export class Controller {
         }) => {
             await this.wrapper('onDeleteProjectRequest', () =>
                 this.projectsPageService.onDeleteProject(projectId, okCallback)
+            );
+        }
+    );
+
+    onProjectTagsChangeRequest = createAsyncThunk(
+        'onProjectTagsChangeRequest',
+        async ({
+            projectId,
+            tags,
+        }: {
+            projectId: string;
+            tags: ProjectTag[];
+        }) => {
+            await this.wrapper('onProjectTagsChangeRequest', () =>
+                this.projectsPageService.onProjectTagsChange(projectId, tags)
+            );
+        }
+    );
+
+    onListedProjectVisibilityChangeRequest = createAsyncThunk(
+        'onListedProjectVisibilityChangeRequest',
+        async ({
+            projectId,
+            visible,
+        }: {
+            projectId: string;
+            visible: boolean;
+        }) => {
+            await this.wrapper('onListedProjectVisibilityChangeRequest', () =>
+                this.projectsPageService.onListedProjectVisibilityChange(
+                    projectId,
+                    visible
+                )
+            );
+        }
+    );
+
+    onDuplicateProjectRequest = createAsyncThunk(
+        'onDuplicateProjectRequest',
+        async ({ projectId }: { projectId: string }) => {
+            await this.wrapper('onDuplicateProjectRequest', () =>
+                this.projectsPageService.onDuplicateProject(projectId)
+            );
+        }
+    );
+
+    onTagSaveRequest = createAsyncThunk(
+        'onTagSaveRequest',
+        async (request: TagSaveRequest) => {
+            await this.wrapper('onTagSaveRequest', () =>
+                this.projectsPageService.onTagSave(request)
+            );
+        }
+    );
+
+    onTagDeleteRequest = createAsyncThunk(
+        'onTagDeleteRequest',
+        async ({ name }: { name: string }) => {
+            await this.wrapper('onTagDeleteRequest', () =>
+                this.projectsPageService.onTagDelete(name)
+            );
+        }
+    );
+
+    onDownloadProjectRequest = createAsyncThunk(
+        'onDownloadProjectRequest',
+        async ({ projectId }: { projectId: string }) => {
+            await this.wrapper('onDownloadProjectRequest', () =>
+                this.projectsPageService.onDownloadProject(projectId)
             );
         }
     );

@@ -179,11 +179,30 @@ export interface Project {
     projectType: ProjectType;
 }
 
+/** Метка проекта в списке: имя уникально в пределах проекта, цвет это CSS-цвет */
+export interface ProjectTag {
+    name: string;
+    color: string;
+}
+
+export const PROJECT_TAG_MAX_LENGTH = 32;
+
+/** Больше меток в строке списка уже не прочесть */
+export const PROJECT_TAGS_MAX_COUNT = 10;
+
+/**
+ * Проект в списке, без программы. Поля после lastModified сервер присылает
+ * всегда, но старые ответы и моки их не знают, поэтому они необязательны
+ */
 export interface ProjectShort {
     projectId: string;
     userId: number;
     title: string;
     lastModified: string;
+    creationTime?: string;
+    isPublic?: boolean;
+    projectType?: ProjectType;
+    tags?: ProjectTag[];
 }
 
 /**
