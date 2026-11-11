@@ -44,8 +44,16 @@ export const ProjectTitle = (props: {
         }
     }
 
+    /*
+     * Переименование уже закончено: Enter или Escape убирают поле, и браузер
+     * может следом прислать blur в старый обработчик, где оно ещё открыто.
+     * Без отметки название ушло бы второй раз, а Escape сохранил бы его
+     */
+    const finished = useRef(false);
+
     useEffect(() => {
         if (editMode) {
+            finished.current = false;
             const timer = setTimeout(() => {
                 const input = ref.current;
                 input?.focus();
@@ -66,13 +74,14 @@ export const ProjectTitle = (props: {
     /*
     Когда заканчивает ввод названия
      */
-    const onInputBlur = async () => {
-        if (!props.project.projectId || !editMode) {
+    const finish = (save: boolean) => {
+        if (!props.project.projectId || !editMode || finished.current) {
             return;
         }
+        finished.current = true;
         setEditMode(false);
         // пробелы по краям сервер не хранит: без них название могло не измениться
-        if (currentTitle.trim() === props.project.title) {
+        if (!save || currentTitle.trim() === props.project.title) {
             setCurrentTitle(props.project.title);
             return;
         }
@@ -89,11 +98,7 @@ export const ProjectTitle = (props: {
     useHotkeys(
         'esc',
         () => {
-            if (!editMode) {
-                return;
-            }
-            setCurrentTitle(props.project.title);
-            setEditMode(false);
+            finish(false);
         },
         { enableOnFormTags: true }
     );
@@ -104,10 +109,13 @@ export const ProjectTitle = (props: {
                 <Input
                     ref={ref}
                     value={currentTitle}
-                    onBlur={onInputBlur}
-                    onKeyDown={(e) =>
-                        e.key === 'Enter' ? onInputBlur() : () => {}
-                    }
+                    onBlur={() => finish(true)}
+                    onKeyDown={(e) => {
+                        // Enter, которым выбирают иероглиф, название не сохраняет
+                        if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
+                            finish(true);
+                        }
+                    }}
                     onChange={(e) => setCurrentTitle(e.target.value)}
                     showCharacterCount
                     maxLength={PROJECT_TITLE_MAX_LENGTH}

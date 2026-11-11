@@ -53,6 +53,9 @@
         // при фильтре счётчик показывает «N из M» и по щелчку сбрасывает фильтры
         &__count--filtered {
             display: inline-flex;
+            // на телефоне «N из M ×» не сжимается под кнопку «Добавить»
+            flex-shrink: 0;
+            white-space: nowrap;
             align-items: center;
             gap: 6px;
             border: none;
@@ -82,8 +85,12 @@
             gap: 8px;
 
             .typography.h1 {
+                min-width: 0;
+                overflow: hidden;
                 font-size: 30px;
                 line-height: 36px;
+                text-overflow: ellipsis;
+                white-space: nowrap;
             }
 
             &__add {
@@ -103,7 +110,8 @@
                 white-space: nowrap;
             }
 
-            &__count {
+            // число проектов уходит, а сброс фильтров остаётся
+            &__count:not(.projects-header__count--filtered) {
                 display: none;
             }
 
@@ -511,8 +519,9 @@
             }
         }
 
+        // «Последнее изменение» по-русски со стрелкой сортировки
         .projects-col-date {
-            width: 160px;
+            width: 184px;
         }
 
         .projects-col-type {
@@ -532,6 +541,20 @@
         // на узком окне дата создания уступает место названию
         @media screen and (max-width: 1440px) {
             .projects-col-created {
+                display: none;
+            }
+        }
+
+        // дальше по мере сужения место названию уступают тип и доступ;
+        // отобрать по ним проекты по-прежнему можно фильтрами
+        @media screen and (max-width: 1100px) {
+            .projects-col-type {
+                display: none;
+            }
+        }
+
+        @media screen and (max-width: 900px) {
+            .projects-col-access {
                 display: none;
             }
         }
@@ -639,10 +662,6 @@
 
             .change-icon-container {
                 flex-shrink: 0;
-            }
-
-            .input-base {
-                padding-left: 0;
             }
         }
     }

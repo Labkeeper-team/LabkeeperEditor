@@ -188,6 +188,9 @@ export class LoaderService {
             if (!fresh(`${project.projectId}:public`)) {
                 patch.isPublic = own.isPublic;
             }
+            if (!fresh(`${project.projectId}:title`)) {
+                patch.title = own.title;
+            }
             return { ...project, ...patch };
         });
     };
@@ -205,6 +208,13 @@ export class LoaderService {
         }
         const result = await this.rpi.getAllProjectsRequest();
         if (requestedAt < this.shownListRequestedAt) {
+            // список новее уже показан или прежние отброшены; но спиннер этой
+            // загрузки должен закончиться, даже если новые шли без него
+            if (!silent && state.getProjectsRequestState() === 'loading') {
+                state.setGetProjectsRequestState(
+                    result.isOk ? 'ok' : result.isUnauth ? 'unauth' : 'error'
+                );
+            }
             return result;
         }
         if (result.isOk) {

@@ -494,3 +494,165 @@ test('поле переименования не меняет высоту ст�
     expect(field.x + field.width).toBeLessThanOrEqual(cell.x + cell.width);
     expect(Math.abs((await row.boundingBox())!.height - before.height)).toBe(0);
 });
+
+const manyProjects = (count: number, tagsEach = 0) =>
+    Array.from({ length: count }, (_, i) => ({
+        ...PROJECTS[0],
+        projectId: `00000000-0000-4000-8000-${String(100 + i).padStart(12, '0')}`,
+        title: `Проект ${i + 1}`,
+        tags: Array.from({ length: tagsEach }, (_, j) => ({
+            name: `Метка ${i * tagsEach + j + 1}`,
+            color: '#4469e0',
+        })),
+    }));
+
+const inRussian = (page: Page) =>
+    page.addInitScript(() =>
+        window.localStorage.setItem('labkeeper_lang', 'ru')
+    );
+
+test('Enter в поиске окна тега только ищет и тег не сохраняет', async ({
+    page,
+}) => {
+    await openProjects(page, manyProjects(10));
+    let saves = 0;
+    await page.route('**/api/v4/public/project/*/tags', (route) => {
+        saves++;
+        return route.fulfill({ contentType: 'application/json', body: '{}' });
+    });
+
+    await sidebar(page).getByRole('button', { name: 'New tag' }).click();
+    const modal = page.locator('.tag-edit-modal');
+    await modal.getByRole('textbox').first().fill('Черновик');
+    await modal
+        .getByRole('checkbox', { name: 'Проект 1', exact: true })
+        .check();
+    const search = modal.getByRole('searchbox');
+    await search.fill('Проект 2');
+    await search.press('Enter');
+
+    await expect(modal).toBeVisible();
+    await expect(
+        modal.getByRole('checkbox', { name: 'Проект 2', exact: true })
+    ).toBeVisible();
+    expect(saves).toBe(0);
+});
+
+test('Enter в переименовании отправляет имя один раз, Escape отменяет', async ({
+    page,
+}) => {
+    await openProjects(page);
+    const sent: string[] = [];
+    await page.route('**/api/v4/public/project/*/title**', (route) => {
+        sent.push(new URL(route.request().url()).searchParams.get('name')!);
+        return route.fulfill({ contentType: 'application/json', body: '{}' });
+    });
+    const row = page.locator('tbody tr').first();
+    const rename = async () => {
+        await row.hover();
+        await row.getByRole('button', { name: 'Project actions' }).click();
+        await page.getByRole('menuitem', { name: 'Rename' }).click();
+        const input = row.locator('input.input-base');
+        await expect(input).toBeFocused();
+        return input;
+    };
+
+    const first = await rename();
+    await first.fill('Отменённое имя');
+    await first.press('Escape');
+    await expect(row.locator('.project-title-text')).toHaveText(
+        'Лабораторная 2'
+    );
+
+    const second = await rename();
+    await second.fill('Лабораторная 3');
+    await second.press('Enter');
+    await expect.poll(() => sent).toEqual(['Лабораторная 3']);
+    // запоздалый blur второй запрос не шлёт
+    await page.waitForTimeout(300);
+    expect(sent).toEqual(['Лабораторная 3']);
+});
+
+test('когда под фильтр ничего не подошло, счётчик пишет 0 из N и сбрасывает', async ({
+    page,
+}) => {
+    await openProjects(page);
+    await page.keyboard.press('/');
+    await page.keyboard.type('такого нет');
+
+    const count = page.locator('.projects-header__count--filtered');
+    await expect(count).toHaveText(/0 of 3/);
+    await count.click();
+    await expect(page.locator('tbody tr')).toHaveCount(3);
+});
+
+test('на телефоне по-русски сброс фильтра в шапке не закрыт кнопкой', async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await inRussian(page);
+    const routeSetup = new RouteSetup(page);
+    await routeSetup.setupProject();
+    await routeSetup.setupListFilesRequest();
+    await routeSetup.setupGetUserInfoRequest(true);
+    const projects = manyProjects(36);
+    await page.route('**/api/v4/public/project/all**', (route) =>
+        route.fulfill({
+            contentType: 'application/json',
+            body: JSON.stringify({ projects }),
+        })
+    );
+    await page.goto('/projects');
+    const search = page.getByRole('searchbox').first();
+    await search.fill('Проект 1');
+
+    const count = page.locator('.projects-header__count--filtered');
+    await expect(count).toHaveText(/из 36/);
+    const pill = (await count.boundingBox())!;
+    const add = (await page.locator('.projects-header__add').boundingBox())!;
+    expect(pill.x + pill.width).toBeLessThanOrEqual(add.x);
+    expect(await count.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(
+        true
+    );
+});
+
+test('по-русски стрелка сортировки по дате видна целиком', async ({ page }) => {
+    await inRussian(page);
+    await openProjects(page);
+    // колонка «Последнее изменение»; дата создания на этой ширине скрыта
+    const header = page.locator('th.projects-col-date', {
+        hasText: 'Последнее изменение',
+    });
+    const arrow = header.locator('.sort-arrow');
+    await expect(arrow).toBeVisible();
+    const cell = (await header.boundingBox())!;
+    const box = (await arrow.boundingBox())!;
+    expect(box.x + box.width).toBeLessThanOrEqual(cell.x + cell.width);
+});
+
+test('с множеством меток кнопка «New tag» в панели не сжимается', async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 1440, height: 700 });
+    await openProjects(page, manyProjects(12, 3));
+    const newTag = sidebar(page).getByRole('button', { name: 'New tag' });
+    expect(
+        await newTag.evaluate((el) => el.scrollHeight <= el.clientHeight)
+    ).toBe(true);
+});
+
+test('название не сжимается в ноль на узком окне компьютера', async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 800, height: 900 });
+    await openProjects(page);
+    const title = page.locator('tbody tr .project-title-text').first();
+    expect((await title.boundingBox())!.width).toBeGreaterThan(80);
+    expect(
+        await page.evaluate(
+            () =>
+                document.documentElement.scrollWidth <=
+                document.documentElement.clientWidth
+        )
+    ).toBe(true);
+});

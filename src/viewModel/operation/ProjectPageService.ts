@@ -358,7 +358,44 @@ export class ProjectPageService {
             return;
         }
 
-        const result = await this.rpi.setTitleRequest(projectId, titleToSend);
+        // список, запрошенный до конца переименования, имя не откатывает
+        const writeKey = `${projectId}:title`;
+        this.loaderService.writeStarted(writeKey);
+        let renamed: boolean;
+        try {
+            renamed = await this.renameListed(
+                projectId,
+                titleToSend,
+                okCallback,
+                failCallback
+            );
+        } finally {
+            this.loaderService.writeSettled(writeKey);
+        }
+
+        // список уже верный: обновляем его без спиннера
+        if (renamed) {
+            await this.loaderService.loadProjects({ silent: true });
+        }
+    };
+
+    /** Переименования одного проекта уходят на сервер по очереди */
+    private titleQueues = new Map<string, Promise<unknown>>();
+
+    private renameListed = async (
+        projectId: string,
+        titleToSend: string,
+        okCallback: () => void,
+        failCallback: () => void
+    ): Promise<boolean> => {
+        const previous = this.titleQueues.get(projectId) ?? Promise.resolve();
+        const send = () => this.rpi.setTitleRequest(projectId, titleToSend);
+        const request = previous.then(send, send);
+        this.titleQueues.set(projectId, request);
+        const result = await request;
+        if (this.titleQueues.get(projectId) === request) {
+            this.titleQueues.delete(projectId);
+        }
         if (result.isUnauth) {
             this.repository.toast(
                 this.repository.dictionary.filemanager.errors.sessionExpired,
@@ -370,7 +407,7 @@ export class ProjectPageService {
                 'unauth'
             );
             failCallback();
-            return;
+            return false;
         }
         if (!result.isOk) {
             this.repository.toast(
@@ -378,7 +415,7 @@ export class ProjectPageService {
                 'error'
             );
             failCallback();
-            return;
+            return false;
         }
         const project = this.repository.projectViewModelRepository.project();
         // открытый в редакторе проект может быть другим, если переименовали из списка
@@ -401,9 +438,7 @@ export class ProjectPageService {
         );
         this.track(Events.EVENT_PROJECT_TITLE_CHANGED);
         okCallback();
-
-        // список уже верный: обновляем его без спиннера
-        await this.loaderService.loadProjects({ silent: true });
+        return true;
     };
 
     onProjectVisibilityChange = async (visible: boolean) => {

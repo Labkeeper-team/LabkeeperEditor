@@ -10,6 +10,11 @@
     overflow-y: auto;
     box-sizing: border-box;
 
+    // панель прокручивается целиком, а не сжимает свои части
+    > * {
+        flex-shrink: 0;
+    }
+
     &__add {
         width: 100%;
         height: 42px;

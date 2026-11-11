@@ -27,6 +27,9 @@ export const ProjectsSidebar = (props: {
     tag: string | null;
     untagged: boolean;
     onAdd: () => void;
+    /** Пока список грузится, нулей в счётчиках не показываем */
+    showCounts?: boolean;
+    onSelectAll: () => void;
     onSelectAccess: (access: AccessFilter) => void;
     onSelectTag: (key: string | null) => void;
     onSelectUntagged: () => void;
@@ -61,7 +64,9 @@ export const ProjectsSidebar = (props: {
                 onClick={onClick}
             >
                 {label}
-                <span className="projects-sidebar__count">{count}</span>
+                {props.showCounts === false ? null : (
+                    <span className="projects-sidebar__count">{count}</span>
+                )}
             </button>
             {extra}
         </li>
@@ -87,10 +92,7 @@ export const ProjectsSidebar = (props: {
                     </span>,
                     props.projects.length,
                     props.access === 'all' && !anyTagSelected,
-                    () => {
-                        props.onSelectAccess('all');
-                        props.onSelectTag(null);
-                    }
+                    props.onSelectAll
                 )}
                 {item(
                     'public',

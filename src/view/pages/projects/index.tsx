@@ -75,8 +75,12 @@ const projectHref = (projectId?: string) =>
  */
 const copyText = async (text: string) => {
     if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(text);
-        return;
+        try {
+            await navigator.clipboard.writeText(text);
+            return;
+        } catch {
+            // браузер не дал доступа к буферу: пробуем по-старому
+        }
     }
     const field = document.createElement('textarea');
     field.value = text;
@@ -85,6 +89,8 @@ const copyText = async (text: string) => {
     field.style.opacity = '0';
     document.body.appendChild(field);
     field.select();
+    // iOS Safari выделяет поле только так
+    field.setSelectionRange(0, text.length);
     try {
         if (!document.execCommand('copy')) {
             throw new Error('copy rejected');
@@ -300,7 +306,18 @@ export const ProjectsPage = () => {
             tag: null,
             untagged: !current.untagged,
         }));
-        trackFilter('tag', 'untagged');
+        trackFilter('tag', filter.untagged ? 'all' : 'untagged');
+    }, [trackFilter, filter.untagged]);
+
+    /** «Все проекты» в боковой панели: доступ и метка сразу, одним событием */
+    const selectAll = useCallback(() => {
+        setFilter((current) => ({
+            ...current,
+            access: 'all',
+            tag: null,
+            untagged: false,
+        }));
+        trackFilter('access', 'all');
     }, [trackFilter]);
 
     const selectAccess = useCallback(
@@ -311,10 +328,25 @@ export const ProjectsPage = () => {
         [trackFilter]
     );
 
-    const resetFilters = useCallback(() => {
-        setFilter(EMPTY_FILTER);
-        trackFilter('reset', null);
-    }, [trackFilter]);
+    /** place: какой кнопкой сбросили, счётчиком в шапке или под «ничего нет» */
+    const resetFilters = useCallback(
+        (place: 'header' | 'no_matches') => {
+            setFilter(EMPTY_FILTER);
+            trackFilter('reset', place);
+        },
+        [trackFilter]
+    );
+
+    // поиск считаем, когда человек перестал печатать, а не на каждую букву;
+    // сам запрос не отправляем
+    const searching = filter.search.trim() !== '';
+    useEffect(() => {
+        if (!searching) {
+            return;
+        }
+        const timer = setTimeout(() => trackFilter('search', null), 1500);
+        return () => clearTimeout(timer);
+    }, [filter.search, searching, trackFilter]);
 
     // «/» как на многих сайтах ставит курсор в поиск. Сравниваем символ, а
     // не клавишу: на русской раскладке «/» стоит в другом месте
@@ -326,7 +358,9 @@ export const ProjectsPage = () => {
                 e.ctrlKey ||
                 e.metaKey ||
                 e.altKey ||
-                target?.closest('input, textarea, select, [contenteditable]')
+                target?.closest('input, textarea, select, [contenteditable]') ||
+                // за открытым окном поиск не трогаем
+                document.querySelector('.modal-container-overlay')
             ) {
                 return;
             }
@@ -776,7 +810,7 @@ export const ProjectsPage = () => {
             <button
                 type="button"
                 className="projects-link-button"
-                onClick={resetFilters}
+                onClick={() => resetFilters('no_matches')}
             >
                 {texts.reset_filters}
             </button>
@@ -918,6 +952,11 @@ export const ProjectsPage = () => {
                         tag={filter.tag}
                         untagged={filter.untagged}
                         onAdd={onAddProjectClick}
+                        showCounts={
+                            projects.length > 0 ||
+                            getProjectsRequestState === 'ok'
+                        }
+                        onSelectAll={selectAll}
                         onSelectAccess={selectAccess}
                         onSelectTag={selectTag}
                         onSelectUntagged={selectUntagged}
@@ -933,7 +972,7 @@ export const ProjectsPage = () => {
                             text={texts.label}
                             color={colors.black}
                         />
-                        {filterActive && visibleProjects.length ? (
+                        {filterActive && projects.length ? (
                             // «N из M» в счётчике: строка заголовка от фильтра не
                             // меняет высоту, и список под ним не сдвигается
                             <button
@@ -941,7 +980,7 @@ export const ProjectsPage = () => {
                                 className="projects-header__count projects-header__count--filtered"
                                 title={texts.reset_filters}
                                 aria-label={`${shownText}. ${texts.reset_filters}`}
-                                onClick={resetFilters}
+                                onClick={() => resetFilters('header')}
                             >
                                 {shownText}
                                 <span aria-hidden>×</span>
@@ -1019,7 +1058,7 @@ export const ProjectsPage = () => {
                 showModal={!!tagToDelete}
             >
                 {tagToDelete ? (
-                    <div className="delete-project-modal">
+                    <div className="delete-project-modal delete-tag-modal">
                         <Typography
                             text={texts.sidebar.delete_tag_confirm.replace(
                                 '${name}',

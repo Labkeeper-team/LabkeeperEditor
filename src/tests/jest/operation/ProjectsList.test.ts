@@ -2,7 +2,10 @@ import { ProjectShort } from '../../../model/domain.ts';
 import { RequestResult } from '../../../model/rpi';
 import { Events } from '../../../model/service/ObserverService.ts';
 import { MockViewModelRepository } from '../../../viewModel/repository';
-import { normalizeProjectTags } from '../../../viewModel/operation/ProjectsPageService.ts';
+import {
+    normalizeProjectTags,
+    tagsChange,
+} from '../../../viewModel/operation/ProjectsPageService.ts';
 import {
     DEFAULT_SORT,
     EMPTY_FILTER,
@@ -409,7 +412,7 @@ test('new-tag-is-not-added-where-the-limit-is-reached-and-says-so', async () => 
     );
 });
 
-test('a-failed-older-tag-edit-does-not-undo-a-newer-one', async () => {
+test('a-newer-tag-edit-keeps-its-own-change-but-not-a-refused-older-one', async () => {
     const ctx = setup();
     const first = deferred<RequestResult<object>>();
     const order: string[] = [];
@@ -433,8 +436,9 @@ test('a-failed-older-tag-edit-does-not-undo-a-newer-one', async () => {
     first.resolve(fail(500));
     await Promise.all([older, newer]);
 
-    expect(order).toEqual(['A', 'A,B']);
-    expect(tagNames(ctx, 'c')).toEqual(['A:#000000', 'B:#000000']);
+    // вторая правка добавила только B: отказ по A с ней на сервер не уезжает
+    expect(order).toEqual(['A', 'B']);
+    expect(tagNames(ctx, 'c')).toEqual(['B:#000000']);
 });
 
 test('list-refresh-keeps-tags-that-are-still-being-saved', async () => {
@@ -729,4 +733,244 @@ test('no-tags-error-for-a-project-deleted-while-its-tags-were-saving', async () 
 
     expect(ctx.toasts().some((t) => t.type === 'error')).toBe(false);
     expect(ctx.listed('c')).toBeUndefined();
+});
+
+test('a-tags-modal-change-applies-only-what-was-changed-in-it', () => {
+    const NEW = { name: 'Новая', color: '#000000' };
+    const change = tagsChange([PHYSICS], [PHYSICS, NEW]);
+    // сервер хранит то же, что видело окно: уходит ровно результат окна
+    expect(change([PHYSICS])).toEqual([PHYSICS, NEW]);
+    // сервер хранит другое: добавляется только новая метка
+    expect(change([THESIS])).toEqual([THESIS, NEW]);
+    // снятая в окне метка снимается, остальное хранимое остаётся
+    expect(tagsChange([PHYSICS, THESIS], [THESIS])([PHYSICS, NEW])).toEqual([
+        NEW,
+    ]);
+});
+
+test('a-failed-sidebar-rename-does-not-ride-along-with-a-modal-edit', async () => {
+    const ctx = setup();
+    const renames = [
+        deferred<RequestResult<object>>(),
+        deferred<RequestResult<object>>(),
+    ];
+    const sent: string[] = [];
+    ctx.rpi.setProjectTagsRequest = jest
+        .fn()
+        .mockImplementation(async (id: string, tags: { name: string }[]) => {
+            sent.push(`${id}:${tags.map((tag) => tag.name).join(',')}`);
+            return sent.length <= 2
+                ? renames[sent.length - 1].promise
+                : ok({ tags });
+        });
+
+    const renamed = ctx.projectsPageService.onTagSave({
+        previousName: 'Физика',
+        name: 'Физ',
+        color: PHYSICS.color,
+        projectIds: ['a', 'b'],
+    });
+    // окно меток открыли уже с новым именем и добавили метку
+    const edited = ctx.projectsPageService.onProjectTagsChange('a', [
+        ...ctx.listed('a').tags!,
+        { name: 'Новая', color: '#000000' },
+    ]);
+    renames.forEach((rename) => rename.resolve(fail(500)));
+    await Promise.all([renamed, edited]);
+
+    expect(sent).toContain('a:Физика,Новая');
+    expect(tagNames(ctx, 'a')).toEqual(['Физика:#4469e0', 'Новая:#000000']);
+    expect(tagNames(ctx, 'b')).toEqual(['Физика:#4469e0', 'Диплом:#1ca852']);
+});
+
+test('a-sidebar-tag-delete-reaches-a-project-whose-modal-edit-failed', async () => {
+    const ctx = setup();
+    const first = deferred<RequestResult<object>>();
+    const sent: string[] = [];
+    ctx.rpi.setProjectTagsRequest = jest
+        .fn()
+        .mockImplementation(async (id: string, tags: { name: string }[]) => {
+            sent.push(`${id}:${tags.map((tag) => tag.name).join(',')}`);
+            return sent.length === 1 ? first.promise : ok({ tags });
+        });
+
+    // в окне сняли «Физику» с a, и пока это сохраняется, метку удалили совсем
+    const edited = ctx.projectsPageService.onProjectTagsChange('a', []);
+    const deleted = ctx.projectsPageService.onTagDelete('Физика');
+    first.resolve(fail(500));
+    await Promise.all([edited, deleted]);
+
+    expect(sent).toEqual(['a:', 'b:Диплом', 'a:']);
+    expect(tagNames(ctx, 'a')).toEqual([]);
+    // отказ перекрыла следующая правка: жаловаться не на что
+    expect(ctx.toasts().some((toast) => toast.type === 'error')).toBe(false);
+});
+
+test('toggling-access-back-before-the-answer-sends-nothing-extra', async () => {
+    const ctx = setup();
+    const onEvent = jest.spyOn(ctx.observerService, 'onEvent');
+    const first = deferred<RequestResult<object>>();
+    ctx.rpi.setProjectVisibilityRequest = jest
+        .fn()
+        .mockReturnValue(first.promise);
+
+    const on = ctx.projectsPageService.onListedProjectVisibilityChange(
+        'a',
+        true
+    );
+    const off = ctx.projectsPageService.onListedProjectVisibilityChange(
+        'a',
+        false
+    );
+    first.resolve(fail(500));
+    await Promise.all([on, off]);
+
+    expect(ctx.rpi.setProjectVisibilityRequest).toHaveBeenCalledTimes(1);
+    expect(ctx.listed('a').isPublic).toBe(false);
+    expect(onEvent).not.toHaveBeenCalledWith(
+        Events.EVENT_PROJECT_VISIBILITY_CHANGED,
+        expect.anything()
+    );
+    expect(ctx.toasts().some((toast) => toast.type === 'error')).toBe(false);
+});
+
+test('an-expired-session-is-reported-once-for-many-refused-edits', async () => {
+    const ctx = setup();
+    ctx.rpi.setProjectTagsRequest = jest.fn().mockResolvedValue(fail(401));
+    ctx.rpi.setProjectVisibilityRequest = jest
+        .fn()
+        .mockResolvedValue(fail(401));
+
+    await Promise.all([
+        ctx.projectsPageService.onProjectTagsChange('c', [THESIS]),
+        ctx.projectsPageService.onListedProjectVisibilityChange('a', true),
+    ]);
+
+    const expired = ctx.repository.dictionary.filemanager.errors.sessionExpired;
+    expect(
+        ctx.toasts().filter((toast) => toast.message === expired)
+    ).toHaveLength(1);
+});
+
+test('no-tag-limit-toast-after-the-session-expired', async () => {
+    const ctx = setup();
+    const full = Array.from({ length: 10 }, (_, i) => ({
+        name: `t${i}`,
+        color: '#000000',
+    }));
+    ctx.repository.projectsViewModelRepository.setProjects([
+        project('a', { tags: full }),
+        project('b'),
+    ]);
+    ctx.rpi.setProjectTagsRequest = jest.fn().mockResolvedValue(fail(401));
+
+    await ctx.projectsPageService.onTagSave({
+        name: 'Новая',
+        color: '#000000',
+        projectIds: ['a', 'b'],
+    });
+
+    const limit = ctx.repository.dictionary.projects.tags_modal.limit.replace(
+        '${max}',
+        '10'
+    );
+    expect(ctx.toasts().some((toast) => toast.message === limit)).toBe(false);
+});
+
+test('an-older-list-does-not-undo-a-rename-from-the-list', async () => {
+    const ctx = setup();
+    const older = deferred<RequestResult<object>>();
+    ctx.rpi.getAllProjectsRequest = jest
+        .fn()
+        .mockReturnValueOnce(older.promise)
+        .mockResolvedValue(fail(500));
+    ctx.rpi.setTitleRequest = jest.fn().mockResolvedValue(ok({}));
+
+    const loading = ctx.projectsPageService.loaderService.loadProjects({
+        silent: true,
+    });
+    await ctx.projectPageService.onProjectTitleChanged(
+        'a',
+        'Новое',
+        () => undefined,
+        () => undefined
+    );
+    older.resolve(ok({ projects: [...LIST].reverse() }));
+    await loading;
+
+    expect(ctx.listed('a').title).toBe('Новое');
+});
+
+test('renames-of-one-project-reach-the-server-in-order', async () => {
+    const ctx = setup();
+    const first = deferred<RequestResult<object>>();
+    const sent: string[] = [];
+    ctx.rpi.setTitleRequest = jest
+        .fn()
+        .mockImplementation(async (_id: string, title: string) => {
+            sent.push(title);
+            return sent.length === 1 ? first.promise : ok({});
+        });
+    ctx.rpi.getAllProjectsRequest = jest
+        .fn()
+        .mockResolvedValue(ok({ projects: [...LIST].reverse() }));
+
+    const one = ctx.projectPageService.onProjectTitleChanged(
+        'a',
+        'Один',
+        () => undefined,
+        () => undefined
+    );
+    const two = ctx.projectPageService.onProjectTitleChanged(
+        'a',
+        'Два',
+        () => undefined,
+        () => undefined
+    );
+    await Promise.resolve();
+    expect(sent).toEqual(['Один']);
+    first.resolve(ok({}));
+    await Promise.all([one, two]);
+
+    expect(sent).toEqual(['Один', 'Два']);
+});
+
+test('a-dropped-initial-load-does-not-leave-the-spinner-on', async () => {
+    const ctx = setup();
+    const initial = deferred<RequestResult<object>>();
+    ctx.rpi.getAllProjectsRequest = jest.fn().mockReturnValue(initial.promise);
+    const loader = ctx.projectsPageService.loaderService;
+
+    const loading = loader.loadProjects();
+    loader.discardEarlierLists();
+    initial.resolve(ok({ projects: [...LIST].reverse() }));
+    await loading;
+
+    expect(
+        ctx.repository.ideViewModelRepository.getProjectsRequestState()
+    ).toBe('ok');
+});
+
+test('a-second-download-click-does-not-start-another-export', async () => {
+    const ctx = setup();
+    const answer = deferred<RequestResult<object>>();
+    ctx.rpi.exportProjectRequest = jest.fn().mockReturnValue(answer.promise);
+
+    const first = ctx.projectsPageService.onDownloadProject('a');
+    await ctx.projectsPageService.onDownloadProject('a');
+    answer.resolve(fail(500));
+    await first;
+
+    expect(ctx.rpi.exportProjectRequest).toHaveBeenCalledTimes(1);
+});
+
+test('after-a-reset-the-projects-page-says-the-session-is-over', () => {
+    const ctx = setup();
+    ctx.repository.ideViewModelRepository.setGetProjectsRequestState('ok');
+
+    ctx.projectsPageService.ideService.resetEditor();
+
+    expect(
+        ctx.repository.ideViewModelRepository.getProjectsRequestState()
+    ).toBe('unauth');
 });

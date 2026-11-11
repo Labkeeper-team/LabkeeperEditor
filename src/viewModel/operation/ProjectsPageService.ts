@@ -88,6 +88,46 @@ const sameTags = (a: ProjectTag[], b: ProjectTag[]) =>
     a.every((tag, i) => tag.name === b[i].name && tag.color === b[i].color);
 
 /**
+ * Правка меток из окна проекта как разница с тем, что в окне было открыто.
+ * Если сервер хранит то же, что видело окно, отправляется ровно результат
+ * окна. Иначе (до этого не прошла другая правка) к хранимому применяется
+ * только то, что человек поменял в окне: снятые метки снимаются, новые и
+ * перекрашенные добавляются, остальное остаётся как есть
+ */
+export const tagsChange =
+    (before: ProjectTag[], after: ProjectTag[]) =>
+    (tags: ProjectTag[]): ProjectTag[] => {
+        if (sameTags(tags, before)) {
+            return after;
+        }
+        const was = new Map(before.map((tag) => [nameKey(tag.name), tag]));
+        const kept = new Map(after.map((tag) => [nameKey(tag.name), tag]));
+        const touched = (tag: ProjectTag) => {
+            const old = was.get(nameKey(tag.name));
+            return !old || old.name !== tag.name || old.color !== tag.color;
+        };
+        const result = tags
+            .filter((tag) => {
+                const key = nameKey(tag.name);
+                return !was.has(key) || kept.has(key);
+            })
+            .map((tag) => {
+                const edited = kept.get(nameKey(tag.name));
+                return edited && touched(edited) ? edited : tag;
+            });
+        for (const tag of after) {
+            const key = nameKey(tag.name);
+            if (
+                touched(tag) &&
+                !result.some((other) => nameKey(other.name) === key)
+            ) {
+                result.push(tag);
+            }
+        }
+        return result;
+    };
+
+/**
  * Метка из боковой панели. Отдельной сущности у метки на сервере нет, она
  * живёт в проектах, поэтому создать, переименовать или перекрасить её значит
  * поменять метки у всех её проектов
@@ -151,6 +191,10 @@ export class ProjectsPageService {
      * сессия истекла, а не что проектов нет
      */
     private sessionExpired = () => {
+        // несколько отказов подряд: о сессии уже сказали, список уже сброшен
+        if (this.sessionLost()) {
+            return;
+        }
         this.repository.toast(
             this.repository.dictionary.filemanager.errors.sessionExpired,
             'error'
@@ -161,6 +205,10 @@ export class ProjectsPageService {
             'unauth'
         );
     };
+
+    private sessionLost = () =>
+        this.repository.ideViewModelRepository.getProjectsRequestState() ===
+        'unauth';
 
     private listedProject = (projectId: string): ProjectShort | undefined =>
         this.repository.projectsViewModelRepository
@@ -191,6 +239,8 @@ export class ProjectsPageService {
     private writes = new Map<string, FieldWrites<unknown>>();
     /** Удаляемые сейчас проекты: второй щелчок по «Да» запрос не повторяет */
     private deleting = new Set<string>();
+    /** Скачиваемые сейчас архивы: повторный щелчок второй не запускает */
+    private downloading = new Set<string>();
     /** Запросы к одному полю идут по очереди, чтобы сервер получил их по порядку */
     private queues = new Map<string, Promise<unknown>>();
 
@@ -299,7 +349,15 @@ export class ProjectsPageService {
         if (sameTags(before, next)) {
             return;
         }
-        const result = await this.writeTags(projectId, before, () => next);
+        const key = `${projectId}:tags`;
+        const result = await this.writeTags(
+            projectId,
+            before,
+            tagsChange(before, next)
+        );
+        if (result === NOTHING_TO_SEND) {
+            return;
+        }
         if (result.isOk) {
             this.track(Events.EVENT_PROJECT_TAGS_CHANGED, {
                 project_id: projectId,
@@ -308,8 +366,9 @@ export class ProjectsPageService {
             });
         } else if (result.isUnauth) {
             this.sessionExpired();
-        } else if (this.listedProject(projectId)) {
-            // проект удалили, пока метки сохранялись: жаловаться не на что
+        } else if (this.listedProject(projectId) && !this.writes.has(key)) {
+            // проект удалили, пока метки сохранялись, или следом идёт другая
+            // правка, которая всё равно решит, что будет: жаловаться не на что
             this.repository.toast(
                 this.repository.dictionary.projects.errors.tags_failed,
                 'error'
@@ -335,6 +394,9 @@ export class ProjectsPageService {
             .projects()
             .filter(
                 (project) =>
+                    // у проекта с незавершённой правкой сервер может хранить
+                    // другое, чем видно: правку применяем к тому, что хранит он
+                    this.writes.has(`${project.projectId}:tags`) ||
                     !sameTags(
                         project.tags ?? [],
                         changed(project.projectId, project.tags ?? [])
@@ -355,7 +417,9 @@ export class ProjectsPageService {
         } else if (
             results.some(
                 (result, i) =>
-                    !result.isOk && this.listedProject(projects[i].projectId)
+                    !result.isOk &&
+                    this.listedProject(projects[i].projectId) &&
+                    !this.writes.has(`${projects[i].projectId}:tags`)
             )
         ) {
             this.repository.toast(
@@ -418,7 +482,7 @@ export class ProjectsPageService {
                 ...rest.slice(position),
             ];
         });
-        if (overLimit) {
+        if (overLimit && !this.sessionLost()) {
             this.repository.toast(
                 this.repository.dictionary.projects.tags_modal.limit.replace(
                     '${max}',
@@ -471,6 +535,9 @@ export class ProjectsPageService {
                 this.rpi.setProjectVisibilityRequest(projectId, isPublic),
             (_, sent) => sent
         );
+        if (result === NOTHING_TO_SEND) {
+            return;
+        }
         if (result.isOk) {
             this.track(Events.EVENT_PROJECT_VISIBILITY_CHANGED, {
                 visible,
@@ -486,7 +553,10 @@ export class ProjectsPageService {
             }
         } else if (result.isUnauth) {
             this.sessionExpired();
-        } else {
+        } else if (
+            this.listedProject(projectId) &&
+            !this.writes.has(`${projectId}:public`)
+        ) {
             this.repository.toast(
                 this.repository.dictionary.projects.errors.visibility_failed,
                 'error'
@@ -527,9 +597,19 @@ export class ProjectsPageService {
      */
     onDownloadProject = async (projectId: string) => {
         const project = this.listedProject(projectId);
-        if (!project) {
+        if (!project || this.downloading.has(projectId)) {
             return;
         }
+        this.downloading.add(projectId);
+        try {
+            await this.downloadListedProject(project);
+        } finally {
+            this.downloading.delete(projectId);
+        }
+    };
+
+    private downloadListedProject = async (project: ProjectShort) => {
+        const projectId = project.projectId;
         const result = await this.rpi.exportProjectRequest(projectId);
         this.track(Events.EVENT_PROJECT_EXPORTED, {
             format: 'labkeeper',

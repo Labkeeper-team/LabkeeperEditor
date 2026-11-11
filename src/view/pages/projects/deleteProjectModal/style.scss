@@ -8,6 +8,12 @@
         padding: 20px 16px 24px;
     }
 
+    // подтверждение для метки с длинным именем не растягивается на всё окно
+    &.delete-tag-modal {
+        max-width: 520px;
+        overflow-wrap: anywhere;
+    }
+
     .delete-project-modal-button {
         margin-top: 11px;
         min-height: 44px;

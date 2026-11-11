@@ -211,6 +211,12 @@ export const TagEditModal = (props: {
                         placeholder={dictionary.projects.search_placeholder}
                         aria-label={dictionary.projects.search_placeholder}
                         onChange={(e) => setQuery(e.target.value)}
+                        // Enter в поиске только ищет, а не сохраняет метку
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                                e.preventDefault();
+                            }
+                        }}
                     />
                 ) : null}
                 <div className="tag-edit-modal__projects">
