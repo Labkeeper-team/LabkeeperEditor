@@ -57,7 +57,7 @@ export const ProjectsSidebar = (props: {
             <button
                 type="button"
                 className="projects-sidebar__button"
-                aria-current={active ? 'true' : undefined}
+                aria-pressed={active}
                 onClick={onClick}
             >
                 {label}

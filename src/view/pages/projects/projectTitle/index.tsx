@@ -124,6 +124,8 @@ export const ProjectTitle = (props: {
                     </a>
                     <div
                         onClick={onClickChange}
+                        // средняя кнопка по карандашу не открывает проект в новой вкладке
+                        onAuxClick={(e) => e.stopPropagation()}
                         className="change-icon-container"
                     >
                         <PencilIcon />

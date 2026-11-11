@@ -86,7 +86,7 @@ test('метка в боковой панели и в строке фильтр�
     await sidebarItem(page, 'Физика').click();
     await expectTitles(page, ['Лабораторная 2', 'Лабораторная 10']);
     await expect(sidebarItem(page, 'Физика')).toHaveAttribute(
-        'aria-current',
+        'aria-pressed',
         'true'
     );
 
@@ -293,4 +293,48 @@ test('переименование из меню проекта', async ({ page 
 
     await expect.poll(() => renamedTo).toBe('Лабораторная 3');
     await expect(page).toHaveURL(/\/projects$/);
+});
+
+test('меню проекта работает с клавиатуры', async ({ page }) => {
+    await openProjects(page);
+    const button = page
+        .locator('tbody tr')
+        .first()
+        .getByRole('button', { name: 'Project actions' });
+    await button.focus();
+    await page.keyboard.press('Enter');
+
+    const items = page.getByRole('menuitem');
+    await expect(items.first()).toBeFocused();
+    await page.keyboard.press('ArrowDown');
+    await expect(items.nth(1)).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('menu')).toHaveCount(0);
+    await expect(button).toBeFocused();
+});
+
+test('щелчок по строке, которым закончили переименование, проект не открывает', async ({
+    page,
+}) => {
+    await openProjects(page);
+    let renamed = '';
+    await page.route('**/api/v4/public/project/*/title**', (route) => {
+        renamed = new URL(route.request().url()).searchParams.get('name')!;
+        return route.fulfill({ contentType: 'application/json', body: '{}' });
+    });
+
+    const row = page.locator('tbody tr').first();
+    await row.hover();
+    await row.getByRole('button', { name: 'Project actions' }).click();
+    await page.getByRole('menuitem', { name: 'Rename' }).click();
+    await row.locator('input.input-base').fill('Лабораторная 3');
+    await row.locator('.projects-col-type').click();
+
+    await expect.poll(() => renamed).toBe('Лабораторная 3');
+    await page.waitForTimeout(300);
+    await expect(page).toHaveURL(/\/projects$/);
+
+    // следующий щелчок открывает проект как обычно
+    await row.locator('.projects-col-type').click();
+    await expect(page).toHaveURL(/\/project\/[0-9a-f-]+$/);
 });

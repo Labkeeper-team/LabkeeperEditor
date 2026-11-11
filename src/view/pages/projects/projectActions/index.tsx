@@ -66,10 +66,16 @@ export const ProjectActions = (props: {
             window.innerWidth - menu.width - VIEWPORT_GAP
         );
         setPosition({ top, left });
-        menuRef.current
-            .querySelector<HTMLButtonElement>('[role="menuitem"]')
-            ?.focus();
     }, [open]);
+
+    // фокус в меню, только когда оно уже на месте: скрытое фокус не принимает
+    useEffect(() => {
+        if (position) {
+            menuRef.current
+                ?.querySelector<HTMLButtonElement>('[role="menuitem"]')
+                ?.focus();
+        }
+    }, [position]);
 
     useEffect(() => {
         if (!open) {
@@ -119,7 +125,8 @@ export const ProjectActions = (props: {
             e.preventDefault();
             items[(index - 1 + items.length) % items.length]?.focus();
         } else if (e.key === 'Tab') {
-            close();
+            // фокус на кнопку, а дальше Tab уводит его как обычно
+            close(true);
         }
     };
 
@@ -144,6 +151,13 @@ export const ProjectActions = (props: {
                     }
                 }}
                 onAuxClick={stop}
+                onKeyDown={(e) => {
+                    if (open && e.key === 'Escape') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        close(true);
+                    }
+                }}
             >
                 <DotssIcon />
             </button>
@@ -179,7 +193,8 @@ export const ProjectActions = (props: {
                                   )}
                                   data-action={action.key}
                                   onClick={() => {
-                                      close();
+                                      // окно, которое откроет пункт, само заберёт фокус
+                                      close(true);
                                       action.onSelect();
                                   }}
                               >

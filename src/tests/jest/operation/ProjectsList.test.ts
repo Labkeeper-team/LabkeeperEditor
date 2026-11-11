@@ -8,6 +8,7 @@ import {
     EMPTY_FILTER,
     collectTags,
     defaultTagColor,
+    tagColors,
     isFilterActive,
     matchesFilter,
     sortProjects,
@@ -128,19 +129,39 @@ test('projects-tags-are-collected-case-insensitively-most-used-first', () => {
     ]);
 });
 
-test('projects-tags-are-normalized-before-saving', () => {
+// сервер не ограничивает число, длину и регистр меток: сохранение их не теряет
+test('projects-tags-normalization-keeps-everything-the-server-allows', () => {
+    const many = Array.from({ length: 12 }, (_, i) => ({
+        name: `t${i}`,
+        color: '#000000',
+    }));
+    expect(normalizeProjectTags(many)).toEqual(many);
     expect(
         normalizeProjectTags([
             { name: '  Физика ', color: '#4469e0' },
             { name: 'физика', color: '#000000' },
+            { name: 'Физика', color: '#111111' },
             { name: '   ', color: '#000000' },
             { name: 'x'.repeat(50), color: '#000000' },
         ])
     ).toEqual([
         { name: 'Физика', color: '#4469e0' },
-        { name: 'x'.repeat(32), color: '#000000' },
+        { name: 'физика', color: '#000000' },
+        { name: 'x'.repeat(50), color: '#000000' },
     ]);
     expect(defaultTagColor('Физика')).toBe(defaultTagColor(' физика'));
+});
+
+test('tag-colors-pick-readable-text-and-borders', () => {
+    expect(tagColors('#ffffff')).toMatchObject({
+        dot: '#ffffff',
+        activeText: '#0e1621',
+        border: '#bfc8de',
+    });
+    expect(tagColors('#4469e0').activeText).toBe('#ffffff');
+    expect(tagColors('#FFF').dot).toBe('#ffffff');
+    // не-hex в jsdom не разобрать: берётся серый из палитры, а не пустота
+    expect(tagColors('').dot).toBe('#8c98b0');
 });
 
 const lastToast = (ctx: {
@@ -316,5 +337,141 @@ test('tag-delete-removes-it-everywhere-and-rolls-back-failed-projects', async ()
     expect(ctx.rpi.setProjectTagsRequest).toHaveBeenCalledTimes(2);
     expect(lastToast(ctx)?.message).toBe(
         ctx.repository.dictionary.projects.errors.tags_failed
+    );
+});
+
+const deferred = <T>() => {
+    let resolve!: (value: T) => void;
+    const promise = new Promise<T>((r) => (resolve = r));
+    return { promise, resolve };
+};
+
+test('saving-tags-of-a-project-with-many-tags-keeps-them-all', async () => {
+    const ctx = setup();
+    const many = Array.from({ length: 12 }, (_, i) => ({
+        name: `t${i}`,
+        color: '#000000',
+    }));
+    ctx.repository.projectsViewModelRepository.setProjects([
+        project('m', { tags: many }),
+    ]);
+    ctx.rpi.setProjectTagsRequest = echoTags();
+
+    await ctx.projectsPageService.onTagSave({
+        previousName: 't3',
+        name: 't3',
+        color: '#ffffff',
+        projectIds: ['m'],
+    });
+
+    expect(ctx.rpi.setProjectTagsRequest).toHaveBeenCalledTimes(1);
+    const sent = (ctx.rpi.setProjectTagsRequest as jest.Mock).mock.calls[0][1];
+    expect(sent).toHaveLength(12);
+    expect(sent[3]).toEqual({ name: 't3', color: '#ffffff' });
+});
+
+test('unchanged-project-tags-are-not-sent', async () => {
+    const ctx = setup();
+    ctx.rpi.setProjectTagsRequest = echoTags();
+
+    await ctx.projectsPageService.onProjectTagsChange('a', [PHYSICS]);
+
+    expect(ctx.rpi.setProjectTagsRequest).not.toHaveBeenCalled();
+});
+
+test('new-tag-is-not-added-where-the-limit-is-reached-and-says-so', async () => {
+    const ctx = setup();
+    const ten = Array.from({ length: 10 }, (_, i) => ({
+        name: `t${i}`,
+        color: '#000000',
+    }));
+    ctx.repository.projectsViewModelRepository.setProjects([
+        project('full', { tags: ten }),
+        project('free'),
+    ]);
+    ctx.rpi.setProjectTagsRequest = echoTags();
+
+    await ctx.projectsPageService.onTagSave({
+        name: 'Новый',
+        color: '#4469e0',
+        projectIds: ['full', 'free'],
+    });
+
+    expect(ctx.rpi.setProjectTagsRequest).toHaveBeenCalledTimes(1);
+    expect(tagNames(ctx, 'full')).toHaveLength(10);
+    expect(tagNames(ctx, 'free')).toEqual(['Новый:#4469e0']);
+    expect(lastToast(ctx)?.message).toBe(
+        ctx.repository.dictionary.projects.tags_modal.limit.replace(
+            '${max}',
+            '10'
+        )
+    );
+});
+
+test('a-failed-older-tag-edit-does-not-undo-a-newer-one', async () => {
+    const ctx = setup();
+    const first = deferred<RequestResult<object>>();
+    const order: string[] = [];
+    ctx.rpi.setProjectTagsRequest = jest
+        .fn()
+        .mockImplementation(async (_id: string, tags: { name: string }[]) => {
+            order.push(tags.map((t) => t.name).join(','));
+            return order.length === 1 ? first.promise : ok({ tags });
+        });
+
+    const older = ctx.projectsPageService.onProjectTagsChange('c', [
+        { name: 'A', color: '#000000' },
+    ]);
+    const newer = ctx.projectsPageService.onProjectTagsChange('c', [
+        { name: 'A', color: '#000000' },
+        { name: 'B', color: '#000000' },
+    ]);
+    // вторая правка ждёт первую: сервер получает их по порядку
+    await Promise.resolve();
+    expect(order).toEqual(['A']);
+    first.resolve(fail(500));
+    await Promise.all([older, newer]);
+
+    expect(order).toEqual(['A', 'A,B']);
+    expect(tagNames(ctx, 'c')).toEqual(['A:#000000', 'B:#000000']);
+});
+
+test('list-refresh-keeps-tags-that-are-still-being-saved', async () => {
+    const ctx = setup();
+    const save = deferred<RequestResult<object>>();
+    ctx.rpi.setProjectTagsRequest = jest.fn().mockReturnValue(save.promise);
+    ctx.rpi.cloneProjectRequest = jest
+        .fn()
+        .mockResolvedValue(ok({ ...project('copy'), program: {} }, 201));
+    // сервер ещё не знает о новой метке у c
+    ctx.rpi.getAllProjectsRequest = jest
+        .fn()
+        .mockResolvedValue(ok({ projects: [...LIST].reverse() }));
+
+    const saving = ctx.projectsPageService.onProjectTagsChange('c', [
+        { name: 'Новая', color: '#000000' },
+    ]);
+    await ctx.projectsPageService.onDuplicateProject('a');
+    expect(tagNames(ctx, 'c')).toEqual(['Новая:#000000']);
+
+    save.resolve(ok({ tags: [{ name: 'Новая', color: '#000000' }] }));
+    await saving;
+    expect(tagNames(ctx, 'c')).toEqual(['Новая:#000000']);
+});
+
+test('download-explains-payment-and-lock-errors', async () => {
+    const ctx = setup();
+    ctx.rpi.exportProjectRequest = jest
+        .fn()
+        .mockResolvedValueOnce(fail(402))
+        .mockResolvedValueOnce(fail(423));
+
+    await ctx.projectsPageService.onDownloadProject('a');
+    expect(lastToast(ctx)?.message).toBe(
+        ctx.repository.dictionary.prompt_modal.errors.payment_required
+    );
+    await ctx.projectsPageService.onDownloadProject('a');
+    expect(lastToast(ctx)?.message).toBe(
+        ctx.repository.dictionary.synctex.errors.locked
     );
 });

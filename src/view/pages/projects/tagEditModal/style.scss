@@ -126,11 +126,45 @@
             accent-color: $blue-10;
         }
 
+        // длинные названия похожи началом, поэтому до двух строк
         span {
+            display: -webkit-box;
             overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+            overflow-wrap: anywhere;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
         }
+
+        &--disabled {
+            color: $gray-30;
+            cursor: default;
+
+            &:hover {
+                background: transparent;
+            }
+        }
+    }
+
+    &__search {
+        height: 34px;
+        padding: 0 10px;
+        border: 1px solid $gray-50;
+        border-radius: 8px;
+        font-family: inherit;
+        font-size: 14px;
+        color: $gray-10;
+        outline: none;
+
+        &:focus {
+            border-color: $blue-20;
+            box-shadow: 0 0 0 3px rgba($blue-10, 0.12);
+        }
+    }
+
+    &__empty {
+        padding: 10px 12px;
+        color: $gray-30;
+        font-size: 14px;
     }
 
     &__hint {

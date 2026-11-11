@@ -11,6 +11,7 @@ import { AppDispatch } from '../../../store';
 import { controller } from '../../../../main.tsx';
 import {
     PROJECT_TAG_MAX_LENGTH,
+    PROJECT_TAGS_MAX_COUNT,
     ProjectShort,
     ProjectTag,
 } from '../../../../model/domain.ts';
@@ -19,7 +20,11 @@ import {
     TAG_COLORS,
     defaultTagColor,
     tagKey,
+    toHexColor,
 } from '../projectsFilter.ts';
+
+/** С какого числа проектов в окне появляется поиск по ним */
+const PROJECT_SEARCH_FROM = 8;
 
 /**
  * Создание и правка метки из боковой панели, как в Overleaf: имя, цвет
@@ -41,7 +46,11 @@ export const TagEditModal = (props: {
     const inputRef = useRef<HTMLInputElement>(null);
 
     const [name, setName] = useState(props.tag?.name ?? '');
-    const [color, setColor] = useState<string | null>(props.tag?.color ?? null);
+    // цвет с сервера может быть не hex: приводим, чтобы его образец был отмечен
+    const [color, setColor] = useState<string | null>(
+        props.tag ? (toHexColor(props.tag.color) ?? props.tag.color) : null
+    );
+    const [query, setQuery] = useState('');
     const [selected, setSelected] = useState<Set<string>>(() => {
         if (!props.tag) {
             return new Set(props.preselected ?? []);
@@ -57,6 +66,47 @@ export const TagEditModal = (props: {
     useEffect(() => {
         inputRef.current?.focus();
     }, []);
+
+    // отмеченные при открытии проекты сверху; порядок не прыгает при щелчках
+    const [order] = useState(() => [
+        ...props.projects.filter((p) => selected.has(p.projectId)),
+        ...props.projects.filter((p) => !selected.has(p.projectId)),
+    ]);
+    const hadTag = useMemo(() => {
+        const key = props.tag ? tagKey(props.tag.name) : null;
+        return new Set(
+            props.projects
+                .filter(
+                    (p) =>
+                        key !== null &&
+                        p.tags?.some((t) => tagKey(t.name) === key)
+                )
+                .map((p) => p.projectId)
+        );
+    }, [props.projects, props.tag]);
+    const visibleProjects = order.filter(
+        (p) =>
+            !query.trim() ||
+            p.title
+                .toLocaleLowerCase()
+                .includes(query.trim().toLocaleLowerCase())
+    );
+    const limitText = dictionary.projects.tags_modal.limit.replace(
+        '${max}',
+        () => `${PROJECT_TAGS_MAX_COUNT}`
+    );
+    /** Новую метку не поставить туда, где меток уже предел */
+    const isFull = (project: ProjectShort) =>
+        !hadTag.has(project.projectId) &&
+        (project.tags?.length ?? 0) >= PROJECT_TAGS_MAX_COUNT;
+
+    // цвет метки не из палитры показываем отдельным образцом в начале
+    const palette = useMemo(() => {
+        const current = props.tag ? toHexColor(props.tag.color) : null;
+        return current && !(TAG_COLORS as readonly string[]).includes(current)
+            ? [current, ...TAG_COLORS]
+            : [...TAG_COLORS];
+    }, [props.tag]);
 
     const effectiveColor = color ?? defaultTagColor(name);
     const takenBy = useMemo(() => {
@@ -125,7 +175,7 @@ export const TagEditModal = (props: {
             <div className="tag-edit-modal__field">
                 <span className="tag-edit-modal__label">{texts.tag_color}</span>
                 <div className="tag-edit-modal__colors" role="radiogroup">
-                    {TAG_COLORS.map((swatch) => (
+                    {palette.map((swatch) => (
                         <button
                             key={swatch}
                             type="button"
@@ -150,20 +200,47 @@ export const TagEditModal = (props: {
                         {selected.size}
                     </span>
                 </span>
+                {props.projects.length >= PROJECT_SEARCH_FROM ? (
+                    <input
+                        className="tag-edit-modal__search"
+                        type="search"
+                        value={query}
+                        placeholder={dictionary.projects.search_placeholder}
+                        aria-label={dictionary.projects.search_placeholder}
+                        onChange={(e) => setQuery(e.target.value)}
+                    />
+                ) : null}
                 <div className="tag-edit-modal__projects">
-                    {props.projects.map((project) => (
-                        <label
-                            key={project.projectId}
-                            className="tag-edit-modal__project"
-                        >
-                            <input
-                                type="checkbox"
-                                checked={selected.has(project.projectId)}
-                                onChange={() => toggle(project.projectId)}
-                            />
-                            <span>{project.title}</span>
-                        </label>
-                    ))}
+                    {visibleProjects.map((project) => {
+                        const full =
+                            isFull(project) && !selected.has(project.projectId);
+                        return (
+                            <label
+                                key={project.projectId}
+                                className={classNames(
+                                    'tag-edit-modal__project',
+                                    {
+                                        'tag-edit-modal__project--disabled':
+                                            full,
+                                    }
+                                )}
+                                title={full ? limitText : project.title}
+                            >
+                                <input
+                                    type="checkbox"
+                                    checked={selected.has(project.projectId)}
+                                    disabled={full}
+                                    onChange={() => toggle(project.projectId)}
+                                />
+                                <span>{project.title}</span>
+                            </label>
+                        );
+                    })}
+                    {!visibleProjects.length ? (
+                        <span className="tag-edit-modal__empty">
+                            {dictionary.projects.no_matches}
+                        </span>
+                    ) : null}
                 </div>
                 {!selected.size ? (
                     <span className="tag-edit-modal__hint">

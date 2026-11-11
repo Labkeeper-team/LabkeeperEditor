@@ -80,6 +80,12 @@ export const ProjectsPage = () => {
     const [deleteTarget, setDeleteTarget] = useState<ProjectShort | null>(null);
     const [tagsTargetId, setTagsTargetId] = useState<string | null>(null);
     const [renamingId, setRenamingId] = useState<string | null>(null);
+    /**
+     * Шло ли переименование, когда человек нажал кнопку мыши. Нажатие мимо
+     * поля сначала завершает переименование (blur), и к щелчку renamingId уже
+     * пуст; без этой отметки тот же щелчок открыл бы проект
+     */
+    const pressedWhileRenaming = useRef(false);
     // окно метки из боковой панели: {} создаёт новую, { tag } правит её
     const [tagEdit, setTagEdit] = useState<{ tag?: ProjectTag } | null>(null);
     const [tagToDelete, setTagToDelete] = useState<ProjectTag | null>(null);
@@ -295,8 +301,9 @@ export const ProjectsPage = () => {
             if (!projectId || (e.button !== 0 && e.button !== 1)) {
                 return;
             }
-            // пока проект переименовывают, щелчок по строке его не открывает
-            if (renamingId === projectId) {
+            // щелчок, которым закончили переименование, проект не открывает
+            if (pressedWhileRenaming.current || renamingId === projectId) {
+                pressedWhileRenaming.current = false;
                 return;
             }
             const inNewTab = e.button === 1 || e.ctrlKey || e.metaKey;
@@ -539,7 +546,7 @@ export const ProjectsPage = () => {
                 <Button
                     classname="add-project-button"
                     rounded
-                    color="gray"
+                    color="blue"
                     title={texts.add}
                     minimize={false}
                     titleIcon={() => <PlusIcon />}
@@ -640,22 +647,23 @@ export const ProjectsPage = () => {
             </div>
         ) : null;
 
-    const summary = filterActive ? (
-        <div className="projects-summary">
-            <span>
-                {texts.shown
-                    .replace('${shown}', `${visibleProjects.length}`)
-                    .replace('${total}', `${projects.length}`)}
-            </span>
-            <button
-                type="button"
-                className="projects-link-button"
-                onClick={resetFilters}
-            >
-                {texts.reset_filters}
-            </button>
-        </div>
-    ) : null;
+    const summary =
+        filterActive && visibleProjects.length ? (
+            <div className="projects-summary">
+                <span>
+                    {texts.shown
+                        .replace('${shown}', `${visibleProjects.length}`)
+                        .replace('${total}', `${projects.length}`)}
+                </span>
+                <button
+                    type="button"
+                    className="projects-link-button"
+                    onClick={resetFilters}
+                >
+                    {texts.reset_filters}
+                </button>
+            </div>
+        ) : null;
 
     const noMatches = (
         <div className="projects-no-matches">
@@ -675,9 +683,11 @@ export const ProjectsPage = () => {
             href={projectHref(project.projectId)}
             project={project}
             tooltipId={tooltipId}
-            editing={renamingId === project.projectId ? true : undefined}
+            editing={renamingId === project.projectId}
             onEditingChange={(editing) => {
-                if (!editing && renamingId === project.projectId) {
+                if (editing) {
+                    setRenamingId(project.projectId);
+                } else if (renamingId === project.projectId) {
                     setRenamingId(null);
                 }
             }}
@@ -841,7 +851,13 @@ export const ProjectsPage = () => {
                             {toolbar}
                             {tagFilter}
                             {summary}
-                            <div className="projects-list-wrapper">
+                            <div
+                                className="projects-list-wrapper"
+                                onPointerDownCapture={() => {
+                                    pressedWhileRenaming.current =
+                                        renamingId !== null;
+                                }}
+                            >
                                 {!visibleProjects.length
                                     ? noMatches
                                     : isMobile
@@ -887,7 +903,7 @@ export const ProjectsPage = () => {
                         <Typography
                             text={texts.sidebar.delete_tag_confirm.replace(
                                 '${name}',
-                                tagToDelete.name
+                                () => tagToDelete.name
                             )}
                             type="h2"
                             color={colors.gray10}

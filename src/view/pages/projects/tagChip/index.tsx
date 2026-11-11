@@ -18,7 +18,9 @@ export const TagChip = (props: {
     removeLabel?: string;
     small?: boolean;
 }) => {
-    const { dot, background, border } = tagColors(props.tag.color);
+    const { dot, background, border, activeBorder, activeText } = tagColors(
+        props.tag.color
+    );
     const stop = (e: MouseEvent) => e.stopPropagation();
     const className = classNames('project-tag', {
         'project-tag--active': props.active,
@@ -27,13 +29,13 @@ export const TagChip = (props: {
     });
     // выбранная метка залита своим цветом, чтобы фильтр было видно сразу
     const style = props.active
-        ? { background: dot, borderColor: dot }
+        ? { background: dot, borderColor: activeBorder, color: activeText }
         : { background, borderColor: border };
     const content = (
         <>
             <span
                 className="project-tag__dot"
-                style={{ background: props.active ? undefined : dot }}
+                style={{ background: props.active ? activeText : dot }}
             />
             <span className="project-tag__name">{props.tag.name}</span>
             {props.count !== undefined ? (

@@ -4,7 +4,6 @@ import { LoaderService } from '../domain/LoaderService.ts';
 import { IdeService } from '../domain/IdeService.ts';
 import { StartupService } from './StartupService.ts';
 import {
-    PROJECT_TAG_MAX_LENGTH,
     PROJECT_TAGS_MAX_COUNT,
     Project,
     ProjectShort,
@@ -35,23 +34,24 @@ const TEMPLATES_MAX_PAGES = 10;
 type ProjectSource = 'empty' | 'template' | 'archive';
 
 /**
- * Метки перед отправкой: без пробелов по краям, без пустых и без повторов
- * имени. Повтор без учёта регистра тоже повтор: «Физика» и «физика» в
- * фильтре списка выглядели бы одной меткой
+ * Метки перед отправкой: без пробелов по краям, без пустых и без точных
+ * повторов имени, как требует сервер. Больше ничего не трогаем: сервер не
+ * ограничивает ни число меток, ни длину имени, ни регистр, и метки, которые
+ * поставили не здесь, при сохранении терять нельзя. Лимиты из интерфейса
+ * действуют только на то, что человек добавляет сам
  */
 export const normalizeProjectTags = (tags: ProjectTag[]): ProjectTag[] => {
     const seen = new Set<string>();
     const result: ProjectTag[] = [];
     for (const tag of tags) {
-        const name = tag.name.trim().slice(0, PROJECT_TAG_MAX_LENGTH);
-        const key = name.toLocaleLowerCase();
-        if (!name || seen.has(key)) {
+        const name = tag.name.trim();
+        if (!name || seen.has(name)) {
             continue;
         }
-        seen.add(key);
+        seen.add(name);
         result.push({ name, color: tag.color });
     }
-    return result.slice(0, PROJECT_TAGS_MAX_COUNT);
+    return result;
 };
 
 /** GH-234: ответы импорта, о которых человеку есть что сказать, кроме «не вышло» */
@@ -162,19 +162,116 @@ export class ProjectsPageService {
     };
 
     /**
+     * Номер последней правки поля проекта (`<id>:tags`, `<id>:public`), пока
+     * она не завершилась. Ответы и откаты более старых правок к списку не
+     * применяются: иначе медленный ответ затёр бы то, что человек уже поменял
+     */
+    private writeVersions = new Map<string, number>();
+    private writeCounter = 0;
+    /** Что сервер точно хранит, пока по полю идут правки: к этому и откатываемся */
+    private confirmed = new Map<string, unknown>();
+    /** Запросы к одному полю идут по очереди, чтобы сервер получил их по порядку */
+    private queues = new Map<string, Promise<unknown>>();
+
+    private enqueue = <T>(key: string, send: () => Promise<T>): Promise<T> => {
+        const previous = this.queues.get(key) ?? Promise.resolve();
+        const request = previous.then(send, send);
+        this.queues.set(key, request);
+        const cleanup = () => {
+            if (this.queues.get(key) === request) {
+                this.queues.delete(key);
+            }
+        };
+        request.then(cleanup, cleanup);
+        return request;
+    };
+
+    /**
+     * Оптимистичная правка: значение в списке меняется сразу, запрос встаёт
+     * в очередь поля. Когда завершается последняя правка, в списке остаётся
+     * то, что сервер принял, или то, что было до неудачных правок
+     */
+    private optimisticWrite = async <T, R extends RequestResult<unknown>>(
+        key: string,
+        current: T,
+        next: T,
+        apply: (value: T) => void,
+        send: () => Promise<R>,
+        accepted: (result: R) => T
+    ): Promise<R> => {
+        if (!this.confirmed.has(key)) {
+            this.confirmed.set(key, current);
+        }
+        const version = ++this.writeCounter;
+        this.writeVersions.set(key, version);
+        apply(next);
+
+        const result = await this.enqueue(key, send);
+        if (result.isOk) {
+            this.confirmed.set(key, accepted(result));
+        }
+        if (this.writeVersions.get(key) === version) {
+            apply(this.confirmed.get(key) as T);
+            this.writeVersions.delete(key);
+            this.confirmed.delete(key);
+        }
+        return result;
+    };
+
+    /**
+     * Новый список с сервера. Поля, по которым ещё идут правки, остаются
+     * локальными: ответ мог уйти раньше, чем сервер их принял
+     */
+    private setProjectsKeepingPending = (projects: ProjectShort[]) => {
+        const repository = this.repository.projectsViewModelRepository;
+        const local = new Map(
+            repository.projects().map((project) => [project.projectId, project])
+        );
+        repository.setProjects(
+            projects.map((project) => {
+                const own = local.get(project.projectId);
+                if (!own) {
+                    return project;
+                }
+                const patch: Partial<ProjectShort> = {};
+                if (this.writeVersions.has(`${project.projectId}:tags`)) {
+                    patch.tags = own.tags;
+                }
+                if (this.writeVersions.has(`${project.projectId}:public`)) {
+                    patch.isPublic = own.isPublic;
+                }
+                return { ...project, ...patch };
+            })
+        );
+    };
+
+    /**
      * Список заново, но без спиннера: страница показывает прежний, пока не
      * придёт новый. Порядок тот же, что у LoaderService.loadProjects
      */
     private refreshProjects = async () => {
         const result = await this.rpi.getAllProjectsRequest();
         if (result.isOk) {
-            this.repository.projectsViewModelRepository.setProjects(
-                [...result.body.projects].reverse()
-            );
+            this.setProjectsKeepingPending([...result.body.projects].reverse());
         } else if (result.isUnauth) {
             this.sessionExpired();
         }
     };
+
+    /** Метки одного проекта: в списке сразу, на сервере по очереди */
+    private writeTags = (
+        projectId: string,
+        before: ProjectTag[],
+        next: ProjectTag[]
+    ) =>
+        this.optimisticWrite(
+            `${projectId}:tags`,
+            before,
+            next,
+            (tags) => this.patchListedProject(projectId, { tags }),
+            () => this.rpi.setProjectTagsRequest(projectId, next),
+            (result) => result.body?.tags ?? next
+        );
 
     /**
      * Метки проекта меняются в списке сразу, а если сервер их не принял,
@@ -187,40 +284,36 @@ export class ProjectsPageService {
         }
         const before = project.tags ?? [];
         const next = normalizeProjectTags(tags);
-        this.patchListedProject(projectId, { tags: next });
-
-        const result = await this.rpi.setProjectTagsRequest(projectId, next);
+        if (sameTags(before, next)) {
+            return;
+        }
+        const result = await this.writeTags(projectId, before, next);
         if (result.isOk) {
             this.track(Events.EVENT_PROJECT_TAGS_CHANGED, {
                 project_id: projectId,
                 tags_count: next.length,
+                source: 'project',
             });
-            this.patchListedProject(projectId, {
-                tags: result.body?.tags ?? next,
-            });
-            return;
-        }
-        this.patchListedProject(projectId, { tags: before });
-        if (result.isUnauth) {
+        } else if (result.isUnauth) {
             this.sessionExpired();
-            return;
+        } else {
+            this.repository.toast(
+                this.repository.dictionary.projects.errors.tags_failed,
+                'error'
+            );
         }
-        this.repository.toast(
-            this.repository.dictionary.projects.errors.tags_failed,
-            'error'
-        );
     };
 
     /**
-     * Меняет метки сразу у многих проектов: в списке сразу, на сервере
-     * отдельным запросом на проект. Проекты, где сервер отказал, получают
-     * прежние метки обратно. transform возвращает null, если проект не меняется
+     * Меняет метки сразу у многих проектов, по запросу на проект. Проекты,
+     * где сервер отказал, получают прежние метки обратно. transform
+     * возвращает null, если проект не меняется. Результат: сколько проектов
+     * сервер принял
      */
     private updateTagsInBulk = async (
         transform: (project: ProjectShort) => ProjectTag[] | null
     ): Promise<number> => {
-        const repository = this.repository.projectsViewModelRepository;
-        const changes = repository
+        const changes = this.repository.projectsViewModelRepository
             .projects()
             .map((project) => {
                 const next = transform(project);
@@ -237,40 +330,27 @@ export class ProjectsPageService {
         if (!changes.length) {
             return 0;
         }
-        const nextById = new Map(changes.map((c) => [c.projectId, c.next]));
-        repository.setProjects(
-            repository
-                .projects()
-                .map((project) =>
-                    nextById.has(project.projectId)
-                        ? { ...project, tags: nextById.get(project.projectId) }
-                        : project
-                )
-        );
-
         const results = await Promise.all(
             changes.map((change) =>
-                this.rpi.setProjectTagsRequest(change.projectId, change.next)
+                this.writeTags(change.projectId, change.before, change.next)
             )
         );
-        const failed = changes.filter((_, i) => !results[i].isOk);
-        failed.forEach((change) =>
-            this.patchListedProject(change.projectId, { tags: change.before })
-        );
+        const failed = results.filter((result) => !result.isOk).length;
         if (results.some((result) => result.isUnauth)) {
             this.sessionExpired();
-        } else if (failed.length) {
+        } else if (failed) {
             this.repository.toast(
                 this.repository.dictionary.projects.errors.tags_failed,
                 'error'
             );
         }
-        return changes.length - failed.length;
+        return changes.length - failed;
     };
 
     /**
      * Создаёт метку или меняет имя, цвет и набор проектов у существующей.
-     * Там, где метка уже была, она остаётся на своём месте среди других
+     * Там, где метка уже была, она остаётся на своём месте среди других.
+     * Проекту, где меток уже предел, новую не добавляем и говорим об этом
      */
     onTagSave = async ({
         previousName,
@@ -287,12 +367,17 @@ export class ProjectsPageService {
             keys.add(nameKey(previousName));
         }
         const owners = new Set(projectIds);
+        let overLimit = 0;
         const changed = await this.updateTagsInBulk((project) => {
             const tags = project.tags ?? [];
             const index = tags.findIndex((tag) => keys.has(nameKey(tag.name)));
             const rest = tags.filter((tag) => !keys.has(nameKey(tag.name)));
             if (!owners.has(project.projectId)) {
                 return rest.length === tags.length ? null : rest;
+            }
+            if (index < 0 && tags.length >= PROJECT_TAGS_MAX_COUNT) {
+                overLimit += 1;
+                return null;
             }
             const position =
                 index < 0
@@ -306,11 +391,22 @@ export class ProjectsPageService {
                 ...rest.slice(position),
             ];
         });
-        this.track(Events.EVENT_PROJECT_TAGS_CHANGED, {
-            source: 'sidebar',
-            action: previousName ? 'edit' : 'create',
-            projects_count: changed,
-        });
+        if (overLimit) {
+            this.repository.toast(
+                this.repository.dictionary.projects.tags_modal.limit.replace(
+                    '${max}',
+                    () => `${PROJECT_TAGS_MAX_COUNT}`
+                ),
+                'error'
+            );
+        }
+        if (changed) {
+            this.track(Events.EVENT_PROJECT_TAGS_CHANGED, {
+                source: 'sidebar',
+                action: previousName ? 'edit' : 'create',
+                projects_count: changed,
+            });
+        }
     };
 
     /** Снимает метку со всех проектов; сами проекты остаются */
@@ -321,11 +417,13 @@ export class ProjectsPageService {
             const rest = tags.filter((tag) => nameKey(tag.name) !== key);
             return rest.length === tags.length ? null : rest;
         });
-        this.track(Events.EVENT_PROJECT_TAGS_CHANGED, {
-            source: 'sidebar',
-            action: 'delete',
-            projects_count: changed,
-        });
+        if (changed) {
+            this.track(Events.EVENT_PROJECT_TAGS_CHANGED, {
+                source: 'sidebar',
+                action: 'delete',
+                projects_count: changed,
+            });
+        }
     };
 
     /** Публичность проекта прямо из списка, без открытия редактора */
@@ -334,15 +432,16 @@ export class ProjectsPageService {
         visible: boolean
     ) => {
         const project = this.listedProject(projectId);
-        if (!project) {
+        if (!project || !!project.isPublic === visible) {
             return;
         }
-        const before = !!project.isPublic;
-        this.patchListedProject(projectId, { isPublic: visible });
-
-        const result = await this.rpi.setProjectVisibilityRequest(
-            projectId,
-            visible
+        const result = await this.optimisticWrite(
+            `${projectId}:public`,
+            !!project.isPublic,
+            visible,
+            (isPublic) => this.patchListedProject(projectId, { isPublic }),
+            () => this.rpi.setProjectVisibilityRequest(projectId, visible),
+            () => visible
         );
         if (result.isOk) {
             this.track(Events.EVENT_PROJECT_VISIBILITY_CHANGED, {
@@ -357,17 +456,14 @@ export class ProjectsPageService {
                     isPublic: visible,
                 });
             }
-            return;
-        }
-        this.patchListedProject(projectId, { isPublic: before });
-        if (result.isUnauth) {
+        } else if (result.isUnauth) {
             this.sessionExpired();
-            return;
+        } else {
+            this.repository.toast(
+                this.repository.dictionary.projects.errors.visibility_failed,
+                'error'
+            );
         }
-        this.repository.toast(
-            this.repository.dictionary.projects.errors.visibility_failed,
-            'error'
-        );
     };
 
     /** Копия проекта появляется в списке, а человек остаётся на странице */
@@ -397,7 +493,10 @@ export class ProjectsPageService {
         );
     };
 
-    /** Архив проекта, как «Экспорт» в редакторе, но не открывая проект */
+    /**
+     * Архив проекта, как «Экспорт» в редакторе, но не открывая проект. О
+     * понятных отказах говорим теми же словами, что и редактор
+     */
     onDownloadProject = async (projectId: string) => {
         const project = this.listedProject(projectId);
         if (!project) {
@@ -421,38 +520,31 @@ export class ProjectsPageService {
             this.sessionExpired();
             return;
         }
+        const dictionary = this.repository.dictionary;
+        const messages: Partial<Record<number, string>> = {
+            203: dictionary.project_export.program_errors,
+            402: dictionary.prompt_modal.errors.payment_required,
+            403: dictionary.filemanager.errors.notEnoughRights,
+            404: dictionary.filemanager.errors.notFound,
+            423: dictionary.synctex.errors.locked,
+        };
+        if (result.code === 402) {
+            this.track(Events.EVENT_PAYMENT_REQUIRED, { source: 'export' });
+        }
         this.repository.toast(
-            this.repository.dictionary.projects.errors.download_failed,
+            messages[result.code] ?? dictionary.projects.errors.download_failed,
             'error'
         );
     };
 
     onDeleteProject = async (projectId: string, okCallback: () => void) => {
-        const result1 = await this.rpi.deleteProjectRequest(projectId);
-        if (result1.isOk) {
+        const result = await this.rpi.deleteProjectRequest(projectId);
+        if (result.isOk) {
             this.track(Events.EVENT_PROJECT_DELETED, { project_id: projectId });
             okCallback();
-            const result2 = await this.rpi.getAllProjectsRequest();
-            if (result2.isOk) {
-                this.repository.projectsViewModelRepository.setProjects(
-                    (result2.body as { projects: Array<Project> }).projects
-                );
-            }
-            if (result2.isUnauth) {
-                this.repository.toast(
-                    this.repository.dictionary.filemanager.errors
-                        .sessionExpired,
-                    'error'
-                );
-                this.ideService.resetEditor();
-            }
-        }
-        if (result1.isUnauth) {
-            this.repository.toast(
-                this.repository.dictionary.filemanager.errors.sessionExpired,
-                'error'
-            );
-            this.ideService.resetEditor();
+            await this.refreshProjects();
+        } else if (result.isUnauth) {
+            this.sessionExpired();
         }
     };
 
