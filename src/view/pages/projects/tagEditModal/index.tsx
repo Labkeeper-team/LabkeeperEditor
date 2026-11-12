@@ -20,6 +20,7 @@ import {
     TAG_COLORS,
     defaultTagColor,
     tagKey,
+    tagColorName,
 } from '../../../../viewModel/domain/projectsFilter.ts';
 import { toHexColor } from '../tagColors.ts';
 
@@ -177,14 +178,22 @@ export const TagEditModal = (props: {
 
             <div className="tag-edit-modal__field">
                 <span className="tag-edit-modal__label">{texts.tag_color}</span>
-                <div className="tag-edit-modal__colors" role="radiogroup">
+                <div
+                    className="tag-edit-modal__colors"
+                    role="radiogroup"
+                    aria-label={texts.tag_color}
+                >
                     {palette.map((swatch) => (
                         <button
                             key={swatch}
                             type="button"
                             role="radio"
                             aria-checked={swatch === shownColor}
-                            aria-label={swatch}
+                            aria-label={
+                                texts.tag_color_names[
+                                    tagColorName(swatch) ?? 'own'
+                                ]
+                            }
                             className={classNames('tag-edit-modal__swatch', {
                                 'tag-edit-modal__swatch--active':
                                     swatch === shownColor,

@@ -49,6 +49,18 @@ export interface KnownTag extends ProjectTag {
  * Цвета меток. Подобраны так, чтобы тёмный текст читался на их светлом
  * фоне, а сами точки различались между собой
  */
+/** Имена образцов по порядку TAG_COLORS: по ним подписи для экранного диктора */
+export const TAG_COLOR_NAMES = [
+    'blue',
+    'green',
+    'yellow',
+    'red',
+    'purple',
+    'teal',
+    'orange',
+    'gray',
+] as const;
+
 export const TAG_COLORS = [
     '#4469e0',
     '#1ca852',
@@ -59,6 +71,16 @@ export const TAG_COLORS = [
     '#e67e22',
     '#8c98b0',
 ] as const;
+
+/** Имя образца палитры или null, если цвет не из неё */
+export const tagColorName = (
+    color: string
+): (typeof TAG_COLOR_NAMES)[number] | null => {
+    const index = (TAG_COLORS as readonly string[]).indexOf(
+        color.toLowerCase()
+    );
+    return index < 0 ? null : TAG_COLOR_NAMES[index];
+};
 
 export const tagKey = (name: string) => name.trim().toLocaleLowerCase();
 
