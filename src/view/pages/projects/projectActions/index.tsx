@@ -28,6 +28,29 @@ const MENU_GAP = 4;
 const VIEWPORT_GAP = 8;
 
 /**
+ * Щелчок мимо открытого меню только закрывает его. Меню закрывается на
+ * pointerdown, а click того же нажатия иначе дошёл бы до строки под курсором
+ * и открыл чужой проект (в боковой панели выбрал бы соседнюю метку). Глотаем
+ * ровно этот click: после отпускания кнопки страховка снимается
+ */
+function swallowClickOfThisPress(): void {
+    const swallow = (event: Event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        release();
+    };
+    const releaseAfterRelease = () => window.setTimeout(release, 0);
+    function release() {
+        document.removeEventListener('click', swallow, true);
+        document.removeEventListener('auxclick', swallow, true);
+        document.removeEventListener('pointerup', releaseAfterRelease, true);
+    }
+    document.addEventListener('click', swallow, true);
+    document.addEventListener('auxclick', swallow, true);
+    document.addEventListener('pointerup', releaseAfterRelease, true);
+}
+
+/**
  * Кнопка «⋯» в строке проекта и её меню. Меню рисуется поверх страницы
  * в document.body: список проектов прокручивается и обрезал бы его.
  * Щелчки по кнопке и меню до строки не доходят, иначе открылся бы проект
@@ -89,6 +112,7 @@ export const ProjectActions = (props: {
             ) {
                 return;
             }
+            swallowClickOfThisPress();
             close();
         };
         // меню стоит на месте, а строка уезжает: проще закрыть
