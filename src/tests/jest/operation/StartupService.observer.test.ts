@@ -9,6 +9,7 @@ jest.mock('@sentry/react', () => ({
 }));
 
 import * as Sentry from '@sentry/react';
+import { Events, States } from '../../../model/service/ObserverService.ts';
 import {
     mockAuthenticatedStartup,
     mockContext,
@@ -77,4 +78,60 @@ test('analytics-starts-as-a-guest-when-user-info-did-not-answer', async () => {
     expect(observerService.init).toHaveBeenCalledTimes(1);
     expect(observerService.init).toHaveBeenCalledWith(undefined);
     expect(rpi.getDefaultProjectRequest).not.toHaveBeenCalled();
+});
+
+// GH-250: язык уходит в аналитику с начала сессии и при каждой смене
+test('analytics-learns-the-language-before-the-session-starts', async () => {
+    const { startupService, rpi, repository, observerService } = mockContext();
+    mockAuthenticatedStartup(rpi);
+    repository.persistenceViewModelRepository.setLanguage('zh');
+    const calls: string[] = [];
+    observerService.setUserState = jest.fn((name: string, value: string) => {
+        calls.push(`${name}=${value}`);
+    });
+    observerService.init = jest.fn(() => {
+        calls.push('init');
+    });
+
+    await startupService.onAppStartup();
+
+    expect(calls.indexOf(`${States.STATE_LANGUAGE}=zh`)).toBeGreaterThanOrEqual(
+        0
+    );
+    expect(calls.indexOf(`${States.STATE_LANGUAGE}=zh`)).toBeLessThan(
+        calls.indexOf('init')
+    );
+});
+
+test('a-selected-language-is-tracked-saved-and-carried-by-analytics', () => {
+    const { startupService, repository, observerService } = mockContext();
+    repository.persistenceViewModelRepository.setLanguage('ru');
+    const events: { event: string; properties?: unknown }[] = [];
+    observerService.onEvent = (event: string, properties?: unknown) =>
+        events.push({ event, properties });
+    observerService.setUserState = jest.fn();
+
+    startupService.onLanguageSelected('en');
+
+    expect(repository.persistenceViewModelRepository.language()).toBe('en');
+    expect(events).toContainEqual({
+        event: Events.EVENT_LANGUAGE_CHANGED,
+        properties: expect.objectContaining({ from: 'ru', to: 'en' }),
+    });
+    expect(observerService.setUserState).toHaveBeenCalledWith(
+        States.STATE_LANGUAGE,
+        'en'
+    );
+});
+
+test('selecting-the-current-language-sends-nothing', () => {
+    const { startupService, repository, observerService } = mockContext();
+    repository.persistenceViewModelRepository.setLanguage('en');
+    observerService.onEvent = jest.fn();
+    observerService.setUserState = jest.fn();
+
+    startupService.onLanguageSelected('en');
+
+    expect(observerService.onEvent).not.toHaveBeenCalled();
+    expect(observerService.setUserState).not.toHaveBeenCalled();
 });

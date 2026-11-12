@@ -19,6 +19,7 @@ import { logBreadcrumb } from '../utils/logBreadcrumb.ts';
 import { reportToSentry } from '../utils/reportUnexpectedError.ts';
 import { trackEvent } from '../utils/observerContext.ts';
 import { AGENT_MODE_SUFFIX } from '../utils/agentModePath.ts';
+import type { Language } from '../dictionaries';
 
 const qrPagePattern = /\/qr\/v\d+/i;
 const projectPagePattern = /\/project\/\S+/i;
@@ -108,6 +109,11 @@ export class StartupService {
         open?: OpenParams,
         query: StartupQuery = {}
     ): Promise<void> => {
+        // до первого события сессии: язык должен прийти уже с её стартом
+        this.observerService.setUserState(
+            States.STATE_LANGUAGE,
+            this.repository.persistenceViewModelRepository.language()
+        );
         // Открываем то, с чем пришли на страницу. Пока ждём user-info, человек
         // мог уйти дальше по приложению, например создать проект: тот уже
         // открыт и собирается, и по новому адресу его открыли бы второй раз
@@ -233,6 +239,18 @@ export class StartupService {
         if (compileQuery) {
             await this.projectPageService?.runAutomatically('example');
         }
+    };
+
+    /** Язык выбран в шапке или меню: аналитика узнаёт и о смене, и о новом языке сессии */
+    onLanguageSelected = (language: Language): void => {
+        const persistence = this.repository.persistenceViewModelRepository;
+        const from = persistence.language();
+        if (from === language) {
+            return;
+        }
+        this.track(Events.EVENT_LANGUAGE_CHANGED, { from, to: language });
+        persistence.setLanguage(language);
+        this.observerService.setUserState(States.STATE_LANGUAGE, language);
     };
 
     // аналитику не ждём: её сеть стояла ровно между «узнали пользователя» и открытием проекта

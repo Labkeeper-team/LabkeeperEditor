@@ -5,6 +5,7 @@ import {
     OPENPANEL_EVENT_NAMES,
     ObserverEventProperties,
     ObserverService,
+    States,
 } from '../../model/service/ObserverService.ts';
 import { logBreadcrumb } from '../../viewModel/utils/logBreadcrumb.ts';
 import { reportToSentry } from '../../viewModel/utils/reportUnexpectedError.ts';
@@ -99,7 +100,21 @@ export class OpenPanelService implements ObserverService {
         });
     }
 
-    setUserState() {}
+    /**
+     * GH-250: язык уходит общим свойством, и его несёт каждое следующее событие
+     * редактора, начиная с Session started, а через identify и профиль. Прочее
+     * состояние пользователя (почта, id) в OpenPanel не нужно: профиль у него свой
+     */
+    setUserState(name: string, value: string) {
+        if (
+            name !== States.STATE_LANGUAGE ||
+            !this.ensureClient() ||
+            !this.op
+        ) {
+            return;
+        }
+        this.op.setGlobalProperties({ language: value });
+    }
 
     trackSentryEvent(event: SentryEvent) {
         if (!this.ensureClient() || !this.op) {
