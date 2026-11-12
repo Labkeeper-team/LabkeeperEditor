@@ -370,22 +370,30 @@ export class ProjectsPageService {
 
     /**
      * Метки проекта меняются в списке сразу, а если сервер их не принял,
-     * возвращаются прежние
+     * возвращаются прежние. opened это метки, которые окно показало при
+     * открытии: правка считается от них, а не от списка в момент сохранения.
+     * Иначе отказ, пришедший, пока окно было открыто, тихо уходил бы на
+     * сервер повторно со следующим «Сохранить»
      */
-    onProjectTagsChange = async (projectId: string, tags: ProjectTag[]) => {
+    onProjectTagsChange = async (
+        projectId: string,
+        tags: ProjectTag[],
+        opened?: ProjectTag[]
+    ) => {
         const project = this.listedProject(projectId);
         if (!project) {
             return;
         }
         const before = project.tags ?? [];
+        const from = normalizeProjectTags(opened ?? before);
         const next = normalizeProjectTags(tags);
-        if (sameTags(before, next)) {
+        if (sameTags(from, next)) {
             return;
         }
         const { result, lost } = await this.writeTags(
             projectId,
             before,
-            tagsChange(before, next)
+            tagsChange(from, next)
         );
         // проект удалили, пока метки сохранялись: жаловаться не на что
         // при отказе сессии говорим только о ней
