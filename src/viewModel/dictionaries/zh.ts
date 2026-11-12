@@ -172,10 +172,12 @@ export const zh: Translations = {
     projects: {
         label: '\u9879\u76EE',
         title: '\u540D\u79F0',
-        last_modified: '\u6700\u540E\u4FEE\u6539',
+        last_modified: '\u4FEE\u6539\u65F6\u95F4',
         add: '\u6DFB\u52A0',
         search_placeholder: '\u6309\u540D\u79F0\u6216\u6807\u7B7E\u641C\u7D22',
         created: '\u521B\u5EFA\u65F6\u95F4',
+        sort_az: '\u4ECE A \u5230 Z',
+        sort_za: '\u4ECE Z \u5230 A',
         type: '\u7C7B\u578B',
         access: '\u8BBF\u95EE\u6743\u9650',
         public: '\u516C\u5F00',

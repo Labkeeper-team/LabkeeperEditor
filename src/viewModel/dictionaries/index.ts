@@ -164,6 +164,9 @@ export interface Translations {
         add: string;
         search_placeholder: string;
         created: string;
+        /** Сортировка по названию в списке, например «Название, от А до Я» */
+        sort_az: string;
+        sort_za: string;
         type: string;
         access: string;
         public: string;
