@@ -299,6 +299,25 @@ test('меню проекта делает его публичным и копи
     await expect(page).toHaveURL(/\/projects$/);
 });
 
+// щелчок мимо открытого меню только закрывает его, а не открывает проект под курсором
+test('щелчок мимо меню проекта закрывает меню и не открывает другой проект', async ({
+    page,
+}) => {
+    await openProjects(page);
+    const rows = page.locator('tbody tr');
+    await rows.first().hover();
+    await rows.first().getByRole('button', { name: 'Project actions' }).click();
+    await expect(page.getByRole('menu')).toBeVisible();
+
+    await rows.nth(1).locator('.project-title-text').click();
+
+    await expect(page.getByRole('menu')).toHaveCount(0);
+    await expect(page).toHaveURL(/\/projects$/);
+    // следующий щелчок по строке уже обычный
+    await rows.nth(1).locator('.project-title-text').click();
+    await expect(page).toHaveURL(/\/project\/00000000-/);
+});
+
 test('переименование из меню проекта', async ({ page }) => {
     await openProjects(page);
     let renamedTo = '';
