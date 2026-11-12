@@ -14,6 +14,7 @@ const READ_ONLY_TOOLS = new Set<string>([
     'read_segments',
     'search_segments',
     'read_file',
+    'read_text_from_image',
     'done',
 ] satisfies AgentToolName[]);
 

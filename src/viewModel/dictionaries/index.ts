@@ -370,6 +370,7 @@ export interface Translations {
             read_segments: string;
             search_segments: string;
             read_file: string;
+            read_text_from_image: string;
             done: string;
             unknown_tool: string;
         };

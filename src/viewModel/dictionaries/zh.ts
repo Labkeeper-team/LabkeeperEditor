@@ -423,6 +423,8 @@ export const zh: Translations = {
             read_segments: '\u6B63\u5728\u8BFB\u53D6\u7247\u6BB5',
             search_segments: '\u6B63\u5728\u641C\u7D22\u7247\u6BB5',
             read_file: '\u6B63\u5728\u8BFB\u53D6\u6587\u4EF6',
+            read_text_from_image:
+                '\u6B63\u5728\u8BC6\u522B\u56FE\u7247\u4E2D\u7684\u6587\u5B57',
             done: '\u5373\u5C06\u5B8C\u6210',
             unknown_tool:
                 '\u667A\u80FD\u4F53\u6267\u884C\u4E86\u4E00\u9879\u64CD\u4F5C',
