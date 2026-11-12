@@ -579,6 +579,12 @@ export interface Translations {
         personalDataPolicyLink: string;
         personalDataAgreementAnd: string;
         personalDataConsentLink: string;
+        captcha: {
+            loadFailed: string;
+            reloadCaptcha: string;
+            reloadPage: string;
+            expired: string;
+        };
         views: {
             email: string;
             code: string;

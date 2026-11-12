@@ -709,6 +709,15 @@ export const zh: Translations = {
         personalDataAgreementAnd: '\u548C',
         personalDataConsentLink:
             '\u4E2A\u4EBA\u6570\u636E\u5904\u7406\u540C\u610F\u4E66',
+        // GH-253: капча не загрузилась или её проверка устарела
+        captcha: {
+            loadFailed:
+                '\u4EBA\u673A\u9A8C\u8BC1\u672A\u80FD\u52A0\u8F7D\u3002\u8BF7\u5173\u95ED\u5E7F\u544A\u62E6\u622A\u5668\u6216 VPN \u540E\u91CD\u8BD5',
+            reloadCaptcha: '\u91CD\u65B0\u52A0\u8F7D\u4EBA\u673A\u9A8C\u8BC1',
+            reloadPage: '\u5237\u65B0\u9875\u9762',
+            expired:
+                '\u4EBA\u673A\u9A8C\u8BC1\u5DF2\u8FC7\u671F\uFF0C\u8BF7\u91CD\u65B0\u5B8C\u6210\u9A8C\u8BC1',
+        },
         views: {
             email: '\u8F93\u5165\u4F60\u7684\u90AE\u7BB1',
             code: '\u8F93\u5165\u9A8C\u8BC1\u7801',

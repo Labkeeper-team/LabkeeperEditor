@@ -38,6 +38,8 @@ export const Events = {
     EVENT_AUTH_PASSWORD_SET: 'auth_password_set',
     EVENT_LOGOUT_CONFIRMED: 'logout_confirmed',
     EVENT_PRIVACY_POLICY_ACCEPTED: 'privacy_policy_accepted',
+    // GH-253: SmartCaptcha не загрузилась, причина в параметре reason
+    EVENT_CAPTCHA_FAILED: 'captcha_failed',
 
     EVENT_CREATE_PROJECT_CLICKED: 'create_project_clicked',
     EVENT_PROJECT_CREATE_FAILED: 'project_create_failed',
@@ -177,6 +179,7 @@ export const OPENPANEL_EVENT_NAMES: Record<string, string> = {
     [Events.EVENT_AUTH_PASSWORD_SET]: 'Auth password set',
     [Events.EVENT_LOGOUT_CONFIRMED]: 'Logout confirmed',
     [Events.EVENT_PRIVACY_POLICY_ACCEPTED]: 'Privacy policy accepted',
+    [Events.EVENT_CAPTCHA_FAILED]: 'Captcha failed',
     [Events.EVENT_CREATE_PROJECT_CLICKED]: 'Create project clicked',
     [Events.EVENT_PROJECT_CREATE_FAILED]: 'Project create failed',
     [Events.EVENT_PROJECT_OPENED]: 'Project opened',
