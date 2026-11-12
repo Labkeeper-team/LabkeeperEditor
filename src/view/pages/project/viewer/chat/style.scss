@@ -147,6 +147,60 @@
     }
 }
 
+.agent-files__item {
+    position: relative;
+    display: flex;
+    min-width: 0;
+
+    .agent-files__file {
+        flex: 1;
+        // место под крестик, чтобы имя не уходило под него
+        padding-right: 26px;
+    }
+}
+
+// GH-244: крестик удаления появляется у файла при наведении и фокусе
+.agent-files__delete {
+    position: absolute;
+    top: 50%;
+    right: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: $gray-50;
+    color: $gray-20;
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(-50%);
+    transition: opacity 0.15s;
+
+    &:hover:not(:disabled) {
+        background: $red-20;
+        color: $red-10;
+    }
+
+    &:disabled {
+        cursor: default;
+    }
+}
+
+.agent-files__item:hover .agent-files__delete:not(:disabled),
+.agent-files__item:focus-within .agent-files__delete:not(:disabled) {
+    opacity: 1;
+}
+
+// на сенсорном экране наведения нет: крестик виден всегда
+@media (hover: none) {
+    .agent-files__delete:not(:disabled) {
+        opacity: 1;
+    }
+}
+
 .agent-files__file-name {
     overflow: hidden;
     text-overflow: ellipsis;

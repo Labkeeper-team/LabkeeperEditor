@@ -71,9 +71,49 @@ async function openAgentMode(
             await route.fulfill({ status: 201, body: '"/files/x"' });
         }
     );
+    const deletes: string[] = [];
+    await page.route(
+        `**/api/v4/public/project/${uuid}/file/delete**`,
+        async (route) => {
+            const name =
+                new URL(route.request().url()).searchParams.get('name') ?? '';
+            deletes.push(name);
+            current.splice(
+                current.findIndex((file) => file.fileName === name),
+                1
+            );
+            await route.fulfill({ status: 200, body: '' });
+        }
+    );
     await page.goto(path);
     await page.waitForLoadState('domcontentloaded');
-    return { uploads: () => [...uploads] };
+    return { uploads: () => [...uploads], deletes: () => [...deletes] };
+}
+
+/** Ctrl+V в поле запроса: в буфере файлы и, может быть, текст */
+async function pasteIntoPrompt(
+    page: Page,
+    clipboard: { files: { name: string; type: string }[]; text?: string }
+) {
+    await promptField(page).focus();
+    await page.evaluate(({ files, text }) => {
+        const data = new DataTransfer();
+        for (const file of files) {
+            data.items.add(
+                new File(['content'], file.name, { type: file.type })
+            );
+        }
+        if (text) {
+            data.setData('text/plain', text);
+        }
+        document.activeElement?.dispatchEvent(
+            new ClipboardEvent('paste', {
+                clipboardData: data,
+                bubbles: true,
+                cancelable: true,
+            })
+        );
+    }, clipboard);
 }
 
 const dropZone = (page: Page) => page.locator('.agent-files__drop');
@@ -111,7 +151,7 @@ test('в пустом чате пунктирная зона загрузки н
     await openAgentMode(page);
 
     await expect(dropZone(page)).toBeVisible();
-    await expect(dropZone(page)).toContainText('Drag a file here');
+    await expect(dropZone(page)).toContainText('Drag or paste a file here');
     await expect(dropZone(page)).toContainText(
         'or click to add it to the document'
     );
@@ -222,6 +262,94 @@ for (const [name, mimeType] of [
         await expect.poll(() => promptText(page)).toBe(mention(name));
     });
 }
+
+// GH-244: файл из буфера обмена загружается так же, как выбранный
+test('снимок экрана из буфера загружается по Ctrl+V и агента просят его вставить', async ({
+    page,
+}) => {
+    const { uploads } = await openAgentMode(page);
+
+    await pasteIntoPrompt(page, {
+        files: [{ name: 'image.png', type: 'image/png' }],
+    });
+
+    await expect.poll(uploads).toEqual(['image.png']);
+    await expect.poll(() => promptText(page)).toBe(mention('image.png'));
+    await expect(fileChips(page)).toHaveText(['image.png']);
+});
+
+test('файл из Finder приходит со своим именем в тексте и тоже загружается', async ({
+    page,
+}) => {
+    const { uploads } = await openAgentMode(page);
+
+    await pasteIntoPrompt(page, {
+        files: [{ name: 'report.pdf', type: 'application/pdf' }],
+        text: 'report.pdf',
+    });
+
+    await expect.poll(uploads).toEqual(['report.pdf']);
+});
+
+// таблица из Excel кладёт в буфер и текст, и свою картинку: вставляют текст
+test('текст из буфера с картинкой рядом файл не загружает', async ({
+    page,
+}) => {
+    const { uploads } = await openAgentMode(page);
+
+    await pasteIntoPrompt(page, {
+        files: [{ name: 'image.png', type: 'image/png' }],
+        text: 'x\ty\n1\t2',
+    });
+
+    // загрузка ушла бы сразу: даём ей время и проверяем, что её не было
+    await page.waitForTimeout(500);
+    expect(uploads()).toEqual([]);
+});
+
+// GH-244: крестик у файла удаляет его через то же подтверждение, что и в редакторе
+test('крестик у файла удаляет его после подтверждения', async ({ page }) => {
+    const { deletes } = await openAgentMode(page, {
+        files: [{ fileName: 'data.csv' }, { fileName: 'plot.png' }],
+    });
+    const deleteData = page.getByRole('button', {
+        name: 'Delete the file data.csv',
+    });
+    await expect(deleteData).toHaveCSS('opacity', '0');
+
+    await fileChips(page).first().hover();
+    await expect(deleteData).toHaveCSS('opacity', '1');
+    await deleteData.click();
+
+    const confirm = page.locator('.delete-files-modal');
+    await expect(confirm).toContainText('data.csv');
+    expect(deletes()).toEqual([]);
+    await confirm.getByRole('button', { name: 'Yes' }).click();
+
+    await expect.poll(deletes).toEqual(['data.csv']);
+    await expect(fileChips(page)).toHaveText(['plot.png']);
+    // клик по крестику не дописывает файл в запрос
+    expect(await promptText(page)).toBe('');
+});
+
+test('крестик без подтверждения файл не удаляет', async ({ page }) => {
+    const { deletes } = await openAgentMode(page, {
+        files: [{ fileName: 'data.csv' }],
+    });
+
+    await fileChips(page).first().hover();
+    await page
+        .getByRole('button', { name: 'Delete the file data.csv' })
+        .click();
+    await page
+        .locator('.delete-files-modal')
+        .getByRole('button', { name: 'No' })
+        .click();
+
+    await expect(page.locator('.delete-files-modal')).toHaveCount(0);
+    expect(deletes()).toEqual([]);
+    await expect(fileChips(page)).toHaveText(['data.csv']);
+});
 
 test('текстовый файл загружается, но в запрос не дописывается', async ({
     page,
@@ -432,8 +560,12 @@ test.describe('по-русски', () => {
         await expect(page.locator('.viewer-header__title')).toHaveText(
             'Итоговый документ'
         );
-        await expect(dropZone(page)).toContainText('Перетащите файл сюда');
-        await page.getByRole('button', { name: 'data.csv' }).click();
+        await expect(dropZone(page)).toContainText(
+            'Перетащите или вставьте файл сюда'
+        );
+        await page
+            .getByRole('button', { name: 'data.csv', exact: true })
+            .click();
         await expect
             .poll(() =>
                 page

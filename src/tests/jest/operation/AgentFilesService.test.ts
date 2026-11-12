@@ -181,3 +181,46 @@ test('agent-files-click-on-a-file-appends-the-request', async () => {
         expect.objectContaining({ extension: 'png' })
     );
 });
+
+// GH-244: файл из буфера обмена загружается тем же путём, что и выбранный
+test('agent-files-paste-is-counted-as-its-own-method', async () => {
+    const { agentFilesService, rpi, onEvent } = await setup();
+
+    await agentFilesService.onFilesAdded(
+        [fileOf('image.png', 'image/png')],
+        'paste'
+    );
+
+    expect(rpi.uploadFileRequest).toHaveBeenCalledTimes(1);
+    expect(onEvent).toHaveBeenCalledWith(
+        Events.EVENT_FILE_UPLOADED,
+        expect.objectContaining({ method: 'paste', source: 'agent_chat' })
+    );
+});
+
+// GH-244: крестик у файла ведёт в окно подтверждения, а не удаляет сразу
+test('agent-files-delete-asks-for-confirmation-first', async () => {
+    const { agentFilesService, repository, rpi } = await setup();
+    const file = { fileName: 'data.csv', url: '/files/data.csv' };
+    repository.projectViewModelRepository.setFiles([
+        file,
+        { fileName: 'plot.png', url: '/files/plot.png' },
+    ] as never);
+    rpi.deleteFileRequest = jest.fn();
+
+    agentFilesService.onFileDeleteClicked('data.csv');
+
+    expect(repository.settingsViewModelRepository.filesToDelete()).toEqual([
+        file,
+    ]);
+    expect(rpi.deleteFileRequest).not.toHaveBeenCalled();
+});
+
+test('agent-files-delete-of-a-missing-file-does-nothing', async () => {
+    const { agentFilesService, repository } = await setup();
+    repository.projectViewModelRepository.setFiles([]);
+
+    agentFilesService.onFileDeleteClicked('gone.csv');
+
+    expect(repository.settingsViewModelRepository.filesToDelete()).toEqual([]);
+});

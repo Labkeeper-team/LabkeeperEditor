@@ -17,6 +17,9 @@ import {
 } from '../../model/service/ObserverService.ts';
 import { fileExtension, trackEvent } from '../utils/observerContext.ts';
 
+/** Как файл попал в проект: выбор в окне, бросок или вставка из буфера (GH-244) */
+export type FileUploadMethod = 'picker' | 'drop' | 'paste';
+
 export class FileManagerService {
     repository: ViewModelRepository;
     rpi: Rpi;
@@ -225,7 +228,7 @@ export class FileManagerService {
     onUploadFiles = async (
         files: File[],
         folderPrefix?: string | null,
-        method: 'picker' | 'drop' = 'picker',
+        method: FileUploadMethod = 'picker',
         source?: 'agent_chat'
     ): Promise<string[]> => {
         const uploaded: string[] = [];

@@ -469,10 +469,12 @@ export const en: Translations = {
         },
         steps_toggle: 'Agent steps: {count}',
         files: {
-            drop_title: 'Drag a file here',
+            drop_title: 'Drag or paste a file here',
             drop_hint: 'or click to add it to the document',
             guest_hint: 'Files are available after logging in',
             upload: 'Upload file',
+            // GH-244: подпись крестика у файла для экранного диктора
+            delete: 'Delete the file {name}',
             mention: 'Add the file {name} that I uploaded to the document',
         },
     },

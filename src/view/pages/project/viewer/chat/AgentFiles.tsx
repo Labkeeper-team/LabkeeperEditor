@@ -1,14 +1,28 @@
 import classNames from 'classnames';
-import { useMemo, useRef, useState, type DragEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type DragEvent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, StorageState } from '../../../../store';
 import { useDictionary } from '../../../../store/selectors/translations';
 import { controller } from '../../../../../main.tsx';
+import type { FileUploadMethod } from '../../../../../viewModel/operation/FileManagerService.ts';
 
 /** Больше в строку над запросом не помещается, остальные файлы не показываем */
 const VISIBLE_FILES = 3;
 
 const baseName = (path: string) => path.slice(path.lastIndexOf('/') + 1);
+
+/**
+ * Таблица из Excel или абзац из Word кладут в буфер и текст, и его картинку:
+ * вставить хотят текст. Файл из Finder приходит с одним своим именем в тексте,
+ * снимок экрана без текста вовсе, их загружаем
+ */
+const pastesText = (clipboard: DataTransfer | null, files: File[]) => {
+    const names = new Set(files.map((file) => file.name));
+    return (clipboard?.getData('text/plain') ?? '')
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .some((line) => line !== '' && !names.has(line));
+};
 
 /**
  * Файлы в чате агентского режима. Файлового менеджера там нет, поэтому
@@ -51,7 +65,7 @@ export const AgentFiles = ({ isEmpty }: { isEmpty: boolean }) => {
         inputRef.current?.click();
     };
 
-    const addFiles = (list: FileList | null, method: 'picker' | 'drop') => {
+    const addFiles = (list: FileList | null, method: FileUploadMethod) => {
         const added = Array.from(list ?? []);
         if (added.length > 0) {
             dispatch(
@@ -59,6 +73,37 @@ export const AgentFiles = ({ isEmpty }: { isEmpty: boolean }) => {
             );
         }
     };
+
+    // GH-244: файл из буфера обмена загружается так же, как выбранный или брошенный.
+    // Текст вставляется в поле запроса как обычно. Окна поверх чата вставку не отдают
+    useEffect(() => {
+        const onPaste = (event: ClipboardEvent) => {
+            const pasted = Array.from(event.clipboardData?.files ?? []);
+            const target = event.target;
+            const inChat =
+                target === document.body ||
+                (target instanceof Element && target.closest('.agent-chat'));
+            if (
+                pasted.length === 0 ||
+                !inChat ||
+                pastesText(event.clipboardData, pasted)
+            ) {
+                return;
+            }
+            event.preventDefault();
+            if (isRunning) {
+                return;
+            }
+            dispatch(
+                controller.onAgentFilesAddedRequest({
+                    files: pasted,
+                    method: 'paste',
+                })
+            );
+        };
+        document.addEventListener('paste', onPaste);
+        return () => document.removeEventListener('paste', onPaste);
+    }, [dispatch, isRunning]);
 
     const onDragOver = (event: DragEvent) => {
         if (!event.dataTransfer.types.includes('Files')) {
@@ -112,25 +157,43 @@ export const AgentFiles = ({ isEmpty }: { isEmpty: boolean }) => {
             )}
             <div className="agent-files__row">
                 {visibleFiles.map((name) => (
-                    <button
-                        key={name}
-                        type="button"
-                        className="agent-files__file"
-                        title={name}
-                        disabled={isRunning}
-                        onClick={() =>
-                            dispatch(
-                                controller.onAgentFileMentionedRequest({
-                                    name,
-                                })
-                            )
-                        }
-                    >
-                        <FileIcon />
-                        <span className="agent-files__file-name">
-                            {baseName(name)}
-                        </span>
-                    </button>
+                    <div key={name} className="agent-files__item">
+                        <button
+                            type="button"
+                            className="agent-files__file"
+                            title={name}
+                            disabled={isRunning}
+                            onClick={() =>
+                                dispatch(
+                                    controller.onAgentFileMentionedRequest({
+                                        name,
+                                    })
+                                )
+                            }
+                        >
+                            <FileIcon />
+                            <span className="agent-files__file-name">
+                                {baseName(name)}
+                            </span>
+                        </button>
+                        {/* GH-244: крестик виден при наведении, на сенсорном экране всегда */}
+                        <button
+                            type="button"
+                            className="agent-files__delete"
+                            aria-label={text.delete.replace('{name}', name)}
+                            title={text.delete.replace('{name}', name)}
+                            disabled={isRunning}
+                            onClick={() =>
+                                dispatch(
+                                    controller.onAgentFileDeleteRequest({
+                                        name,
+                                    })
+                                )
+                            }
+                        >
+                            <CrossIcon />
+                        </button>
+                    </div>
                 ))}
                 <button
                     type="button"
@@ -173,6 +236,23 @@ const UploadIcon = ({ size }: { size: number }) => (
             strokeWidth="1.6"
             strokeLinecap="round"
             strokeLinejoin="round"
+        />
+    </svg>
+);
+
+const CrossIcon = () => (
+    <svg
+        width="10"
+        height="10"
+        viewBox="0 0 10 10"
+        fill="none"
+        aria-hidden="true"
+    >
+        <path
+            d="M2 2l6 6M8 2 2 8"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
         />
     </svg>
 );

@@ -4,7 +4,7 @@ import {
 } from '../../model/service/ObserverService.ts';
 import { ViewModelRepository } from '../repository';
 import { trackEvent } from '../utils/observerContext.ts';
-import { FileManagerService } from './FileManagerService.ts';
+import { FileManagerService, FileUploadMethod } from './FileManagerService.ts';
 
 /** Сюда кладём файлы из чата: файлового менеджера в агентском режиме нет, и папку не выбрать */
 const ROOT_FOLDER = '';
@@ -41,7 +41,7 @@ export class AgentFilesService {
 
     onFilesAdded = async (
         files: File[],
-        method: 'picker' | 'drop'
+        method: FileUploadMethod
     ): Promise<void> => {
         // бросить файл в зону гость может и без клика
         if (!this.repository.userViewModelRepository.isAuthenticated()) {
@@ -63,6 +63,20 @@ export class AgentFilesService {
             ...chat.recentFiles().filter((name) => !uploaded.includes(name)),
         ]);
         this.appendMentions(uploaded.filter(isMentionedOnUpload));
+    };
+
+    /**
+     * GH-244: крестик у файла в ряду. Удаление необратимо, поэтому идёт через
+     * то же окно подтверждения, что и в редакторе: удалит его «Да»
+     */
+    onFileDeleteClicked = (name: string): void => {
+        const file = this.repository.projectViewModelRepository
+            .files()
+            .find((candidate) => candidate.fileName === name);
+        if (!file) {
+            return;
+        }
+        this.repository.settingsViewModelRepository.setFilesToDelete([file]);
     };
 
     onFileMentioned = (name: string): void => {
