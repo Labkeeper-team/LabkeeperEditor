@@ -227,6 +227,21 @@ test('сортировка по колонке и её смена направл
     await expectTitles(page, ['Лабораторная 10', 'Лабораторная 2', 'Конспект']);
 });
 
+// ТЗ: выбранная сортировка запоминается между визитами
+test('выбранная сортировка переживает перезагрузку', async ({ page }) => {
+    await openProjects(page);
+    await page.locator('th').first().getByRole('button').click();
+    await expectTitles(page, ['Конспект', 'Лабораторная 2', 'Лабораторная 10']);
+
+    await page.reload();
+
+    await expectTitles(page, ['Конспект', 'Лабораторная 2', 'Лабораторная 10']);
+    await expect(page.locator('th').first()).toHaveAttribute(
+        'aria-sort',
+        'ascending'
+    );
+});
+
 test('метки проекта меняются в окне и уходят одним запросом', async ({
     page,
 }) => {

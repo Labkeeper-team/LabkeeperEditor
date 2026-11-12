@@ -20,8 +20,8 @@ import {
     TAG_COLORS,
     defaultTagColor,
     tagKey,
-    toHexColor,
-} from '../projectsFilter.ts';
+} from '../../../../viewModel/domain/projectsFilter.ts';
+import { toHexColor } from '../tagColors.ts';
 
 /** С какого числа проектов в окне появляется поиск по ним */
 const PROJECT_SEARCH_FROM = 8;
@@ -108,8 +108,7 @@ export const TagEditModal = (props: {
             : [...TAG_COLORS];
     }, [props.tag]);
 
-    const effectiveColor =
-        color ?? props.tag?.color ?? defaultTagColor(name);
+    const effectiveColor = color ?? props.tag?.color ?? defaultTagColor(name);
     // отмечаем образец по приведённому цвету: с сервера он может прийти не hex
     const shownColor = toHexColor(effectiveColor) ?? effectiveColor;
     const takenBy = useMemo(() => {

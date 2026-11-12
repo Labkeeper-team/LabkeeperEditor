@@ -51,13 +51,14 @@ import {
     collectTags,
     defaultDirection,
     isFilterActive,
-    loadSort,
+    DEFAULT_SORT,
+    isSort,
     matchesFilter,
-    saveSort,
     sortProjects,
     tagKey,
     uniqueTags,
-} from './projectsFilter.ts';
+} from '../../../viewModel/domain/projectsFilter.ts';
+import { setProjectsSort } from '../../store/slices/persistence';
 
 const PROJECT_TITLE_TOOLTIP_ID = 'projects-title-tooltip';
 
@@ -138,7 +139,11 @@ export const ProjectsPage = () => {
     // окно метки из боковой панели: {} создаёт новую, { tag } правит её
     const [tagEdit, setTagEdit] = useState<{ tag?: ProjectTag } | null>(null);
     const [tagToDelete, setTagToDelete] = useState<ProjectTag | null>(null);
-    const [sort, setSort] = useState<ProjectsSort>(loadSort);
+    // сортировка лежит в общем хранилище и переживает перезагрузку
+    const savedSort = useSelector(
+        (state: StorageState) => state.persistence.projectsSort
+    );
+    const sort = isSort(savedSort) ? savedSort : DEFAULT_SORT;
     const [rawFilter, setFilter] = useState<ProjectsFilter>(EMPTY_FILTER);
     const searchRef = useRef<HTMLInputElement>(null);
 
@@ -261,11 +266,10 @@ export const ProjectsPage = () => {
 
     const updateSort = useCallback(
         (next: ProjectsSort) => {
-            setSort(next);
-            saveSort(next);
+            dispatch(setProjectsSort(next));
             trackFilter('sort', `${next.field}-${next.direction}`);
         },
-        [trackFilter]
+        [dispatch, trackFilter]
     );
 
     const onSortColumn = useCallback(
