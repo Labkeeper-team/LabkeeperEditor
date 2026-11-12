@@ -183,7 +183,6 @@ export const en: Translations = {
         duplicated: 'Copy of the project created',
         actions: {
             menu: 'Project actions',
-            open: 'Open',
             open_new_tab: 'Open in new tab',
             rename: 'Rename',
             edit_tags: 'Tags…',
@@ -204,6 +203,18 @@ export const en: Translations = {
             edit: 'Edit',
             tag_name: 'Name',
             tag_color: 'Color',
+            // названия образцов для экранного диктора, по порядку палитры
+            tag_color_names: {
+                blue: 'Blue',
+                green: 'Green',
+                yellow: 'Yellow',
+                red: 'Red',
+                purple: 'Purple',
+                teal: 'Teal',
+                orange: 'Orange',
+                gray: 'Gray',
+                own: 'Own tag color',
+            },
             tag_projects: 'Projects',
             tag_projects_hint:
                 'Tags are stored in projects, so pick at least one',

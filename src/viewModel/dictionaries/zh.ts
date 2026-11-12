@@ -196,7 +196,6 @@ export const zh: Translations = {
         duplicated: '\u5DF2\u521B\u5EFA\u9879\u76EE\u526F\u672C',
         actions: {
             menu: '\u9879\u76EE\u64CD\u4F5C',
-            open: '\u6253\u5F00',
             open_new_tab: '\u5728\u65B0\u6807\u7B7E\u9875\u4E2D\u6253\u5F00',
             rename: '\u91CD\u547D\u540D',
             edit_tags: '\u6807\u7B7E\u2026',
@@ -217,6 +216,18 @@ export const zh: Translations = {
             edit: '\u7F16\u8F91',
             tag_name: '\u540D\u79F0',
             tag_color: '\u989C\u8272',
+            // названия образцов для экранного диктора, по порядку палитры
+            tag_color_names: {
+                blue: '\u84DD\u8272',
+                green: '\u7EFF\u8272',
+                yellow: '\u9EC4\u8272',
+                red: '\u7EA2\u8272',
+                purple: '\u7D2B\u8272',
+                teal: '\u9752\u8272',
+                orange: '\u6A59\u8272',
+                gray: '\u7070\u8272',
+                own: '\u6807\u7B7E\u539F\u6709\u989C\u8272',
+            },
             tag_projects: '\u9879\u76EE',
             tag_projects_hint:
                 '\u6807\u7B7E\u4FDD\u5B58\u5728\u9879\u76EE\u4E2D\uFF0C\u8BF7\u81F3\u5C11\u9009\u62E9\u4E00\u4E2A\u9879\u76EE',

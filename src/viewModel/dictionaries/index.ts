@@ -183,7 +183,6 @@ export interface Translations {
         duplicated: string;
         actions: {
             menu: string;
-            open: string;
             open_new_tab: string;
             rename: string;
             edit_tags: string;
@@ -204,6 +203,18 @@ export interface Translations {
             edit: string;
             tag_name: string;
             tag_color: string;
+            tag_color_names: {
+                blue: string;
+                green: string;
+                yellow: string;
+                red: string;
+                purple: string;
+                teal: string;
+                orange: string;
+                gray: string;
+                /** Цвет метки не из палитры */
+                own: string;
+            };
             tag_projects: string;
             tag_projects_hint: string;
             tag_exists: string;
