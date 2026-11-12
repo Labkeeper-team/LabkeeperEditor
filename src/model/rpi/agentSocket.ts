@@ -64,6 +64,8 @@ export const AGENT_TOOL_NAMES = [
     'read_segments',
     'search_segments',
     'read_file',
+    // распознавание текста картинки или скана pdf: платное, но проект не меняет
+    'read_text_from_image',
     'add_segment',
     'add_lines_to_segment',
     'delete_lines_from_segment',

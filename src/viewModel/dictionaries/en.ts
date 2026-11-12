@@ -385,6 +385,7 @@ export const en: Translations = {
             read_segments: 'Reading segments',
             search_segments: 'Searching segments',
             read_file: 'Reading a file',
+            read_text_from_image: 'Reading text from an image',
             done: 'Finishing up',
             unknown_tool: 'The agent performed an action',
         },

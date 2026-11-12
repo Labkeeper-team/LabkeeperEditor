@@ -13,6 +13,7 @@ const READ_TOOLS: AgentToolName[] = [
     'read_segments',
     'search_segments',
     'read_file',
+    'read_text_from_image',
     'done',
 ];
 

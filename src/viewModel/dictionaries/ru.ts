@@ -388,6 +388,7 @@ export const ru: Translations = {
             read_segments: 'Чтение сегментов',
             search_segments: 'Поиск по сегментам',
             read_file: 'Чтение файла',
+            read_text_from_image: 'Распознавание текста на картинке',
             done: 'Завершение работы',
             unknown_tool: 'Агент выполнил действие',
         },
