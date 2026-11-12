@@ -243,11 +243,9 @@ export const ProjectsPage = () => {
         [projects]
     );
     const showTypeFilter = typesPresent.size > 1 || filter.type !== 'all';
-    // на компьютере доступ выбирается в боковой панели
-    const showAccessFilter =
-        isMobile &&
-        (projects.some((project) => project.isPublic) ||
-            filter.access !== 'all');
+    // на компьютере доступ выбирается в боковой панели, где разделы видны
+    // всегда; на телефоне так же, по ТЗ, даже если публичных проектов нет
+    const showAccessFilter = isMobile;
     const filterActive = isFilterActive(filter);
 
     const tagsTarget = tagsTargetId

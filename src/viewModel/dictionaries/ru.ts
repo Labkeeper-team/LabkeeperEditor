@@ -185,7 +185,6 @@ export const ru: Translations = {
         duplicated: 'Копия проекта создана',
         actions: {
             menu: 'Действия с проектом',
-            open: 'Открыть',
             open_new_tab: 'Открыть в новой вкладке',
             rename: 'Переименовать',
             edit_tags: 'Теги…',
@@ -206,6 +205,18 @@ export const ru: Translations = {
             edit: 'Изменить',
             tag_name: 'Название',
             tag_color: 'Цвет',
+            // названия образцов для экранного диктора, по порядку палитры
+            tag_color_names: {
+                blue: 'Синий',
+                green: 'Зелёный',
+                yellow: 'Жёлтый',
+                red: 'Красный',
+                purple: 'Фиолетовый',
+                teal: 'Бирюзовый',
+                orange: 'Оранжевый',
+                gray: 'Серый',
+                own: 'Свой цвет метки',
+            },
             tag_projects: 'Проекты',
             tag_projects_hint:
                 'Теги хранятся в проектах, поэтому выберите хотя бы один',

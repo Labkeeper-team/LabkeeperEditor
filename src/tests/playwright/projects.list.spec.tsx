@@ -984,3 +984,52 @@ test('прилипшие кнопки окна меток стоят с отст
     const lastBox = (await last.boundingBox())!;
     expect(lastBox.y + lastBox.height).toBeLessThanOrEqual(barBox.y);
 });
+
+// ТЗ: Esc очищает поиск
+test('Escape в поиске очищает запрос и возвращает весь список', async ({
+    page,
+}) => {
+    await openProjects(page);
+    await page.keyboard.press('/');
+    await page.keyboard.type('конспект');
+    await expectTitles(page, ['Конспект']);
+
+    await page.keyboard.press('Escape');
+
+    await expect(page.getByRole('searchbox')).toHaveValue('');
+    await expect(page.locator('tbody tr')).toHaveCount(3);
+});
+
+// экранный диктор читает образцы цвета словами, а не hex-кодом
+test('образцы цвета в окне меток подписаны названиями цветов', async ({
+    page,
+}) => {
+    await openProjects(page);
+    const row = page.locator('tbody tr').first();
+    await row.hover();
+    await row.getByRole('button', { name: 'Project actions' }).click();
+    await page.getByRole('menuitem', { name: 'Tags…' }).click();
+
+    const colors = page
+        .locator('.tags-modal')
+        .getByRole('radiogroup', { name: 'Color' });
+    await expect(colors.getByRole('radio')).toHaveCount(8);
+    await expect(colors.getByRole('radio', { name: 'Blue' })).toBeVisible();
+});
+
+// ТЗ: на телефоне под поиском переключатель доступа, даже без публичных проектов
+test('на телефоне переключатель доступа виден и без публичных проектов', async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openProjectsOnPhone(
+        page,
+        PROJECTS.map((project) => ({ ...project, isPublic: false }))
+    );
+
+    await expect(
+        page.getByRole('group', { name: 'Access' }).getByRole('button', {
+            name: 'Public',
+        })
+    ).toBeVisible();
+});

@@ -22,6 +22,7 @@ import {
     defaultTagColor,
     tagKey,
     uniqueTags,
+    tagColorName,
 } from '../../../../viewModel/domain/projectsFilter.ts';
 
 /**
@@ -35,6 +36,7 @@ export const TagsModal = (props: {
 }) => {
     const dictionary = useSelector(useDictionary);
     const texts = dictionary.projects.tags_modal;
+    const colorTexts = dictionary.projects.sidebar;
     const dispatch = useDispatch<AppDispatch>();
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -164,14 +166,22 @@ export const TagsModal = (props: {
                     {texts.add}
                 </button>
             </form>
-            <div className="tags-modal__colors" role="radiogroup">
+            <div
+                className="tags-modal__colors"
+                role="radiogroup"
+                aria-label={colorTexts.tag_color}
+            >
                 {TAG_COLORS.map((swatch) => (
                     <button
                         key={swatch}
                         type="button"
                         role="radio"
                         aria-checked={swatch === color}
-                        aria-label={swatch}
+                        aria-label={
+                            colorTexts.tag_color_names[
+                                tagColorName(swatch) ?? 'own'
+                            ]
+                        }
                         className={classNames('tags-modal__swatch', {
                             'tags-modal__swatch--active': swatch === color,
                         })}
