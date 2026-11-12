@@ -1032,6 +1032,43 @@ test('a-refused-tag-is-reported-when-the-next-edit-does-not-include-it', async (
     );
 });
 
+// окно меток открыли, пока отказанная правка ещё висела в списке
+test('a-refusal-that-came-while-the-window-was-open-is-not-sent-again', async () => {
+    const ctx = setup();
+    const sent: string[] = [];
+    ctx.rpi.setProjectTagsRequest = jest
+        .fn()
+        .mockImplementation(async (_id: string, tags: { name: string }[]) => {
+            sent.push(tags.map((tag) => tag.name).join(','));
+            return sent.length === 1 ? fail(500) : ok({ tags });
+        });
+    const X = { name: 'X', color: '#000000' };
+    const Y = { name: 'Y', color: '#000000' };
+
+    await ctx.projectsPageService.onProjectTagsChange('c', [X]);
+    // окно открыли с X, сервер X отказал, в окне добавили Y
+    await ctx.projectsPageService.onProjectTagsChange('c', [X, Y], [X]);
+
+    expect(sent).toEqual(['X', 'Y']);
+});
+
+test('saving-an-unchanged-window-after-a-refusal-sends-nothing', async () => {
+    const ctx = setup();
+    const sent: string[] = [];
+    ctx.rpi.setProjectTagsRequest = jest
+        .fn()
+        .mockImplementation(async (_id: string, tags: { name: string }[]) => {
+            sent.push(tags.map((tag) => tag.name).join(','));
+            return fail(500);
+        });
+    const X = { name: 'X', color: '#000000' };
+
+    await ctx.projectsPageService.onProjectTagsChange('c', [X]);
+    await ctx.projectsPageService.onProjectTagsChange('c', [X], [X]);
+
+    expect(sent).toEqual(['X']);
+});
+
 test('tags-differing-only-in-case-are-edited-separately', () => {
     const upper = { name: 'ML', color: '#000000' };
     const lower = { name: 'ml', color: '#000000' };

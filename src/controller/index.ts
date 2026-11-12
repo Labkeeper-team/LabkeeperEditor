@@ -944,12 +944,19 @@ export class Controller {
         async ({
             projectId,
             tags,
+            opened,
         }: {
             projectId: string;
             tags: ProjectTag[];
+            /** Метки, которые окно показало при открытии */
+            opened?: ProjectTag[];
         }) => {
             await this.wrapper('onProjectTagsChangeRequest', () =>
-                this.projectsPageService.onProjectTagsChange(projectId, tags)
+                this.projectsPageService.onProjectTagsChange(
+                    projectId,
+                    tags,
+                    opened
+                )
             );
         }
     );
