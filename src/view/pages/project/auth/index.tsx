@@ -1,7 +1,7 @@
 import { Typography } from '../../../components/typography';
 import { colors } from '../../../styles/colors.ts';
 import { Button } from '../../../components/button';
-import { Login2Icon, WarningIcon } from '../../../icons';
+import { Login2Icon } from '../../../icons';
 import { Modal } from '../../../components/modal';
 import { useSelector, useDispatch } from 'react-redux';
 import { useDictionary } from '../../../store/selectors/translations.ts';
@@ -10,35 +10,11 @@ import { useState, ChangeEvent, useMemo, useEffect } from 'react';
 import { setCurrentView } from '../../../store/slices/auth';
 import { StorageState } from '../../../store';
 import { AppDispatch } from '../../../store';
-import { SmartCaptcha } from '@yandex/smart-captcha';
+import { AuthCaptcha } from './authCaptcha.tsx';
+import { AuthErrorMessage } from './authErrorMessage.tsx';
 import { Providers, Secrets, URLS } from '../../../../constants.ts';
 import { controller } from '../../../../main.tsx';
 import { isValidEmail, isValidPassword, normalizeEmail } from './validation.ts';
-
-const AuthErrorMessage = ({
-    text,
-    centered = false,
-}: {
-    text: string;
-    centered?: boolean;
-}) => (
-    <div
-        style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: centered ? 'center' : undefined,
-            gap: 8,
-        }}
-    >
-        <WarningIcon style={{ flexShrink: 0 }} />
-        <Typography
-            color={colors.red10}
-            type="body"
-            text={text}
-            style={{ fontWeight: 600 }}
-        />
-    </div>
-);
 
 // Компонент спиннера загрузки
 const LoadingSpinner = () => (
@@ -89,9 +65,6 @@ const LoginView = () => {
 
     // Selectors
     const dictionary = useSelector(useDictionary);
-    const language = useSelector(
-        (state: StorageState) => state.persistence.language
-    );
     const loginRequest = useSelector(
         (state: StorageState) => state.auth.loginRequest
     );
@@ -227,11 +200,10 @@ const LoginView = () => {
                     {showCaptcha &&
                         password &&
                         !!Secrets.yandexCaptchaSiteKey && (
-                            <SmartCaptcha
-                                key={captchaInstanceKey}
-                                language={language === 'zh' ? 'en' : language}
-                                sitekey={Secrets.yandexCaptchaSiteKey}
-                                onSuccess={setToken}
+                            <AuthCaptcha
+                                form="login"
+                                resetKey={captchaInstanceKey}
+                                onToken={setToken}
                             />
                         )}
                     <Button
@@ -366,9 +338,6 @@ const EmailView = () => {
     const [token, setToken] = useState('');
     const [captchaInstanceKey, setCaptchaInstanceKey] = useState(0);
     const [isEmailTouched, setIsEmailTouched] = useState(false);
-    const language = useSelector(
-        (state: StorageState) => state.persistence.language
-    );
     const showCaptcha = useSelector(
         (state: StorageState) => state.settings.captchaBypassToken === undefined
     );
@@ -520,11 +489,10 @@ const EmailView = () => {
                     </label>
                 )}
                 {Secrets.yandexCaptchaSiteKey && showCaptcha && (
-                    <SmartCaptcha
-                        key={captchaInstanceKey}
-                        language={language === 'zh' ? 'en' : language}
-                        sitekey={Secrets.yandexCaptchaSiteKey}
-                        onSuccess={setToken}
+                    <AuthCaptcha
+                        form="email"
+                        resetKey={captchaInstanceKey}
+                        onToken={setToken}
                     />
                 )}
                 {getErrorMessage() && (

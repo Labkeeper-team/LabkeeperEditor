@@ -654,6 +654,14 @@ export const ru: Translations = {
         personalDataPolicyLink: 'Политикой обработки персональных данных',
         personalDataAgreementAnd: 'и',
         personalDataConsentLink: 'согласием на обработку персональных данных',
+        // GH-253: капча не загрузилась или её проверка устарела
+        captcha: {
+            loadFailed:
+                'Капча не загрузилась. Отключите блокировщик рекламы или VPN и попробуйте снова',
+            reloadCaptcha: 'Загрузить капчу заново',
+            reloadPage: 'Обновить страницу',
+            expired: 'Время проверки истекло, пройдите капчу ещё раз',
+        },
         views: {
             email: 'Введите email',
             code: 'Введите код',
