@@ -1,4 +1,10 @@
-import { expect, test, type ConsoleMessage, type Page } from '@playwright/test';
+import {
+    expect,
+    test,
+    type ConsoleMessage,
+    type Page,
+    type Route,
+} from '@playwright/test';
 import { RouteSetup } from './mock.routeSetUp.tsx';
 import { AgentHistoryEntry } from '../../model/domain.ts';
 
@@ -275,6 +281,55 @@ test('leaving-while-a-formula-loads-an-extension-reports-nothing', async ({
     await page.goto('/projects');
     await page.waitForTimeout(2000);
 
+    expect(seen.pageErrors).toEqual([]);
+    expect(seen.sentryEvents).toBe(0);
+});
+
+// Sentry bfa1189f, e44265a2: на медленной сети компонент качался дольше сторожа
+// старта. Попытка считалась проваленной, глобальный MathJax менялся на конфиг
+// следующей, и докачавшийся asciimath.js бросал «MathJax is not defined»
+test('a-slow-mathjax-component-neither-restarts-mathjax-nor-throws', async ({
+    page,
+}) => {
+    await page.clock.install();
+    // первый запрос компонента висит, пока опыт его не отпустит
+    const held: Route[] = [];
+    await page.route('**/mathjax/input/asciimath.js', async (route) => {
+        if (held.length === 0) {
+            held.push(route);
+            return;
+        }
+        await route.fallback();
+    });
+    // повторная попытка старого загрузчика ждёт, пока докачается компонент первой
+    let mainScripts = 0;
+    const heldMain: Route[] = [];
+    await page.route(MAIN_SCRIPT, async (route) => {
+        mainScripts += 1;
+        if (mainScripts === 1) {
+            await route.fallback();
+            return;
+        }
+        heldMain.push(route);
+    });
+    const seen = await openChatWithFormulas(page);
+    await expect.poll(() => held.length).toBe(1);
+
+    // дольше сторожа старта и первой паузы перед повтором
+    await page.clock.runFor(25000);
+    const arrived = page.waitForResponse('**/mathjax/input/asciimath.js');
+    await held[0].fallback();
+    await arrived;
+    // докачавшийся скрипт выполняется сразу после ответа
+    await page.waitForTimeout(500);
+    expect(seen.pageErrors).toEqual([]);
+    for (const route of heldMain) {
+        await route.fallback();
+    }
+
+    const transcript = page.locator('.agent-chat__transcript');
+    await expect(transcript.locator(FORMULA)).toHaveCount(3, MATHJAX_LOAD);
+    expect(seen.mainScript).toBe(1);
     expect(seen.pageErrors).toEqual([]);
     expect(seen.sentryEvents).toBe(0);
 });

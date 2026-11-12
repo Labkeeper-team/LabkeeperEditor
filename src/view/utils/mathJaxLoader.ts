@@ -37,8 +37,9 @@ export interface MathJaxLoader {
 
 type MathJaxGlobal = { MathJax?: MathJax3Config | MathJax3Object };
 
+// отказ компонента MathJax дописывает к «Can't load» с переводом строки
 const messageOf = (error: unknown) =>
-    error instanceof Error ? error.message : String(error);
+    (error instanceof Error ? error.message : String(error)).trim();
 
 /** Отчёт один на страницу и ждёт: уходя со страницы, WebKit и Firefox обрывают загрузки с ошибкой ещё до pagehide */
 function createPageReport<T>(
@@ -188,6 +189,9 @@ export function createMathJaxLoader(
         let started = false;
         let startupTimer: ReturnType<typeof setTimeout> | undefined;
         const script = win.document.createElement('script');
+        // компоненты этой попытки (input/asciimath, output/chtml...), которые ещё качаются
+        const components = new Set<HTMLScriptElement>();
+        let afterComponents: (() => void) | undefined;
         const settle = () => {
             if (settled) {
                 return false;
@@ -200,15 +204,61 @@ export function createMathJaxLoader(
             if (!settle()) {
                 return;
             }
-            script.remove();
-            // иначе следующий скрипт примет прошлый недостартовавший MathJax за готовый
-            delete global.MathJax;
-            onAttemptFailed(failure, detail);
+            const cleanUp = () => {
+                script.remove();
+                // иначе следующий скрипт примет прошлый недостартовавший MathJax за готовый
+                delete global.MathJax;
+                onAttemptFailed(failure, detail);
+            };
+            // Недокачанный компонент выполнится позже и обратится к глобальному
+            // MathJax: без него бросит «MathJax is not defined», а на конфиге
+            // следующей попытки «reading 'components'». Пусть докачается в свой
+            if (components.size > 0) {
+                afterComponents = cleanUp;
+                return;
+            }
+            cleanUp();
+        };
+        // компоненты грузим сами, а не тегами MathJax: так видно, что попытка ещё качает
+        const loadComponent = (url: string) =>
+            new Promise<void>((resolve, reject) => {
+                const tag = win.document.createElement('script');
+                tag.src = url;
+                tag.charset = 'UTF-8';
+                components.add(tag);
+                const done = (loaded: boolean) => {
+                    components.delete(tag);
+                    if (loaded) {
+                        resolve();
+                    } else {
+                        reject(new Error(''));
+                    }
+                    if (components.size === 0 && afterComponents) {
+                        const next = afterComponents;
+                        afterComponents = undefined;
+                        next();
+                    }
+                };
+                tag.addEventListener('load', () => done(true));
+                tag.addEventListener('error', () => done(false));
+                win.document.head.appendChild(tag);
+            });
+        const armStartupTimer = () => {
+            startupTimer = setTimeout(() => {
+                // компонент ещё в пути: это медленная сеть, а не зависший старт
+                if (components.size > 0) {
+                    armStartupTimer();
+                    return;
+                }
+                fail('startup-timeout');
+            }, options.startupTimeoutMs);
         };
         const config = options.createConfig();
         config.loader = {
             ...config.loader,
             failed: (error: unknown) => fail('startup', messageOf(error)),
+            // промис MathJax ждёт сам, а отказ передаёт в failed
+            require: loadComponent,
         };
         config.startup = {
             ...config.startup,
@@ -251,10 +301,7 @@ export function createMathJaxLoader(
                 return;
             }
             // таймер только на старт: скачивание на медленной сети долгое, и повтор его не ускорит
-            startupTimer = setTimeout(
-                () => fail('startup-timeout'),
-                options.startupTimeoutMs
-            );
+            armStartupTimer();
         });
         win.document.head.appendChild(script);
     }
