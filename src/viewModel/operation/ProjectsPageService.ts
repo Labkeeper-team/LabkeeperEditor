@@ -226,6 +226,26 @@ export class ProjectsPageService {
         );
     };
 
+    /**
+     * Проекта больше нет на сервере, например его удалили в другой вкладке.
+     * Убираем его из списка, а не повторяем правку, которую некуда сохранить
+     */
+    private forgetMissingProject = (projectId: string) => {
+        if (!this.listedProject(projectId)) {
+            return;
+        }
+        this.loaderService.discardEarlierLists();
+        this.repository.projectsViewModelRepository.setProjects(
+            this.repository.projectsViewModelRepository
+                .projects()
+                .filter((project) => project.projectId !== projectId)
+        );
+        this.repository.toast(
+            this.repository.dictionary.filemanager.errors.notFound,
+            'error'
+        );
+    };
+
     /** Об истёкшей сессии уже сказали, см. LoaderService.claimSessionReport */
     private sessionLost = () => this.loaderService.sessionWasReported();
 
@@ -260,6 +280,8 @@ export class ProjectsPageService {
     private deleting = new Set<string>();
     /** Скачиваемые сейчас архивы: повторный щелчок второй не запускает */
     private downloading = new Set<string>();
+    /** Копируемые сейчас проекты: повторный щелчок вторую копию не создаёт */
+    private duplicating = new Set<string>();
     /** Запросы к одному полю идут по очереди, чтобы сервер получил их по порядку */
     private queues = new Map<string, Promise<unknown>>();
 
@@ -395,6 +417,10 @@ export class ProjectsPageService {
             before,
             tagsChange(from, next)
         );
+        if (result !== NOTHING_TO_SEND && result.code === 404) {
+            this.forgetMissingProject(projectId);
+            return;
+        }
         // проект удалили, пока метки сохранялись: жаловаться не на что
         // при отказе сессии говорим только о ней
         if (lost && !result.isUnauth && this.listedProject(projectId)) {
@@ -575,6 +601,10 @@ export class ProjectsPageService {
                 this.rpi.setProjectVisibilityRequest(projectId, isPublic),
             (_, sent) => sent
         );
+        if (result !== NOTHING_TO_SEND && result.code === 404) {
+            this.forgetMissingProject(projectId);
+            return;
+        }
         // при отказе сессии говорим только о ней
         if (lost && !result.isUnauth && this.listedProject(projectId)) {
             this.repository.toast(
@@ -603,19 +633,55 @@ export class ProjectsPageService {
         }
     };
 
-    /** Копия проекта появляется в списке, а человек остаётся на странице */
+    /**
+     * Копия проекта появляется в списке, а человек остаётся на странице.
+     * Копия встаёт в список из ответа сразу: если следующий список не придёт,
+     * тост «Копия создана» иначе говорил бы о проекте, которого не видно
+     */
     onDuplicateProject = async (projectId: string) => {
+        if (this.duplicating.has(projectId)) {
+            return;
+        }
+        this.duplicating.add(projectId);
+        try {
+            await this.duplicateProject(projectId);
+        } finally {
+            this.duplicating.delete(projectId);
+        }
+    };
+
+    private duplicateProject = async (projectId: string) => {
         const result = await this.rpi.cloneProjectRequest(projectId);
         if (result.isOk) {
             this.track(Events.EVENT_PROJECT_CLONED, {
                 source_project_id: projectId,
                 source: 'list',
             });
-            await this.refreshProjects();
+            const copy = result.body;
+            const projects = this.repository.projectsViewModelRepository;
+            // список, запрошенный до копии, её бы не знал и убрал
+            this.loaderService.discardEarlierLists();
+            projects.setProjects([
+                {
+                    projectId: copy.projectId,
+                    userId: copy.userId,
+                    title: copy.title,
+                    lastModified: copy.lastModified,
+                    // копия создана только что; метки, если сервер их скопировал, придут со списком
+                    creationTime: copy.lastModified,
+                    isPublic: copy.isPublic,
+                    projectType: copy.projectType,
+                    tags: [],
+                },
+                ...projects
+                    .projects()
+                    .filter((project) => project.projectId !== copy.projectId),
+            ]);
             this.repository.toast(
                 this.repository.dictionary.projects.duplicated,
                 'success'
             );
+            await this.refreshProjects();
             return;
         }
         if (result.isUnauth) {
@@ -668,16 +734,12 @@ export class ProjectsPageService {
             return;
         }
         const dictionary = this.repository.dictionary;
+        // архив Labkeeper по спеке отвечает 201, 400, 401, 403 и 404; 423 ставит замок агента
         const messages: Partial<Record<number, string>> = {
-            203: dictionary.project_export.program_errors,
-            402: dictionary.prompt_modal.errors.payment_required,
             403: dictionary.filemanager.errors.notEnoughRights,
             404: dictionary.filemanager.errors.notFound,
             423: dictionary.projects.errors.project_busy,
         };
-        if (result.code === 402) {
-            this.track(Events.EVENT_PAYMENT_REQUIRED, { source: 'export' });
-        }
         this.repository.toast(
             messages[result.code] ?? dictionary.projects.errors.download_failed,
             'error'
