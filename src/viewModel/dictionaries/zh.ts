@@ -515,11 +515,14 @@ export const zh: Translations = {
         },
         steps_toggle: '\u667A\u80FD\u4F53\u6B65\u9AA4\uFF1A{count}',
         files: {
-            drop_title: '\u5C06\u6587\u4EF6\u62D6\u5230\u6B64\u5904',
+            drop_title:
+                '\u5C06\u6587\u4EF6\u62D6\u52A8\u6216\u7C98\u8D34\u5230\u6B64\u5904',
             drop_hint: '\u6216\u70B9\u51FB\u6DFB\u52A0\u5230\u6587\u6863',
             guest_hint:
                 '\u767B\u5F55\u540E\u53EF\u4F7F\u7528\u6587\u4EF6\u529F\u80FD',
             upload: '\u4E0A\u4F20\u6587\u4EF6',
+            // GH-244: подпись крестика у файла для экранного диктора
+            delete: '\u5220\u9664\u6587\u4EF6 {name}',
             mention:
                 '\u5C06\u6211\u4E0A\u4F20\u7684\u6587\u4EF6 {name} \u6DFB\u52A0\u5230\u6587\u6863\u4E2D',
         },

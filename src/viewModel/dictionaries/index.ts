@@ -429,6 +429,8 @@ export interface Translations {
             drop_hint: string;
             guest_hint: string;
             upload: string;
+            // {name} это имя файла в проекте
+            delete: string;
             // дописывается в запрос, {name} это имя файла в проекте
             mention: string;
         };

@@ -13,7 +13,10 @@ import type { Language } from '../viewModel/dictionaries';
 import * as Sentry from '@sentry/react';
 import { Events, ObserverService } from '../model/service/ObserverService.ts';
 import { AuthService } from '../viewModel/operation/AuthService.ts';
-import { FileManagerService } from '../viewModel/operation/FileManagerService.ts';
+import {
+    FileManagerService,
+    FileUploadMethod,
+} from '../viewModel/operation/FileManagerService.ts';
 import { TextFileEditorService } from '../viewModel/operation/TextFileEditorService.ts';
 import { ProgramEditorService } from '../viewModel/operation/ProgramEditorService.ts';
 import { ProjectPageService } from '../viewModel/operation/ProjectPageService.ts';
@@ -659,7 +662,7 @@ export class Controller {
         }: {
             files: File[];
             folderPrefix?: string;
-            method?: 'picker' | 'drop';
+            method?: FileUploadMethod;
         }) => {
             await this.wrapper('onUploadFilesRequest', () =>
                 this.fileManagerService.onUploadFiles(
@@ -989,7 +992,7 @@ export class Controller {
             method,
         }: {
             files: File[];
-            method: 'picker' | 'drop';
+            method: FileUploadMethod;
         }) => {
             await this.wrapper('onAgentFilesAdded', () =>
                 this.agentFilesService.onFilesAdded(files, method)
@@ -1002,6 +1005,15 @@ export class Controller {
         async () => {
             await this.wrapper('onAgentFilesGuest', () =>
                 this.agentFilesService.onGuestFileAttempt()
+            );
+        }
+    );
+
+    onAgentFileDeleteRequest = createAsyncThunk(
+        'onAgentFileDelete',
+        async ({ name }: { name: string }) => {
+            await this.wrapper('onAgentFileDelete', () =>
+                this.agentFilesService.onFileDeleteClicked(name)
             );
         }
     );
