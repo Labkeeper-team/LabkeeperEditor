@@ -9,7 +9,11 @@ const RESTART_INTERVAL = 60000;
 const REPORT_DELAY = 1500;
 
 type Config = MathJax3Config & {
-    loader: { load: string[]; failed: (error: unknown) => void };
+    loader: {
+        load: string[];
+        failed: (error: unknown) => void;
+        require: (url: string) => Promise<void>;
+    };
     startup: { ready: () => void };
 };
 
@@ -66,6 +70,27 @@ const script = () => {
 };
 
 const config = () => win.MathJax as Config;
+
+const COMPONENT = '/mathjax/input/asciimath.js';
+const OTHER_COMPONENT = '/mathjax/output/chtml.js';
+
+const componentTags = (src?: string) =>
+    Array.from(
+        document.head.querySelectorAll<HTMLScriptElement>(
+            src ? `script[src="${src}"]` : 'script[src^="/mathjax/"]'
+        )
+    ).filter((tag) => tag.getAttribute('src') !== SRC);
+
+/** Компонент докачался или нет: так его тег отвечает MathJax */
+const finishComponent = (src: string, event: 'load' | 'error' = 'load') => {
+    // теги прошлых попыток остаются в документе, как и у MathJax: нужен последний
+    const tags = componentTags(src);
+    const tag = tags[tags.length - 1];
+    if (!tag) {
+        throw new Error(`no component ${src}`);
+    }
+    tag.dispatchEvent(new Event(event));
+};
 
 const goOnline = () => {
     win.navigator.onLine = true;
@@ -128,6 +153,7 @@ beforeEach(() => {
 
 afterEach(() => {
     scripts().forEach((tag) => tag.remove());
+    componentTags().forEach((tag) => tag.remove());
     jest.useRealTimers();
 });
 
@@ -427,4 +453,71 @@ test('the-facade-is-mathjax-that-typesets-the-given-elements', async () => {
     expect(mathJax.typesetPromise).toHaveBeenCalledWith(elements);
     expect(mathJax.typesetClear).toHaveBeenCalledWith(elements);
     expect(facade.startup).toBe(mathJax.startup);
+});
+
+// Sentry bfa1189f, e44265a2: на медленной сети компоненты качаются дольше сторожа старта
+test('a-component-still-downloading-does-not-time-the-startup-out', async () => {
+    const { loader, onLoadFailure } = setup();
+    loader.load();
+    const run = runScript();
+    const startupConfig = run.mathJax.config as Config;
+    const component = startupConfig.loader.require(COMPONENT);
+
+    jest.advanceTimersByTime(STARTUP_TIMEOUT * 3);
+
+    expect(loader.status()).toBe('loading');
+    script();
+    finishComponent(COMPONENT);
+    await expect(component).resolves.toBeUndefined();
+    run.ready();
+    await expect(loader.ready).resolves.toBeDefined();
+    jest.advanceTimersByTime(REPORT_DELAY);
+    expect(onLoadFailure).not.toHaveBeenCalled();
+});
+
+// отказ одного компонента: остальные выполнятся позже и обратятся к глобальному MathJax
+test('a-failed-attempt-keeps-its-mathjax-until-its-components-arrive', async () => {
+    const { loader } = setup();
+    loader.load();
+    const run = runScript();
+    const startupConfig = run.mathJax.config as Config;
+    const failed = startupConfig.loader.require(COMPONENT);
+    void startupConfig.loader.require(OTHER_COMPONENT);
+    finishComponent(COMPONENT, 'error');
+    await expect(failed).rejects.toThrow();
+    // так MathJax сообщает об отказе компонента
+    startupConfig.loader.failed(new Error(`Can't load "${COMPONENT}"\n`));
+
+    expect(win.MathJax).toBe(run.mathJax);
+    jest.advanceTimersByTime(RETRY_DELAYS[0] * 2);
+    expect(scripts()).toHaveLength(1);
+
+    finishComponent(OTHER_COMPONENT);
+
+    expect(win.MathJax).toBeUndefined();
+    expect(scripts()).toHaveLength(0);
+    jest.advanceTimersByTime(RETRY_DELAYS[0]);
+    expect(config()).not.toBe(startupConfig);
+    script();
+});
+
+test('a-component-that-did-not-download-is-reported-as-before', async () => {
+    const { loader, onLoadFailure } = setup();
+    loader.load();
+    await failSeries(async () => {
+        const run = runScript();
+        const startupConfig = run.mathJax.config as Config;
+        const component = startupConfig.loader.require(COMPONENT);
+        finishComponent(COMPONENT, 'error');
+        await component.catch((error: Error) =>
+            startupConfig.loader.failed(
+                new Error(`Can't load "${COMPONENT}"\n${error.message}`)
+            )
+        );
+    });
+    jest.advanceTimersByTime(REPORT_DELAY);
+
+    expect(onLoadFailure.mock.calls[0][0].message).toBe(
+        `MathJax gave up after 4 attempts, last failure: startup (Can't load "${COMPONENT}")`
+    );
 });
