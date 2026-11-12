@@ -258,6 +258,8 @@ export const OPENPANEL_EVENT_NAMES: Record<string, string> = {
 export const States = {
     /** Чем закончился последний прогон агента: без этого в воронке видно только «закончился» */
     STATE_AGENT_STOP_REASON: 'agent_stop_reason',
+    /** GH-250: язык интерфейса с начала сессии и после каждой смены */
+    STATE_LANGUAGE: 'language',
     STATE_ONLINE: 'is_logged',
     STATE_EMAIL: 'email',
     STATE_PROJECT: 'project',

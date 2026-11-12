@@ -22,6 +22,8 @@ jest.mock('../../../viewModel/utils/logBreadcrumb.ts', () => ({
     logBreadcrumb: jest.fn(),
 }));
 
+import { Events, States } from '../../../model/service/ObserverService.ts';
+
 type OpenPanelModule = typeof import('../../../web/openpanel');
 type SessionModule = typeof import('../../../web/session.ts');
 
@@ -322,4 +324,37 @@ test('an-idle-signed-in-tab-does-not-hand-its-user-to-the-landing', async () => 
     expect(
         window.localStorage.getItem(session.OPENPANEL_PROFILE_STORAGE_KEY)
     ).toBeNull();
+});
+
+// GH-250: язык интерфейса несут старт сессии, профиль и каждое следующее событие
+test('events-carry-the-interface-language-from-the-session-start', async () => {
+    const service = new openpanel.OpenPanelService();
+    service.setUserState(States.STATE_LANGUAGE, 'zh');
+    // прочее состояние пользователя OpenPanel не нужно
+    service.setUserState(States.STATE_EMAIL, 'person@example.com');
+
+    await service.init();
+    service.onEvent(Events.EVENT_LANGUAGE_CHANGED, { from: 'zh', to: 'en' });
+    service.setUserState(States.STATE_LANGUAGE, 'en');
+    service.onEvent(Events.EVENT_PAGE_VIEWED, { path: '/projects' });
+    await flushNetwork();
+
+    expect(tracked('[E] Session started')[0].payload.properties).toEqual(
+        expect.objectContaining({ language: 'zh' })
+    );
+    expect(sent()).toContainEqual(
+        expect.objectContaining({
+            type: 'identify',
+            payload: expect.objectContaining({
+                properties: expect.objectContaining({ language: 'zh' }),
+            }),
+        })
+    );
+    expect(tracked('[E] Language changed')[0].payload.properties).toEqual(
+        expect.objectContaining({ language: 'zh', from: 'zh', to: 'en' })
+    );
+    expect(tracked('[E] Page viewed')[0].payload.properties).toEqual(
+        expect.objectContaining({ language: 'en' })
+    );
+    expect(JSON.stringify(sent())).not.toContain('person@example.com');
 });

@@ -8,13 +8,11 @@ import {
     useCurrentLanguage,
     useDictionary,
 } from '../../../store/selectors/translations';
-import { setLanguage } from '../../../store/slices/persistence';
 import { AppDispatch } from '../../../store';
 import { AuthModal } from '../../../pages/project/auth';
 import { ShareModal } from '../share/modal';
 import { ContactModal } from '../contact/modal';
 import { controller } from '../../../../main.tsx';
-import { Events } from '../../../../model/service/ObserverService.ts';
 import { Language } from '../../../../viewModel/dictionaries';
 import { Routes } from '../../../../viewModel/routes.ts';
 import { LogoutConfirmModal } from '../logout-confirm-modal';
@@ -56,11 +54,7 @@ export const MarketingHeader = () => {
     };
 
     const onLanguageSelect = (lang: Language) => {
-        controller.trackUiEvent(Events.EVENT_LANGUAGE_CHANGED, {
-            from: language,
-            to: lang,
-        });
-        dispatch(setLanguage(lang));
+        dispatch(controller.onLanguageSelectedRequest(lang));
     };
 
     const isTokensRoute = location.pathname === Routes.Tokens;

@@ -23,7 +23,6 @@ import {
     setShowShareModal,
     setTourVisibility,
 } from '../../../store/slices/settings';
-import { setLanguage } from '../../../store/slices/persistence';
 import { Language, LANGUAGE_NAMES } from '../../../../viewModel/dictionaries';
 import { useIsMobile } from '../../../hooks/useMobile';
 import { DotssIcon } from '../../../icons';
@@ -94,11 +93,7 @@ export const HeaderMenu = () => {
             ),
             item: `language-${option.value}`,
             onClick: () => {
-                controller.trackUiEvent(Events.EVENT_LANGUAGE_CHANGED, {
-                    from: language,
-                    to: option.value,
-                });
-                dispatch(setLanguage(option.value));
+                dispatch(controller.onLanguageSelectedRequest(option.value));
             },
         }));
     }, [

@@ -14,7 +14,6 @@ import {
     useCurrentLanguage,
     useDictionary,
 } from '../../../store/selectors/translations';
-import { setLanguage } from '../../../store/slices/persistence';
 import { Select } from '../../select';
 import { ProjectTitle } from '../projectTitle';
 import { Language, LANGUAGE_NAMES } from '../../../../viewModel/dictionaries';
@@ -53,11 +52,7 @@ export const AppHeader = () => {
 
     const onLanguageChange = (lang: unknown) => {
         const next = lang as Language;
-        controller.trackUiEvent(Events.EVENT_LANGUAGE_CHANGED, {
-            from: language,
-            to: next,
-        });
-        dispatch(setLanguage(next));
+        dispatch(controller.onLanguageSelectedRequest(next));
     };
 
     const onLoginClick = () => {

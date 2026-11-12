@@ -9,6 +9,7 @@ import {
     SegmentType,
 } from '../model/domain.ts';
 import { HeaderHelpItem } from '../model/help';
+import type { Language } from '../viewModel/dictionaries';
 import * as Sentry from '@sentry/react';
 import { Events, ObserverService } from '../model/service/ObserverService.ts';
 import { AuthService } from '../viewModel/operation/AuthService.ts';
@@ -83,6 +84,15 @@ export class Controller {
         }) => {
             await this.wrapper('onFormLoginClicked', () =>
                 this.authService.onFormLoginClicked(userName, password, captcha)
+            );
+        }
+    );
+
+    onLanguageSelectedRequest = createAsyncThunk(
+        'onLanguageSelected',
+        async (language: Language) => {
+            await this.wrapper('onLanguageSelected', () =>
+                this.startupService.onLanguageSelected(language)
             );
         }
     );
