@@ -260,6 +260,72 @@ test('duplicate-project-clones-it-and-reloads-the-list-without-navigation', asyn
     expect(lastToast(ctx)?.type).toBe('success');
 });
 
+test('a-second-click-while-copying-does-not-make-a-second-copy', async () => {
+    const ctx = setup();
+    const copy = project('copy');
+    let answer: (value: RequestResult<object>) => void = () => {};
+    ctx.rpi.cloneProjectRequest = jest
+        .fn()
+        .mockReturnValue(new Promise((resolve) => (answer = resolve)));
+    ctx.rpi.getAllProjectsRequest = jest
+        .fn()
+        .mockResolvedValue(ok({ projects: [...LIST].reverse().concat(copy) }));
+
+    const first = ctx.projectsPageService.onDuplicateProject('a');
+    const second = ctx.projectsPageService.onDuplicateProject('a');
+    answer(ok({ ...copy, program: {} }, 201));
+    await Promise.all([first, second]);
+
+    expect(ctx.rpi.cloneProjectRequest).toHaveBeenCalledTimes(1);
+});
+
+// список после копии не пришёл: копия всё равно видна, раз о ней сказали
+test('a-copy-is-listed-even-when-the-next-list-fails', async () => {
+    const ctx = setup();
+    const copy = project('copy', { title: 'Лабораторная 2 (copy)' });
+    ctx.rpi.cloneProjectRequest = jest
+        .fn()
+        .mockResolvedValue(ok({ ...copy, program: {} }, 201));
+    ctx.rpi.getAllProjectsRequest = jest.fn().mockResolvedValue(fail(500));
+
+    await ctx.projectsPageService.onDuplicateProject('a');
+
+    expect(ctx.listed('copy')?.title).toBe('Лабораторная 2 (copy)');
+    expect(lastToast(ctx)?.type).toBe('success');
+});
+
+// проект удалили в другой вкладке: правка ему уже не нужна, и в списке ему не место
+test.each([
+    [
+        'tags',
+        (ctx: ReturnType<typeof setup>) =>
+            ctx.projectsPageService.onProjectTagsChange('c', [
+                { name: 'X', color: '#000000' },
+            ]),
+    ],
+    [
+        'visibility',
+        (ctx: ReturnType<typeof setup>) =>
+            ctx.projectsPageService.onListedProjectVisibilityChange('c', true),
+    ],
+])(
+    'a-%s-change-of-a-deleted-project-removes-it-from-the-list',
+    async (_field, change) => {
+        const ctx = setup();
+        ctx.rpi.setProjectTagsRequest = jest.fn().mockResolvedValue(fail(404));
+        ctx.rpi.setProjectVisibilityRequest = jest
+            .fn()
+            .mockResolvedValue(fail(404));
+
+        await change(ctx);
+
+        expect(ctx.listed('c')).toBeUndefined();
+        expect(lastToast(ctx)?.message).toBe(
+            ctx.repository.dictionary.filemanager.errors.notFound
+        );
+    }
+);
+
 test('duplicate-project-reports-the-project-limit', async () => {
     const ctx = setup();
     ctx.rpi.cloneProjectRequest = jest.fn().mockResolvedValue(fail(417));
@@ -466,7 +532,8 @@ test('list-refresh-keeps-tags-that-are-still-being-saved', async () => {
     expect(tagNames(ctx, 'c')).toEqual(['Новая:#000000']);
 });
 
-test('download-explains-payment-and-lock-errors', async () => {
+// архив Labkeeper по спеке не платный: незнакомый ответ это общий отказ, а замок агента свой
+test('download-explains-a-lock-and-reports-other-errors-generally', async () => {
     const ctx = setup();
     ctx.rpi.exportProjectRequest = jest
         .fn()
@@ -475,7 +542,7 @@ test('download-explains-payment-and-lock-errors', async () => {
 
     await ctx.projectsPageService.onDownloadProject('a');
     expect(lastToast(ctx)?.message).toBe(
-        ctx.repository.dictionary.prompt_modal.errors.payment_required
+        ctx.repository.dictionary.projects.errors.download_failed
     );
     await ctx.projectsPageService.onDownloadProject('a');
     expect(lastToast(ctx)?.message).toBe(
