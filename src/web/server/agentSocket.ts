@@ -20,6 +20,7 @@ import { wsUrl, WS_URLS } from '../../constants.ts';
 import { getSessionId, withSessionQuery } from '../session.ts';
 import { withSegmentIds } from '../../viewModel/utils/segmentId.ts';
 import { logBreadcrumb } from '../../viewModel/utils/logBreadcrumb.ts';
+import { reportToSentry } from '../../viewModel/utils/reportUnexpectedError.ts';
 
 type ServerFrame = {
     type?: string;
@@ -283,11 +284,14 @@ function openSession(
         try {
             logBreadcrumb('agent', 'connect', { url, attempt });
             created = new WebSocket(url);
-        } catch {
+        } catch (error) {
             clearTimeout(timer);
             settled = true;
             cancelled = true;
             logBreadcrumb('agent', 'connect_failed', { url, attempt }, 'error');
+            // браузер не принял сам адрес: это ошибка кода, а не сети, и в
+            // отличие от неоткрывшегося сокета она нужна в Bugsink
+            reportToSentry('agent.socket_create', error);
             // отложенно: вызывающий ещё не получил сессию, и сброс session
             // внутри onClosed был бы тут же перезатёрт присваиванием
             queueMicrotask(() => handlers.onClosed('connect_failed'));

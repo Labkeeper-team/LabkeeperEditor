@@ -1442,9 +1442,10 @@ export class AgentChatService {
         }
         this.track(Events.EVENT_AGENT_FAILED, { reason });
         // Сокет не открылся и со второй попытки: это сеть или сервер, а не
-        // ошибка кода. Как и запрос HTTP без ответа, в Bugsink не уходит,
-        // а сколько таких сбоев, видно в аналитике по событию выше
+        // ошибка кода. Как и запрос HTTP без ответа, в Bugsink не уходит, а в
+        // аналитике у такого сбоя своё событие, отдельно от обрывов на ходу
         if (reason === 'connect_failed') {
+            this.track(Events.EVENT_AGENT_CONNECT_FAILED, this.agentSettings());
             return;
         }
         reportUnexpectedError(

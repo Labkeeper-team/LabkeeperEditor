@@ -16,7 +16,13 @@ jest.mock('../../../viewModel/utils/logBreadcrumb.ts', () => ({
     logBreadcrumb: jest.fn(),
 }));
 
+// в Bugsink уходит только то, что повтор не исправит: сбой сети туда не нужен
+jest.mock('../../../viewModel/utils/reportUnexpectedError.ts', () => ({
+    reportToSentry: jest.fn(),
+}));
+
 import { logBreadcrumb } from '../../../viewModel/utils/logBreadcrumb.ts';
+import { reportToSentry } from '../../../viewModel/utils/reportUnexpectedError.ts';
 import {
     AGENT_CONNECT_ATTEMPTS,
     AGENT_RECONNECT_DELAY_MS,
@@ -163,6 +169,7 @@ let originalWebSocket: unknown;
 beforeEach(() => {
     jest.useFakeTimers();
     jest.mocked(logBreadcrumb).mockClear();
+    jest.mocked(reportToSentry).mockClear();
     FakeWebSocket.instances = [];
     FakeWebSocket.failOnCreate = false;
     originalWebSocket = globalThis.WebSocket;
@@ -579,6 +586,7 @@ test('socket-error-before-open-gives-connect-failed', async () => {
     await failEveryConnect((socket) => socket.fireError());
 
     expect(handlers.onClosed.mock.calls).toEqual([['connect_failed']]);
+    expect(reportToSentry).not.toHaveBeenCalled();
 });
 
 test('unbuildable-socket-gives-connect-failed-and-a-usable-stub-session', async () => {
@@ -594,6 +602,11 @@ test('unbuildable-socket-gives-connect-failed-and-a-usable-stub-session', async 
     await jest.advanceTimersByTimeAsync(AGENT_TIMEOUT_MS);
 
     expect(handlers.onClosed.mock.calls).toEqual([['connect_failed']]);
+    // браузер не принял адрес: это ошибка кода, а не сети
+    expect(reportToSentry).toHaveBeenCalledWith(
+        'agent.socket_create',
+        expect.any(Error)
+    );
 });
 
 test('close-stops-the-socket-and-the-timer-without-on-closed', async () => {

@@ -581,11 +581,13 @@ test('agent-connection-drop-unlocks-and-reports', async () => {
     });
     expect(ctx.agentChatService.isRunning()).toBe(false);
     expect(events).toContain(Events.EVENT_RPI_UNKNOWN);
+    expect(events).not.toContain(Events.EVENT_AGENT_CONNECT_FAILED);
     expect(Sentry.captureException).toHaveBeenCalled();
 });
 
 // Sentry 4907df3a: сокет не открылся и со второй попытки. Это сеть или сервер,
-// человек видит ошибку, аналитика считает сбой, а в Bugsink ошибкой кода он не уходит
+// человек видит ошибку, аналитика считает сбой своим событием, а в Bugsink
+// ошибкой кода он не уходит
 test('agent-connect-failure-is-shown-and-counted-but-not-sent-to-bugsink', async () => {
     const ctx = setup(false);
     const events: { event: string; properties?: unknown }[] = [];
@@ -608,6 +610,13 @@ test('agent-connect-failure-is-shown-and-counted-but-not-sent-to-bugsink', async
             properties: expect.objectContaining({ reason: 'connect_failed' }),
         })
     );
+    expect(events).toContainEqual({
+        event: Events.EVENT_AGENT_CONNECT_FAILED,
+        properties: expect.objectContaining({
+            authorized: false,
+            mode: 'agent',
+        }),
+    });
     expect(events.map(({ event }) => event)).not.toContain(
         Events.EVENT_RPI_UNKNOWN
     );
@@ -631,6 +640,7 @@ test('agent-timeout-unlocks-and-reports', async () => {
     });
     expect(events).toContain(Events.EVENT_AGENT_TIMEOUT);
     expect(events).toContain(Events.EVENT_AGENT_STARTED);
+    expect(events).not.toContain(Events.EVENT_AGENT_CONNECT_FAILED);
     expect(Sentry.captureException).toHaveBeenCalled();
 });
 

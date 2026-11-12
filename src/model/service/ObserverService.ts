@@ -83,6 +83,8 @@ export const Events = {
 
     EVENT_AGENT_PROMPT_SUBMITTED: 'agent_prompt_submitted',
     EVENT_AGENT_FAILED: 'agent_failed',
+    // сокет агента не открылся ни с первой попытки, ни с повтора
+    EVENT_AGENT_CONNECT_FAILED: 'agent_connect_failed',
     EVENT_AGENT_ABORTED: 'agent_aborted',
     EVENT_AGENT_SETTINGS_CHANGED: 'agent_settings_changed',
     EVENT_CHAT_HISTORY_CLEARED: 'chat_history_cleared',
@@ -211,6 +213,7 @@ export const OPENPANEL_EVENT_NAMES: Record<string, string> = {
     [Events.EVENT_FILES_MOVED]: 'Files moved',
     [Events.EVENT_AGENT_PROMPT_SUBMITTED]: 'Agent prompt submitted',
     [Events.EVENT_AGENT_FAILED]: 'Agent failed',
+    [Events.EVENT_AGENT_CONNECT_FAILED]: 'Agent connect failed',
     [Events.EVENT_AGENT_ABORTED]: 'Agent aborted',
     [Events.EVENT_AGENT_SETTINGS_CHANGED]: 'Agent settings changed',
     [Events.EVENT_CHAT_HISTORY_CLEARED]: 'Chat history cleared',
