@@ -635,12 +635,33 @@ test('на телефоне по-русски сброс фильтра в ша�
     );
 });
 
+// на ноутбуке колонка «Создан» на месте, а где её нет, по дате создания
+// сортирует список над таблицей: иначе такой сортировки на компьютере не было
+test('на ноутбуке колонка «Created» видна, а без неё сортировку даёт список', async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 1366, height: 800 });
+    await openProjects(page);
+    const created = page.locator('th.projects-col-created');
+    const sortList = page.locator('.projects-mobile-sort--desktop');
+    await expect(created).toBeVisible();
+    await expect(sortList).toBeHidden();
+
+    await page.setViewportSize({ width: 1200, height: 800 });
+    await expect(created).toBeHidden();
+    await expect(sortList).toBeVisible();
+    await sortList.locator('.select-header').click();
+    await sortList.getByText('Created ↑').click();
+
+    // старые по дате создания первыми: Конспект, Лабораторная 2, Лабораторная 10
+    await expectTitles(page, ['Конспект', 'Лабораторная 2', 'Лабораторная 10']);
+});
+
 test('по-русски стрелка сортировки по дате видна целиком', async ({ page }) => {
     await inRussian(page);
     await openProjects(page);
-    // колонка «Последнее изменение»; дата создания на этой ширине скрыта
     const header = page.locator('th.projects-col-date', {
-        hasText: 'Последнее изменение',
+        hasText: 'Изменён',
     });
     const arrow = header.locator('.sort-arrow');
     await expect(arrow).toBeVisible();

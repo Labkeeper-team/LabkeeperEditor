@@ -1,6 +1,9 @@
 @use '../../styles/common' as *;
 @use '../../styles/colors' as *;
 
+/** Ниже этой ширины окна колонки «Создан» в таблице нет */
+$projects-created-column-breakpoint: 1240px;
+
 .projects-container {
     display: flex;
     flex-direction: row;
@@ -240,6 +243,17 @@
 
     .projects-mobile-sort {
         flex: 1 1 100%;
+
+        // на компьютере список нужен, только пока колонки «Создан» нет:
+        // иначе отсортировать по дате создания было бы нечем
+        &--desktop {
+            flex: 0 0 auto;
+            min-width: 220px;
+
+            @media screen and (min-width: $projects-created-column-breakpoint + 1px) {
+                display: none;
+            }
+        }
     }
 
     // на телефоне метки идут одной строкой и прокручиваются вбок
@@ -554,8 +568,10 @@
             text-align: right;
         }
 
-        // на узком окне дата создания уступает место названию
-        @media screen and (max-width: 1440px) {
+        // на узком окне дата создания уступает место названию. Выше этого
+        // порога со всеми колонками названию остаётся не меньше 245px, а
+        // отсортировать по дате создания можно списком над таблицей
+        @media screen and (max-width: $projects-created-column-breakpoint) {
             .projects-col-created {
                 display: none;
             }
