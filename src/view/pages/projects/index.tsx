@@ -648,10 +648,16 @@ export const ProjectsPage = () => {
             { value: 'modified-asc', label: `${texts.last_modified} ↑` },
             { value: 'created-desc', label: `${texts.created} ↓` },
             { value: 'created-asc', label: `${texts.created} ↑` },
-            { value: 'title-asc', label: `${texts.title} A-Z` },
-            { value: 'title-desc', label: `${texts.title} Z-A` },
+            { value: 'title-asc', label: `${texts.title}, ${texts.sort_az}` },
+            { value: 'title-desc', label: `${texts.title}, ${texts.sort_za}` },
         ],
-        [texts.last_modified, texts.created, texts.title]
+        [
+            texts.last_modified,
+            texts.created,
+            texts.title,
+            texts.sort_az,
+            texts.sort_za,
+        ]
     );
 
     // на компьютере панель есть и пока список грузится: иначе с её
@@ -770,8 +776,13 @@ export const ProjectsPage = () => {
                     onChange={selectAccess}
                 />
             ) : null}
-            {isMobile ? (
-                <div className="projects-mobile-sort">
+            {/* на компьютере виден только без колонки «Создан», это решает CSS */}
+            {projects.length ? (
+                <div
+                    className={classNames('projects-mobile-sort', {
+                        'projects-mobile-sort--desktop': !isMobile,
+                    })}
+                >
                     <Select
                         options={sortOptions}
                         value={`${sort.field}-${sort.direction}`}
