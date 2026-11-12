@@ -119,6 +119,17 @@ export interface AgentHistoryResponse {
     history: AgentHistoryEntry[];
 }
 
+/**
+ * GH-256: правки и история агента, накопленные гостем. При входе уходят в
+ * проект, который сервер создаёт из непустой программы гостя
+ */
+export interface GuestAgentState {
+    /** Как пришли в agentFinishedUnauthorized, от старых к новым */
+    hunks: Hunk[];
+    /** Удачные прогоны гостя, от старых к новым */
+    history: AgentHistoryEntry[];
+}
+
 export interface Rpi {
     compilationRequest(
         program: Program
@@ -165,7 +176,8 @@ export interface Rpi {
     getDefaultProjectRequest(
         lang: string,
         program: Program,
-        projectType: ProjectType
+        projectType: ProjectType,
+        guestAgent?: GuestAgentState
     ): Promise<RequestResult<RichProject>>;
 
     getBlogExampleProgramRequest(slug: string): Promise<RequestResult<Program>>;

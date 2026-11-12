@@ -167,7 +167,9 @@ test('signed-in example slug sends the whole program to the default project', as
 
     let posted: Program | undefined;
     await page.route('**/api/v4/public/project/default**', async (route) => {
-        posted = route.request().postDataJSON() as Program;
+        // GH-256: программа во вложенном поле DefaultProjectRequestSpec
+        posted = (route.request().postDataJSON() as { program: Program })
+            .program;
         await route.fulfill({
             status: 200,
             contentType: 'application/json',

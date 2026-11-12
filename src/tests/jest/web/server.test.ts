@@ -518,6 +518,50 @@ describe('WebRpi', () => {
         );
     });
 
+    // GH-256: тело это DefaultProjectRequestSpec, программа во вложенном поле
+    test('getDefaultProjectRequest nests the program and adds the guest agent state', async () => {
+        const postMock = axios.post as jest.Mock;
+        postMock.mockResolvedValue({ status: 200, data: {} });
+        const { rpi } = createRpi();
+        const hunk = {
+            id: 'h1',
+            type: 'addLinesToSegment' as const,
+            segmentId: 1,
+            startLine: 1,
+            endLine: 1,
+            text: 'x',
+        };
+        const entry = {
+            id: '3f0c2c8e-6f5e-4b7a-9c3d-1a2b3c4d5e6f',
+            request: 'добавь строку',
+            response: '',
+            createdAt: '2026-11-13T10:00:00.000Z',
+        };
+
+        await rpi.getDefaultProjectRequest('ru', program, 'latex');
+        await rpi.getDefaultProjectRequest('ru', program, 'latex', {
+            hunks: [hunk],
+            history: [entry],
+        });
+        await rpi.getDefaultProjectRequest('ru', program, 'latex', {
+            hunks: [],
+            history: [entry],
+        });
+
+        const bodies = postMock.mock.calls.map(([, body]) => body);
+        expect(Object.keys(bodies[0])).toEqual(['program']);
+        expect(bodies[0].program.segments).toHaveLength(
+            program.segments.length
+        );
+        expect(bodies[1]).toEqual({
+            program: bodies[0].program,
+            hunks: [hunk],
+            history: [entry],
+        });
+        // пустой список не шлём вовсе: поля необязательные
+        expect(Object.keys(bodies[2])).toEqual(['program', 'history']);
+    });
+
     // GH-234: архив уходит файлом в поле file, как в спеке
     test('importProjectRequest sends the archive as the file field', async () => {
         const postMock = axios.post as jest.Mock;

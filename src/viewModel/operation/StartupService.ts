@@ -1,7 +1,12 @@
 import { ViewModelRepository } from '../repository';
 import { Routes } from '../routes.ts';
 import { OpenParams, Program, Project, UserInfo } from '../../model/domain.ts';
-import { RequestResult, RichProject, Rpi } from '../../model/rpi';
+import {
+    GuestAgentState,
+    RequestResult,
+    RichProject,
+    Rpi,
+} from '../../model/rpi';
 import { ProgramService } from '../../model/service/ProgramService.ts';
 import { LoaderService } from '../domain/LoaderService.ts';
 import {
@@ -543,6 +548,28 @@ export class StartupService {
         }
     }
 
+    /**
+     * GH-256: правки и история агента гостя для проекта из его программы.
+     * Сервер берёт их, только когда создаёт проект из непустой программы
+     */
+    private guestAgentState(program: Program): GuestAgentState | undefined {
+        const persistence = this.repository.persistenceViewModelRepository;
+        const hunks = persistence.guestAgentHunks();
+        const history = persistence.guestAgentHistory();
+        if (
+            program.segments.length === 0 ||
+            (hunks.length === 0 && history.length === 0)
+        ) {
+            return undefined;
+        }
+        return { hunks, history };
+    }
+
+    private forgetGuestAgentState(): void {
+        this.repository.persistenceViewModelRepository.setGuestAgentHunks([]);
+        this.repository.persistenceViewModelRepository.setGuestAgentHistory([]);
+    }
+
     private async openDefaultProject(
         userInfo: UserInfo,
         open?: OpenParams,
@@ -559,9 +586,13 @@ export class StartupService {
             const result = await this.rpi.getDefaultProjectRequest(
                 this.repository.persistenceViewModelRepository.language(),
                 program,
-                this.repository.projectViewModelRepository.mode()
+                this.repository.projectViewModelRepository.mode(),
+                // пример из ссылки не программа гостя, и его правки к нему не относятся
+                query.exampleProgram ? undefined : this.guestAgentState(program)
             );
             if (result.isOk) {
+                // программа гостя теперь проект (или забыта ради примера): второй раз не переносим
+                this.forgetGuestAgentState();
                 const project = result.body as RichProject;
                 if (
                     this.repository.projectViewModelRepository.project()
@@ -630,8 +661,11 @@ export class StartupService {
             this.setEditorLocation(Routes.ProjectDefault);
             this.programService.setNewProgram(program);
             if (this.hasExampleProgram(query)) {
+                // пример заменил программу гостя: её правки и история больше ни к чему
+                this.forgetGuestAgentState();
                 this.focusLastSegment();
             } else {
+                this.hunkService?.restoreGuestHunks();
                 this.showAgentIfNeverCompiled();
             }
         }

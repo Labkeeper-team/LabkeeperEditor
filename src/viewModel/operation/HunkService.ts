@@ -115,7 +115,32 @@ export class HunkService {
 
     setHunksFromPrompt = (hunks: Hunk[]): void => {
         this.repository.ideViewModelRepository.setHunks(hunks);
+        this.rememberGuestHunks();
         void this.textFileEditorService.reloadActiveTextFileIfOpen();
+    };
+
+    /**
+     * GH-256: у гостя правки живут только в памяти вкладки, а уйти в проект
+     * при входе должны и после перезагрузки, и после ухода на OAuth. Поэтому
+     * каждое их изменение (прогон, приём, набор текста, undo) пишем в хранилище
+     */
+    private rememberGuestHunks = (): void => {
+        if (
+            this.repository.userViewModelRepository.isAuthenticated() ||
+            this.repository.projectViewModelRepository.projectIsReadonly()
+        ) {
+            return;
+        }
+        this.repository.persistenceViewModelRepository.setGuestAgentHunks(
+            this.repository.ideViewModelRepository.hunks()
+        );
+    };
+
+    /** Гость перезагрузил страницу: правки прошлых прогонов снова видны и снимаются как прежде */
+    restoreGuestHunks = (): void => {
+        this.repository.ideViewModelRepository.setHunks(
+            this.repository.persistenceViewModelRepository.guestAgentHunks()
+        );
     };
 
     clearHunks = (): void => {
@@ -471,6 +496,7 @@ export class HunkService {
             .hunks()
             .filter((h) => !remove.has(h.id));
         this.repository.ideViewModelRepository.setHunks(next);
+        this.rememberGuestHunks();
     };
 
     acceptHunksInBackground = (hunkIds: string[]): void => {

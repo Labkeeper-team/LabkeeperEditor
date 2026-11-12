@@ -113,10 +113,12 @@ test('a slug example replaces the signed-in draft with the whole api program', a
         example: 'many-segments',
     });
 
+    // GH-256: пример не программа гостя, его правок агента в запросе нет
     expect(ctx.rpi.getDefaultProjectRequest).toHaveBeenCalledWith(
         expect.any(String),
         exampleProgram,
-        'latex'
+        'latex',
+        undefined
     );
     expect(ctx.programService.getCurrentProgram()).toEqual(exampleProgram);
 });
