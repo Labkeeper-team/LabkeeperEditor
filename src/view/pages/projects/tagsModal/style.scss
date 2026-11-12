@@ -142,10 +142,23 @@
         overflow-y: auto;
     }
 
+    // на низком окне кнопки не уезжают вниз вместе с метками: прилипают к
+    // нижнему краю окна, а прокручивается то, что над ними
     &__buttons {
+        position: sticky;
+        bottom: -28px;
+        z-index: 1;
         display: flex;
         gap: 10px;
-        margin-top: 6px;
+        margin: 6px 0 -28px;
+        padding: 10px 0 28px;
+        background: $white;
+
+        @media screen and (max-width: 767px) {
+            bottom: -24px;
+            margin-bottom: -24px;
+            padding-bottom: 24px;
+        }
     }
 
     &__button {

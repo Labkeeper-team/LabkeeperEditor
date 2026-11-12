@@ -1066,3 +1066,65 @@ test('a-rename-and-a-tag-edit-refused-together-report-the-session-once', async (
         ctx.toasts().filter((toast) => toast.message === expired)
     ).toHaveLength(1);
 });
+
+test('two-refused-tag-edits-in-a-row-give-one-message', async () => {
+    const ctx = setup();
+    ctx.rpi.setProjectTagsRequest = jest.fn().mockResolvedValue(fail(500));
+    const X = { name: 'X', color: '#000000' };
+    const Y = { name: 'Y', color: '#000000' };
+
+    await Promise.all([
+        ctx.projectsPageService.onProjectTagsChange('c', [X]),
+        ctx.projectsPageService.onProjectTagsChange('c', [X, Y]),
+    ]);
+
+    const failed = ctx.repository.dictionary.projects.errors.tags_failed;
+    expect(
+        ctx.toasts().filter((toast) => toast.message === failed)
+    ).toHaveLength(1);
+    expect(tagNames(ctx, 'c')).toEqual([]);
+});
+
+test('a-refused-tag-added-again-by-hand-gives-no-message', async () => {
+    const ctx = setup();
+    const first = deferred<RequestResult<object>>();
+    const second = deferred<RequestResult<object>>();
+    let calls = 0;
+    ctx.rpi.setProjectTagsRequest = jest
+        .fn()
+        .mockImplementation(async (_id: string, tags: object[]) => {
+            calls++;
+            if (calls === 1) return first.promise;
+            if (calls === 2) return second.promise;
+            return ok({ tags });
+        });
+    const X = { name: 'X', color: '#000000' };
+    const Y = { name: 'Y', color: '#000000' };
+
+    const a = ctx.projectsPageService.onProjectTagsChange('c', [X]);
+    const c = ctx.projectsPageService.onProjectTagsChange('c', [X, Y]);
+    first.resolve(fail(500));
+    await a;
+    // X не сохранился, Y ещё сохраняется: человек добавляет X заново
+    expect(tagNames(ctx, 'c')).toEqual(['Y:#000000']);
+    const b = ctx.projectsPageService.onProjectTagsChange('c', [Y, X]);
+    second.resolve(ok({ tags: [Y] }));
+    await Promise.all([c, b]);
+
+    expect(tagNames(ctx, 'c')).toEqual(['Y:#000000', 'X:#000000']);
+    expect(ctx.toasts().some((toast) => toast.type === 'error')).toBe(false);
+});
+
+test('a-401-after-deleting-the-only-project-reports-the-session', async () => {
+    const ctx = setup();
+    ctx.repository.projectsViewModelRepository.setProjects([project('a')]);
+    ctx.rpi.deleteProjectRequest = jest.fn().mockResolvedValue(ok({}));
+    ctx.rpi.getAllProjectsRequest = jest.fn().mockResolvedValue(fail(401));
+
+    await ctx.projectsPageService.onDeleteProject('a', () => undefined);
+
+    const expired = ctx.repository.dictionary.filemanager.errors.sessionExpired;
+    expect(
+        ctx.toasts().filter((toast) => toast.message === expired)
+    ).toHaveLength(1);
+});

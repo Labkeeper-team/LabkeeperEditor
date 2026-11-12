@@ -142,6 +142,27 @@ export class LoaderService {
      * Списки, запрошенные до этого момента, уже устарели: например, в них
      * есть только что удалённый проект или они пришли после истечения сессии
      */
+    /** О текущем отказе сессии уже сказали; после нового входа снова нет */
+    private sessionReported = false;
+
+    sessionWasReported = () =>
+        this.sessionReported &&
+        this.repository.ideViewModelRepository.getProjectsRequestState() ===
+            'unauth';
+
+    /**
+     * Отказ сессии: true, если о нём ещё не говорили, и тогда это делает
+     * вызвавший. Отказ, который сама загрузка списка получила молча, не в
+     * счёт: о нём не сказали
+     */
+    claimSessionReport = () => {
+        if (this.sessionWasReported()) {
+            return false;
+        }
+        this.sessionReported = true;
+        return true;
+    };
+
     discardEarlierLists = () => {
         this.shownListRequestedAt = ++this.clock;
     };

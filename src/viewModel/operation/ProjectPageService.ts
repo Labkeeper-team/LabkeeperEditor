@@ -397,12 +397,8 @@ export class ProjectPageService {
             this.titleQueues.delete(projectId);
         }
         if (result.isUnauth) {
-            // об истёкшей сессии уже сказали, если сброс уже очистил список
-            const reported =
-                this.repository.ideViewModelRepository.getProjectsRequestState() ===
-                    'unauth' &&
-                !this.repository.projectsViewModelRepository.projects().length;
-            if (!reported) {
+            // об истёкшей сессии могли уже сказать из-за другого запроса
+            if (this.loaderService.claimSessionReport()) {
                 this.repository.toast(
                     this.repository.dictionary.filemanager.errors
                         .sessionExpired,

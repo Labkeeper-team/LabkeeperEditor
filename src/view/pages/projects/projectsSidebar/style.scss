@@ -65,11 +65,15 @@
             opacity: 1;
         }
 
-        // число меняется на «⋯» только у строк с меню, то есть у меток
-        &:has(.project-actions-button):hover .projects-sidebar__count,
-        &:has(.project-actions-button--open) .projects-sidebar__count,
-        &:has(.project-actions-button:focus-visible) .projects-sidebar__count {
-            visibility: hidden;
+        // число меняется на «⋯» только у строк с меню, то есть у меток, и
+        // только с мышью: на сенсорном экране «⋯» стоит после числа
+        @media (hover: hover) {
+            &:has(.project-actions-button):hover .projects-sidebar__count,
+            &:has(.project-actions-button--open) .projects-sidebar__count,
+            &:has(.project-actions-button:focus-visible)
+                .projects-sidebar__count {
+                visibility: hidden;
+            }
         }
 
         // без мыши наведения нет: «⋯» видна всегда и стоит после счётчика
@@ -78,11 +82,6 @@
                 position: static;
                 flex-shrink: 0;
                 opacity: 1;
-            }
-
-            &:hover .projects-sidebar__count,
-            &:has(.project-actions-button--open) .projects-sidebar__count {
-                visibility: visible;
             }
         }
     }

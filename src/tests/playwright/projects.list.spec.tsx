@@ -739,3 +739,69 @@ async function openProjectsOnPhone(page: Page, projects: unknown[]) {
     );
     await page.goto('/projects');
 }
+
+test('на сенсорном планшете после касания метки её число видно', async ({
+    browser,
+}) => {
+    const context = await browser.newContext({
+        viewport: { width: 1024, height: 768 },
+        hasTouch: true,
+        isMobile: true,
+    });
+    const page = await context.newPage();
+    await openProjects(page);
+    expect(await page.evaluate(() => matchMedia('(hover: none)').matches)).toBe(
+        true
+    );
+
+    await sidebarItem(page, 'Физика').tap();
+    await expect(
+        sidebarRow(page, 'Физика').locator('.projects-sidebar__count')
+    ).toBeVisible();
+    await context.close();
+});
+
+test('подтверждение удаления проекта с длинным названием не шире окна', async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 1280, height: 700 });
+    const long = 'Оченьдлинноеназваниебезпробелов'.repeat(4);
+    await openProjects(page, [{ ...PROJECTS[0], title: long }]);
+    const row = page.locator('tbody tr').first();
+    await row.hover();
+    await row.getByRole('button', { name: 'Project actions' }).click();
+    await page.getByRole('menuitem', { name: 'Delete' }).click();
+
+    const modal = page.locator('.delete-project-modal');
+    await expect(modal).toBeVisible();
+    expect((await modal.boundingBox())!.width).toBeLessThanOrEqual(520);
+    expect(await modal.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(
+        true
+    );
+});
+
+test('кнопки окна меток видны и на невысоком окне', async ({ page }) => {
+    await page.setViewportSize({ width: 1024, height: 600 });
+    const many = Array.from({ length: 14 }, (_, i) => ({
+        name: `Метка ${i + 1}`,
+        color: '#4469e0',
+    }));
+    const others = many.map((tag) => ({
+        ...tag,
+        name: `Другая ${tag.name}`,
+    }));
+    await openProjects(page, [
+        { ...PROJECTS[0], tags: many },
+        { ...PROJECTS[1], tags: others },
+    ]);
+    const row = page.locator('tbody tr').first();
+    await row.hover();
+    await row.getByRole('button', { name: 'Project actions' }).click();
+    await page.getByRole('menuitem', { name: 'Tags…' }).click();
+
+    const save = page
+        .locator('.tags-modal__buttons')
+        .getByRole('button')
+        .last();
+    await expect(save).toBeInViewport({ ratio: 1 });
+});
