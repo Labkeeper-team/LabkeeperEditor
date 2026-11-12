@@ -11,9 +11,9 @@ import { ProjectActions } from '../projectActions';
 import {
     AccessFilter,
     KnownTag,
-    tagColors,
     tagKey,
-} from '../projectsFilter.ts';
+} from '../../../../viewModel/domain/projectsFilter.ts';
+import { tagColors } from '../tagColors.ts';
 
 /**
  * Боковая панель списка проектов по образцу Overleaf: создание проекта,

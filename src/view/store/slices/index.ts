@@ -20,6 +20,10 @@ import {
 
 import { Language } from '../../../viewModel/dictionaries';
 import {
+    DEFAULT_SORT,
+    type ProjectsSort,
+} from '../../../viewModel/domain/projectsFilter.ts';
+import {
     AuthView,
     CloneRequestState,
     CodeRequestState,
@@ -159,6 +163,8 @@ interface PersistenceState {
     lastProgram: Program;
     instructionExpanded: boolean;
     lastOpenedProjectUuid?: string;
+    /** Сортировка списка проектов: запоминается между визитами, как просит ТЗ */
+    projectsSort: ProjectsSort;
     /** Настройки агента переживают перезагрузку, история чата — нет */
     agentMaxTokens: number;
     agentIterations: number;
@@ -266,6 +272,7 @@ export const persistenceInitialState: PersistenceState = {
     lastProgram: createEmptyProgram(),
     instructionExpanded: true,
     lastOpenedProjectUuid: undefined,
+    projectsSort: DEFAULT_SORT,
     agentMaxTokens: AGENT_DEFAULT_MAX_TOKENS,
     agentIterations: AGENT_DEFAULT_ITERATIONS,
     agentCompilationAllowed: true,

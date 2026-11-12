@@ -22,7 +22,7 @@ import {
     defaultTagColor,
     tagKey,
     uniqueTags,
-} from '../projectsFilter.ts';
+} from '../../../../viewModel/domain/projectsFilter.ts';
 
 /**
  * Метки одного проекта. Правки копятся здесь и уходят одним запросом по
