@@ -236,6 +236,25 @@ test('listed-project-visibility-changes-in-place-and-rolls-back-on-error', async
     expect(lastToast(ctx)?.type).toBe('error');
 });
 
+// доступ меняется в списке сразу, ещё до ответа сервера
+test('listed-project-visibility-shows-at-once-and-rolls-back-on-refusal', async () => {
+    const ctx = setup();
+    const answer = deferred<RequestResult<object>>();
+    ctx.rpi.setProjectVisibilityRequest = jest
+        .fn()
+        .mockReturnValue(answer.promise);
+
+    const change = ctx.projectsPageService.onListedProjectVisibilityChange(
+        'a',
+        true
+    );
+    expect(ctx.listed('a').isPublic).toBe(true);
+
+    answer.resolve(fail(500));
+    await change;
+    expect(ctx.listed('a').isPublic).toBe(false);
+});
+
 test('duplicate-project-clones-it-and-reloads-the-list-without-navigation', async () => {
     const ctx = setup();
     const copy = project('copy', { title: 'Лабораторная 2 (copy)' });
