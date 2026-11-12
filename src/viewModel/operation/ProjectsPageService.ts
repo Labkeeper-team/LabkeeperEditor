@@ -24,6 +24,7 @@ import {
     CompilationService,
 } from '../domain/CompilationService.ts';
 import { trackEvent } from '../utils/observerContext.ts';
+import { tagKey } from '../domain/projectsFilter.ts';
 import { exportFileName } from './ProjectPageService.ts';
 
 // с запасом: каталог обычно приходит одним запросом
@@ -65,8 +66,6 @@ const ARCHIVE_ERRORS: Partial<
     409: 'archive_too_many_files',
     413: 'archive_too_big',
 };
-
-const nameKey = (name: string) => name.trim().toLocaleLowerCase();
 
 /** Правки одного поля проекта, ещё не завершённые, поверх принятого сервером */
 interface FieldWrites<T> {
@@ -513,14 +512,14 @@ export class ProjectsPageService {
         if (!title) {
             return;
         }
-        const keys = new Set([nameKey(title)]);
+        const keys = new Set([tagKey(title)]);
         if (previousName) {
-            keys.add(nameKey(previousName));
+            keys.add(tagKey(previousName));
         }
         const owners = new Set(projectIds);
         const isFull = (tags: ProjectTag[]) =>
             tags.length >= PROJECT_TAGS_MAX_COUNT &&
-            !tags.some((tag) => keys.has(nameKey(tag.name)));
+            !tags.some((tag) => keys.has(tagKey(tag.name)));
         const overLimit = this.repository.projectsViewModelRepository
             .projects()
             .filter(
@@ -528,8 +527,8 @@ export class ProjectsPageService {
                     owners.has(project.projectId) && isFull(project.tags ?? [])
             ).length;
         const changed = await this.updateTagsInBulk((projectId, tags) => {
-            const index = tags.findIndex((tag) => keys.has(nameKey(tag.name)));
-            const rest = tags.filter((tag) => !keys.has(nameKey(tag.name)));
+            const index = tags.findIndex((tag) => keys.has(tagKey(tag.name)));
+            const rest = tags.filter((tag) => !keys.has(tagKey(tag.name)));
             if (!owners.has(projectId)) {
                 return rest.length === tags.length ? null : rest;
             }
@@ -541,7 +540,7 @@ export class ProjectsPageService {
                     ? rest.length
                     : tags
                           .slice(0, index)
-                          .filter((tag) => !keys.has(nameKey(tag.name))).length;
+                          .filter((tag) => !keys.has(tagKey(tag.name))).length;
             return [
                 ...rest.slice(0, position),
                 { name: title, color },
@@ -568,9 +567,9 @@ export class ProjectsPageService {
 
     /** Снимает метку со всех проектов; сами проекты остаются */
     onTagDelete = async (name: string) => {
-        const key = nameKey(name);
+        const key = tagKey(name);
         const changed = await this.updateTagsInBulk((_, tags) => {
-            const rest = tags.filter((tag) => nameKey(tag.name) !== key);
+            const rest = tags.filter((tag) => tagKey(tag.name) !== key);
             return rest.length === tags.length ? null : rest;
         });
         if (changed) {

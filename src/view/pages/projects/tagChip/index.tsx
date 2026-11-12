@@ -3,7 +3,7 @@ import { MouseEvent } from 'react';
 
 import './style.scss';
 import { ProjectTag } from '../../../../model/domain.ts';
-import { tagColors } from '../projectsFilter.ts';
+import { tagColors } from '../tagColors.ts';
 
 /**
  * Метка проекта. С onClick это кнопка (фильтр списка), с onRemove у неё

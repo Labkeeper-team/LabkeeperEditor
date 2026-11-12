@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import type { ProjectsSort } from '../../../../viewModel/domain/projectsFilter.ts';
 import { Language } from '../../../../viewModel/dictionaries';
 import { AgentHistoryEntry, Hunk, Program } from '../../../../model/domain.ts';
 import { persistenceInitialState } from '../index.ts';
@@ -73,6 +74,9 @@ export const persistenceSlice = createSlice({
         ) {
             state.skipCheckpointRevertConfirm = payload;
         },
+        setProjectsSort(state, { payload }: PayloadAction<ProjectsSort>) {
+            state.projectsSort = payload;
+        },
     },
 });
 export const {
@@ -92,4 +96,5 @@ export const {
     setSkipClearHistoryConfirm,
     setAgentCheckpointMode,
     setSkipCheckpointRevertConfirm,
+    setProjectsSort,
 } = persistenceSlice.actions;

@@ -11,12 +11,12 @@ import {
     EMPTY_FILTER,
     collectTags,
     defaultTagColor,
-    tagColors,
     isFilterActive,
     uniqueTags,
     matchesFilter,
     sortProjects,
-} from '../../../view/pages/projects/projectsFilter.ts';
+} from '../../../viewModel/domain/projectsFilter.ts';
+import { tagColors } from '../../../view/pages/projects/tagColors.ts';
 import { mockContext, USER_ID } from '../common.ts';
 
 const collator = new Intl.Collator(['en', 'ru'], {
