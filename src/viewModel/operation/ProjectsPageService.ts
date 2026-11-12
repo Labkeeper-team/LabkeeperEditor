@@ -388,7 +388,8 @@ export class ProjectsPageService {
             tagsChange(before, next)
         );
         // проект удалили, пока метки сохранялись: жаловаться не на что
-        if (lost && this.listedProject(projectId)) {
+        // при отказе сессии говорим только о ней
+        if (lost && !result.isUnauth && this.listedProject(projectId)) {
             this.repository.toast(
                 this.repository.dictionary.projects.errors.tags_failed,
                 'error'
@@ -566,7 +567,8 @@ export class ProjectsPageService {
                 this.rpi.setProjectVisibilityRequest(projectId, isPublic),
             (_, sent) => sent
         );
-        if (lost && this.listedProject(projectId)) {
+        // при отказе сессии говорим только о ней
+        if (lost && !result.isUnauth && this.listedProject(projectId)) {
             this.repository.toast(
                 this.repository.dictionary.projects.errors.visibility_failed,
                 'error'

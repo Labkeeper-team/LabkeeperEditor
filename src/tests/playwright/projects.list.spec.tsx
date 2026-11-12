@@ -748,17 +748,20 @@ test('на сенсорном планшете после касания мет�
         hasTouch: true,
         isMobile: true,
     });
-    const page = await context.newPage();
-    await openProjects(page);
-    expect(await page.evaluate(() => matchMedia('(hover: none)').matches)).toBe(
-        true
-    );
+    try {
+        const page = await context.newPage();
+        await openProjects(page);
+        expect(
+            await page.evaluate(() => matchMedia('(hover: none)').matches)
+        ).toBe(true);
 
-    await sidebarItem(page, 'Физика').tap();
-    await expect(
-        sidebarRow(page, 'Физика').locator('.projects-sidebar__count')
-    ).toBeVisible();
-    await context.close();
+        await sidebarItem(page, 'Физика').tap();
+        await expect(
+            sidebarRow(page, 'Физика').locator('.projects-sidebar__count')
+        ).toBeVisible();
+    } finally {
+        await context.close();
+    }
 });
 
 test('подтверждение удаления проекта с длинным названием не шире окна', async ({
@@ -804,4 +807,63 @@ test('кнопки окна меток видны и на невысоком о�
         .getByRole('button')
         .last();
     await expect(save).toBeInViewport({ ratio: 1 });
+});
+
+test('на телефоне лёжа подтверждение удаления стоит по центру', async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 740, height: 360 });
+    await openProjectsOnPhone(page, PROJECTS);
+    await page.getByRole('button', { name: 'Project actions' }).first().click();
+    await page.getByRole('menuitem', { name: 'Delete' }).click();
+
+    const modal = (await page.locator('.delete-project-modal').boundingBox())!;
+    const card = (await page.locator('.modal-contaier').boundingBox())!;
+    const left = modal.x - card.x;
+    const right = card.x + card.width - (modal.x + modal.width);
+    expect(Math.abs(left - right)).toBeLessThanOrEqual(2);
+});
+
+test('прилипшие кнопки окна меток стоят с отступом от края и не прячут фокус', async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 1024, height: 600 });
+    const many = Array.from({ length: 14 }, (_, i) => ({
+        name: `Метка ${i + 1}`,
+        color: '#4469e0',
+    }));
+    const others = many.map((tag) => ({
+        ...tag,
+        name: `Другая ${tag.name}`,
+    }));
+    await openProjects(page, [
+        { ...PROJECTS[0], tags: many },
+        { ...PROJECTS[1], tags: others },
+    ]);
+    const row = page.locator('tbody tr').first();
+    await row.hover();
+    await row.getByRole('button', { name: 'Project actions' }).click();
+    await page.getByRole('menuitem', { name: 'Tags…' }).click();
+
+    const modal = page.locator('.tags-modal');
+    const bar = page.locator('.tags-modal__buttons');
+    const save = bar.getByRole('button').last();
+    // окно прокручивается, а кнопки прилипли с прежним нижним отступом
+    expect(
+        await modal.evaluate((el) => el.scrollHeight > el.clientHeight)
+    ).toBe(true);
+    const modalBox = (await modal.boundingBox())!;
+    const saveBox = (await save.boundingBox())!;
+    expect(modalBox.y + modalBox.height - (saveBox.y + saveBox.height)).toBe(
+        28
+    );
+
+    // подсказка в самом низу, получив фокус, не уходит под кнопки
+    const last = page.locator('.tags-modal__suggestions-list button').last();
+    // Tab прокручивает к фокусу до ближайшего края, как scrollIntoView
+    await modal.evaluate((el) => el.scrollTo(0, 0));
+    await last.evaluate((el) => el.scrollIntoView({ block: 'nearest' }));
+    const barBox = (await bar.boundingBox())!;
+    const lastBox = (await last.boundingBox())!;
+    expect(lastBox.y + lastBox.height).toBeLessThanOrEqual(barBox.y);
 });

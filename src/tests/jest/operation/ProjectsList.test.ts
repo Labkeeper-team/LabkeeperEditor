@@ -1128,3 +1128,47 @@ test('a-401-after-deleting-the-only-project-reports-the-session', async () => {
         ctx.toasts().filter((toast) => toast.message === expired)
     ).toHaveLength(1);
 });
+
+test('a-second-session-expiry-after-logging-in-again-is-reported', async () => {
+    const ctx = setup();
+    const expired = ctx.repository.dictionary.filemanager.errors.sessionExpired;
+    const expiredToasts = () =>
+        ctx.toasts().filter((toast) => toast.message === expired);
+    ctx.rpi.setProjectTagsRequest = jest.fn().mockResolvedValue(fail(401));
+    await ctx.projectsPageService.onProjectTagsChange('c', [THESIS]);
+    expect(expiredToasts()).toHaveLength(1);
+
+    // вошли снова без перезагрузки: список загрузился
+    ctx.rpi.getAllProjectsRequest = jest
+        .fn()
+        .mockResolvedValueOnce(ok({ projects: [...LIST].reverse() }))
+        .mockResolvedValue(fail(401));
+    await ctx.projectsPageService.loaderService.loadProjects();
+    // сессия истекла снова: копия создалась, а список уже не отдают
+    ctx.rpi.cloneProjectRequest = jest
+        .fn()
+        .mockResolvedValue(ok({ projectId: 'copy' }));
+    await ctx.projectsPageService.onDuplicateProject('a');
+
+    expect(expiredToasts()).toHaveLength(2);
+    expect(ctx.repository.projectsViewModelRepository.projects()).toEqual([]);
+});
+
+test('a-refused-edit-followed-by-a-401-speaks-only-of-the-session', async () => {
+    const ctx = setup();
+    ctx.rpi.setProjectTagsRequest = jest
+        .fn()
+        .mockResolvedValueOnce(fail(500))
+        .mockResolvedValue(fail(401));
+    const X = { name: 'X', color: '#000000' };
+    const Y = { name: 'Y', color: '#000000' };
+
+    await Promise.all([
+        ctx.projectsPageService.onProjectTagsChange('c', [X]),
+        ctx.projectsPageService.onProjectTagsChange('c', [X, Y]),
+    ]);
+
+    expect(ctx.toasts().map((toast) => toast.message)).toEqual([
+        ctx.repository.dictionary.filemanager.errors.sessionExpired,
+    ]);
+});

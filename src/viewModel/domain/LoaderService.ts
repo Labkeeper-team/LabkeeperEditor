@@ -139,10 +139,9 @@ export class LoaderService {
     };
 
     /**
-     * Списки, запрошенные до этого момента, уже устарели: например, в них
-     * есть только что удалённый проект или они пришли после истечения сессии
+     * О текущем отказе сессии уже сказали. Сбрасывается, как только список
+     * снова загрузился: человек вошёл заново, и следующий отказ уже новый
      */
-    /** О текущем отказе сессии уже сказали; после нового входа снова нет */
     private sessionReported = false;
 
     sessionWasReported = () =>
@@ -163,6 +162,10 @@ export class LoaderService {
         return true;
     };
 
+    /**
+     * Списки, запрошенные до этого момента, уже устарели: например, в них
+     * есть только что удалённый проект или они пришли после истечения сессии
+     */
     discardEarlierLists = () => {
         this.shownListRequestedAt = ++this.clock;
     };
@@ -228,6 +231,9 @@ export class LoaderService {
             state.setGetProjectsRequestState('loading');
         }
         const result = await this.rpi.getAllProjectsRequest();
+        if (result.isOk) {
+            this.sessionReported = false;
+        }
         if (requestedAt < this.shownListRequestedAt) {
             // список новее уже показан или прежние отброшены; но спиннер этой
             // загрузки должен закончиться, даже если новые шли без него
