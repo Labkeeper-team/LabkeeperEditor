@@ -397,15 +397,21 @@ export class ProjectPageService {
             this.titleQueues.delete(projectId);
         }
         if (result.isUnauth) {
-            this.repository.toast(
-                this.repository.dictionary.filemanager.errors.sessionExpired,
-                'error'
-            );
-            this.ideService.resetEditor();
-            this.loaderService.discardEarlierLists();
-            this.repository.ideViewModelRepository.setGetProjectsRequestState(
-                'unauth'
-            );
+            // об истёкшей сессии уже сказали, если сброс уже очистил список
+            const reported =
+                this.repository.ideViewModelRepository.getProjectsRequestState() ===
+                    'unauth' &&
+                !this.repository.projectsViewModelRepository.projects().length;
+            if (!reported) {
+                this.repository.toast(
+                    this.repository.dictionary.filemanager.errors
+                        .sessionExpired,
+                    'error'
+                );
+                // сброс сам говорит странице списка, что сессия истекла
+                this.ideService.resetEditor();
+                this.loaderService.discardEarlierLists();
+            }
             failCallback();
             return false;
         }

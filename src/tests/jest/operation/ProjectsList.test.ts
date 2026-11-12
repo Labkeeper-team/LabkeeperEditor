@@ -974,3 +974,95 @@ test('after-a-reset-the-projects-page-says-the-session-is-over', () => {
         ctx.repository.ideViewModelRepository.getProjectsRequestState()
     ).toBe('unauth');
 });
+
+test('a-401-on-the-list-refresh-after-a-copy-reports-the-session', async () => {
+    const ctx = setup();
+    ctx.rpi.cloneProjectRequest = jest
+        .fn()
+        .mockResolvedValue(ok({ projectId: 'copy' }));
+    ctx.rpi.getAllProjectsRequest = jest.fn().mockResolvedValue(fail(401));
+
+    await ctx.projectsPageService.onDuplicateProject('a');
+
+    const expired = ctx.repository.dictionary.filemanager.errors.sessionExpired;
+    expect(ctx.toasts().some((toast) => toast.message === expired)).toBe(true);
+    // сброс очистил список: страница говорит, что сессия истекла
+    expect(ctx.repository.projectsViewModelRepository.projects()).toEqual([]);
+    expect(
+        ctx.repository.ideViewModelRepository.getProjectsRequestState()
+    ).toBe('unauth');
+});
+
+test('a-tag-edit-after-a-401-list-refresh-reports-the-session', async () => {
+    const ctx = setup();
+    ctx.rpi.getAllProjectsRequest = jest.fn().mockResolvedValue(fail(401));
+    ctx.rpi.setProjectTagsRequest = jest.fn().mockResolvedValue(fail(401));
+
+    await ctx.projectsPageService.loaderService.loadProjects({ silent: true });
+    await ctx.projectsPageService.onProjectTagsChange('c', [THESIS]);
+
+    const expired = ctx.repository.dictionary.filemanager.errors.sessionExpired;
+    expect(
+        ctx.toasts().filter((toast) => toast.message === expired)
+    ).toHaveLength(1);
+});
+
+test('a-refused-tag-is-reported-when-the-next-edit-does-not-include-it', async () => {
+    const ctx = setup();
+    const first = deferred<RequestResult<object>>();
+    const sent: string[] = [];
+    ctx.rpi.setProjectTagsRequest = jest
+        .fn()
+        .mockImplementation(async (_id: string, tags: { name: string }[]) => {
+            sent.push(tags.map((tag) => tag.name).join(','));
+            return sent.length === 1 ? first.promise : ok({ tags });
+        });
+    const X = { name: 'X', color: '#000000' };
+    const Y = { name: 'Y', color: '#000000' };
+
+    const one = ctx.projectsPageService.onProjectTagsChange('c', [X]);
+    // окно открыли снова, уже с X, и добавили Y
+    const two = ctx.projectsPageService.onProjectTagsChange('c', [X, Y]);
+    first.resolve(fail(500));
+    await Promise.all([one, two]);
+
+    expect(sent).toEqual(['X', 'Y']);
+    expect(lastToast(ctx)?.message).toBe(
+        ctx.repository.dictionary.projects.errors.tags_failed
+    );
+});
+
+test('tags-differing-only-in-case-are-edited-separately', () => {
+    const upper = { name: 'ML', color: '#000000' };
+    const lower = { name: 'ml', color: '#000000' };
+    const Z = { name: 'Z', color: '#000000' };
+    expect(tagsChange([upper, lower], [upper])([upper, lower, Z])).toEqual([
+        upper,
+        Z,
+    ]);
+    expect(tagsChange([upper, lower], [lower])([upper, lower, Z])).toEqual([
+        lower,
+        Z,
+    ]);
+});
+
+test('a-rename-and-a-tag-edit-refused-together-report-the-session-once', async () => {
+    const ctx = setup();
+    ctx.rpi.setTitleRequest = jest.fn().mockResolvedValue(fail(401));
+    ctx.rpi.setProjectTagsRequest = jest.fn().mockResolvedValue(fail(401));
+
+    await Promise.all([
+        ctx.projectsPageService.onProjectTagsChange('c', [THESIS]),
+        ctx.projectPageService.onProjectTitleChanged(
+            'a',
+            'Другое',
+            () => undefined,
+            () => undefined
+        ),
+    ]);
+
+    const expired = ctx.repository.dictionary.filemanager.errors.sessionExpired;
+    expect(
+        ctx.toasts().filter((toast) => toast.message === expired)
+    ).toHaveLength(1);
+});

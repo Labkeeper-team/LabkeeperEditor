@@ -11,6 +11,11 @@
     max-height: calc(82.5vh - 16px);
     overflow-y: auto;
 
+    // на низком окне прокручивается всё окно, а части не сжимаются друг в друга
+    > * {
+        flex-shrink: 0;
+    }
+
     @media screen and (max-width: 767px) {
         width: 100%;
         padding: 20px 16px 24px;

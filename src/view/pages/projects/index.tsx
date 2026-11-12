@@ -966,7 +966,11 @@ export const ProjectsPage = () => {
                     />
                 ) : null}
                 <div className="project-content-container">
-                    <div className="projects-header">
+                    <div
+                        className={classNames('projects-header', {
+                            'projects-header--filtered': filterActive,
+                        })}
+                    >
                         <Typography
                             type="h1"
                             text={texts.label}

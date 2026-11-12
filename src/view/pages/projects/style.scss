@@ -98,6 +98,22 @@
                 height: 36px;
                 padding: 0 14px;
             }
+
+            // со счётчиком «N из M ×» места на всё не хватает: от «Добавить»
+            // остаётся плюс, а слово читают только экранные дикторы
+            &--filtered .projects-header__add {
+                width: 36px;
+                padding: 0;
+
+                > span:first-child {
+                    position: absolute;
+                    width: 1px;
+                    height: 1px;
+                    overflow: hidden;
+                    clip: rect(0 0 0 0);
+                    white-space: nowrap;
+                }
+            }
         }
 
         // самые узкие телефоны: число проектов уступает место заголовку и кнопке

@@ -656,3 +656,86 @@ test('название не сжимается в ноль на узком ок�
         )
     ).toBe(true);
 });
+
+test('при наведении на «All projects» число проектов не пропадает', async ({
+    page,
+}) => {
+    await openProjects(page);
+    const all = sidebar(page).locator('.projects-sidebar__item').first();
+    await all.hover();
+    await expect(all.locator('.projects-sidebar__count')).toBeVisible();
+    // у метки число по-прежнему меняется на «⋯»
+    await sidebarRow(page, 'Физика').hover();
+    await expect(
+        sidebarRow(page, 'Физика').locator('.projects-sidebar__count')
+    ).toBeHidden();
+});
+
+test('окно меток на низком телефоне прокручивается, а не сжимается', async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 320, height: 640 });
+    const many = Array.from({ length: 14 }, (_, i) => ({
+        name: `Метка ${i + 1}`,
+        color: '#4469e0',
+    }));
+    // и метки других проектов: окно предлагает их ниже
+    const others = many.map((tag) => ({
+        ...tag,
+        name: `Другая ${tag.name}`,
+    }));
+    await openProjectsOnPhone(page, [
+        { ...PROJECTS[0], tags: many },
+        { ...PROJECTS[1], tags: others },
+    ]);
+    await page.getByRole('button', { name: 'Project actions' }).first().click();
+    await page.getByRole('menuitem', { name: /Tags/ }).click();
+
+    const modal = page.locator('.tags-modal');
+    await expect(modal).toBeVisible();
+    // ни одна часть окна не ужата меньше своего содержимого
+    expect(
+        await modal.evaluate((el) =>
+            [...el.children].every(
+                (child) =>
+                    child.getBoundingClientRect().height + 1 >=
+                    child.scrollHeight
+            )
+        )
+    ).toBe(true);
+});
+
+test('на телефоне по-русски заголовок с фильтром не обрезается', async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 360, height: 740 });
+    await inRussian(page);
+    await openProjectsOnPhone(page, manyProjects(36));
+    await page.getByRole('searchbox').first().fill('Проект 1');
+    await expect(
+        page.locator('.projects-header__count--filtered')
+    ).toBeVisible();
+
+    const title = page.locator('.projects-header .typography.h1');
+    expect(await title.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(
+        true
+    );
+    // от «Добавить» остался плюс, но имя у кнопки есть
+    await expect(
+        page.getByRole('button', { name: 'Добавить' }).first()
+    ).toBeVisible();
+});
+
+async function openProjectsOnPhone(page: Page, projects: unknown[]) {
+    const routeSetup = new RouteSetup(page);
+    await routeSetup.setupProject();
+    await routeSetup.setupListFilesRequest();
+    await routeSetup.setupGetUserInfoRequest(true);
+    await page.route('**/api/v4/public/project/all**', (route) =>
+        route.fulfill({
+            contentType: 'application/json',
+            body: JSON.stringify({ projects }),
+        })
+    );
+    await page.goto('/projects');
+}

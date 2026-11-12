@@ -100,31 +100,28 @@ export const tagsChange =
         if (sameTags(tags, before)) {
             return after;
         }
-        const was = new Map(before.map((tag) => [nameKey(tag.name), tag]));
-        const kept = new Map(after.map((tag) => [nameKey(tag.name), tag]));
+        // имена сравниваем точно: у проекта могут быть «ML» и «ml» сразу
+        const was = new Map(before.map((tag) => [tag.name, tag]));
+        const kept = new Map(after.map((tag) => [tag.name, tag]));
         const touched = (tag: ProjectTag) => {
-            const old = was.get(nameKey(tag.name));
-            return !old || old.name !== tag.name || old.color !== tag.color;
+            const old = was.get(tag.name);
+            return !old || old.color !== tag.color;
         };
         const result = tags
-            .filter((tag) => {
-                const key = nameKey(tag.name);
-                return !was.has(key) || kept.has(key);
-            })
+            .filter((tag) => !was.has(tag.name) || kept.has(tag.name))
             .map((tag) => {
-                const edited = kept.get(nameKey(tag.name));
+                const edited = kept.get(tag.name);
                 return edited && touched(edited) ? edited : tag;
             });
         for (const tag of after) {
-            const key = nameKey(tag.name);
             if (
                 touched(tag) &&
-                !result.some((other) => nameKey(other.name) === key)
+                !result.some((other) => other.name === tag.name)
             ) {
                 result.push(tag);
             }
         }
-        return result;
+        return normalizeProjectTags(result);
     };
 
 /**
@@ -206,9 +203,15 @@ export class ProjectsPageService {
         );
     };
 
+    /**
+     * Об истёкшей сессии уже сказали: сброс очищает список и ставит ему
+     * «unauth». Одного «unauth» мало: его ставит и загрузка списка, получив
+     * 401, а о сессии она не говорит
+     */
     private sessionLost = () =>
         this.repository.ideViewModelRepository.getProjectsRequestState() ===
-        'unauth';
+            'unauth' &&
+        this.repository.projectsViewModelRepository.projects().length === 0;
 
     private listedProject = (projectId: string): ProjectShort | undefined =>
         this.repository.projectsViewModelRepository
@@ -296,6 +299,15 @@ export class ProjectsPageService {
             const sent = await send(next);
             if (sent.isOk) {
                 state.confirmed = accepted(sent, next);
+            } else {
+                // что вышло бы, пройди эта правка, вместе с идущими следом
+                this.intents.set(
+                    sent,
+                    state.pending.reduce(
+                        (value, pending) => pending(value),
+                        state.confirmed
+                    )
+                );
             }
             return sent;
         });
@@ -306,6 +318,40 @@ export class ProjectsPageService {
         }
         this.loaderService.writeSettled(key);
         return result;
+    };
+
+    /**
+     * Правка не прошла. Если следом идут другие правки того же поля, ждём их:
+     * они могли привести к тому же итогу, что получился бы и с ней (тогда
+     * жаловаться не на что), а могли и нет, ведь отказанное в следующий запрос
+     * не попадает. true, если итог расходится с тем, что вышло бы, пройди
+     * правка, и об отказе надо сказать
+     */
+    private intents = new WeakMap<object, unknown>();
+
+    private changeLost = async <T>(
+        projectId: string,
+        field: 'tags' | 'public',
+        failed: RequestResult<unknown>,
+        read: (project: ProjectShort) => T,
+        same: (a: T, b: T) => boolean
+    ): Promise<boolean> => {
+        const key = `${projectId}:${field}`;
+        for (
+            let queue = this.queues.get(key);
+            queue;
+            queue = this.queues.get(key)
+        ) {
+            await queue.catch(() => undefined);
+        }
+        // показанное значение обновляется сразу после ответа очереди
+        await Promise.resolve();
+        // проект удалили, пока шли правки: жаловаться не на что
+        const project = this.listedProject(projectId);
+        if (!project || !this.intents.has(failed)) {
+            return !!project;
+        }
+        return !same(read(project), this.intents.get(failed) as T);
     };
 
     /**
@@ -349,12 +395,8 @@ export class ProjectsPageService {
         if (sameTags(before, next)) {
             return;
         }
-        const key = `${projectId}:tags`;
-        const result = await this.writeTags(
-            projectId,
-            before,
-            tagsChange(before, next)
-        );
+        const change = tagsChange(before, next);
+        const result = await this.writeTags(projectId, before, change);
         if (result === NOTHING_TO_SEND) {
             return;
         }
@@ -366,9 +408,15 @@ export class ProjectsPageService {
             });
         } else if (result.isUnauth) {
             this.sessionExpired();
-        } else if (this.listedProject(projectId) && !this.writes.has(key)) {
-            // проект удалили, пока метки сохранялись, или следом идёт другая
-            // правка, которая всё равно решит, что будет: жаловаться не на что
+        } else if (
+            await this.changeLost(
+                projectId,
+                'tags',
+                result,
+                (listed) => listed.tags ?? [],
+                sameTags
+            )
+        ) {
             this.repository.toast(
                 this.repository.dictionary.projects.errors.tags_failed,
                 'error'
@@ -412,16 +460,23 @@ export class ProjectsPageService {
                 )
             )
         );
-        if (results.some((result) => result.isUnauth)) {
-            this.sessionExpired();
-        } else if (
-            results.some(
+        const lost = await Promise.all(
+            results.map(
                 (result, i) =>
                     !result.isOk &&
-                    this.listedProject(projects[i].projectId) &&
-                    !this.writes.has(`${projects[i].projectId}:tags`)
+                    !result.isUnauth &&
+                    this.changeLost(
+                        projects[i].projectId,
+                        'tags',
+                        result,
+                        (listed) => listed.tags ?? [],
+                        sameTags
+                    )
             )
-        ) {
+        );
+        if (results.some((result) => result.isUnauth)) {
+            this.sessionExpired();
+        } else if (lost.some(Boolean)) {
             this.repository.toast(
                 this.repository.dictionary.projects.errors.tags_failed,
                 'error'
@@ -554,8 +609,13 @@ export class ProjectsPageService {
         } else if (result.isUnauth) {
             this.sessionExpired();
         } else if (
-            this.listedProject(projectId) &&
-            !this.writes.has(`${projectId}:public`)
+            await this.changeLost(
+                projectId,
+                'public',
+                result,
+                (listed) => !!listed.isPublic,
+                (a, b) => a === b
+            )
         ) {
             this.repository.toast(
                 this.repository.dictionary.projects.errors.visibility_failed,

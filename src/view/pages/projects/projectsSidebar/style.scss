@@ -65,7 +65,8 @@
             opacity: 1;
         }
 
-        &:hover .projects-sidebar__count,
+        // число меняется на «⋯» только у строк с меню, то есть у меток
+        &:has(.project-actions-button):hover .projects-sidebar__count,
         &:has(.project-actions-button--open) .projects-sidebar__count,
         &:has(.project-actions-button:focus-visible) .projects-sidebar__count {
             visibility: hidden;
