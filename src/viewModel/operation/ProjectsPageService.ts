@@ -332,26 +332,32 @@ export class ProjectsPageService {
         show();
         this.loaderService.writeStarted(key);
 
-        const result = await this.enqueue(key, async () => {
-            const next = change(state.confirmed);
-            if (same(next, state.confirmed)) {
-                return NOTHING_TO_SEND as unknown as R;
+        let result: R;
+        try {
+            result = await this.enqueue(key, async () => {
+                const next = change(state.confirmed);
+                if (same(next, state.confirmed)) {
+                    return NOTHING_TO_SEND as unknown as R;
+                }
+                const sent = await send(next);
+                if (sent.isOk) {
+                    state.confirmed = accepted(sent, next);
+                } else if (!sent.isUnauth) {
+                    state.failed = true;
+                }
+                return sent;
+            });
+        } finally {
+            // и при исключении: иначе поле проекта в этой вкладке навсегда
+            // считалось бы занятым правкой и перестало обновляться из списка
+            state.pending.splice(state.pending.indexOf(change), 1);
+            show();
+            if (!state.pending.length && this.writes.get(key) === state) {
+                this.writes.delete(key);
             }
-            const sent = await send(next);
-            if (sent.isOk) {
-                state.confirmed = accepted(sent, next);
-            } else if (!sent.isUnauth) {
-                state.failed = true;
-            }
-            return sent;
-        });
-        state.pending.splice(state.pending.indexOf(change), 1);
-        show();
-        const last = !state.pending.length;
-        if (last && this.writes.get(key) === state) {
-            this.writes.delete(key);
+            this.loaderService.writeSettled(key);
         }
-        this.loaderService.writeSettled(key);
+        const last = !state.pending.length;
         return {
             result,
             lost:

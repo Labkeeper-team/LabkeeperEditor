@@ -489,6 +489,24 @@ describe('WebRpi', () => {
         jest.clearAllMocks();
     });
 
+    // POST /project/{id}/tags заменяет список целиком: тело это { tags }
+    test('setProjectTagsRequest posts the whole list to the project tags', async () => {
+        const postMock = axios.post as jest.Mock;
+        postMock.mockResolvedValue({ status: 200, data: { tags: [] } });
+        const { rpi } = createRpi();
+        const tags = [
+            { name: 'Физика', color: '#4469e0' },
+            { name: 'Диплом', color: 'red' },
+        ];
+
+        await rpi.setProjectTagsRequest('project-id', tags);
+
+        expect(postMock).toHaveBeenCalledWith(
+            '/api/v4/public/project/project-id/tags',
+            { tags }
+        );
+    });
+
     test('renameFileRequest passes old and new file names as-is', async () => {
         const postMock = axios.post as jest.Mock;
         postMock.mockResolvedValue({
