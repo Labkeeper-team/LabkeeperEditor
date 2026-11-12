@@ -113,8 +113,11 @@ export const DropdownMenu = (
     const [constrainedWidth, setConstrainedWidth] = useState<number | null>(
         null
     );
+    // номер замера: окно или колонка поменяли ширину, пока меню открыто
+    const [measureTick, setMeasureTick] = useState(0);
 
-    // до отрисовки: меню, которое не влезает, сразу появляется суженным
+    // до отрисовки: меню, которое не влезает, сразу появляется суженным.
+    // Замер идёт без ограничения: его сбрасывает тот же рендер, что заказал замер
     useLayoutEffect(() => {
         const root = rootRef.current;
         const menu = ref.current;
@@ -124,6 +127,32 @@ export const DropdownMenu = (
         }
         const available = Math.floor(availableMenuWidth(root));
         setConstrainedWidth(menu.offsetWidth > available ? available : null);
+    }, [isPopover, measureTick]);
+
+    // GH-254: окно сузили при открытом меню, и оно оставалось прежней ширины,
+    // а левый край уходил под обрезку колонки. Меряем заново на каждое изменение
+    useEffect(() => {
+        const root = rootRef.current;
+        if (!isPopover || !root) {
+            return;
+        }
+        const remeasure = () => {
+            setConstrainedWidth(null);
+            setMeasureTick((tick) => tick + 1);
+        };
+        window.addEventListener('resize', remeasure);
+        const clip = horizontalClipOf(root);
+        const observer =
+            clip && typeof ResizeObserver !== 'undefined'
+                ? new ResizeObserver(remeasure)
+                : null;
+        if (clip) {
+            observer?.observe(clip);
+        }
+        return () => {
+            window.removeEventListener('resize', remeasure);
+            observer?.disconnect();
+        };
     }, [isPopover]);
 
     useHotkeys(

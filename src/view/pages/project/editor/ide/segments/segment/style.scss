@@ -239,13 +239,13 @@ $segment-editor-min-height: 80px;
             padding-right: $segment-editor-rules-right-gutter;
         }
         // кнопки правки после первой строки встают ниже плашки, а не на неё;
-        // запас обрезки блока кнопок растёт на тот же сдвиг, иначе низ кнопок срезался бы
+        // их полоса растёт на тот же сдвиг, иначе кнопки заехали бы на строку под ними
         > .cm-hunk-controls-host:nth-child(
                 -n + 2 of .cm-line,
                 .cm-hunk-deleted-wrap,
                 .cm-hunk-controls-host
             ) {
-            overflow-clip-margin: 46px;
+            height: 46px;
 
             .cm-hunk-controls {
                 top: 14px;

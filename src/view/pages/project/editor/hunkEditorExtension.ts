@@ -174,29 +174,12 @@ function createHunkButton(
     return button;
 }
 
-const HUNK_TRAILING_LINE_LAST_PX = 32;
-const HUNK_TRAILING_LINE_SECOND_LAST_PX = 16;
-
-/** Trailing delete sits after EOF. Second-to-last delete shifts the next line up, so `controlsLine === docLines` in both cases. */
-function hunkTrailingSpacePx(
-    controlsLine: number,
-    docLines: number,
-    deletedBlockAtEnd: boolean,
-    deleteOnly: boolean
-): number {
-    if (deletedBlockAtEnd) {
-        return HUNK_TRAILING_LINE_LAST_PX;
-    }
-    if (controlsLine >= docLines) {
-        return deleteOnly
-            ? HUNK_TRAILING_LINE_SECOND_LAST_PX
-            : HUNK_TRAILING_LINE_LAST_PX;
-    }
-    if (controlsLine === docLines - 1) {
-        return HUNK_TRAILING_LINE_SECOND_LAST_PX;
-    }
-    return 0;
-}
+/**
+ * GH-254: кнопки правки стоят своей полосой между правкой и следующей
+ * строкой. Раньше блок под ними был нулевой высоты, кнопки свисали на
+ * следующую строку и закрывали её текст
+ */
+const HUNK_CONTROLS_ROW_PX = 36;
 
 class HunkControlsWidget extends WidgetType {
     constructor(
@@ -248,40 +231,7 @@ class HunkControlsWidget extends WidgetType {
     }
 
     get estimatedHeight(): number {
-        return 0;
-    }
-
-    ignoreEvent(): boolean {
-        return true;
-    }
-}
-
-/**
- * Empty line after EOF so trailing hunks layout like mid-document:
- * deleted/added lines, then the next line that absolute buttons sit on.
- */
-class HunkTrailingLineWidget extends WidgetType {
-    constructor(readonly height: number) {
-        super();
-    }
-
-    eq(other: WidgetType): boolean {
-        return (
-            other instanceof HunkTrailingLineWidget &&
-            other.height === this.height
-        );
-    }
-
-    toDOM(): HTMLElement {
-        const el = document.createElement('div');
-        el.className = 'cm-hunk-trailing-line';
-        el.style.height = `${this.height}px`;
-        el.setAttribute('aria-hidden', 'true');
-        return el;
-    }
-
-    get estimatedHeight(): number {
-        return this.height;
+        return HUNK_CONTROLS_ROW_PX;
     }
 
     ignoreEvent(): boolean {
@@ -375,7 +325,6 @@ function buildHunkDecorations(
                 .map((hunk) => [hunk.id, hunk])
         ).values(),
     ];
-    let trailingSpacePx = 0;
     const lineText = (line: number) =>
         line >= 1 && line <= docLines ? state.doc.line(line).text : null;
 
@@ -394,7 +343,6 @@ function buildHunkDecorations(
             : 'cm-hunk-added-line';
 
         let controlsPos: number | null = null;
-        let controlsLine: number | null = null;
         let controlsSide: number;
         const deleteOnly = isDeleteOnlyGroup(group);
         let deletedBlockAtEnd = false;
@@ -419,7 +367,6 @@ function buildHunkDecorations(
             reserveSide(sideByPos, deletePos, deleteSide);
             if (deleteOnly) {
                 controlsPos = deletePos;
-                controlsLine = anchor;
             }
         }
 
@@ -454,18 +401,17 @@ function buildHunkDecorations(
                 );
             }
             controlsPos = state.doc.line(end).to;
-            controlsLine = end;
         }
 
         if (!group.isNewSegment) {
             if (deleteOnly && controlsPos != null) {
                 // Mid-doc: same slot as the deleted block (line.from), side -1
-                // keeps the 0-height host under the red lines and above the
+                // keeps the buttons row under the red lines and above the
                 // remaining line. Trailing delete: both widgets sit after EOF.
                 controlsSide = deletedBlockAtEnd ? 2 : -1;
                 reserveSide(sideByPos, controlsPos, controlsSide);
             } else if (controlsPos == null) {
-                controlsLine = resolveControlsLine(
+                const controlsLine = resolveControlsLine(
                     group,
                     docLines,
                     targetHunks
@@ -475,16 +421,6 @@ function buildHunkDecorations(
             } else {
                 controlsSide = takeNextSide(sideByPos, controlsPos);
             }
-
-            trailingSpacePx = Math.max(
-                trailingSpacePx,
-                hunkTrailingSpacePx(
-                    controlsLine ?? 0,
-                    docLines,
-                    deletedBlockAtEnd,
-                    deleteOnly
-                )
-            );
 
             widgets.push(
                 Decoration.widget({
@@ -500,17 +436,6 @@ function buildHunkDecorations(
                 }).range(controlsPos)
             );
         }
-    }
-
-    if (trailingSpacePx > 0 && docLines > 0) {
-        const eof = state.doc.line(docLines).to;
-        widgets.push(
-            Decoration.widget({
-                widget: new HunkTrailingLineWidget(trailingSpacePx),
-                block: true,
-                side: takeNextSide(sideByPos, eof),
-            }).range(eof)
-        );
     }
 
     return Decoration.set([...decorations, ...widgets], true);
@@ -669,31 +594,11 @@ export const hunkEditorTheme = EditorView.theme({
     '.cm-hunk-controls-host': {
         position: 'relative',
         display: 'block',
-        height: '0',
-        maxHeight: '0',
+        height: `${HUNK_CONTROLS_ROW_PX}px`,
         margin: '0',
         padding: '0',
         border: 'none',
         width: '100%',
-        // Clip so abs buttons do not inflate cm-content/scroller height;
-        // clip-margin keeps them visible over the next line.
-        overflow: 'clip',
-        overflowClipMargin: '36px',
-        pointerEvents: 'none',
-        lineHeight: '0',
-    },
-    // WebKit не знает overflow-clip-margin и срезал бы кнопки целиком; место под кнопками у конца текста держит cm-hunk-trailing-line
-    '@supports not (overflow-clip-margin: 1px)': {
-        '.cm-hunk-controls-host': {
-            overflow: 'visible',
-        },
-    },
-    '.cm-hunk-trailing-line': {
-        display: 'block',
-        width: '100%',
-        margin: '0',
-        padding: '0',
-        border: 'none',
         pointerEvents: 'none',
         lineHeight: '0',
     },

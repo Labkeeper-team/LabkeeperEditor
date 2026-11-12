@@ -93,3 +93,60 @@ test('export-hint-wraps-inside-its-width-on-a-wide-screen', async ({
     expect(overflow).toBeLessThanOrEqual(0);
     expect(right).toBeLessThanOrEqual(1700);
 });
+
+// GH-254: окно сузили, пока меню открыто, и оно оставалось прежней ширины
+test('settings-menu-narrows-with-the-window-while-it-is-open', async ({
+    page,
+}) => {
+    await openProject(page, 1280);
+    await page.locator('div.file-manager-button').click();
+    await expect(page.locator('.manager-container')).toBeVisible();
+    // без движения мыши: Chromium после смены размера сам двигает указатель,
+    // и меню закрывается по mouseleave. Safari так не делает, и меню остаётся
+    await page
+        .locator('.code-settings-header-container .dropdown-menu-container')
+        .first()
+        .dispatchEvent('click');
+    await expect(menu(page)).toBeVisible();
+
+    await page.setViewportSize({ width: 900, height: 943 });
+
+    await expect
+        .poll(async () => {
+            const column = await box(page, '.ide-container');
+            const opened = await box(
+                page,
+                '.dropdown-menu-content-container:has(.project-settings-dropdown)'
+            );
+            return opened.x >= column.x;
+        })
+        .toBe(true);
+    const overflow = await menu(page).evaluate(
+        (element) => element.scrollWidth - element.clientWidth
+    );
+    expect(overflow).toBeLessThanOrEqual(0);
+});
+
+// GH-254: в колонке редактора Safari 17 рисовал поверх подсказки панель
+// агента, и текст обрывался на краю колонки. Подсказка живёт вне колонки
+test('export-hint-lives-outside-the-editor-column', async ({ page }) => {
+    await openProject(page, 1280);
+    await page.locator('div.file-manager-button').click();
+    await openSettings(page);
+
+    await page
+        .locator('.project-export__option[data-export-format="tex"]')
+        .hover();
+    const hint = page.locator('#project-export-hint');
+    await expect(hint).toBeVisible();
+
+    expect(
+        await hint.evaluate(
+            (element) => element.closest('.ide-container') === null
+        )
+    ).toBe(true);
+    const column = await box(page, '.ide-container');
+    const shown = await hint.boundingBox();
+    // подсказка справа от меню и выходит за колонку: значит, её не обрезает и не накрывает соседняя панель
+    expect(shown!.x + shown!.width).toBeGreaterThan(column.x + column.width);
+});
