@@ -38,9 +38,11 @@ export const TagsModal = (props: {
     const dispatch = useDispatch<AppDispatch>();
     const inputRef = useRef<HTMLInputElement>(null);
 
-    const [tags, setTags] = useState<ProjectTag[]>(() =>
+    // что окно показало при открытии: правка уходит как разница с ним
+    const [opened] = useState<ProjectTag[]>(() =>
         uniqueTags(props.project.tags)
     );
+    const [tags, setTags] = useState<ProjectTag[]>(opened);
     const [name, setName] = useState('');
     // цвет, выбранный руками; пока его нет, цвет берётся от имени
     const [pickedColor, setPickedColor] = useState<string | null>(null);
@@ -69,7 +71,10 @@ export const TagsModal = (props: {
     const full = tags.length >= PROJECT_TAGS_MAX_COUNT;
 
     const addTag = (tag: ProjectTag) => {
-        const trimmed = tag.name.trim();
+        // метка уже есть у других проектов: берём её написание, иначе «физика»
+        // встала бы рядом с «Физика» отдельным вариантом
+        const trimmed =
+            knownByKey.get(tagKey(tag.name.trim()))?.name ?? tag.name.trim();
         if (!trimmed) {
             return;
         }
@@ -99,12 +104,13 @@ export const TagsModal = (props: {
         // недописанная метка в поле тоже сохраняется: её явно хотели добавить
         const pending =
             name.trim() && !ownKeys.has(tagKey(name)) && !full
-                ? [...tags, { name: name.trim(), color }]
+                ? [...tags, { name: existing?.name ?? name.trim(), color }]
                 : tags;
         dispatch(
             controller.onProjectTagsChangeRequest({
                 projectId: props.project.projectId,
                 tags: pending,
+                opened,
             })
         );
         props.onClose();

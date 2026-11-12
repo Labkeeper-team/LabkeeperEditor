@@ -34,8 +34,6 @@ const PROJECT_SEARCH_FROM = 8;
 export const TagEditModal = (props: {
     /** Метка, которую правят; без неё окно создаёт новую */
     tag?: ProjectTag;
-    /** Проекты, отмеченные сразу, например текущая выборка списка */
-    preselected?: string[];
     projects: ProjectShort[];
     knownTags: KnownTag[];
     /** Метку сохранили под этим именем: выбор в списке должен пойти за ней */
@@ -48,14 +46,14 @@ export const TagEditModal = (props: {
     const inputRef = useRef<HTMLInputElement>(null);
 
     const [name, setName] = useState(props.tag?.name ?? '');
-    // цвет с сервера может быть не hex: приводим, чтобы его образец был отмечен
-    const [color, setColor] = useState<string | null>(
-        props.tag ? (toHexColor(props.tag.color) ?? props.tag.color) : null
-    );
+    // цвет, выбранный руками. Пока его нет, уходит исходный цвет метки как
+    // есть: приведённый к hex («red» в «#ff0000») отличался бы от хранимого,
+    // и «Сохранить» без правок переписал бы все проекты с этой меткой
+    const [color, setColor] = useState<string | null>(null);
     const [query, setQuery] = useState('');
     const [selected, setSelected] = useState<Set<string>>(() => {
         if (!props.tag) {
-            return new Set(props.preselected ?? []);
+            return new Set<string>();
         }
         const key = tagKey(props.tag.name);
         return new Set(
@@ -110,7 +108,10 @@ export const TagEditModal = (props: {
             : [...TAG_COLORS];
     }, [props.tag]);
 
-    const effectiveColor = color ?? defaultTagColor(name);
+    const effectiveColor =
+        color ?? props.tag?.color ?? defaultTagColor(name);
+    // отмечаем образец по приведённому цвету: с сервера он может прийти не hex
+    const shownColor = toHexColor(effectiveColor) ?? effectiveColor;
     const takenBy = useMemo(() => {
         const key = tagKey(name);
         if (!key || (props.tag && tagKey(props.tag.name) === key)) {
@@ -161,7 +162,7 @@ export const TagEditModal = (props: {
                 <span className="tag-edit-modal__name">
                     <span
                         className="tag-edit-modal__dot"
-                        style={{ background: effectiveColor }}
+                        style={{ background: shownColor }}
                     />
                     <input
                         ref={inputRef}
@@ -183,11 +184,11 @@ export const TagEditModal = (props: {
                             key={swatch}
                             type="button"
                             role="radio"
-                            aria-checked={swatch === effectiveColor}
+                            aria-checked={swatch === shownColor}
                             aria-label={swatch}
                             className={classNames('tag-edit-modal__swatch', {
                                 'tag-edit-modal__swatch--active':
-                                    swatch === effectiveColor,
+                                    swatch === shownColor,
                             })}
                             style={{ background: swatch }}
                             onClick={() => setColor(swatch)}

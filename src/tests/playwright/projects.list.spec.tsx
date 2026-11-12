@@ -265,6 +265,68 @@ test('метки проекта меняются в окне и уходят о�
     ]);
 });
 
+// уже существующая метка, набранная в другом регистре, берёт своё написание
+test('метка, набранная в другом регистре, сохраняется как уже существующая', async ({
+    page,
+}) => {
+    await openProjects(page);
+    const sent: { tags: { name: string }[] }[] = [];
+    await page.route('**/api/v4/public/project/*/tags', async (route) => {
+        const body = route.request().postDataJSON();
+        sent.push(body);
+        await route.fulfill({ json: body });
+    });
+
+    const row = page.locator('tbody tr', { hasText: 'Конспект' });
+    await row.hover();
+    await row.getByRole('button', { name: 'Project actions' }).click();
+    await page.getByRole('menuitem', { name: 'Tags…' }).click();
+    const modal = page.locator('.tags-modal');
+    await modal.getByRole('textbox').fill('физика');
+    await modal.getByRole('textbox').press('Enter');
+    await modal.getByRole('button', { name: 'Save' }).click();
+
+    await expect.poll(() => sent).toHaveLength(1);
+    expect(sent[0].tags).toEqual([PHYSICS]);
+});
+
+// цвет метки с сервера может быть любым CSS-цветом: «Сохранить» без правок
+// его не трогает и проекты не переписывает
+test('метка с цветом не из палитры без правок не переписывает проекты', async ({
+    page,
+}) => {
+    const named = { name: 'Физика', color: 'red' };
+    await openProjects(
+        page,
+        PROJECTS.map((project) => ({
+            ...project,
+            tags: project.tags.map((tag) =>
+                tag.name === 'Физика' ? named : tag
+            ),
+        }))
+    );
+    const sent: unknown[] = [];
+    await page.route('**/api/v4/public/project/*/tags', async (route) => {
+        sent.push(route.request().postDataJSON());
+        await route.fulfill({ json: route.request().postDataJSON() });
+    });
+
+    const physics = sidebarRow(page, 'Физика');
+    await physics.hover();
+    await physics.getByRole('button', { name: /Tag actions/ }).click();
+    await page.getByRole('menuitem', { name: 'Edit' }).click();
+    const modal = page.locator('.tag-edit-modal');
+    // образец своего цвета отмечен, хотя цвет пришёл не hex
+    await expect(modal.locator('.tag-edit-modal__swatch--active')).toHaveCount(
+        1
+    );
+    await modal.getByRole('button', { name: 'Save' }).click();
+
+    await expect(modal).toHaveCount(0);
+    await page.waitForTimeout(300);
+    expect(sent).toEqual([]);
+});
+
 test('меню проекта делает его публичным и копирует', async ({ page }) => {
     await openProjects(page);
     const visibility: string[] = [];
