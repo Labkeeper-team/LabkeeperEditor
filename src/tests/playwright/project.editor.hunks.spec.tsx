@@ -1598,7 +1598,50 @@ test('hunk-replace-in-file-revert-restores-old-text', async ({ page }) => {
     await expect(page.locator('.tree-row-file--has-hunks')).toHaveCount(0);
 });
 
-// WebKit не знает overflow-clip-margin: хост нулевой высоты обрезал кнопки целиком, и в Safari правку было нечем принять
+// GH-254: кнопки правки висели на следующей строке и закрывали её текст
+test('hunk-buttons-do-not-cover-the-lines-around-them', async ({ page }) => {
+    await openProjectWithHunks(page, {
+        program: programOf(
+            mdSegment(1, `New first line.\n${LONG_LINE}\nomega`)
+        ),
+        hunks: [
+            {
+                id: 'hunk-replace-first',
+                type: 'replaceTextInSegment',
+                segmentId: 1,
+                startLine: 1,
+                endLine: 1,
+                text: 'Old first line.',
+            },
+        ],
+    });
+    const editor = page.locator('#ide-segment-0');
+    await expect(editor.locator('.cm-hunk-btn--accept')).toBeVisible();
+
+    const overlaps = await editor.evaluate((root) => {
+        const buttons = Array.from(root.querySelectorAll('.cm-hunk-btn')).map(
+            (button) => button.getBoundingClientRect()
+        );
+        const rows = Array.from(
+            root.querySelectorAll('.cm-line, .cm-hunk-deleted-line')
+        );
+        return rows
+            .filter((row) => {
+                const box = row.getBoundingClientRect();
+                return buttons.some(
+                    (button) =>
+                        button.top < box.bottom &&
+                        box.top < button.bottom &&
+                        button.left < box.right &&
+                        box.left < button.right
+                );
+            })
+            .map((row) => row.textContent);
+    });
+    expect(overlaps).toEqual([]);
+});
+
+// кнопки нажимаются на любом экране; раньше хост кнопок был нулевой высоты, и в Safari их срезало целиком
 const HUNK_BUTTON_VIEWPORTS = [
     { width: 1360, height: 900 },
     { width: 390, height: 844 },
@@ -1651,7 +1694,8 @@ async function hitAroundButton(button: Locator) {
             if (target.contains(hit)) {
                 return 'button';
             }
-            return hit.closest('.cm-line') ? 'line' : hit.className;
+            // полоса кнопок касаний не забирает: левее кнопок их получает редактор
+            return hit.closest('.cm-content') ? 'editor' : hit.className;
         };
         return {
             center: describe(
@@ -1685,10 +1729,10 @@ for (const viewport of HUNK_BUTTON_VIEWPORTS) {
                 const revert = editor.locator('.cm-hunk-btn--revert');
                 await expect(accept).toBeVisible();
 
-                // строка под кнопками остаётся строкой: левее кнопок касание ставит курсор
+                // левее кнопок касание ставит курсор, а не пропадает
                 expect(await hitAroundButton(accept)).toEqual({
                     center: 'button',
-                    left: 'line',
+                    left: 'editor',
                 });
                 expect((await hitAroundButton(revert)).center).toBe('button');
 
