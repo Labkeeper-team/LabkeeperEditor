@@ -308,6 +308,9 @@ export interface MockViewModelRepository extends ViewModelRepository {
 
 export const mockViewModelState = (): MockViewModelRepository => {
     const mockViewModelState = new MockViewModelRepositoryState();
+    // в замыкании, а не в состоянии: его целиком снимают снимки jest
+    let guestAgentHunks: Hunk[] = [];
+    let guestAgentHistory: AgentHistoryEntry[] = [];
     let programChangeRevision = 0;
     let savedProgramRevision = 0;
     let textFileChangeRevision = 0;
@@ -592,6 +595,10 @@ export const mockViewModelState = (): MockViewModelRepository => {
                     segments: [],
                     parameters: { roundStrategy: 'threeDigits' },
                 }),
+            guestAgentHunks: () => guestAgentHunks,
+            guestAgentHistory: () => guestAgentHistory,
+            setGuestAgentHunks: (hunks) => (guestAgentHunks = hunks),
+            setGuestAgentHistory: (history) => (guestAgentHistory = history),
         },
         projectViewModelRepository: {
             mode: () => mockViewModelState.mode,
@@ -1018,6 +1025,11 @@ export interface PersistenceViewModelRepository {
     setInstructionExpanded: (instructionExpanded: boolean) => void;
     setLastProgram: (lastProgram: Program) => void;
     clearLastProgram: () => void;
+    /** GH-256: правки и история агента гостя, уходят в проект при входе */
+    guestAgentHunks: () => Hunk[];
+    guestAgentHistory: () => AgentHistoryEntry[];
+    setGuestAgentHunks: (hunks: Hunk[]) => void;
+    setGuestAgentHistory: (history: AgentHistoryEntry[]) => void;
 }
 
 export type SetLocationOptions = {

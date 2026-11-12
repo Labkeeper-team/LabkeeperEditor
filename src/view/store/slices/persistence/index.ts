@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Language } from '../../../../viewModel/dictionaries';
-import { Program } from '../../../../model/domain.ts';
+import { AgentHistoryEntry, Hunk, Program } from '../../../../model/domain.ts';
 import { persistenceInitialState } from '../index.ts';
 import { createEmptyProgram } from '../../../../model/repository/ProgramRepository.ts';
 import { AgentRunMode } from '../../../../model/rpi/agentSocket.ts';
@@ -21,6 +21,15 @@ export const persistenceSlice = createSlice({
         },
         clearLastProgram(state) {
             state.lastProgram = createEmptyProgram();
+        },
+        setGuestAgentHunks(state, { payload }: PayloadAction<Hunk[]>) {
+            state.guestAgentHunks = payload;
+        },
+        setGuestAgentHistory(
+            state,
+            { payload }: PayloadAction<AgentHistoryEntry[]>
+        ) {
+            state.guestAgentHistory = payload;
         },
         setLastOpenedProjectUuid(
             state,
@@ -71,6 +80,8 @@ export const {
     setInstructionExpanded,
     clearLastProgram,
     setLastProgram,
+    setGuestAgentHunks,
+    setGuestAgentHistory,
     setLastOpenedProjectUuid,
     setAgentMaxTokens,
     setAgentIterations,

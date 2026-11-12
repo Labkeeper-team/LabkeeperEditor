@@ -175,6 +175,12 @@ interface PersistenceState {
     skipClearHistoryConfirm: boolean;
     /** Высота панели запроса, выставленная ручкой; null значит авторост */
     agentPromptHeight: number | null;
+    /**
+     * GH-256: правки и история агента гостя. Живут рядом с lastProgram, чтобы
+     * пережить перезагрузку и уход на вход через OAuth, и уходят в проект при входе
+     */
+    guestAgentHunks: Hunk[];
+    guestAgentHistory: AgentHistoryEntry[];
     /** GH-189: режим отката в агентском режиме; срез, сохранённый до него, получит last */
     agentCheckpointMode: AgentCheckpointMode;
     /** Галка «больше не спрашивать» в подтверждении отката */
@@ -275,6 +281,8 @@ export const persistenceInitialState: PersistenceState = {
     agentPromptHeight: null,
     agentCheckpointMode: AGENT_DEFAULT_CHECKPOINT_MODE,
     skipCheckpointRevertConfirm: false,
+    guestAgentHunks: [],
+    guestAgentHistory: [],
 };
 
 export const chatInitialState: ChatState = {

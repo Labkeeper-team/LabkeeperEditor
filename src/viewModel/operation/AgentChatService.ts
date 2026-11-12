@@ -1,4 +1,4 @@
-import { Hunk } from '../../model/domain.ts';
+import { AgentHistoryEntry, Hunk } from '../../model/domain.ts';
 import { Rpi } from '../../model/rpi';
 import {
     AgentClosedReason,
@@ -52,6 +52,9 @@ const ERROR_STOP_REASONS: AgentStopReason[] = [
     'PromptTooLong',
     'UnknownError',
 ];
+
+/** Сервер хранит в проекте последние 20 записей истории: больше гостю копить незачем */
+const GUEST_HISTORY_LIMIT = 20;
 
 /** Причины, при которых агент не доработал, но изменения всё равно применились. */
 const PARTIAL_STOP_REASONS: AgentStopReason[] = [
@@ -1211,6 +1214,9 @@ export class AgentChatService {
                 maxContextTokens: event.maxContextTokens,
             });
         }
+        if (!this.repository.userViewModelRepository.isAuthenticated()) {
+            this.rememberGuestRun(event);
+        }
         this.stoppedShort = PARTIAL_STOP_REASONS.includes(event.stopReason);
         if (this.stoppedShort) {
             // прогон не доработал, но изменения применились: это оговорка, а не отказ
@@ -1257,6 +1263,34 @@ export class AgentChatService {
                 target: target.file ? 'file' : 'segment',
             });
         }
+    };
+
+    /**
+     * GH-256: удачный прогон гостя уйдёт в историю проекта, когда гость войдёт.
+     * Ошибки и прерванные прогоны сюда не попадают: сервер их тоже не хранит.
+     * id сервер выдаст свой, но ему нужен UUID
+     */
+    private rememberGuestRun = (
+        event: Extract<AgentEvent, { kind: 'finished' }>
+    ): void => {
+        const persistence = this.repository.persistenceViewModelRepository;
+        const entry: AgentHistoryEntry = {
+            id: crypto.randomUUID(),
+            request: this.lastPrompt,
+            response: event.message ?? '',
+            createdAt: new Date().toISOString(),
+            ...(event.contextTokens !== undefined
+                ? { contextTokens: event.contextTokens }
+                : {}),
+            ...(event.maxContextTokens !== undefined
+                ? { maxContextTokens: event.maxContextTokens }
+                : {}),
+        };
+        persistence.setGuestAgentHistory(
+            [...persistence.guestAgentHistory(), entry].slice(
+                -GUEST_HISTORY_LIMIT
+            )
+        );
     };
 
     private applyUnauthorizedResult = (

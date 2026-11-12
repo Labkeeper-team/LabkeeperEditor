@@ -73,6 +73,8 @@ import {
     setAgentRunMode,
     setCrossBorderConsentAcceptedLocally,
     setLastProgram,
+    setGuestAgentHunks,
+    setGuestAgentHistory,
     setAgentCheckpointMode,
 } from './slices/persistence';
 import {
@@ -421,6 +423,13 @@ export const createViewModelStateFromStore = (
             setLastProgram: (lastProgram) =>
                 store.dispatch(setLastProgram(lastProgram)),
             clearLastProgram: () => store.dispatch(clearLastProgram()),
+            guestAgentHunks: () => store.getState().persistence.guestAgentHunks,
+            guestAgentHistory: () =>
+                store.getState().persistence.guestAgentHistory,
+            setGuestAgentHunks: (hunks) =>
+                store.dispatch(setGuestAgentHunks(hunks)),
+            setGuestAgentHistory: (history) =>
+                store.dispatch(setGuestAgentHistory(history)),
         },
         projectViewModelRepository: {
             compileErrorResult: () =>

@@ -21,6 +21,7 @@ import {
     ListFilesResponse,
     ListProjectsResponse,
     ListTemplatesResponse,
+    GuestAgentState,
     RequestResult,
     RichProject,
     Rpi,
@@ -400,15 +401,24 @@ export class WebRpi implements Rpi {
     async getDefaultProjectRequest(
         lang: string,
         program: Program,
-        projectType: ProjectType
+        projectType: ProjectType,
+        guestAgent?: GuestAgentState
     ): Promise<RequestResult<RichProject>> {
+        // DefaultProjectRequestSpec: программа во вложенном поле, рядом состояние агента гостя
+        const body = {
+            program: withIds(program),
+            ...(guestAgent?.hunks.length ? { hunks: guestAgent.hunks } : {}),
+            ...(guestAgent?.history.length
+                ? { history: guestAgent.history }
+                : {}),
+        };
         return this.requestWrapper(
             'getDefaultProjectRequest',
             [200, 401],
             async () =>
                 axios.post(
                     `${URLS.getDefaultProject}?type=${projectType}`,
-                    withIds(program),
+                    body,
                     {
                         headers: {
                             'Accept-Language': lang || 'en',
