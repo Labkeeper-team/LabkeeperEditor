@@ -1,11 +1,8 @@
 import { useDispatch, useSelector } from 'react-redux';
-import { format, formatDistanceToNow } from 'date-fns';
-import { enGB, ru, zhCN } from 'date-fns/locale';
 import React, {
     ReactNode,
     useCallback,
     useEffect,
-    useMemo,
     useRef,
     useState,
 } from 'react';
@@ -17,109 +14,41 @@ import classNames from 'classnames';
 import './style.scss';
 import { Typography } from '../../components/typography';
 import { Button } from '../../components/button';
-import { PlusIcon, SearchIcon } from '../../icons';
+import { PlusIcon } from '../../icons';
 import { Modal } from '../../components/modal';
 import { DeleteProjectModal } from './deleteProjectModal';
 import { ProjectShort, ProjectTag } from '../../../model/domain';
-import { ProjectTitle } from './projectTitle';
 import { useProjects } from '../../store/selectors/program';
 import { colors } from '../../styles/colors';
-import {
-    useCurrentLanguage,
-    useDictionary,
-} from '../../store/selectors/translations';
+import { useDictionary } from '../../store/selectors/translations';
 import { AppDispatch, StorageState } from '../../store';
 import { controller } from '../../../main.tsx';
 import { Events } from '../../../model/service/ObserverService.ts';
 import { useIsMobile } from '../../hooks/useMobile';
-import { Select } from '../../components/select';
-import { SegmentedControl } from '../../components/segmentedControl';
-import { TruncatedTextTooltip } from '../../components/truncatedTextTooltip';
 import { Routes } from '../../../viewModel/routes.ts';
 import { TagChip } from './tagChip';
 import { TagsModal } from './tagsModal';
-import { ActionMenu, MenuAction } from '../../components/actionMenu';
+import { MenuAction } from '../../components/actionMenu';
 import { ProjectsSidebar } from './projectsSidebar';
 import { TagEditModal } from './tagEditModal';
+import { DeleteTagModal } from './deleteTagModal';
 import {
-    AccessFilter,
-    EMPTY_FILTER,
-    ProjectsFilter,
-    ProjectsSort,
-    SortField,
-    TypeFilter,
-    collectTags,
-    defaultDirection,
-    isFilterActive,
-    DEFAULT_SORT,
-    isSort,
-    matchesFilter,
     sortProjects,
     tagKey,
-    uniqueTags,
 } from '../../../viewModel/domain/projectsFilter.ts';
-import { setProjectsSort } from '../../store/slices/persistence';
-
-const PROJECT_TITLE_TOOLTIP_ID = 'projects-title-tooltip';
-
-const TYPE_LABELS: Record<string, string> = {
-    latex: 'LaTeX',
-    markdown: 'Markdown',
-};
-
-const projectHref = (projectId?: string) =>
-    Routes.Project.replace(':id', projectId ?? '');
+import { copyText } from '../../utils/copyText.ts';
+import { shownText, useProjectsFilter } from './useProjectsFilter.ts';
+import { ProjectsToolbar } from './ProjectsToolbar.tsx';
+import { ProjectsTable } from './ProjectsTable.tsx';
+import { ProjectsCards } from './ProjectsCards.tsx';
+import { projectHref } from './projectLinks.ts';
 
 /**
- * Текст в буфер обмена. navigator.clipboard есть только на HTTPS и
- * localhost, поэтому без него копируем через выделенное поле
+ * Страница «Проекты»: боковая панель с доступом и метками, поиск и фильтры,
+ * таблица на компьютере и карточки на телефоне. Фильтр и сортировка живут
+ * в useProjectsFilter, а здесь то, что связывает части: переименование на
+ * месте, меню проекта и окна
  */
-const copyText = async (text: string) => {
-    if (navigator.clipboard?.writeText) {
-        try {
-            await navigator.clipboard.writeText(text);
-            return;
-        } catch {
-            // браузер не дал доступа к буферу: пробуем по-старому
-        }
-    }
-    const field = document.createElement('textarea');
-    field.value = text;
-    field.setAttribute('readonly', '');
-    field.style.position = 'fixed';
-    field.style.opacity = '0';
-    document.body.appendChild(field);
-    field.select();
-    // iOS Safari выделяет поле только так
-    field.setSelectionRange(0, text.length);
-    try {
-        if (!document.execCommand('copy')) {
-            throw new Error('copy rejected');
-        }
-    } finally {
-        field.remove();
-    }
-};
-
-/** Что известно о выбранной метке, см. ProjectsPage */
-interface TagMemory {
-    tag: string | null;
-    /** Прежнее имя переименованной метки, пока сервер не ответил */
-    fallback: string | null;
-    /** Метку уже видели в списке */
-    seen: boolean;
-}
-
-const NO_TAG_MEMORY: TagMemory = { tag: null, fallback: null, seen: false };
-
-const toDate = (value?: string): Date | null => {
-    if (!value) {
-        return null;
-    }
-    const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? null : date;
-};
-
 export const ProjectsPage = () => {
     const [deleteTarget, setDeleteTarget] = useState<ProjectShort | null>(null);
     const [tagsTargetId, setTagsTargetId] = useState<string | null>(null);
@@ -139,17 +68,10 @@ export const ProjectsPage = () => {
     // окно метки из боковой панели: {} создаёт новую, { tag } правит её
     const [tagEdit, setTagEdit] = useState<{ tag?: ProjectTag } | null>(null);
     const [tagToDelete, setTagToDelete] = useState<ProjectTag | null>(null);
-    // сортировка лежит в общем хранилище и переживает перезагрузку
-    const savedSort = useSelector(
-        (state: StorageState) => state.persistence.projectsSort
-    );
-    const sort = isSort(savedSort) ? savedSort : DEFAULT_SORT;
-    const [rawFilter, setFilter] = useState<ProjectsFilter>(EMPTY_FILTER);
     const searchRef = useRef<HTMLInputElement>(null);
 
     const dictionary = useSelector(useDictionary);
     const texts = dictionary.projects;
-    const lang = useSelector(useCurrentLanguage);
     const projects = useSelector(useProjects);
     const getProjectsRequestState = useSelector(
         (state: StorageState) => state.ide.getProjectsRequestState
@@ -158,197 +80,12 @@ export const ProjectsPage = () => {
     const navigate = useNavigate();
     const isMobile = useIsMobile();
 
-    const locale = useMemo(() => {
-        switch (lang) {
-            case 'ru':
-                return ru;
-            case 'zh':
-                return zhCN;
-            default:
-                return enGB;
-        }
-    }, [lang]);
-
-    // китайские названия упорядочиваем по пиньиню, для остальных порядок прежний
-    const collator = useMemo(
-        () =>
-            new Intl.Collator(lang === 'zh' ? ['zh-CN', 'en'] : ['en', 'ru'], {
-                sensitivity: 'base',
-                numeric: true,
-            }),
-        [lang]
-    );
-
-    const knownTags = useMemo(
-        () => collectTags(projects, collator),
-        [projects, collator]
-    );
-
-    // метку сняли со всех проектов: фильтровать по ней больше нельзя
-    const knownKeys = useMemo(
-        () => new Set(knownTags.map((tag) => tagKey(tag.name))),
-        [knownTags]
-    );
-
-    /*
-     * Выбранная метка может пропасть: её сняли со всех проектов или её
-     * переименование не удалось. Метку, которую уже видели в списке, тогда
-     * снимаем совсем, а не прячем: иначе выбор сам включился бы, когда метка
-     * с тем же именем появится снова. После неудачного переименования выбор
-     * возвращается к прежнему имени
-     */
-    const [tagMemory, setTagMemory] = useState<TagMemory>(NO_TAG_MEMORY);
-    const memory =
-        tagMemory.tag === rawFilter.tag
-            ? tagMemory
-            : { tag: rawFilter.tag, fallback: null, seen: false };
-    const tagKnown = rawFilter.tag !== null && knownKeys.has(rawFilter.tag);
-    const fallbackKnown =
-        memory.fallback !== null && knownKeys.has(memory.fallback);
-    if (tagKnown && (!memory.seen || memory !== tagMemory)) {
-        setTagMemory({ ...memory, seen: true });
-    } else if (rawFilter.tag !== null && !tagKnown && memory.seen) {
-        const next = fallbackKnown ? memory.fallback : null;
-        setFilter((current) => ({ ...current, tag: next }));
-        setTagMemory({ tag: next, fallback: null, seen: next !== null });
-    }
-    const selectedTag = tagKnown
-        ? rawFilter.tag
-        : fallbackKnown
-          ? memory.fallback
-          : null;
-    const filter = useMemo<ProjectsFilter>(
-        () =>
-            selectedTag === rawFilter.tag
-                ? rawFilter
-                : { ...rawFilter, tag: selectedTag },
-        [rawFilter, selectedTag]
-    );
-
-    const visibleProjects = useMemo(
-        () =>
-            sortProjects(
-                projects.filter((project) => matchesFilter(project, filter)),
-                sort,
-                collator
-            ),
-        [projects, filter, sort, collator]
-    );
-
-    const typesPresent = useMemo(
-        () =>
-            new Set(
-                projects.map((project) => project.projectType).filter(Boolean)
-            ),
-        [projects]
-    );
-    const showTypeFilter = typesPresent.size > 1 || filter.type !== 'all';
-    // на компьютере доступ выбирается в боковой панели, где разделы видны
-    // всегда; на телефоне так же, по ТЗ, даже если публичных проектов нет
-    const showAccessFilter = isMobile;
-    const filterActive = isFilterActive(filter);
+    const filterState = useProjectsFilter(projects);
+    const { filter, filterActive, visibleProjects, knownTags } = filterState;
 
     const tagsTarget = tagsTargetId
         ? projects.find((project) => project.projectId === tagsTargetId)
         : undefined;
-
-    const trackFilter = useCallback(
-        (kind: string, value: unknown) =>
-            controller.trackUiEvent(Events.EVENT_PROJECTS_FILTERED, {
-                kind,
-                value,
-                projects_count: projects.length,
-            }),
-        [projects.length]
-    );
-
-    const updateSort = useCallback(
-        (next: ProjectsSort) => {
-            dispatch(setProjectsSort(next));
-            trackFilter('sort', `${next.field}-${next.direction}`);
-        },
-        [dispatch, trackFilter]
-    );
-
-    const onSortColumn = useCallback(
-        (field: SortField) => {
-            updateSort(
-                sort.field === field
-                    ? {
-                          field,
-                          direction: sort.direction === 'asc' ? 'desc' : 'asc',
-                      }
-                    : { field, direction: defaultDirection(field) }
-            );
-        },
-        [sort, updateSort]
-    );
-
-    /** Метка выбирается одна, как в Overleaf; null снимает выбор */
-    const selectTag = useCallback(
-        (key: string | null) => {
-            setFilter((current) => ({ ...current, tag: key, untagged: false }));
-            trackFilter('tag', key === null ? 'all' : 'tag');
-        },
-        [trackFilter]
-    );
-
-    /** Метка в строке или на телефоне: щелчок по выбранной снимает выбор */
-    const toggleTag = useCallback(
-        (name: string) => {
-            const key = tagKey(name);
-            selectTag(filter.tag === key ? null : key);
-        },
-        [selectTag, filter.tag]
-    );
-
-    const selectUntagged = useCallback(() => {
-        setFilter((current) => ({
-            ...current,
-            tag: null,
-            untagged: !current.untagged,
-        }));
-        trackFilter('tag', filter.untagged ? 'all' : 'untagged');
-    }, [trackFilter, filter.untagged]);
-
-    /** «Все проекты» в боковой панели: доступ и метка сразу, одним событием */
-    const selectAll = useCallback(() => {
-        setFilter((current) => ({
-            ...current,
-            access: 'all',
-            tag: null,
-            untagged: false,
-        }));
-        trackFilter('access', 'all');
-    }, [trackFilter]);
-
-    const selectAccess = useCallback(
-        (access: AccessFilter) => {
-            setFilter((current) => ({ ...current, access }));
-            trackFilter('access', access);
-        },
-        [trackFilter]
-    );
-
-    /** place: какой кнопкой сбросили, счётчиком в шапке или под «ничего нет» */
-    const resetFilters = useCallback(
-        (place: 'header' | 'summary' | 'no_matches') => {
-            setFilter(EMPTY_FILTER);
-            trackFilter('reset', place);
-        },
-        [trackFilter]
-    );
-
-    // поиск считаем, когда человек перестал печатать, а не на каждую букву;
-    // сам запрос не отправляем
-    const searching = filter.search.trim() !== '';
-    useEffect(() => {
-        if (!searching) {
-            return;
-        }
-        const timer = setTimeout(() => trackFilter('search', null), 1500);
-        return () => clearTimeout(timer);
-    }, [filter.search, searching, trackFilter]);
 
     // «/» как на многих сайтах ставит курсор в поиск. Сравниваем символ, а
     // не клавишу: на русской раскладке «/» стоит в другом месте
@@ -461,37 +198,13 @@ export const ProjectsPage = () => {
         [texts.link_copied, texts.errors.copy_link_failed]
     );
 
-    /** Выбранная метка идёт за переименованием, а не сбрасывается */
-    const onTagSaved = useCallback(
-        (previousName: string | undefined, name: string) => {
-            if (
-                previousName === undefined ||
-                rawFilter.tag !== tagKey(previousName)
-            ) {
-                return;
-            }
-            // прежнее имя запоминаем: если сервер откажет, выбор вернётся к нему
-            setFilter((current) => ({ ...current, tag: tagKey(name) }));
-            setTagMemory({
-                tag: tagKey(name),
-                fallback: tagKey(previousName),
-                seen: false,
-            });
-        },
-        [rawFilter.tag]
-    );
-
     /** Удалённая метка перестаёт быть выбранной, даже если появится снова */
     const deleteTag = useCallback(
         (name: string) => {
-            setFilter((current) =>
-                current.tag === tagKey(name)
-                    ? { ...current, tag: null }
-                    : current
-            );
+            filterState.onTagDeleted(name);
             dispatch(controller.onTagDeleteRequest({ name }));
         },
-        [dispatch]
+        [dispatch, filterState]
     );
 
     const actionsFor = useCallback(
@@ -567,101 +280,6 @@ export const ProjectsPage = () => {
         [texts.actions, openInNewTab, dispatch, copyLink]
     );
 
-    const relativeTime = (value?: string) => {
-        const date = toDate(value);
-        return date
-            ? formatDistanceToNow(date, { addSuffix: true, locale })
-            : '—';
-    };
-    const fullTime = (value?: string) => {
-        const date = toDate(value);
-        return date ? format(date, 'PPp', { locale }) : undefined;
-    };
-
-    const typeBadge = (project: ProjectShort) =>
-        project.projectType ? (
-            <span
-                className={classNames(
-                    'projects-badge',
-                    `projects-badge--${project.projectType}`
-                )}
-            >
-                {TYPE_LABELS[project.projectType] ?? project.projectType}
-            </span>
-        ) : null;
-
-    const accessBadge = (project: ProjectShort) => (
-        <span
-            className={classNames('projects-access', {
-                'projects-access--public': project.isPublic,
-            })}
-        >
-            <span className="projects-access__dot" />
-            {project.isPublic ? texts.public : texts.private}
-        </span>
-    );
-
-    const rowTags = (project: ProjectShort) =>
-        project.tags?.length ? (
-            <div className="projects-row-tags">
-                {uniqueTags(project.tags).map((tag) => (
-                    <TagChip
-                        // ключ по точному имени: «Физика» и «физика» две метки
-                        key={tag.name}
-                        tag={tag}
-                        small
-                        active={filter.tag === tagKey(tag.name)}
-                        onClick={() => toggleTag(tag.name)}
-                    />
-                ))}
-            </div>
-        ) : null;
-
-    const sortHeader = (field: SortField, label: string) => {
-        const active = sort.field === field;
-        return (
-            <button
-                type="button"
-                className={classNames('projects-sort-button', {
-                    'is-active': active,
-                })}
-                onClick={(e) => {
-                    e.stopPropagation();
-                    onSortColumn(field);
-                }}
-            >
-                {label}
-                <span className="sort-arrow" aria-hidden>
-                    {active ? (sort.direction === 'asc' ? '▲' : '▼') : '▲▼'}
-                </span>
-            </button>
-        );
-    };
-    const ariaSort = (field: SortField) =>
-        sort.field === field
-            ? sort.direction === 'asc'
-                ? 'ascending'
-                : 'descending'
-            : undefined;
-
-    const sortOptions = useMemo(
-        () => [
-            { value: 'modified-desc', label: `${texts.last_modified} ↓` },
-            { value: 'modified-asc', label: `${texts.last_modified} ↑` },
-            { value: 'created-desc', label: `${texts.created} ↓` },
-            { value: 'created-asc', label: `${texts.created} ↑` },
-            { value: 'title-asc', label: `${texts.title}, ${texts.sort_az}` },
-            { value: 'title-desc', label: `${texts.title}, ${texts.sort_za}` },
-        ],
-        [
-            texts.last_modified,
-            texts.created,
-            texts.title,
-            texts.sort_az,
-            texts.sort_za,
-        ]
-    );
-
     // на компьютере панель есть и пока список грузится: иначе с её
     // появлением вся страница съехала бы вправо
     const showSidebar =
@@ -717,103 +335,21 @@ export const ProjectsPage = () => {
         );
     };
 
-    const shownText = texts.shown
-        .replace('${shown}', `${visibleProjects.length}`)
-        .replace('${total}', `${projects.length}`);
-
-    const toolbar = (
-        <div className="projects-toolbar">
-            <label className="projects-search">
-                <SearchIcon />
-                <input
-                    ref={searchRef}
-                    type="search"
-                    value={filter.search}
-                    placeholder={texts.search_placeholder}
-                    aria-label={texts.search_placeholder}
-                    onChange={(e) =>
-                        setFilter((current) => ({
-                            ...current,
-                            search: e.target.value,
-                        }))
-                    }
-                    onKeyDown={(e) => {
-                        if (e.key === 'Escape' && filter.search) {
-                            e.stopPropagation();
-                            setFilter((current) => ({
-                                ...current,
-                                search: '',
-                            }));
-                        }
-                    }}
-                />
-                {!filter.search && !isMobile ? (
-                    <kbd className="projects-search__hint">/</kbd>
-                ) : null}
-            </label>
-            {showTypeFilter ? (
-                <SegmentedControl<TypeFilter>
-                    ariaLabel={texts.type}
-                    value={filter.type}
-                    options={[
-                        { value: 'all', label: texts.all },
-                        { value: 'latex', label: TYPE_LABELS.latex },
-                        { value: 'markdown', label: TYPE_LABELS.markdown },
-                    ]}
-                    onChange={(type) => {
-                        setFilter((current) => ({ ...current, type }));
-                        trackFilter('type', type);
-                    }}
-                />
-            ) : null}
-            {showAccessFilter ? (
-                <SegmentedControl<AccessFilter>
-                    ariaLabel={texts.access}
-                    value={filter.access}
-                    options={[
-                        { value: 'all', label: texts.all },
-                        { value: 'public', label: texts.public },
-                        { value: 'private', label: texts.private },
-                    ]}
-                    onChange={selectAccess}
-                />
-            ) : null}
-            {/* на компьютере виден только без колонки «Создан», это решает CSS */}
-            {projects.length ? (
-                <div
-                    className={classNames('projects-mobile-sort', {
-                        'projects-mobile-sort--desktop': !isMobile,
-                    })}
-                >
-                    <Select
-                        options={sortOptions}
-                        value={`${sort.field}-${sort.direction}`}
-                        onChange={(value: unknown) => {
-                            const [field, direction] = String(value).split(
-                                '-'
-                            ) as [SortField, ProjectsSort['direction']];
-                            updateSort({ field, direction });
-                        }}
-                    />
-                </div>
-            ) : null}
-            {/* ТЗ: «2 из 6 · Сбросить фильтры». Стоит в строке инструментов, а не
-                отдельной строкой: строка от фильтра не растёт, и список не сдвигается */}
-            {!isMobile && filterActive && projects.length ? (
-                <div className="projects-summary" role="status">
-                    <span>{shownText}</span>
-                    <span aria-hidden>·</span>
-                    <button
-                        type="button"
-                        className="projects-link-button"
-                        onClick={() => resetFilters('summary')}
-                    >
-                        {texts.reset_filters}
-                    </button>
-                </div>
-            ) : null}
-        </div>
-    );
+    const listProps = {
+        projects: visibleProjects,
+        activeTag: filter.tag,
+        onToggleTag: filterState.toggleTag,
+        renamingId,
+        onRenamingChange: (projectId: string, editing: boolean) => {
+            if (editing) {
+                setRenamingId(projectId);
+            } else if (renamingId === projectId) {
+                setRenamingId(null);
+            }
+        },
+        onProjectClick,
+        actionsFor,
+    };
 
     // на телефоне боковой панели нет, метки идут лентой над списком
     const tagFilter =
@@ -826,7 +362,7 @@ export const ProjectsPage = () => {
                         small
                         count={tag.count}
                         active={filter.tag === tagKey(tag.name)}
-                        onClick={() => toggleTag(tag.name)}
+                        onClick={() => filterState.toggleTag(tag.name)}
                     />
                 ))}
             </div>
@@ -838,136 +374,14 @@ export const ProjectsPage = () => {
             <button
                 type="button"
                 className="projects-link-button"
-                onClick={() => resetFilters('no_matches')}
+                onClick={() => filterState.resetFilters('no_matches')}
             >
                 {texts.reset_filters}
             </button>
         </div>
     );
 
-    const titleFor = (project: ProjectShort, tooltipId?: string) => (
-        <ProjectTitle
-            href={projectHref(project.projectId)}
-            project={project}
-            tooltipId={tooltipId}
-            editing={renamingId === project.projectId}
-            onEditingChange={(editing) => {
-                if (editing) {
-                    setRenamingId(project.projectId);
-                } else if (renamingId === project.projectId) {
-                    setRenamingId(null);
-                }
-            }}
-        />
-    );
-
-    const cards = (
-        <div className="projects-card-list">
-            {visibleProjects.map((p) => (
-                <div
-                    key={p.projectId}
-                    className="projects-card"
-                    onClick={(e) => onProjectClick(e, p.projectId)}
-                    onAuxClick={(e) => onProjectClick(e, p.projectId)}
-                >
-                    <div className="projects-card__main">
-                        {titleFor(p)}
-                        <div className="projects-card__meta">
-                            {typeBadge(p)}
-                            {accessBadge(p)}
-                            <span title={fullTime(p.lastModified)}>
-                                {relativeTime(p.lastModified)}
-                            </span>
-                        </div>
-                        {rowTags(p)}
-                    </div>
-                    <ActionMenu
-                        label={texts.actions.menu}
-                        actions={actionsFor(p)}
-                    />
-                </div>
-            ))}
-        </div>
-    );
-
-    const table = (
-        <>
-            <table className="projects-table">
-                <thead>
-                    <tr>
-                        <th aria-sort={ariaSort('title')}>
-                            {sortHeader('title', texts.title)}
-                        </th>
-                        <th className="projects-col-type">{texts.type}</th>
-                        <th className="projects-col-access">{texts.access}</th>
-                        <th
-                            className="projects-col-date"
-                            aria-sort={ariaSort('modified')}
-                        >
-                            {sortHeader('modified', texts.last_modified)}
-                        </th>
-                        <th
-                            className="projects-col-date projects-col-created"
-                            aria-sort={ariaSort('created')}
-                        >
-                            {sortHeader('created', texts.created)}
-                        </th>
-                        <th className="projects-col-actions" />
-                    </tr>
-                </thead>
-                <tbody>
-                    {visibleProjects.map((p) => (
-                        <tr
-                            key={p.projectId}
-                            className={classNames({
-                                'is-renaming': renamingId === p.projectId,
-                            })}
-                            onClick={(e) => onProjectClick(e, p.projectId)}
-                            onAuxClick={(e) => onProjectClick(e, p.projectId)}
-                        >
-                            <td className="projects-cell-title">
-                                {titleFor(p, PROJECT_TITLE_TOOLTIP_ID)}
-                                {rowTags(p)}
-                            </td>
-                            <td className="projects-col-type">
-                                {typeBadge(p)}
-                            </td>
-                            <td className="projects-col-access">
-                                {accessBadge(p)}
-                            </td>
-                            <td className="projects-col-date">
-                                <a
-                                    className="projects-row-link"
-                                    href={projectHref(p.projectId)}
-                                    title={fullTime(p.lastModified)}
-                                    // та же ссылка, что у названия: Tab по ней второй раз не ходит
-                                    tabIndex={-1}
-                                >
-                                    {relativeTime(p.lastModified)}
-                                </a>
-                            </td>
-                            <td
-                                className="projects-col-date projects-col-created"
-                                title={fullTime(p.creationTime)}
-                            >
-                                {relativeTime(p.creationTime)}
-                            </td>
-                            <td className="projects-col-actions">
-                                <ActionMenu
-                                    label={texts.actions.menu}
-                                    actions={actionsFor(p)}
-                                />
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-            <TruncatedTextTooltip
-                id={PROJECT_TITLE_TOOLTIP_ID}
-                isMobile={false}
-            />
-        </>
-    );
+    const shown = shownText(texts.shown, filterState, projects.length);
 
     return (
         <>
@@ -984,10 +398,10 @@ export const ProjectsPage = () => {
                             projects.length > 0 ||
                             getProjectsRequestState === 'ok'
                         }
-                        onSelectAll={selectAll}
-                        onSelectAccess={selectAccess}
-                        onSelectTag={selectTag}
-                        onSelectUntagged={selectUntagged}
+                        onSelectAll={filterState.selectAll}
+                        onSelectAccess={filterState.selectAccess}
+                        onSelectTag={filterState.selectTag}
+                        onSelectUntagged={filterState.selectUntagged}
                         onNewTag={() => setTagEdit({})}
                         onEditTag={(tag) => setTagEdit({ tag })}
                         onDeleteTag={setTagToDelete}
@@ -1011,10 +425,12 @@ export const ProjectsPage = () => {
                                 type="button"
                                 className="projects-header__count projects-header__count--filtered"
                                 title={texts.reset_filters}
-                                aria-label={`${shownText}. ${texts.reset_filters}`}
-                                onClick={() => resetFilters('header')}
+                                aria-label={`${shown}. ${texts.reset_filters}`}
+                                onClick={() =>
+                                    filterState.resetFilters('header')
+                                }
                             >
-                                {shownText}
+                                {shown}
                                 <span aria-hidden>×</span>
                             </button>
                         ) : projects.length ? (
@@ -1037,7 +453,12 @@ export const ProjectsPage = () => {
                     </div>
                     {renderState() ?? (
                         <>
-                            {toolbar}
+                            <ProjectsToolbar
+                                state={filterState}
+                                total={projects.length}
+                                isMobile={isMobile}
+                                searchRef={searchRef}
+                            />
                             {tagFilter}
                             <div
                                 className="projects-list-wrapper"
@@ -1048,11 +469,17 @@ export const ProjectsPage = () => {
                                 onClickCapture={takePress}
                                 onAuxClickCapture={takePress}
                             >
-                                {!visibleProjects.length
-                                    ? noMatches
-                                    : isMobile
-                                      ? cards
-                                      : table}
+                                {!visibleProjects.length ? (
+                                    noMatches
+                                ) : isMobile ? (
+                                    <ProjectsCards {...listProps} />
+                                ) : (
+                                    <ProjectsTable
+                                        {...listProps}
+                                        sort={filterState.sort}
+                                        onSortColumn={filterState.onSortColumn}
+                                    />
+                                )}
                             </div>
                         </>
                     )}
@@ -1077,10 +504,10 @@ export const ProjectsPage = () => {
                         projects={sortProjects(
                             projects,
                             { field: 'title', direction: 'asc' },
-                            collator
+                            filterState.collator
                         )}
                         knownTags={knownTags}
-                        onSaved={onTagSaved}
+                        onSaved={filterState.onTagSaved}
                         onClose={() => setTagEdit(null)}
                     />
                 ) : null}
@@ -1090,36 +517,14 @@ export const ProjectsPage = () => {
                 showModal={!!tagToDelete}
             >
                 {tagToDelete ? (
-                    <div className="delete-project-modal delete-tag-modal">
-                        <Typography
-                            text={texts.sidebar.delete_tag_confirm.replace(
-                                '${name}',
-                                () => tagToDelete.name
-                            )}
-                            type="h2"
-                            color={colors.gray10}
-                        />
-                        <div style={{ height: 17 }} />
-                        <Button
-                            classname="delete-project-modal-button"
-                            onPress={() => {
-                                deleteTag(tagToDelete.name);
-                                setTagToDelete(null);
-                            }}
-                            title={dictionary.yes}
-                            color="blue"
-                            rounded
-                            minimize={false}
-                        />
-                        <Button
-                            classname="delete-project-modal-button"
-                            onPress={() => setTagToDelete(null)}
-                            title={dictionary.no}
-                            color="gray"
-                            rounded
-                            minimize={false}
-                        />
-                    </div>
+                    <DeleteTagModal
+                        name={tagToDelete.name}
+                        onConfirm={() => {
+                            deleteTag(tagToDelete.name);
+                            setTagToDelete(null);
+                        }}
+                        onClose={() => setTagToDelete(null)}
+                    />
                 ) : null}
             </Modal>
             <Modal
