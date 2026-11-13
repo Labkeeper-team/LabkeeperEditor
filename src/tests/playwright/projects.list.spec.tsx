@@ -69,12 +69,14 @@ test('поиск находит проекты по словам из назва
     await page.keyboard.type('лаб диплом');
 
     await expectTitles(page, ['Лабораторная 10']);
-    // «N из M» стоит в счётчике у заголовка, а список под фильтрами не сдвигается
+    // ТЗ: сводка «1 из 3 · Сбросить фильтры» в строке инструментов, а в шапке
+    // по-прежнему общее число; список под фильтрами не сдвигается
     const list = page.locator('.projects-list-wrapper');
     const top = (await list.boundingBox())!.y;
-    await expect(page.locator('.projects-header__count--filtered')).toHaveText(
-        /1 of 3/
+    await expect(page.locator('.projects-summary')).toHaveText(
+        /1 of 3\s*·\s*Reset filters/
     );
+    await expect(page.locator('.projects-header__count')).toHaveText('3');
     expect((await list.boundingBox())!.y).toBe(top);
 
     await page.getByRole('button', { name: /Reset filters/ }).click();
@@ -687,16 +689,16 @@ test('Enter в переименовании отправляет имя один
     expect(sent).toEqual(['Лабораторная 3']);
 });
 
-test('когда под фильтр ничего не подошло, счётчик пишет 0 из N и сбрасывает', async ({
+test('когда под фильтр ничего не подошло, сводка пишет 0 из N и сбрасывает', async ({
     page,
 }) => {
     await openProjects(page);
     await page.keyboard.press('/');
     await page.keyboard.type('такого нет');
 
-    const count = page.locator('.projects-header__count--filtered');
-    await expect(count).toHaveText(/0 of 3/);
-    await count.click();
+    const summary = page.locator('.projects-summary');
+    await expect(summary).toHaveText(/0 of 3/);
+    await summary.getByRole('button', { name: 'Reset filters' }).click();
     await expect(page.locator('tbody tr')).toHaveCount(3);
 });
 
