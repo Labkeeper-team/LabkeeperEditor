@@ -12,6 +12,7 @@ import { useDictionary } from '../../../../store/selectors/translations';
 import { controller } from '../../../../../main.tsx';
 import { Events } from '../../../../../model/service/ObserverService.ts';
 import { colors } from '../../../../styles/colors';
+import { copyText } from '../../../../utils/copyText.ts';
 
 export const ShareModal = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -73,8 +74,8 @@ export const ShareModal = () => {
                             rounded={true}
                             titleIcon={() => <LinkIcon />}
                             onPress={() => {
-                                navigator.clipboard
-                                    .writeText(window.location.href)
+                                // без navigator.clipboard (не HTTPS) копирует через поле
+                                copyText(window.location.href)
                                     .then(() => {
                                         controller.trackUiEvent(
                                             Events.EVENT_SHARE_LINK_COPIED,
