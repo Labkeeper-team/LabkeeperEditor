@@ -1295,3 +1295,96 @@ test('a-refused-edit-followed-by-a-401-speaks-only-of-the-session', async () => 
         ctx.repository.dictionary.filemanager.errors.sessionExpired,
     ]);
 });
+
+// сервер двигает lastModified на каждой записи: «Изменён» в списке тоже новый
+describe('a change from the list moves the modified time', () => {
+    const OLD = '2025-03-01T00:00:00Z';
+    const isNow = (value: string) =>
+        Math.abs(Date.parse(value) - Date.now()) < 60_000;
+
+    test.each([
+        [
+            'tags',
+            (ctx: ReturnType<typeof setup>) => {
+                ctx.rpi.setProjectTagsRequest = jest
+                    .fn()
+                    .mockImplementation(async (_id, tags) => ok({ tags }));
+                return ctx.projectsPageService.onProjectTagsChange('a', [
+                    THESIS,
+                ]);
+            },
+        ],
+        [
+            'visibility',
+            (ctx: ReturnType<typeof setup>) => {
+                ctx.rpi.setProjectVisibilityRequest = jest
+                    .fn()
+                    .mockResolvedValue(ok({}));
+                return ctx.projectsPageService.onListedProjectVisibilityChange(
+                    'a',
+                    true
+                );
+            },
+        ],
+        [
+            'title',
+            (ctx: ReturnType<typeof setup>) => {
+                ctx.rpi.setTitleRequest = jest.fn().mockResolvedValue(ok({}));
+                // список после переименования не пришёл: время из самой правки
+                ctx.rpi.getAllProjectsRequest = jest
+                    .fn()
+                    .mockResolvedValue(fail(500));
+                return ctx.projectPageService.onProjectTitleChanged(
+                    'a',
+                    'Другое',
+                    () => undefined,
+                    () => undefined
+                );
+            },
+        ],
+    ])('%s', async (_field, change) => {
+        const ctx = setup();
+        expect(ctx.listed('a').lastModified).toBe(OLD);
+
+        await change(ctx);
+
+        expect(isNow(ctx.listed('a').lastModified)).toBe(true);
+    });
+
+    test('a-refused-change-keeps-the-old-time', async () => {
+        const ctx = setup();
+        ctx.rpi.setProjectVisibilityRequest = jest
+            .fn()
+            .mockResolvedValue(fail(500));
+
+        await ctx.projectsPageService.onListedProjectVisibilityChange(
+            'a',
+            true
+        );
+
+        expect(ctx.listed('a').lastModified).toBe(OLD);
+    });
+
+    // список ушёл до конца правки: в нём и метки, и время ещё старые
+    test('a-list-requested-before-the-change-ended-keeps-the-new-time', async () => {
+        const ctx = setup();
+        const list = deferred<RequestResult<object>>();
+        ctx.rpi.getAllProjectsRequest = jest.fn().mockReturnValue(list.promise);
+        ctx.rpi.setProjectVisibilityRequest = jest
+            .fn()
+            .mockResolvedValue(ok({}));
+
+        const loading = ctx.projectsPageService.loaderService.loadProjects({
+            silent: true,
+        });
+        await ctx.projectsPageService.onListedProjectVisibilityChange(
+            'a',
+            true
+        );
+        list.resolve(ok({ projects: [...LIST].reverse() }));
+        await loading;
+
+        expect(ctx.listed('a').isPublic).toBe(true);
+        expect(isNow(ctx.listed('a').lastModified)).toBe(true);
+    });
+});

@@ -465,8 +465,25 @@ test('после переименования, законченного щелч
     page,
 }) => {
     await openProjects(page);
-    await page.route('**/api/v4/public/project/*/title**', (route) =>
-        route.fulfill({ contentType: 'application/json', body: '{}' })
+    // как настоящий сервер: после переименования список отдаёт новое имя и
+    // новое время изменения. Неизменный мок затирал имя поздним списком
+    let projects = [...PROJECTS];
+    await page.route('**/api/v4/public/project/*/title**', (route) => {
+        const url = new URL(route.request().url());
+        const id = url.pathname.split('/').at(-2);
+        projects = projects.map((project) =>
+            project.projectId === id
+                ? {
+                      ...project,
+                      title: url.searchParams.get('name')!,
+                      lastModified: new Date().toISOString(),
+                  }
+                : project
+        );
+        return route.fulfill({ contentType: 'application/json', body: '{}' });
+    });
+    await page.route('**/api/v4/public/project/all**', (route) =>
+        route.fulfill({ json: { projects: [...projects].reverse() } })
     );
 
     // по номеру: в поле ввода названия нет текста, по которому искать строку
@@ -483,7 +500,8 @@ test('после переименования, законченного щелч
         .first()
         .getByRole('button', { name: /Физика/ })
         .click();
-    await expectTitles(page, ['Лабораторная 2', 'Лабораторная 11']);
+    // переименованный проект изменён только что и при сортировке по изменению первый
+    await expectTitles(page, ['Лабораторная 11', 'Лабораторная 2']);
 
     await page
         .locator('tbody tr', { hasText: 'Лабораторная 11' })
