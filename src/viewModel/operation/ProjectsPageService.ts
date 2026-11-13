@@ -3,7 +3,14 @@ import { Rpi } from '../../model/rpi';
 import { LoaderService } from '../domain/LoaderService.ts';
 import { IdeService } from '../domain/IdeService.ts';
 import { StartupService } from './StartupService.ts';
-import { Project, ProjectTemplate, ProjectType } from '../../model/domain.ts';
+import {
+    PROJECT_TAGS_MAX_COUNT,
+    Project,
+    ProjectShort,
+    ProjectTag,
+    ProjectTemplate,
+    ProjectType,
+} from '../../model/domain.ts';
 import { RequestResult } from '../../model/rpi';
 import { createEmptyProgram } from '../../model/repository/ProgramRepository.ts';
 import { Routes } from '../routes.ts';
@@ -17,6 +24,7 @@ import {
     CompilationService,
 } from '../domain/CompilationService.ts';
 import { trackEvent } from '../utils/observerContext.ts';
+import { exportFileName } from './ProjectPageService.ts';
 
 // с запасом: каталог обычно приходит одним запросом
 const TEMPLATES_PAGE_SIZE = 100;
@@ -24,6 +32,27 @@ const TEMPLATES_PAGE_SIZE = 100;
 const TEMPLATES_MAX_PAGES = 10;
 
 type ProjectSource = 'empty' | 'template' | 'archive';
+
+/**
+ * Метки перед отправкой: без пробелов по краям, без пустых и без точных
+ * повторов имени, как требует сервер. Больше ничего не трогаем: сервер не
+ * ограничивает ни число меток, ни длину имени, ни регистр, и метки, которые
+ * поставили не здесь, при сохранении терять нельзя. Лимиты из интерфейса
+ * действуют только на то, что человек добавляет сам
+ */
+export const normalizeProjectTags = (tags: ProjectTag[]): ProjectTag[] => {
+    const seen = new Set<string>();
+    const result: ProjectTag[] = [];
+    for (const tag of tags) {
+        const name = tag.name.trim();
+        if (!name || seen.has(name)) {
+            continue;
+        }
+        seen.add(name);
+        result.push({ name, color: tag.color });
+    }
+    return result;
+};
 
 /** GH-234: ответы импорта, о которых человеку есть что сказать, кроме «не вышло» */
 const ARCHIVE_ERRORS: Partial<
@@ -36,6 +65,101 @@ const ARCHIVE_ERRORS: Partial<
     409: 'archive_too_many_files',
     413: 'archive_too_big',
 };
+
+const nameKey = (name: string) => name.trim().toLocaleLowerCase();
+
+/** Правки одного поля проекта, ещё не завершённые, поверх принятого сервером */
+interface FieldWrites<T> {
+    confirmed: T;
+    pending: ((value: T) => T)[];
+    /** Что вышло бы, пройди все правки этой серии */
+    intended: T;
+    /** Сервер отказал хотя бы одной правке серии (не из-за сессии) */
+    failed: boolean;
+}
+
+/** Итог правки: ответ сервера и пропало ли что-то из задуманного */
+interface WriteOutcome<R> {
+    result: R;
+    /**
+     * Серия правок поля закончилась, и итог расходится с тем, что вышло бы,
+     * пройди они все. Решается один раз на серию, последней правкой: подряд
+     * идущие отказы дают одно сообщение, а отказ, который следующая правка
+     * всё равно перекрыла, не даёт ни одного
+     */
+    lost: boolean;
+}
+
+/** Ответ на правку, которую отправлять не пришлось: сервер уже хранит то же */
+const NOTHING_TO_SEND: RequestResult<never> = {
+    body: undefined as never,
+    code: 200,
+    isOk: true,
+    isUnauth: false,
+    isForbidden: false,
+};
+
+const sameTags = (a: ProjectTag[], b: ProjectTag[]) =>
+    a.length === b.length &&
+    a.every((tag, i) => tag.name === b[i].name && tag.color === b[i].color);
+
+/** Те же метки, порядок не важен */
+const sameTagSet = (a: ProjectTag[], b: ProjectTag[]) =>
+    a.length === b.length &&
+    a.every((tag) =>
+        b.some((other) => other.name === tag.name && other.color === tag.color)
+    );
+
+/**
+ * Правка меток из окна проекта как разница с тем, что в окне было открыто.
+ * Если сервер хранит то же, что видело окно, отправляется ровно результат
+ * окна. Иначе (до этого не прошла другая правка) к хранимому применяется
+ * только то, что человек поменял в окне: снятые метки снимаются, новые и
+ * перекрашенные добавляются, остальное остаётся как есть
+ */
+export const tagsChange =
+    (before: ProjectTag[], after: ProjectTag[]) =>
+    (tags: ProjectTag[]): ProjectTag[] => {
+        if (sameTags(tags, before)) {
+            return after;
+        }
+        // имена сравниваем точно: у проекта могут быть «ML» и «ml» сразу
+        const was = new Map(before.map((tag) => [tag.name, tag]));
+        const kept = new Map(after.map((tag) => [tag.name, tag]));
+        const touched = (tag: ProjectTag) => {
+            const old = was.get(tag.name);
+            return !old || old.color !== tag.color;
+        };
+        const result = tags
+            .filter((tag) => !was.has(tag.name) || kept.has(tag.name))
+            .map((tag) => {
+                const edited = kept.get(tag.name);
+                return edited && touched(edited) ? edited : tag;
+            });
+        for (const tag of after) {
+            if (
+                touched(tag) &&
+                !result.some((other) => other.name === tag.name)
+            ) {
+                result.push(tag);
+            }
+        }
+        return normalizeProjectTags(result);
+    };
+
+/**
+ * Метка из боковой панели. Отдельной сущности у метки на сервере нет, она
+ * живёт в проектах, поэтому создать, переименовать или перекрасить её значит
+ * поменять метки у всех её проектов
+ */
+export interface TagSaveRequest {
+    /** Прежнее имя, если метку правят, а не создают */
+    previousName?: string;
+    name: string;
+    color: string;
+    /** Проекты, у которых метка должна быть; у остальных её снимут */
+    projectIds: string[];
+}
 
 export interface NewProjectRequest {
     projectName: string;
@@ -82,32 +206,509 @@ export class ProjectsPageService {
         trackEvent(this.observerService, this.repository, event, properties);
     }
 
-    onDeleteProject = async (projectId: string, okCallback: () => void) => {
-        const result1 = await this.rpi.deleteProjectRequest(projectId);
-        if (result1.isOk) {
-            this.track(Events.EVENT_PROJECT_DELETED, { project_id: projectId });
-            okCallback();
-            const result2 = await this.rpi.getAllProjectsRequest();
-            if (result2.isOk) {
-                this.repository.projectsViewModelRepository.setProjects(
-                    (result2.body as { projects: Array<Project> }).projects
-                );
-            }
-            if (result2.isUnauth) {
-                this.repository.toast(
-                    this.repository.dictionary.filemanager.errors
-                        .sessionExpired,
-                    'error'
-                );
-                this.ideService.resetEditor();
-            }
+    /**
+     * Сброс очищает и список проектов. Страница списка тогда говорит, что
+     * сессия истекла, а не что проектов нет
+     */
+    private sessionExpired = () => {
+        // несколько отказов подряд: о сессии уже сказали, список уже сброшен
+        if (!this.loaderService.claimSessionReport()) {
+            return;
         }
-        if (result1.isUnauth) {
+        this.repository.toast(
+            this.repository.dictionary.filemanager.errors.sessionExpired,
+            'error'
+        );
+        this.ideService.resetEditor();
+        this.loaderService.discardEarlierLists();
+        this.repository.ideViewModelRepository.setGetProjectsRequestState(
+            'unauth'
+        );
+    };
+
+    /** Об истёкшей сессии уже сказали, см. LoaderService.claimSessionReport */
+    private sessionLost = () => this.loaderService.sessionWasReported();
+
+    private listedProject = (projectId: string): ProjectShort | undefined =>
+        this.repository.projectsViewModelRepository
+            .projects()
+            .find((project) => project.projectId === projectId);
+
+    /** Меняет проект в списке на месте, не перезапрашивая весь список */
+    private patchListedProject = (
+        projectId: string,
+        patch: Partial<ProjectShort>
+    ) => {
+        const projects = this.repository.projectsViewModelRepository;
+        projects.setProjects(
+            projects
+                .projects()
+                .map((project) =>
+                    project.projectId === projectId
+                        ? { ...project, ...patch }
+                        : project
+                )
+        );
+    };
+
+    /**
+     * Незавершённые правки поля проекта (`<id>:tags`, `<id>:public`) и то,
+     * что по нему точно хранит сервер
+     */
+    private writes = new Map<string, FieldWrites<unknown>>();
+    /** Удаляемые сейчас проекты: второй щелчок по «Да» запрос не повторяет */
+    private deleting = new Set<string>();
+    /** Скачиваемые сейчас архивы: повторный щелчок второй не запускает */
+    private downloading = new Set<string>();
+    /** Запросы к одному полю идут по очереди, чтобы сервер получил их по порядку */
+    private queues = new Map<string, Promise<unknown>>();
+
+    private enqueue = <T>(key: string, send: () => Promise<T>): Promise<T> => {
+        const previous = this.queues.get(key) ?? Promise.resolve();
+        const request = previous.then(send, send);
+        this.queues.set(key, request);
+        const cleanup = () => {
+            if (this.queues.get(key) === request) {
+                this.queues.delete(key);
+            }
+        };
+        request.then(cleanup, cleanup);
+        return request;
+    };
+
+    /**
+     * Оптимистичная правка. Правка задаётся функцией от значения, которое
+     * хранит сервер, и применяется к нему в момент отправки: так отказ по
+     * одной правке не уезжает на сервер в составе следующей. В списке сразу
+     * видны все незавершённые правки поверх того, что принял сервер
+     */
+    private optimisticWrite = async <T, R extends RequestResult<unknown>>(
+        key: string,
+        current: T,
+        change: (value: T) => T,
+        same: (a: T, b: T) => boolean,
+        apply: (value: T) => void,
+        send: (value: T) => Promise<R>,
+        accepted: (result: R, sent: T) => T,
+        sameOutcome: (a: T, b: T) => boolean = same
+    ): Promise<WriteOutcome<R>> => {
+        const state = (this.writes.get(key) ?? {
+            confirmed: current,
+            pending: [],
+            intended: current,
+            failed: false,
+        }) as FieldWrites<T>;
+        state.intended = change(state.intended);
+        this.writes.set(key, state as FieldWrites<unknown>);
+        const show = () =>
+            apply(
+                state.pending.reduce(
+                    (value, pending) => pending(value),
+                    state.confirmed
+                )
+            );
+        state.pending.push(change);
+        show();
+        this.loaderService.writeStarted(key);
+
+        const result = await this.enqueue(key, async () => {
+            const next = change(state.confirmed);
+            if (same(next, state.confirmed)) {
+                return NOTHING_TO_SEND as unknown as R;
+            }
+            const sent = await send(next);
+            if (sent.isOk) {
+                state.confirmed = accepted(sent, next);
+            } else if (!sent.isUnauth) {
+                state.failed = true;
+            }
+            return sent;
+        });
+        state.pending.splice(state.pending.indexOf(change), 1);
+        show();
+        const last = !state.pending.length;
+        if (last && this.writes.get(key) === state) {
+            this.writes.delete(key);
+        }
+        this.loaderService.writeSettled(key);
+        return {
+            result,
+            lost:
+                last &&
+                state.failed &&
+                !sameOutcome(state.confirmed, state.intended),
+        };
+    };
+
+    /**
+     * Список заново, но без спиннера: страница показывает прежний, пока не
+     * придёт новый
+     */
+    private refreshProjects = async () => {
+        const result = await this.loaderService.loadProjects({ silent: true });
+        if (result.isUnauth) {
+            this.sessionExpired();
+        }
+    };
+
+    /** Метки одного проекта: в списке сразу, на сервере по очереди */
+    private writeTags = (
+        projectId: string,
+        before: ProjectTag[],
+        change: (tags: ProjectTag[]) => ProjectTag[]
+    ) =>
+        this.optimisticWrite(
+            `${projectId}:tags`,
+            before,
+            change,
+            sameTags,
+            (tags) => this.patchListedProject(projectId, { tags }),
+            (tags) => this.rpi.setProjectTagsRequest(projectId, tags),
+            (result, sent) => result.body?.tags ?? sent,
+            sameTagSet
+        );
+
+    /**
+     * Метки проекта меняются в списке сразу, а если сервер их не принял,
+     * возвращаются прежние
+     */
+    onProjectTagsChange = async (projectId: string, tags: ProjectTag[]) => {
+        const project = this.listedProject(projectId);
+        if (!project) {
+            return;
+        }
+        const before = project.tags ?? [];
+        const next = normalizeProjectTags(tags);
+        if (sameTags(before, next)) {
+            return;
+        }
+        const { result, lost } = await this.writeTags(
+            projectId,
+            before,
+            tagsChange(before, next)
+        );
+        // проект удалили, пока метки сохранялись: жаловаться не на что
+        // при отказе сессии говорим только о ней
+        if (lost && !result.isUnauth && this.listedProject(projectId)) {
             this.repository.toast(
-                this.repository.dictionary.filemanager.errors.sessionExpired,
+                this.repository.dictionary.projects.errors.tags_failed,
                 'error'
             );
-            this.ideService.resetEditor();
+        }
+        if (result === NOTHING_TO_SEND) {
+            return;
+        }
+        if (result.isOk) {
+            this.track(Events.EVENT_PROJECT_TAGS_CHANGED, {
+                project_id: projectId,
+                tags_count: next.length,
+                source: 'project',
+            });
+        } else if (result.isUnauth) {
+            this.sessionExpired();
+        }
+    };
+
+    /**
+     * Меняет метки сразу у многих проектов, по запросу на проект. Проекты,
+     * где сервер отказал, получают прежние метки обратно. rewrite получает
+     * метки проекта и возвращает новые или null, если проект не меняется;
+     * к меткам, которые хранит сервер, он применяется ещё раз при отправке.
+     * Результат: у скольких проектов сервер принял изменения
+     */
+    private updateTagsInBulk = async (
+        rewrite: (projectId: string, tags: ProjectTag[]) => ProjectTag[] | null
+    ): Promise<number> => {
+        const changed = (projectId: string, tags: ProjectTag[]) => {
+            const next = rewrite(projectId, tags);
+            return next ? normalizeProjectTags(next) : tags;
+        };
+        const projects = this.repository.projectsViewModelRepository
+            .projects()
+            .filter(
+                (project) =>
+                    // у проекта с незавершённой правкой сервер может хранить
+                    // другое, чем видно: правку применяем к тому, что хранит он
+                    this.writes.has(`${project.projectId}:tags`) ||
+                    !sameTags(
+                        project.tags ?? [],
+                        changed(project.projectId, project.tags ?? [])
+                    )
+            );
+        if (!projects.length) {
+            return 0;
+        }
+        const outcomes = await Promise.all(
+            projects.map((project) =>
+                this.writeTags(project.projectId, project.tags ?? [], (tags) =>
+                    changed(project.projectId, tags)
+                )
+            )
+        );
+        const results = outcomes.map((outcome) => outcome.result);
+        if (results.some((result) => result.isUnauth)) {
+            this.sessionExpired();
+        } else if (
+            outcomes.some(
+                (outcome, i) =>
+                    outcome.lost && this.listedProject(projects[i].projectId)
+            )
+        ) {
+            this.repository.toast(
+                this.repository.dictionary.projects.errors.tags_failed,
+                'error'
+            );
+        }
+        return results.filter(
+            (result) => result.isOk && result !== NOTHING_TO_SEND
+        ).length;
+    };
+
+    /**
+     * Создаёт метку или меняет имя, цвет и набор проектов у существующей.
+     * Там, где метка уже была, она остаётся на своём месте среди других.
+     * Проекту, где меток уже предел, новую не добавляем и говорим об этом
+     */
+    onTagSave = async ({
+        previousName,
+        name,
+        color,
+        projectIds,
+    }: TagSaveRequest) => {
+        const title = name.trim();
+        if (!title) {
+            return;
+        }
+        const keys = new Set([nameKey(title)]);
+        if (previousName) {
+            keys.add(nameKey(previousName));
+        }
+        const owners = new Set(projectIds);
+        const isFull = (tags: ProjectTag[]) =>
+            tags.length >= PROJECT_TAGS_MAX_COUNT &&
+            !tags.some((tag) => keys.has(nameKey(tag.name)));
+        const overLimit = this.repository.projectsViewModelRepository
+            .projects()
+            .filter(
+                (project) =>
+                    owners.has(project.projectId) && isFull(project.tags ?? [])
+            ).length;
+        const changed = await this.updateTagsInBulk((projectId, tags) => {
+            const index = tags.findIndex((tag) => keys.has(nameKey(tag.name)));
+            const rest = tags.filter((tag) => !keys.has(nameKey(tag.name)));
+            if (!owners.has(projectId)) {
+                return rest.length === tags.length ? null : rest;
+            }
+            if (isFull(tags)) {
+                return null;
+            }
+            const position =
+                index < 0
+                    ? rest.length
+                    : tags
+                          .slice(0, index)
+                          .filter((tag) => !keys.has(nameKey(tag.name))).length;
+            return [
+                ...rest.slice(0, position),
+                { name: title, color },
+                ...rest.slice(position),
+            ];
+        });
+        if (overLimit && !this.sessionLost()) {
+            this.repository.toast(
+                this.repository.dictionary.projects.tags_modal.limit.replace(
+                    '${max}',
+                    () => `${PROJECT_TAGS_MAX_COUNT}`
+                ),
+                'error'
+            );
+        }
+        if (changed) {
+            this.track(Events.EVENT_PROJECT_TAGS_CHANGED, {
+                source: 'sidebar',
+                action: previousName ? 'edit' : 'create',
+                projects_count: changed,
+            });
+        }
+    };
+
+    /** Снимает метку со всех проектов; сами проекты остаются */
+    onTagDelete = async (name: string) => {
+        const key = nameKey(name);
+        const changed = await this.updateTagsInBulk((_, tags) => {
+            const rest = tags.filter((tag) => nameKey(tag.name) !== key);
+            return rest.length === tags.length ? null : rest;
+        });
+        if (changed) {
+            this.track(Events.EVENT_PROJECT_TAGS_CHANGED, {
+                source: 'sidebar',
+                action: 'delete',
+                projects_count: changed,
+            });
+        }
+    };
+
+    /** Публичность проекта прямо из списка, без открытия редактора */
+    onListedProjectVisibilityChange = async (
+        projectId: string,
+        visible: boolean
+    ) => {
+        const project = this.listedProject(projectId);
+        if (!project || !!project.isPublic === visible) {
+            return;
+        }
+        const { result, lost } = await this.optimisticWrite(
+            `${projectId}:public`,
+            !!project.isPublic,
+            () => visible,
+            (a, b) => a === b,
+            (isPublic) => this.patchListedProject(projectId, { isPublic }),
+            (isPublic) =>
+                this.rpi.setProjectVisibilityRequest(projectId, isPublic),
+            (_, sent) => sent
+        );
+        // при отказе сессии говорим только о ней
+        if (lost && !result.isUnauth && this.listedProject(projectId)) {
+            this.repository.toast(
+                this.repository.dictionary.projects.errors.visibility_failed,
+                'error'
+            );
+        }
+        if (result === NOTHING_TO_SEND) {
+            return;
+        }
+        if (result.isOk) {
+            this.track(Events.EVENT_PROJECT_VISIBILITY_CHANGED, {
+                visible,
+                source: 'list',
+            });
+            // открытый в редакторе проект тот же: его шапка должна это знать
+            const opened = this.repository.projectViewModelRepository.project();
+            if (opened?.projectId === projectId) {
+                this.repository.projectViewModelRepository.setProject({
+                    ...opened,
+                    isPublic: visible,
+                });
+            }
+        } else if (result.isUnauth) {
+            this.sessionExpired();
+        }
+    };
+
+    /** Копия проекта появляется в списке, а человек остаётся на странице */
+    onDuplicateProject = async (projectId: string) => {
+        const result = await this.rpi.cloneProjectRequest(projectId);
+        if (result.isOk) {
+            this.track(Events.EVENT_PROJECT_CLONED, {
+                source_project_id: projectId,
+                source: 'list',
+            });
+            await this.refreshProjects();
+            this.repository.toast(
+                this.repository.dictionary.projects.duplicated,
+                'success'
+            );
+            return;
+        }
+        if (result.isUnauth) {
+            this.sessionExpired();
+            return;
+        }
+        this.repository.toast(
+            result.code === 417
+                ? this.repository.dictionary.new_project.error.too_many_projects
+                : this.repository.dictionary.projects.errors.duplicate_failed,
+            'error'
+        );
+    };
+
+    /**
+     * Архив проекта, как «Экспорт» в редакторе, но не открывая проект. О
+     * понятных отказах говорим теми же словами, что и редактор
+     */
+    onDownloadProject = async (projectId: string) => {
+        const project = this.listedProject(projectId);
+        if (!project || this.downloading.has(projectId)) {
+            return;
+        }
+        this.downloading.add(projectId);
+        try {
+            await this.downloadListedProject(project);
+        } finally {
+            this.downloading.delete(projectId);
+        }
+    };
+
+    private downloadListedProject = async (project: ProjectShort) => {
+        const projectId = project.projectId;
+        const result = await this.rpi.exportProjectRequest(projectId);
+        this.track(Events.EVENT_PROJECT_EXPORTED, {
+            format: 'labkeeper',
+            ok: result.code === 201,
+            http_code: result.code,
+            source: 'list',
+        });
+        if (result.code === 201 && typeof result.body === 'string') {
+            await this.repository.downloadFile(
+                result.body,
+                exportFileName(project.title, 'labkeeper')
+            );
+            return;
+        }
+        if (result.isUnauth) {
+            this.sessionExpired();
+            return;
+        }
+        const dictionary = this.repository.dictionary;
+        const messages: Partial<Record<number, string>> = {
+            203: dictionary.project_export.program_errors,
+            402: dictionary.prompt_modal.errors.payment_required,
+            403: dictionary.filemanager.errors.notEnoughRights,
+            404: dictionary.filemanager.errors.notFound,
+            423: dictionary.projects.errors.project_busy,
+        };
+        if (result.code === 402) {
+            this.track(Events.EVENT_PAYMENT_REQUIRED, { source: 'export' });
+        }
+        this.repository.toast(
+            messages[result.code] ?? dictionary.projects.errors.download_failed,
+            'error'
+        );
+    };
+
+    /** Повторный запрос, пока первый не вернулся, не отправляется */
+    onDeleteProject = async (projectId: string, okCallback: () => void) => {
+        if (this.deleting.has(projectId)) {
+            return;
+        }
+        this.deleting.add(projectId);
+        try {
+            const result = await this.rpi.deleteProjectRequest(projectId);
+            if (result.isOk) {
+                this.track(Events.EVENT_PROJECT_DELETED, {
+                    project_id: projectId,
+                });
+                okCallback();
+                // проект пропадает сразу, не дожидаясь нового списка, и не
+                // возвращается из ответа, запрошенного до удаления
+                this.loaderService.discardEarlierLists();
+                this.repository.projectsViewModelRepository.setProjects(
+                    this.repository.projectsViewModelRepository
+                        .projects()
+                        .filter((project) => project.projectId !== projectId)
+                );
+                await this.refreshProjects();
+            } else if (result.isUnauth) {
+                okCallback();
+                this.sessionExpired();
+            } else {
+                this.repository.toast(
+                    this.repository.dictionary.projects.errors.delete_failed,
+                    'error'
+                );
+            }
+        } finally {
+            this.deleting.delete(projectId);
         }
     };
 

@@ -3,6 +3,7 @@ import {
     CompileSuccessResult,
     Program,
     Project,
+    ProjectTag,
     ProjectType,
     UserInfo,
 } from '../../model/domain.ts';
@@ -33,6 +34,7 @@ import {
     BillingPurchasesListResponse,
     BillingPricingResponse,
     ExportProjectResponse,
+    ProjectTagsResponse,
 } from '../../model/rpi';
 import * as Sentry from '@sentry/react';
 import {
@@ -97,6 +99,7 @@ const RPI_SOURCES: Record<keyof Rpi, string> = {
     exportProjectTexRequest: 'compile',
     saveProgramRequest: 'program',
     setProjectVisibilityRequest: 'project',
+    setProjectTagsRequest: 'project',
     sendEmailWithCodeRequest: 'auth',
     checkCodeRequest: 'auth',
     setPasswordRequest: 'auth',
@@ -635,6 +638,19 @@ export class WebRpi implements Rpi {
                 axios.post(
                     `${URLS.setVisibility.replace('{id}', projectId)}?public=${visibility}`
                 ),
+            projectId
+        );
+    }
+
+    async setProjectTagsRequest(
+        projectId: string,
+        tags: ProjectTag[]
+    ): Promise<RequestResult<ProjectTagsResponse>> {
+        return this.requestWrapper(
+            'setProjectTagsRequest',
+            [200, 400, 401, 403, 404],
+            async () =>
+                axios.post(URLS.setTags.replace('{id}', projectId), { tags }),
             projectId
         );
     }

@@ -1846,9 +1846,16 @@ test('history-entry-with-the-same-address-does-not-ask', async ({ page }) => {
     await submitPrompt(page);
     await expect(page.locator('.agent-chat__event')).toHaveCount(1);
 
-    // приложение кладёт адрес проекта в историю дважды, поэтому первое «назад»
-    // ведёт на него же. Спрашивать про уход оттуда, откуда не уходят, нельзя:
-    // человек соглашается и остаётся на месте
+    // адрес проекта может лежать в истории дважды (раньше приложение само так
+    // делало), и тогда первое «назад» ведёт на него же. Спрашивать про уход
+    // оттуда, откуда не уходят, нельзя: человек соглашается и остаётся на месте
+    await page.evaluate(() =>
+        history.pushState(
+            { ...history.state, idx: (history.state?.idx ?? 0) + 1 },
+            '',
+            location.href
+        )
+    );
     const dialogs: string[] = [];
     page.on('dialog', async (dialog) => {
         dialogs.push(dialog.type());

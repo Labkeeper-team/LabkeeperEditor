@@ -9,155 +9,379 @@
     width: 100%;
     gap: 8px;
     border-radius: 8px;
+    // до 1024px родитель уже колонка по высоте окна, а страница может быть
+    // уменьшена масштабом: высоту от окна тогда не посчитать, берём родителя
     @media screen and (max-width: 1024px) {
-        height: calc($screen-height - $header-height - $main-margin-mobile);
+        flex: 1 1 0;
+        height: auto;
+        min-height: 0;
     }
+
     .project-content-container {
-        padding-left: 40px;
-        padding-right: 40px;
-        padding-top: 30px;
+        padding: 30px 40px 0;
         display: flex;
         flex-direction: column;
         flex: 1;
+        min-width: 0;
 
         @media screen and (max-width: $mobile-breakpoint) {
-            padding: 16px;
+            padding: 16px 16px 0;
         }
-        .projects-loading-wrapper {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 24px 0;
-            flex: 1;
-        }
-        .projects-loading-icon-with-text {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
+    }
+
+    // заголовок, число проектов и кнопка создания в одну строку
+    .projects-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+
+        &__count {
+            min-width: 24px;
+            height: 24px;
+            padding: 0 8px;
+            border-radius: 12px;
+            background: $gray-60;
+            color: $gray-20;
+            font-size: 13px;
+            line-height: 24px;
             text-align: center;
-            max-width: 80%;
+            box-sizing: border-box;
+            white-space: nowrap;
         }
-        .projects-loading-caption {
-            color: rgba(0, 0, 0, 0.7);
-            font-size: 14px;
-            line-height: 18px;
-            white-space: pre-wrap;
-        }
-        .projects-loading-spinner {
-            width: 28px;
-            height: 28px;
-            border: 3px solid rgba(0, 0, 0, 0.12);
-            border-top-color: rgba(0, 0, 0, 0.6);
-            border-radius: 50%;
-            animation: ide-main-spin 0.9s linear infinite;
-        }
-        @keyframes ide-main-spin {
-            0% {
-                transform: rotate(0deg);
+
+        // при фильтре счётчик показывает «N из M» и по щелчку сбрасывает фильтры
+        &__count--filtered {
+            display: inline-flex;
+            // на телефоне «N из M ×» не сжимается под кнопку «Добавить»
+            flex-shrink: 0;
+            white-space: nowrap;
+            align-items: center;
+            gap: 6px;
+            border: none;
+            background: rgba($blue-10, 0.12);
+            color: $blue-10;
+            font-family: inherit;
+            cursor: pointer;
+
+            &:hover {
+                background: rgba($blue-10, 0.2);
             }
-            100% {
-                transform: rotate(360deg);
+
+            &:focus-visible {
+                outline: 2px solid $blue-10;
+                outline-offset: 2px;
             }
         }
-        .projects-loading-warning {
-            position: relative;
-            width: 28px;
-            height: 28px;
-            display: inline-block;
-            border-radius: 50%;
-            background: rgba(255, 82, 82, 0.13);
-            border: 2px solid #ff5252;
+
+        &__add {
+            margin-left: auto;
+            height: 40px;
+            padding: 0 18px;
         }
-        .projects-loading-warning::before,
-        .projects-loading-warning::after {
-            content: '';
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 3px;
-            background: #ff5252;
-            border-radius: 2px;
-        }
-        .projects-loading-warning::before {
-            top: 5px;
-            height: 14px;
-        }
-        .projects-loading-warning::after {
-            bottom: 5px;
-            height: 3px;
-        }
-    }
-    .add-project-button {
-        width: 300px;
-        height: 90px;
 
         @media screen and (max-width: $mobile-breakpoint) {
-            width: 100%;
-            max-width: none;
-            height: auto;
-            min-height: 64px;
+            flex-wrap: nowrap;
+            gap: 8px;
+
+            .typography.h1 {
+                min-width: 0;
+                overflow: hidden;
+                font-size: 30px;
+                line-height: 36px;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            &__add {
+                flex-shrink: 0;
+                height: 36px;
+                padding: 0 14px;
+            }
+
+            // со счётчиком «N из M ×» места на всё не хватает: от «Добавить»
+            // остаётся плюс, а слово читают только экранные дикторы
+            &--filtered .projects-header__add {
+                width: 36px;
+                padding: 0;
+
+                > span:first-child {
+                    position: absolute;
+                    width: 1px;
+                    height: 1px;
+                    overflow: hidden;
+                    clip: rect(0 0 0 0);
+                    white-space: nowrap;
+                }
+            }
+        }
+
+        // самые узкие телефоны: число проектов уступает место заголовку и кнопке
+        @media screen and (max-width: 360px) {
+            .typography.h1 {
+                min-width: 0;
+                overflow: hidden;
+                font-size: 28px;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            // число проектов уходит, а сброс фильтров остаётся
+            &__count:not(.projects-header__count--filtered) {
+                display: none;
+            }
+
+            &__add {
+                padding: 0 12px;
+            }
         }
     }
-    .projects-header-cell {
-        display: inline-flex;
+
+    // поиск и фильтры
+    .projects-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px 12px;
+        margin-top: 22px;
+
+        @media screen and (max-width: $mobile-breakpoint) {
+            margin-top: 14px;
+        }
+    }
+
+    .projects-search {
+        position: relative;
+        display: flex;
         align-items: center;
         gap: 8px;
+        flex: 1 1 220px;
+        max-width: 420px;
+        height: 38px;
+        padding: 0 12px;
+        border: 1px solid $gray-50;
+        border-radius: 8px;
+        background: $white;
+        box-sizing: border-box;
+        cursor: text;
+        transition:
+            border-color 0.15s,
+            box-shadow 0.15s;
+
+        @media screen and (max-width: $mobile-breakpoint) {
+            max-width: none;
+            flex-basis: 100%;
+        }
+
+        svg {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+
+            path {
+                fill: $gray-30;
+            }
+        }
+
+        &:focus-within {
+            border-color: $blue-20;
+            box-shadow: 0 0 0 3px rgba($blue-10, 0.12);
+        }
+
+        input {
+            flex: 1;
+            min-width: 0;
+            height: 100%;
+            border: none;
+            outline: none;
+            background: transparent;
+            color: $gray-10;
+            font-family: inherit;
+            font-size: 15px;
+
+            &::placeholder {
+                color: $gray-30;
+            }
+        }
+
+        &__hint {
+            padding: 1px 6px;
+            border: 1px solid $gray-50;
+            border-radius: 4px;
+            color: $gray-30;
+            font-family: inherit;
+            font-size: 12px;
+            line-height: 16px;
+        }
     }
-    .projects-sort-icon-button {
+
+    .projects-toolbar .segmented-control {
+        height: 38px;
+        padding: 3px;
+        border-radius: 8px;
+        box-sizing: border-box;
+
+        .segmented-control__item {
+            height: 100%;
+            padding: 0 12px;
+            border-radius: 6px;
+            font-size: 13px;
+
+            @media screen and (max-width: $mobile-breakpoint) {
+                flex: 1;
+                padding: 0 6px;
+            }
+        }
+
+        @media screen and (max-width: $mobile-breakpoint) {
+            flex: 1 1 auto;
+        }
+    }
+
+    .projects-mobile-sort {
+        flex: 1 1 100%;
+    }
+
+    // на телефоне метки идут одной строкой и прокручиваются вбок
+    .projects-tags-filter {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 6px;
+        margin: 12px -16px 0;
+        padding: 0 16px 2px;
+        overflow-x: auto;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+
+        &::-webkit-scrollbar {
+            display: none;
+        }
+    }
+
+    .projects-link-button {
+        padding: 0;
         border: none;
         background: transparent;
-        padding: 0;
-        margin: 0;
-        display: inline-flex;
+        color: $blue-10;
+        font-family: inherit;
+        font-size: 13px;
+        cursor: pointer;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+
+    .projects-no-matches {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        padding: 60px 16px;
+        color: $gray-30;
+        font-size: 15px;
+        text-align: center;
+
+        .projects-link-button {
+            font-size: 15px;
+        }
+    }
+
+    // загрузка, ошибка и пустой список
+    .projects-loading-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px 0;
+        flex: 1;
+    }
+    .projects-loading-icon-with-text {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        text-align: center;
+        max-width: 80%;
+    }
+    .projects-loading-caption {
+        color: rgba(0, 0, 0, 0.7);
+        font-size: 14px;
+        line-height: 18px;
+        white-space: pre-wrap;
+    }
+    .projects-loading-spinner {
+        width: 28px;
+        height: 28px;
+        border: 3px solid rgba(0, 0, 0, 0.12);
+        border-top-color: rgba(0, 0, 0, 0.6);
+        border-radius: 50%;
+        animation: ide-main-spin 0.9s linear infinite;
+    }
+    @keyframes ide-main-spin {
+        0% {
+            transform: rotate(0deg);
+        }
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+    .projects-loading-warning {
+        position: relative;
+        width: 28px;
+        height: 28px;
+        display: inline-block;
+        border-radius: 50%;
+        background: rgba(255, 82, 82, 0.13);
+        border: 2px solid #ff5252;
+    }
+    .projects-loading-warning::before,
+    .projects-loading-warning::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 3px;
+        background: #ff5252;
+        border-radius: 2px;
+    }
+    .projects-loading-warning::before {
+        top: 5px;
+        height: 14px;
+    }
+    .projects-loading-warning::after {
+        bottom: 5px;
+        height: 3px;
+    }
+
+    .projects-empty {
+        display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        cursor: pointer;
-        line-height: 10px;
-    }
-    .sort-arrow {
-        color: $gray-30;
-        font-size: 11px;
-        user-select: none;
-        height: 10px;
-    }
-    .sort-arrow.is-active {
-        color: $blue-10;
-    }
-    table {
-        th:nth-child(1) {
-        }
-        td:nth-child(1) {
-            // width: 33%;
-            padding: 0px;
-            display: flex;
-            align-items: center;
-        }
-        td {
-            width: 33%;
-        }
-    }
-    .add-project-button-footer {
-        margin-bottom: 20px;
+        gap: 10px;
+        flex: 1;
+        padding: 24px 0;
+        text-align: center;
 
-        .labkeeper-button {
-            width: 100%;
+        &__title {
+            color: $gray-10;
+            font-size: 20px;
+            font-weight: 500;
         }
+
+        &__text {
+            color: $gray-30;
+            font-size: 15px;
+            margin-bottom: 14px;
+        }
+    }
+
+    .add-project-button {
+        height: 44px;
+        padding: 0 28px;
+
         @media screen and (max-width: $mobile-breakpoint) {
-            position: sticky;
-            bottom: 0;
             width: 100%;
-            margin-bottom: 0;
-            padding-top: 12px;
-            padding-bottom: env(safe-area-inset-bottom, 0px);
-            background: linear-gradient(to top, $white 70%, rgba($white, 0));
-
-            @media (hover: none) {
-                .labkeeper-button.gray-color:hover:not(:disabled) {
-                    background-color: $gray-60;
-                }
-            }
         }
     }
 
@@ -167,101 +391,215 @@
         flex: 1;
         overflow: auto;
         min-height: 0;
+        margin-top: 12px;
+        padding-bottom: 20px;
     }
 
-    .projects-mobile-sort {
-        display: none;
+    // бейджи типа и доступа
+    .projects-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 4px;
+        background: $gray-60;
+        color: $gray-20;
+        font-size: 12px;
+        line-height: 16px;
+        white-space: nowrap;
 
-        @media screen and (max-width: $mobile-breakpoint) {
-            display: block;
-            margin-top: 16px;
-            margin-bottom: 12px;
+        &--latex {
+            background: rgba($blue-10, 0.1);
+            color: $button-action-blue;
+        }
+
+        &--markdown {
+            background: rgba($green, 0.12);
+            color: $button-action-green;
         }
     }
 
-    .projects-card-list {
-        display: none;
-
-        @media screen and (max-width: $mobile-breakpoint) {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            padding-bottom: 12px;
-        }
-    }
-
-    .projects-card {
-        display: flex;
+    .projects-access {
+        display: inline-flex;
         align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        padding: 14px 12px;
-        border: 1px solid $gray-50;
-        border-radius: 10px;
-        background: $white;
+        gap: 6px;
+        color: $gray-30;
+        font-size: 13px;
+        white-space: nowrap;
+
+        &__dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            border: 1.5px solid $gray-40;
+            box-sizing: border-box;
+        }
+
+        &--public {
+            color: $gray-20;
+
+            .projects-access__dot {
+                border-color: $green;
+                background: $green;
+            }
+        }
+    }
+
+    .projects-row-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-top: 2px;
+        padding-left: 14px;
+    }
+
+    // таблица на компьютере
+    // ширины колонок заданы: таблица не перестраивается от каждого символа в
+    // поиске, а «⋯» не уходит за край на узком окне
+    .projects-table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+
+        th {
+            // ширины колонок ниже вместе с отступами
+            box-sizing: border-box;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            padding: 8px 10px;
+            background: $white;
+            // рамка у залипающей ячейки при border-collapse уезжает, тень нет
+            box-shadow: inset 0 -1px 0 $gray-50;
+            color: $gray-30;
+            font-size: 13px;
+            font-weight: 400;
+            text-align: left;
+            white-space: nowrap;
+
+            &:first-child {
+                padding-left: 14px;
+            }
+        }
+
+        td {
+            padding: 10px;
+            border-bottom: 1px solid $gray-50;
+            color: $gray-30;
+            font-size: 14px;
+            vertical-align: middle;
+        }
+
+        td.projects-cell-title {
+            padding: 8px 10px 8px 0;
+        }
+
+        td.projects-col-type,
+        td.projects-col-access,
+        td.projects-col-date {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        tbody tr {
+            transition: background-color 0.2s;
+            cursor: pointer;
+
+            &:hover {
+                background: $gray-60;
+            }
+
+            &.is-renaming {
+                background: $gray-60;
+                cursor: default;
+            }
+
+            .project-actions-button {
+                opacity: 0;
+            }
+
+            &:hover .project-actions-button,
+            &:focus-within .project-actions-button,
+            .project-actions-button--open {
+                opacity: 1;
+            }
+        }
+
+        // длинным названиям места больше, чем по умолчанию
+        .project-title-text {
+            max-width: 64ch;
+        }
+
+        @media (hover: none) {
+            tbody tr .project-actions-button {
+                opacity: 1;
+            }
+        }
+
+        // «Последнее изменение» по-русски со стрелкой сортировки
+        .projects-col-date {
+            width: 184px;
+        }
+
+        .projects-col-type {
+            width: 100px;
+        }
+
+        .projects-col-access {
+            width: 116px;
+        }
+
+        .projects-col-actions {
+            width: 44px;
+            padding: 0 6px;
+            text-align: right;
+        }
+
+        // на узком окне дата создания уступает место названию
+        @media screen and (max-width: 1440px) {
+            .projects-col-created {
+                display: none;
+            }
+        }
+
+        // дальше по мере сужения место названию уступают тип и доступ;
+        // отобрать по ним проекты по-прежнему можно фильтрами
+        @media screen and (max-width: 1100px) {
+            .projects-col-type {
+                display: none;
+            }
+        }
+
+        @media screen and (max-width: 900px) {
+            .projects-col-access {
+                display: none;
+            }
+        }
+    }
+
+    .projects-sort-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0;
+        border: none;
+        background: transparent;
+        color: inherit;
+        font: inherit;
         cursor: pointer;
 
-        &__main {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            min-width: 0;
-            flex: 1;
+        &:hover,
+        &.is-active {
+            color: $gray-10;
         }
 
-        &__delete {
-            height: auto;
-            flex-shrink: 0;
-            align-self: center;
+        .sort-arrow {
+            color: $gray-40;
+            font-size: 9px;
+            letter-spacing: -1px;
         }
 
-        .project-title-container {
-            width: fit-content;
-            max-width: 100%;
-            gap: 6px;
-
-            .project-title-text {
-                padding-left: 0;
-                max-width: calc(100% - 26px);
-                width: auto;
-                flex: 0 1 auto;
-            }
-
-            .input-base {
-                padding-left: 0;
-            }
-        }
-    }
-    td:has(.delete-project-container) {
-        padding-top: 0px;
-        padding-bottom: 0px;
-    }
-    .delete-project-container {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        gap: 5px;
-        justify-content: end;
-        padding-left: 5px;
-        // ХАК
-        height: 62px;
-        &:hover {
-            cursor: pointer;
-        }
-        .delete-icon {
-            background-color: $red-20;
-            border-radius: 45px;
-            height: 16px;
-            width: 16px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            rotate: 45deg;
-            svg {
-                path {
-                    fill: $red-10;
-                }
-            }
+        &.is-active .sort-arrow {
+            color: $blue-10;
         }
     }
 
@@ -271,20 +609,85 @@
         text-decoration: none;
     }
 
-    table {
-        border-collapse: collapse;
-        tr {
-            text-align: left;
-            border-bottom: 1px solid $gray-50;
-            transition-duration: 0.3s;
-            th {
-                padding-bottom: 4px;
+    // один вид фокуса для ссылок и кнопок страницы, как у кнопки «⋯»
+    .project-title-link,
+    .projects-sort-button,
+    .projects-link-button {
+        &:focus-visible {
+            outline: 2px solid $blue-10;
+            outline-offset: 2px;
+            border-radius: 4px;
+        }
+    }
+
+    // карточки на телефоне
+    .projects-card-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .projects-card {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 12px 6px 12px 12px;
+        border: 1px solid $gray-50;
+        border-radius: 10px;
+        background: $white;
+        cursor: pointer;
+
+        &__main {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-width: 0;
+            flex: 1;
+        }
+
+        &__meta {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px 12px;
+            color: $gray-30;
+            font-size: 13px;
+        }
+
+        .projects-row-tags {
+            padding-left: 0;
+            margin-top: 0;
+        }
+
+        // название на телефоне занимает до двух строк и не сжимается раньше времени
+        .project-title-container {
+            width: 100%;
+            gap: 6px;
+
+            .project-title-link {
+                flex: 0 1 auto;
             }
 
-            &:hover:not(:nth-child(1)) {
-                cursor: pointer;
-                background: $gray-60;
+            .project-title-text {
+                padding-left: 0;
+                max-width: 100%;
+                width: auto;
+                -webkit-line-clamp: 2;
+            }
+
+            .change-icon-container {
+                flex-shrink: 0;
             }
         }
+    }
+}
+
+// плюс на синих кнопках «Добавить» белый, иначе он сливается с фоном
+.projects-header__add,
+.projects-sidebar__add,
+.projects-container .add-project-button {
+    svg path {
+        fill: $white;
     }
 }

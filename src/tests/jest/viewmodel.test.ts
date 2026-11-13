@@ -480,11 +480,14 @@ test('display-name-new-project-test', async () => {
         () => {}
     ); // создать новый проект
     await projectPageService.onBackButtonClicked(); // перейти на экран с проектами
+    // сервер отдаёт старые проекты первыми, в списке сначала новые
     expect(
         repository.projectsViewModelRepository
             .projects()
             .map((p) => p.projectId + p.title)
-    ).toStrictEqual(allprojects.map((p) => p.projectId + p.title));
+    ).toStrictEqual(
+        [...allprojects].reverse().map((p) => p.projectId + p.title)
+    );
 });
 
 test('back-button-resets-forbidden-project-error-for-unauthorized-user', async () => {

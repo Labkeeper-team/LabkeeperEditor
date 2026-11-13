@@ -340,7 +340,12 @@ export class ProjectPageService {
         okCallback: () => void,
         failCallback: () => void
     ) => {
-        if (this.editingLock.rejectEdit()) {
+        // агент правит только открытый в редакторе проект: другой из списка
+        // переименовать можно, а отказ возвращает в поле прежнее имя
+        const opened =
+            this.repository.projectViewModelRepository.project()?.projectId;
+        if (opened === projectId && this.editingLock.rejectEdit()) {
+            failCallback();
             return;
         }
         const titleToSend = title.trim();
@@ -353,35 +358,89 @@ export class ProjectPageService {
             return;
         }
 
-        const result = await this.rpi.setTitleRequest(projectId, title);
-        if (result.isUnauth) {
-            this.repository.toast(
-                this.repository.dictionary.filemanager.errors.sessionExpired,
-                'error'
+        // список, запрошенный до конца переименования, имя не откатывает
+        const writeKey = `${projectId}:title`;
+        this.loaderService.writeStarted(writeKey);
+        let renamed: boolean;
+        try {
+            renamed = await this.renameListed(
+                projectId,
+                titleToSend,
+                okCallback,
+                failCallback
             );
-            this.ideService.resetEditor();
-            failCallback();
-            return;
-        }
-        if (!result.isOk) {
-            failCallback();
-            return;
-        }
-        if (result.isOk) {
-            const project =
-                this.repository.projectViewModelRepository.project();
-            if (project) {
-                this.repository.projectViewModelRepository.setProject({
-                    ...project,
-                    title: title,
-                });
-                this.repository.projectViewModelRepository.setReadOnly(false);
-            }
-            this.track(Events.EVENT_PROJECT_TITLE_CHANGED);
-            okCallback();
+        } finally {
+            this.loaderService.writeSettled(writeKey);
         }
 
-        await this.loaderService.loadProjects();
+        // список уже верный: обновляем его без спиннера
+        if (renamed) {
+            await this.loaderService.loadProjects({ silent: true });
+        }
+    };
+
+    /** Переименования одного проекта уходят на сервер по очереди */
+    private titleQueues = new Map<string, Promise<unknown>>();
+
+    private renameListed = async (
+        projectId: string,
+        titleToSend: string,
+        okCallback: () => void,
+        failCallback: () => void
+    ): Promise<boolean> => {
+        const previous = this.titleQueues.get(projectId) ?? Promise.resolve();
+        const send = () => this.rpi.setTitleRequest(projectId, titleToSend);
+        const request = previous.then(send, send);
+        this.titleQueues.set(projectId, request);
+        const result = await request;
+        if (this.titleQueues.get(projectId) === request) {
+            this.titleQueues.delete(projectId);
+        }
+        if (result.isUnauth) {
+            // об истёкшей сессии могли уже сказать из-за другого запроса
+            if (this.loaderService.claimSessionReport()) {
+                this.repository.toast(
+                    this.repository.dictionary.filemanager.errors
+                        .sessionExpired,
+                    'error'
+                );
+                // сброс сам говорит странице списка, что сессия истекла
+                this.ideService.resetEditor();
+                this.loaderService.discardEarlierLists();
+            }
+            failCallback();
+            return false;
+        }
+        if (!result.isOk) {
+            this.repository.toast(
+                this.repository.dictionary.projects.errors.rename_failed,
+                'error'
+            );
+            failCallback();
+            return false;
+        }
+        const project = this.repository.projectViewModelRepository.project();
+        // открытый в редакторе проект может быть другим, если переименовали из списка
+        if (project?.projectId === projectId) {
+            this.repository.projectViewModelRepository.setProject({
+                ...project,
+                title: titleToSend,
+            });
+            this.repository.projectViewModelRepository.setReadOnly(false);
+        }
+        const projects = this.repository.projectsViewModelRepository;
+        projects.setProjects(
+            projects
+                .projects()
+                .map((listed) =>
+                    listed.projectId === projectId
+                        ? { ...listed, title: titleToSend }
+                        : listed
+                )
+        );
+        this.track(Events.EVENT_PROJECT_TITLE_CHANGED);
+        okCallback();
+        return true;
     };
 
     onProjectVisibilityChange = async (visible: boolean) => {

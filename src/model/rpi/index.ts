@@ -7,6 +7,7 @@ import {
     Program,
     Project,
     ProjectShort,
+    ProjectTag,
     ProjectTemplate,
     ProjectType,
     UserInfo,
@@ -55,6 +56,10 @@ export interface ListFilesResponse {
 
 export interface ListProjectsResponse {
     projects: ProjectShort[];
+}
+
+export interface ProjectTagsResponse {
+    tags: ProjectTag[];
 }
 
 export interface ListTemplatesResponse {
@@ -247,6 +252,12 @@ export interface Rpi {
         type: ProjectType
     ): Promise<RequestResult>;
 
+    /** Список меток проекта заменяется целиком, в ответе он же */
+    setProjectTagsRequest(
+        projectId: string,
+        tags: ProjectTag[]
+    ): Promise<RequestResult<ProjectTagsResponse>>;
+
     sendEmailWithCodeRequest(
         email: string,
         registration: boolean,
@@ -376,6 +387,9 @@ export const mockRpi = (): Rpi => {
             throw new Error('Not implemented');
         },
         saveProgramRequest: () => {
+            throw new Error('Not implemented');
+        },
+        setProjectTagsRequest: () => {
             throw new Error('Not implemented');
         },
         setProjectVisibilityRequest: () => {

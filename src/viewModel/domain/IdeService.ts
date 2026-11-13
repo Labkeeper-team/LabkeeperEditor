@@ -76,6 +76,12 @@ export class IdeService {
     resetEditor = () => {
         this.flushPreviewUpdate();
         this.resetService.resetAll();
+        // сброс бывает только при выходе и истёкшей сессии: список проектов
+        // без входа не загрузить, и его страница должна сказать это, а не
+        // крутить загрузку
+        this.repository.ideViewModelRepository.setGetProjectsRequestState(
+            'unauth'
+        );
     };
 
     private isRenderedOnServer(segment: Segment): boolean {

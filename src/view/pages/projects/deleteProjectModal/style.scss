@@ -8,6 +8,13 @@
         padding: 20px 16px 24px;
     }
 
+    // подтверждение с длинным именем проекта или метки не растягивается на
+    // всё окно, а длинное слово переносится
+    max-width: 520px;
+    margin: 0 auto;
+    box-sizing: border-box;
+    overflow-wrap: anywhere;
+
     .delete-project-modal-button {
         margin-top: 11px;
         min-height: 44px;

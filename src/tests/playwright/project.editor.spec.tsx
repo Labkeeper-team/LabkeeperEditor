@@ -755,7 +755,7 @@ test('rename-project-in-editor-via-enter', async ({ page }) => {
     await page.locator('input.change-title-input').press('Enter');
 
     // проверяем, что запрос был сделан
-    expect(requestMade).toBeTruthy();
+    await expect.poll(() => requestMade).toBeTruthy();
 });
 
 test('hunk-accept-smoke-test', async ({ page }) => {
@@ -858,7 +858,7 @@ test('rename-project-in-editor-via-press', async ({ page }) => {
     await page.locator('div.empty-project-placeholder-container').click();
 
     // проверяем, что запрос был сделан
-    expect(requestMade).toBeTruthy();
+    await expect.poll(() => requestMade).toBeTruthy();
 });
 
 /*

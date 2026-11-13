@@ -1,0 +1,103 @@
+@use '../../../styles/colors' as *;
+
+.project-actions-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    cursor: pointer;
+    flex-shrink: 0;
+
+    svg path {
+        fill: $gray-30;
+    }
+
+    &:hover,
+    &--open {
+        background: $gray-50;
+
+        svg path {
+            fill: $gray-10;
+        }
+    }
+
+    &:focus-visible {
+        outline: 2px solid $blue-10;
+        outline-offset: 1px;
+    }
+}
+
+.project-actions-menu {
+    position: fixed;
+    z-index: 1000;
+    min-width: 220px;
+    max-width: calc(100vw - 16px);
+    padding: 6px;
+    border: 1px solid $gray-50;
+    border-radius: 10px;
+    background: $white;
+    box-shadow: 0 8px 24px rgba($gray-10, 0.14);
+    display: flex;
+    flex-direction: column;
+
+    &__item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        padding: 9px 10px;
+        border: none;
+        border-radius: 6px;
+        background: transparent;
+        color: $gray-10;
+        font-family: inherit;
+        font-size: 14px;
+        line-height: 18px;
+        text-align: left;
+        cursor: pointer;
+        white-space: nowrap;
+
+        &:hover,
+        &:focus-visible {
+            background: $gray-60;
+            outline: none;
+        }
+
+        &--danger {
+            color: $red-30;
+
+            &:hover,
+            &:focus-visible {
+                background: rgba($red-20, 0.5);
+            }
+        }
+
+        &--separated {
+            position: relative;
+            margin-top: 7px;
+
+            &::before {
+                content: '';
+                position: absolute;
+                top: -4px;
+                left: 6px;
+                right: 6px;
+                height: 1px;
+                background: $gray-50;
+            }
+        }
+    }
+
+    &__icon {
+        display: inline-flex;
+        width: 16px;
+        justify-content: center;
+        color: $gray-30;
+        font-size: 14px;
+    }
+}

@@ -30,6 +30,7 @@ export const URLS = {
     setTitle: `${uri}/api/${version}/public/project/{id}/title`,
     setVisibility: `${uri}/api/${version}/public/project/{id}/visibility`,
     setType: `${uri}/api/${version}/public/project/{id}/type`,
+    setTags: `${uri}/api/${version}/public/project/{id}/tags`,
     listHunks: `${uri}/api/${version}/public/project/{id}/hunk`,
     deleteHunk: `${uri}/api/${version}/public/project/{id}/hunk/{hunkId}`,
     agentHistory: `${uri}/api/${version}/public/project/{id}/history`,
