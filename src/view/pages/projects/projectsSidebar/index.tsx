@@ -7,7 +7,7 @@ import { Button } from '../../../components/button';
 import { PlusIcon } from '../../../icons';
 import { useDictionary } from '../../../store/selectors/translations';
 import { ProjectShort, ProjectTag } from '../../../../model/domain.ts';
-import { ProjectActions } from '../projectActions';
+import { ActionMenu } from '../../../components/actionMenu';
 import {
     AccessFilter,
     KnownTag,
@@ -148,7 +148,7 @@ export const ProjectsSidebar = (props: {
                         active,
                         // повторный щелчок по выбранной метке снимает выбор
                         () => props.onSelectTag(active ? null : key),
-                        <ProjectActions
+                        <ActionMenu
                             label={`${texts.sidebar.tag_menu}: ${tag.name}`}
                             actions={[
                                 {
