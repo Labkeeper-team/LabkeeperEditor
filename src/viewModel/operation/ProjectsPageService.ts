@@ -25,6 +25,10 @@ import {
 } from '../domain/CompilationService.ts';
 import { trackEvent } from '../utils/observerContext.ts';
 import { tagKey } from '../domain/projectsFilter.ts';
+import {
+    NOTHING_TO_SEND,
+    ProjectListWrites,
+} from '../domain/ProjectListWrites.ts';
 import { exportFileName } from './ProjectPageService.ts';
 
 // с запасом: каталог обычно приходит одним запросом
@@ -65,37 +69,6 @@ const ARCHIVE_ERRORS: Partial<
     400: 'archive_invalid',
     409: 'archive_too_many_files',
     413: 'archive_too_big',
-};
-
-/** Правки одного поля проекта, ещё не завершённые, поверх принятого сервером */
-interface FieldWrites<T> {
-    confirmed: T;
-    pending: ((value: T) => T)[];
-    /** Что вышло бы, пройди все правки этой серии */
-    intended: T;
-    /** Сервер отказал хотя бы одной правке серии (не из-за сессии) */
-    failed: boolean;
-}
-
-/** Итог правки: ответ сервера и пропало ли что-то из задуманного */
-interface WriteOutcome<R> {
-    result: R;
-    /**
-     * Серия правок поля закончилась, и итог расходится с тем, что вышло бы,
-     * пройди они все. Решается один раз на серию, последней правкой: подряд
-     * идущие отказы дают одно сообщение, а отказ, который следующая правка
-     * всё равно перекрыла, не даёт ни одного
-     */
-    lost: boolean;
-}
-
-/** Ответ на правку, которую отправлять не пришлось: сервер уже хранит то же */
-const NOTHING_TO_SEND: RequestResult<never> = {
-    body: undefined as never,
-    code: 200,
-    isOk: true,
-    isUnauth: false,
-    isForbidden: false,
 };
 
 const sameTags = (a: ProjectTag[], b: ProjectTag[]) =>
@@ -189,7 +162,8 @@ export class ProjectsPageService {
         startupService: StartupService,
         observerService: ObserverService,
         resetService: ResetService,
-        compilationService: CompilationService
+        compilationService: CompilationService,
+        private projectWrites: ProjectListWrites
     ) {
         this.rpi = rpi;
         this.loaderService = loaderService;
@@ -270,103 +244,12 @@ export class ProjectsPageService {
         );
     };
 
-    /**
-     * Незавершённые правки поля проекта (`<id>:tags`, `<id>:public`) и то,
-     * что по нему точно хранит сервер
-     */
-    private writes = new Map<string, FieldWrites<unknown>>();
     /** Удаляемые сейчас проекты: второй щелчок по «Да» запрос не повторяет */
     private deleting = new Set<string>();
     /** Скачиваемые сейчас архивы: повторный щелчок второй не запускает */
     private downloading = new Set<string>();
     /** Копируемые сейчас проекты: повторный щелчок вторую копию не создаёт */
     private duplicating = new Set<string>();
-    /** Запросы к одному полю идут по очереди, чтобы сервер получил их по порядку */
-    private queues = new Map<string, Promise<unknown>>();
-
-    private enqueue = <T>(key: string, send: () => Promise<T>): Promise<T> => {
-        const previous = this.queues.get(key) ?? Promise.resolve();
-        const request = previous.then(send, send);
-        this.queues.set(key, request);
-        const cleanup = () => {
-            if (this.queues.get(key) === request) {
-                this.queues.delete(key);
-            }
-        };
-        request.then(cleanup, cleanup);
-        return request;
-    };
-
-    /**
-     * Оптимистичная правка. Правка задаётся функцией от значения, которое
-     * хранит сервер, и применяется к нему в момент отправки: так отказ по
-     * одной правке не уезжает на сервер в составе следующей. В списке сразу
-     * видны все незавершённые правки поверх того, что принял сервер
-     */
-    private optimisticWrite = async <T, R extends RequestResult<unknown>>(
-        key: string,
-        current: T,
-        change: (value: T) => T,
-        same: (a: T, b: T) => boolean,
-        apply: (value: T) => void,
-        send: (value: T) => Promise<R>,
-        accepted: (result: R, sent: T) => T,
-        sameOutcome: (a: T, b: T) => boolean = same
-    ): Promise<WriteOutcome<R>> => {
-        const state = (this.writes.get(key) ?? {
-            confirmed: current,
-            pending: [],
-            intended: current,
-            failed: false,
-        }) as FieldWrites<T>;
-        state.intended = change(state.intended);
-        this.writes.set(key, state as FieldWrites<unknown>);
-        const show = () =>
-            apply(
-                state.pending.reduce(
-                    (value, pending) => pending(value),
-                    state.confirmed
-                )
-            );
-        state.pending.push(change);
-        show();
-        this.loaderService.writeStarted(key);
-
-        let result: R;
-        try {
-            result = await this.enqueue(key, async () => {
-                const next = change(state.confirmed);
-                if (same(next, state.confirmed)) {
-                    return NOTHING_TO_SEND as unknown as R;
-                }
-                const sent = await send(next);
-                if (sent.isOk) {
-                    state.confirmed = accepted(sent, next);
-                } else if (!sent.isUnauth) {
-                    state.failed = true;
-                }
-                return sent;
-            });
-        } finally {
-            // и при исключении: иначе поле проекта в этой вкладке навсегда
-            // считалось бы занятым правкой и перестало обновляться из списка
-            state.pending.splice(state.pending.indexOf(change), 1);
-            show();
-            if (!state.pending.length && this.writes.get(key) === state) {
-                this.writes.delete(key);
-            }
-            this.loaderService.writeSettled(key);
-        }
-        const last = !state.pending.length;
-        return {
-            result,
-            lost:
-                last &&
-                state.failed &&
-                !sameOutcome(state.confirmed, state.intended),
-        };
-    };
-
     /**
      * Список заново, но без спиннера: страница показывает прежний, пока не
      * придёт новый
@@ -384,16 +267,15 @@ export class ProjectsPageService {
         before: ProjectTag[],
         change: (tags: ProjectTag[]) => ProjectTag[]
     ) =>
-        this.optimisticWrite(
-            `${projectId}:tags`,
-            before,
+        this.projectWrites.optimistic(projectId, 'tags', {
+            current: before,
             change,
-            sameTags,
-            (tags) => this.patchListedProject(projectId, { tags }),
-            (tags) => this.rpi.setProjectTagsRequest(projectId, tags),
-            (result, sent) => result.body?.tags ?? sent,
-            sameTagSet
-        );
+            same: sameTags,
+            apply: (tags) => this.patchListedProject(projectId, { tags }),
+            send: (tags) => this.rpi.setProjectTagsRequest(projectId, tags),
+            accepted: (result, sent) => result.body?.tags ?? sent,
+            sameOutcome: sameTagSet,
+        });
 
     /**
      * Метки проекта меняются в списке сразу, а если сервер их не принял,
@@ -468,7 +350,7 @@ export class ProjectsPageService {
                 (project) =>
                     // у проекта с незавершённой правкой сервер может хранить
                     // другое, чем видно: правку применяем к тому, что хранит он
-                    this.writes.has(`${project.projectId}:tags`) ||
+                    this.projectWrites.isWriting(project.projectId, 'tags') ||
                     !sameTags(
                         project.tags ?? [],
                         changed(project.projectId, project.tags ?? [])
@@ -596,15 +478,19 @@ export class ProjectsPageService {
         if (!project || !!project.isPublic === visible) {
             return;
         }
-        const { result, lost } = await this.optimisticWrite(
-            `${projectId}:public`,
-            !!project.isPublic,
-            () => visible,
-            (a, b) => a === b,
-            (isPublic) => this.patchListedProject(projectId, { isPublic }),
-            (isPublic) =>
-                this.rpi.setProjectVisibilityRequest(projectId, isPublic),
-            (_, sent) => sent
+        const { result, lost } = await this.projectWrites.optimistic(
+            projectId,
+            'public',
+            {
+                current: !!project.isPublic,
+                change: () => visible,
+                same: (a, b) => a === b,
+                apply: (isPublic) =>
+                    this.patchListedProject(projectId, { isPublic }),
+                send: (isPublic) =>
+                    this.rpi.setProjectVisibilityRequest(projectId, isPublic),
+                accepted: (_, sent) => sent,
+            }
         );
         if (result !== NOTHING_TO_SEND && result.code === 404) {
             this.forgetMissingProject(projectId);

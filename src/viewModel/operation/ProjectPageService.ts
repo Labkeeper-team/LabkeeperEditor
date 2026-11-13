@@ -26,6 +26,7 @@ import { SearchService } from '../domain/SearchService.ts';
 import { HunkService } from './HunkService.ts';
 import { EditingLockService } from '../domain/EditingLockService.ts';
 import { segmentCreateEvent, trackEvent } from '../utils/observerContext.ts';
+import { ProjectListWrites } from '../domain/ProjectListWrites.ts';
 
 // в имени файла не бывает этих знаков ни на одной системе
 const UNSAFE_FILE_NAME = /[\\/:*?"<>|]+/g;
@@ -67,7 +68,8 @@ export class ProjectPageService {
         textFileEditorService: TextFileEditorService,
         searchService: SearchService,
         hunkService: HunkService,
-        editingLock: EditingLockService
+        editingLock: EditingLockService,
+        private projectWrites: ProjectListWrites
     ) {
         this.rpi = rpi;
         this.programService = programService;
@@ -358,20 +360,12 @@ export class ProjectPageService {
             return;
         }
 
-        // список, запрошенный до конца переименования, имя не откатывает
-        const writeKey = `${projectId}:title`;
-        this.loaderService.writeStarted(writeKey);
-        let renamed: boolean;
-        try {
-            renamed = await this.renameListed(
-                projectId,
-                titleToSend,
-                okCallback,
-                failCallback
-            );
-        } finally {
-            this.loaderService.writeSettled(writeKey);
-        }
+        const renamed = await this.renameListed(
+            projectId,
+            titleToSend,
+            okCallback,
+            failCallback
+        );
 
         // список уже верный: обновляем его без спиннера
         if (renamed) {
@@ -379,23 +373,20 @@ export class ProjectPageService {
         }
     };
 
-    /** Переименования одного проекта уходят на сервер по очереди */
-    private titleQueues = new Map<string, Promise<unknown>>();
-
+    /**
+     * Переименования одного проекта уходят на сервер по очереди, а список,
+     * запрошенный до конца переименования, имя не откатывает: это делает
+     * общий учёт правок полей проектов из списка
+     */
     private renameListed = async (
         projectId: string,
         titleToSend: string,
         okCallback: () => void,
         failCallback: () => void
     ): Promise<boolean> => {
-        const previous = this.titleQueues.get(projectId) ?? Promise.resolve();
-        const send = () => this.rpi.setTitleRequest(projectId, titleToSend);
-        const request = previous.then(send, send);
-        this.titleQueues.set(projectId, request);
-        const result = await request;
-        if (this.titleQueues.get(projectId) === request) {
-            this.titleQueues.delete(projectId);
-        }
+        const result = await this.projectWrites.run(projectId, 'title', () =>
+            this.rpi.setTitleRequest(projectId, titleToSend)
+        );
         if (result.isUnauth) {
             // об истёкшей сессии могли уже сказать из-за другого запроса
             if (this.loaderService.claimSessionReport()) {

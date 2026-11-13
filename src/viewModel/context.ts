@@ -2,6 +2,7 @@ import { Rpi } from '../model/rpi';
 import { ViewModelRepository } from './repository';
 import { ObserverService } from '../model/service/ObserverService.ts';
 import { ProgramService } from '../model/service/ProgramService.ts';
+import { ProjectListWrites } from './domain/ProjectListWrites.ts';
 import { LoaderService } from './domain/LoaderService.ts';
 import { StartupService } from './operation/StartupService.ts';
 import { CompilationService } from './domain/CompilationService.ts';
@@ -56,11 +57,13 @@ export function setupContext(
     const editingLockService: EditingLockService = new EditingLockService(
         repository
     );
+    const projectListWrites = new ProjectListWrites(repository);
     const loaderService: LoaderService = new LoaderService(
         rpi,
         repository,
         ideService,
-        programService
+        programService,
+        projectListWrites
     );
     const fileService: FileService = new FileService(
         repository,
@@ -154,7 +157,8 @@ export function setupContext(
         textFileEditorService,
         searchService,
         hunkService,
-        editingLockService
+        editingLockService,
+        projectListWrites
     );
     startupService.setProjectPageService(projectPageService);
     startupService.setHunkService(hunkService);
@@ -189,7 +193,8 @@ export function setupContext(
         startupService,
         observerService,
         resetService,
-        compilationService
+        compilationService,
+        projectListWrites
     );
 
     /*

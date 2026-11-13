@@ -3,6 +3,7 @@ import { ViewModelRepository } from '../repository';
 import { Rpi } from '../../model/rpi';
 import { IdeService } from './IdeService.ts';
 import { ProgramService } from '../../model/service/ProgramService.ts';
+import { ProjectListWrites } from './ProjectListWrites.ts';
 
 export class LoaderService {
     rpi: Rpi;
@@ -10,16 +11,7 @@ export class LoaderService {
     ideService: IdeService;
     programService: ProgramService;
     private saveProgramPromise: Promise<void> | null = null;
-    /**
-     * Правки полей проектов из списка (`<id>:tags`, `<id>:public`), которые
-     * ещё идут. Пока правка идёт, список с сервера её поле не трогает: ответ
-     * мог уйти раньше, чем сервер её принял
-     */
-    private pendingWrites = new Map<string, number>();
-    /** Когда по часам clock завершилась последняя правка поля */
-    private settledWrites = new Map<string, number>();
-    private clock = 0;
-    /** Когда ушёл запрос, чей список сейчас показан */
+    /** Когда по часам правок ушёл запрос, чей список сейчас показан */
     private shownListRequestedAt = 0;
     private saveProgramRequested = false;
 
@@ -27,7 +19,9 @@ export class LoaderService {
         rpi: Rpi,
         repository: ViewModelRepository,
         ideService: IdeService,
-        programService: ProgramService
+        programService: ProgramService,
+        /** Правки полей проектов из списка: их поля ответ списка не трогает */
+        private projectWrites: ProjectListWrites
     ) {
         this.rpi = rpi;
         this.repository = repository;
@@ -167,56 +161,7 @@ export class LoaderService {
      * есть только что удалённый проект или они пришли после истечения сессии
      */
     discardEarlierLists = () => {
-        this.shownListRequestedAt = ++this.clock;
-    };
-
-    writeStarted = (key: string) => {
-        this.pendingWrites.set(key, (this.pendingWrites.get(key) ?? 0) + 1);
-    };
-
-    writeSettled = (key: string) => {
-        const left = (this.pendingWrites.get(key) ?? 1) - 1;
-        if (left > 0) {
-            this.pendingWrites.set(key, left);
-        } else {
-            this.pendingWrites.delete(key);
-        }
-        this.settledWrites.set(key, ++this.clock);
-    };
-
-    /**
-     * Поле проекта, которое правят сейчас или поправили после того, как
-     * ушёл запрос списка, берётся из показанного списка, а не из ответа
-     */
-    private keepLocalFields = (
-        projects: ProjectShort[],
-        requestedAt: number
-    ): ProjectShort[] => {
-        const local = new Map(
-            this.repository.projectsViewModelRepository
-                .projects()
-                .map((project) => [project.projectId, project])
-        );
-        const fresh = (key: string) =>
-            !this.pendingWrites.has(key) &&
-            (this.settledWrites.get(key) ?? 0) < requestedAt;
-        return projects.map((project) => {
-            const own = local.get(project.projectId);
-            if (!own) {
-                return project;
-            }
-            const patch: Partial<ProjectShort> = {};
-            if (!fresh(`${project.projectId}:tags`)) {
-                patch.tags = own.tags;
-            }
-            if (!fresh(`${project.projectId}:public`)) {
-                patch.isPublic = own.isPublic;
-            }
-            if (!fresh(`${project.projectId}:title`)) {
-                patch.title = own.title;
-            }
-            return { ...project, ...patch };
-        });
+        this.shownListRequestedAt = this.projectWrites.tick();
     };
 
     /**
@@ -225,7 +170,7 @@ export class LoaderService {
      * запрос, отбрасывается
      */
     loadProjects = async ({ silent = false }: { silent?: boolean } = {}) => {
-        const requestedAt = ++this.clock;
+        const requestedAt = this.projectWrites.tick();
         const state = this.repository.ideViewModelRepository;
         if (!silent) {
             state.setGetProjectsRequestState('loading');
@@ -247,7 +192,7 @@ export class LoaderService {
         if (result.isOk) {
             this.shownListRequestedAt = requestedAt;
             this.repository.projectsViewModelRepository.setProjects(
-                this.keepLocalFields(
+                this.projectWrites.keepLocalFields(
                     [
                         ...(result.body as { projects: ProjectShort[] })
                             .projects,
