@@ -527,13 +527,13 @@ $projects-created-column-breakpoint: 1240px;
                 cursor: default;
             }
 
-            .project-actions-button {
+            .action-menu-button {
                 opacity: 0;
             }
 
-            &:hover .project-actions-button,
-            &:focus-within .project-actions-button,
-            .project-actions-button--open {
+            &:hover .action-menu-button,
+            &:focus-within .action-menu-button,
+            .action-menu-button--open {
                 opacity: 1;
             }
         }
@@ -544,7 +544,7 @@ $projects-created-column-breakpoint: 1240px;
         }
 
         @media (hover: none) {
-            tbody tr .project-actions-button {
+            tbody tr .action-menu-button {
                 opacity: 1;
             }
         }

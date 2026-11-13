@@ -38,7 +38,7 @@ import { TruncatedTextTooltip } from '../../components/truncatedTextTooltip';
 import { Routes } from '../../../viewModel/routes.ts';
 import { TagChip } from './tagChip';
 import { TagsModal } from './tagsModal';
-import { ProjectAction, ProjectActions } from './projectActions';
+import { ActionMenu, MenuAction } from '../../components/actionMenu';
 import { ProjectsSidebar } from './projectsSidebar';
 import { TagEditModal } from './tagEditModal';
 import {
@@ -495,9 +495,9 @@ export const ProjectsPage = () => {
     );
 
     const actionsFor = useCallback(
-        (project: ProjectShort): ProjectAction[] => {
+        (project: ProjectShort): MenuAction[] => {
             const id = project.projectId;
-            const actions: ProjectAction[] = [
+            const actions: MenuAction[] = [
                 {
                     key: 'open-new-tab',
                     label: texts.actions.open_new_tab,
@@ -866,7 +866,7 @@ export const ProjectsPage = () => {
                         </div>
                         {rowTags(p)}
                     </div>
-                    <ProjectActions
+                    <ActionMenu
                         label={texts.actions.menu}
                         actions={actionsFor(p)}
                     />
@@ -938,7 +938,7 @@ export const ProjectsPage = () => {
                                 {relativeTime(p.creationTime)}
                             </td>
                             <td className="projects-col-actions">
-                                <ProjectActions
+                                <ActionMenu
                                     label={texts.actions.menu}
                                     actions={actionsFor(p)}
                                 />

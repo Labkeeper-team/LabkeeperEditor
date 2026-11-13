@@ -51,7 +51,7 @@
         }
 
         // «⋯» метки появляется при наведении и встаёт на место счётчика
-        .project-actions-button {
+        .action-menu-button {
             position: absolute;
             right: 2px;
             width: 28px;
@@ -59,26 +59,25 @@
             opacity: 0;
         }
 
-        &:hover .project-actions-button,
-        .project-actions-button:focus-visible,
-        .project-actions-button--open {
+        &:hover .action-menu-button,
+        .action-menu-button:focus-visible,
+        .action-menu-button--open {
             opacity: 1;
         }
 
         // число меняется на «⋯» только у строк с меню, то есть у меток, и
         // только с мышью: на сенсорном экране «⋯» стоит после числа
         @media (hover: hover) {
-            &:has(.project-actions-button):hover .projects-sidebar__count,
-            &:has(.project-actions-button--open) .projects-sidebar__count,
-            &:has(.project-actions-button:focus-visible)
-                .projects-sidebar__count {
+            &:has(.action-menu-button):hover .projects-sidebar__count,
+            &:has(.action-menu-button--open) .projects-sidebar__count,
+            &:has(.action-menu-button:focus-visible) .projects-sidebar__count {
                 visibility: hidden;
             }
         }
 
         // без мыши наведения нет: «⋯» видна всегда и стоит после счётчика
         @media (hover: none) {
-            .project-actions-button {
+            .action-menu-button {
                 position: static;
                 flex-shrink: 0;
                 opacity: 1;

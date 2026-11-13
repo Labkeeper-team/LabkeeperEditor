@@ -12,9 +12,9 @@ import { createPortal } from 'react-dom';
 import classNames from 'classnames';
 
 import './style.scss';
-import { DotssIcon } from '../../../icons';
+import { DotssIcon } from '../../icons';
 
-export interface ProjectAction {
+export interface MenuAction {
     key: string;
     label: string;
     icon?: ReactNode;
@@ -51,14 +51,13 @@ function swallowClickOfThisPress(): void {
 }
 
 /**
- * Кнопка «⋯» в строке проекта и её меню. Меню рисуется поверх страницы
+ * Кнопка «⋯» и её меню действий: строка и карточка проекта, метка в боковой
+ * панели. В отличие от DropdownMenu открывается щелчком, работает с
+ * клавиатуры и рисуется в body, поэтому колонка с прокруткой его не режет. Меню рисуется поверх страницы
  * в document.body: список проектов прокручивается и обрезал бы его.
  * Щелчки по кнопке и меню до строки не доходят, иначе открылся бы проект
  */
-export const ProjectActions = (props: {
-    label: string;
-    actions: ProjectAction[];
-}) => {
+export const ActionMenu = (props: { label: string; actions: MenuAction[] }) => {
     const [open, setOpen] = useState(false);
     const [position, setPosition] = useState<{ top: number; left: number }>();
     const buttonRef = useRef<HTMLButtonElement>(null);
@@ -159,8 +158,8 @@ export const ProjectActions = (props: {
             <button
                 ref={buttonRef}
                 type="button"
-                className={classNames('project-actions-button', {
-                    'project-actions-button--open': open,
+                className={classNames('action-menu-button', {
+                    'action-menu-button--open': open,
                 })}
                 aria-label={props.label}
                 aria-haspopup="menu"
@@ -191,7 +190,7 @@ export const ProjectActions = (props: {
                           ref={menuRef}
                           role="menu"
                           aria-label={props.label}
-                          className="project-actions-menu"
+                          className="action-menu"
                           style={
                               position
                                   ? { top: position.top, left: position.left }
@@ -206,15 +205,12 @@ export const ProjectActions = (props: {
                                   key={action.key}
                                   type="button"
                                   role="menuitem"
-                                  className={classNames(
-                                      'project-actions-menu__item',
-                                      {
-                                          'project-actions-menu__item--danger':
-                                              action.danger,
-                                          'project-actions-menu__item--separated':
-                                              action.separated,
-                                      }
-                                  )}
+                                  className={classNames('action-menu__item', {
+                                      'action-menu__item--danger':
+                                          action.danger,
+                                      'action-menu__item--separated':
+                                          action.separated,
+                                  })}
                                   data-action={action.key}
                                   onClick={() => {
                                       // окно, которое откроет пункт, само заберёт фокус
@@ -223,7 +219,7 @@ export const ProjectActions = (props: {
                                   }}
                               >
                                   {action.icon ? (
-                                      <span className="project-actions-menu__icon">
+                                      <span className="action-menu__icon">
                                           {action.icon}
                                       </span>
                                   ) : null}
