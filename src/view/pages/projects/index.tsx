@@ -332,7 +332,7 @@ export const ProjectsPage = () => {
 
     /** place: какой кнопкой сбросили, счётчиком в шапке или под «ничего нет» */
     const resetFilters = useCallback(
-        (place: 'header' | 'no_matches') => {
+        (place: 'header' | 'summary' | 'no_matches') => {
             setFilter(EMPTY_FILTER);
             trackFilter('reset', place);
         },
@@ -797,6 +797,21 @@ export const ProjectsPage = () => {
                     />
                 </div>
             ) : null}
+            {/* ТЗ: «2 из 6 · Сбросить фильтры». Стоит в строке инструментов, а не
+                отдельной строкой: строка от фильтра не растёт, и список не сдвигается */}
+            {!isMobile && filterActive && projects.length ? (
+                <div className="projects-summary" role="status">
+                    <span>{shownText}</span>
+                    <span aria-hidden>·</span>
+                    <button
+                        type="button"
+                        className="projects-link-button"
+                        onClick={() => resetFilters('summary')}
+                    >
+                        {texts.reset_filters}
+                    </button>
+                </div>
+            ) : null}
         </div>
     );
 
@@ -989,9 +1004,9 @@ export const ProjectsPage = () => {
                             text={texts.label}
                             color={colors.black}
                         />
-                        {filterActive && projects.length ? (
-                            // «N из M» в счётчике: строка заголовка от фильтра не
-                            // меняет высоту, и список под ним не сдвигается
+                        {isMobile && filterActive && projects.length ? (
+                            // на телефоне инструменты идут столбиком, и сводке место
+                            // только в шапке: «N из M ×», от фильтра она не растёт
                             <button
                                 type="button"
                                 className="projects-header__count projects-header__count--filtered"

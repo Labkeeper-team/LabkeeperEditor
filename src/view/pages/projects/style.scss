@@ -153,6 +153,17 @@ $projects-created-column-breakpoint: 1240px;
         }
     }
 
+    // сводка фильтра в конце строки инструментов: «2 из 6 · Сбросить фильтры»
+    .projects-summary {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-left: auto;
+        color: $gray-20;
+        font-size: 14px;
+        white-space: nowrap;
+    }
+
     .projects-search {
         position: relative;
         display: flex;
