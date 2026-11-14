@@ -20,6 +20,7 @@ import { useIsMobile } from '../../../../../../../hooks/useMobile';
 import { HintTooltip } from '../../../../../../../components/hintTooltip';
 
 const EXPORT_HINT_TOOLTIP_ID = 'project-export-hint';
+const LATEX_COMPILER_HINT_TOOLTIP_ID = 'project-latex-compiler-hint';
 
 const LATEX_COMPILERS: LatexCompiler[] = ['pdflatex', 'xelatex'];
 // у программ, сохранённых до выбора движка, поля нет: сервер собирает их pdflatex
@@ -189,23 +190,60 @@ export const ProjectSettings = () => {
                         data-testid="project-latex-compiler"
                     >
                         {LATEX_COMPILERS.map((compiler) => (
-                            <Radio
+                            // на компьютере зачем нужен движок, всплывает; на телефоне наведения нет — текст под пунктом
+                            <div
                                 key={compiler}
-                                id={`latex-compiler-${compiler}`}
-                                checked={
-                                    (activeProgram?.parameters.latexCompiler ??
-                                        DEFAULT_LATEX_COMPILER) === compiler
+                                className="project-latex-compiler__option"
+                                data-latex-compiler={compiler}
+                                data-tooltip-content={
+                                    isMobile
+                                        ? undefined
+                                        : dictionary.latex_compiler[
+                                              `${compiler}_hint`
+                                          ]
                                 }
-                                onChange={() =>
-                                    dispatch(
-                                        controller.onLatexCompilerSetRequest({
-                                            compiler,
-                                        })
-                                    )
+                                data-tooltip-id={
+                                    isMobile
+                                        ? undefined
+                                        : LATEX_COMPILER_HINT_TOOLTIP_ID
                                 }
-                                title={dictionary.latex_compiler[compiler]}
-                            />
+                            >
+                                <Radio
+                                    id={`latex-compiler-${compiler}`}
+                                    checked={
+                                        (activeProgram?.parameters
+                                            .latexCompiler ??
+                                            DEFAULT_LATEX_COMPILER) === compiler
+                                    }
+                                    onChange={() =>
+                                        dispatch(
+                                            controller.onLatexCompilerSetRequest(
+                                                { compiler }
+                                            )
+                                        )
+                                    }
+                                    title={dictionary.latex_compiler[compiler]}
+                                />
+                                {isMobile ? (
+                                    <small className="project-latex-compiler__hint">
+                                        {
+                                            dictionary.latex_compiler[
+                                                `${compiler}_hint`
+                                            ]
+                                        }
+                                    </small>
+                                ) : null}
+                            </div>
                         ))}
+                        {isMobile ? null : (
+                            <HintTooltip
+                                id={LATEX_COMPILER_HINT_TOOLTIP_ID}
+                                isMobile={false}
+                                place="right"
+                                variant="dark"
+                                maxWidth={300}
+                            />
+                        )}
                     </div>
                 </>
             ) : null}

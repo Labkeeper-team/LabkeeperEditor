@@ -28,6 +28,11 @@ async function openProject(
     });
     await routeSetup.setupListFilesRequest(200, 'emptyFiles');
     await page.goto(`/project/${uuid}`);
+    // несобранный LaTeX-проект телефон открывает чатом агента, а меню живёт в шапке редактора
+    if (projectType === 'latex' && (page.viewportSize()?.width ?? 0) <= 767) {
+        await page.locator('.mobile-view-switcher-bar__toggle').click();
+        await page.getByRole('option', { name: 'Editor' }).click();
+    }
     await page.locator('.ide-header').waitFor();
 }
 
@@ -51,6 +56,32 @@ test('в latex-проекте движок по умолчанию pdfLaTeX', as
     await expect(compilerSection(page)).toBeVisible();
     await expect(compilerOption(page, /^pdfLaTeX$/)).toHaveClass(/checked/);
     await expect(compilerOption(page, /^XeLaTeX/)).not.toHaveClass(/checked/);
+});
+
+test('зачем нужен XeLaTeX, всплывает при наведении', async ({ page }) => {
+    await openProject(page, 'latex');
+    await openSettings(page);
+
+    await expect(compilerOption(page, /^XeLaTeX$/)).toBeVisible();
+    await compilerOption(page, /^XeLaTeX$/).hover();
+    const hint = page.locator('#project-latex-compiler-hint');
+    await expect(hint).toBeVisible();
+    await expect(hint).toContainText('fontspec');
+});
+
+test.describe('phone', () => {
+    test.use({ viewport: { width: 390, height: 844 } });
+
+    test('описание движка видно под названием', async ({ page }) => {
+        await openProject(page, 'latex');
+        await openSettings(page);
+
+        await expect(
+            compilerSection(page).locator(
+                '[data-latex-compiler="xelatex"] .project-latex-compiler__hint'
+            )
+        ).toContainText('fontspec');
+    });
 });
 
 test('выбор XeLaTeX сохраняет программу с latexCompiler', async ({ page }) => {

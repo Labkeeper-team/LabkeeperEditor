@@ -159,7 +159,11 @@ export const ru: Translations = {
     latex_compiler: {
         label: 'Компилятор LaTeX',
         pdflatex: 'pdfLaTeX',
-        xelatex: 'XeLaTeX (fontspec)',
+        pdflatex_hint:
+            'Классический движок. Кириллица через T2A, шрифты из TeX Live. Подходит большинству работ',
+        xelatex: 'XeLaTeX',
+        xelatex_hint:
+            'Юникод и системные шрифты через fontspec: турецкий, арабский и другие алфавиты, свои TTF/OTF',
     },
     label_syntax_highlight: 'Подсветка синтаксиса',
     label_autocompilation: 'Автокомпиляция',

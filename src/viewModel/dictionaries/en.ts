@@ -156,7 +156,11 @@ export const en: Translations = {
     latex_compiler: {
         label: 'LaTeX compiler',
         pdflatex: 'pdfLaTeX',
-        xelatex: 'XeLaTeX (fontspec)',
+        pdflatex_hint:
+            'The classic engine. Cyrillic via T2A, TeX Live fonts. Fits most documents',
+        xelatex: 'XeLaTeX',
+        xelatex_hint:
+            'Unicode and system fonts via fontspec: Turkish, Arabic and other scripts, your own TTF/OTF',
     },
     label_syntax_highlight: 'Syntax highlighting',
     label_autocompilation: 'Autocompilation',

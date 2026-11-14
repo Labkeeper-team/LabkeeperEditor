@@ -156,7 +156,9 @@ export interface Translations {
     latex_compiler: {
         label: string;
         pdflatex: string;
+        pdflatex_hint: string;
         xelatex: string;
+        xelatex_hint: string;
     };
     label_syntax_highlight: string;
     label_autocompilation: string;
