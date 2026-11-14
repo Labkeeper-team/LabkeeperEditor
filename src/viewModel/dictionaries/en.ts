@@ -156,7 +156,7 @@ export const en: Translations = {
     latex_compiler: {
         label: 'LaTeX compiler',
         pdflatex: 'pdfLaTeX',
-        xelatex: 'XeLaTeX (system fonts, fontspec)',
+        xelatex: 'XeLaTeX (fontspec)',
     },
     label_syntax_highlight: 'Syntax highlighting',
     label_autocompilation: 'Autocompilation',
