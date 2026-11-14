@@ -286,6 +286,66 @@ describe('создание проекта', () => {
         expect(onFinished).toHaveBeenCalledWith();
     });
 
+    // Labkeeper-team/LabkeeperServer#669: движок пустого LaTeX-проекта уходит в параметрах программы
+    test('пустой LaTeX-проект создаётся с выбранным XeLaTeX', async () => {
+        const { projectsPageService, rpi } = signedIn();
+        rpi.createProjectRequest = jest
+            .fn()
+            .mockResolvedValue(ok(clonedProject('new', 'Отчёт'), 201));
+
+        await projectsPageService.onProjectCreate(
+            {
+                projectName: 'Отчёт',
+                projectType: 'latex',
+                latexCompiler: 'xelatex',
+                agentMode: false,
+            },
+            jest.fn()
+        );
+
+        expect(rpi.createProjectRequest).toHaveBeenCalledWith(
+            'Отчёт',
+            {
+                segments: [],
+                parameters: {
+                    roundStrategy: 'threeDigits',
+                    latexCompiler: 'xelatex',
+                },
+            },
+            'latex'
+        );
+    });
+
+    // pdflatex — значение по умолчанию на сервере, а markdown PDF не собирает: поле не нужно
+    test.each([
+        ['latex', 'pdflatex'],
+        ['markdown', 'xelatex'],
+    ] as const)(
+        'проект %s с движком %s создаётся без latexCompiler',
+        async (projectType, latexCompiler) => {
+            const { projectsPageService, rpi } = signedIn();
+            rpi.createProjectRequest = jest
+                .fn()
+                .mockResolvedValue(ok(clonedProject('new', 'Отчёт'), 201));
+
+            await projectsPageService.onProjectCreate(
+                {
+                    projectName: 'Отчёт',
+                    projectType,
+                    latexCompiler,
+                    agentMode: false,
+                },
+                jest.fn()
+            );
+
+            expect(rpi.createProjectRequest).toHaveBeenCalledWith(
+                'Отчёт',
+                { segments: [], parameters: { roundStrategy: 'threeDigits' } },
+                projectType
+            );
+        }
+    );
+
     // вход проверяет сервер: страница могла спросить раньше, чем пришёл user-info
     test('401 на создание открывает вход вместо ошибки', async () => {
         const { projectsPageService, repository, rpi } = mockContext();

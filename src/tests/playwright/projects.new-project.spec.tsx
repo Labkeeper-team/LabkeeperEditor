@@ -204,6 +204,56 @@ test('пустой проект создаётся с выбранным тип�
     expect(url.searchParams.get('type')).toBe('markdown');
 });
 
+// Labkeeper-team/LabkeeperServer#669: движок LaTeX-проекта выбирается при создании
+const compilerButton = (page: Page, compiler: 'pdflatex' | 'xelatex') =>
+    page
+        .getByTestId('new-project-latex-compiler')
+        .locator(`[data-latex-compiler="${compiler}"]`);
+
+test('пустой LaTeX-проект создаётся с выбранным XeLaTeX', async ({ page }) => {
+    const calls = await openNewProject(page);
+
+    await expect(compilerButton(page, 'pdflatex')).toHaveAttribute(
+        'aria-pressed',
+        'true'
+    );
+    await expect(compilerButton(page, 'xelatex')).toContainText('fontspec');
+    await compilerButton(page, 'xelatex').click();
+    await expect(compilerButton(page, 'xelatex')).toHaveAttribute(
+        'aria-pressed',
+        'true'
+    );
+    await page.getByRole('textbox').fill('Диссертация');
+    await page.getByRole('button', { name: 'Create project' }).click();
+
+    await expect(page).toHaveURL(`/project/${uuid}`);
+    expect(calls.create).toHaveLength(1);
+    expect(calls.create[0].postDataJSON().parameters.latexCompiler).toBe(
+        'xelatex'
+    );
+});
+
+test('у markdown-проекта выбора движка нет', async ({ page }) => {
+    await openNewProject(page);
+
+    await expect(page.getByTestId('new-project-latex-compiler')).toBeVisible();
+    await typeButton(page, 'Markdown').click();
+    await expect(page.getByTestId('new-project-latex-compiler')).toHaveCount(0);
+});
+
+test('у шаблона движок свой: выбор неактивен', async ({ page }) => {
+    await openNewProject(page);
+
+    await card(page, 'altacv').locator('.new-project__card-select').click();
+
+    await expect(compilerButton(page, 'pdflatex')).toBeDisabled();
+    await expect(compilerButton(page, 'xelatex')).toBeDisabled();
+    await expect(compilerButton(page, 'pdflatex')).toHaveAttribute(
+        'aria-pressed',
+        'false'
+    );
+});
+
 test('проект из шаблона клонируется, переименовывается и открывается в агентском режиме', async ({
     page,
 }) => {

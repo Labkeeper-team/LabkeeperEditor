@@ -117,6 +117,25 @@
         }
     }
 
+    // Labkeeper-team/LabkeeperServer#669: выбор движка под типом проекта, карточки ниже и плотнее
+    &__compiler {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 4px;
+    }
+
+    &__compiler-label {
+        color: $gray-20;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    &__types--compact &__type {
+        gap: 4px;
+        padding: 10px 14px;
+    }
+
     &__type-name {
         color: $gray-10;
         font-size: 15px;

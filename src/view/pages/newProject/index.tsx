@@ -13,6 +13,7 @@ import { Link } from 'react-router-dom';
 
 import { controller } from '../../../main.tsx';
 import {
+    LatexCompiler,
     PROJECT_TITLE_MAX_LENGTH,
     ProjectTemplate,
     ProjectType,
@@ -36,6 +37,7 @@ import { useDictionary } from '../../store/selectors/translations';
 import './style.scss';
 
 const PROJECT_TYPES: ProjectType[] = ['latex', 'markdown'];
+const LATEX_COMPILERS: LatexCompiler[] = ['pdflatex', 'xelatex'];
 
 /** Архив со стрелкой наверх: проект приходит из файла */
 const ArchiveIcon = () => (
@@ -106,6 +108,8 @@ export const NewProjectPage = () => {
     // имя, подставленное из шаблона или архива, меняется вместе с ними, а введённое остаётся
     const [nameFromSource, setNameFromSource] = useState(false);
     const [projectType, setProjectType] = useState<ProjectType>('latex');
+    const [latexCompiler, setLatexCompiler] =
+        useState<LatexCompiler>('pdflatex');
     const [templateSlug, setTemplateSlug] = useState<string | null>(null);
     const [archive, setArchive] = useState<File | null>(null);
     const archiveInputRef = useRef<HTMLInputElement>(null);
@@ -185,6 +189,7 @@ export const NewProjectPage = () => {
                 controller.onProjectCreateRequest({
                     projectName: name,
                     projectType,
+                    latexCompiler,
                     template,
                     archive: archive ?? undefined,
                     agentMode,
@@ -195,7 +200,16 @@ export const NewProjectPage = () => {
                 })
             );
         },
-        [agentMode, archive, creating, dispatch, name, projectType, template]
+        [
+            agentMode,
+            archive,
+            creating,
+            dispatch,
+            latexCompiler,
+            name,
+            projectType,
+            template,
+        ]
     );
 
     return (
@@ -304,6 +318,63 @@ export const NewProjectPage = () => {
                                 </button>
                             ))}
                         </div>
+                        {/* Labkeeper-team/LabkeeperServer#669: движок нужен только LaTeX-проекту.
+                            У шаблона и архива движок свой: блок не прячем, чтобы карточки не сдвигались (GH-232) */}
+                        {projectType === 'latex' && (
+                            <div
+                                className="new-project__compiler"
+                                data-testid="new-project-latex-compiler"
+                            >
+                                <span className="new-project__compiler-label">
+                                    {dictionary.latex_compiler.label}
+                                </span>
+                                <div
+                                    className="new-project__types new-project__types--compact"
+                                    role="group"
+                                    aria-label={dictionary.latex_compiler.label}
+                                >
+                                    {LATEX_COMPILERS.map((compiler) => (
+                                        <button
+                                            key={compiler}
+                                            type="button"
+                                            className={classNames(
+                                                'new-project__type',
+                                                {
+                                                    'new-project__type--active':
+                                                        !typeFixed &&
+                                                        latexCompiler ===
+                                                            compiler,
+                                                }
+                                            )}
+                                            data-latex-compiler={compiler}
+                                            aria-pressed={
+                                                !typeFixed &&
+                                                latexCompiler === compiler
+                                            }
+                                            disabled={typeFixed}
+                                            onClick={() =>
+                                                setLatexCompiler(compiler)
+                                            }
+                                        >
+                                            <span className="new-project__type-name">
+                                                {
+                                                    dictionary.latex_compiler[
+                                                        compiler
+                                                    ]
+                                                }
+                                            </span>
+                                            <span className="new-project__type-hint">
+                                                {
+                                                    dictionary.latex_compiler[
+                                                        `${compiler}_hint`
+                                                    ]
+                                                }
+                                            </span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                         {/* GH-232: место под подсказку есть всегда, иначе
                             выбор шаблона сдвигал карточки под курсором */}
                         <p

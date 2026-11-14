@@ -4,7 +4,9 @@ import { LoaderService } from '../domain/LoaderService.ts';
 import { IdeService } from '../domain/IdeService.ts';
 import { StartupService } from './StartupService.ts';
 import {
+    LatexCompiler,
     PROJECT_TAGS_MAX_COUNT,
+    Program,
     Project,
     ProjectShort,
     ProjectTag,
@@ -37,6 +39,22 @@ const TEMPLATES_PAGE_SIZE = 100;
 const TEMPLATES_MAX_PAGES = 10;
 
 type ProjectSource = 'empty' | 'template' | 'archive';
+
+// Labkeeper-team/LabkeeperServer#669: pdflatex — значение по умолчанию на сервере, поле кладём только для другого движка
+const emptyProgramFor = (
+    projectType: ProjectType,
+    latexCompiler?: LatexCompiler
+): Program => {
+    const program = createEmptyProgram();
+    if (
+        projectType === 'latex' &&
+        latexCompiler &&
+        latexCompiler !== 'pdflatex'
+    ) {
+        program.parameters.latexCompiler = latexCompiler;
+    }
+    return program;
+};
 
 /**
  * Метки перед отправкой: без пробелов по краям, без пустых и без точных
@@ -137,6 +155,11 @@ export interface NewProjectRequest {
     projectName: string;
     /** Тип пустого проекта, у проекта из шаблона или архива тип свой */
     projectType: ProjectType;
+    /**
+     * Labkeeper-team/LabkeeperServer#669: движок пустого LaTeX-проекта. Не задан — pdflatex по умолчанию
+     * на сервере; у проекта из шаблона или архива движок свой
+     */
+    latexCompiler?: LatexCompiler;
     template?: ProjectTemplate;
     /** GH-234: архив экспорта или zip с main.tex */
     archive?: File;
@@ -721,6 +744,7 @@ export class ProjectsPageService {
         {
             projectName,
             projectType,
+            latexCompiler,
             template,
             archive,
             agentMode,
@@ -754,7 +778,7 @@ export class ProjectsPageService {
                 )
               : await this.rpi.createProjectRequest(
                     title,
-                    createEmptyProgram(),
+                    emptyProgramFor(projectType, latexCompiler),
                     projectType
                 );
         const templateSlug =
