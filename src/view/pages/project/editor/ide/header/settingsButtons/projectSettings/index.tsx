@@ -14,7 +14,6 @@ import {
     ProjectExportFormat,
     ProjectType,
 } from '../../../../../../../../model/domain.ts';
-import { Select } from '../../../../../../../components/select';
 import { useAgentModeNavigation } from '../../../../../../../hooks/useAgentMode';
 import { useIsProjectReadonly } from '../../../../../../../store/selectors/program';
 import { useIsMobile } from '../../../../../../../hooks/useMobile';
@@ -184,28 +183,29 @@ export const ProjectSettings = () => {
                         text={dictionary.latex_compiler.label}
                         color={colors.gray10}
                     />
+                    {/* радиокнопки, как у типа проекта и округления: выпадающий список внутри меню наезжал на экспорт */}
                     <div
                         className="project-settings-dropdown__section project-latex-compiler"
                         data-testid="project-latex-compiler"
                     >
-                        <Select
-                            options={LATEX_COMPILERS.map((compiler) => ({
-                                value: compiler,
-                                label: dictionary.latex_compiler[compiler],
-                            }))}
-                            value={
-                                activeProgram?.parameters.latexCompiler ??
-                                DEFAULT_LATEX_COMPILER
-                            }
-                            onChange={(value) =>
-                                dispatch(
-                                    controller.onLatexCompilerSetRequest({
-                                        compiler: value as LatexCompiler,
-                                    })
-                                )
-                            }
-                            minimize={false}
-                        />
+                        {LATEX_COMPILERS.map((compiler) => (
+                            <Radio
+                                key={compiler}
+                                id={`latex-compiler-${compiler}`}
+                                checked={
+                                    (activeProgram?.parameters.latexCompiler ??
+                                        DEFAULT_LATEX_COMPILER) === compiler
+                                }
+                                onChange={() =>
+                                    dispatch(
+                                        controller.onLatexCompilerSetRequest({
+                                            compiler,
+                                        })
+                                    )
+                                }
+                                title={dictionary.latex_compiler[compiler]}
+                            />
+                        ))}
                     </div>
                 </>
             ) : null}

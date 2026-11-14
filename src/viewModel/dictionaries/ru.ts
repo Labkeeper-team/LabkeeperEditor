@@ -159,7 +159,7 @@ export const ru: Translations = {
     latex_compiler: {
         label: 'Компилятор LaTeX',
         pdflatex: 'pdfLaTeX',
-        xelatex: 'XeLaTeX (системные шрифты, fontspec)',
+        xelatex: 'XeLaTeX (fontspec)',
     },
     label_syntax_highlight: 'Подсветка синтаксиса',
     label_autocompilation: 'Автокомпиляция',

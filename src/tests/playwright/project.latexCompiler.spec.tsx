@@ -41,14 +41,16 @@ async function openSettings(page: Page) {
 const compilerSection = (page: Page) =>
     page.getByTestId('project-latex-compiler');
 
+const compilerOption = (page: Page, name: RegExp) =>
+    compilerSection(page).locator('.labkeeper-radio', { hasText: name });
+
 test('в latex-проекте движок по умолчанию pdfLaTeX', async ({ page }) => {
     await openProject(page, 'latex');
     await openSettings(page);
 
     await expect(compilerSection(page)).toBeVisible();
-    await expect(compilerSection(page).locator('.select-header')).toContainText(
-        'pdfLaTeX'
-    );
+    await expect(compilerOption(page, /^pdfLaTeX$/)).toHaveClass(/checked/);
+    await expect(compilerOption(page, /^XeLaTeX/)).not.toHaveClass(/checked/);
 });
 
 test('выбор XeLaTeX сохраняет программу с latexCompiler', async ({ page }) => {
@@ -56,14 +58,14 @@ test('выбор XeLaTeX сохраняет программу с latexCompiler'
     await openProject(page, 'latex', (body) => saved.push(body));
     await openSettings(page);
 
-    await compilerSection(page).locator('.select-header').click();
-    await compilerSection(page)
-        .locator('.select-options li', { hasText: 'XeLaTeX' })
-        .click();
+    await compilerOption(page, /^XeLaTeX/).click();
 
-    await expect(compilerSection(page).locator('.select-header')).toContainText(
-        'XeLaTeX'
-    );
+    await expect(compilerOption(page, /^XeLaTeX/)).toHaveClass(/checked/);
+    await expect(compilerOption(page, /^pdfLaTeX$/)).not.toHaveClass(/checked/);
+    // меню не закрывается и не съезжает: экспорт на месте
+    await expect(
+        page.locator('.project-export__option[data-export-format="labkeeper"]')
+    ).toBeVisible();
     await expect
         .poll(() =>
             saved.some((body) =>
