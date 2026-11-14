@@ -153,6 +153,11 @@ export interface Translations {
         two_digits: string;
         three_digits: string;
     };
+    latex_compiler: {
+        label: string;
+        pdflatex: string;
+        xelatex: string;
+    };
     label_syntax_highlight: string;
     label_autocompilation: string;
 

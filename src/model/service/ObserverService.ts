@@ -65,6 +65,7 @@ export const Events = {
     EVENT_SEGMENT_VISIBILITY_CHANGED: 'segment_visibility_changed',
     EVENT_PROJECT_MODE_CHANGED: 'project_mode_changed',
     EVENT_ROUND_STRATEGY_CHANGED: 'round_strategy_changed',
+    EVENT_LATEX_COMPILER_CHANGED: 'latex_compiler_changed',
     EVENT_FILES_DROPPED_INTO_SEGMENT: 'files_dropped_into_segment',
     // вставка из буфера обмена в сегмент, не чаще трёх событий в минуту
     EVENT_SEGMENT_PASTED: 'segment_pasted',
@@ -203,6 +204,7 @@ export const OPENPANEL_EVENT_NAMES: Record<string, string> = {
     [Events.EVENT_SEGMENT_VISIBILITY_CHANGED]: 'Segment visibility changed',
     [Events.EVENT_PROJECT_MODE_CHANGED]: 'Project mode changed',
     [Events.EVENT_ROUND_STRATEGY_CHANGED]: 'Round strategy changed',
+    [Events.EVENT_LATEX_COMPILER_CHANGED]: 'LaTeX compiler changed',
     [Events.EVENT_FILES_DROPPED_INTO_SEGMENT]: 'Files dropped into segment',
     [Events.EVENT_SEGMENT_PASTED]: 'Segment pasted',
     [Events.EVENT_FILE_MANAGER_OPENED]: 'File manager opened',

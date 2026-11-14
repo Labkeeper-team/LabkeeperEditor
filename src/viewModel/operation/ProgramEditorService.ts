@@ -14,6 +14,7 @@ import { EditorView } from '@codemirror/view';
 import { ExternalChange } from '@uiw/react-codemirror';
 import {
     CompileErrorResult,
+    LatexCompiler,
     ProgramRoundStrategy,
     Segment,
     SegmentType,
@@ -500,6 +501,17 @@ export class ProgramEditorService {
         }
         this.track(Events.EVENT_ROUND_STRATEGY_CHANGED, { strategy });
         this.programService.changeRoundStrategy(strategy);
+        this.repository.ideViewModelRepository.markProgramChanged();
+        this.ideService.onProgramUpdated();
+        await this.loaderService.segmentEditorSaveProgram();
+    };
+
+    onLatexCompilerSet = async (compiler: LatexCompiler) => {
+        if (this.editingLock.rejectEdit()) {
+            return;
+        }
+        this.track(Events.EVENT_LATEX_COMPILER_CHANGED, { compiler });
+        this.programService.changeLatexCompiler(compiler);
         this.repository.ideViewModelRepository.markProgramChanged();
         this.ideService.onProgramUpdated();
         await this.loaderService.segmentEditorSaveProgram();

@@ -8,6 +8,8 @@ export type ProgramRoundStrategy =
     | 'oneDigit'
     | 'fiveDigits'
     | 'firstMeaningDigit';
+/** Labkeeper-team/LabkeeperServer#669: движок сборки PDF latex-проекта */
+export type LatexCompiler = 'pdflatex' | 'xelatex';
 export type SegmentType =
     | 'md'
     | 'computational'
@@ -162,6 +164,8 @@ export interface Statement {
 
 export interface ProgramParameters {
     roundStrategy: ProgramRoundStrategy;
+    /** нет в старых программах: сервер собирает их pdflatex */
+    latexCompiler?: LatexCompiler;
 }
 
 export interface Program {
