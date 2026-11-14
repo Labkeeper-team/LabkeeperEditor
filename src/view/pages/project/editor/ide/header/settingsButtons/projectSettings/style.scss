@@ -110,3 +110,21 @@
         white-space: normal;
     }
 }
+
+// Labkeeper-team/LabkeeperServer#669: зачем нужен движок, всплывает при наведении, на телефоне под названием
+.project-latex-compiler {
+    &__option {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    &__hint {
+        // отступ под кружок радиокнопки, чтобы текст шёл под подписью
+        padding-left: 23px;
+        color: $gray-30;
+        font-size: 12px;
+        line-height: 16px;
+        white-space: normal;
+    }
+}

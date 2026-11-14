@@ -168,7 +168,11 @@ export const zh: Translations = {
     latex_compiler: {
         label: 'LaTeX 编译器',
         pdflatex: 'pdfLaTeX',
-        xelatex: 'XeLaTeX (fontspec)',
+        pdflatex_hint:
+            '经典引擎。西里尔字母使用 T2A，字体来自 TeX Live。适合大多数文档',
+        xelatex: 'XeLaTeX',
+        xelatex_hint:
+            'Unicode 和系统字体（fontspec）：土耳其语、阿拉伯语等文字，自己的 TTF/OTF',
     },
     label_syntax_highlight: '\u8BED\u6CD5\u9AD8\u4EAE',
     label_autocompilation: '\u81EA\u52A8\u7F16\u8BD1',
