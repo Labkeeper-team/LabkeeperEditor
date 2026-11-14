@@ -3,6 +3,7 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 import {
     CompileErrorResult,
     OpenParams,
+    LatexCompiler,
     ProgramRoundStrategy,
     ProjectExportFormat,
     ProjectTag,
@@ -615,6 +616,15 @@ export class Controller {
         async ({ strategy }: { strategy: ProgramRoundStrategy }) => {
             await this.wrapper('onRoundStrategySetRequest', () =>
                 this.programEditorService.onRoundStrategySet(strategy)
+            );
+        }
+    );
+
+    onLatexCompilerSetRequest = createAsyncThunk(
+        'onLatexCompilerSetRequest',
+        async ({ compiler }: { compiler: LatexCompiler }) => {
+            await this.wrapper('onLatexCompilerSetRequest', () =>
+                this.programEditorService.onLatexCompilerSet(compiler)
             );
         }
     );

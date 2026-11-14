@@ -165,6 +165,11 @@ export const zh: Translations = {
         two_digits: '\u4E24\u4F4D\u6570\u5B57',
         three_digits: '\u4E09\u4F4D\u6570\u5B57',
     },
+    latex_compiler: {
+        label: 'LaTeX 编译器',
+        pdflatex: 'pdfLaTeX',
+        xelatex: 'XeLaTeX（系统字体，fontspec）',
+    },
     label_syntax_highlight: '\u8BED\u6CD5\u9AD8\u4EAE',
     label_autocompilation: '\u81EA\u52A8\u7F16\u8BD1',
 

@@ -1,5 +1,6 @@
 import {
     Program,
+    LatexCompiler,
     ProgramRoundStrategy,
     Segment,
     SegmentType,
@@ -390,6 +391,10 @@ export class ProgramService {
 
     changeRoundStrategy = (strategy: ProgramRoundStrategy) => {
         this.programRepository.program.parameters.roundStrategy = strategy;
+    };
+
+    changeLatexCompiler = (compiler: LatexCompiler) => {
+        this.programRepository.program.parameters.latexCompiler = compiler;
     };
 
     clearHistory = () => {

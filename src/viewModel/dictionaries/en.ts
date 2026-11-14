@@ -153,6 +153,11 @@ export const en: Translations = {
         two_digits: 'Two digits',
         three_digits: 'Three digits',
     },
+    latex_compiler: {
+        label: 'LaTeX compiler',
+        pdflatex: 'pdfLaTeX',
+        xelatex: 'XeLaTeX (system fonts, fontspec)',
+    },
     label_syntax_highlight: 'Syntax highlighting',
     label_autocompilation: 'Autocompilation',
 

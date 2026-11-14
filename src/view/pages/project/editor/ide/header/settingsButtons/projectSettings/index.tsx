@@ -10,15 +10,21 @@ import { useDictionary } from '../../../../../../../store/selectors/translations
 import { AppDispatch, StorageState } from '../../../../../../../store';
 import { controller } from '../../../../../../../../main.tsx';
 import {
+    LatexCompiler,
     ProjectExportFormat,
     ProjectType,
 } from '../../../../../../../../model/domain.ts';
+import { Select } from '../../../../../../../components/select';
 import { useAgentModeNavigation } from '../../../../../../../hooks/useAgentMode';
 import { useIsProjectReadonly } from '../../../../../../../store/selectors/program';
 import { useIsMobile } from '../../../../../../../hooks/useMobile';
 import { HintTooltip } from '../../../../../../../components/hintTooltip';
 
 const EXPORT_HINT_TOOLTIP_ID = 'project-export-hint';
+
+const LATEX_COMPILERS: LatexCompiler[] = ['pdflatex', 'xelatex'];
+// у программ, сохранённых до выбора движка, поля нет: сервер собирает их pdflatex
+const DEFAULT_LATEX_COMPILER: LatexCompiler = 'pdflatex';
 
 const EXPORT_FORMATS: {
     format: ProjectExportFormat;
@@ -170,6 +176,39 @@ export const ProjectSettings = () => {
                     title={dictionary.rounding_mode.first_digit}
                 />
             </div>
+            {/* Labkeeper-team/LabkeeperServer#669: markdown-проект PDF не собирает, движок ему не нужен */}
+            {mode === 'latex' ? (
+                <>
+                    <Typography
+                        type="body-large"
+                        text={dictionary.latex_compiler.label}
+                        color={colors.gray10}
+                    />
+                    <div
+                        className="project-settings-dropdown__section project-latex-compiler"
+                        data-testid="project-latex-compiler"
+                    >
+                        <Select
+                            options={LATEX_COMPILERS.map((compiler) => ({
+                                value: compiler,
+                                label: dictionary.latex_compiler[compiler],
+                            }))}
+                            value={
+                                activeProgram?.parameters.latexCompiler ??
+                                DEFAULT_LATEX_COMPILER
+                            }
+                            onChange={(value) =>
+                                dispatch(
+                                    controller.onLatexCompilerSetRequest({
+                                        compiler: value as LatexCompiler,
+                                    })
+                                )
+                            }
+                            minimize={false}
+                        />
+                    </div>
+                </>
+            ) : null}
             {/* GH-211: у каждого формата описание, что окажется в архиве */}
             <Typography
                 type="body-large"

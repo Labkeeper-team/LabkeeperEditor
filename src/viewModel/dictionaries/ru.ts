@@ -156,6 +156,11 @@ export const ru: Translations = {
         two_digits: '2 знака',
         three_digits: '3 знака',
     },
+    latex_compiler: {
+        label: 'Компилятор LaTeX',
+        pdflatex: 'pdfLaTeX',
+        xelatex: 'XeLaTeX (системные шрифты, fontspec)',
+    },
     label_syntax_highlight: 'Подсветка синтаксиса',
     label_autocompilation: 'Автокомпиляция',
 
