@@ -22,6 +22,8 @@ export const Events = {
     EVENT_AGENT_TIMEOUT: 'agent_timeout',
     FRONTEND_ERROR: 'frontend_error',
     EVENT_RPI_UNKNOWN: 'rpi_unknown',
+    // user-info ответил 403: наш сервер так не отвечает, это браузер бота или прокси
+    EVENT_USER_INFO_FORBIDDEN: 'user_info_forbidden',
 
     EVENT_PAGE_VIEWED: 'page_viewed',
 
@@ -169,6 +171,7 @@ export const OPENPANEL_EVENT_NAMES: Record<string, string> = {
     [Events.EVENT_AGENT_TIMEOUT]: 'Agent timeout',
     [Events.FRONTEND_ERROR]: 'Frontend error',
     [Events.EVENT_RPI_UNKNOWN]: 'RPI unknown',
+    [Events.EVENT_USER_INFO_FORBIDDEN]: 'User info forbidden',
     [Events.EVENT_PAGE_VIEWED]: 'Page viewed',
     [Events.EVENT_AUTH_MODAL_OPENED]: 'Auth modal opened',
     [Events.EVENT_AUTH_MODAL_CLOSED]: 'Auth modal closed',
