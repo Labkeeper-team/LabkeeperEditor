@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { RouteSetup } from './mock.routeSetUp.tsx';
+import type { Program } from '../../model/domain.ts';
 
 // Labkeeper-team/LabkeeperServer#669: движок сборки PDF выбирается рядом с экспортом архива
 
@@ -10,7 +11,8 @@ test.use({ viewport: { width: 1360, height: 900 } });
 async function openProject(
     page: Page,
     projectType: 'latex' | 'markdown',
-    onSave?: (body: unknown) => void
+    onSave?: (body: unknown) => void,
+    program?: Program
 ) {
     const routeSetup = new RouteSetup(page);
     if (projectType === 'latex') {
@@ -19,7 +21,7 @@ async function openProject(
     await routeSetup.setupGetUserInfoRequest(true);
     await routeSetup.acceptCrossBorderConsentLocally();
     await routeSetup.setupGetDefaultProjectRequest();
-    await routeSetup.setupGetProjectRequest();
+    await routeSetup.setupGetProjectRequest(200, 'default', program);
     await routeSetup.setupGetAllProjectsRequest();
     await routeSetup.setupSaveProgramRequest(200, 'empty', (route) => {
         if (route.request().method() !== 'GET') {
@@ -104,6 +106,41 @@ test('выбор XeLaTeX сохраняет программу с latexCompiler'
             )
         )
         .toBe(true);
+});
+
+// a body without \begin{document}: only then does the editor offer the header card
+const BODY_ONLY_PROGRAM: Program = {
+    segments: [
+        {
+            id: 1,
+            type: 'latex',
+            text: 'Hello',
+            parameters: { visible: true },
+        },
+    ],
+    parameters: { roundStrategy: 'noRound' },
+};
+
+test('header card follows the selected LaTeX engine', async ({ page }) => {
+    await openProject(page, 'latex', undefined, BODY_ONLY_PROGRAM);
+    const headerCard = page.locator('.latex-header-segment');
+    await expect(headerCard).toBeVisible();
+    await expect(headerCard).not.toContainText('fontspec');
+
+    await openSettings(page);
+    await compilerOption(page, /^XeLaTeX/).click();
+    await page.keyboard.press('Escape');
+
+    await expect(headerCard).toContainText('\\usepackage{fontspec}');
+    await headerCard.click();
+
+    const header = page
+        .locator('.segment-editor-container .cm-content')
+        .first();
+    await expect(header).toContainText('\\usepackage{fontspec}');
+    await expect(header).toContainText('\\setmainfont{CMU Serif}');
+    await expect(header).not.toContainText('inputenc');
+    await expect(header).not.toContainText('T2A');
 });
 
 test('в markdown-проекте выбора движка нет', async ({ page }) => {

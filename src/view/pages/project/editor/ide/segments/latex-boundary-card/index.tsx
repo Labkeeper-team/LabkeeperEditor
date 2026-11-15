@@ -7,32 +7,9 @@ import { useDictionary } from '../../../../../../store/selectors/translations.ts
 import { AppDispatch, StorageState } from '../../../../../../store';
 import { controller } from '../../../../../../../main.tsx';
 import { SegmentDivider } from '../segment-divider';
+import { latexHeaderDisplayFor, latexHeaderFor } from './latexHeader.ts';
 import './style.scss';
 
-const LATEX_HEADER_TEXT = String.raw`\documentclass[a4paper,12pt]{article}
-\usepackage{comment,cmap,amsmath,longtable,mathtools}
-\usepackage{booktabs,geometry,graphicx,listings,soul}
-\usepackage[T2A]{fontenc}
-\usepackage[utf8]{inputenc}
-\usepackage[english,russian]{babel}
-\geometry{
-  a4paper,
-  top=3mm,
-  right=5mm,
-  bottom=3mm,
-  left=5mm
-}
-\setcounter{secnumdepth}{0}
-\mathtoolsset{showonlyrefs}
-\newcounter{none}
-\begin{document}
-`;
-
-const LATEX_HEADER_DISPLAY_TEXT = String.raw`\documentclass[a4paper,12pt]{article}
-...
-\geometry{a4paper,top=3mm,right=5mm,bottom=3mm,left=5mm}
-\begin{document}
-`;
 const LATEX_FOOTER_TEXT = String.raw`\end{document}`;
 
 interface LatexBoundaryCardBaseProps {
@@ -82,6 +59,10 @@ export const LatexHeaderBoundaryCard = () => {
         return null;
     }
 
+    // the header must match the engine, otherwise it switches off the server's XeLaTeX auto-preamble
+    const compiler = program?.parameters.latexCompiler;
+    const headerText = latexHeaderFor(compiler);
+
     return (
         <LatexBoundaryCardBase
             containerClassName="latex-header-segment"
@@ -89,14 +70,14 @@ export const LatexHeaderBoundaryCard = () => {
             hint={
                 isReadonly ? undefined : dictionary.latex_boundary.insert_hint
             }
-            content={isReadonly ? LATEX_HEADER_TEXT : LATEX_HEADER_DISPLAY_TEXT}
+            content={isReadonly ? headerText : latexHeaderDisplayFor(compiler)}
             onClick={
                 isReadonly
                     ? undefined
                     : () =>
                           dispatch(
                               controller.onAddLatexBoundarySegmentRequest({
-                                  text: LATEX_HEADER_TEXT,
+                                  text: headerText,
                                   placement: 'start',
                               })
                           )
