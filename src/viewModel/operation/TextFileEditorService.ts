@@ -15,6 +15,7 @@ import {
 import { getFileContentFromHunks } from '../utils/hunkGrouping.ts';
 import { reportUnexpectedError } from '../utils/reportUnexpectedError.ts';
 import { logBreadcrumb } from '../utils/logBreadcrumb.ts';
+import type { CollabFiles } from '../domain/collab/CollabFiles.ts';
 
 type OpenTextFileOptions = {
     silent?: boolean;
@@ -34,6 +35,8 @@ export class TextFileEditorService {
     private savePromise: Promise<void> | null = null;
     private saveRequested = false;
     private loadRequestId = 0;
+    /** Collaborative editing: a text file of the session is a collaborative document */
+    private collabFiles: CollabFiles | null = null;
 
     constructor(
         repository: ViewModelRepository,
@@ -57,12 +60,66 @@ export class TextFileEditorService {
         this.hunkService = hunkService;
     };
 
+    setCollabFiles = (collabFiles: CollabFiles) => {
+        this.collabFiles = collabFiles;
+        collabFiles.setHooks({
+            onOpenFileGone: (path) => this.onOpenFileDeleted(path),
+            onFilesReady: () => void this.bindActiveTextFileToCollab(),
+        });
+    };
+
+    /** The open text file is edited through its collaborative document */
+    private isCollabBound = (fileName: string | null): boolean =>
+        Boolean(this.collabFiles?.isBound(fileName));
+
+    /**
+     * The session got its file list while a text file was open over REST: what is typed
+     * is saved first, then the file continues as a collaborative document.
+     */
+    bindActiveTextFileToCollab = async (): Promise<void> => {
+        const fileName =
+            this.repository.ideViewModelRepository.activeTextFile();
+        if (
+            !fileName ||
+            !this.collabFiles?.isTextDocumentFile(fileName) ||
+            this.isCollabBound(fileName) ||
+            this.repository.ideViewModelRepository.loadTextFileRequestState() ===
+                'loading'
+        ) {
+            return;
+        }
+        if (this.saveTimeout) {
+            clearTimeout(this.saveTimeout);
+            this.saveTimeout = null;
+        }
+        if (
+            this.canFlush() &&
+            this.canSaveTextFile() &&
+            (this.hasUnsavedTextFile() || this.savePromise)
+        ) {
+            const saved = await this.flushSave();
+            if (!saved) {
+                return;
+            }
+        }
+        if (
+            this.repository.ideViewModelRepository.activeTextFile() !== fileName
+        ) {
+            return;
+        }
+        await this.onTextFileOpened(fileName, { silent: true });
+    };
+
     reloadActiveTextFileIfOpen = async (
         hunksOverride?: Hunk[]
     ): Promise<void> => {
         const fileName =
             this.repository.ideViewModelRepository.activeTextFile();
         if (!fileName) {
+            return;
+        }
+        // a collaborative document is up to date by itself (the agent's changes come as updates)
+        if (this.isCollabBound(fileName)) {
             return;
         }
         // набранное ещё не на сервере, и перечитанный файл стёр бы его с экрана
@@ -120,6 +177,9 @@ export class TextFileEditorService {
                 }
             }
 
+            if (currentFile !== fileName || !this.isCollabBound(fileName)) {
+                this.collabFiles?.closeDocument();
+            }
             this.repository.ideViewModelRepository.setActiveImageFile(null);
             this.repository.ideViewModelRepository.setActiveTextFile(fileName);
             this.repository.ideViewModelRepository.setTextFileContent('');
@@ -156,6 +216,34 @@ export class TextFileEditorService {
             this.repository.ideViewModelRepository.setLoadTextFileRequestState(
                 'loading'
             );
+        }
+
+        // collaborative editing: the text comes from the document, not from the storage
+        if (this.collabFiles?.isTextDocumentFile(fileName)) {
+            if (silent && this.isCollabBound(fileName)) {
+                return;
+            }
+            const text = await this.collabFiles.openDocument(fileName);
+            if (
+                loadRequestId !== this.loadRequestId ||
+                this.repository.ideViewModelRepository.activeTextFile() !==
+                    fileName
+            ) {
+                return;
+            }
+            if (text !== null) {
+                this.repository.ideViewModelRepository.setTextFileContent(text);
+                this.repository.ideViewModelRepository.resetTextFileRevisions();
+                this.repository.ideViewModelRepository.setLoadTextFileRequestState(
+                    'ok'
+                );
+                this.repository.ideViewModelRepository.setSaveTextFileRequestState(
+                    'ok'
+                );
+                this.hunkService?.settleNoOpHunks();
+                return;
+            }
+            // the session could not open it: read the stored file as before
         }
 
         // fetch отклоняется, когда до хранилища не достучаться: это сеть человека, а не ошибка редактора
@@ -285,6 +373,22 @@ export class TextFileEditorService {
         }
         const activeFile =
             this.repository.ideViewModelRepository.activeTextFile();
+        if (activeFile && this.collabFiles && this.isCollabBound(activeFile)) {
+            // the edit goes to the document; the collaboration server stores it, no REST save
+            if (!this.collabFiles.acceptLocalText(activeFile, content)) {
+                return;
+            }
+            this.hunkService?.acceptHunksForFile(activeFile);
+            this.repository.ideViewModelRepository.markTextFileChanged();
+            this.repository.ideViewModelRepository.setTextFileContent(content);
+            this.repository.ideViewModelRepository.markTextFileRevisionSaved(
+                this.repository.ideViewModelRepository.textFileChangeRevision()
+            );
+            this.repository.ideViewModelRepository.setSaveTextFileRequestState(
+                'ok'
+            );
+            return;
+        }
         if (activeFile && this.hunkService) {
             this.hunkService.acceptHunksForFile(activeFile);
         }
@@ -338,6 +442,7 @@ export class TextFileEditorService {
             }
         }
         this.loadRequestId += 1;
+        this.collabFiles?.closeDocument();
         this.repository.ideViewModelRepository.setActiveTextFile(null);
         this.repository.ideViewModelRepository.setTextFileContent('');
         this.repository.ideViewModelRepository.setLoadTextFileRequestState(
@@ -359,6 +464,9 @@ export class TextFileEditorService {
             this.repository.ideViewModelRepository.activeTextFile() === fileName
         ) {
             this.loadRequestId += 1;
+            if (this.isCollabBound(fileName)) {
+                this.collabFiles?.closeDocument();
+            }
             if (this.saveTimeout) {
                 clearTimeout(this.saveTimeout);
                 this.saveTimeout = null;

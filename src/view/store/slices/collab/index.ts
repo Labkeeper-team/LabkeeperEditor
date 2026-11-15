@@ -74,6 +74,21 @@ export const collabSlice = createSlice({
         ) => {
             state.participantLimit = payload;
         },
+        setCollabFilesReady: (state, { payload }: PayloadAction<boolean>) => {
+            state.filesReady = payload;
+        },
+        setCollabFileRevisions: (
+            state,
+            { payload }: PayloadAction<Record<string, number>>
+        ) => {
+            state.fileRevisions = payload;
+        },
+        setCollabTextFileDocPath: (
+            state,
+            { payload }: PayloadAction<string | null>
+        ) => {
+            state.textFileDocPath = payload;
+        },
         resetCollab: () => collabInitialState,
     },
 });
@@ -87,6 +102,9 @@ export const {
     setCollabSegmentKeys,
     setCollabMaxParticipants,
     setCollabParticipantLimit,
+    setCollabFilesReady,
+    setCollabFileRevisions,
+    setCollabTextFileDocPath,
     resetCollab,
 } = collabSlice.actions;
 
@@ -113,6 +131,11 @@ export function createCollabRepositoryFromStore(
             store.dispatch(setCollabMaxParticipants(max)),
         setParticipantLimit: (limit) =>
             store.dispatch(setCollabParticipantLimit(limit)),
+        setFilesReady: (ready) => store.dispatch(setCollabFilesReady(ready)),
+        setFileRevisions: (revisions) =>
+            store.dispatch(setCollabFileRevisions(revisions)),
+        setTextFileDocPath: (path) =>
+            store.dispatch(setCollabTextFileDocPath(path)),
         reset: () => store.dispatch(resetCollab()),
     };
 }

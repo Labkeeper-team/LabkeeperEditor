@@ -40,7 +40,7 @@ export const ProjectPage = () => {
     const isMobile = useIsMobile();
     const { isAgentMode, leaveAgentMode } = useAgentModeNavigation();
     useAgentModeTracking();
-    // collaborative editing of the open project (off unless the feature flag is on)
+    // collaborative editing of the open project; without a collab server the editor works as before
     useCollabSession();
     const mobileView = useSelector(useMobileView);
     const activeTextFile = useSelector(

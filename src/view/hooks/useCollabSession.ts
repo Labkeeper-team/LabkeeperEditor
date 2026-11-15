@@ -5,8 +5,8 @@ import { collabService } from '../../main.tsx';
 
 /**
  * Keeps the collaboration session of the open project: started when a saved project
- * is open for an authenticated user, stopped when the page leaves the project. The
- * service itself checks the feature flag, so with the flag off no socket is opened.
+ * is open for an authenticated user, stopped when the page leaves the project. Without
+ * a collaboration server the session ends up `failed` and the editor works over REST.
  */
 export const useCollabSession = (): void => {
     const projectId = useSelector(

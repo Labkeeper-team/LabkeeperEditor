@@ -16,6 +16,14 @@ import {
     ObserverService,
 } from '../../model/service/ObserverService.ts';
 import { fileExtension, trackEvent } from '../utils/observerContext.ts';
+import type {
+    CollabFileCommand,
+    CollabFileCommandOutcome,
+    CollabFiles,
+} from '../domain/collab/CollabFiles.ts';
+
+/** createFile picks the next free name this many times when the name was taken meanwhile */
+const COLLAB_CREATE_FILE_ATTEMPTS = 3;
 
 /** Как файл попал в проект: выбор в окне, бросок или вставка из буфера (GH-244) */
 export type FileUploadMethod = 'picker' | 'drop' | 'paste';
@@ -31,6 +39,8 @@ export class FileManagerService {
     editingLock: EditingLockService;
     observerService: ObserverService;
     private hunkService: import('./HunkService.ts').HunkService | null = null;
+    /** Collaborative editing: file changes go through the session while it is live */
+    private collabFiles: CollabFiles | null = null;
 
     constructor(
         repository: ViewModelRepository,
@@ -56,6 +66,73 @@ export class FileManagerService {
 
     setHunkService = (hunkService: import('./HunkService.ts').HunkService) => {
         this.hunkService = hunkService;
+    };
+
+    setCollabFiles = (collabFiles: CollabFiles) => {
+        this.collabFiles = collabFiles;
+    };
+
+    /** The live session takes file changes (any participant who may write) */
+    private collab = (): CollabFiles | null =>
+        this.collabFiles?.canWrite() ? this.collabFiles : null;
+
+    /** Somebody else's project without a live session: files cannot be changed */
+    private cannotChangeFiles = (): boolean =>
+        this.repository.projectViewModelRepository.projectIsReadonly() &&
+        !this.collab();
+
+    /** Sends a file command; the shared list changes with the filesChanged that follows */
+    private runCollabCommand = async (
+        collab: CollabFiles,
+        command: CollabFileCommand
+    ): Promise<CollabFileCommandOutcome> => {
+        this.repository.ideViewModelRepository.setGetFilesRequestState(
+            'loading'
+        );
+        try {
+            return await collab.command(command);
+        } finally {
+            this.restoreFilesReadyState();
+        }
+    };
+
+    /** Toast of a rejected file command, as the REST answers of the same cases */
+    private toastCollabRejection = (
+        outcome: CollabFileCommandOutcome,
+        fallback: string
+    ) => {
+        if (outcome.ok) {
+            return;
+        }
+        const errors = this.repository.dictionary.filemanager.errors;
+        switch (outcome.code) {
+            case 'fileExists':
+                this.repository.toast(errors.fileAlreadyExists, 'error');
+                return;
+            case 'fileNotFound':
+                this.repository.toast(errors.notFound, 'error');
+                return;
+            case 'invalidFileName':
+                this.repository.toast(errors.bad_name, 'error');
+                return;
+            case 'tooManyFiles':
+                this.repository.toast(errors.tooMuchFiles, 'error');
+                return;
+            case 'tooLarge':
+                this.repository.toast(
+                    errors.tooBigFile.replace('${replace1}', '10'),
+                    'error'
+                );
+                return;
+            case 'locked':
+                this.repository.toast(
+                    this.repository.dictionary.agent_chat.editing_locked,
+                    'info'
+                );
+                return;
+            default:
+                this.repository.toast(fallback, 'error');
+        }
     };
 
     private track(event: string, properties?: Record<string, unknown>) {
@@ -113,15 +190,40 @@ export class FileManagerService {
         const folderPath = parentPath
             ? `${parentPath}/${normalized}`
             : normalized;
+        if (this.collab()) {
+            void this.createCollabFolder(folderPath);
+            return;
+        }
         this.onEphemeralFolderCreated(folderPath);
         this.track(Events.EVENT_FOLDER_CREATED);
+    };
+
+    /** An empty folder of the session: every participant sees it */
+    private createCollabFolder = async (folderPath: string) => {
+        const collab = this.collab();
+        if (!collab) {
+            this.onEphemeralFolderCreated(folderPath);
+            return;
+        }
+        const outcome = await this.runCollabCommand(collab, {
+            type: 'createFolder',
+            path: folderPath,
+        });
+        if (outcome.ok) {
+            this.track(Events.EVENT_FOLDER_CREATED);
+        } else {
+            this.toastCollabRejection(
+                outcome,
+                this.repository.dictionary.filemanager.errors.internalError
+            );
+        }
     };
 
     onCreateFile = async () => {
         if (this.editingLock.rejectEdit()) {
             return;
         }
-        if (this.repository.projectViewModelRepository.projectIsReadonly()) {
+        if (this.cannotChangeFiles()) {
             return;
         }
         const project = this.repository.projectViewModelRepository.project();
@@ -130,6 +232,11 @@ export class FileManagerService {
         }
 
         const folderPrefix = this.resolveCurrentFolderPath();
+        const collab = this.collab();
+        if (collab) {
+            await this.createCollabFile(collab, folderPrefix);
+            return;
+        }
         const fileName = this.fileService.calculateNumberFile(
             null,
             'new.txt',
@@ -224,6 +331,72 @@ export class FileManagerService {
         }
     };
 
+    /**
+     * New empty text file through the session. Two participants creating the same name:
+     * the first wins, the second takes the next free name and tries again.
+     */
+    private createCollabFile = async (
+        collab: CollabFiles,
+        folderPrefix: string
+    ) => {
+        let outcome: CollabFileCommandOutcome = {
+            ok: false,
+            code: 'fileExists',
+        };
+        let fileName = '';
+        for (
+            let attempt = 0;
+            attempt < COLLAB_CREATE_FILE_ATTEMPTS &&
+            !outcome.ok &&
+            outcome.code === 'fileExists';
+            attempt++
+        ) {
+            // the list already has the name that won: filesChanged comes before the rejection
+            fileName = this.fileService.calculateNumberFile(
+                null,
+                'new.txt',
+                folderPrefix || null
+            );
+            outcome = await this.runCollabCommand(collab, {
+                type: 'createFile',
+                path: fileName,
+            });
+        }
+        if (!outcome.ok) {
+            this.toastCollabRejection(
+                outcome,
+                this.repository.dictionary.filemanager.errors.upload_failed
+            );
+            return;
+        }
+        this.track(Events.EVENT_FILE_CREATED, {
+            ext: fileExtension(fileName),
+        });
+        // opened like the REST path does, without another file-opened event
+        await this.textFileEditorService.onTextFileOpened(fileName, {
+            silent: true,
+        });
+    };
+
+    /** Upload as a participant of the session: the result arrives as filesChanged */
+    private uploadThroughCollab = (
+        collab: CollabFiles,
+        formData: FormData,
+        projectId: string,
+        name: string
+    ) => {
+        const connectionId = collab.connectionId();
+        if (!connectionId) {
+            return null;
+        }
+        return this.rpi.uploadCollabFileRequest(
+            formData,
+            projectId,
+            name,
+            connectionId
+        );
+    };
+
     /** Возвращает имена загруженных файлов в проекте: по ним чат агента дописывает запрос */
     onUploadFiles = async (
         files: File[],
@@ -250,6 +423,7 @@ export class FileManagerService {
             'loading'
         );
         let isResultOk = false;
+        let uploadedThroughCollab = false;
         try {
             for (const file of files) {
                 const normalizedName = normalizeFileTreeNodeName(file.name);
@@ -276,11 +450,31 @@ export class FileManagerService {
                 const formData = new FormData();
                 formData.append('file', file);
 
-                const result = await this.rpi.uploadFileRequest(
-                    formData,
-                    project.projectId,
-                    name
-                );
+                const collab = this.collab();
+                const collabUpload = collab
+                    ? this.uploadThroughCollab(
+                          collab,
+                          formData,
+                          project.projectId,
+                          name
+                      )
+                    : null;
+                if (collab) {
+                    uploadedThroughCollab = true;
+                }
+                const result = await (collabUpload ??
+                    this.rpi.uploadFileRequest(
+                        formData,
+                        project.projectId,
+                        name
+                    ));
+                if (result.code === 423 && collabUpload) {
+                    this.repository.toast(
+                        this.repository.dictionary.agent_chat.editing_locked,
+                        'info'
+                    );
+                    break;
+                }
                 if (result.code === 413) {
                     this.repository.toast(
                         this.repository.dictionary.filemanager.errors.tooBigFile.replace(
@@ -336,7 +530,12 @@ export class FileManagerService {
                     ...(prefix ? { folder: prefix } : {}),
                     ...(source ? { source } : {}),
                 });
-                await this.loaderService.loadFiles(project.projectId);
+                if (uploadedThroughCollab && this.collab()) {
+                    // every participant gets the new list as filesChanged
+                    this.restoreFilesReadyState();
+                } else {
+                    await this.loaderService.loadFiles(project.projectId);
+                }
             } else {
                 this.restoreFilesReadyState();
             }
@@ -359,6 +558,10 @@ export class FileManagerService {
             const folderPath = ev.newId
                 ? svarIdToPath(ev.newId)
                 : joinFolderPath(svarIdToPath(ev.parent), ev.file.name);
+            if (this.collab()) {
+                await this.createCollabFolder(folderPath);
+                return;
+            }
             this.onEphemeralFolderCreated(folderPath);
             return;
         }
@@ -507,6 +710,33 @@ export class FileManagerService {
             return;
         }
 
+        const collab = this.collab();
+        if (collab) {
+            const hadFiles = this.folderHasFiles(oldPath);
+            const outcome = await this.runCollabCommand(collab, {
+                type: 'renameFolder',
+                path: oldPath,
+                newPath: normalizedNewPath,
+            });
+            if (!outcome.ok) {
+                this.toastCollabRejection(
+                    outcome,
+                    this.repository.dictionary.filemanager.errors
+                        .rename_folder_failed
+                );
+                return;
+            }
+            this.track(Events.EVENT_FOLDER_RENAMED);
+            if (hadFiles) {
+                // the server does not touch segment texts: the author's edits go as updates
+                this.replaceFileReferences(
+                    `${oldPath}/`,
+                    `${normalizedNewPath}/`
+                );
+            }
+            return;
+        }
+
         if (!this.folderHasFiles(oldPath)) {
             this.remapCurrentFolderAfterRename(oldPath, normalizedNewPath);
             this.track(Events.EVENT_FOLDER_RENAMED);
@@ -579,6 +809,23 @@ export class FileManagerService {
             return;
         }
 
+        const collab = this.collab();
+        if (collab) {
+            const outcome = await this.runCollabCommand(collab, {
+                type: 'deleteFolder',
+                path: folderPath,
+            });
+            if (outcome.ok) {
+                this.track(Events.EVENT_FOLDER_DELETED, { count: 1 });
+            } else {
+                this.toastCollabRejection(
+                    outcome,
+                    this.repository.dictionary.filemanager.errors.internalError
+                );
+            }
+            return;
+        }
+
         if (!this.folderHasFiles(folderPath)) {
             this.pruneEphemeralFolders(folderPath);
             this.remapCurrentFolderAfterDelete(folderPath);
@@ -643,6 +890,26 @@ export class FileManagerService {
         if (!project) {
             return;
         }
+        const collab = this.collab();
+        if (collab) {
+            const outcome = await this.runCollabCommand(collab, {
+                type: 'deleteFile',
+                path: fileName,
+            });
+            if (outcome.ok) {
+                this.track(Events.EVENT_FILE_DELETED, {
+                    count: 1,
+                    ext: fileExtension(fileName),
+                });
+                this.textFileEditorService.onOpenFileDeleted(fileName);
+            } else {
+                this.toastCollabRejection(
+                    outcome,
+                    this.repository.dictionary.filemanager.errors.internalError
+                );
+            }
+            return;
+        }
         this.repository.ideViewModelRepository.setGetFilesRequestState(
             'loading'
         );
@@ -682,6 +949,31 @@ export class FileManagerService {
         }
         const project = this.repository.projectViewModelRepository.project();
         if (!project) {
+            this.repository.settingsViewModelRepository.setFilesToDelete([]);
+            return;
+        }
+        const collab = this.collab();
+        if (collab) {
+            let deleted = 0;
+            for (const file of files) {
+                const outcome = await this.runCollabCommand(collab, {
+                    type: 'deleteFile',
+                    path: file.fileName,
+                });
+                if (!outcome.ok) {
+                    this.toastCollabRejection(
+                        outcome,
+                        this.repository.dictionary.filemanager.errors
+                            .internalError
+                    );
+                    break;
+                }
+                deleted += 1;
+                this.textFileEditorService.onOpenFileDeleted(file.fileName);
+            }
+            if (deleted) {
+                this.track(Events.EVENT_FILE_DELETED, { count: deleted });
+            }
             this.repository.settingsViewModelRepository.setFilesToDelete([]);
             return;
         }
@@ -740,6 +1032,28 @@ export class FileManagerService {
             this.hunkService &&
             !(await this.hunkService.acceptDeletionOfFileName(newName))
         ) {
+            return;
+        }
+        const collab = this.collab();
+        if (collab) {
+            const outcome = await this.runCollabCommand(collab, {
+                type: 'renameFile',
+                path: oldName,
+                newPath: newName,
+            });
+            if (!outcome.ok) {
+                this.toastCollabRejection(
+                    outcome,
+                    this.repository.dictionary.filemanager.errors
+                        .rename_file_failed
+                );
+                return;
+            }
+            this.track(Events.EVENT_FILE_RENAMED, {
+                ext: fileExtension(newName),
+            });
+            // the open file follows filesChanged; references in segments are the author's edit
+            this.replaceFileReferences(oldName, newName);
             return;
         }
         this.repository.ideViewModelRepository.setGetFilesRequestState(
@@ -819,6 +1133,28 @@ export class FileManagerService {
             ? `${oldParentPath}/${normalizedName}`
             : normalizedName;
         await this.renameFilePath(oldName, normalizedNewPath);
+    };
+
+    /**
+     * References to a renamed file in segment texts, in a live session: the collaboration
+     * server leaves texts alone, so the change goes to the documents as the author's edit
+     */
+    private replaceFileReferences = (from: string, to: string) => {
+        const before = this.programService
+            .getCurrentProgram()
+            .segments.map((segment) => segment.text);
+        this.programService.replaceAllInProgram(from, to);
+        const changed = this.programService
+            .getCurrentProgram()
+            .segments.some((segment, index) => segment.text !== before[index]);
+        if (!changed) {
+            return;
+        }
+        this.ideService.onProgramUpdated();
+        if (!this.repository.projectViewModelRepository.projectIsReadonly()) {
+            this.repository.ideViewModelRepository.markProgramChanged();
+            void this.loaderService.segmentEditorSaveProgram();
+        }
     };
 
     onFileRenameButtonClicked = () => {

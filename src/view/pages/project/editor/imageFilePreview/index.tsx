@@ -3,9 +3,18 @@ import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, StorageState } from '../../../../store';
 import { controller } from '../../../../../main.tsx';
 import { PlusIcon } from '../../../../icons';
+import { selectCollabFileRevision } from '../../../../store/selectors/collab.ts';
 import '../ide/style.scss';
 import '../ide/header/style.scss';
 import './style.scss';
+
+/** Cache-busting query parameter for a replaced file; the URL as it is otherwise */
+function withRevision(url: string, revision: number): string {
+    if (!revision) {
+        return url;
+    }
+    return `${url}${url.includes('?') ? '&' : '?'}lkrev=${revision}`;
+}
 
 export const ImageFilePreview = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -13,6 +22,13 @@ export const ImageFilePreview = () => {
         (state: StorageState) => state.ide.activeImageFile
     );
     const files = useSelector((state: StorageState) => state.project.files);
+    // collaborative editing: the file was replaced by an upload, the browser must not show the old one
+    const revision = useSelector(
+        useMemo(
+            () => selectCollabFileRevision(activeImageFile),
+            [activeImageFile]
+        )
+    );
 
     const file = useMemo(
         () => files.find((item) => item.fileName === activeImageFile),
@@ -55,7 +71,7 @@ export const ImageFilePreview = () => {
             <div className="ide-flexibility-container image-file-preview-body">
                 <img
                     className="image-file-preview-image"
-                    src={file.url}
+                    src={withRevision(file.url, revision)}
                     alt={fileLabel}
                     draggable={false}
                 />

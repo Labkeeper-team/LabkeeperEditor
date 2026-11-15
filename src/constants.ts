@@ -38,6 +38,8 @@ export const URLS = {
 
     filesGetList: `${uri}/api/${version}/public/project/{id}/file/list`,
     uploadFile: `${uri}/api/${version}/public/project/{id}/file/upload`,
+    // upload as a participant of the collaboration session (openapi collabFileUpload)
+    uploadCollabFile: `${uri}/api/${version}/public/project/{id}/collab/file/upload`,
     renameFile: `${uri}/api/${version}/public/project/{id}/file/rename`,
     deleteFile: `${uri}/api/${version}/public/project/{id}/file/delete`,
     renameFolder: `${uri}/api/${version}/public/project/{id}/file/folder/rename`,

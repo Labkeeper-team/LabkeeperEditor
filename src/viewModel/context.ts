@@ -167,6 +167,9 @@ export function setupContext(
         : undefined;
     if (collabService) {
         programEditorService.setCollabService(collabService);
+        // project files: shared list, file commands, collab uploads and text file documents
+        fileManagerService.setCollabFiles(collabService.files);
+        textFileEditorService.setCollabFiles(collabService.files);
         resetService.setOnProjectReset(() => collabService.stop());
     }
     fileManagerService.setHunkService(hunkService);
@@ -268,6 +271,7 @@ export function setupContext(
         fileService,
         programService,
         ideService,
+        loaderService,
         searchService,
         editingLockService,
         resetService,

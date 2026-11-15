@@ -4,6 +4,7 @@ import { Rpi } from '../../model/rpi';
 import { IdeService } from './IdeService.ts';
 import { ProgramService } from '../../model/service/ProgramService.ts';
 import { ProjectListWrites } from './ProjectListWrites.ts';
+import { LabkeeperFile } from '../../model/domain.ts';
 
 /** What the collaboration session says about one REST save of the program */
 export interface CollabSaveDecision {
@@ -24,6 +25,12 @@ export class LoaderService {
     private saveProgramRequested = false;
     /** Collaborative editing session decides whether and how the REST save goes */
     private collabSaveGate: (() => CollabSaveDecision | null) | null = null;
+    /**
+     * Collaborative editing: the session has the user files, REST adds the generated ones.
+     * Returns null while the session has no file list.
+     */
+    private collabFilesMerge:
+        ((restFiles: LabkeeperFile[]) => LabkeeperFile[] | null) | null = null;
 
     constructor(
         rpi: Rpi,
@@ -43,11 +50,33 @@ export class LoaderService {
         this.collabSaveGate = gate;
     };
 
+    setCollabFilesMerge = (
+        merge: ((restFiles: LabkeeperFile[]) => LabkeeperFile[] | null) | null
+    ) => {
+        this.collabFilesMerge = merge;
+    };
+
     loadFiles = async (projectId: string) => {
         this.repository.ideViewModelRepository.setGetFilesRequestState(
             'loading'
         );
         const result = await this.rpi.listFilesRequest(projectId);
+
+        // the collaboration session decides the user files; REST brings generated files
+        const collabFiles = result.isUnauth
+            ? null
+            : (this.collabFilesMerge?.(
+                  result.isOk
+                      ? result.body.files
+                      : this.repository.projectViewModelRepository.files()
+              ) ?? null);
+        if (collabFiles) {
+            this.repository.projectViewModelRepository.setFiles(collabFiles);
+            this.repository.ideViewModelRepository.setGetFilesRequestState(
+                'ok'
+            );
+            return;
+        }
 
         if (result.isOk) {
             this.repository.projectViewModelRepository.setFiles(

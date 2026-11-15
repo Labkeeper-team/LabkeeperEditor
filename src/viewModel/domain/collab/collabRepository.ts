@@ -31,6 +31,15 @@ export interface CollabViewState {
      * (collabError participantLimit before close 1008). The editor works without collaboration.
      */
     participantLimit: number | null;
+    /**
+     * The file list comes from the session (welcome had files): file commands, uploads and
+     * text file documents go through it, for every participant that may write
+     */
+    filesReady: boolean;
+    /** By path: grows with every upload that replaced the file (cache-busting of previews) */
+    fileRevisions: Record<string, number>;
+    /** Path of the text file whose collaborative document is bound to the text file editor */
+    textFileDocPath: string | null;
 }
 
 export const collabInitialState: CollabViewState = {
@@ -44,6 +53,9 @@ export const collabInitialState: CollabViewState = {
     segmentKeys: [],
     maxParticipants: null,
     participantLimit: null,
+    filesReady: false,
+    fileRevisions: {},
+    textFileDocPath: null,
 };
 
 /** Redux side of the collaboration session (participants, status, lock) */
@@ -62,6 +74,9 @@ export interface CollabViewModelRepository {
     setSegmentKeys: (keys: string[]) => void;
     setMaxParticipants: (max: number | null) => void;
     setParticipantLimit: (limit: number | null) => void;
+    setFilesReady: (ready: boolean) => void;
+    setFileRevisions: (revisions: Record<string, number>) => void;
+    setTextFileDocPath: (path: string | null) => void;
     reset: () => void;
 }
 
@@ -99,6 +114,15 @@ export function inMemoryCollabRepository(): CollabViewModelRepository & {
         },
         setParticipantLimit: (participantLimit: number | null) => {
             repo.current = { ...repo.current, participantLimit };
+        },
+        setFilesReady: (filesReady: boolean) => {
+            repo.current = { ...repo.current, filesReady };
+        },
+        setFileRevisions: (fileRevisions: Record<string, number>) => {
+            repo.current = { ...repo.current, fileRevisions };
+        },
+        setTextFileDocPath: (textFileDocPath: string | null) => {
+            repo.current = { ...repo.current, textFileDocPath };
         },
         reset: () => {
             repo.current = structuredClone(collabInitialState);

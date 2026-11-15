@@ -37,6 +37,7 @@ import {
     toCollabText,
 } from './CollabDocumentClient.ts';
 import { CollabStatus, CollabViewModelRepository } from './collabRepository.ts';
+import { CollabFiles } from './CollabFiles.ts';
 
 /** Throttle of `updatePresence` (asyncapi CollabUpdatePresenceSpec): trailing edge */
 export const COLLAB_PRESENCE_THROTTLE_MS = 100;
@@ -178,10 +179,35 @@ export class CollabService {
     private lastPresenceDocId: string | null = null;
     private cursorFlushQueued = new Set<string>();
     private welcomeTimer: ReturnType<typeof setTimeout> | undefined;
+    /** File list, file commands and the document of the open text file */
+    readonly files: CollabFiles;
 
     constructor(private deps: CollabServiceDeps) {
         deps.ideService.setCollabHooks(this.programHooks);
         deps.loaderService.setCollabSaveGate(this.saveGate);
+        this.files = new CollabFiles(
+            {
+                transport: this.transport,
+                send: (frame) =>
+                    this.welcomed
+                        ? (this.connection?.send(frame) ?? false)
+                        : false,
+                isWelcomed: () =>
+                    this.isActive() &&
+                    this.welcomed &&
+                    (this.connection?.isOpen() ?? false),
+                canWrite: () => this.canWrite,
+                isLocked: () => this.locked,
+                connectionId: () => this.connectionId,
+                reportSelection: (docId, selection) =>
+                    this.reportDocSelection(docId, selection),
+                onReadOnly: () => this.markReadOnly(),
+                log: (message, data, level) => this.log(message, data, level),
+            },
+            deps.repository,
+            deps.collabRepository
+        );
+        deps.loaderService.setCollabFilesMerge(this.files.mergeFiles);
     }
 
     /*
@@ -265,6 +291,7 @@ export class CollabService {
         this.presencePending = null;
         this.lastPresenceDocId = null;
         this.pendingViewEdit = null;
+        this.files.reset();
         this.deps.collabRepository.reset();
     };
 
@@ -391,7 +418,17 @@ export class CollabService {
         selection: CollabSelection | null
     ): void => {
         const docId = this.slotByKey(key)?.docId;
-        if (!docId || !this.isActive()) {
+        if (docId) {
+            this.reportDocSelection(docId, selection);
+        }
+    };
+
+    /** Selection in a segment or text file document; null when the editor lost focus */
+    private reportDocSelection = (
+        docId: string,
+        selection: CollabSelection | null
+    ): void => {
+        if (!this.isActive()) {
             return;
         }
         if (!selection && this.lastPresenceDocId !== docId) {
@@ -486,8 +523,31 @@ export class CollabService {
                 this.onWelcome(frame);
                 return;
             case 'documentOpened':
-                this.onDocumentOpened(frame);
+                if (
+                    frame.segmentId === undefined &&
+                    frame.filePath !== undefined
+                ) {
+                    this.files.onDocumentOpened(frame);
+                } else {
+                    this.onDocumentOpened(frame);
+                }
                 return;
+            case 'filesChanged':
+                this.files.onFilesChanged(frame);
+                return;
+            default:
+                break;
+        }
+        // document frames of the open text file belong to the file part of the session
+        if (
+            frame.type !== 'presenceChanged' &&
+            'docId' in frame &&
+            !this.docs.has(frame.docId) &&
+            this.files.onDocFrame(frame)
+        ) {
+            return;
+        }
+        switch (frame.type) {
             case 'documentResumed':
                 this.docs
                     .get(frame.docId)
@@ -527,12 +587,24 @@ export class CollabService {
                 this.onSegmentsChanged(frame);
                 return;
             case 'commandAccepted':
+                if (this.files.onCommandResult(frame)) {
+                    if (isNumber(frame.structureVersion)) {
+                        this.structureVersion = frame.structureVersion;
+                    }
+                    return;
+                }
                 this.commands.delete(frame.requestId);
                 if (isNumber(frame.structureVersion)) {
                     this.structureVersion = frame.structureVersion;
                 }
                 return;
             case 'commandRejected':
+                if (this.files.onCommandResult(frame)) {
+                    if (isNumber(frame.structureVersion)) {
+                        this.structureVersion = frame.structureVersion;
+                    }
+                    return;
+                }
                 this.onCommandRejected(frame);
                 return;
             case 'projectLockChanged':
@@ -548,6 +620,7 @@ export class CollabService {
                 this.onCollabError(frame);
                 return;
             case 'pong':
+            default:
                 return;
         }
     }
@@ -588,6 +661,8 @@ export class CollabService {
             locked: this.locked,
         });
         this.setStatus('live');
+        // the file list does not depend on the segment list: it is taken before any reset
+        this.files.onWelcome(frame);
         this.log('welcome', {
             reconnect,
             structureVersion: this.structureVersion,
@@ -624,6 +699,7 @@ export class CollabService {
         for (const client of this.docs.values()) {
             client.onDisconnected();
         }
+        this.files.onDisconnected();
         if (reason === 'denied') {
             this.denied = true;
             for (const docId of [...this.docs.keys()]) {
@@ -726,19 +802,24 @@ export class CollabService {
             return;
         }
         if (problem.kind === 'readOnly') {
-            this.canWrite = false;
-            this.deps.collabRepository.setWelcome({
-                selfUserId: this.deps.collabRepository.state().selfUserId ?? 0,
-                selfConnectionId: this.connectionId ?? '',
-                canWrite: false,
-                locked: this.locked,
-            });
+            this.markReadOnly();
             return;
         }
         this.reopenDocument(
             client,
             problem.kind === 'reload' ? problem.reason : 'unknownDocument'
         );
+    }
+
+    /** A push came back readOnly: nothing is written through the session any more */
+    private markReadOnly(): void {
+        this.canWrite = false;
+        this.deps.collabRepository.setWelcome({
+            selfUserId: this.deps.collabRepository.state().selfUserId ?? 0,
+            selfConnectionId: this.connectionId ?? '',
+            canWrite: false,
+            locked: this.locked,
+        });
     }
 
     /** Drops the state of the document and opens it again from the server text */
@@ -954,6 +1035,7 @@ export class CollabService {
             }
         }
         this.docs.get(frame.docId)?.setRemotePresence(frame);
+        this.files.onPresenceChanged(frame);
     }
 
     private onParticipantsChanged(frame: CollabParticipantsChangedFrame): void {
@@ -983,9 +1065,13 @@ export class CollabService {
         for (const client of this.docs.values()) {
             client.retainConnections(connections);
         }
+        this.files.retainConnections(connections);
     }
 
     private onCollabError(frame: CollabErrorFrame): void {
+        if (this.files.onCollabError(frame)) {
+            return;
+        }
         const refused =
             frame.code === 'forbidden' ||
             frame.code === 'projectNotFound' ||
@@ -1275,6 +1361,7 @@ export class CollabService {
         for (const client of this.docs.values()) {
             client.setLocked(locked);
         }
+        this.files.setLocked(locked);
         if (!locked) {
             this.sendOutbox();
         }
@@ -1409,7 +1496,8 @@ export class CollabService {
         if (!pending || !this.welcomed) {
             return;
         }
-        const client = this.docs.get(pending.docId);
+        const client =
+            this.docs.get(pending.docId) ?? this.files.clientFor(pending.docId);
         if (!client) {
             this.presencePending = null;
             return;
@@ -1439,6 +1527,7 @@ export class CollabService {
      * our own updates got confirmed (receivers then map it against the same text).
      */
     private refreshPresence(docId?: string): void {
+        this.files.refreshPresence(docId);
         for (const sink of this.sinks) {
             const slot = this.slotByKey(sink.key());
             if (!slot?.docId || (docId && slot.docId !== docId)) {

@@ -79,6 +79,7 @@ const RPI_SOURCES: Record<keyof Rpi, string> = {
     navigationDocToPdfRequest: 'synctex',
     navigationPdfToDocRequest: 'synctex',
     uploadFileRequest: 'file',
+    uploadCollabFileRequest: 'file',
     deleteFileRequest: 'file',
     listFilesRequest: 'file',
     setTitleRequest: 'project',
@@ -352,6 +353,36 @@ export class WebRpi implements Rpi {
                         },
                         params: {
                             name: uploadName,
+                        },
+                    }
+                ),
+            projectId
+        );
+    }
+
+    async uploadCollabFileRequest(
+        formData: FormData,
+        projectId: string,
+        name: string,
+        connectionId: string
+    ): Promise<RequestResult<UploadFileResponse>> {
+        const uploadName =
+            name.includes('/') && !name.startsWith('/') ? `/${name}` : name;
+        return this.requestWrapper(
+            'uploadCollabFileRequest',
+            [200, 201, 423, 400, 409, 413, 401, 403, 404],
+            async () =>
+                axios.put(
+                    URLS.uploadCollabFile.replace('{id}', projectId),
+                    formData,
+                    {
+                        headers: {
+                            'Content-Type': 'multipart/form-data',
+                            Accept: '*/*',
+                        },
+                        params: {
+                            name: uploadName,
+                            connectionId,
                         },
                     }
                 ),

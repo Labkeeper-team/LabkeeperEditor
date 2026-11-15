@@ -170,6 +170,17 @@ export interface Rpi {
         name: string
     ): Promise<RequestResult<UploadFileResponse>>;
 
+    /**
+     * Upload (create or replace) as a participant of the collaboration session: owner, or
+     * any signed-in user for a public project, with a live collab connection (connectionId)
+     */
+    uploadCollabFileRequest(
+        formData: FormData,
+        projectId: string,
+        name: string,
+        connectionId: string
+    ): Promise<RequestResult<UploadFileResponse>>;
+
     deleteFileRequest(name: string, projectId: string): Promise<RequestResult>;
 
     listFilesRequest(
@@ -344,6 +355,9 @@ export const mockRpi = (): Rpi => {
             throw new Error('Not implemented');
         },
         uploadFileRequest: () => {
+            throw new Error('Not implemented');
+        },
+        uploadCollabFileRequest: () => {
             throw new Error('Not implemented');
         },
         deleteFileRequest: () => {

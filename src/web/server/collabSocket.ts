@@ -30,6 +30,7 @@ const SERVER_FRAME_TYPES = new Set<string>([
     'segmentsChanged',
     'commandAccepted',
     'commandRejected',
+    'filesChanged',
     'projectLockChanged',
     'presenceChanged',
     'participantsChanged',

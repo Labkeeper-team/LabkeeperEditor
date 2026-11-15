@@ -62,7 +62,34 @@ export interface CollabLimits {
     maxOpenDocuments: number;
     /** Distinct users connected to the project at once (see participantLimit) */
     maxParticipants: number;
+    /** User files of the project (tooManyFiles above it) */
+    maxFiles?: number;
+    /** One file in bytes: uploads (HTTP 413), createFile.text and flushed text documents */
+    maxFileBytes?: number;
 }
+
+/** CollabFileRefSpec: one user file of the project (generated files are not listed) */
+export interface CollabFileRef {
+    path: string;
+    url: string;
+    /** A collaboratively editable text file: it can be opened with openDocument.filePath */
+    text: boolean;
+    docId?: string;
+}
+
+/** CollabFileChangeKindSpec */
+export type CollabFileChangeKind =
+    | 'create'
+    | 'upload'
+    | 'delete'
+    | 'rename'
+    | 'createFolder'
+    | 'deleteFolder'
+    | 'renameFolder'
+    | 'reset';
+
+/** CollabFileChangeSourceSpec */
+export type CollabFileChangeSource = 'participant' | 'rest' | 'external';
 
 /** CollabParticipantSpec */
 export interface CollabParticipant {
@@ -90,7 +117,12 @@ export type CollabCommandRejectionCode =
     | 'locked'
     | 'segmentNotFound'
     | 'invalidPosition'
-    | 'quotaExceeded';
+    | 'quotaExceeded'
+    | 'fileNotFound'
+    | 'fileExists'
+    | 'invalidFileName'
+    | 'tooManyFiles'
+    | 'tooLarge';
 
 export type CollabReloadReason =
     'historyTrimmed' | 'unknownVersion' | 'documentReset' | 'unknownDocument';
@@ -102,6 +134,8 @@ export type CollabErrorCode =
     | 'malformedMessage'
     | 'unknownMessageType'
     | 'segmentNotFound'
+    | 'fileNotFound'
+    | 'notTextFile'
     | 'unknownDocument'
     | 'documentLimit'
     | 'internalError';
@@ -118,11 +152,10 @@ export interface CollabProgramSegment {
  * Client frames (asyncapi `receive` operations of projectCollab)
  */
 
-export interface CollabOpenDocumentFrame {
-    type: 'openDocument';
-    requestId: string;
-    segmentId: number;
-}
+/** Exactly one of segmentId (segment document) and filePath (text file document) */
+export type CollabOpenDocumentFrame =
+    | { type: 'openDocument'; requestId: string; segmentId: number }
+    | { type: 'openDocument'; requestId: string; filePath: string };
 
 export interface CollabResumeDocumentFrame {
     type: 'resumeDocument';
@@ -175,6 +208,53 @@ export interface CollabMoveSegmentFrame {
     toSegmentId: number;
 }
 
+export interface CollabCreateFileFrame {
+    type: 'createFile';
+    requestId: string;
+    path: string;
+    text?: string;
+}
+
+export interface CollabDeleteFileFrame {
+    type: 'deleteFile';
+    requestId: string;
+    path: string;
+}
+
+export interface CollabRenameFileFrame {
+    type: 'renameFile';
+    requestId: string;
+    path: string;
+    newPath: string;
+}
+
+export interface CollabCreateFolderFrame {
+    type: 'createFolder';
+    requestId: string;
+    path: string;
+}
+
+export interface CollabDeleteFolderFrame {
+    type: 'deleteFolder';
+    requestId: string;
+    path: string;
+}
+
+export interface CollabRenameFolderFrame {
+    type: 'renameFolder';
+    requestId: string;
+    path: string;
+    newPath: string;
+}
+
+export type CollabFileCommandFrame =
+    | CollabCreateFileFrame
+    | CollabDeleteFileFrame
+    | CollabRenameFileFrame
+    | CollabCreateFolderFrame
+    | CollabDeleteFolderFrame
+    | CollabRenameFolderFrame;
+
 export interface CollabUpdatePresenceFrame {
     type: 'updatePresence';
     docId: string;
@@ -196,6 +276,7 @@ export type CollabClientFrame =
     | CollabAddSegmentFrame
     | CollabDeleteSegmentFrame
     | CollabMoveSegmentFrame
+    | CollabFileCommandFrame
     | CollabUpdatePresenceFrame
     | CollabPingFrame;
 
@@ -217,13 +298,21 @@ export interface CollabWelcomeFrame {
     segments: CollabSegmentRef[];
     limits: CollabLimits;
     presenceTimeoutSeconds: number;
+    /** File list version; the file fields are absent on a server without file collaboration */
+    filesVersion?: number;
+    files?: CollabFileRef[];
+    /** Empty folders created with createFolder in this session */
+    folders?: string[];
 }
 
 export interface CollabDocumentOpenedFrame {
     type: 'documentOpened';
     requestId: string;
     docId: string;
-    segmentId: number;
+    /** Segment documents only */
+    segmentId?: number;
+    /** Text file documents only */
+    filePath?: string;
     version: number;
     text: string;
 }
@@ -232,7 +321,10 @@ export interface CollabDocumentResumedFrame {
     type: 'documentResumed';
     requestId: string;
     docId: string;
-    segmentId: number;
+    /** Segment documents only */
+    segmentId?: number;
+    /** Text file documents only */
+    filePath?: string;
     fromVersion: number;
     version: number;
     updates: CollabUpdate[];
@@ -242,7 +334,10 @@ export interface CollabDocumentUpdatesFrame {
     type: 'documentUpdates';
     requestId?: string;
     docId: string;
-    segmentId: number;
+    /** Segment documents only */
+    segmentId?: number;
+    /** Text file documents only */
+    filePath?: string;
     fromVersion: number;
     updates: CollabUpdate[];
 }
@@ -268,6 +363,7 @@ export interface CollabReloadRequiredFrame {
     requestId?: string;
     docId: string;
     segmentId?: number;
+    filePath?: string;
     reason: CollabReloadReason;
 }
 
@@ -287,6 +383,8 @@ export interface CollabCommandAcceptedFrame {
     type: 'commandAccepted';
     requestId: string;
     structureVersion: number;
+    /** File commands only */
+    filesVersion?: number;
 }
 
 export interface CollabCommandRejectedFrame {
@@ -294,7 +392,24 @@ export interface CollabCommandRejectedFrame {
     requestId: string;
     code: CollabCommandRejectionCode;
     structureVersion: number;
+    /** File commands only */
+    filesVersion?: number;
     message?: string;
+}
+
+/** CollabFilesChangedSpec: the complete new lists, replaced by the client */
+export interface CollabFilesChangedFrame {
+    type: 'filesChanged';
+    filesVersion: number;
+    kind: CollabFileChangeKind;
+    source: CollabFileChangeSource;
+    requestId?: string;
+    connectionId?: string;
+    userId?: number;
+    path?: string;
+    newPath?: string;
+    files: CollabFileRef[];
+    folders: string[];
 }
 
 export interface CollabProjectLockChangedFrame {
@@ -306,7 +421,8 @@ export interface CollabProjectLockChangedFrame {
 export interface CollabPresenceChangedFrame {
     type: 'presenceChanged';
     docId: string;
-    segmentId: number;
+    segmentId?: number;
+    filePath?: string;
     connectionId: string;
     userId: number;
     displayName: string;
@@ -346,6 +462,7 @@ export type CollabServerFrame =
     | CollabSegmentsChangedFrame
     | CollabCommandAcceptedFrame
     | CollabCommandRejectedFrame
+    | CollabFilesChangedFrame
     | CollabProjectLockChangedFrame
     | CollabPresenceChangedFrame
     | CollabParticipantsChangedFrame

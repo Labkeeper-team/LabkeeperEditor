@@ -207,7 +207,7 @@ export class TestDocPeer {
                 this.client = new CollabDocumentClient(
                     {
                         docId: frame.docId,
-                        segmentId: frame.segmentId,
+                        segmentId: frame.segmentId ?? 1,
                         version: frame.version,
                         text: frame.text,
                     },

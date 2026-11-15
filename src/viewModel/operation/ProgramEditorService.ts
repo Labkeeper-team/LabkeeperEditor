@@ -177,7 +177,8 @@ export class ProgramEditorService {
                     this.repository.projectViewModelRepository.project();
                 if (
                     !project ||
-                    this.repository.projectViewModelRepository.projectIsReadonly()
+                    (this.repository.projectViewModelRepository.projectIsReadonly() &&
+                        !this.collab?.files.canWrite())
                 ) {
                     this.repository.toast(
                         this.repository.dictionary.segment.errors
@@ -228,11 +229,22 @@ export class ProgramEditorService {
                     thisCopy.repository.ideViewModelRepository.setGetProjectRequestState(
                         'loading'
                     );
-                    const res = await thisCopy.rpi.uploadFileRequest(
-                        formData,
-                        project.projectId,
-                        name
-                    );
+                    // collaborative editing: participants upload through the session
+                    const collabConnection = thisCopy.collab?.files.canWrite()
+                        ? thisCopy.collab.files.connectionId()
+                        : null;
+                    const res = collabConnection
+                        ? await thisCopy.rpi.uploadCollabFileRequest(
+                              formData,
+                              project.projectId,
+                              name,
+                              collabConnection
+                          )
+                        : await thisCopy.rpi.uploadFileRequest(
+                              formData,
+                              project.projectId,
+                              name
+                          );
                     thisCopy.repository.ideViewModelRepository.setGetProjectRequestState(
                         'ok'
                     );
