@@ -11,6 +11,7 @@ import { authSlice } from '../slices/auth';
 import { persistenceSlice } from '../slices/persistence';
 import { billingSlice } from '../slices/billing';
 import { chatSlice } from '../slices/chat';
+import { collabSlice } from '../slices/collab';
 import {
     PERSISTENCE_VERSION,
     migratePersistence,
@@ -28,6 +29,7 @@ export const createRootReducer = () => {
         auth: authSlice.reducer,
         billing: billingSlice.reducer,
         chat: chatSlice.reducer,
+        collab: collabSlice.reducer,
         persistence: persistReducer(
             {
                 key: LOCAL_STORAGE_KEY,

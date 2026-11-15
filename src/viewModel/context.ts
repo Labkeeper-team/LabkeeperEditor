@@ -29,12 +29,22 @@ import { AgentChatService } from './operation/AgentChatService.ts';
 import { AgentFilesService } from './operation/AgentFilesService.ts';
 import { AgentEventService } from './domain/AgentEventService.ts';
 import { EditingLockService } from './domain/EditingLockService.ts';
+import { CollabSocket } from '../model/rpi/collabSocket.ts';
+import { CollabService } from './domain/collab/CollabService.ts';
+import { CollabViewModelRepository } from './domain/collab/collabRepository.ts';
+
+/** Collaborative editing wiring; without it the editor works as before */
+export interface CollabContextDeps {
+    socket: CollabSocket;
+    repository: CollabViewModelRepository;
+}
 
 export function setupContext(
     rpi: Rpi,
     repository: ViewModelRepository,
     observerService: ObserverService,
-    agentSocket: AgentSocket
+    agentSocket: AgentSocket,
+    collab?: CollabContextDeps
 ) {
     /*
     DOMAIN
@@ -144,6 +154,21 @@ export function setupContext(
         editingLockService
     );
     programEditorService.setHunkService(hunkService);
+    const collabService: CollabService | undefined = collab
+        ? new CollabService({
+              socket: collab.socket,
+              repository,
+              collabRepository: collab.repository,
+              programService,
+              ideService,
+              loaderService,
+              rpi,
+          })
+        : undefined;
+    if (collabService) {
+        programEditorService.setCollabService(collabService);
+        resetService.setOnProjectReset(() => collabService.stop());
+    }
     fileManagerService.setHunkService(hunkService);
     const projectPageService: ProjectPageService = new ProjectPageService(
         repository,
@@ -236,11 +261,13 @@ export function setupContext(
         projectsPageService,
         tokenPageService,
         hunkService,
+        collabService,
         /*
         DOMAIN
          */
         fileService,
         programService,
+        ideService,
         searchService,
         editingLockService,
         resetService,

@@ -13,6 +13,14 @@ import {
 import { ResetService } from './ResetService.ts';
 import { isImageFilePath } from '../../view/pages/project/fileManager/svarFileTreeAdapter.ts';
 
+/** What the collaboration session needs to know about program replacements */
+export interface IdeCollabHooks {
+    /** Before the program is published: push local text changes as collaborative edits */
+    reconcileLocalProgram: () => void;
+    /** After a program came over REST: replace texts of open documents with theirs */
+    adoptCollabTexts: () => void;
+}
+
 const dollarPattern = /\$\{[\w|\p{Script=Cyrillic}]+\}/u;
 
 const PREVIEW_DEBOUNCE_MS = 200;
@@ -23,6 +31,8 @@ export class IdeService {
     resetService: ResetService;
 
     private previewTimer: ReturnType<typeof setTimeout> | null = null;
+    /** Collaborative editing session, when it is on (see CollabService.programHooks) */
+    private collabHooks: IdeCollabHooks | null = null;
     private pendingPreviewApply: (() => void) | null = null;
 
     constructor(
@@ -34,6 +44,10 @@ export class IdeService {
         this.programService = programService;
         this.resetService = resetService;
     }
+
+    setCollabHooks = (hooks: IdeCollabHooks | null) => {
+        this.collabHooks = hooks;
+    };
 
     private schedulePreviewUpdate(apply: () => void) {
         if (this.previewTimer) clearTimeout(this.previewTimer);
@@ -157,6 +171,8 @@ export class IdeService {
 
     onProgramUpdated = () => {
         this.flushPreviewUpdate();
+        // local text changes (undo, redo, replace in all segments) go to the collaboration session
+        this.collabHooks?.reconcileLocalProgram();
         const program = this.programService.getCurrentProgram();
 
         this.repository.projectViewModelRepository.setCurrentProgram(program);
@@ -260,6 +276,8 @@ export class IdeService {
     setNewProgram = (program: Program, result?: CompileSuccessResult) => {
         this.flushPreviewUpdate();
         this.programService.setNewProgram(program);
+        // a program read over REST is older than the collaboration documents: their texts win
+        this.collabHooks?.adoptCollabTexts();
         this.repository.ideViewModelRepository.resetProgramRevisions();
         if (result) {
             this.repository.projectViewModelRepository.setCompileResult(result);

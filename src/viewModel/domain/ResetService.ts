@@ -10,6 +10,8 @@ export class ResetService {
      * очистить ленту мало, живой сокет продолжит писать в неё после логаута.
      */
     private beforeProjectReset: (() => void) | null = null;
+    /** Collaborative editing session of the project, closed on every project reset */
+    private onProjectReset: (() => void) | null = null;
 
     constructor(
         repository: ViewModelRepository,
@@ -21,6 +23,10 @@ export class ResetService {
 
     setBeforeProjectReset(hook: () => void): void {
         this.beforeProjectReset = hook;
+    }
+
+    setOnProjectReset(hook: () => void): void {
+        this.onProjectReset = hook;
     }
 
     resetAll(): void {
@@ -97,6 +103,7 @@ export class ResetService {
 
     resetProject(): void {
         this.beforeProjectReset?.();
+        this.onProjectReset?.();
         this.programService.clearHistory();
         this.resetFileManagerProjectState();
         this.resetSearchState();

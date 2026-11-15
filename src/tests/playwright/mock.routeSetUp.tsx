@@ -26,6 +26,11 @@ type BodyTypeForCompileRequest =
 
 const uuid = '2cd18704-6c3f-48cb-96f1-9a923930f8cb';
 const version = 'v4';
+
+/** Agent WebSocket only: the collaboration socket (.../collab) is left to its own mock */
+export const AGENT_SOCKET_URL = new RegExp(
+    `/api/${version}/ws/(?!project/[^/]+/collab)`
+);
 const contentType = 'application/json';
 const defaultUserId = 1;
 const anotherUserId = 2;
@@ -353,18 +358,15 @@ export class RouteSetup {
     /** Канал агента, где у каждого прогона свои кадры: n-й startAgent получает runs[n], а прогону без кадров сокет ничего не шлёт, и он идёт, пока его не прервут */
     async setupAgentSocketRuns(runs: Record<string, unknown>[][]) {
         const received: Record<string, unknown>[] = [];
-        await this.page.routeWebSocket(
-            `**/api/${version}/ws/**`,
-            async (ws) => {
-                ws.onMessage((message) => {
-                    const frames = runs[received.length] ?? [];
-                    received.push(JSON.parse(String(message)));
-                    for (const frame of frames) {
-                        ws.send(JSON.stringify(frame));
-                    }
-                });
-            }
-        );
+        await this.page.routeWebSocket(AGENT_SOCKET_URL, async (ws) => {
+            ws.onMessage((message) => {
+                const frames = runs[received.length] ?? [];
+                received.push(JSON.parse(String(message)));
+                for (const frame of frames) {
+                    ws.send(JSON.stringify(frame));
+                }
+            });
+        });
         return received;
     }
 
@@ -374,16 +376,13 @@ export class RouteSetup {
         let socket: WebSocketRoute | undefined;
         let started: () => void = () => {};
         const start = new Promise<void>((done) => (started = done));
-        await this.page.routeWebSocket(
-            `**/api/${version}/ws/**`,
-            async (ws) => {
-                ws.onMessage((message) => {
-                    received.push(JSON.parse(String(message)));
-                    socket = ws;
-                    started();
-                });
-            }
-        );
+        await this.page.routeWebSocket(AGENT_SOCKET_URL, async (ws) => {
+            ws.onMessage((message) => {
+                received.push(JSON.parse(String(message)));
+                socket = ws;
+                started();
+            });
+        });
         return {
             received,
             send: async (frame: Record<string, unknown>) => {
@@ -404,21 +403,18 @@ export class RouteSetup {
         options: { dropConnection?: boolean; closes?: number[] } = {}
     ) {
         const received: Record<string, unknown>[] = [];
-        await this.page.routeWebSocket(
-            `**/api/${version}/ws/**`,
-            async (ws) => {
-                ws.onClose((code) => options.closes?.push(code ?? 0));
-                ws.onMessage((message) => {
-                    received.push(JSON.parse(String(message)));
-                    for (const frame of frames) {
-                        ws.send(JSON.stringify(frame));
-                    }
-                    if (options.dropConnection) {
-                        ws.close({ code: 1011 });
-                    }
-                });
-            }
-        );
+        await this.page.routeWebSocket(AGENT_SOCKET_URL, async (ws) => {
+            ws.onClose((code) => options.closes?.push(code ?? 0));
+            ws.onMessage((message) => {
+                received.push(JSON.parse(String(message)));
+                for (const frame of frames) {
+                    ws.send(JSON.stringify(frame));
+                }
+                if (options.dropConnection) {
+                    ws.close({ code: 1011 });
+                }
+            });
+        });
         return received;
     }
 

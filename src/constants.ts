@@ -63,6 +63,8 @@ export const URLS = {
 export const WS_URLS = {
     projectAgent: `/api/${version}/ws/project/{id}`,
     unauthorizedAgent: `/api/${version}/ws/prompt`,
+    // collaborative editing of a project (asyncapi channel projectCollab)
+    projectCollab: `/api/${version}/ws/project/{id}/collab`,
 };
 
 /**

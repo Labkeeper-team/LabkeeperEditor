@@ -3,10 +3,7 @@ import './style.scss';
 import { IdeHeader } from './header';
 import { AddBlock } from './addBlock';
 import { Segments } from './segments';
-import {
-    useCurrentProgram,
-    useIsProjectReadonly,
-} from '../../../../store/selectors/program';
+import { useCurrentProgram } from '../../../../store/selectors/program';
 import classNames from 'classnames';
 import { InterfaceTourAnchorClassnames } from '../../../../components/tour/helpers';
 
@@ -15,13 +12,15 @@ import { useDictionary } from '../../../../store/selectors/translations.ts';
 import { RunButton } from '../runButton';
 import { HunkGlobalButtons } from '../../../../components/hunkGlobalButtons';
 import { selectDeletedSegmentsByPosition } from '../../../../store/selectors/hunks.ts';
+import { selectCanEditSegments } from '../../../../store/selectors/collab.ts';
+import { CollabParticipantLimitNotice } from '../../../../components/collabParticipants';
 
 export const Ide = () => {
     /*
     STATE
      */
     const program = useSelector(useCurrentProgram);
-    const isReadonly = useSelector(useIsProjectReadonly);
+    const canEditSegments = useSelector(selectCanEditSegments);
     const dictionary = useSelector(useDictionary);
     const getProjectRequestState = useSelector(
         (state: StorageState) => state.ide.getProjectRequestState
@@ -34,6 +33,7 @@ export const Ide = () => {
     return (
         <div className="ide-container">
             <IdeHeader />
+            <CollabParticipantLimitNotice />
 
             <div
                 className={classNames('ide-flexibility-container', {
@@ -67,7 +67,7 @@ export const Ide = () => {
                         </div>
                     </div>
                 ) : !program?.segments.length &&
-                  !isReadonly &&
+                  canEditSegments &&
                   !hasDeletedSegments ? (
                     <AddBlock isFirst />
                 ) : (

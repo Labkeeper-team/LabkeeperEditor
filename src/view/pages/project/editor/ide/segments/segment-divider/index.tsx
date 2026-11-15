@@ -7,7 +7,7 @@ import React, {
 } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import classNames from 'classnames';
-import { useIsProjectReadonly } from '../../../../../../store/selectors/program';
+import { selectCanEditSegments } from '../../../../../../store/selectors/collab.ts';
 
 import { useDictionary } from '../../../../../../store/selectors/translations';
 
@@ -27,7 +27,8 @@ export const SegmentDivider: React.FC<SegmentDividerProps> = ({
 }) => {
     const dispatch = useDispatch<AppDispatch>();
 
-    const projectIsReadonly = useSelector(useIsProjectReadonly);
+    // collaborative editing lets a shared project insert segments too
+    const projectIsReadonly = !useSelector(selectCanEditSegments);
 
     const [isOpen, setIsOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);

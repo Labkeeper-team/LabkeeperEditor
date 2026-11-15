@@ -237,9 +237,14 @@ export interface Rpi {
         projectId: string
     ): Promise<RequestResult<ExportProjectResponse>>;
 
+    /**
+     * collabStructureVersion: segment list version of the collaboration session the
+     * program was built on; the server answers 409 when it is outdated
+     */
     saveProgramRequest(
         projectId: string,
-        program: Program
+        program: Program,
+        collabStructureVersion?: number
     ): Promise<RequestResult>;
 
     setProjectVisibilityRequest(

@@ -5,6 +5,14 @@ import { IdeService } from './IdeService.ts';
 import { ProgramService } from '../../model/service/ProgramService.ts';
 import { ProjectListWrites } from './ProjectListWrites.ts';
 
+/** What the collaboration session says about one REST save of the program */
+export interface CollabSaveDecision {
+    /** Do not send the save at all (session reconnecting, or nothing local to save) */
+    skip: boolean;
+    /** Segment list version to send as collabStructureVersion */
+    structureVersion?: number;
+}
+
 export class LoaderService {
     rpi: Rpi;
     repository: ViewModelRepository;
@@ -14,6 +22,8 @@ export class LoaderService {
     /** Когда по часам правок ушёл запрос, чей список сейчас показан */
     private shownListRequestedAt = 0;
     private saveProgramRequested = false;
+    /** Collaborative editing session decides whether and how the REST save goes */
+    private collabSaveGate: (() => CollabSaveDecision | null) | null = null;
 
     constructor(
         rpi: Rpi,
@@ -28,6 +38,10 @@ export class LoaderService {
         this.ideService = ideService;
         this.programService = programService;
     }
+
+    setCollabSaveGate = (gate: (() => CollabSaveDecision | null) | null) => {
+        this.collabSaveGate = gate;
+    };
 
     loadFiles = async (projectId: string) => {
         this.repository.ideViewModelRepository.setGetFilesRequestState(
@@ -102,13 +116,32 @@ export class LoaderService {
             return;
         }
         if (project) {
+            const collab = this.collabSaveGate?.() ?? null;
+            if (collab?.skip) {
+                return;
+            }
             this.repository.ideViewModelRepository.setSaveProjectRequestState(
                 'loading'
             );
-            const result = await this.rpi.saveProgramRequest(
-                project.projectId,
-                savedProgram
-            );
+            const result =
+                collab?.structureVersion === undefined
+                    ? await this.rpi.saveProgramRequest(
+                          project.projectId,
+                          savedProgram
+                      )
+                    : await this.rpi.saveProgramRequest(
+                          project.projectId,
+                          savedProgram,
+                          collab.structureVersion
+                      );
+            if (collab && result.code === 409) {
+                // the segment list changed under the save; the next save after
+                // segmentsChanged carries the new version, so this one is dropped silently
+                this.repository.ideViewModelRepository.setSaveProjectRequestState(
+                    'ok'
+                );
+                return;
+            }
             if (result.isUnauth) {
                 this.repository.toast(
                     this.repository.dictionary.filemanager.errors

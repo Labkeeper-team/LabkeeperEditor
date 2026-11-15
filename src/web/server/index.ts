@@ -613,14 +613,21 @@ export class WebRpi implements Rpi {
 
     async saveProgramRequest(
         projectId: string,
-        program: Program
+        program: Program,
+        collabStructureVersion?: number
     ): Promise<RequestResult> {
+        const url = URLS.setProgram.replace('{id}', projectId);
         return this.requestWrapper(
             'saveProgramRequest',
-            [200, 423, 401],
+            // 409: the collaboration segment list changed meanwhile, the next save is right
+            collabStructureVersion === undefined
+                ? [200, 423, 401]
+                : [200, 409, 423, 401],
             async () =>
                 axios.post(
-                    URLS.setProgram.replace('{id}', projectId),
+                    collabStructureVersion === undefined
+                        ? url
+                        : `${url}?collabStructureVersion=${collabStructureVersion}`,
                     withIds(program)
                 ),
             projectId

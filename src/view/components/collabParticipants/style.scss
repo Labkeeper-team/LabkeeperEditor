@@ -1,0 +1,60 @@
+@use '../../styles/colors' as *;
+@use '../../styles/common' as *;
+
+.collab-participants {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding-left: 6px;
+
+    &--offline {
+        opacity: 0.5;
+    }
+
+    .collab-participant {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        border: 2px solid $gray-50;
+        margin-left: -6px;
+        color: $white;
+        font-size: 10px;
+        font-weight: 600;
+        line-height: 1;
+        letter-spacing: 0.02em;
+        user-select: none;
+        cursor: default;
+        box-sizing: border-box;
+
+        &:first-child {
+            margin-left: 0;
+        }
+
+        &--self {
+            box-shadow: 0 0 0 1px $gray-20;
+        }
+
+        &--more {
+            background: $gray-30;
+        }
+
+        @media screen and (max-width: $mobile-breakpoint) {
+            width: 22px;
+            height: 22px;
+            font-size: 9px;
+        }
+    }
+}
+
+.collab-limit-notice {
+    margin: 8px 10px 0;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: $red-20;
+    color: $red-10;
+    font-size: 13px;
+    line-height: 1.4;
+}

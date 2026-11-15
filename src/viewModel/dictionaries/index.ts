@@ -822,6 +822,11 @@ export interface Translations {
 
     contact_ok: string;
     contact_error: string;
+    /** Collaborative editing; ${limit} is the number of people */
+    collab: {
+        participant_limit: string;
+        participants_count: string;
+    };
 }
 
 export const dictionary: Record<Language, Translations> = {

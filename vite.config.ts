@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import svgr from 'vite-plugin-svgr';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
@@ -38,8 +38,30 @@ function resolveBuildVersion(): { major: string; minor: string } {
     return { major, minor };
 }
 
+/**
+ * Dev server without LABKEEPER_DEV_PROXY has no backend: API WebSocket upgrades are closed
+ * at once. Otherwise they hang, and the editor waits for the collaboration session.
+ */
+function failApiSocketsWithoutBackend(proxyTarget: string | undefined): Plugin {
+    return {
+        name: 'fail-api-sockets-without-backend',
+        apply: 'serve',
+        configureServer(server) {
+            if (proxyTarget) {
+                return;
+            }
+            server.httpServer?.on('upgrade', (request, socket) => {
+                if (request.url?.startsWith('/api/')) {
+                    socket.destroy();
+                }
+            });
+        },
+    };
+}
+
 export default defineConfig(() => {
     const { major, minor } = resolveBuildVersion();
+    const devProxyTarget = process.env.LABKEEPER_DEV_PROXY;
 
     return {
         plugins: [
@@ -47,6 +69,7 @@ export default defineConfig(() => {
             svgr(),
             lowerClassStaticBlocks(),
             guardRegexLookbehind(),
+            failApiSocketsWithoutBackend(devProxyTarget),
             viteStaticCopy({
                 targets: [
                     {
@@ -70,6 +93,19 @@ export default defineConfig(() => {
         },
         server: {
             port: 3000,
+            // optional: LABKEEPER_DEV_PROXY=http://localhost:8080 sends /api (REST and the
+            // agent and collaboration WebSockets) to a local server, without the nginx proxy
+            ...(devProxyTarget
+                ? {
+                      proxy: {
+                          '/api': {
+                              target: devProxyTarget,
+                              changeOrigin: true,
+                              ws: true,
+                          },
+                      },
+                  }
+                : {}),
         },
         define: {
             __BUILD_INFO__: JSON.stringify({ major, minor }),

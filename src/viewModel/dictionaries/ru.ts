@@ -910,4 +910,9 @@ export const ru: Translations = {
 
     contact_ok: 'Мы получили вашу обратную связь',
     contact_error: 'Произошла непредвиденная ошибка',
+    collab: {
+        participant_limit:
+            'Этот проект уже редактируют ${limit} человек. Попробуйте позже, когда кто-нибудь выйдет.',
+        participants_count: 'Редактируют ${count} из ${limit}',
+    },
 };

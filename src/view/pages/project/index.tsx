@@ -32,6 +32,7 @@ import { AgentModePane } from './agentMode';
 import { useProjectHotkeys } from './hotkeys/useProjectHotkeys.ts';
 import { HotkeysHelpModal } from './hotkeys/HotkeysHelp.tsx';
 import { HotkeyTooltip } from './hotkeys/HotkeyTooltip.tsx';
+import { useCollabSession } from '../../hooks/useCollabSession.ts';
 
 export const ProjectPage = () => {
     useHunkActionHandler();
@@ -39,6 +40,8 @@ export const ProjectPage = () => {
     const isMobile = useIsMobile();
     const { isAgentMode, leaveAgentMode } = useAgentModeNavigation();
     useAgentModeTracking();
+    // collaborative editing of the open project (off unless the feature flag is on)
+    useCollabSession();
     const mobileView = useSelector(useMobileView);
     const activeTextFile = useSelector(
         (state: StorageState) => state.ide.activeTextFile

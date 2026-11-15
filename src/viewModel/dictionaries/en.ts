@@ -901,4 +901,9 @@ export const en: Translations = {
 
     contact_ok: 'We have received your feedback',
     contact_error: 'An unexpected error has occurred',
+    collab: {
+        participant_limit:
+            'This project already has ${limit} people editing. Try again when someone leaves.',
+        participants_count: '${count} of ${limit} people editing',
+    },
 };

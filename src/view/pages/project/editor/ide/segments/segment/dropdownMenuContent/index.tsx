@@ -15,6 +15,7 @@ import { controller } from '../../../../../../../../main.tsx';
 export const DropdownMenuContent = ({
     index,
     segment,
+    parametersEditable = true,
 }: DropdownSegmentMenuContentProps) => {
     const dispatch = useDispatch<AppDispatch>();
 
@@ -40,9 +41,10 @@ export const DropdownMenuContent = ({
         );
     };
 
+    // parameters are saved over REST, which only the owner may do
     const isSegmentIsNotComputational = useMemo(() => {
-        return segment.type !== 'computational';
-    }, [segment.type]);
+        return segment.type !== 'computational' || !parametersEditable;
+    }, [segment.type, parametersEditable]);
 
     return (
         <>
