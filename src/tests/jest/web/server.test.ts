@@ -710,6 +710,43 @@ describe('WebRpi', () => {
         expect(observerService.onEvent).not.toHaveBeenCalled();
     });
 
+    // 403 на user-info выдумывает браузер краулера: не сбой, но в аналитике виден отдельно
+    test('403 от user-info не идёт в RPI unknown и Sentry, но шлёт своё событие', async () => {
+        const getMock = axios.get as jest.Mock;
+        getMock.mockRejectedValue({ response: { status: 403, data: {} } });
+        const { rpi, observerService } = createRpi();
+
+        const result = await rpi.getUserInfoRequest();
+
+        expect(result.code).toBe(403);
+        expect(result.isOk).toBe(false);
+        expect(result.isForbidden).toBe(true);
+        expect(Sentry.captureException).not.toHaveBeenCalled();
+        expect(observerService.onEvent).not.toHaveBeenCalledWith(
+            Events.EVENT_RPI_UNKNOWN,
+            expect.anything()
+        );
+        expect(observerService.onEvent).toHaveBeenCalledTimes(1);
+        expect(observerService.onEvent).toHaveBeenCalledWith(
+            Events.EVENT_USER_INFO_FORBIDDEN,
+            { source: 'rpi', operation: 'getUserInfoRequest' }
+        );
+    });
+
+    test('200 от user-info не шлёт событие о 403', async () => {
+        const getMock = axios.get as jest.Mock;
+        getMock.mockResolvedValue({
+            status: 200,
+            data: { isAuthenticated: false },
+        });
+        const { rpi, observerService } = createRpi();
+
+        const result = await rpi.getUserInfoRequest();
+
+        expect(result.isOk).toBe(true);
+        expect(observerService.onEvent).not.toHaveBeenCalled();
+    });
+
     test('reports an unexpected status to Sentry and Metrika and still returns the result', async () => {
         const getMock = axios.get as jest.Mock;
         getMock.mockRejectedValue({

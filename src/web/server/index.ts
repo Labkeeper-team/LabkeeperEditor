@@ -700,9 +700,20 @@ export class WebRpi implements Rpi {
     }
 
     async getUserInfoRequest(): Promise<RequestResult<UserInfo>> {
-        return this.requestWrapper('getUserInfoRequest', [200], () =>
-            axios.get(URLS.UserInfo)
+        // сервер на user-info 403 не отдаёт: его выдумывает браузер краулера, которому
+        // robots.txt закрыл /api/. Это не сбой, но считать такие заходы хотим отдельно
+        const result = await this.requestWrapper<UserInfo>(
+            'getUserInfoRequest',
+            [200, 403],
+            () => axios.get(URLS.UserInfo)
         );
+        if (result.isForbidden) {
+            this.observerService.onEvent(Events.EVENT_USER_INFO_FORBIDDEN, {
+                source: 'rpi',
+                operation: 'getUserInfoRequest',
+            });
+        }
+        return result;
     }
 
     async acceptPrivacyPolicyRequest(): Promise<RequestResult> {
