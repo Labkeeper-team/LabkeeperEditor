@@ -612,6 +612,18 @@ test('agent-response-renders-formulas', async ({ page }) => {
     await expect(response.locator('pre code')).toHaveText('\\[ x \\]');
 });
 
+// GH-257: агент поправил строку с подстановками, и текст между ними пропадал в формуле
+test('substitutions-in-the-answer-stay-text', async ({ page }) => {
+    const answer = 'Заменил строку: масса ${m} кг, объём ${V} л, площадь $x^2$';
+    await openChat(page, { frames: [finished('Done', answer)] });
+    await submitPrompt(page);
+
+    const response = page.locator('.agent-chat__response-text');
+    // формула одна: настоящая, подстановки в набор не попали
+    await expect(response.locator(FORMULA)).toHaveCount(1, MATHJAX_LOAD);
+    await expect(response).toContainText('масса ${m} кг, объём ${V} л');
+});
+
 test('answer-without-formulas-does-not-load-mathjax', async ({ page }) => {
     const mathJaxRequests: string[] = [];
     page.on('request', (request) => {

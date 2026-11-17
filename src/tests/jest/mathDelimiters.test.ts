@@ -159,3 +159,20 @@ test('unpaired delimiters are left alone', () => {
     const text = 'скобка \\[ без пары и \\( тоже';
     expect(normalizeMathDelimiters(text)).toBe(text);
 });
+
+// GH-257: доллар подстановки remark-math принимал за начало формулы
+test('substitutions from markdown segments stay text', () => {
+    expect(normalizeMathDelimiters('Масса ${m} кг и объём ${объём} л')).toBe(
+        'Масса \\${m} кг и объём \\${объём} л'
+    );
+});
+
+test('substitutions in code and real formulas are left as they are', () => {
+    const text = [
+        'Код `${m}` и формула $x^2$, уже экранированная \\${m}',
+        '```md',
+        'Масса ${m} кг',
+        '```',
+    ].join('\n');
+    expect(normalizeMathDelimiters(text)).toBe(text);
+});

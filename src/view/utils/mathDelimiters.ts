@@ -3,6 +3,7 @@ type MathGroups = {
     inline?: string;
     indent?: string;
     dollars?: string;
+    substitution?: string;
 };
 
 // Код идёт первым, чтобы скобки в нём остались текстом программы. Двойной
@@ -11,7 +12,7 @@ type MathGroups = {
 // утащила бы в формулу всё до чужой \]. Каждый символ разбирается одним
 // способом, иначе на незакрытой скобке перебор растёт экспоненциально
 const MATH_PATTERN =
-    /^[ \t]*(?<fence>`{3,}(?!`)|~{3,}(?!~))[^\n]*(?:\n[\s\S]*?)?(?:\n[ \t]*\k<fence>[`~]*[ \t]*$|(?![\s\S]))|(?<ticks>`+)(?!`)(?:[^`\n]|\n(?![ \t]*\n))*?\k<ticks>(?!`)|`+|\\\\|\\\[(?<display>(?:\\[^[\]]|(?!```|~~~)[^\\])+?)\\\]|\\\((?<inline>(?:\\[^(`\n)]|[^\\`\n])+?)\\\)|^(?<indent>[ \t]*)\$\$(?<dollars>[^$\n]+)\$\$[ \t]*$/gm;
+    /^[ \t]*(?<fence>`{3,}(?!`)|~{3,}(?!~))[^\n]*(?:\n[\s\S]*?)?(?:\n[ \t]*\k<fence>[`~]*[ \t]*$|(?![\s\S]))|(?<ticks>`+)(?!`)(?:[^`\n]|\n(?![ \t]*\n))*?\k<ticks>(?!`)|`+|\\\\|\\\[(?<display>(?:\\[^[\]]|(?!```|~~~)[^\\])+?)\\\]|\\\((?<inline>(?:\\[^(`\n)]|[^\\`\n])+?)\\\)|^(?<indent>[ \t]*)\$\$(?<dollars>[^$\n]+)\$\$[ \t]*$|(?<!\\)(?<substitution>\$\{[\wА-яЁё]+\})/gm;
 
 // в пункте списка каждая строка блока нужна с отступом пункта, иначе блок оборвётся
 const mathBlock = (indent: string, tex: string) =>
@@ -37,9 +38,14 @@ function ownLineIndent(text: string, start: number, end: number) {
 }
 
 function convert(text: string, found: RegExpMatchArray): string {
-    const { display, inline, indent, dollars } = (found.groups ??
+    const { display, inline, indent, dollars, substitution } = (found.groups ??
         {}) as MathGroups;
     const start = found.index ?? 0;
+    // GH-257: подстановка ${имя} из markdown-сегмента. Её доллар remark-math
+    // принимал за начало формулы до следующего доллара, и строка ломалась
+    if (substitution !== undefined) {
+        return `\\${substitution}`;
+    }
     // доллар внутри сбил бы remark-math, а маркер цитаты попал бы в саму формулу
     if (/\$|\n[ \t]*>/.test(display ?? inline ?? '')) {
         return found[0];
@@ -62,7 +68,8 @@ function convert(text: string, found: RegExpMatchArray): string {
 
 /**
  * DeepSeek пишет формулы в \[ \] и \( \), а remark-math понимает только доллары.
- * Формула одна на строке становится блоком, иначе $$ x $$ рисуется мелко, как строчная
+ * Формула одна на строке становится блоком, иначе $$ x $$ рисуется мелко, как строчная.
+ * Подстановки ${имя} вне кода экранируются, чтобы остаться текстом
  */
 export function normalizeMathDelimiters(source: string): string {
     const text = source.replace(/\r\n?/g, '\n');
