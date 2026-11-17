@@ -392,9 +392,12 @@ test('щелчок мимо меню проекта закрывает меню 
 
     await expect(page.getByRole('menu')).toHaveCount(0);
     await expect(page).toHaveURL(/\/projects$/);
-    // следующий щелчок по строке уже обычный
+    // следующий щелчок по строке уже обычный. Переход ловим с начала: заглушка
+    // проекта отвечает другим id, и под нагрузкой адрес успевал смениться
+    // раньше, чем его проверяли
+    const opened = page.waitForURL(/\/project\/00000000-/);
     await rows.nth(1).locator('.project-title-text').click();
-    await expect(page).toHaveURL(/\/project\/00000000-/);
+    await opened;
 });
 
 test('переименование из меню проекта', async ({ page }) => {
