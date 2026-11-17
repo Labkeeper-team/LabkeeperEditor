@@ -565,6 +565,8 @@ export class ProjectsPageService {
     };
 
     private duplicateProject = async (projectId: string) => {
+        // метки, которые человек видел, когда копировал
+        const sourceTags = this.listedProject(projectId)?.tags ?? [];
         const result = await this.rpi.cloneProjectRequest(projectId);
         if (result.isOk) {
             this.track(Events.EVENT_PROJECT_CLONED, {
@@ -581,7 +583,7 @@ export class ProjectsPageService {
                     userId: copy.userId,
                     title: copy.title,
                     lastModified: copy.lastModified,
-                    // копия создана только что; метки, если сервер их скопировал, придут со списком
+                    // копия создана только что
                     creationTime: copy.lastModified,
                     isPublic: copy.isPublic,
                     projectType: copy.projectType,
@@ -595,6 +597,8 @@ export class ProjectsPageService {
                 this.repository.dictionary.projects.duplicated,
                 'success'
             );
+            // без меток запроса не будет: копия и так без них
+            await this.copyTags(copy.projectId, sourceTags);
             await this.refreshProjects();
             return;
         }
@@ -608,6 +612,25 @@ export class ProjectsPageService {
                 : this.repository.dictionary.projects.errors.duplicate_failed,
             'error'
         );
+    };
+
+    /**
+     * GH-267: сервер копирует проект без меток, поэтому копия получает их
+     * отдельным запросом. В списке они видны сразу, а при отказе снимаются
+     */
+    private copyTags = async (projectId: string, tags: ProjectTag[]) => {
+        const { lost } = await this.writeTags(projectId, [], () =>
+            normalizeProjectTags(tags)
+        );
+        // об истёкшей сессии скажет следующий за этим запрос списка, а
+        // копию могли удалить, пока метки сохранялись
+        if (lost && this.listedProject(projectId)) {
+            this.repository.toast(
+                this.repository.dictionary.projects.errors
+                    .duplicate_tags_failed,
+                'error'
+            );
+        }
     };
 
     /**

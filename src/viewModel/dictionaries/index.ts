@@ -244,6 +244,7 @@ export interface Translations {
             tags_failed: string;
             visibility_failed: string;
             duplicate_failed: string;
+            duplicate_tags_failed: string;
             download_failed: string;
             rename_failed: string;
             delete_failed: string;

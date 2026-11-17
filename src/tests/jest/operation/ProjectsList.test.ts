@@ -175,6 +175,8 @@ const lastToast = (ctx: {
 const setup = () => {
     const ctx = mockContext();
     ctx.repository.projectsViewModelRepository.setProjects(LIST);
+    // сервер принимает метки как есть: копия проекта переносит их отдельным запросом
+    ctx.rpi.setProjectTagsRequest = jest.fn(async (_id, tags) => ok({ tags }));
     const toasts = () =>
         (ctx.repository as MockViewModelRepository).mockState().toasts;
     const listed = (id: string) =>
@@ -277,6 +279,94 @@ test('duplicate-project-clones-it-and-reloads-the-list-without-navigation', asyn
     ).toEqual(['copy', 'a', 'b', 'c']);
     expect(setLocation).not.toHaveBeenCalled();
     expect(lastToast(ctx)?.type).toBe('success');
+});
+
+// GH-267: сервер копирует проект без меток
+test('a-copy-gets-the-tags-of-its-source', async () => {
+    const ctx = setup();
+    const copy = project('copy', { title: 'Лабораторная 10 (copy)' });
+    ctx.rpi.cloneProjectRequest = jest
+        .fn()
+        .mockResolvedValue(ok({ ...copy, program: {} }, 201));
+    ctx.rpi.getAllProjectsRequest = jest.fn().mockResolvedValue(
+        ok({
+            projects: [...LIST]
+                .reverse()
+                .concat({ ...copy, tags: [PHYSICS, THESIS] }),
+        })
+    );
+    const shown: string[][] = [];
+    ctx.rpi.setProjectTagsRequest = jest.fn(async (_id, tags) => {
+        // метки видны в списке, ещё пока сервер их сохраняет
+        shown.push(tagNames(ctx, 'copy'));
+        return ok({ tags });
+    });
+
+    await ctx.projectsPageService.onDuplicateProject('b');
+
+    expect(ctx.rpi.setProjectTagsRequest).toHaveBeenCalledTimes(1);
+    expect(ctx.rpi.setProjectTagsRequest).toHaveBeenCalledWith('copy', [
+        PHYSICS,
+        THESIS,
+    ]);
+    expect(shown).toEqual([['Физика:#4469e0', 'Диплом:#1ca852']]);
+    expect(tagNames(ctx, 'copy')).toEqual(['Физика:#4469e0', 'Диплом:#1ca852']);
+    // у исходного проекта ничего не поменялось
+    expect(ctx.listed('b').tags).toEqual([PHYSICS, THESIS]);
+    expect(ctx.toasts()).toEqual([
+        {
+            message: ctx.repository.dictionary.projects.duplicated,
+            type: 'success',
+        },
+    ]);
+});
+
+test('a-copy-whose-tags-were-refused-stays-untagged-and-says-so', async () => {
+    const ctx = setup();
+    const copy = project('copy');
+    ctx.rpi.cloneProjectRequest = jest
+        .fn()
+        .mockResolvedValue(ok({ ...copy, program: {} }, 201));
+    ctx.rpi.getAllProjectsRequest = jest.fn().mockResolvedValue(fail(500));
+    ctx.rpi.setProjectTagsRequest = jest.fn().mockResolvedValue(fail(500));
+
+    await ctx.projectsPageService.onDuplicateProject('a');
+
+    expect(ctx.listed('copy').tags).toEqual([]);
+    expect(lastToast(ctx)?.message).toBe(
+        ctx.repository.dictionary.projects.errors.duplicate_tags_failed
+    );
+});
+
+test('a-401-while-copying-tags-reports-the-session-once', async () => {
+    const ctx = setup();
+    ctx.rpi.cloneProjectRequest = jest
+        .fn()
+        .mockResolvedValue(ok({ ...project('copy'), program: {} }, 201));
+    ctx.rpi.getAllProjectsRequest = jest.fn().mockResolvedValue(fail(401));
+    ctx.rpi.setProjectTagsRequest = jest.fn().mockResolvedValue(fail(401));
+
+    await ctx.projectsPageService.onDuplicateProject('a');
+
+    const expired = ctx.repository.dictionary.filemanager.errors.sessionExpired;
+    expect(
+        ctx.toasts().filter((toast) => toast.message === expired)
+    ).toHaveLength(1);
+    expect(ctx.toasts().map((toast) => toast.message)).not.toContain(
+        ctx.repository.dictionary.projects.errors.duplicate_tags_failed
+    );
+});
+
+test('a-copy-of-an-untagged-project-sends-no-tags', async () => {
+    const ctx = setup();
+    ctx.rpi.cloneProjectRequest = jest
+        .fn()
+        .mockResolvedValue(ok({ ...project('copy'), program: {} }, 201));
+    ctx.rpi.getAllProjectsRequest = jest.fn().mockResolvedValue(fail(500));
+
+    await ctx.projectsPageService.onDuplicateProject('c');
+
+    expect(ctx.rpi.setProjectTagsRequest).not.toHaveBeenCalled();
 });
 
 test('a-second-click-while-copying-does-not-make-a-second-copy', async () => {
@@ -529,7 +619,12 @@ test('a-newer-tag-edit-keeps-its-own-change-but-not-a-refused-older-one', async 
 test('list-refresh-keeps-tags-that-are-still-being-saved', async () => {
     const ctx = setup();
     const save = deferred<RequestResult<object>>();
-    ctx.rpi.setProjectTagsRequest = jest.fn().mockReturnValue(save.promise);
+    // копия проекта переносит метки сразу, а правка у c ещё идёт
+    ctx.rpi.setProjectTagsRequest = jest.fn((id, tags) =>
+        id === 'c'
+            ? (save.promise as ReturnType<typeof ctx.rpi.setProjectTagsRequest>)
+            : Promise.resolve(ok({ tags }))
+    );
     ctx.rpi.cloneProjectRequest = jest
         .fn()
         .mockResolvedValue(ok({ ...project('copy'), program: {} }, 201));

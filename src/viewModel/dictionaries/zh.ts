@@ -264,6 +264,8 @@ export const zh: Translations = {
             visibility_failed:
                 '\u65E0\u6CD5\u66F4\u6539\u8BBF\u95EE\u6743\u9650',
             duplicate_failed: '\u65E0\u6CD5\u590D\u5236\u9879\u76EE',
+            duplicate_tags_failed:
+                '\u526F\u672C\u5DF2\u521B\u5EFA\uFF0C\u4F46\u672A\u80FD\u590D\u5236\u6807\u7B7E',
             download_failed: '\u65E0\u6CD5\u4E0B\u8F7D\u538B\u7F29\u5305',
             rename_failed: '\u65E0\u6CD5\u91CD\u547D\u540D\u9879\u76EE',
             delete_failed: '\u65E0\u6CD5\u5220\u9664\u9879\u76EE',
