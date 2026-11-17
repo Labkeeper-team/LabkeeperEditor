@@ -45,6 +45,8 @@
         white-space: nowrap;
     }
     .change-title-input {
+        // поле сжимается вместе с шапкой, а не наезжает на соседей
+        min-width: 0;
         font-family: Inter;
         font-size: 15px;
         line-height: 18px;

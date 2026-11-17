@@ -1,15 +1,12 @@
 import { useLayoutEffect } from 'react';
 import { refreshCodeMirrorLayout } from '../utils/refreshCodeMirrorLayout';
 import { layoutViewportWidth } from '../utils/viewportSize';
-import {
-    VIEWPORT_RESCALE_EVENT,
-    isNativeMobileLayoutPath,
-    isTokensLandingPath,
-} from './viewportScale';
+import { VIEWPORT_RESCALE_EVENT, keepsOwnLayout } from './viewportScale';
 
 /**
- * Масштабирует node так, чтобы вся вёрстка влезала
- * при ширине окна < minWidth.
+ * Масштабирует node так, чтобы вся вёрстка влезала при ширине окна
+ * < minWidth. Только для страниц без своей телефонной раскладки, см.
+ * keepsOwnLayout
  * @param {React.RefObject<HTMLElement>} ref
  * @param {number} minWidth
  */
@@ -19,8 +16,9 @@ export function useScaleToMinWidth(ref, minWidth = 1024) {
         if (!el) return;
 
         const rescale = () => {
-            if (isTokensLandingPath() || isNativeMobileLayoutPath()) {
+            if (keepsOwnLayout()) {
                 el.style.transform = el.style.width = el.style.height = '';
+                el.style.maxHeight = '';
                 el.style.transformOrigin = '';
                 document.documentElement.style.setProperty(
                     '--mobile-scale',
@@ -34,8 +32,12 @@ export function useScaleToMinWidth(ref, minWidth = 1024) {
                 el.style.transformOrigin = 'top left';
                 el.style.width = 100 / k + '%';
                 el.style.height = 100 / k + '%';
+                // иначе max-height: 100% из стилей не даёт высоте вырасти,
+                // и под уменьшенной страницей остаётся пустая полоса
+                el.style.maxHeight = 'none';
             } else {
                 el.style.transform = el.style.width = el.style.height = '';
+                el.style.maxHeight = '';
                 el.style.transformOrigin = '';
             }
             document.documentElement.style.setProperty(

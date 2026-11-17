@@ -21,3 +21,17 @@ export function isNativeMobileLayoutPath() {
             /^\/project\//.test(pathname))
     );
 }
+
+/**
+ * Страница держит свою раскладку, а не уменьшается целиком до minWidth.
+ * От планшета и шире так все страницы, на телефоне страницы приложения.
+ * GH-266: раньше на 768–1023 вся страница уменьшалась до раскладки 1024,
+ * текст мельчал, а под страницей оставалась чёрная полоса
+ */
+export function keepsOwnLayout() {
+    return (
+        isTokensLandingPath() ||
+        layoutViewportWidth() > MOBILE_BREAKPOINT ||
+        isNativeMobileLayoutPath()
+    );
+}
