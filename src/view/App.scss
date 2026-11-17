@@ -6,6 +6,13 @@
     --mobile-scale: 1;
     --inner-height: 100vh;
 }
+// GH-262: приложение светлое. pdf_viewer.css из pdf.js объявляет для всей
+// страницы :root { color-scheme: light dark }, и после первого же PDF при
+// тёмной теме системы поля ввода и флажки становились тёмными, а текст в них
+// пропадал. Селектор сильнее :root, поэтому порядок загрузки стилей не важен
+html:root {
+    color-scheme: light;
+}
 html {
     @media screen and (max-width: 1024px) {
         max-height: var(--inner-height, 100dvh);
