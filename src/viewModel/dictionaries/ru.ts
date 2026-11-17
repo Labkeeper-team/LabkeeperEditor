@@ -252,6 +252,8 @@ export const ru: Translations = {
             tags_failed: 'Не удалось сохранить теги',
             visibility_failed: 'Не удалось изменить доступ',
             duplicate_failed: 'Не удалось скопировать проект',
+            duplicate_tags_failed:
+                'Копия создана, но перенести теги не удалось',
             download_failed: 'Не удалось скачать архив',
             rename_failed: 'Не удалось переименовать проект',
             delete_failed: 'Не удалось удалить проект',

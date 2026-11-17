@@ -248,6 +248,8 @@ export const en: Translations = {
             tags_failed: 'Could not save the tags',
             visibility_failed: 'Could not change the access',
             duplicate_failed: 'Could not copy the project',
+            duplicate_tags_failed:
+                'The copy was created, but its tags could not be copied',
             download_failed: 'Could not download the archive',
             rename_failed: 'Could not rename the project',
             delete_failed: 'Could not delete the project',
