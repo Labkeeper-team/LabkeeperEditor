@@ -192,7 +192,7 @@ const RPI_CASES: RpiCase[] = [
         method: 'deleteFileRequest',
         source: 'file',
         scoped: true,
-        expects423: false,
+        expects423: true,
         call: (rpi) => rpi.deleteFileRequest('main.tex', PROJECT_ID),
     },
     {
@@ -439,7 +439,7 @@ const RPI_CASES: RpiCase[] = [
         method: 'deleteHunkRequest',
         source: 'hunk',
         scoped: true,
-        expects423: false,
+        expects423: true,
         call: (rpi) => rpi.deleteHunkRequest(PROJECT_ID, 'hunk-1', true),
     },
     {
@@ -954,14 +954,30 @@ describe('WebRpi', () => {
 
     // Сервер отвечает 410, когда собранного PDF нет. Ответ штатный:
     // пользователю показывают подсказку собрать проект, мониторинг молчит
-    test('ожидаемый 410 от navigationDocToPdfRequest не идёт в мониторинг', async () => {
+    // Sentry 56c64ea1: в обратную сторону, из PDF в код, сервер отвечает так же
+    test.each([
+        [
+            'navigationDocToPdfRequest',
+            (rpi: WebRpi) =>
+                rpi.navigationDocToPdfRequest(PROJECT_ID, {
+                    segmentId: 1,
+                    line: 1,
+                }),
+        ],
+        [
+            'navigationPdfToDocRequest',
+            (rpi: WebRpi) =>
+                rpi.navigationPdfToDocRequest(PROJECT_ID, {
+                    page: 1,
+                    x: 1,
+                    y: 1,
+                }),
+        ],
+    ])('ожидаемый 410 от %s не идёт в мониторинг', async (_method, call) => {
         respondWith(410);
         const { rpi, observerService } = createRpi();
 
-        const result = await rpi.navigationDocToPdfRequest(PROJECT_ID, {
-            segmentId: 1,
-            line: 1,
-        });
+        const result = await call(rpi);
 
         expect(result.code).toBe(410);
         expect(Sentry.captureException).not.toHaveBeenCalled();

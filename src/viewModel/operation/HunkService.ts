@@ -24,12 +24,15 @@ import {
     ObserverService,
 } from '../../model/service/ObserverService.ts';
 import { trackEvent } from '../utils/observerContext.ts';
+import { HTTP_LOCKED, retryWhileLocked } from '../utils/retryWhileLocked.ts';
 
 /** Чем кончилась пачка DELETE. Отказы разведены: лечатся они по-разному. */
 interface DeleteOutcome {
     failed: number;
     unauth: boolean;
     forbidden: boolean;
+    /** Сервер держит проект и после повторов: прогон агента в другой вкладке */
+    locked: boolean;
 }
 
 export class HunkService {
@@ -201,7 +204,10 @@ export class HunkService {
             await this.loadHunks();
             this.reportAcceptFailure(outcome);
             return (
-                !outcome.unauth && !outcome.forbidden && outcome.failed === 0
+                !outcome.unauth &&
+                !outcome.forbidden &&
+                !outcome.locked &&
+                outcome.failed === 0
             );
         } finally {
             this.unmarkPending(ids);
@@ -250,11 +256,19 @@ export class HunkService {
             failed: 0,
             unauth: false,
             forbidden: false,
+            locked: false,
         };
         for (const id of hunkIds) {
-            const result = await this.deleteHunkOnServer(projectId, id, revert);
+            const result = await retryWhileLocked(() =>
+                this.deleteHunkOnServer(projectId, id, revert)
+            );
             if (result.isOk || result.code === 404) {
                 continue;
+            }
+            if (result.code === HTTP_LOCKED) {
+                // замок держится дольше повторов, остальные запросы пачки упрутся в него же
+                outcome.locked = true;
+                break;
             }
             if (result.isUnauth) {
                 // сессии нет, остальные запросы пачки вернут то же самое
@@ -287,6 +301,13 @@ export class HunkService {
         if (outcome.forbidden) {
             this.repository.toast(
                 this.repository.dictionary.filemanager.errors.notEnoughRights,
+                'error'
+            );
+            return;
+        }
+        if (outcome.locked) {
+            this.repository.toast(
+                this.repository.dictionary.projects.errors.project_busy,
                 'error'
             );
             return;
@@ -483,7 +504,10 @@ export class HunkService {
             await this.refreshAfterRevert();
             this.reportRevertFailure(outcome);
             return (
-                !outcome.unauth && !outcome.forbidden && outcome.failed === 0
+                !outcome.unauth &&
+                !outcome.forbidden &&
+                !outcome.locked &&
+                outcome.failed === 0
             );
         } finally {
             this.unmarkPending(ids);
@@ -538,6 +562,7 @@ export class HunkService {
                 failed: 0,
                 unauth: false,
                 forbidden: false,
+                locked: false,
             };
             while (this.backgroundAcceptQueue.length > 0) {
                 const batch = this.backgroundAcceptQueue.splice(0);
@@ -549,6 +574,7 @@ export class HunkService {
                 total.failed += outcome.failed;
                 total.unauth = total.unauth || outcome.unauth;
                 total.forbidden = total.forbidden || outcome.forbidden;
+                total.locked = total.locked || outcome.locked;
                 // перечитываем внутри круга: пока список ехал, могла прийти новая пачка
                 await this.loadHunks();
             }

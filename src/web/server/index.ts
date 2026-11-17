@@ -321,7 +321,8 @@ export class WebRpi implements Rpi {
     ): Promise<RequestResult<ProgramDocumentPosition>> {
         return this.requestWrapper(
             'navigationPdfToDocRequest',
-            [200, 401, 423],
+            // 410: собранного PDF нет, проект надо собрать заново
+            [200, 401, 410, 423],
             async () =>
                 axios.post(
                     URLS.navigationPdfToDoc.replace('{id}', projectId),
@@ -365,7 +366,8 @@ export class WebRpi implements Rpi {
     ): Promise<RequestResult> {
         return this.requestWrapper(
             'deleteFileRequest',
-            [200, 401, 404],
+            // 423: проект держит другая операция, например прогон агента
+            [200, 401, 404, 423],
             async () =>
                 axios.delete(
                     `${URLS.deleteFile.replace('{id}', projectId)}?name=${name}`
@@ -851,10 +853,11 @@ export class WebRpi implements Rpi {
         hunkId: string,
         revert: boolean
     ): Promise<RequestResult> {
-        // 403 и 404 из спеки намеренно не ожидаем: иначе такие ответы перестанут доходить до Sentry
+        // 403 и 404 из спеки намеренно не ожидаем: иначе такие ответы перестанут доходить до Sentry.
+        // 423 штатный: проект держит сохранение программы или прогон агента
         return this.requestWrapper(
             'deleteHunkRequest',
-            [200, 401],
+            [200, 401, 423],
             () =>
                 axios.delete(
                     URLS.deleteHunk

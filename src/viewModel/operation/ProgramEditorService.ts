@@ -446,23 +446,27 @@ export class ProgramEditorService {
 
         const nextText = segment.text;
         const currentText = view.state.doc.toString();
+        const changes =
+            currentText === nextText
+                ? undefined
+                : view.state.changes({
+                      from: 0,
+                      to: view.state.doc.length,
+                      insert: nextText,
+                  });
+        // Длина документа, а не строки: CodeMirror сводит \r\n и \r к \n, и
+        // курсор в конце текста с такими переводами строк выпадал за документ
+        const docLength = changes ? changes.newLength : view.state.doc.length;
         const cursorOffset = Math.max(
             0,
-            Math.min(cursorHint.cursorOffset, nextText.length)
+            Math.min(cursorHint.cursorOffset, docLength)
         );
         const externalChangeAnnotations = [
             ExternalChange.of(true),
         ] as unknown as Annotation<unknown>[];
 
         view.dispatch({
-            changes:
-                currentText === nextText
-                    ? undefined
-                    : {
-                          from: 0,
-                          to: view.state.doc.length,
-                          insert: nextText,
-                      },
+            changes,
             selection: EditorSelection.cursor(cursorOffset),
             effects: EditorView.scrollIntoView(cursorOffset, {
                 y: 'nearest',
@@ -1001,6 +1005,14 @@ export class ProgramEditorService {
         if (result.code === 423) {
             this.repository.toast(
                 this.repository.dictionary.synctex.errors.locked,
+                'error'
+            );
+            return;
+        }
+        // Собранного PDF нет, как и при переходе в обратную сторону
+        if (result.code === 410) {
+            this.repository.toast(
+                this.repository.dictionary.synctex.errors.missing,
                 'error'
             );
             return;

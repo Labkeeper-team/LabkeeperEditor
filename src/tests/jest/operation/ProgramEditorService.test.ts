@@ -15,6 +15,7 @@ import {
     LabkeeperFile,
     TextOutputSegment,
 } from '../../../model/domain.ts';
+import { EditorState, TransactionSpec } from '@codemirror/state';
 import { InMemoryProgramRepository } from '../../../model/repository/ProgramRepository.ts';
 import { ProgramService } from '../../../model/service/ProgramService.ts';
 import { getIdeSegmentEditorView } from '../../../view/pages/project/editor/ide/segments/ideSegmentEditorView.ts';
@@ -321,6 +322,40 @@ test('synctex pdf-to-editor shows locked error for 423', async () => {
     ).toBeNull();
 });
 
+// Sentry 56c64ea1: сборку вытеснили, а человек щёлкнул по PDF
+test('synctex pdf-to-editor просит собрать проект при 410', async () => {
+    const { startupService, rpi, repository, programEditorService } =
+        mockContext();
+    mockAuthenticatedStartup(rpi);
+    await startupService.onAppStartup();
+
+    repository.projectViewModelRepository.setProjectType('latex');
+    repository.ideViewModelRepository.setPdfClickPosition({
+        page: 1,
+        x: 20,
+        y: 30,
+    });
+    rpi.navigationPdfToDocRequest = jest.fn().mockResolvedValue({
+        code: 410,
+        body: 'Compiled document is missing. Compile it again.',
+        isOk: false,
+        isUnauth: false,
+        isForbidden: false,
+    });
+    const toastSpy = jest.spyOn(repository, 'toast');
+
+    await programEditorService.onSyncPdfToEditor();
+
+    expect(toastSpy).toHaveBeenCalledTimes(1);
+    expect(toastSpy).toHaveBeenCalledWith(
+        repository.dictionary.synctex.errors.missing,
+        'error'
+    );
+    expect(
+        repository.ideViewModelRepository.editorNavigationTarget()
+    ).toBeNull();
+});
+
 test('pdf compilation shows locked error for 423', async () => {
     const { startupService, rpi, repository, projectPageService } =
         mockContext();
@@ -473,49 +508,70 @@ test('pendingSegmentEditorCursor: onPrevVersionButtonClicked устанавли�
     expect(pending?.offset).toBeLessThanOrEqual('hello world'.length);
 });
 
-test('undo: редактор принимает восстановленный текст синхронно сразу после изменений', () => {
-    const { programEditorService, repository } = mockContext();
-    const editedText = 'hello world edited';
-    const restoredText = 'hello world';
-    const view = {
-        state: {
-            doc: {
-                length: editedText.length,
-                toString: () => editedText,
-            },
+/** Редактор сегмента на настоящем состоянии CodeMirror: dispatch его меняет */
+function editorViewOn(text: string) {
+    let state = EditorState.create({ doc: text });
+    return {
+        get state() {
+            return state;
         },
-        dispatch: jest.fn(),
+        dispatch: jest.fn((spec: TransactionSpec) => {
+            state = state.update(spec).state;
+        }),
         focus: jest.fn(),
     };
-    getIdeSegmentEditorViewMock.mockReturnValue(view);
+}
 
-    programEditorService['programService'].addSegmentToLastPosition('md');
-    programEditorService['programService'].changeSegmentTextByPositionIndex(
+function undoInMountedEditor(restoredText: string, editedText: string) {
+    const context = mockContext();
+    const view = editorViewOn(editedText);
+    getIdeSegmentEditorViewMock.mockReturnValue(view);
+    const programService = context.programEditorService['programService'];
+    programService.addSegmentToLastPosition('md');
+    programService.changeSegmentTextByPositionIndex(
         0,
         restoredText,
         restoredText.length
     );
-    programEditorService['programService'].gap();
-    programEditorService['programService'].changeSegmentTextByPositionIndex(
+    programService.gap();
+    programService.changeSegmentTextByPositionIndex(
         0,
         editedText,
         editedText.length
     );
+    return { ...context, view };
+}
+
+test('undo: редактор принимает восстановленный текст синхронно сразу после изменений', () => {
+    const { programEditorService, repository, view } = undoInMountedEditor(
+        'hello world',
+        'hello world edited'
+    );
 
     programEditorService.onPrevVersionButtonClicked();
 
-    expect(view.dispatch).toHaveBeenCalledWith(
-        expect.objectContaining({
-            changes: {
-                from: 0,
-                to: editedText.length,
-                insert: restoredText,
-            },
-        })
-    );
+    expect(view.dispatch).toHaveBeenCalledTimes(1);
+    expect(view.state.doc.toString()).toBe('hello world');
+    expect(view.state.selection.main.head).toBe('hello world'.length);
     expect(
         repository.ideViewModelRepository.pendingSegmentEditorCursor()
     ).toBeNull();
+});
+
+// Sentry db658e54: CodeMirror сводит \r\n к \n, документ короче строки, и
+// курсор в конце восстановленного текста выпадал за документ (RangeError)
+test('undo: текст с переводами строк \\r\\n не уводит курсор за документ', () => {
+    const { programEditorService, view } = undoInMountedEditor(
+        'first\r\nsecond\r\nthird',
+        'first\r\nsecond\r\nthird and more'
+    );
+
+    expect(() =>
+        programEditorService.onPrevVersionButtonClicked()
+    ).not.toThrow();
+
+    expect(view.state.doc.toString()).toBe('first\nsecond\nthird');
+    expect(view.state.selection.main.head).toBe(view.state.doc.length);
 });
 
 test('canUndo/canRedo корректны после серии операций', () => {
