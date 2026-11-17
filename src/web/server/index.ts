@@ -434,16 +434,19 @@ export class WebRpi implements Rpi {
     async getBlogExampleProgramRequest(
         slug: string
     ): Promise<RequestResult<Program>> {
-        return this.requestWrapper(
+        return this.crawlerAware(
             'getBlogExampleProgramRequest',
-            [200, 404],
-            async () =>
-                axios.get(
-                    URLS.blogExampleProgram.replace(
-                        '{slug}',
-                        encodeURIComponent(slug)
+            await this.requestWrapper<Program>(
+                'getBlogExampleProgramRequest',
+                [200, 403, 404],
+                async () =>
+                    axios.get(
+                        URLS.blogExampleProgram.replace(
+                            '{slug}',
+                            encodeURIComponent(slug)
+                        )
                     )
-                )
+            )
         );
     }
 
@@ -700,17 +703,29 @@ export class WebRpi implements Rpi {
     }
 
     async getUserInfoRequest(): Promise<RequestResult<UserInfo>> {
-        // сервер на user-info 403 не отдаёт: его выдумывает браузер краулера, которому
-        // robots.txt закрыл /api/. Это не сбой, но считать такие заходы хотим отдельно
-        const result = await this.requestWrapper<UserInfo>(
+        return this.crawlerAware(
             'getUserInfoRequest',
-            [200, 403],
-            () => axios.get(URLS.UserInfo)
+            await this.requestWrapper<UserInfo>(
+                'getUserInfoRequest',
+                [200, 403],
+                () => axios.get(URLS.UserInfo)
+            )
         );
+    }
+
+    /**
+     * GH-270: на стартовые запросы наш сервер 403 не отдаёт. Его выдумывает
+     * браузер краулера, который исполняет JS, но соблюдает robots.txt с
+     * Disallow: /api/. Это не сбой: в RPI unknown и Sentry такой 403 не идёт,
+     * а в OpenPanel считается событием «Maybe crawler» с названием запроса
+     */
+    private crawlerAware<T>(
+        request: string,
+        result: RequestResult<T>
+    ): RequestResult<T> {
         if (result.isForbidden) {
-            this.observerService.onEvent(Events.EVENT_USER_INFO_FORBIDDEN, {
-                source: 'rpi',
-                operation: 'getUserInfoRequest',
+            this.observerService.onEvent(Events.EVENT_MAYBE_CRAWLER, {
+                request,
             });
         }
         return result;
@@ -735,8 +750,13 @@ export class WebRpi implements Rpi {
     async getBillingPricingRequest(): Promise<
         RequestResult<BillingPricingResponse>
     > {
-        return this.requestWrapper('getBillingPricingRequest', [200], () =>
-            axios.get(URLS.billingPricing)
+        return this.crawlerAware(
+            'getBillingPricingRequest',
+            await this.requestWrapper<BillingPricingResponse>(
+                'getBillingPricingRequest',
+                [200, 403],
+                () => axios.get(URLS.billingPricing)
+            )
         );
     }
 
