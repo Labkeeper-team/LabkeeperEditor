@@ -754,6 +754,42 @@ test('на ноутбуке колонка «Created» видна, а без н�
     await expectTitles(page, ['Конспект', 'Лабораторная 2', 'Лабораторная 10']);
 });
 
+// GH-262: стили просмотра PDF объявляют тёмную схему для всей страницы, и
+// при тёмной теме системы поля окон меток становились тёмными, а текст в них
+// почти не был виден. Стили подгружаются с первым PDF и остаются на странице
+test('при тёмной теме системы поля окна метки остаются светлыми', async ({
+    page,
+}) => {
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await openProjects(page);
+    await page.addStyleTag({
+        path: 'node_modules/pdfjs-dist/legacy/web/pdf_viewer.css',
+    });
+
+    await sidebar(page).getByRole('button', { name: 'New tag' }).click();
+    const modal = page.locator('.tag-edit-modal');
+    const fields = modal.locator('input');
+    await expect(fields.first()).toBeVisible();
+    const looks = await fields.evaluateAll((inputs) =>
+        inputs.map((input) => {
+            const style = getComputedStyle(input);
+            return {
+                type: (input as HTMLInputElement).type,
+                scheme: style.colorScheme,
+                background: style.backgroundColor,
+            };
+        })
+    );
+    expect(looks.length).toBeGreaterThan(1);
+    for (const look of looks) {
+        expect(look.scheme).toBe('light');
+        // флажки браузер рисует сам, у текстовых полей фон белый
+        if (look.type !== 'checkbox') {
+            expect(look.background).toBe('rgb(255, 255, 255)');
+        }
+    }
+});
+
 // GH-261: шапка таблицы залипает и раньше рисовалась поверх раскрытого списка
 test('раскрытый список сортировки лежит поверх шапки таблицы', async ({
     page,
