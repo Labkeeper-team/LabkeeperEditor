@@ -572,7 +572,7 @@ for (const size of [
 const LAYOUTS = [
     { width: 1360, height: 900 },
     { width: 1280, height: 720 },
-    // 768-1024: шелл уменьшен через transform: scale
+    // 768-1023: планшет, своя раскладка без уменьшения (GH-266)
     { width: 900, height: 800 },
     { width: 820, height: 1180 },
     { width: 390, height: 844 },

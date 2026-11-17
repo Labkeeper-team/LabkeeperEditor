@@ -393,17 +393,18 @@ test('handle-hides-when-fine-pointer-goes-away', async ({
     expect(await layoutHeight(page, '.agent-chat__field')).toBe(MIN_HEIGHT);
 });
 
-test('scaled-layout-top-edge-follows-pointer', async ({ page }) => {
+// GH-266: на планшете страница больше не уменьшается целиком, и край поля
+// идёт за указателем один к одному
+test('tablet-layout-top-edge-follows-pointer', async ({ page }) => {
     await page.setViewportSize({ width: 900, height: 700 });
     await openChat(page);
-    const scale = await mobileScale(page);
-    expect(scale).toBeLessThan(1);
+    expect(await mobileScale(page)).toBe(1);
 
     const { endY, during } = await dragSeparator(page, -100);
 
-    expect(Math.abs(during.y - (endY + 2 * scale))).toBeLessThanOrEqual(1.5);
+    expect(Math.abs(during.y - (endY + 2))).toBeLessThanOrEqual(1.5);
     const after = await layoutHeight(page, '.agent-chat__field');
-    expect(Math.abs(after - (MIN_HEIGHT + 100 / scale))).toBeLessThanOrEqual(1);
+    expect(Math.abs(after - (MIN_HEIGHT + 100))).toBeLessThanOrEqual(1);
 });
 
 test('empty-chat-top-edge-follows-pointer', async ({ page }) => {
@@ -415,15 +416,14 @@ test('empty-chat-top-edge-follows-pointer', async ({ page }) => {
     expect(Math.abs(during.y - (endY + 2))).toBeLessThanOrEqual(1.5);
 });
 
-test('empty-chat-scaled-top-edge-follows-pointer', async ({ page }) => {
+test('empty-chat-tablet-top-edge-follows-pointer', async ({ page }) => {
     await page.setViewportSize({ width: 900, height: 700 });
     await openChat(page, { history: [] });
-    const scale = await mobileScale(page);
-    expect(scale).toBeLessThan(1);
+    expect(await mobileScale(page)).toBe(1);
 
     const { endY, during } = await dragSeparator(page, -60);
 
-    expect(Math.abs(during.y - (endY + 2 * scale))).toBeLessThanOrEqual(1.5);
+    expect(Math.abs(during.y - (endY + 2))).toBeLessThanOrEqual(1.5);
 });
 
 test('empty-chat-max-keeps-disclaimer-inside', async ({ page }) => {

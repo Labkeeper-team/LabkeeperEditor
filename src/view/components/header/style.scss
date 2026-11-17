@@ -143,7 +143,9 @@
         transition: opacity 0.2s ease;
     }
 
-    @media screen and (max-width: 767px) {
+    // GH-266: на планшете шапка без уменьшения, и место нужно названию
+    // проекта: как и на телефоне, остаётся число без подписи
+    @media screen and (max-width: 1023px) {
         &__label {
             font-size: 0;
         }
