@@ -33,6 +33,7 @@ import {
     BillingPurchaseResponse,
     BillingPurchasesListResponse,
     BillingPricingResponse,
+    SpeechRecognitionResponse,
     ExportProjectResponse,
     ProjectTagsResponse,
 } from '../../model/rpi';
@@ -44,6 +45,7 @@ import {
 import { logBreadcrumb } from '../../viewModel/utils/logBreadcrumb.ts';
 import { getSessionId, LABKEEPER_SESSION_HEADER } from '../session.ts';
 import { getRequestLanguage } from '../requestLanguage.ts';
+import { VoiceRecording } from '../../model/voice.ts';
 
 function withRequestHeaders(
     config: InternalAxiosRequestConfig
@@ -107,6 +109,7 @@ const RPI_SOURCES: Record<keyof Rpi, string> = {
     acceptPrivacyPolicyRequest: 'user',
     acceptCrossBorderDataTransferPolicyRequest: 'user',
     getBillingPricingRequest: 'billing',
+    recognizeSpeechRequest: 'speech',
     createBillingPurchaseRequest: 'billing',
     listBillingPurchasesRequest: 'billing',
     getS3FileRequest: 'file',
@@ -904,6 +907,35 @@ export class WebRpi implements Rpi {
             [200, 401],
             () => axios.delete(URLS.agentHistory.replace('{id}', projectId)),
             projectId
+        );
+    }
+
+    async recognizeSpeechRequest(
+        recording: VoiceRecording,
+        lang: string
+    ): Promise<RequestResult<SpeechRecognitionResponse>> {
+        const formData = new FormData();
+        formData.append(
+            'file',
+            recording.audio,
+            recording.format === 'oggopus' ? 'voice.ogg' : 'voice.pcm'
+        );
+        // 400 плохая запись, 402 мало токенов, 413 больше 1 МБ, 503 распознавание выключено
+        return this.requestWrapper(
+            'recognizeSpeechRequest',
+            [200, 400, 401, 402, 413, 503],
+            () =>
+                axios.post(URLS.speechRecognize, formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                    params: {
+                        format: recording.format,
+                        // частоту сервер спрашивает только у PCM
+                        ...(recording.format === 'lpcm'
+                            ? { sampleRateHertz: recording.sampleRateHertz }
+                            : {}),
+                        lang,
+                    },
+                })
         );
     }
 }

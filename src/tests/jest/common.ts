@@ -17,6 +17,7 @@ import {
 } from '../../model/rpi/agentSocket.ts';
 import { Hunk, LabkeeperFile, Program } from '../../model/domain.ts';
 import { LOCK_RETRY_DELAYS_MS } from '../../viewModel/utils/retryWhileLocked.ts';
+import { VoiceRecorder, VoiceRecording } from '../../model/voice.ts';
 
 export const USER_ID = 111;
 export const USER_EMAIL = 'a@gmail.com';
@@ -81,17 +82,47 @@ export const mockAgentSocket = () => {
     return { socket, state };
 };
 
+/** Микрофон для опытов: что запишется и как откажет, задаёт сам опыт */
+export class FakeVoiceRecorder implements VoiceRecorder {
+    supported = true;
+    startError: Error | null = null;
+    recording: VoiceRecording = {
+        audio: new Blob([]),
+        format: 'lpcm',
+        sampleRateHertz: 16000,
+        durationMs: 0,
+    };
+
+    isSupported() {
+        return this.supported;
+    }
+
+    async start() {
+        if (this.startError) {
+            throw this.startError;
+        }
+    }
+
+    async stop() {
+        return this.recording;
+    }
+
+    cancel() {}
+}
+
 export const mockContext = () => {
     const mvs = mockViewModelState();
     const rpi: Rpi = mockRpi();
     const observerService: ObserverService = mockObserver();
     const agent = mockAgentSocket();
+    const voiceRecorder = new FakeVoiceRecorder();
 
     return {
-        ...setupContext(rpi, mvs, observerService, agent.socket),
+        ...setupContext(rpi, mvs, observerService, agent.socket, voiceRecorder),
         agentSocket: agent.socket,
         agentSocketState: agent.state,
         observerService,
+        voiceRecorder,
     };
 };
 

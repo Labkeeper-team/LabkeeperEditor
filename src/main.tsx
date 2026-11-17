@@ -14,6 +14,7 @@ import { OpenPanelService } from './web/openpanel';
 import { CompositeObserver } from './model/service/ObserverService.ts';
 import { WebRpi } from './web/server';
 import { WebAgentSocket } from './web/server/agentSocket.ts';
+import { WebVoiceRecorder } from './web/voice/webVoiceRecorder.ts';
 import { reactRootErrorOptions, sentryOptions } from './web/sentry/hooks.ts';
 
 const openPanelService = new OpenPanelService();
@@ -32,7 +33,8 @@ export const { controller } = setupContext(
     new WebRpi(observerService),
     createViewModelStateFromStore(store),
     observerService,
-    new WebAgentSocket()
+    new WebAgentSocket(),
+    new WebVoiceRecorder()
 );
 
 createRoot(document.getElementById('root')!, reactRootErrorOptions()).render(

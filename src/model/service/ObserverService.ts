@@ -20,6 +20,10 @@ export const Events = {
     EVENT_AGENT_STARTED: 'agent_started',
     EVENT_AGENT_FINISHED: 'agent_finished',
     EVENT_AGENT_TIMEOUT: 'agent_timeout',
+    // GH-271: голосовой ввод в поле агента
+    EVENT_VOICE_INPUT_STARTED: 'voice_input_started',
+    EVENT_VOICE_INPUT_RECOGNIZED: 'voice_input_recognized',
+    EVENT_VOICE_INPUT_FAILED: 'voice_input_failed',
     FRONTEND_ERROR: 'frontend_error',
     EVENT_RPI_UNKNOWN: 'rpi_unknown',
     // GH-270: стартовый запрос ответил 403. Наш сервер на них 403 не отдаёт: это
@@ -170,6 +174,9 @@ export const OPENPANEL_EVENT_NAMES: Record<string, string> = {
     [Events.EVENT_AGENT_STARTED]: 'Agent started',
     [Events.EVENT_AGENT_FINISHED]: 'Agent finished',
     [Events.EVENT_AGENT_TIMEOUT]: 'Agent timeout',
+    [Events.EVENT_VOICE_INPUT_STARTED]: 'Voice input started',
+    [Events.EVENT_VOICE_INPUT_RECOGNIZED]: 'Voice input recognized',
+    [Events.EVENT_VOICE_INPUT_FAILED]: 'Voice input failed',
     [Events.FRONTEND_ERROR]: 'Frontend error',
     [Events.EVENT_RPI_UNKNOWN]: 'RPI unknown',
     [Events.EVENT_MAYBE_CRAWLER]: 'Maybe crawler',

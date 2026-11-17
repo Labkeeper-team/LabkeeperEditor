@@ -27,7 +27,7 @@ import {
     UserInfo,
 } from '../../model/domain.ts';
 import { setupContext } from '../../viewModel/context.ts';
-import { mockAgentSocket } from './common.ts';
+import { FakeVoiceRecorder, mockAgentSocket } from './common.ts';
 import {
     mockObserver,
     ObserverService,
@@ -46,7 +46,13 @@ const mockContext = () => {
     const rpi: Rpi = mockRpi();
     const observerService: ObserverService = mockObserver();
 
-    return setupContext(rpi, mvs, observerService, mockAgentSocket().socket);
+    return setupContext(
+        rpi,
+        mvs,
+        observerService,
+        mockAgentSocket().socket,
+        new FakeVoiceRecorder()
+    );
 };
 
 // Создает дефолтный пустой проект

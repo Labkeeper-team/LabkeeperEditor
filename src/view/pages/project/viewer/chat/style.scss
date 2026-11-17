@@ -869,6 +869,83 @@ body.agent-chat-resizing {
     }
 }
 
+// GH-271: голосовой ввод. Кнопка крупная, под палец; во время записи она
+// красная и показывает время, чтобы было видно, что микрофон слушает
+.agent-voice {
+    flex-shrink: 0;
+    align-self: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-width: 44px;
+    height: 44px;
+    box-sizing: border-box;
+    padding: 0 12px;
+    border: 1px solid $gray-50;
+    border-radius: 22px;
+    background: $white;
+    color: $gray-20;
+    font-size: 13px;
+    line-height: 16px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+        background: $gray-60;
+    }
+
+    &:focus-visible {
+        outline: 2px solid $blue-10;
+        outline-offset: 2px;
+    }
+
+    &:disabled {
+        cursor: default;
+    }
+
+    &--recording {
+        border-color: $red-30;
+        background: $red-30;
+        color: $white;
+        animation: agent-voice-pulse 1.6s ease-in-out infinite;
+
+        &:hover:not(:disabled) {
+            background: $red-10;
+        }
+    }
+
+    &__spinner {
+        width: 16px;
+        height: 16px;
+        box-sizing: border-box;
+        border: 2px solid $gray-50;
+        border-top-color: $blue-10;
+        border-radius: 50%;
+        animation: agent-voice-spin 0.8s linear infinite;
+    }
+}
+
+@keyframes agent-voice-pulse {
+    50% {
+        box-shadow: 0 0 0 4px rgba($red-30, 0.25);
+    }
+}
+
+@keyframes agent-voice-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .agent-voice--recording,
+    .agent-voice__spinner {
+        animation: none;
+    }
+}
+
 // режим, настройки и отправка прижаты вправо, размер контекста остаётся слева
 .agent-chat__mode {
     margin-left: auto;
@@ -1198,6 +1275,23 @@ body.agent-chat-resizing {
     // ниже 16px айфон зумит страницу при фокусе, и тап по полю дёргал бы весь экран
     .agent-chat__input .cm-content {
         font-size: 16px;
+        // текст не уходит под кнопку микрофона в углу поля
+        padding-right: 48px;
+    }
+
+    // GH-271: в ряду кнопок на телефоне места нет, отправка уехала бы на
+    // вторую строку. Микрофон стоит в углу поля, как в мессенджерах
+    .agent-voice {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        z-index: 1;
+    }
+
+    .agent-chat__field:has(.agent-voice--recording)
+        .agent-chat__input
+        .cm-content {
+        padding-right: 120px;
     }
 
     // строка в 18px мала для пальца: зона нажатия как у остальных кнопок на телефоне
@@ -1256,5 +1350,10 @@ body.agent-chat-resizing {
     .agent-chat__submit {
         width: 44px;
         height: 44px;
+    }
+
+    // в 320px пределу записи в ряду места нет, остаётся прошедшее время
+    .agent-voice__limit {
+        display: none;
     }
 }

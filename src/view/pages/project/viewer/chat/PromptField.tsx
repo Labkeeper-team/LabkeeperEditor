@@ -14,6 +14,7 @@ import { useHasFinePointer } from '../../../../hooks/useFinePointer';
 import { setAgentPromptHeight } from '../../../../store/slices/persistence';
 import { usePromptFieldResize } from './usePromptFieldResize.ts';
 import { AgentSettings } from './AgentSettings.tsx';
+import { VoiceButton } from './VoiceButton.tsx';
 
 const FIELD_ID = 'agent-chat-field';
 
@@ -201,6 +202,7 @@ export const PromptField = ({ isEmpty }: { isEmpty: boolean }) => {
                     controlsRef={controlsRef}
                     isRunning={isRunning}
                 />
+                <VoiceButton />
                 {/* пока агент работает, та же круглая кнопка прерывает прогон */}
                 {isRunning ? (
                     <button

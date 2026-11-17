@@ -36,6 +36,7 @@ import {
     PendingSegmentEditorCursor,
     SaveProjectRequestState,
     TemplatesRequestState,
+    VoiceInputState,
 } from '../../../viewModel/repository';
 import { createEmptyProgram } from '../../../model/repository/ProgramRepository.ts';
 import {
@@ -214,6 +215,8 @@ export interface ChatState {
     historySyncing: boolean;
     /** Какое действие рамки отката сейчас идёт: на его кнопке загрузка, обе кнопки выключены */
     checkpointAction: 'accept' | 'revert' | null;
+    /** GH-271: голосовой ввод в поле агента */
+    voice: VoiceInputState;
 }
 
 export const authInitialState: AuthState = {
@@ -306,6 +309,7 @@ export const chatInitialState: ChatState = {
     checkpointBase: null,
     historySyncing: false,
     checkpointAction: null,
+    voice: { stage: 'idle' },
 };
 
 export const projectInitialState: ProjectState = {

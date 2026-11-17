@@ -379,6 +379,25 @@ export interface Translations {
         document: string;
     };
     agent_chat: {
+        voice: {
+            start: string;
+            stop: string;
+            recognizing: string;
+            /** ${seconds} предел записи, ${cost} цена каждых начатых 15 секунд */
+            price_hint: string;
+            errors: {
+                denied: string;
+                no_microphone: string;
+                unsupported: string;
+                failed: string;
+                too_short: string;
+                nothing_heard: string;
+                not_recognized: string;
+                no_tokens: string;
+                too_long: string;
+                unavailable: string;
+            };
+        };
         tab_label: string;
         // вкладка результата: человеку важен документ, а не его формат
         pdf_tab_label: string;

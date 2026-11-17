@@ -9,6 +9,7 @@ import {
     LABKEEPER_SESSION_HEADER,
 } from '../../../web/session.ts';
 import { setRequestLanguage } from '../../../web/requestLanguage.ts';
+import { VoiceRecording } from '../../../model/voice.ts';
 
 const createRpi = () => {
     const observerService = {
@@ -65,6 +66,7 @@ jest.mock('../../../constants.ts', () => ({
         Password: '/api/v4/public/password',
         Contact: '/api/v4/public/contact',
         billingPricing: '/api/v4/public/billing/pricing',
+        speechRecognize: '/api/v4/public/speech/recognize',
         billingPurchases: '/api/v4/public/billing/purchases',
         FormLogin: '/api/v4/sec/formlogin',
         OauthCode: '/api/v4/sec/login/oauth2/code',
@@ -98,6 +100,13 @@ const attachSessionHeader = (axios.interceptors.request.use as jest.Mock).mock
 };
 
 const PROJECT_ID = 'project-id';
+
+const PCM_RECORDING: VoiceRecording = {
+    audio: new Blob([new Uint8Array(32)]),
+    format: 'lpcm',
+    sampleRateHertz: 16000,
+    durationMs: 1000,
+};
 const program: Program = {
     segments: [],
     parameters: { roundStrategy: 'noRound' },
@@ -380,6 +389,13 @@ const RPI_CASES: RpiCase[] = [
         call: (rpi) => rpi.acceptCrossBorderDataTransferPolicyRequest(),
     },
     {
+        method: 'recognizeSpeechRequest',
+        source: 'speech',
+        scoped: false,
+        expects423: false,
+        call: (rpi) => rpi.recognizeSpeechRequest(PCM_RECORDING, 'ru-RU'),
+    },
+    {
         method: 'getBillingPricingRequest',
         source: 'billing',
         scoped: false,
@@ -488,6 +504,65 @@ describe('WebRpi', () => {
     beforeEach(() => {
         jest.clearAllMocks();
     });
+
+    // GH-271: запись уходит файлом, формат и язык в параметрах (спека, recognizeSpeech)
+    test.each([
+        [
+            'lpcm',
+            PCM_RECORDING,
+            { format: 'lpcm', sampleRateHertz: 16000, lang: 'en-US' },
+            'voice.pcm',
+        ],
+        [
+            'oggopus',
+            {
+                audio: new Blob([new Uint8Array(32)], { type: 'audio/ogg' }),
+                format: 'oggopus',
+                durationMs: 1000,
+            } as VoiceRecording,
+            // частоту сервер спрашивает только у PCM
+            { format: 'oggopus', lang: 'en-US' },
+            'voice.ogg',
+        ],
+    ])(
+        'recognizeSpeechRequest sends a %s recording as a file',
+        async (_format, recording, params, fileName) => {
+            const postMock = axios.post as jest.Mock;
+            postMock.mockResolvedValue({ status: 200, data: { text: 'hi' } });
+            const { rpi } = createRpi();
+
+            const result = await rpi.recognizeSpeechRequest(recording, 'en-US');
+
+            expect(result.body).toEqual({ text: 'hi' });
+            const [url, body, config] = postMock.mock.calls[0];
+            expect(url).toBe('/api/v4/public/speech/recognize');
+            expect(config.params).toEqual(params);
+            const file = (body as FormData).get('file') as File;
+            expect(file.name).toBe(fileName);
+            expect(file.size).toBe(32);
+        }
+    );
+
+    // 402 и прочие ответы из спеки объясняются человеку, в мониторинг они не идут
+    test.each([400, 402, 413, 503])(
+        'expected %i from recognizeSpeechRequest does not go to Sentry',
+        async (code) => {
+            respondWith(code);
+            const { rpi, observerService } = createRpi();
+
+            const result = await rpi.recognizeSpeechRequest(
+                PCM_RECORDING,
+                'ru-RU'
+            );
+
+            expect(result.code).toBe(code);
+            expect(Sentry.captureException).not.toHaveBeenCalled();
+            expect(observerService.onEvent).not.toHaveBeenCalledWith(
+                Events.EVENT_RPI_UNKNOWN,
+                expect.anything()
+            );
+        }
+    );
 
     // POST /project/{id}/tags заменяет список целиком: тело это { tags }
     test('setProjectTagsRequest posts the whole list to the project tags', async () => {

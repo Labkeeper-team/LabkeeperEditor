@@ -419,6 +419,31 @@ export const zh: Translations = {
         document: '\u6700\u7EC8\u6587\u6863',
     },
     agent_chat: {
+        // GH-271: голосовой ввод в поле агента
+        voice: {
+            start: '\u8BED\u97F3\u8F93\u5165',
+            stop: '\u505C\u6B62\u5F55\u97F3\u5E76\u8BC6\u522B',
+            recognizing: '\u6B63\u5728\u8BC6\u522B\u8BED\u97F3\u2026',
+            price_hint:
+                '\u6700\u957F ${seconds} \u79D2\uFF0C\u6BCF\u5F00\u59CB 15 \u79D2\u6536\u53D6 ${cost} \u4E2A\u4EE3\u5E01',
+            errors: {
+                denied: '\u65E0\u6CD5\u8BBF\u95EE\u9EA6\u514B\u98CE\u3002\u8BF7\u5728\u6D4F\u89C8\u5668\u8BBE\u7F6E\u4E2D\u5141\u8BB8\u8BBF\u95EE',
+                no_microphone: '\u672A\u627E\u5230\u9EA6\u514B\u98CE',
+                unsupported: '\u6B64\u6D4F\u89C8\u5668\u65E0\u6CD5\u5F55\u97F3',
+                failed: '\u65E0\u6CD5\u5F55\u5236\u6216\u8BC6\u522B\u8BED\u97F3\uFF0C\u8BF7\u91CD\u8BD5',
+                too_short: '\u5F55\u97F3\u592A\u77ED',
+                nothing_heard:
+                    '\u5F55\u97F3\u4E2D\u6CA1\u6709\u8BC6\u522B\u5230\u5185\u5BB9',
+                not_recognized:
+                    '\u65E0\u6CD5\u8BC6\u522B\u5F55\u97F3\uFF0C\u8BF7\u91CD\u8BD5',
+                no_tokens:
+                    '\u4EE3\u5E01\u4E0D\u8DB3\uFF0C\u65E0\u6CD5\u8FDB\u884C\u8BED\u97F3\u8BC6\u522B',
+                too_long:
+                    '\u5F55\u97F3\u592A\u957F\uFF0C\u65E0\u6CD5\u8BC6\u522B',
+                unavailable:
+                    '\u8BED\u97F3\u8BC6\u522B\u6682\u65F6\u4E0D\u53EF\u7528',
+            },
+        },
         tab_label: 'AI \u667A\u80FD\u4F53',
         pdf_tab_label: '\u6700\u7EC8\u6587\u6863',
         placeholder: '\u8F93\u5165\u4F60\u7684\u63D0\u793A\u8BCD',

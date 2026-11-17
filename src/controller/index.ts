@@ -32,6 +32,7 @@ import { TokenPageService } from '../viewModel/operation/TokenPageService.ts';
 import { HunkService } from '../viewModel/operation/HunkService.ts';
 import { AgentChatService } from '../viewModel/operation/AgentChatService.ts';
 import { AgentFilesService } from '../viewModel/operation/AgentFilesService.ts';
+import { VoiceInputService } from '../viewModel/operation/VoiceInputService.ts';
 import { logBreadcrumb } from '../viewModel/utils/logBreadcrumb.ts';
 import { trackEvent } from '../viewModel/utils/observerContext.ts';
 
@@ -48,6 +49,7 @@ export class Controller {
     hunkService: HunkService;
     agentChatService: AgentChatService;
     agentFilesService: AgentFilesService;
+    voiceInputService: VoiceInputService;
 
     constructor(
         authService: AuthService,
@@ -61,7 +63,8 @@ export class Controller {
         observerService: ObserverService,
         hunkService: HunkService,
         agentChatService: AgentChatService,
-        agentFilesService: AgentFilesService
+        agentFilesService: AgentFilesService,
+        voiceInputService: VoiceInputService
     ) {
         this.observerService = observerService;
         this.authService = authService;
@@ -75,6 +78,7 @@ export class Controller {
         this.hunkService = hunkService;
         this.agentChatService = agentChatService;
         this.agentFilesService = agentFilesService;
+        this.voiceInputService = voiceInputService;
     }
 
     onFormLoginClickedRequest = createAsyncThunk(
@@ -1066,6 +1070,23 @@ export class Controller {
             );
         }
     );
+
+    /** GH-271: кнопка микрофона в поле агента начинает и заканчивает запись */
+    onVoiceButtonClickedRequest = createAsyncThunk(
+        'onVoiceButtonClicked',
+        async () => {
+            await this.wrapper('onVoiceButtonClicked', () =>
+                this.voiceInputService.onVoiceButtonClicked()
+            );
+        }
+    );
+
+    /** Поле агента ушло с экрана: запись бросается, микрофон освобождается */
+    onVoiceCancelledRequest = createAsyncThunk('onVoiceCancelled', async () => {
+        await this.wrapper('onVoiceCancelled', () =>
+            this.voiceInputService.onVoiceCancelled()
+        );
+    });
 
     onAgentAbortRequest = createAsyncThunk('onAgentAbort', async () => {
         await this.wrapper('onAgentAbort', () =>

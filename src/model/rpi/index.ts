@@ -12,6 +12,7 @@ import {
     ProjectType,
     UserInfo,
 } from '../domain.ts';
+import { VoiceRecording } from '../voice.ts';
 
 export interface RequestResult<T = object> {
     body: T;
@@ -75,6 +76,15 @@ export interface ServicePrices {
     latexCompilationTokenCostPerSecond: number;
     markdownCompilationTokenCostPerSecond: number;
     gptTextPromptTokenCost: number;
+    /** GH-271: цена каждых начатых 15 секунд распознавания речи */
+    speechRecognitionTokenCostPer15Seconds: number;
+    /** Самая длинная запись, которую примет распознавание, не больше 30 секунд */
+    speechRecognitionMaxDurationSeconds: number;
+}
+
+/** Распознанный текст; пустой, если в записи ничего не сказано */
+export interface SpeechRecognitionResponse {
+    text: string;
 }
 
 export interface TokenPrice {
@@ -328,6 +338,12 @@ export interface Rpi {
         size?: number;
         status?: BillingPurchaseResponse['status'];
     }): Promise<RequestResult<BillingPurchasesListResponse>>;
+
+    /** GH-271: запись голоса в текст; lang вроде ru-RU */
+    recognizeSpeechRequest(
+        recording: VoiceRecording,
+        lang: string
+    ): Promise<RequestResult<SpeechRecognitionResponse>>;
 }
 
 export const mockRpi = (): Rpi => {
@@ -437,6 +453,9 @@ export const mockRpi = (): Rpi => {
             throw new Error('Not implemented');
         },
         listBillingPurchasesRequest: () => {
+            throw new Error('Not implemented');
+        },
+        recognizeSpeechRequest: () => {
             throw new Error('Not implemented');
         },
         listHunksRequest: () => {
