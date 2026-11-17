@@ -817,6 +817,7 @@ export const en: Translations = {
             rename_folder_failed: 'Could not rename folder. Please try again',
             folder_locked:
                 'The folder is busy with another operation. Please try again shortly',
+            delete_file_failed: 'Could not delete the file. Please try again',
             upload_failed: 'Could not upload file. Please try again',
         },
     },

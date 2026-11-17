@@ -897,6 +897,8 @@ export const zh: Translations = {
                 '\u65E0\u6CD5\u91CD\u547D\u540D\u6587\u4EF6\u5939\uFF0C\u8BF7\u91CD\u8BD5',
             folder_locked:
                 '\u8BE5\u6587\u4EF6\u5939\u6B63\u5728\u6267\u884C\u5176\u4ED6\u64CD\u4F5C\uFF0C\u8BF7\u7A0D\u540E\u91CD\u8BD5',
+            delete_file_failed:
+                '\u65E0\u6CD5\u5220\u9664\u6587\u4EF6\uFF0C\u8BF7\u91CD\u8BD5',
             upload_failed:
                 '\u65E0\u6CD5\u4E0A\u4F20\u6587\u4EF6\uFF0C\u8BF7\u91CD\u8BD5',
         },

@@ -739,6 +739,7 @@ export interface Translations {
             rename_file_failed: string;
             rename_folder_failed: string;
             folder_locked: string;
+            delete_file_failed: string;
             upload_failed: string;
         };
     };

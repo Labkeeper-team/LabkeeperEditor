@@ -16,6 +16,7 @@ import {
     ObserverService,
 } from '../../model/service/ObserverService.ts';
 import { fileExtension, trackEvent } from '../utils/observerContext.ts';
+import { HTTP_LOCKED, retryWhileLocked } from '../utils/retryWhileLocked.ts';
 
 /** Как файл попал в проект: выбор в окне, бросок или вставка из буфера (GH-244) */
 export type FileUploadMethod = 'picker' | 'drop' | 'paste';
@@ -646,9 +647,9 @@ export class FileManagerService {
         this.repository.ideViewModelRepository.setGetFilesRequestState(
             'loading'
         );
-        const result = await this.rpi.deleteFileRequest(
-            fileName,
-            project.projectId
+        // 423: проект держит сохранение программы или прогон агента
+        const result = await retryWhileLocked(() =>
+            this.rpi.deleteFileRequest(fileName, project.projectId)
         );
         if (result.isUnauth) {
             this.repository.toast(
@@ -658,15 +659,26 @@ export class FileManagerService {
             this.ideService.resetEditor();
             this.restoreFilesReadyState();
         }
-        if (result.isOk) {
-            this.track(Events.EVENT_FILE_DELETED, {
-                count: 1,
-                ext: fileExtension(fileName),
-            });
+        // 404: файла уже нет, например его удалили в другой вкладке
+        if (result.isOk || result.code === 404) {
+            if (result.isOk) {
+                this.track(Events.EVENT_FILE_DELETED, {
+                    count: 1,
+                    ext: fileExtension(fileName),
+                });
+            }
             this.textFileEditorService.onOpenFileDeleted(fileName);
             await this.loaderService.loadFiles(project.projectId);
         } else if (!result.isUnauth) {
+            // раньше отказ проходил молча: файл оставался, а человек не знал почему
             this.restoreFilesReadyState();
+            this.repository.toast(
+                result.code === HTTP_LOCKED
+                    ? this.repository.dictionary.projects.errors.project_busy
+                    : this.repository.dictionary.filemanager.errors
+                          .delete_file_failed,
+                'error'
+            );
         }
     };
 
@@ -688,11 +700,21 @@ export class FileManagerService {
         this.repository.ideViewModelRepository.setGetFilesRequestState(
             'loading'
         );
+        let deleted = 0;
+        let failed = false;
         for (const file of files) {
-            const result = await this.rpi.deleteFileRequest(
-                file.fileName,
-                project.projectId
+            // 423: проект держит сохранение программы или прогон агента
+            const result = await retryWhileLocked(() =>
+                this.rpi.deleteFileRequest(file.fileName, project.projectId)
             );
+            if (result.code === HTTP_LOCKED) {
+                // часть файлов могла уже удалиться: список берём с сервера
+                this.repository.toast(
+                    this.repository.dictionary.projects.errors.project_busy,
+                    'error'
+                );
+                break;
+            }
             if (result.isUnauth) {
                 this.repository.toast(
                     this.repository.dictionary.filemanager.errors
@@ -718,10 +740,23 @@ export class FileManagerService {
                 return;
             }
             if (result.isOk) {
+                deleted++;
                 this.textFileEditorService.onOpenFileDeleted(file.fileName);
+            } else {
+                failed = true;
             }
         }
-        this.track(Events.EVENT_FILE_DELETED, { count: files.length });
+        // раньше отказ сервера проходил молча, а в аналитику шли все файлы
+        if (failed) {
+            this.repository.toast(
+                this.repository.dictionary.filemanager.errors
+                    .delete_file_failed,
+                'error'
+            );
+        }
+        if (deleted) {
+            this.track(Events.EVENT_FILE_DELETED, { count: deleted });
+        }
         await this.loaderService.loadFiles(project.projectId);
         this.repository.settingsViewModelRepository.setFilesToDelete([]);
     };

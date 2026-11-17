@@ -9,6 +9,7 @@ import {
     PROJECT_ID,
     USER_EMAIL,
     USER_ID,
+    withoutLockPauses,
 } from '../common.ts';
 import { en } from '../../../viewModel/dictionaries/en.ts';
 import { MockViewModelRepository } from '../../../viewModel/repository';
@@ -579,6 +580,47 @@ test('403 on DELETE reports lost access instead of a retry', async () => {
     expect(toasts(repository)).toEqual([
         { message: en.filemanager.errors.notEnoughRights, type: 'error' },
     ]);
+});
+
+// Sentry b70c26b7: приём правки ушёл рядом с сохранением программы, и сервер
+// ответил 423, пока держал проект под ним. Такой замок снимается быстро
+test('423 on DELETE is retried while the project is held for a moment', async () => {
+    const { hunkService, rpi, repository } = mockContext();
+    setOwnAuthenticatedProject(repository);
+    repository.ideViewModelRepository.setHunks(threeHunks);
+    mockListHunksRequestWithHunks(rpi, []);
+    let lockedOnce = false;
+    rpi.deleteHunkRequest = jest.fn(
+        async (_projectId: string, hunkId: string) => {
+            if (hunkId === 'h1' && !lockedOnce) {
+                lockedOnce = true;
+                return deleteResult(423);
+            }
+            return deleteResult(200);
+        }
+    );
+
+    await withoutLockPauses(() => hunkService.acceptAll());
+
+    expect(toasts(repository)).toEqual([]);
+    expect(rpi.deleteHunkRequest).toHaveBeenCalledTimes(4);
+});
+
+// Sentry f7dfe9d7: проект держит прогон агента, и повторы его не переждали
+test('423 that outlasts the retries reports a busy project and stops the batch', async () => {
+    const { hunkService, rpi, repository } = mockContext();
+    setOwnAuthenticatedProject(repository);
+    repository.ideViewModelRepository.setHunks(threeHunks);
+    rpi.deleteHunkRequest = jest.fn(async () => deleteResult(423));
+    rpi.listHunksRequest = jest.fn(async () => hunkListResult(threeHunks));
+
+    await withoutLockPauses(() => hunkService.acceptAll());
+
+    expect(toasts(repository)).toEqual([
+        { message: en.projects.errors.project_busy, type: 'error' },
+    ]);
+    // запрос и два повтора для первой правки, остальные упёрлись бы в тот же замок
+    expect(rpi.deleteHunkRequest).toHaveBeenCalledTimes(3);
 });
 
 // GH-179: агент вернул прежний текст поверх непринятой правки

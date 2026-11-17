@@ -16,6 +16,7 @@ import {
     AgentSocket,
 } from '../../model/rpi/agentSocket.ts';
 import { Hunk, LabkeeperFile, Program } from '../../model/domain.ts';
+import { LOCK_RETRY_DELAYS_MS } from '../../viewModel/utils/retryWhileLocked.ts';
 
 export const USER_ID = 111;
 export const USER_EMAIL = 'a@gmail.com';
@@ -271,4 +272,21 @@ export function mockAuthenticatedStartup(rpi: Rpi) {
     mockGetAllProjectsRequestWithDefaultProject(rpi);
     mockListFilesRequestWithDefaultFile(rpi);
     mockListHunksRequestWithHunks(rpi);
+}
+
+/**
+ * Действие с повторами запросов при 423 (retryWhileLocked) без настоящих
+ * пауз между ними: часы подменяются только на время действия
+ */
+export async function withoutLockPauses<T>(run: () => Promise<T>): Promise<T> {
+    jest.useFakeTimers();
+    try {
+        const running = run();
+        await jest.advanceTimersByTimeAsync(
+            LOCK_RETRY_DELAYS_MS.reduce((sum, delay) => sum + delay, 0) + 1
+        );
+        return await running;
+    } finally {
+        jest.useRealTimers();
+    }
 }
