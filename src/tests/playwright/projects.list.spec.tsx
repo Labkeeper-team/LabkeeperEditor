@@ -754,6 +754,73 @@ test('на ноутбуке колонка «Created» видна, а без н�
     await expectTitles(page, ['Конспект', 'Лабораторная 2', 'Лабораторная 10']);
 });
 
+// GH-261: шапка таблицы залипает и раньше рисовалась поверх раскрытого списка
+test('раскрытый список сортировки лежит поверх шапки таблицы', async ({
+    page,
+}) => {
+    // раскрытие списка анимировано обрезкой, без анимации он виден сразу целиком
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.setViewportSize({ width: 1200, height: 800 });
+    await openProjects(page);
+    const sortList = page.locator('.projects-mobile-sort--desktop');
+    await sortList.locator('.select-header').click();
+
+    // каждый пункт виден сам, а не заслонён ячейкой шапки
+    const options = sortList.locator(
+        '.select-options:not(.select-width-measurer) li'
+    );
+    await expect(options.first()).toBeVisible();
+    const hidden = await options.evaluateAll((items) =>
+        items
+            .filter((item) => {
+                const box = item.getBoundingClientRect();
+                const top = document.elementFromPoint(
+                    box.left + box.width / 2,
+                    box.top + box.height / 2
+                );
+                return !top || !item.contains(top);
+            })
+            .map((item) => item.textContent)
+    );
+    expect(hidden).toEqual([]);
+});
+
+// GH-261: после смены сортировки виден её первый проект
+test('смена сортировки возвращает список к началу', async ({ page }) => {
+    const many = Array.from({ length: 40 }, (_, index) => ({
+        ...PROJECTS[index % PROJECTS.length],
+        projectId: `00000000-0000-4000-8000-${String(index + 100).padStart(12, '0')}`,
+        title: `Проект ${index + 1}`,
+        lastModified: new Date(Date.UTC(2025, 0, index + 1)).toISOString(),
+    }));
+    await page.setViewportSize({ width: 1200, height: 700 });
+    await openProjects(page, many);
+    const list = page.locator('.projects-list-wrapper');
+    // Chrome держит прокрутку за видимую строку и иногда сам уводит список к
+    // началу вслед за ней; в Safari такой привязки нет. Без неё видно, что
+    // делает сама страница
+    await list.evaluate((element) => {
+        element.style.overflowAnchor = 'none';
+        element.scrollTop = element.scrollHeight;
+    });
+    await expect
+        .poll(() => list.evaluate((element) => element.scrollTop))
+        .toBeGreaterThan(0);
+
+    // щелчок без докрутки: click() сам прокрутил бы список к залипшей шапке
+    await page
+        .locator('thead .projects-sort-button')
+        .first()
+        .dispatchEvent('click');
+
+    await expect(
+        page.locator('tbody tr .project-title-text').first()
+    ).toHaveText('Проект 1');
+    await expect
+        .poll(() => list.evaluate((element) => element.scrollTop))
+        .toBe(0);
+});
+
 test('по-русски стрелка сортировки по дате видна целиком', async ({ page }) => {
     await inRussian(page);
     await openProjects(page);
