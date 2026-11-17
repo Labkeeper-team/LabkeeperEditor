@@ -29,12 +29,15 @@ import { AgentChatService } from './operation/AgentChatService.ts';
 import { AgentFilesService } from './operation/AgentFilesService.ts';
 import { AgentEventService } from './domain/AgentEventService.ts';
 import { EditingLockService } from './domain/EditingLockService.ts';
+import { VoiceInputService } from './operation/VoiceInputService.ts';
+import { VoiceRecorder } from '../model/voice.ts';
 
 export function setupContext(
     rpi: Rpi,
     repository: ViewModelRepository,
     observerService: ObserverService,
-    agentSocket: AgentSocket
+    agentSocket: AgentSocket,
+    voiceRecorder: VoiceRecorder
 ) {
     /*
     DOMAIN
@@ -185,6 +188,13 @@ export function setupContext(
         fileManagerService,
         observerService
     );
+    const voiceInputService = new VoiceInputService(
+        repository,
+        rpi,
+        voiceRecorder,
+        tokenPageService,
+        observerService
+    );
     const projectsPageService: ProjectsPageService = new ProjectsPageService(
         repository,
         rpi,
@@ -212,7 +222,8 @@ export function setupContext(
         observerService,
         hunkService,
         agentChatService,
-        agentFilesService
+        agentFilesService,
+        voiceInputService
     );
 
     return {
@@ -227,6 +238,7 @@ export function setupContext(
          */
         agentChatService,
         agentFilesService,
+        voiceInputService,
         startupService,
         authService,
         fileManagerService,

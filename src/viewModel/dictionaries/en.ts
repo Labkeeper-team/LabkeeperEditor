@@ -390,6 +390,26 @@ export const en: Translations = {
         document: 'Final document',
     },
     agent_chat: {
+        // GH-271: голосовой ввод в поле агента
+        voice: {
+            start: 'Voice input',
+            stop: 'Stop recording and transcribe',
+            recognizing: 'Transcribing…',
+            price_hint: 'up to ${seconds} s, ${cost} tokens per started 15 s',
+            errors: {
+                denied: 'No access to the microphone. Allow it in the browser settings',
+                no_microphone: 'No microphone found',
+                unsupported: 'This browser cannot record audio',
+                failed: 'Could not record or transcribe your voice. Please try again',
+                too_short: 'The recording is too short',
+                nothing_heard: 'No words could be made out in the recording',
+                not_recognized:
+                    'Could not transcribe the recording. Please try again',
+                no_tokens: 'Not enough tokens for speech recognition',
+                too_long: 'The recording is too long to transcribe',
+                unavailable: 'Speech recognition is unavailable right now',
+            },
+        },
         tab_label: 'AI agent',
         pdf_tab_label: 'Final document',
         placeholder: 'Enter your promt',

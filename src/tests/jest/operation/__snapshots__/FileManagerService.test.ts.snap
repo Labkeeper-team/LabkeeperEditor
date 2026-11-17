@@ -41,6 +41,9 @@ MockViewModelRepositoryState {
   "chatNextMessageId": 1,
   "chatRecentFiles": [],
   "chatRequestState": "idle",
+  "chatVoice": {
+    "stage": "idle",
+  },
   "cloneRequestState": "unknown",
   "codeCheckRequest": "unknown",
   "compileErrorResult": {
@@ -192,6 +195,9 @@ MockViewModelRepositoryState {
   "chatNextMessageId": 1,
   "chatRecentFiles": [],
   "chatRequestState": "idle",
+  "chatVoice": {
+    "stage": "idle",
+  },
   "cloneRequestState": "unknown",
   "codeCheckRequest": "unknown",
   "compileErrorResult": undefined,

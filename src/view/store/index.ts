@@ -92,6 +92,7 @@ import {
     setChatHistory,
     setChatHistoryRequestState,
     setChatInput,
+    setChatVoice,
     setChatMessages,
     setChatRecentFiles,
     setChatRequestState,
@@ -359,6 +360,8 @@ export const createViewModelStateFromStore = (
             setRequestState: (state) =>
                 store.dispatch(setChatRequestState(state)),
             setInput: (input) => store.dispatch(setChatInput(input)),
+            voice: () => store.getState().chat.voice,
+            setVoice: (voice) => store.dispatch(setChatVoice(voice)),
             setHistoryRequestState: (state) =>
                 store.dispatch(setChatHistoryRequestState(state)),
             setHistory: (history) => store.dispatch(setChatHistory(history)),

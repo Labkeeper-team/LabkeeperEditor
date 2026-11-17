@@ -7,6 +7,7 @@ import {
     ChatMessage,
     ChatMessageDraft,
     HistoryRequestState,
+    VoiceInputState,
 } from '../../../../viewModel/repository';
 
 export const chatSlice = createSlice({
@@ -107,6 +108,9 @@ export const chatSlice = createSlice({
         setChatRecentFiles(state, { payload }: PayloadAction<string[]>) {
             state.recentFiles = payload;
         },
+        setChatVoice(state, { payload }: PayloadAction<VoiceInputState>) {
+            state.voice = payload;
+        },
         resetChat() {
             return {
                 ...chatInitialState,
@@ -128,6 +132,7 @@ export const {
     setChatHistory,
     toggleChatSteps,
     setChatRecentFiles,
+    setChatVoice,
     applyChatHistoryRefresh,
     setChatCheckpointFromRequestId,
     setChatCheckpointBase,

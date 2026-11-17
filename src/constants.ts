@@ -52,6 +52,7 @@ export const URLS = {
     Password: `${uri}/api/${version}/public/password`,
     Contact: `${uri}/api/${version}/public/contact`,
     billingPricing: `${uri}/api/${version}/public/billing/pricing`,
+    speechRecognize: `${uri}/api/${version}/public/speech/recognize`,
     billingPurchases: `${uri}/api/${version}/public/billing/purchases`,
 
     FormLogin: `${uri}/api/${version}/sec/formlogin`,

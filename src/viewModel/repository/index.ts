@@ -86,6 +86,14 @@ export type AgentRequestState =
 
 export type HistoryRequestState = 'unknown' | 'loading' | 'ok' | 'error';
 
+/** GH-271: голосовой ввод в поле агента */
+export type VoiceInputState =
+    | { stage: 'idle' }
+    /** браузер спрашивает разрешение на микрофон */
+    | { stage: 'starting' }
+    | { stage: 'recording'; startedAt: number; limitSeconds: number }
+    | { stage: 'recognizing' };
+
 /**
  * Элемент ленты чата. Спиннер тут не хранится: он рисуется на последнем элементе,
  * пока requestState это connecting или running. Иначе на каждое событие пришлось бы
@@ -288,6 +296,7 @@ class MockViewModelRepositoryState {
     chatNextMessageId: number = 1;
     chatRequestState: AgentRequestState = 'idle';
     chatInput: string = '';
+    chatVoice: VoiceInputState = { stage: 'idle' };
     chatHistoryRequestState: HistoryRequestState = 'unknown';
     chatHistory: AgentHistoryEntry[] = [];
     chatRecentFiles: string[] = [];
@@ -469,6 +478,7 @@ export const mockViewModelState = (): MockViewModelRepository => {
             messages: () => mockViewModelState.chatMessages,
             requestState: () => mockViewModelState.chatRequestState,
             input: () => mockViewModelState.chatInput,
+            voice: () => mockViewModelState.chatVoice,
             historyRequestState: () =>
                 mockViewModelState.chatHistoryRequestState,
             history: () => mockViewModelState.chatHistory,
@@ -528,6 +538,7 @@ export const mockViewModelState = (): MockViewModelRepository => {
             setRequestState: (state) =>
                 (mockViewModelState.chatRequestState = state),
             setInput: (input) => (mockViewModelState.chatInput = input),
+            setVoice: (voice) => (mockViewModelState.chatVoice = voice),
             setHistoryRequestState: (state) =>
                 (mockViewModelState.chatHistoryRequestState = state),
             setHistory: (history) => (mockViewModelState.chatHistory = history),
@@ -538,6 +549,7 @@ export const mockViewModelState = (): MockViewModelRepository => {
                 mockViewModelState.chatNextMessageId = 1;
                 mockViewModelState.chatRequestState = 'idle';
                 mockViewModelState.chatInput = '';
+                mockViewModelState.chatVoice = { stage: 'idle' };
                 mockViewModelState.chatHistoryRequestState = 'unknown';
                 mockViewModelState.chatHistory = [];
                 mockViewModelState.chatRecentFiles = [];
@@ -989,6 +1001,8 @@ export interface ChatViewModelRepository {
     setMessages: (messages: ChatMessage[]) => void;
     setRequestState: (state: AgentRequestState) => void;
     setInput: (input: string) => void;
+    voice: () => VoiceInputState;
+    setVoice: (voice: VoiceInputState) => void;
     setHistoryRequestState: (state: HistoryRequestState) => void;
     setHistory: (history: AgentHistoryEntry[]) => void;
     setRecentFiles: (names: string[]) => void;
