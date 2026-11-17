@@ -83,6 +83,15 @@ export const ProjectsPage = () => {
     const filterState = useProjectsFilter(projects);
     const { filter, filterActive, visibleProjects, knownTags } = filterState;
 
+    // GH-261: после смены сортировки виден её первый проект, а не прежнее место
+    const listRef = useRef<HTMLDivElement>(null);
+    const sortKey = `${filterState.sort.field}-${filterState.sort.direction}`;
+    useEffect(() => {
+        if (listRef.current) {
+            listRef.current.scrollTop = 0;
+        }
+    }, [sortKey]);
+
     const tagsTarget = tagsTargetId
         ? projects.find((project) => project.projectId === tagsTargetId)
         : undefined;
@@ -462,6 +471,7 @@ export const ProjectsPage = () => {
                             {tagFilter}
                             <div
                                 className="projects-list-wrapper"
+                                ref={listRef}
                                 onPointerDownCapture={() => {
                                     pressedWhileRenaming.current =
                                         renamingId !== null;
