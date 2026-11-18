@@ -127,6 +127,7 @@ test('public-project-unauth-user-compilation-308', async ({ page }) => {
         200,
         'withTwoSegmentsBibaAndAEqualTen'
     );
+    await routeSetup.setupStaticCaptcha();
 
     await page.goto(`/project/${uuid}`);
 

@@ -18,6 +18,7 @@ const removeErrorScreenshotMaxDiff = 8000;
 test('425-display', async ({ page }) => {
     await page.goto('/');
     const routeSetup = new RouteSetup(page);
+    await routeSetup.setupStaticCaptcha();
 
     // Ждем загрузки страницы
     await page.waitForLoadState('domcontentloaded');

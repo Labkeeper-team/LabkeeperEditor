@@ -126,9 +126,11 @@ test('a-blocked-captcha-script-explains-itself-and-is-counted', async ({
     await expect(
         modal.getByRole('button', { name: 'Send code', exact: true })
     ).toBeDisabled();
+    // the login form shows the captcha right away, so it reports the failure first
     await expect
         .poll(() => named('Captcha failed'))
         .toEqual([
+            expect.objectContaining({ reason: 'script', form: 'login' }),
             expect.objectContaining({ reason: 'script', form: 'email' }),
         ]);
 });

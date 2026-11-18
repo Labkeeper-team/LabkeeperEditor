@@ -57,6 +57,36 @@ export class RouteSetup {
 
     constructor(private page: Page) {}
 
+    /**
+     * The login form always shows SmartCaptcha. A screenshot must not depend
+     * on the network and the real widget, so the script draws a fixed box
+     */
+    async setupStaticCaptcha() {
+        await this.page.route(
+            'https://smartcaptcha.cloud.yandex.ru/captcha.js*',
+            (route) =>
+                route.fulfill({
+                    contentType: 'text/javascript',
+                    body: `(function () {
+    window.smartCaptcha = {
+        render: function (container) {
+            container.innerHTML = '<div class="static-captcha" style="height:100px;border:1px solid #ccc;border-radius:8px;"></div>';
+            return 1;
+        },
+        subscribe: function () { return function () {}; },
+        destroy: function () {},
+        reset: function () {},
+        execute: function () {},
+        showError: function () {},
+        setTheme: function () {},
+        getResponse: function () { return ''; },
+    };
+    if (window.__onSmartCaptchaReady) { window.__onSmartCaptchaReady(); }
+})();`,
+                })
+        );
+    }
+
     /** Своё название проекта: обрезку длинного названия проверяют отдельно */
     setupProjectTitle(title: string) {
         this.projectTitle = title;
