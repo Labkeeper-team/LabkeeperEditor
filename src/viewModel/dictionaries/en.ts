@@ -765,10 +765,10 @@ export const en: Translations = {
         personalDataConsentLink: 'the Personal Data Processing Consent',
         // GH-253: капча не загрузилась или её проверка устарела
         captcha: {
+            loading: 'Loading the captcha…',
             loadFailed:
                 'The captcha did not load. Turn off your ad blocker or VPN and try again',
             reloadCaptcha: 'Reload the captcha',
-            reloadPage: 'Reload the page',
             expired: 'The captcha check has expired, please pass it again',
         },
         views: {

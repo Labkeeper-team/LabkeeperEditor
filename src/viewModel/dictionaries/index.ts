@@ -686,9 +686,10 @@ export interface Translations {
         personalDataAgreementAnd: string;
         personalDataConsentLink: string;
         captcha: {
+            /** Shown where the widget will be while captcha.js loads or the widget draws */
+            loading: string;
             loadFailed: string;
             reloadCaptcha: string;
-            reloadPage: string;
             expired: string;
         };
         views: {

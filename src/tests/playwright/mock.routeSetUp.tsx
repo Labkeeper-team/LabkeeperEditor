@@ -59,7 +59,9 @@ export class RouteSetup {
 
     /**
      * The login form always shows SmartCaptcha. A screenshot must not depend
-     * on the network and the real widget, so the script draws a fixed box
+     * on the network and the real widget, so the script draws a fixed box.
+     * The box holds an empty iframe like the real checkbox frame: the form
+     * shows "Loading the captcha…" over the widget until an iframe appears
      */
     async setupStaticCaptcha() {
         await this.page.route(
@@ -70,7 +72,7 @@ export class RouteSetup {
                     body: `(function () {
     window.smartCaptcha = {
         render: function (container) {
-            container.innerHTML = '<div class="static-captcha" style="height:100px;border:1px solid #ccc;border-radius:8px;"></div>';
+            container.innerHTML = '<div class="static-captcha" style="height:100px;border:1px solid #ccc;border-radius:8px;"><iframe title="SmartCaptcha" style="display:block;width:100%;height:100%;border:0"></iframe></div>';
             return 1;
         },
         subscribe: function () { return function () {}; },
