@@ -564,6 +564,19 @@ describe('WebRpi', () => {
         }
     );
 
+    // без ключей капчи токена нет: параметр captcha не отправляется вовсе
+    test('formLoginRequest without a captcha token omits the captcha field', async () => {
+        const postMock = axios.post as jest.Mock;
+        postMock.mockResolvedValue({ status: 200, data: {} });
+        const { rpi } = createRpi();
+
+        await rpi.formLoginRequest('user', 'pass');
+
+        const body = postMock.mock.lastCall?.[1] as URLSearchParams;
+        expect(body.get('username')).toBe('user');
+        expect(body.has('captcha')).toBe(false);
+    });
+
     // POST /project/{id}/tags заменяет список целиком: тело это { tags }
     test('setProjectTagsRequest posts the whole list to the project tags', async () => {
         const postMock = axios.post as jest.Mock;

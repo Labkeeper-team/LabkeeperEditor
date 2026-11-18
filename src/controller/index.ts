@@ -214,7 +214,7 @@ export class Controller {
 
     onEmailSendButtonClickedRequest = createAsyncThunk(
         'onEmailSendButtonClicked',
-        async ({ email, captcha }: { email: string; captcha: string }) => {
+        async ({ email, captcha }: { email: string; captcha?: string }) => {
             await this.wrapper('onEmailSendButtonClicked', () =>
                 this.authService.onEmailSendButtonClicked(email, captcha)
             );

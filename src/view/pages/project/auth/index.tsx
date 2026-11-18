@@ -16,6 +16,14 @@ import { Providers, Secrets, URLS } from '../../../../constants.ts';
 import { controller } from '../../../../main.tsx';
 import { isValidEmail, isValidPassword, normalizeEmail } from './validation.ts';
 
+/**
+ * Капча нужна, только когда задан ключ SmartCaptcha и нет токена обхода.
+ * Без ключа сервер капчу тоже не проверяет: вход и регистрация идут без неё
+ */
+const captchaRequired = (state: StorageState) =>
+    !!Secrets.yandexCaptchaSiteKey &&
+    state.settings.captchaBypassToken === undefined;
+
 // Компонент спиннера загрузки
 const LoadingSpinner = () => (
     <div
@@ -68,9 +76,7 @@ const LoginView = () => {
     const loginRequest = useSelector(
         (state: StorageState) => state.auth.loginRequest
     );
-    const showCaptcha = useSelector(
-        (state: StorageState) => state.settings.captchaBypassToken === undefined
-    );
+    const showCaptcha = useSelector(captchaRequired);
 
     const errorMessage = useMemo((): string => {
         if (loginRequest === 'bad_credentials') {
@@ -96,11 +102,7 @@ const LoginView = () => {
             : '';
 
     useEffect(() => {
-        if (
-            loginRequest === 'bad_credentials' &&
-            showCaptcha &&
-            !!Secrets.yandexCaptchaSiteKey
-        ) {
+        if (loginRequest === 'bad_credentials' && showCaptcha) {
             // Сброс капчи после неудачного входа; отложенный setState избегает sync flush в effect.
             queueMicrotask(() => {
                 setToken('');
@@ -194,13 +196,13 @@ const LoginView = () => {
                         type="password"
                         disabled={isLoading}
                     />
-                    {!!Secrets.yandexCaptchaSiteKey && showCaptcha && (
+                    {showCaptcha && (
                         <input required hidden value={token} name="captcha" />
                     )}
                     {errorMessage && (
                         <AuthErrorMessage text={errorMessage} centered />
                     )}
-                    {showCaptcha && !!Secrets.yandexCaptchaSiteKey && (
+                    {showCaptcha && (
                         <AuthCaptcha
                             form="login"
                             resetKey={captchaInstanceKey}
@@ -212,9 +214,7 @@ const LoginView = () => {
                         title={dictionary.authorization.login}
                         color="blue"
                         disabled={
-                            (!token &&
-                                !!Secrets.yandexCaptchaSiteKey &&
-                                showCaptcha) ||
+                            (!token && showCaptcha) ||
                             isLoading ||
                             !isValidEmail(normalizedLogin) ||
                             !password
@@ -339,9 +339,7 @@ const EmailView = () => {
     const [token, setToken] = useState('');
     const [captchaInstanceKey, setCaptchaInstanceKey] = useState(0);
     const [isEmailTouched, setIsEmailTouched] = useState(false);
-    const showCaptcha = useSelector(
-        (state: StorageState) => state.settings.captchaBypassToken === undefined
-    );
+    const showCaptcha = useSelector(captchaRequired);
 
     const isLoading = status === 'loading';
     const normalizedEmail = normalizeEmail(email);
@@ -363,14 +361,14 @@ const EmailView = () => {
                 status === 'validationError' ||
                 status === 'captchaError' ||
                 status === 'unknownError') &&
-            !!Secrets.yandexCaptchaSiteKey
+            showCaptcha
         ) {
             queueMicrotask(() => {
                 setToken('');
                 setCaptchaInstanceKey((prev) => prev + 1);
             });
         }
-    }, [status]);
+    }, [status, showCaptcha]);
 
     const handleSubmit = async () => {
         if (!email || (isRegistration && !agreementAccepted)) {
@@ -383,7 +381,7 @@ const EmailView = () => {
         dispatch(
             controller.onEmailSendButtonClickedRequest({
                 email: normalizedEmail,
-                captcha: token,
+                captcha: showCaptcha ? token : undefined,
             })
         );
     };
@@ -489,7 +487,7 @@ const EmailView = () => {
                         </span>
                     </label>
                 )}
-                {Secrets.yandexCaptchaSiteKey && showCaptcha && (
+                {showCaptcha && (
                     <AuthCaptcha
                         form="email"
                         resetKey={captchaInstanceKey}
