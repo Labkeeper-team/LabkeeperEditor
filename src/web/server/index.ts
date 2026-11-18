@@ -667,7 +667,7 @@ export class WebRpi implements Rpi {
         email: string,
         registration: boolean,
         lang: string,
-        captcha: string
+        captcha?: string
     ): Promise<RequestResult> {
         return this.requestWrapper(
             'sendEmailWithCodeRequest',
@@ -809,12 +809,14 @@ export class WebRpi implements Rpi {
     async formLoginRequest(
         userName: string,
         password: string,
-        captcha: string
+        captcha?: string
     ): Promise<RequestResult> {
         const params = new URLSearchParams();
         params.append('username', userName);
         params.append('password', password);
-        params.append('captcha', captcha);
+        if (captcha) {
+            params.append('captcha', captcha);
+        }
         return this.requestWrapper('formLoginRequest', [200, 401], () =>
             axios.post(URLS.FormLogin, params)
         );

@@ -46,21 +46,11 @@ export class AuthService {
         captcha?: string
     ) => {
         this.repository.authViewModelRepository.setLoginRequest('loading');
-        const captchaBypassToken =
-            this.repository.settingsViewModelRepository.captchaBypassToken();
-        let captchaRequest: string | undefined = undefined;
-
-        if (captcha) {
-            captchaRequest = captcha;
-        }
-
-        if (captchaBypassToken) {
-            captchaRequest = captchaBypassToken;
-        }
-
-        if (!captchaRequest) {
-            throw Error('Captcha token not provided');
-        }
+        // без ключей капчи токена нет, и сервер капчу не проверяет
+        const captchaRequest =
+            this.repository.settingsViewModelRepository.captchaBypassToken() ||
+            captcha ||
+            undefined;
 
         this.track(Events.EVENT_LOGIN_SUBMITTED, { method: 'password' });
 
@@ -164,7 +154,7 @@ export class AuthService {
         this.track(Events.EVENT_FORGOT_PASSWORD_STARTED);
     };
 
-    onEmailSendButtonClicked = async (email: string, captcha: string) => {
+    onEmailSendButtonClicked = async (email: string, captcha?: string) => {
         this.repository.authViewModelRepository.setCurrentEmail(null);
         this.repository.authViewModelRepository.setEmailRequest('loading');
         // как и при входе: с токеном обхода виджета капчи на экране нет
@@ -174,7 +164,7 @@ export class AuthService {
             email,
             this.repository.authViewModelRepository.isRegistration(),
             this.repository.persistenceViewModelRepository.language(),
-            captchaBypassToken ?? captcha
+            captchaBypassToken || captcha || undefined
         );
 
         const flow = this.authFlow();

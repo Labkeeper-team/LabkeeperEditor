@@ -272,7 +272,8 @@ export interface Rpi {
         email: string,
         registration: boolean,
         lang: string,
-        captcha: string
+        /** Без токена капча не проверяется: ключей капчи нет */
+        captcha?: string
     ): Promise<RequestResult>;
 
     checkCodeRequest(
@@ -298,7 +299,8 @@ export interface Rpi {
     formLoginRequest(
         userName: string,
         password: string,
-        captcha: string
+        /** Без токена капча не проверяется: ключей капчи нет */
+        captcha?: string
     ): Promise<RequestResult>;
 
     oauthCodeRequest(code: string, state: string): Promise<RequestResult>;

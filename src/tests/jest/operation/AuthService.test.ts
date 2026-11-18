@@ -103,6 +103,51 @@ test('registration-email-sends-the-captcha-bypass-token', async () => {
     expect(repository.authViewModelRepository.currentView()).toBe('code');
 });
 
+// без ключей капчи виджета нет: вход и письмо уходят без токена
+test('form-login-without-captcha-keys-sends-no-captcha', async () => {
+    const { authService, repository, rpi } = mockContext();
+    rpi.formLoginRequest = jest.fn().mockResolvedValue({
+        code: 401,
+        body: {},
+        isOk: false,
+        isUnauth: true,
+        isForbidden: false,
+    });
+
+    await authService.onFormLoginClicked('a@gmail.com', 'password');
+
+    expect(rpi.formLoginRequest).toHaveBeenCalledWith(
+        'a@gmail.com',
+        'password',
+        undefined
+    );
+    expect(repository.authViewModelRepository.loginRequest()).toBe(
+        'bad_credentials'
+    );
+});
+
+test('registration-email-without-captcha-keys-sends-no-captcha', async () => {
+    const { authService, repository, rpi } = mockContext();
+    repository.authViewModelRepository.setIsRegistration(true);
+    rpi.sendEmailWithCodeRequest = jest.fn().mockResolvedValue({
+        code: 200,
+        body: {},
+        isOk: true,
+        isUnauth: false,
+        isForbidden: false,
+    });
+
+    await authService.onEmailSendButtonClicked('a@gmail.com');
+
+    expect(rpi.sendEmailWithCodeRequest).toHaveBeenCalledWith(
+        'a@gmail.com',
+        true,
+        expect.any(String),
+        undefined
+    );
+    expect(repository.authViewModelRepository.currentView()).toBe('code');
+});
+
 // Bugsink: сервер ответил 406, он так отвечает, когда не разобрал токен капчи.
 // Человек должен увидеть, что капча не прошла, а не «Неизвестная ошибка»
 test('email-rejected-with-406-reports-a-captcha-error', async () => {
