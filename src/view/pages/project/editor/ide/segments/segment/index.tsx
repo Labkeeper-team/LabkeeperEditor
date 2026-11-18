@@ -71,6 +71,12 @@ import { hunkEditorExtensions } from '../../../hunkEditorExtension.ts';
 import { useSyncHunksToEditorView } from '../../../../../../hooks/useHunkEditorSync.ts';
 import { selectSegmentHunkUiState } from '../../../../../../store/selectors/hunks.ts';
 import { Segment } from '../../../../../../../model/domain';
+import { collabService } from '../../../../../../../main.tsx';
+import { collabBinding } from './collabBinding.ts';
+import {
+    selectCanEditSegments,
+    selectCollabSegmentBlocked,
+} from '../../../../../../store/selectors/collab.ts';
 
 const CURSOR_MAP_CAPACITY = 100;
 
@@ -146,7 +152,12 @@ function computeDocKey(text: string): string {
 }
 
 export const SegmentEditor = memo(
-    (props: { index: number; isLast: boolean }) => {
+    (props: {
+        index: number;
+        isLast: boolean;
+        /** Stable key of the segment in the collaboration session, if it runs */
+        collabKey?: string;
+    }) => {
         const segment = useSelector(
             (state: StorageState) =>
                 state.project.currentProgram?.segments[props.index]
@@ -220,6 +231,16 @@ export const SegmentEditor = memo(
             (state: StorageState) => state.project.compileErrorResult?.errors
         );
         const projectIsReadonly = useSelector(useIsProjectReadonly);
+        // collaborative editing: texts and the segment list of a shared project are editable too
+        const canEditSegments = useSelector(selectCanEditSegments);
+        const collabBlocked = useSelector(
+            useMemo(
+                () => selectCollabSegmentBlocked(props.index),
+                [props.index]
+            )
+        );
+        const collabKeyRef = useRef(props.collabKey);
+        collabKeyRef.current = props.collabKey;
         const isAgentRunning = useSelector(useIsAgentRunning);
         const onBlockedEditKeyDown = useBlockedEditNotice();
         // берём совпадение только для своего сегмента, иначе перерисуются все
@@ -471,7 +492,7 @@ export const SegmentEditor = memo(
 
         const onSegmentMouseDownCapture = useCallback(
             (event: React.MouseEvent) => {
-                if (projectIsReadonly) {
+                if (!canEditSegments) {
                     return;
                 }
                 const target = event.target;
@@ -523,7 +544,7 @@ export const SegmentEditor = memo(
                     event.clientY
                 );
             },
-            [dispatch, props.index, projectIsReadonly]
+            [dispatch, props.index, canEditSegments]
         );
 
         // События редактора
@@ -862,6 +883,19 @@ export const SegmentEditor = memo(
             [segment?.type]
         );
 
+        // stable for the life of the view: the key and the index are read through refs
+        const collabExtension = useMemo(
+            () =>
+                collabService
+                    ? collabBinding(
+                          collabService,
+                          () => collabKeyRef.current,
+                          () => segmentIdxForPendingRef.current
+                      )
+                    : null,
+            []
+        );
+
         /** Стабильная ссылка: обход бага CM6 — padding первой строки обрезает drawSelection на остальных. */
         const segmentSelectionGutterFix = useMemo(
             () => segmentEditorSelectionGutterFix(),
@@ -888,6 +922,7 @@ export const SegmentEditor = memo(
                 latexSpellLint,
                 computationalSpellLint,
                 segmentSelectionGutterFix,
+                collabExtension,
                 // Держим contentAttributes последним, чтобы не дать языковым
                 // extension'ам (например TeX) переопределить spellcheck.
                 contentAttrsExtension,
@@ -905,6 +940,7 @@ export const SegmentEditor = memo(
             latexSpellLint,
             computationalSpellLint,
             segmentSelectionGutterFix,
+            collabExtension,
             contentAttrsExtension,
         ]);
 
@@ -971,12 +1007,14 @@ export const SegmentEditor = memo(
                         onCreateEditor={() =>
                             setEditorViewEpoch((epoch) => epoch + 1)
                         }
-                        readOnly={projectIsReadonly || isAgentRunning}
+                        readOnly={
+                            !canEditSegments || isAgentRunning || collabBlocked
+                        }
                         extensions={codeMirrorExtensions}
                         basicSetup={SEGMENT_CODE_MIRROR_BASIC_SETUP}
                     />
                     <div className="editor-rules">
-                        {!projectIsReadonly && (
+                        {canEditSegments && (
                             <div
                                 style={{
                                     display: 'flex',
@@ -1041,7 +1079,7 @@ export const SegmentEditor = memo(
                             />
                         </div>
                         <DropdownMenu
-                            clickable={!projectIsReadonly}
+                            clickable={canEditSegments}
                             fullScreenOnMobile
                             containerClassname={classNames(
                                 'dropdown-content-contanier-additional',
@@ -1052,6 +1090,7 @@ export const SegmentEditor = memo(
                             <DropdownMenuContent
                                 index={props.index}
                                 segment={segment}
+                                parametersEditable={!projectIsReadonly}
                             />
                         </DropdownMenu>
                     </div>

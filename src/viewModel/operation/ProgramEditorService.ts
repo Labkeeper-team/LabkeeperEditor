@@ -25,6 +25,7 @@ import { getIdeSegmentEditorView } from '../../view/pages/project/editor/ide/seg
 import { EditorNavigationTarget } from '../repository';
 import { TextFileEditorService } from './TextFileEditorService.ts';
 import { EditingLockService } from '../domain/EditingLockService.ts';
+import type { CollabService } from '../domain/collab/CollabService.ts';
 import {
     projectFilePathsMatch,
     resolveProjectFileName,
@@ -60,6 +61,8 @@ export class ProgramEditorService {
     textFileEditorService: TextFileEditorService;
     editingLock: EditingLockService;
     private hunkService: import('./HunkService.ts').HunkService | null = null;
+    /** Collaborative editing: segment list changes go to the server as commands */
+    private collab: CollabService | null = null;
 
     constructor(
         repository: ViewModelRepository,
@@ -85,6 +88,10 @@ export class ProgramEditorService {
 
     setHunkService = (hunkService: import('./HunkService.ts').HunkService) => {
         this.hunkService = hunkService;
+    };
+
+    setCollabService = (collab: CollabService) => {
+        this.collab = collab;
     };
 
     private allowPasteEvent = createRateLimiter(
@@ -170,7 +177,8 @@ export class ProgramEditorService {
                     this.repository.projectViewModelRepository.project();
                 if (
                     !project ||
-                    this.repository.projectViewModelRepository.projectIsReadonly()
+                    (this.repository.projectViewModelRepository.projectIsReadonly() &&
+                        !this.collab?.files.canWrite())
                 ) {
                     this.repository.toast(
                         this.repository.dictionary.segment.errors
@@ -221,11 +229,22 @@ export class ProgramEditorService {
                     thisCopy.repository.ideViewModelRepository.setGetProjectRequestState(
                         'loading'
                     );
-                    const res = await thisCopy.rpi.uploadFileRequest(
-                        formData,
-                        project.projectId,
-                        name
-                    );
+                    // collaborative editing: participants upload through the session
+                    const collabConnection = thisCopy.collab?.files.canWrite()
+                        ? thisCopy.collab.files.connectionId()
+                        : null;
+                    const res = collabConnection
+                        ? await thisCopy.rpi.uploadCollabFileRequest(
+                              formData,
+                              project.projectId,
+                              name,
+                              collabConnection
+                          )
+                        : await thisCopy.rpi.uploadFileRequest(
+                              formData,
+                              project.projectId,
+                              name
+                          );
                     thisCopy.repository.ideViewModelRepository.setGetProjectRequestState(
                         'ok'
                     );
@@ -536,6 +555,10 @@ export class ProgramEditorService {
             direction,
             from_index: segmentIndex,
         });
+        // collaborative editing: the server moves it and every participant applies it
+        if (this.collab?.moveSegment(segmentIndex, direction)) {
+            return;
+        }
         this.programService.moveSegment(segmentIndex, direction);
         this.repository.ideViewModelRepository.markProgramChanged();
         this.ideService.onProgramUpdated();
@@ -583,6 +606,9 @@ export class ProgramEditorService {
             segment_type: segmentType,
             segment_index: segmentIndex,
         });
+        if (this.collab?.deleteSegment(segmentIndex)) {
+            return;
+        }
         const filesBefore = this.ideService.calculateFilesToDelete(
             this.programService.getCurrentProgram()
         );
@@ -616,6 +642,9 @@ export class ProgramEditorService {
             source,
             Events.EVENT_INSERT_SEGMENT_BETWEEN
         );
+        if (this.collab?.addSegment(after + 1, segmentType)) {
+            return;
+        }
         this.programService.addSegmentAfterIndex(segmentType, after);
         this.repository.ideViewModelRepository.markProgramChanged();
         this.ideService.setActiveSegmentIndexAndPreviousSegmentIndex(after + 1);
@@ -631,6 +660,20 @@ export class ProgramEditorService {
         text: string,
         placement: 'start' | 'end'
     ) => {
+        if (this.collab?.isActive()) {
+            if (!this.collab.canEdit() || this.editingLock.rejectEdit()) {
+                return;
+            }
+            // the text goes with the command: the new segment id is known only after segmentsChanged
+            this.collab.addSegment(
+                placement === 'start'
+                    ? 0
+                    : this.programService.getCurrentProgram().segments.length,
+                'latex',
+                { text, scrollToBottom: placement === 'end' }
+            );
+            return;
+        }
         if (
             this.repository.projectViewModelRepository.projectIsReadonly() ||
             this.editingLock.rejectEdit()
@@ -696,6 +739,14 @@ export class ProgramEditorService {
     ) => {
         // редактор при блокировке readOnly, сюда правка дойти не должна
         if (this.editingLock.isLocked()) {
+            return;
+        }
+        // collaborative editing: the edit reaches the document first, or is dropped when
+        // it was made in a view that already shows another segment
+        if (
+            this.collab &&
+            !this.collab.acceptLocalText(segmentIndex, segmentText)
+        ) {
             return;
         }
         const programBefore = this.programService.getCurrentProgram();
@@ -1080,6 +1131,15 @@ export class ProgramEditorService {
         }
         this.hunkService?.acceptAllHunksInBackground();
         this.trackSegmentAdded(type, source);
+        if (
+            this.collab?.addSegment(
+                this.programService.getCurrentProgram().segments.length,
+                type,
+                { scrollToBottom: true }
+            )
+        ) {
+            return;
+        }
         this.programService.addSegmentToLastPosition(type);
         this.repository.ideViewModelRepository.markProgramChanged();
         this.repository.ideViewModelRepository.setActiveSegmentIndex(

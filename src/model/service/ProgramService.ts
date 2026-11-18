@@ -402,6 +402,34 @@ export class ProgramService {
         this.programRepository.redoHistory = [];
         this.programRepository.program = createEmptyProgram();
     };
+
+    /**
+     * Collaborative editing: forgets undo and redo steps but keeps the program. Steps store
+     * whole segment texts and positions, so after a change of another participant
+     * undoing them would revert that change too.
+     */
+    dropHistory = () => {
+        this.programRepository.history = [];
+        this.programRepository.redoHistory = [];
+    };
+
+    /** Collaborative editing: text that came from the collaboration session, no undo step */
+    setSegmentTextExternally = (segmentIndex: number, text: string) => {
+        const segment = this.programRepository.program.segments[segmentIndex];
+        if (segment) {
+            segment.text = text;
+        }
+    };
+
+    /**
+     * Collaborative editing: a segment list change decided by the server (add, delete,
+     * move of any participant). Applied without an undo step, ids renumbered.
+     */
+    applyExternalSegmentsChange = (mutate: (segments: Segment[]) => void) => {
+        mutate(this.programRepository.program.segments);
+        renumberSegmentIds(this.programRepository.program.segments);
+        this.dropHistory();
+    };
 }
 
 class GapAction implements ProgramChangeAction {

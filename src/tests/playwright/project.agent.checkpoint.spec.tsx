@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { RouteSetup } from './mock.routeSetUp.tsx';
+import { AGENT_SOCKET_URL, RouteSetup } from './mock.routeSetUp.tsx';
 import { AgentHistoryEntry, Hunk } from '../../model/domain.ts';
 
 /**
@@ -108,7 +108,7 @@ async function openAgentMode(
         server.history = server.history.filter((e) => e.id !== id);
         return route.fulfill({ json: {} });
     });
-    await page.routeWebSocket('**/api/v4/ws/**', (ws) => {
+    await page.routeWebSocket(AGENT_SOCKET_URL, (ws) => {
         ws.onMessage((message) => {
             const start = JSON.parse(String(message)) as { prompt: string };
             const run = runs[server.starts] ?? {};

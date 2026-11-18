@@ -22,6 +22,7 @@ import {
     getIdeSegmentIndexFromTarget,
     isClickOutsideAllIdeSegments,
 } from './ideSegmentDeactivate';
+import { selectCollabSegmentKeys } from '../../../../../store/selectors/collab.ts';
 
 export const Segments = () => {
     const scrollEditorToBottom = useSelector(
@@ -39,6 +40,8 @@ export const Segments = () => {
         (state: StorageState) => state.ide.activeSegmentIndex
     );
     const activeSegmentIndexRef = useRef(activeSegmentIndex);
+    // collaborative editing: a segment keeps its editor when others are added, deleted or moved
+    const collabKeys = useSelector(selectCollabSegmentKeys);
 
     useEffect(() => {
         activeSegmentIndexRef.current = activeSegmentIndex;
@@ -109,11 +112,12 @@ export const Segments = () => {
             <LatexHeaderBoundaryCard />
             {Array.from(Array(segmentsSize).keys()).map((_, index) => {
                 return (
-                    <React.Fragment key={index}>
+                    <React.Fragment key={collabKeys?.[index] ?? index}>
                         <DeletedSegments hunks={deletedAt(index)} />
                         <SegmentEditorWrapper
                             index={index}
                             isLast={index + 1 === segmentsSize}
+                            collabKey={collabKeys?.[index]}
                         />
                     </React.Fragment>
                 );
@@ -125,12 +129,24 @@ export const Segments = () => {
 };
 
 const SegmentEditorWrapper = memo(
-    ({ index, isLast }: { index: number; isLast: boolean }) => {
+    ({
+        index,
+        isLast,
+        collabKey,
+    }: {
+        index: number;
+        isLast: boolean;
+        collabKey?: string;
+    }) => {
         return (
             <React.Fragment key={index}>
                 {/* сбой редактора пересоздаёт этот сегмент, а не закрывает страницу */}
                 <SegmentErrorBoundary>
-                    <SegmentEditor index={index} isLast={isLast} />
+                    <SegmentEditor
+                        index={index}
+                        isLast={isLast}
+                        collabKey={collabKey}
+                    />
                 </SegmentErrorBoundary>
                 <SegmentDivider index={index} showDivider={!isLast} />
             </React.Fragment>

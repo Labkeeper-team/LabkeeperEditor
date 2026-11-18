@@ -342,8 +342,11 @@ test('фильтр показывает только темы каталога, 
 });
 
 /** Где элемент внутри страницы, без учёта прокрутки: клик сам докручивает до карточки */
+// offsets are compared before and after a click: the web font that lands in between
+// changes line heights, so both are measured with the fonts in place
 const offsetInPage = (page: Page, selector: string) =>
-    page.evaluate((target) => {
+    page.evaluate(async (target) => {
+        await document.fonts.ready;
         const content = document.querySelector('.new-project__content')!;
         return Math.round(
             document.querySelector(target)!.getBoundingClientRect().top -

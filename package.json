@@ -24,6 +24,7 @@
         "*.{css,html,json,md,scss,svg,yaml,yml}": "prettier --write"
     },
     "dependencies": {
+        "@codemirror/collab": "^6.1.1",
         "@codemirror/commands": "^6.11.1",
         "@codemirror/lint": "^6.9.7",
         "@estruyf/github-actions-reporter": "^1.14.0",

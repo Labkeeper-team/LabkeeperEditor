@@ -51,6 +51,7 @@ jest.mock('../../../constants.ts', () => ({
         agentHistoryEntry: '/api/v4/public/project/{id}/history/{entryId}',
         filesGetList: '/api/v4/public/project/{id}/file/list',
         uploadFile: '/api/v4/public/project/{id}/file/upload',
+        uploadCollabFile: '/api/v4/public/project/{id}/collab/file/upload',
         renameFile: '/api/v2/public/project/{id}/file/rename',
         deleteFile: '/api/v4/public/project/{id}/file/delete',
         renameFolder: '/api/v4/public/project/{id}/file/folder/rename',
@@ -187,6 +188,19 @@ const RPI_CASES: RpiCase[] = [
         expects423: true,
         call: (rpi) =>
             rpi.uploadFileRequest(new FormData(), PROJECT_ID, 'main.tex'),
+    },
+    {
+        method: 'uploadCollabFileRequest',
+        source: 'file',
+        scoped: true,
+        expects423: true,
+        call: (rpi) =>
+            rpi.uploadCollabFileRequest(
+                new FormData(),
+                PROJECT_ID,
+                'main.tex',
+                'c-1'
+            ),
     },
     {
         method: 'deleteFileRequest',

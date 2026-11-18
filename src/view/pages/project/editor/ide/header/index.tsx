@@ -17,12 +17,15 @@ import { SynctexButton } from '../../../syncButtons';
 import { CloneProjectButton } from '../../../cloneProjectButton';
 import { hotkeyHint } from '../../../hotkeys/hint.ts';
 import { useDictionary } from '../../../../../store/selectors/translations';
+import { selectCanEditSegments } from '../../../../../store/selectors/collab.ts';
+import { CollabParticipants } from '../../../../../components/collabParticipants';
 
 export const IdeHeader = () => {
     const program = useSelector(useCurrentProgram);
     const dispatch = useDispatch<AppDispatch>();
     const showFileManager = useSelector(useShowFileManager);
     const isReadonly = useSelector(useIsProjectReadonly);
+    const canEditSegments = useSelector(selectCanEditSegments);
     const project = useSelector(useCurrentProject);
     const isMobile = useIsMobile();
     const dictionary = useSelector(useDictionary);
@@ -46,8 +49,9 @@ export const IdeHeader = () => {
                 ) : null}
                 {!isReadonly && <HistoryButtons />}
                 {isMobile ? <SynctexButton direction="toPdf" /> : null}
+                <CollabParticipants />
             </div>
-            {program?.segments.length && !isReadonly ? (
+            {program?.segments.length && canEditSegments ? (
                 <AddBlock isFirst={false} />
             ) : isReadonly && project?.isPublic ? (
                 <CloneProjectButton />

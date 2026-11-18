@@ -13,10 +13,7 @@ import { latex } from 'codemirror-lang-latex';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, StorageState } from '../../../../store';
 import { controller } from '../../../../../main.tsx';
-import {
-    useIsAgentRunning,
-    useIsProjectReadonly,
-} from '../../../../store/selectors/program.ts';
+import { useIsAgentRunning } from '../../../../store/selectors/program.ts';
 import { useBlockedEditNotice } from '../../../../hooks/useBlockedEditNotice.ts';
 import { CheckIcon, PlusIcon, WarningIcon } from '../../../../icons';
 import {
@@ -43,6 +40,9 @@ import {
 } from './textFileEditorView';
 import { hunkEditorExtensions } from '../hunkEditorExtension.ts';
 import { useSyncHunksToEditorView } from '../../../../hooks/useHunkEditorSync.ts';
+import { collabService } from '../../../../../main.tsx';
+import { collabBinding } from '../ide/segments/segment/collabBinding.ts';
+import { selectCanEditTextFile } from '../../../../store/selectors/collab.ts';
 import '../ide/style.scss';
 import '../ide/header/style.scss';
 import './style.scss';
@@ -170,7 +170,10 @@ export const TextFileEditor = () => {
     const editorNavigationTarget = useSelector(
         (state: StorageState) => state.ide.editorNavigationTarget
     );
-    const isReadonly = useSelector(useIsProjectReadonly);
+    // collaborative editing: participants of a shared project edit text files too
+    const canEditFiles = useSelector(
+        useMemo(() => selectCanEditTextFile(activeTextFile), [activeTextFile])
+    );
     const isAgentRunning = useSelector(useIsAgentRunning);
     const onBlockedEditKeyDown = useBlockedEditNotice();
     const isAuth = useSelector(
@@ -388,6 +391,19 @@ export const TextFileEditor = () => {
         [dispatch, activeTextFile]
     );
 
+    // remote edits and carets of the file's collaborative document; stable for the view
+    const collabExtension = useMemo(
+        () =>
+            collabService
+                ? collabBinding(
+                      collabService.files.binding,
+                      () => collabService?.files.bindingKey(),
+                      () => 0
+                  )
+                : [],
+        []
+    );
+
     const codeMirrorExtensions = useMemo(
         () => [
             ...languageExtension,
@@ -398,8 +414,14 @@ export const TextFileEditor = () => {
             decorationsField,
             ...hunkEditorExtensions,
             cursorPersistenceListener,
+            collabExtension,
         ],
-        [isLatexFile, languageExtension, cursorPersistenceListener]
+        [
+            isLatexFile,
+            languageExtension,
+            cursorPersistenceListener,
+            collabExtension,
+        ]
     );
 
     const onCreateEditor = useCallback((view: EditorView) => {
@@ -442,7 +464,7 @@ export const TextFileEditor = () => {
                     </span>
                 </div>
                 <div className="text-file-editor-header-actions">
-                    {isAuth && !isReadonly ? (
+                    {isAuth && canEditFiles ? (
                         <div
                             className="text-file-editor-save-status"
                             aria-label="save-status"
@@ -485,7 +507,7 @@ export const TextFileEditor = () => {
                             extensions={codeMirrorExtensions}
                             onChange={onChange}
                             onCreateEditor={onCreateEditor}
-                            readOnly={isReadonly || isAgentRunning}
+                            readOnly={!canEditFiles || isAgentRunning}
                             basicSetup={TEXT_FILE_EDITOR_BASIC_SETUP}
                         />
                     ) : null}

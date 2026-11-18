@@ -14,6 +14,8 @@ import { OpenPanelService } from './web/openpanel';
 import { CompositeObserver } from './model/service/ObserverService.ts';
 import { WebRpi } from './web/server';
 import { WebAgentSocket } from './web/server/agentSocket.ts';
+import { WebCollabSocket } from './web/server/collabSocket.ts';
+import { createCollabRepositoryFromStore } from './view/store/slices/collab';
 import { reactRootErrorOptions, sentryOptions } from './web/sentry/hooks.ts';
 
 const openPanelService = new OpenPanelService();
@@ -28,11 +30,15 @@ const observerService = new CompositeObserver([
     openPanelService,
 ]);
 
-export const { controller } = setupContext(
+export const { controller, collabService } = setupContext(
     new WebRpi(observerService),
     createViewModelStateFromStore(store),
     observerService,
-    new WebAgentSocket()
+    new WebAgentSocket(),
+    {
+        socket: new WebCollabSocket(),
+        repository: createCollabRepositoryFromStore(store),
+    }
 );
 
 createRoot(document.getElementById('root')!, reactRootErrorOptions()).render(

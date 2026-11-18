@@ -993,4 +993,10 @@ export const zh: Translations = {
 
     contact_ok: '\u6211\u4EEC\u5DF2\u6536\u5230\u4F60\u7684\u53CD\u9988',
     contact_error: '\u53D1\u751F\u610F\u5916\u9519\u8BEF',
+    collab: {
+        participant_limit:
+            '\u6B64\u9879\u76EE\u5DF2\u6709 ${limit} \u4EBA\u5728\u7F16\u8F91\u3002\u8BF7\u5728\u6709\u4EBA\u79BB\u5F00\u540E\u518D\u8BD5\u3002',
+        participants_count:
+            '${count} / ${limit} \u4EBA\u6B63\u5728\u7F16\u8F91',
+    },
 };
