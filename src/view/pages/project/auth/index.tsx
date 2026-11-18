@@ -200,15 +200,13 @@ const LoginView = () => {
                     {errorMessage && (
                         <AuthErrorMessage text={errorMessage} centered />
                     )}
-                    {showCaptcha &&
-                        password &&
-                        !!Secrets.yandexCaptchaSiteKey && (
-                            <AuthCaptcha
-                                form="login"
-                                resetKey={captchaInstanceKey}
-                                onToken={setToken}
-                            />
-                        )}
+                    {showCaptcha && !!Secrets.yandexCaptchaSiteKey && (
+                        <AuthCaptcha
+                            form="login"
+                            resetKey={captchaInstanceKey}
+                            onToken={setToken}
+                        />
+                    )}
                     <Button
                         classname="full-width"
                         title={dictionary.authorization.login}
