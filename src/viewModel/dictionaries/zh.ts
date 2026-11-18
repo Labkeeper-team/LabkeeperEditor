@@ -842,6 +842,8 @@ export const zh: Translations = {
             credentialsError: '\u8D26\u53F7\u6216\u5BC6\u7801\u9519\u8BEF',
             oauthError:
                 '\u901A\u8FC7\u7B2C\u4E09\u65B9\u670D\u52A1\u767B\u5F55\u65F6\u51FA\u9519',
+            oauthNoEmail:
+                '\u60A8\u7684 Yandex ID \u6CA1\u6709\u7535\u5B50\u90AE\u7BB1\u3002\u8BF7\u5728 Yandex ID \u8BBE\u7F6E\u4E2D\u6DFB\u52A0\uFF0C\u6216\u4F7F\u7528\u90AE\u7BB1\u548C\u5BC6\u7801\u767B\u5F55',
             unknownError: '\u672A\u77E5\u9519\u8BEF',
         },
     },

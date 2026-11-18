@@ -79,6 +79,9 @@ const LoginView = () => {
         if (loginRequest === 'oauth_error') {
             return dictionary.authorization.errors.oauthError;
         }
+        if (loginRequest === 'oauth_no_email') {
+            return dictionary.authorization.errors.oauthNoEmail;
+        }
         if (loginRequest === 'unknownError') {
             return dictionary.authorization.errors.unknownError;
         }

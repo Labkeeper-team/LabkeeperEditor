@@ -773,6 +773,8 @@ export const ru: Translations = {
             passwordSetError: 'Ошибка установки пароля',
             credentialsError: 'Неправильный логин или пароль',
             oauthError: 'Ошибка входа через сторонний провайдер',
+            oauthNoEmail:
+                'В вашем Яндекс ID нет почты. Добавьте её в настройках Яндекс ID или войдите по почте и паролю',
             unknownError: 'Неизвестная ошибка',
         },
     },

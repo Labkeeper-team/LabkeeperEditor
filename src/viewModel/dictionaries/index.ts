@@ -693,6 +693,7 @@ export interface Translations {
             passwordSetError: string;
             credentialsError: string;
             oauthError: string;
+            oauthNoEmail: string;
             unknownError: string;
         };
     };

@@ -62,6 +62,7 @@ export type LoginRequestState =
     | 'ok'
     | 'bad_credentials'
     | 'oauth_error'
+    | 'oauth_no_email'
     | 'unknownError';
 
 export type CloneRequestState = 'unknown' | 'ok' | 'error' | 'loading';

@@ -26,6 +26,9 @@ import { trackEvent } from '../utils/observerContext.ts';
 import { AGENT_MODE_SUFFIX } from '../utils/agentModePath.ts';
 import type { Language } from '../dictionaries';
 
+/** Server error code for a Yandex ID account without any email */
+export const OAUTH_NO_EMAIL_ERROR = 'oauth_no_email';
+
 const qrPagePattern = /\/qr\/v\d+/i;
 const projectPagePattern = /\/project\/\S+/i;
 
@@ -88,14 +91,18 @@ export class StartupService {
         const response = await this.rpi.oauthCodeRequest(code, state);
 
         if (!response.isOk) {
+            // A Yandex ID without email cannot become a user: say so instead of a generic error
+            const reason =
+                (response.body as { error?: unknown } | undefined)?.error ===
+                OAUTH_NO_EMAIL_ERROR
+                    ? 'oauth_no_email'
+                    : 'oauth_error';
             this.track(Events.EVENT_LOGIN_FAILED, {
                 method: 'oauth',
-                reason: 'oauth_error',
+                reason,
             });
             this.repository.authViewModelRepository.setCurrentView('login');
-            this.repository.authViewModelRepository.setLoginRequest(
-                'oauth_error'
-            );
+            this.repository.authViewModelRepository.setLoginRequest(reason);
         } else {
             this.track(Events.EVENT_LOGIN_SUCCEEDED, { method: 'oauth' });
         }

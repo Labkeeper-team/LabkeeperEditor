@@ -771,6 +771,8 @@ export const en: Translations = {
             passwordSetError: 'Error setting password',
             credentialsError: 'Incorrect login or password',
             oauthError: 'Error while authenticating via third party provider',
+            oauthNoEmail:
+                'Your Yandex ID has no email. Add one in Yandex ID settings or sign in with email and password',
             unknownError: 'Unknown error',
         },
     },
