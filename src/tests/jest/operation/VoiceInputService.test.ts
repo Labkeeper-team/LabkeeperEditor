@@ -228,6 +228,7 @@ test('запись останавливается сама у предела и�
                 latexCompilationTokenCostPerSecond: 0.1,
                 markdownCompilationTokenCostPerSecond: 0.1,
                 gptTextPromptTokenCost: 1,
+                textRecognitionTokenCostPerPage: 1,
                 speechRecognitionTokenCostPer15Seconds: 0.4,
                 speechRecognitionMaxDurationSeconds: 10,
             },

@@ -687,12 +687,24 @@ export const zh: Translations = {
         usage_title: '\u4EE3\u5E01\u7684\u7528\u9014',
         usage_items: [
             {
+                key: 'agent',
                 heading: '\u4F7F\u7528 AI \u52A9\u624B\uFF08GPT\uFF09',
                 body: '\u8BA9\u6A21\u578B\u4E3A\u6587\u6863\u62DF\u5B9A\u5927\u7EB2\u3001\u5C06\u6587\u672C\u8F6C\u6362\u4E3A Markdown\uFF0C\u6216\u627E\u51FA\u4EE3\u7801\u4E2D\u7684\u9519\u8BEF\u3002',
             },
             {
+                key: 'compilation',
                 heading: '\u670D\u52A1\u5668\u7AEF\u7F16\u8BD1',
                 body: '\u6D41\u7545\u6784\u5EFA\u5927\u578B PDF \u6587\u6863\uFF0C\u4E0D\u518D\u5361\u987F\u3002\u4EC5\u5728\u9AD8\u6027\u80FD\u8FDC\u7A0B\u7F16\u8BD1\u5668\u8FD0\u884C\u671F\u95F4\u6263\u9664\u4EE3\u5E01\u3002',
+            },
+            {
+                key: 'images',
+                heading: '\u56FE\u7247\u548C\u626B\u63CF\u4EF6\u8BC6\u522B',
+                body: '\u667A\u80FD\u4F53\u53EF\u4EE5\u8BC6\u522B\u56FE\u7247\u548C\u626B\u63CF\u7248 PDF \u4E2D\u7684\u6587\u5B57\uFF0C\u4F8B\u5982\u7B14\u8BB0\u7167\u7247\u6216\u8868\u683C\u622A\u56FE\uFF0C\u5E76\u5C06\u5176\u5199\u5165\u6587\u6863\u3002',
+            },
+            {
+                key: 'voice',
+                heading: '\u8BED\u97F3\u8F93\u5165',
+                body: '\u7528\u9EA6\u514B\u98CE\u5411\u667A\u80FD\u4F53\u53E3\u8FF0\u8BF7\u6C42\uFF1A\u8BED\u97F3\u4F1A\u8F6C\u6362\u4E3A\u8BF7\u6C42\u6846\u4E2D\u7684\u6587\u5B57\uFF0C\u53D1\u9001\u524D\u53EF\u4EE5\u4FEE\u6539\u3002',
             },
         ],
         usage_rates: {
@@ -702,6 +714,12 @@ export const zh: Translations = {
                 'Markdown \u7F16\u8BD1\uFF1A\u6BCF 1 \u79D2\u670D\u52A1\u5668\u65F6\u95F4 {tokens}\u3002',
             gpt_text_prompt:
                 'GPT \u6587\u672C\u8BF7\u6C42\uFF1A\u6BCF 1 \u6B21\u8BF7\u6C42 {tokens}\u3002',
+            text_recognition:
+                '\u8BC6\u522B\uFF1A\u6BCF 1 \u5F20\u56FE\u7247\u6216 1 \u9875 PDF {tokens}\u3002',
+            speech_recognition:
+                '\u8BED\u97F3\u8F93\u5165\uFF1A\u6BCF\u5F00\u59CB\u7684 15 \u79D2\u5F55\u97F3 {tokens}\u3002',
+            speech_max_duration:
+                '\u5355\u6B21\u5F55\u97F3\u6700\u957F {seconds} \u79D2\u3002',
         },
         modal: {
             title: '\u8D2D\u4E70\u4EE3\u5E01',

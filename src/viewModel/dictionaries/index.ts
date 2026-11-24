@@ -5,6 +5,9 @@ import { zh } from './zh.ts';
 
 export type Language = 'ru' | 'en' | 'zh';
 
+/** Разделы «На что тратятся токены» на странице токенов */
+export type TokenUsageKey = 'agent' | 'compilation' | 'images' | 'voice';
+
 export const LANGUAGES: readonly Language[] = ['ru', 'en', 'zh'];
 
 export const isLanguage = (value: unknown): value is Language =>
@@ -574,6 +577,8 @@ export interface Translations {
         };
         usage_title: string;
         usage_items: {
+            /** К какому разделу цен приписать строки тарифа */
+            key: TokenUsageKey;
             heading: string;
             body: string;
             rateLines?: string[];
@@ -582,6 +587,9 @@ export interface Translations {
             latex_compilation: string;
             markdown_compilation: string;
             gpt_text_prompt: string;
+            text_recognition: string;
+            speech_recognition: string;
+            speech_max_duration: string;
         };
         modal: {
             title: string;

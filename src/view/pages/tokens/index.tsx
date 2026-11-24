@@ -14,7 +14,11 @@ import { MarketingFooter } from '../../components/header/marketing/MarketingFoot
 import { Modal } from '../../components/modal';
 import { ServicePrices } from '../../../model/rpi';
 import { BillingPricingRequestState } from '../../../viewModel/repository';
-import { Language, Translations } from '../../../viewModel/dictionaries';
+import {
+    Language,
+    TokenUsageKey,
+    Translations,
+} from '../../../viewModel/dictionaries';
 
 import './style.scss';
 import {
@@ -40,6 +44,58 @@ const getUsagePricingStatus = (
           ? page.pricing_error
           : page.pricing_empty;
 
+const applySecondsTemplate = (template: string, seconds: number): string =>
+    template.replace('{seconds}', String(seconds));
+
+/** Строки тарифа под каждым разделом. Поля, которого сервер не прислал, на странице нет */
+const usageRateLines = (
+    rates: Translations['tokens_page']['usage_rates'],
+    prices: ServicePrices,
+    language: Language
+): Record<TokenUsageKey, string[]> => {
+    const tokens = (template: string, amount: number | undefined) =>
+        typeof amount === 'number'
+            ? [
+                  applyTokenTemplate(
+                      template,
+                      formatTokenAmount(amount, language)
+                  ),
+              ]
+            : [];
+    return {
+        agent: tokens(rates.gpt_text_prompt, prices.gptTextPromptTokenCost),
+        compilation: [
+            ...tokens(
+                rates.latex_compilation,
+                prices.latexCompilationTokenCostPerSecond
+            ),
+            ...tokens(
+                rates.markdown_compilation,
+                prices.markdownCompilationTokenCostPerSecond
+            ),
+        ],
+        // GH-280: картинки и сканы, которые агент распознаёт, и голосовой ввод
+        images: tokens(
+            rates.text_recognition,
+            prices.textRecognitionTokenCostPerPage
+        ),
+        voice: [
+            ...tokens(
+                rates.speech_recognition,
+                prices.speechRecognitionTokenCostPer15Seconds
+            ),
+            ...(typeof prices.speechRecognitionMaxDurationSeconds === 'number'
+                ? [
+                      applySecondsTemplate(
+                          rates.speech_max_duration,
+                          prices.speechRecognitionMaxDurationSeconds
+                      ),
+                  ]
+                : []),
+        ],
+    };
+};
+
 const getUsageItemsWithPrices = (
     page: Translations['tokens_page'],
     servicePrices: ServicePrices | undefined,
@@ -47,6 +103,7 @@ const getUsageItemsWithPrices = (
     language: Language
 ) => {
     if (!servicePrices) {
+        // пока цен нет, под первым разделом сказано, что с ними
         return page.usage_items.map((item, index) =>
             index === 0
                 ? {
@@ -60,47 +117,11 @@ const getUsageItemsWithPrices = (
         );
     }
 
-    const rates = page.usage_rates;
-    return page.usage_items.map((item, index) => {
-        if (index === 0) {
-            return {
-                ...item,
-                rateLines: [
-                    ...(item.rateLines ?? []),
-                    applyTokenTemplate(
-                        rates.gpt_text_prompt,
-                        formatTokenAmount(
-                            servicePrices.gptTextPromptTokenCost,
-                            language
-                        )
-                    ),
-                ],
-            };
-        }
-        if (index === 1) {
-            return {
-                ...item,
-                rateLines: [
-                    ...(item.rateLines ?? []),
-                    applyTokenTemplate(
-                        rates.latex_compilation,
-                        formatTokenAmount(
-                            servicePrices.latexCompilationTokenCostPerSecond,
-                            language
-                        )
-                    ),
-                    applyTokenTemplate(
-                        rates.markdown_compilation,
-                        formatTokenAmount(
-                            servicePrices.markdownCompilationTokenCostPerSecond,
-                            language
-                        )
-                    ),
-                ],
-            };
-        }
-        return item;
-    });
+    const lines = usageRateLines(page.usage_rates, servicePrices, language);
+    return page.usage_items.map((item) => ({
+        ...item,
+        rateLines: [...(item.rateLines ?? []), ...lines[item.key]],
+    }));
 };
 
 export const TokensPage = () => {

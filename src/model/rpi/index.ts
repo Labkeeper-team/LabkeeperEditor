@@ -76,6 +76,8 @@ export interface ServicePrices {
     latexCompilationTokenCostPerSecond: number;
     markdownCompilationTokenCostPerSecond: number;
     gptTextPromptTokenCost: number;
+    /** GH-280: цена одной картинки или страницы PDF, которую распознал агент */
+    textRecognitionTokenCostPerPage: number;
     /** GH-271: цена каждых начатых 15 секунд распознавания речи */
     speechRecognitionTokenCostPer15Seconds: number;
     /** Самая длинная запись, которую примет распознавание, не больше 30 секунд */
