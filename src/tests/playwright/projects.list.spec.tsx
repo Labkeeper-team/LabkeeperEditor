@@ -824,8 +824,8 @@ test('раскрытый список сортировки лежит повер
     expect(hidden).toEqual([]);
 });
 
-// GH-261: после смены сортировки виден её первый проект
-test('смена сортировки возвращает список к началу', async ({ page }) => {
+/** Длинный список, прокрученный до конца: смена списка должна вернуть его к началу */
+async function openScrolledList(page: Page) {
     const many = Array.from({ length: 40 }, (_, index) => ({
         ...PROJECTS[index % PROJECTS.length],
         projectId: `00000000-0000-4000-8000-${String(index + 100).padStart(12, '0')}`,
@@ -845,6 +845,26 @@ test('смена сортировки возвращает список к на�
     await expect
         .poll(() => list.evaluate((element) => element.scrollTop))
         .toBeGreaterThan(0);
+    return {
+        expectAtTop: () =>
+            expect
+                .poll(() => list.evaluate((element) => element.scrollTop))
+                .toBe(0),
+        // после смены список всё ещё длиннее окна, иначе браузер сам прижал бы его к началу
+        expectStillScrollable: () =>
+            expect
+                .poll(() =>
+                    list.evaluate(
+                        (element) => element.scrollHeight > element.clientHeight
+                    )
+                )
+                .toBe(true),
+    };
+}
+
+// GH-261: после смены сортировки виден её первый проект
+test('смена сортировки возвращает список к началу', async ({ page }) => {
+    const list = await openScrolledList(page);
 
     // щелчок без докрутки: click() сам прокрутил бы список к залипшей шапке
     await page
@@ -855,9 +875,31 @@ test('смена сортировки возвращает список к на�
     await expect(
         page.locator('tbody tr .project-title-text').first()
     ).toHaveText('Проект 1');
-    await expect
-        .poll(() => list.evaluate((element) => element.scrollTop))
-        .toBe(0);
+    await list.expectAtTop();
+});
+
+// GH-283: так же после переключения LaTeX и Markdown и после ввода в поиск
+test('смена типа проекта возвращает список к началу', async ({ page }) => {
+    const list = await openScrolledList(page);
+
+    await page
+        .getByRole('group', { name: 'Type' })
+        .getByRole('button', { name: 'LaTeX' })
+        .click();
+
+    await expect(page.locator('tbody tr')).toHaveCount(27);
+    await list.expectStillScrollable();
+    await list.expectAtTop();
+});
+
+test('ввод в поиск возвращает список к началу', async ({ page }) => {
+    const list = await openScrolledList(page);
+
+    await page.getByPlaceholder('Search by name or tag').fill('Проект');
+
+    await expect(page.locator('.projects-summary')).toBeVisible();
+    await list.expectStillScrollable();
+    await list.expectAtTop();
 });
 
 test('по-русски стрелка сортировки по дате видна целиком', async ({ page }) => {
