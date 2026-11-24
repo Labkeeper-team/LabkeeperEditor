@@ -26,6 +26,27 @@ const FUNCTION_ERRORS = [
     CompileError.FUNCTION_HAS_NO_RETURN_VALUE,
 ];
 
+/**
+ * GH-278: ошибки пакетов, которые работают только в XeTeX: fontspec и
+ * polyglossia, unicode-math, xunicode и xltxtra, fontsetup. Тексты сняты с
+ * сервера сборки. LuaTeX здесь нет: на сервере его нет
+ */
+const XELATEX_REQUIRED =
+    /requires either XeTeX or|Cannot be run with pdftex|works only with XeTeX|Use Unicode-compliant TeX-engines/;
+
+/** Сборка упала потому, что документ требует XeLaTeX */
+export const requiresXelatex = (
+    errors: CompileErrorResult[] | undefined
+): boolean =>
+    (errors ?? []).some(
+        ({ code, payload }) =>
+            code === CompileError.LATEX_ERROR &&
+            XELATEX_REQUIRED.test(
+                (payload as unknown as Partial<LatexErrorPayload>)
+                    .latexErrorMessage ?? ''
+            )
+    );
+
 /** Текст ошибки без места, тот же, что в панели ошибок */
 export const describeCompileError = (
     { code, payload }: CompileErrorResult,

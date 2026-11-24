@@ -15,6 +15,7 @@ import { ErrorGroupedItem } from './errorGroupItem';
 import { AppDispatch, StorageState } from '../../../../store';
 import { controller } from '../../../../../main.tsx';
 import { hotkeyHint } from '../../hotkeys/hint.ts';
+import { XelatexHint } from './XelatexHint.tsx';
 
 export const ProblemViewer = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -75,6 +76,7 @@ export const ProblemViewer = () => {
                     </span>
                 }
             />
+            <XelatexHint />
             <div
                 className={classNames('problem-list', {
                     'problem-list-container-expanded': expanded,

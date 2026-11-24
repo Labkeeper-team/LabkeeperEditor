@@ -642,6 +642,15 @@ export class Controller {
         }
     );
 
+    onSwitchToXelatexRequest = createAsyncThunk(
+        'onSwitchToXelatexRequest',
+        async () => {
+            await this.wrapper('onSwitchToXelatexRequest', () =>
+                this.projectPageService.onSwitchToXelatexClicked()
+            );
+        }
+    );
+
     onSendErrorsToAgentRequest = createAsyncThunk(
         'onSendErrorsToAgent',
         async () => {

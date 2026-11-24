@@ -173,6 +173,8 @@ export const zh: Translations = {
         xelatex: 'XeLaTeX',
         xelatex_hint:
             'Unicode 和系统字体（fontspec）：土耳其语、阿拉伯语等文字，自己的 TTF/OTF',
+        requires_xelatex: '\u6587\u6863\u9700\u8981 XeLaTeX',
+        switch_to_xelatex: '\u5207\u6362\u5230 XeLaTeX',
     },
     label_syntax_highlight: '\u8BED\u6CD5\u9AD8\u4EAE',
     label_autocompilation: '\u81EA\u52A8\u7F16\u8BD1',
