@@ -9,11 +9,9 @@ import {
 
 /**
  * GH-189: что откатится и где это в ленте. Тот же расчёт, что у сервиса,
- * только из стора. null: откатывать нечего или это не агентский режим
+ * только из стора. null: откатывать нечего
  */
-export const useAgentCheckpointView = (
-    enabled: boolean
-): AgentCheckpointView | null => {
+export const useAgentCheckpointView = (): AgentCheckpointView | null => {
     const hunkCount = useSelector(selectShownHunks).length;
     const authenticated = useSelector(
         (state: StorageState) => state.user.isAuthenticated
@@ -37,7 +35,7 @@ export const useAgentCheckpointView = (
     );
     return useMemo(
         () =>
-            enabled && projectId && !readonly
+            projectId && !readonly
                 ? agentCheckpointView({
                       hunkCount,
                       authenticated,
@@ -49,7 +47,6 @@ export const useAgentCheckpointView = (
                   })
                 : null,
         [
-            enabled,
             projectId,
             readonly,
             hunkCount,

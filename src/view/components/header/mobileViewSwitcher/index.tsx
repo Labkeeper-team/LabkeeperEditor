@@ -14,7 +14,6 @@ import { MobileView } from '../../../store/slices';
 import { controller } from '../../../../main.tsx';
 import { Events } from '../../../../model/service/ObserverService.ts';
 import { useIsMobile } from '../../../hooks/useMobile';
-import { useIsAgentMode } from '../../../hooks/useAgentMode';
 
 import './style.scss';
 
@@ -25,7 +24,6 @@ export const MobileViewSwitcher = () => {
     const mobileView = useSelector(useMobileView);
     const isReadonly = useSelector(useIsProjectReadonly);
     const isMobile = useIsMobile();
-    const isAgentMode = useIsAgentMode();
     const [open, setOpen] = useState(false);
     const barRef = useRef<HTMLDivElement>(null);
 
@@ -52,31 +50,18 @@ export const MobileViewSwitcher = () => {
         return null;
     }
 
-    // в агентском режиме колонки всего две: агент и итоговый документ
-    const views = isAgentMode
-        ? [
-              { id: 'chat' as const, label: dictionary.mobile_view.chat },
-              { id: 'pdf' as const, label: dictionary.agent_mode.document },
-          ]
-        : [
-              { id: 'files' as const, label: dictionary.mobile_view.files },
-              { id: 'editor' as const, label: dictionary.mobile_view.editor },
-              { id: 'pdf' as const, label: dictionary.mobile_view.pdf },
-              // на чужом проекте чата нет, как нет и вкладки в правой колонке
-              ...(isReadonly
-                  ? []
-                  : [
-                        {
-                            id: 'chat' as const,
-                            label: dictionary.mobile_view.chat,
-                        },
-                    ]),
-          ];
+    // GH-279: агентского режима на телефоне нет, экранов всегда четыре
+    const views = [
+        { id: 'files' as const, label: dictionary.mobile_view.files },
+        { id: 'editor' as const, label: dictionary.mobile_view.editor },
+        { id: 'pdf' as const, label: dictionary.mobile_view.pdf },
+        // на чужом проекте чата нет, как нет и вкладки в правой колонке
+        ...(isReadonly
+            ? []
+            : [{ id: 'chat' as const, label: dictionary.mobile_view.chat }]),
+    ];
 
-    // в агентском режиме всё, кроме документа, показывает чат: экрана редактора там нет
-    const currentView =
-        views.find((view) => view.id === mobileView) ??
-        (isAgentMode ? views[0] : undefined);
+    const currentView = views.find((view) => view.id === mobileView);
 
     const onSelectView = (id: MobileView) => {
         if (id !== mobileView) {
@@ -89,9 +74,8 @@ export const MobileViewSwitcher = () => {
         if (id === 'files') {
             dispatch(controller.onFolderButtonClickedRequest());
         }
-        // чат и результат делят одну колонку, поэтому синхронизируем таб внутри
-        // неё. В агентском режиме колонки разные, и таб правой трогать нечем
-        if (!isAgentMode && (id === 'chat' || id === 'pdf')) {
+        // чат и результат делят одну колонку, поэтому синхронизируем таб внутри неё
+        if (id === 'chat' || id === 'pdf') {
             dispatch(setViewerTab(id === 'chat' ? 'chat' : 'pdf'));
         }
         dispatch(setMobileView(id));

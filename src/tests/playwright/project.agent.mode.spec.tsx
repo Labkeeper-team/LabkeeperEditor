@@ -352,78 +352,70 @@ test('на чужом проекте агентский режим не откр
     await expect(agentPane(page)).toHaveCount(0);
 });
 
-// На телефоне колонки показываются по одной, и переключать их надо между
-// агентом и PDF, без файлов и редактора
+// GH-279: на телефоне агентского режима нет. Экранов всегда четыре, и агент
+// на своём экране тот же полный чат, что в агентском режиме на компьютере
 test.describe('телефон', () => {
     test.use({ viewport: { width: 390, height: 844 } });
 
-    test('переключатель колонок предлагает только агента и итоговый документ', async ({
+    test('адрес агентского режима открывает экран агента среди четырёх', async ({
         page,
     }) => {
+        // раскладка режима не появляется даже на кадр до замены адреса
+        await page.addInitScript(() => {
+            new MutationObserver(() => {
+                if (document.querySelector('.agent-mode-pane')) {
+                    (window as { agentPaneSeen?: boolean }).agentPaneSeen =
+                        true;
+                }
+            }).observe(document, { childList: true, subtree: true });
+        });
         await openProject(page, `/project/${uuid}/agent`);
-        await expect(agentPane(page)).toBeVisible();
 
-        // открыт чат, и переключатель подписан им, а не редактором из обычного режима
+        // адрес заменён, а не добавлен: «назад» не вернёт в режим, которого нет
+        await expect(page).toHaveURL(`/project/${uuid}`);
+        await expect(agentPane(page)).toHaveCount(0);
+        await expect(page.locator('.agent-chat')).toBeVisible();
+        await expect(page.locator('.agent-files__row')).toBeVisible();
+        await expect(page.locator('.editor-container')).toBeHidden();
         await expect(
             page.locator('.mobile-view-switcher-bar__label')
         ).toHaveText('AI agent');
         await page.locator('.mobile-view-switcher-bar__toggle').click();
-        const options = page.getByRole('option');
+        await expect(page.getByRole('option')).toHaveText([
+            'Files',
+            'Editor',
+            'PDF',
+            'AI agent',
+        ]);
 
-        await expect(options).toHaveCount(2);
-        await expect(options.nth(0)).toHaveAttribute('aria-selected', 'true');
-        await expect(options.nth(0)).toHaveText('AI agent');
-        await expect(options.nth(1)).toHaveText('Final document');
-    });
-
-    test('на телефоне видна одна колонка за раз', async ({ page }) => {
-        await openProject(page, `/project/${uuid}/agent`);
-
-        await expect(page.locator('.agent-chat')).toBeVisible();
-        await expect(page.locator('.viewer-container')).toBeHidden();
-
-        await page.locator('.mobile-view-switcher-bar__toggle').click();
-        await page.getByRole('option', { name: 'Final document' }).click();
-
-        await expect(page.locator('.viewer-container')).toBeVisible();
-        await expect(page.locator('.agent-chat')).toBeHidden();
-    });
-
-    // Замечание заказчика: кнопка зовёт в редактор кода, а на экране оставался
-    // тот же чат, и казалось, что она не работает
-    test('выход на телефоне открывает экран с кодом, а не чат', async ({
-        page,
-    }) => {
-        await openProject(page, `/project/${uuid}/agent`);
-        await expect(page.locator('.agent-chat')).toBeVisible();
-
-        await leaveButton(page).click();
-
-        await expect(page).toHaveURL(`/project/${uuid}`);
-        await expect(agentPane(page)).toHaveCount(0);
+        await page.getByRole('option', { name: 'Editor' }).click();
         await expect(page.locator('.editor-container')).toBeVisible();
         await expect(page.locator('.agent-chat')).toBeHidden();
-        await expect(
-            page.locator('.mobile-view-switcher-bar__label')
-        ).toHaveText('Editor');
+        expect(
+            await page.evaluate(
+                () => (window as { agentPaneSeen?: boolean }).agentPaneSeen
+            )
+        ).toBeUndefined();
     });
 
-    test('«назад» из режима на телефоне возвращает к чату, откуда входили', async ({
-        page,
-    }) => {
+    test('входа в агентский режим на телефоне нет', async ({ page }) => {
         await openProject(page, `/project/${uuid}`);
         await page.locator('.mobile-view-switcher-bar__toggle').click();
         await page.getByRole('option', { name: 'AI agent' }).click();
-        await page.getByRole('button', { name: 'Agent mode' }).click();
-        await expect(agentPane(page)).toBeVisible();
-
-        await page.goBack();
-
-        // вернулись туда, откуда входили: к чату обычного режима
-        await expect(page).toHaveURL(`/project/${uuid}`);
         await expect(page.locator('.agent-chat')).toBeVisible();
+
         await expect(
-            page.locator('.mobile-view-switcher-bar__label')
-        ).toHaveText('AI agent');
+            page.getByRole('button', { name: 'Agent mode' })
+        ).toHaveCount(0);
+        await page.locator('.mobile-view-switcher-bar__toggle').click();
+        await page.getByRole('option', { name: 'Editor' }).click();
+        await page
+            .locator('.code-settings-header-container .dropdown-menu-container')
+            .first()
+            .click();
+        await expect(page.locator('.project-settings-dropdown')).toBeVisible();
+        await expect(
+            page.locator('.project-settings-dropdown__agent-mode')
+        ).toHaveCount(0);
     });
 });

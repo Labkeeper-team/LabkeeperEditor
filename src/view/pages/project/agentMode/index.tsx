@@ -1,9 +1,6 @@
-import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch } from '../../../store';
+import { useSelector } from 'react-redux';
 import { useDictionary } from '../../../store/selectors/translations';
 import { useAgentModeNavigation } from '../../../hooks/useAgentMode';
-import { useIsMobile } from '../../../hooks/useMobile';
-import { setMobileView } from '../../../store/slices/settings';
 import { AgentChat } from '../viewer/chat';
 import { ClearHistoryButton } from '../viewer/chat/ClearHistoryButton.tsx';
 import { hotkeyHint } from '../hotkeys/hint.ts';
@@ -13,23 +10,12 @@ import './style.scss';
 /**
  * Левая колонка агентского режима: одна карточка, сверху выход в обычный
  * режим и очистка истории, под ними чат агента. Панели ошибок сборки здесь
- * нет, её оставили редактору, а файлы добавляют прямо из чата. Правую
- * колонку занимает итоговый документ, её рисует обычный Viewer
+ * нет, её оставили редактору. Правую колонку занимает итоговый документ, её
+ * рисует обычный Viewer
  */
 export const AgentModePane = () => {
-    const dispatch = useDispatch<AppDispatch>();
     const dictionary = useSelector(useDictionary);
-    const isMobile = useIsMobile();
     const { leaveAgentMode } = useAgentModeNavigation();
-
-    const openEditor = () => {
-        leaveAgentMode('button');
-        // на телефоне экран один: без этого после выхода остался бы тот же чат,
-        // и кнопка «открыть редактор кода» ничего бы не меняла
-        if (isMobile) {
-            dispatch(setMobileView('editor'));
-        }
-    };
 
     return (
         <div className="agent-mode-pane">
@@ -38,7 +24,7 @@ export const AgentModePane = () => {
                     type="button"
                     className="agent-mode-pane__leave"
                     {...hotkeyHint('agent_mode')}
-                    onClick={openEditor}
+                    onClick={() => leaveAgentMode('button')}
                 >
                     {dictionary.agent_mode.leave}
                 </button>
@@ -46,7 +32,7 @@ export const AgentModePane = () => {
                 <ClearHistoryButton className="agent-mode-pane__clear" />
             </div>
             <div className="agent-mode-pane__chat">
-                <AgentChat withFiles />
+                <AgentChat />
             </div>
         </div>
     );

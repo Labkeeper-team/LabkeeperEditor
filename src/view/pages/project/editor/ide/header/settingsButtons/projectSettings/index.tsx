@@ -301,8 +301,9 @@ export const ProjectSettings = () => {
                     />
                 )}
             </div>
-            {/* на чужом проекте агента запускать некуда, как и на вкладке агента */}
-            {isReadonly ? null : (
+            {/* на чужом проекте агента запускать некуда, как и на вкладке агента.
+                GH-279: на телефоне режима нет, агент там отдельный экран */}
+            {isReadonly || isMobile ? null : (
                 <button
                     type="button"
                     className="project-settings-dropdown__agent-mode"
