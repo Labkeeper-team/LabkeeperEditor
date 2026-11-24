@@ -1,6 +1,9 @@
 import {
     Hunk,
     HunkPreviousParameters,
+    PROJECT_PARAMETER_NAMES,
+    ProjectParameterName,
+    ProjectParameters,
     SEGMENT_PARAMETER_NAMES,
     Segment,
     SegmentParameterName,
@@ -77,6 +80,9 @@ const isWholeDeletion = (t: Hunk['type']) =>
     t === 'deleteSegment' || t === 'deleteFile';
 export const isParameterChange = (t: Hunk['type']) =>
     t === 'changeSegmentParameters';
+/** GH-284: смена параметров проекта, у неё нет ни сегмента, ни файла */
+export const isProjectParameterChange = (t: Hunk['type']) =>
+    t === 'changeProjectParameters';
 
 function targetKey(hunk: Hunk): string | null {
     if (hunk.segmentId != null) {
@@ -926,6 +932,51 @@ export function noOpParameterHunkIds(
                 parameterChanges(hunk.previousParameters, current).length === 0
             );
         })
+        .map((hunk) => hunk.id);
+}
+
+export function projectParameterHunks(hunks: Hunk[]): Hunk[] {
+    return hunks.filter((h) => isProjectParameterChange(h.type));
+}
+
+export interface ProjectParameterChange<
+    Name extends ProjectParameterName = ProjectParameterName,
+> {
+    name: Name;
+    from: ProjectParameters[Name];
+    to: ProjectParameters[Name];
+}
+
+/**
+ * GH-284: что поменял ханк параметров проекта: прежнее значение и то, что
+ * стоит в проекте сейчас. Как и у сегмента, нетронутого и совпавшего нет
+ */
+export function projectParameterChanges(
+    previous: HunkPreviousParameters | null | undefined,
+    current: ProjectParameters
+): ProjectParameterChange[] {
+    if (!previous) {
+        return [];
+    }
+    return PROJECT_PARAMETER_NAMES.flatMap((name) => {
+        const from = previous[name];
+        return from == null || from === current[name]
+            ? []
+            : [{ name, from, to: current[name] } as ProjectParameterChange];
+    });
+}
+
+/** GH-179 для параметров проекта: всё и так стоит как было, менять нечего */
+export function noOpProjectParameterHunkIds(
+    hunks: Hunk[],
+    current: ProjectParameters
+): string[] {
+    return projectParameterHunks(hunks)
+        .filter(
+            (hunk) =>
+                projectParameterChanges(hunk.previousParameters, current)
+                    .length === 0
+        )
         .map((hunk) => hunk.id);
 }
 

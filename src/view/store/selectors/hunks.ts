@@ -1,5 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit';
 import { StorageState } from '../index.ts';
+import type { ProjectParameters } from '../../../model/domain.ts';
 import {
     buildFileHunkEntries,
     expandGroupsForDisplay,
@@ -12,6 +13,8 @@ import {
     shouldShowGlobalHunkBarFromGroups,
     getPhantomFileNamesFromEntries,
     deletedSegmentsByPosition,
+    projectParameterChanges,
+    projectParameterHunks,
     withoutStaleFileDeletions,
     type HunkGroup,
 } from '../../../viewModel/utils/hunkGrouping.ts';
@@ -44,9 +47,10 @@ export const selectExpandedHunkGroups = createSelector(
     (groups) => expandGroupsForDisplay(groups)
 );
 
+/** GH-284: смена параметров проекта в группы не входит, у неё нет места в документе, но это тоже правка */
 export const selectGroupedHunkCount = createSelector(
-    [selectGroupedHunks],
-    (groups) => groups.length
+    [selectHunks, selectGroupedHunks],
+    (hunks, groups) => groups.length + projectParameterHunks(hunks).length
 );
 
 export const selectShouldShowGlobalHunkBar = createSelector(
@@ -140,4 +144,32 @@ export const selectSegmentHunkUiState = createSelector(
             isPending: segmentHunkIds.some((id) => pendingHunkIds.includes(id)),
         };
     }
+);
+
+/** GH-284: параметры проекта сейчас, с ними сверяются ханки параметров проекта */
+export const selectProjectParameters = createSelector(
+    [
+        (state: StorageState) => state.project.mode,
+        (state: StorageState) =>
+            state.project.currentProgram?.parameters?.roundStrategy,
+        (state: StorageState) =>
+            state.project.currentProgram?.parameters?.latexCompiler,
+    ],
+    (projectType, roundStrategy, latexCompiler): ProjectParameters => ({
+        projectType,
+        roundStrategy: roundStrategy ?? 'noRound',
+        // у программ до выбора движка поля нет: сервер собирает их pdflatex
+        latexCompiler: latexCompiler ?? 'pdflatex',
+    })
+);
+
+/** GH-284: на кнопке настроек проекта точка, пока правка параметров проекта ждёт решения */
+export const selectHasProjectParameterChanges = createSelector(
+    [selectHunks, selectProjectParameters],
+    (hunks, current) =>
+        projectParameterHunks(hunks).some(
+            (hunk) =>
+                projectParameterChanges(hunk.previousParameters, current)
+                    .length > 0
+        )
 );

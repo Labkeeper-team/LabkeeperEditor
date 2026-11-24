@@ -7,7 +7,10 @@ export type ProgramRoundStrategy =
     | 'twoDigits'
     | 'oneDigit'
     | 'fiveDigits'
-    | 'firstMeaningDigit';
+    | 'firstMeaningDigit'
+    /** Есть в спеке, в меню проекта их нет, но агент может их поставить (GH-284) */
+    | 'twoMeaningDigits'
+    | 'threeMeaningDigits';
 /** Labkeeper-team/LabkeeperServer#669: движок сборки PDF latex-проекта */
 export type LatexCompiler = 'pdflatex' | 'xelatex';
 export type SegmentType =
@@ -86,7 +89,13 @@ export type HunkType =
     /** Текстовый файл удалён целиком, text его содержимое */
     | 'deleteFile'
     /** Агент сменил параметры сегмента: previousParameters прежние значения, новые стоят в сегменте */
-    | 'changeSegmentParameters';
+    | 'changeSegmentParameters'
+    /**
+     * GH-284: агент сменил параметры проекта (округление, движок LaTeX, тип).
+     * Ни сегмента, ни файла у него нет: previousParameters прежние значения,
+     * новые стоят в программе и в типе проекта
+     */
+    | 'changeProjectParameters';
 
 /** Параметры сегмента в порядке меню сегмента */
 export const SEGMENT_PARAMETER_NAMES = [
@@ -102,13 +111,30 @@ export const SEGMENT_PARAMETER_NAMES = [
 
 export type SegmentParameterName = (typeof SEGMENT_PARAMETER_NAMES)[number];
 
+/** Параметры проекта в порядке меню проекта (GH-284) */
+export const PROJECT_PARAMETER_NAMES = [
+    'projectType',
+    'roundStrategy',
+    'latexCompiler',
+] as const;
+
+export type ProjectParameterName = (typeof PROJECT_PARAMETER_NAMES)[number];
+
+export interface ProjectParameters {
+    projectType: ProjectType;
+    roundStrategy: ProgramRoundStrategy;
+    latexCompiler: LatexCompiler;
+}
+
 /**
  * Прежние значения параметров. По спеке нетронутого поля нет, а сервер
  * присылает его со значением null: и то и другое значит, что параметр не менялся
  */
 export type HunkPreviousParameters = Partial<
     Record<SegmentParameterName, boolean | null>
->;
+> & {
+    [Name in ProjectParameterName]?: ProjectParameters[Name] | null;
+};
 
 export interface Hunk {
     id: string;

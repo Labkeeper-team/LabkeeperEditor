@@ -155,6 +155,8 @@ export interface Translations {
         one_digit: string;
         two_digits: string;
         three_digits: string;
+        two_meaning_digits: string;
+        three_meaning_digits: string;
     };
     latex_compiler: {
         label: string;
@@ -475,6 +477,8 @@ export interface Translations {
             delete_file_plain: string;
             set_segment_parameters: string;
             set_segment_parameters_plain: string;
+            set_project_parameters: string;
+            set_project_parameters_plain: string;
             list_workspace: string;
             read_segment: string;
             read_segments: string;
@@ -487,6 +491,7 @@ export interface Translations {
         change: {
             segment: string;
             file: string;
+            project: string;
             other: string;
             more: string;
         };
@@ -845,6 +850,9 @@ export interface Translations {
         collapse_bar: string;
         expand_bar: string;
         parameters_changed: string;
+        /** GH-284: заголовок карточки и подсказка точки на кнопке настроек проекта */
+        project_parameters_changed: string;
+        project_parameters_badge: string;
         parameter_yes: string;
         parameter_no: string;
         errors: {

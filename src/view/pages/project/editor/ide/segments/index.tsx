@@ -16,6 +16,7 @@ import {
     LatexFooterBoundaryCard,
     LatexHeaderBoundaryCard,
 } from './latex-boundary-card';
+import { ProjectParameterHunks } from './parameters-hunk';
 import React from 'react';
 import {
     deactivateIdeSegment,
@@ -107,6 +108,8 @@ export const Segments = () => {
     return (
         <div ref={ref} id="segments-container" className="segments-container">
             <LatexHeaderBoundaryCard />
+            {/* GH-284: правка параметров проекта стоит в начале документа */}
+            <ProjectParameterHunks />
             {Array.from(Array(segmentsSize).keys()).map((_, index) => {
                 return (
                     <React.Fragment key={index}>

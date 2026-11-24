@@ -77,6 +77,8 @@ export const AGENT_TOOL_NAMES = [
     'replace_text_in_file',
     'delete_file',
     'set_segment_parameters',
+    // GH-284: округление, движок LaTeX и тип проекта
+    'set_project_parameters',
     'done',
 ] as const;
 

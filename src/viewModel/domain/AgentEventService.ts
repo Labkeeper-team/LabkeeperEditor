@@ -1,4 +1,8 @@
-import { Hunk, SEGMENT_PARAMETER_NAMES } from '../../model/domain.ts';
+import {
+    Hunk,
+    PROJECT_PARAMETER_NAMES,
+    SEGMENT_PARAMETER_NAMES,
+} from '../../model/domain.ts';
 import { AgentEvent, AgentToolName } from '../../model/rpi/agentSocket.ts';
 import { AgentChangeSummary, ChatMessage } from '../repository';
 
@@ -30,6 +34,7 @@ const HUNK_LABELS = new Map<string, string>([
     ['deleteSegment', 'delete_segment'],
     ['deleteFile', 'delete_file'],
     ['changeSegmentParameters', 'set_segment_parameters'],
+    ['changeProjectParameters', 'set_project_parameters'],
 ]);
 
 const SEGMENT_TOOLS = new Set<string>([
@@ -39,6 +44,11 @@ const SEGMENT_TOOLS = new Set<string>([
     'replace_text_in_segment',
     'delete_segment',
     'set_segment_parameters',
+] satisfies AgentToolName[]);
+
+/** GH-284: инструменты, которые меняют параметры всего проекта */
+const PROJECT_TOOLS = new Set<string>([
+    'set_project_parameters',
 ] satisfies AgentToolName[]);
 
 const FILE_TOOLS = new Set<string>([
@@ -67,6 +77,7 @@ const UNKNOWN_TOOL_LABEL = 'unknown_tool';
 const isKnownTool = (toolName: string) =>
     READ_ONLY_TOOLS.has(toolName) ||
     SEGMENT_TOOLS.has(toolName) ||
+    PROJECT_TOOLS.has(toolName) ||
     FILE_TOOLS.has(toolName);
 
 /** Незнакомую правку назвать нечем, поэтому подписываем её местом, как правку строк */
@@ -100,7 +111,7 @@ function sameParameters(
     a: Hunk['previousParameters'],
     b: Hunk['previousParameters']
 ): boolean {
-    return SEGMENT_PARAMETER_NAMES.every(
+    return [...SEGMENT_PARAMETER_NAMES, ...PROJECT_PARAMETER_NAMES].every(
         (name) => (a?.[name] ?? null) === (b?.[name] ?? null)
     );
 }
@@ -237,6 +248,8 @@ export class AgentEventService {
                     labelKey: 'file',
                     file: hunk.fileName,
                 });
+            } else if (hunk.type === 'changeProjectParameters') {
+                targets.set('project', { labelKey: 'project' });
             } else {
                 // место назвать нечем, но умолчать о правке нельзя: список бы соврал
                 targets.set('other', { labelKey: 'other' });
@@ -303,7 +316,11 @@ export class AgentEventService {
         fresh: Hunk[]
     ): { program: boolean; files: boolean } {
         const unknown = !isKnownTool(toolName);
-        let program = unknown || SEGMENT_TOOLS.has(toolName);
+        // параметры проекта лежат в программе, а тип проекта приходит вместе с ней
+        let program =
+            unknown ||
+            SEGMENT_TOOLS.has(toolName) ||
+            PROJECT_TOOLS.has(toolName);
         let files = unknown || FILE_TOOLS.has(toolName);
         for (const hunk of fresh) {
             // сервер сливает соседние правки, и тип hunk не обязан совпадать с вызванным инструментом
@@ -313,7 +330,8 @@ export class AgentEventService {
                 hunk.type === 'deleteLinesFromSegment' ||
                 hunk.type === 'replaceTextInSegment' ||
                 hunk.type === 'deleteSegment' ||
-                hunk.type === 'changeSegmentParameters'
+                hunk.type === 'changeSegmentParameters' ||
+                hunk.type === 'changeProjectParameters'
             ) {
                 program = true;
             }

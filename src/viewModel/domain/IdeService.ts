@@ -5,6 +5,7 @@ import {
     ComputationalOutputSegment,
     LabkeeperFile,
     Program,
+    Project,
     isDiagramSegmentType,
     Segment,
     SegmentType,
@@ -265,6 +266,31 @@ export class IdeService {
             this.repository.projectViewModelRepository.setCompileResult(result);
         }
         this.onProgramUpdated();
+    };
+
+    /**
+     * Проект, перечитанный с сервера после правок агента или их отката.
+     * GH-284: агент меняет и тип проекта, а он лежит не в программе
+     */
+    applyServerProject = (
+        project: Pick<Project, 'program' | 'projectType'> & {
+            lastProgramResult?: CompileSuccessResult;
+        }
+    ) => {
+        this.setNewProgram(project.program, project.lastProgramResult);
+        const projects = this.repository.projectViewModelRepository;
+        // старые заглушки и ответы без типа проект не переключают
+        if (!project.projectType || projects.mode() === project.projectType) {
+            return;
+        }
+        projects.setProjectType(project.projectType);
+        const current = projects.project();
+        if (current) {
+            projects.setProject({
+                ...current,
+                projectType: project.projectType,
+            });
+        }
     };
 
     replaceProgram = (program: Program) => {

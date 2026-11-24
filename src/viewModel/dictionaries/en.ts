@@ -152,6 +152,8 @@ export const en: Translations = {
         one_digit: 'One digit',
         two_digits: 'Two digits',
         three_digits: 'Three digits',
+        two_meaning_digits: 'Two significant digits of the error',
+        three_meaning_digits: 'Three significant digits of the error',
     },
     latex_compiler: {
         label: 'LaTeX compiler',
@@ -493,6 +495,8 @@ export const en: Translations = {
             set_segment_parameters:
                 'Changed the parameters of segment №{segment}',
             set_segment_parameters_plain: 'Changed segment parameters',
+            set_project_parameters: 'Changed the project parameters',
+            set_project_parameters_plain: 'Changed the project parameters',
             list_workspace: 'Reading the document structure',
             read_segment: 'Reading a segment',
             read_segments: 'Reading segments',
@@ -505,6 +509,7 @@ export const en: Translations = {
         change: {
             segment: 'Segment №{segment}',
             file: 'File {file}',
+            project: 'Project parameters',
             other: 'A place with no name',
             more: 'and other places in the document',
         },
@@ -934,6 +939,8 @@ export const en: Translations = {
         collapse_bar: 'Collapse changes bar',
         expand_bar: 'Expand changes bar',
         parameters_changed: 'The agent changed parameters:',
+        project_parameters_changed: 'The agent changed the project parameters:',
+        project_parameters_badge: 'The agent changed the project parameters',
         parameter_yes: 'yes',
         parameter_no: 'no',
         errors: {

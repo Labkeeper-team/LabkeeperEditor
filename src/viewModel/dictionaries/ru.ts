@@ -155,6 +155,8 @@ export const ru: Translations = {
         one_digit: '1 знак',
         two_digits: '2 знака',
         three_digits: '3 знака',
+        two_meaning_digits: 'Две значащие цифры погрешности',
+        three_meaning_digits: 'Три значащие цифры погрешности',
     },
     latex_compiler: {
         label: 'Компилятор LaTeX',
@@ -495,6 +497,8 @@ export const ru: Translations = {
             delete_file_plain: 'Удалён файл',
             set_segment_parameters: 'Изменены параметры сегмента №{segment}',
             set_segment_parameters_plain: 'Изменены параметры сегмента',
+            set_project_parameters: 'Изменены параметры проекта',
+            set_project_parameters_plain: 'Изменены параметры проекта',
             list_workspace: 'Просмотр структуры документа',
             read_segment: 'Чтение сегмента',
             read_segments: 'Чтение сегментов',
@@ -507,6 +511,7 @@ export const ru: Translations = {
         change: {
             segment: 'Сегмент №{segment}',
             file: 'Файл {file}',
+            project: 'Параметры проекта',
             other: 'Место без имени',
             more: 'и другие места документа',
         },
@@ -943,6 +948,8 @@ export const ru: Translations = {
         collapse_bar: 'Свернуть плашку изменений',
         expand_bar: 'Развернуть плашку изменений',
         parameters_changed: 'Агент изменил параметры:',
+        project_parameters_changed: 'Агент изменил параметры проекта:',
+        project_parameters_badge: 'Агент изменил параметры проекта',
         parameter_yes: 'да',
         parameter_no: 'нет',
         errors: {
