@@ -83,14 +83,15 @@ export const ProjectsPage = () => {
     const filterState = useProjectsFilter(projects);
     const { filter, filterActive, visibleProjects, knownTags } = filterState;
 
-    // GH-261: после смены сортировки виден её первый проект, а не прежнее место
+    // GH-261, GH-283: после смены сортировки, поиска или фильтра виден первый
+    // проект нового списка, а не прежнее место, где его может и не быть
     const listRef = useRef<HTMLDivElement>(null);
-    const sortKey = `${filterState.sort.field}-${filterState.sort.direction}`;
+    const listKey = JSON.stringify([filter, filterState.sort]);
     useEffect(() => {
         if (listRef.current) {
             listRef.current.scrollTop = 0;
         }
-    }, [sortKey]);
+    }, [listKey]);
 
     const tagsTarget = tagsTargetId
         ? projects.find((project) => project.projectId === tagsTargetId)
