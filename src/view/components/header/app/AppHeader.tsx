@@ -1,5 +1,5 @@
 import { useDispatch, useSelector } from 'react-redux';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { matchPath, useLocation, useNavigate } from 'react-router-dom';
 
 import { Button } from '../../button';
 import { HeaderLogo } from '../logo';
@@ -7,6 +7,7 @@ import { ShareButton } from '../share';
 import { GithubLink } from '../github';
 import { Back } from '../back';
 import {
+    useCurrentProject,
     useIsProjectReadonly,
     useUser,
 } from '../../../store/selectors/program';
@@ -45,9 +46,20 @@ export const AppHeader = () => {
     const language = useSelector(useCurrentLanguage);
     const { isAuthenticated, tokenBalance } = useSelector(useUser);
     const projectIsReadonly = useSelector(useIsProjectReadonly);
+    const project = useSelector(useCurrentProject);
     const isMobile = useIsMobile();
 
     const isProjectPage = location.pathname.startsWith('/project/');
+    // GH-276: последний открытый проект остаётся в хранилище и после ухода
+    // со страницы. Название и «Поделиться» относятся к проекту из адреса:
+    // в списке проектов их нет, а у только что открытого проекта не мелькает
+    // название прежнего, пока новый грузится
+    const pageProjectId = (
+        matchPath(Routes.Project, location.pathname) ??
+        matchPath(Routes.ProjectAgent, location.pathname)
+    )?.params.id;
+    const showProject =
+        project !== undefined && pageProjectId === project.projectId;
     const showMobileViewSwitcher = isProjectPage && isMobile;
 
     const onLanguageChange = (lang: unknown) => {
@@ -82,8 +94,10 @@ export const AppHeader = () => {
                         {!isMobile ? <GithubLink /> : null}
                     </div>
                     <div className="labkeeper_header__center">
-                        <ProjectTitle isMobile={isMobile} />
-                        {!projectIsReadonly && !isMobile ? (
+                        {showProject ? (
+                            <ProjectTitle isMobile={isMobile} />
+                        ) : null}
+                        {showProject && !projectIsReadonly && !isMobile ? (
                             <ShareButton />
                         ) : null}
                     </div>
