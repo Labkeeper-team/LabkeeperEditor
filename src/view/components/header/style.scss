@@ -1,16 +1,13 @@
 @use '../../styles/colors' as *;
 @use '../../styles/common' as *;
 
-.labkeeper_header-shell {
-    @media screen and (max-width: $mobile-breakpoint) {
-        .labkeeper_header {
-            position: relative;
-            z-index: 20;
-        }
-    }
-}
-
+// GH-277: меню и выбор языка раскрываются из шапки поверх страницы. Без
+// своего слоя список уходил под залипающую шапку таблицы проектов и под ручку
+// высоты поля агента, а они перехватывали нажатия. Шапка выше всего на
+// странице, но ниже окон (z-index 100) и тура (105)
 .labkeeper_header {
+    position: relative;
+    z-index: 50;
     display: flex;
     flex-direction: row;
     align-items: center;
