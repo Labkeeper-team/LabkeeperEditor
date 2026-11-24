@@ -630,12 +630,24 @@ export const en: Translations = {
         usage_title: 'What tokens are used for',
         usage_items: [
             {
+                key: 'agent',
                 heading: 'AI assistant (GPT) usage',
                 body: 'Ask the model to outline a document, convert text to Markdown, or spot bugs in your code.',
             },
             {
+                key: 'compilation',
                 heading: 'Server-side compilation',
                 body: 'Build heavy PDF documents without freezes. Tokens are charged only while the powerful remote compiler is running.',
+            },
+            {
+                key: 'images',
+                heading: 'Image and scan recognition',
+                body: 'The agent reads text from pictures and scanned PDFs, such as a photo of your notes or a screenshot of a table, and moves it into the document.',
+            },
+            {
+                key: 'voice',
+                heading: 'Voice input',
+                body: 'Dictate a request to the agent: your speech turns into text in the request field, and you can edit it before sending.',
             },
         ],
         usage_rates: {
@@ -644,6 +656,10 @@ export const en: Translations = {
             markdown_compilation:
                 'Markdown compilation: {tokens} per 1 second of server time.',
             gpt_text_prompt: 'Text GPT prompt: {tokens} per 1 request.',
+            text_recognition: 'Recognition: {tokens} per 1 image or PDF page.',
+            speech_recognition:
+                'Voice input: {tokens} per every started 15 seconds of recording.',
+            speech_max_duration: 'One recording lasts up to {seconds} seconds.',
         },
         modal: {
             title: 'Token purchase',
