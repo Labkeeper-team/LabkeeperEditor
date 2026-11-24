@@ -515,6 +515,25 @@ export class ProjectPageService {
         trigger: 'button' | 'hotkey' = 'button'
     ): Promise<void> => this.run({ trigger });
 
+    /**
+     * GH-278: документ требует XeTeX, а проект собирается pdfLaTeX. Кнопка в
+     * панели ошибок меняет движок и сразу собирает заново: вошедшему run
+     * перед сборкой сохранит программу, у гостя движок уходит в самой программе
+     */
+    onSwitchToXelatexClicked = async (): Promise<void> => {
+        if (this.editingLock.rejectEdit()) {
+            return;
+        }
+        this.track(Events.EVENT_LATEX_COMPILER_CHANGED, {
+            compiler: 'xelatex',
+            source: 'error_hint',
+        });
+        this.programService.changeLatexCompiler('xelatex');
+        this.repository.ideViewModelRepository.markProgramChanged();
+        this.ideService.onProgramUpdated();
+        await this.run({ trigger: 'xelatex_hint' });
+    };
+
     /** GH-219: сборка без нажатия, в аналитике она не считается нажатием «Выполнить» */
     runAutomatically = (reason: AutoCompileReason): Promise<void> =>
         this.run({ reason });

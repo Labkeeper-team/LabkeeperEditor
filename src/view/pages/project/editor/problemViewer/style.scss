@@ -47,3 +47,39 @@
         background: $button-action-blue;
     }
 }
+
+// GH-278: под заголовком панели, видна и при свёрнутом списке ошибок
+.problem-viewer-xelatex {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 12px;
+    padding: 6px 16px;
+    background: $white;
+    border-top: 1px solid $gray-50;
+    font-size: 13px;
+    line-height: 16px;
+    color: $gray-10;
+
+    &__switch {
+        padding: 0 12px;
+        height: 24px;
+        border: none;
+        border-radius: 12px;
+        background: $blue-10;
+        color: $white;
+        font-size: 12px;
+        line-height: 24px;
+        white-space: nowrap;
+        cursor: pointer;
+
+        &:hover:not(:disabled) {
+            background: $button-action-blue;
+        }
+
+        &:disabled {
+            background: $blue-20;
+            cursor: default;
+        }
+    }
+}

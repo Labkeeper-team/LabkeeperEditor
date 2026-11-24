@@ -22,6 +22,7 @@ import { IdeService } from './IdeService.ts';
 import { HunkService } from '../operation/HunkService.ts';
 import { logBreadcrumb } from '../utils/logBreadcrumb.ts';
 import { trackEvent } from '../utils/observerContext.ts';
+import { requiresXelatex } from '../utils/compileErrors.ts';
 
 /**
  * Сборка, которую запускает не человек: пример с сайта открылся, агент
@@ -36,7 +37,8 @@ export type AutoCompileReason =
  * событием auto_run с причиной, иначе в аналитике они считались нажатиями
  */
 export type CompileStart =
-    { trigger: 'button' | 'hotkey' } | { reason: AutoCompileReason };
+    | { trigger: 'button' | 'hotkey' | 'xelatex_hint' }
+    | { reason: AutoCompileReason };
 
 export class CompilationService {
     repository: ViewModelRepository;
@@ -235,6 +237,8 @@ export class CompilationService {
                 mode,
                 http_code: 203,
                 error_count: compileResult.errors.length,
+                // GH-278: сколько сборок падает на пакетах, которым нужен XeLaTeX
+                requires_xelatex: requiresXelatex(compileResult.errors),
             });
             if (
                 compileResult.errors.some(

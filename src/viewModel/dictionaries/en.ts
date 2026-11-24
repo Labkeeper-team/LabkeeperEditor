@@ -161,6 +161,8 @@ export const en: Translations = {
         xelatex: 'XeLaTeX',
         xelatex_hint:
             'Unicode and system fonts via fontspec: Turkish, Arabic and other scripts, your own TTF/OTF',
+        requires_xelatex: 'The document requires XeLaTeX',
+        switch_to_xelatex: 'Switch to XeLaTeX',
     },
     label_syntax_highlight: 'Syntax highlighting',
     label_autocompilation: 'Autocompilation',

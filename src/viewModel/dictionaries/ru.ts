@@ -164,6 +164,8 @@ export const ru: Translations = {
         xelatex: 'XeLaTeX',
         xelatex_hint:
             'Юникод и системные шрифты через fontspec: турецкий, арабский и другие алфавиты, свои TTF/OTF',
+        requires_xelatex: 'Документ требует XeLaTeX',
+        switch_to_xelatex: 'Переключить на XeLaTeX',
     },
     label_syntax_highlight: 'Подсветка синтаксиса',
     label_autocompilation: 'Автокомпиляция',

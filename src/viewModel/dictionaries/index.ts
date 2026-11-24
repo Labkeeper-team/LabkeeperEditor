@@ -162,6 +162,9 @@ export interface Translations {
         pdflatex_hint: string;
         xelatex: string;
         xelatex_hint: string;
+        /** GH-278: подсказка в панели ошибок, когда пакету нужен XeTeX */
+        requires_xelatex: string;
+        switch_to_xelatex: string;
     };
     label_syntax_highlight: string;
     label_autocompilation: string;
