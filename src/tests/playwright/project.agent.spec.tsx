@@ -624,6 +624,20 @@ test('substitutions-in-the-answer-stay-text', async ({ page }) => {
     await expect(response).toContainText('масса ${m} кг, объём ${V} л');
 });
 
+// GH-282: одиночные доллары в ответе склеивались в формулы, и текст между ними шёл курсивом
+test('lone-dollars-in-the-answer-stay-text', async ({ page }) => {
+    const answer =
+        'В Labkeeper ${...} это не шаблонная строка, а подстановка. Нельзя писать ${a + b}, ${arr[0]}, ${obj.x}, только ${a}. Стоит $5 и $10, а $x^2$ формула';
+    await openChat(page, { frames: [finished('Done', answer)] });
+    await submitPrompt(page);
+
+    const response = page.locator('.agent-chat__response-text');
+    await expect(response.locator(FORMULA)).toHaveCount(1, MATHJAX_LOAD);
+    await expect(response).toContainText(
+        'В Labkeeper ${...} это не шаблонная строка, а подстановка. Нельзя писать ${a + b}, ${arr[0]}, ${obj.x}, только ${a}. Стоит $5 и $10, а'
+    );
+});
+
 test('answer-without-formulas-does-not-load-mathjax', async ({ page }) => {
     const mathJaxRequests: string[] = [];
     page.on('request', (request) => {

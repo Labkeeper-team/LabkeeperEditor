@@ -176,3 +176,50 @@ test('substitutions in code and real formulas are left as they are', () => {
     ].join('\n');
     expect(normalizeMathDelimiters(text)).toBe(text);
 });
+
+// GH-282: ответ из задачи. Ни одна пара долларов в нём не формула, а remark-math
+// склеивал их в формулы, и текст между ними шёл курсивом без пробелов
+test('dollars of templates in the answer stay text', () => {
+    const answer =
+        'в Labkeeper ${...} — это не шаблонная строка с выражением, а простая подстановка. Внутри нельзя писать ${a + b}, ${arr[0]}, ${obj.x} — только ${a}.';
+    expect(normalizeMathDelimiters(answer)).toBe(
+        'в Labkeeper \\${...} — это не шаблонная строка с выражением, а простая подстановка. Внутри нельзя писать \\${a + b}, \\${arr[0]}, \\${obj.x} — только \\${a}.'
+    );
+});
+
+test('prices in dollars stay text', () => {
+    expect(normalizeMathDelimiters('Стоит $5 и $10, итого $15.')).toBe(
+        'Стоит \\$5 и \\$10, итого \\$15.'
+    );
+    expect(normalizeMathDelimiters('от $5-$10 за штуку')).toBe(
+        'от \\$5-\\$10 за штуку'
+    );
+});
+
+test('a dollar pair with spaces inside is not a formula', () => {
+    expect(normalizeMathDelimiters('пробелы $ x $ у краёв')).toBe(
+        'пробелы \\$ x \\$ у краёв'
+    );
+    // пробел перед вторым долларом: формула начинается только с него
+    expect(normalizeMathDelimiters('$a $b$')).toBe('\\$a $b$');
+});
+
+test('real inline formulas keep their dollars', () => {
+    const text = [
+        'Формулы $x^2$, $\\alpha + \\beta$, $\\{1, 2\\}$ и $5$.',
+        'Знак внутри $\\$10 + y$ и перенос $a +',
+        'b$ в абзаце.',
+        'Блок $$E = mc^2$$ в строке и отдельно:',
+        '$$',
+        'x',
+        '$$',
+        'Уже экранированный \\$ и код `$HOME` с ```$x```',
+    ].join('\n');
+    expect(normalizeMathDelimiters(text)).toBe(text);
+});
+
+test('a formula does not continue past an empty line', () => {
+    expect(normalizeMathDelimiters('цена $5\n\nи x$ дальше')).toBe(
+        'цена \\$5\n\nи x\\$ дальше'
+    );
+});
