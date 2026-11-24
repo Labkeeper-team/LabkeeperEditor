@@ -18,6 +18,7 @@ import { useAgentModeNavigation } from '../../../../../../../hooks/useAgentMode'
 import { useIsProjectReadonly } from '../../../../../../../store/selectors/program';
 import { useIsMobile } from '../../../../../../../hooks/useMobile';
 import { HintTooltip } from '../../../../../../../components/hintTooltip';
+import { ProjectParameterHunks } from '../../../segments/parameters-hunk';
 
 const EXPORT_HINT_TOOLTIP_ID = 'project-export-hint';
 const LATEX_COMPILER_HINT_TOOLTIP_ID = 'project-latex-compiler-hint';
@@ -64,6 +65,8 @@ export const ProjectSettings = () => {
 
     return (
         <div className="project-settings-dropdown">
+            {/* GH-284: точка на кнопке ведёт сюда: правку агента видно рядом с самими параметрами */}
+            {isReadonly ? null : <ProjectParameterHunks />}
             <Typography
                 type="body-large"
                 text={dictionary.viewer.mode.label}

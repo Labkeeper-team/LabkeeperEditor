@@ -1,4 +1,4 @@
-import { Hunk } from '../../model/domain.ts';
+import { Hunk, ProjectParameters } from '../../model/domain.ts';
 import { Rpi } from '../../model/rpi';
 import { ViewModelRepository } from '../repository';
 import { IdeService } from '../domain/IdeService.ts';
@@ -12,8 +12,10 @@ import {
     hunksForFile,
     noOpHunkIds,
     noOpParameterHunkIds,
+    noOpProjectParameterHunkIds,
     parameterHunksFirst,
     parameterHunksForSegment,
+    projectParameterHunks,
     staleFileDeletionIds,
     textHunksForSegment,
     withoutStaleFileDeletions,
@@ -362,10 +364,8 @@ export class HunkService {
             this.programStale = false;
         }
         if (projectResult.isOk) {
-            this.ideService.setNewProgram(
-                projectResult.body.program,
-                projectResult.body.lastProgramResult
-            );
+            // откат параметров проекта мог вернуть и прежний тип проекта
+            this.ideService.applyServerProject(projectResult.body);
             this.settleNoOpHunks();
         }
     }
@@ -610,6 +610,17 @@ export class HunkService {
         this.acceptHunksInBackground(ids);
     };
 
+    /**
+     * GH-284: человек сам поменял параметр проекта. Решение по смене
+     * параметров агентом этим принято, как и у параметров сегмента (GH-242)
+     */
+    acceptProjectParameterHunks = (): void => {
+        const ids = projectParameterHunks(
+            this.repository.ideViewModelRepository.hunks()
+        ).map((h) => h.id);
+        this.acceptHunksInBackground(ids);
+    };
+
     acceptHunksForFile = (fileName: string): void => {
         const ids = hunksForFile(
             this.repository.ideViewModelRepository.hunks(),
@@ -651,12 +662,25 @@ export class HunkService {
                 hunks,
                 (segmentId) => segments[segmentId - 1]?.parameters
             ),
+            ...noOpProjectParameterHunkIds(hunks, this.projectParameters()),
         ].filter((id) => !this.settledNoOpIds.has(id));
         if (ids.length === 0) {
             return;
         }
         ids.forEach((id) => this.settledNoOpIds.add(id));
         this.acceptHunksInBackground(ids);
+    };
+
+    /** Параметры проекта сейчас: с ними сверяются ханки параметров проекта */
+    projectParameters = (): ProjectParameters => {
+        const projects = this.repository.projectViewModelRepository;
+        const parameters = projects.currentProgram().parameters;
+        return {
+            projectType: projects.mode(),
+            roundStrategy: parameters.roundStrategy,
+            // у программ до выбора движка поля нет: сервер собирает их pdflatex
+            latexCompiler: parameters.latexCompiler ?? 'pdflatex',
+        };
     };
 
     /**

@@ -320,6 +320,61 @@ test('changed-hunks-include-a-parameter-hunk-that-changed-one-more-parameter', (
     ).toEqual([]);
 });
 
+// GH-284: у смены параметров проекта нет ни сегмента, ни файла, и прыгать некуда
+test('describe-tool-call-of-set-project-parameters-names-the-project', () => {
+    const service = new AgentEventService();
+    // так её присылает препрод: чужие поля null
+    const hunk = serverHunk({
+        id: 'p',
+        type: 'changeProjectParameters',
+        fileName: null,
+        segmentId: null,
+        startLine: null,
+        endLine: null,
+        text: null,
+        previousParameters: {
+            visible: null,
+            roundStrategy: 'threeDigits',
+            latexCompiler: 'pdflatex',
+            projectType: null,
+        },
+    });
+
+    expect(service.describeToolCall('set_project_parameters', [hunk])).toEqual([
+        {
+            kind: 'event',
+            labelKey: 'set_project_parameters',
+            file: null,
+            segmentId: null,
+            lines: undefined,
+            target: undefined,
+        },
+    ]);
+    expect(service.describeChanges([hunk])).toEqual([{ labelKey: 'project' }]);
+    // без правок, например у гостя, строка тоже про проект, а не «агент выполнил действие»
+    expect(service.describeToolCall('set_project_parameters', [])).toEqual([
+        { kind: 'event', labelKey: 'set_project_parameters_plain' },
+    ]);
+});
+
+test('changed-hunks-include-a-project-hunk-that-changed-one-more-parameter', () => {
+    const service = new AgentEventService();
+    const before = hunkOf('changeProjectParameters', {
+        id: 'p',
+        previousParameters: { roundStrategy: 'threeDigits' },
+    });
+    const after = {
+        ...before,
+        previousParameters: {
+            roundStrategy: 'threeDigits' as const,
+            latexCompiler: 'pdflatex' as const,
+        },
+    };
+
+    expect(service.changedHunks([before], [after])).toEqual([after]);
+    expect(service.changedHunks([after], [after])).toEqual([]);
+});
+
 test('describe-tool-call-of-delete-file-names-the-file-without-a-jump', () => {
     const service = new AgentEventService();
 
@@ -680,6 +735,8 @@ test.each([
     ['replace_text_in_segment'],
     ['delete_segment'],
     ['set_segment_parameters'],
+    // GH-284: параметры проекта лежат в программе, тип проекта приходит с ней
+    ['set_project_parameters'],
 ] as const)(
     'reload-scope-of-%s-asks-for-the-program-even-without-hunk-changes',
     (tool) => {
@@ -729,6 +786,7 @@ test.each([
     ['replaceTextInSegment'],
     ['deleteSegment'],
     ['changeSegmentParameters'],
+    ['changeProjectParameters'],
 ] as const)('reload-scope-of-%s-asks-for-the-program-only', (type) => {
     const service = new AgentEventService();
 

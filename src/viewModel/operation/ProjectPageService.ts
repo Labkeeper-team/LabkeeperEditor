@@ -529,6 +529,7 @@ export class ProjectPageService {
             source: 'error_hint',
         });
         this.programService.changeLatexCompiler('xelatex');
+        this.hunkService.acceptProjectParameterHunks();
         this.repository.ideViewModelRepository.markProgramChanged();
         this.ideService.onProgramUpdated();
         await this.run({ trigger: 'xelatex_hint' });
@@ -699,6 +700,8 @@ export class ProjectPageService {
         const from = this.repository.projectViewModelRepository.mode();
         this.track(Events.EVENT_PROJECT_MODE_CHANGED, { from, to: type });
         this.repository.projectViewModelRepository.setProjectType(type);
+        // GH-284: свой выбор человека важнее отката правки агента
+        this.hunkService.acceptProjectParameterHunks();
 
         const project = this.repository.projectViewModelRepository.project();
         if (!project) return;

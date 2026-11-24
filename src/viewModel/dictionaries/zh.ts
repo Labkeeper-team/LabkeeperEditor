@@ -164,6 +164,10 @@ export const zh: Translations = {
         one_digit: '\u4E00\u4F4D\u6570\u5B57',
         two_digits: '\u4E24\u4F4D\u6570\u5B57',
         three_digits: '\u4E09\u4F4D\u6570\u5B57',
+        two_meaning_digits:
+            '\u8BEF\u5DEE\u7684\u4E24\u4F4D\u6709\u6548\u6570\u5B57',
+        three_meaning_digits:
+            '\u8BEF\u5DEE\u7684\u4E09\u4F4D\u6709\u6548\u6570\u5B57',
     },
     latex_compiler: {
         label: 'LaTeX 编译器',
@@ -552,10 +556,15 @@ export const zh: Translations = {
                 '\u5DF2\u4FEE\u6539\u7247\u6BB5 \u2116{segment} \u7684\u53C2\u6570',
             set_segment_parameters_plain:
                 '\u5DF2\u4FEE\u6539\u7247\u6BB5\u53C2\u6570',
+            set_project_parameters:
+                '\u5DF2\u4FEE\u6539\u9879\u76EE\u53C2\u6570',
+            set_project_parameters_plain:
+                '\u5DF2\u4FEE\u6539\u9879\u76EE\u53C2\u6570',
         },
         change: {
             segment: '\u7247\u6BB5 \u2116{segment}',
             file: '\u6587\u4EF6 {file}',
+            project: '\u9879\u76EE\u53C2\u6570',
             other: '\u672A\u547D\u540D\u4F4D\u7F6E',
             more: '\u4EE5\u53CA\u6587\u6863\u4E2D\u7684\u5176\u4ED6\u4F4D\u7F6E',
         },
@@ -1030,6 +1039,10 @@ export const zh: Translations = {
         expand_bar: '\u5C55\u5F00\u4FEE\u6539\u680F',
         parameters_changed:
             '\u667A\u80FD\u4F53\u4FEE\u6539\u4E86\u53C2\u6570\uFF1A',
+        project_parameters_changed:
+            '\u667A\u80FD\u4F53\u4FEE\u6539\u4E86\u9879\u76EE\u53C2\u6570\uFF1A',
+        project_parameters_badge:
+            '\u667A\u80FD\u4F53\u4FEE\u6539\u4E86\u9879\u76EE\u53C2\u6570',
         parameter_yes: '\u662F',
         parameter_no: '\u5426',
         errors: {

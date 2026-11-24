@@ -1336,10 +1336,7 @@ export class AgentChatService {
             return false;
         }
         // setNewProgram, а не replaceProgram: двадцать итераций дадут двадцать точек отмены
-        this.ideService.setNewProgram(
-            result.body.program,
-            result.body.lastProgramResult
-        );
+        this.ideService.applyServerProject(result.body);
         this.programMayBeStale = false;
         await this.textFileEditorService.reloadActiveTextFileIfOpen();
         return true;

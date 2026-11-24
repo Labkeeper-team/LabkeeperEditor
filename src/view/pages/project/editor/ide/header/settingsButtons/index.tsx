@@ -18,6 +18,7 @@ import {
     useSearchNoMatch,
 } from '../../../../../../store/selectors/program';
 import { useDictionary } from '../../../../../../store/selectors/translations';
+import { selectHasProjectParameterChanges } from '../../../../../../store/selectors/hunks.ts';
 import { AppDispatch, StorageState } from '../../../../../../store';
 import { setShowSearch } from '../../../../../../store/slices/settings';
 import { controller } from '../../../../../../../main.tsx';
@@ -34,6 +35,7 @@ export const SettingsButton = () => {
     const showSearch = useSelector(
         (state: StorageState) => state.settings.showSearch
     );
+    const projectChanged = useSelector(selectHasProjectParameterChanges);
 
     return (
         <div
@@ -47,7 +49,29 @@ export const SettingsButton = () => {
                     InterfaceTourAnchorClassnames.CodeSettings
                 )}
             >
-                <DropdownMenu icon={<CodeSettingsIcon />} fullScreenOnMobile>
+                <DropdownMenu
+                    icon={
+                        <span className="project-settings-icon">
+                            <CodeSettingsIcon />
+                            {/* GH-284: агент сменил параметры проекта, решение ждёт в меню */}
+                            {projectChanged ? (
+                                <span
+                                    className="project-settings-icon__badge"
+                                    title={
+                                        dictionary.hunks
+                                            .project_parameters_badge
+                                    }
+                                    aria-label={
+                                        dictionary.hunks
+                                            .project_parameters_badge
+                                    }
+                                    role="status"
+                                />
+                            ) : null}
+                        </span>
+                    }
+                    fullScreenOnMobile
+                >
                     {showSearch ? null : <ProjectSettings />}
                 </DropdownMenu>
             </div>

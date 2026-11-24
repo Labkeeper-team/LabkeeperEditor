@@ -3,6 +3,7 @@ import './style.scss';
 import { IdeHeader } from './header';
 import { AddBlock } from './addBlock';
 import { Segments } from './segments';
+import { ProjectParameterHunks } from './segments/parameters-hunk';
 import {
     useCurrentProgram,
     useIsProjectReadonly,
@@ -69,7 +70,13 @@ export const Ide = () => {
                 ) : !program?.segments.length &&
                   !isReadonly &&
                   !hasDeletedSegments ? (
-                    <AddBlock isFirst />
+                    <>
+                        {/* GH-284: у пустого документа нет списка сегментов, а правка параметров проекта есть */}
+                        <div className="ide-project-parameters">
+                            <ProjectParameterHunks />
+                        </div>
+                        <AddBlock isFirst />
+                    </>
                 ) : (
                     <Segments />
                 )}

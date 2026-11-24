@@ -21,7 +21,9 @@ import {
     hasHunksForSegment,
     noOpHunkIds,
     noOpParameterHunkIds,
+    noOpProjectParameterHunkIds,
     parameterChanges,
+    projectParameterChanges,
     parameterHunksFirst,
     staleFileDeletionIds,
     textHunksForSegment,
@@ -1425,5 +1427,57 @@ describe('segment parameter hunks', () => {
         expect(
             parameterHunksFirst(['a', 'l', 'p'], [lineHunk, parameterHunk])
         ).toEqual(['p', 'a', 'l']);
+    });
+});
+
+// GH-284: смена параметров проекта, прежние значения в ханке, новые в проекте
+describe('project parameter hunks', () => {
+    const current = {
+        projectType: 'latex',
+        roundStrategy: 'twoDigits',
+        latexCompiler: 'xelatex',
+    } as const;
+    const projectHunk = (previousParameters: Hunk['previousParameters']) =>
+        ({
+            id: 'p',
+            type: 'changeProjectParameters',
+            previousParameters,
+        }) as Hunk;
+
+    test('lists changed parameters in the menu order, skipping untouched ones', () => {
+        expect(
+            projectParameterChanges(
+                {
+                    visible: null,
+                    latexCompiler: 'pdflatex',
+                    roundStrategy: 'threeDigits',
+                    projectType: null,
+                },
+                current
+            )
+        ).toEqual([
+            { name: 'roundStrategy', from: 'threeDigits', to: 'twoDigits' },
+            { name: 'latexCompiler', from: 'pdflatex', to: 'xelatex' },
+        ]);
+        expect(projectParameterChanges(null, current)).toEqual([]);
+    });
+
+    test('a hunk whose old values match the project changes nothing', () => {
+        expect(
+            noOpProjectParameterHunkIds(
+                [
+                    projectHunk({ latexCompiler: 'xelatex' }),
+                    { ...projectHunk({ projectType: 'markdown' }), id: 'q' },
+                    // смена параметров сегмента сюда не относится
+                    {
+                        id: 's',
+                        type: 'changeSegmentParameters',
+                        segmentId: 1,
+                        previousParameters: { visible: true },
+                    },
+                ],
+                current
+            )
+        ).toEqual(['p']);
     });
 });

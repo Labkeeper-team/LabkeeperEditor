@@ -128,3 +128,8 @@
         white-space: normal;
     }
 }
+
+// GH-284: правка агента над параметрами, к которым она относится
+.project-settings-dropdown .parameters-hunk {
+    margin: 0 0 8px;
+}

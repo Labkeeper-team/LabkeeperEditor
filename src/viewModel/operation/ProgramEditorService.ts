@@ -505,6 +505,8 @@ export class ProgramEditorService {
         }
         this.track(Events.EVENT_ROUND_STRATEGY_CHANGED, { strategy });
         this.programService.changeRoundStrategy(strategy);
+        // GH-284: свой выбор человека важнее отката правки агента
+        this.hunkService?.acceptProjectParameterHunks();
         this.repository.ideViewModelRepository.markProgramChanged();
         this.ideService.onProgramUpdated();
         await this.loaderService.segmentEditorSaveProgram();
@@ -516,6 +518,7 @@ export class ProgramEditorService {
         }
         this.track(Events.EVENT_LATEX_COMPILER_CHANGED, { compiler });
         this.programService.changeLatexCompiler(compiler);
+        this.hunkService?.acceptProjectParameterHunks();
         this.repository.ideViewModelRepository.markProgramChanged();
         this.ideService.onProgramUpdated();
         await this.loaderService.segmentEditorSaveProgram();
