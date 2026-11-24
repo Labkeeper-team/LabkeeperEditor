@@ -448,18 +448,30 @@ test.describe('гость', () => {
     });
 });
 
-test('во вкладке агента обычного редактора файлов в чате нет: там есть файловый менеджер', async ({
+// GH-279: во вкладке агента рядом с редактором тот же полный чат, что в агентском режиме
+test('во вкладке агента обычного редактора файлы в чате те же, что в агентском режиме', async ({
     page,
 }) => {
-    await openAgentMode(page, {
+    const { uploads } = await openAgentMode(page, {
         path: `/project/${uuid}`,
         files: [{ fileName: 'data.csv' }],
     });
     await page.getByRole('tab', { name: 'AI agent' }).click();
 
-    await expect(page.locator('.agent-chat')).toBeVisible();
-    await expect(dropZone(page)).toHaveCount(0);
-    await expect(page.locator('.agent-files__row')).toHaveCount(0);
+    await expect(fileChips(page)).toHaveText(['data.csv']);
+    await expect(uploadButton(page)).toBeVisible();
+    await expect(dropZone(page)).toBeVisible();
+
+    const transfer = await page.evaluateHandle(() => {
+        const data = new DataTransfer();
+        data.items.add(new File(['x,y'], 'dropped.csv', { type: 'text/csv' }));
+        return data;
+    });
+    await dropZone(page).dispatchEvent('dragover', { dataTransfer: transfer });
+    await dropZone(page).dispatchEvent('drop', { dataTransfer: transfer });
+
+    await expect.poll(uploads).toEqual(['dropped.csv']);
+    await expect.poll(() => promptText(page)).toBe(mention('dropped.csv'));
 });
 
 /** Что из поля запроса не видно целиком: само поле и его кнопки должны помещаться и в чат, и в окно */
@@ -540,11 +552,25 @@ for (const size of [
 test.describe('телефон без клавиатуры', () => {
     test.use({ viewport: { width: 390, height: 844 } });
 
-    test('в пустом чате зона загрузки на месте', async ({ page }) => {
+    // GH-279: на телефоне агент это четвёртый экран, под пустым чатом помощь, и файл загружает кнопка в ряду
+    test('в пустом чате кнопка загрузки на месте, а без помощи и зона', async ({
+        page,
+    }) => {
         await openAgentMode(page);
 
-        await expect(dropZone(page)).toBeVisible();
+        await expect(
+            page.locator('.labkeeper-instruction-container')
+        ).toBeVisible();
+        await expect(uploadButton(page)).toBeVisible();
         await expect(page.locator('.agent-chat__disclaimer')).toBeVisible();
+        expect(await promptFieldProblems(page)).toEqual([]);
+
+        await page
+            .locator(
+                '.labkeeper-instruction-container .sector-header-container'
+            )
+            .click();
+        await expect(dropZone(page)).toBeVisible();
         expect(await promptFieldProblems(page)).toEqual([]);
     });
 });

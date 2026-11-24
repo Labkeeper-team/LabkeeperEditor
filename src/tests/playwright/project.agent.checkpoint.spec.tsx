@@ -555,17 +555,35 @@ test('guest-gets-accept-only', async ({ page }) => {
     await expect(checkpoint(page)).toHaveCount(0);
 });
 
-test('editor-mode-chat-has-no-frame', async ({ page }) => {
-    await openAgentMode(page, {
-        hunks: [hunk('h1')],
+// GH-279: вкладка агента рядом с редактором показывает тот же полный чат, что агентский режим
+test('editor-tab-chat-frames-the-run-and-reverts-it', async ({ page }) => {
+    const server = await openAgentMode(page, {
+        runs: [{ hunkId: 'h1', entryId: 'e1' }],
         path: `/project/${uuid}`,
     });
     await page.getByRole('tab', { name: 'AI agent' }).click();
 
+    await submitPrompt(page, 'добавь строку');
+
+    await expect(
+        checkpoint(page).locator('.agent-chat__request-text')
+    ).toHaveText(['добавь строку']);
+    await revertButton(page).click();
+    await page
+        .getByRole('dialog', { name: 'Revert the changes?' })
+        .getByRole('button', { name: 'Revert 1 request' })
+        .click();
+
+    await expect(checkpoint(page)).toHaveCount(0);
+    await expect
+        .poll(() => server.hunkDeletes)
+        .toEqual([{ id: 'h1', revert: true }]);
+    await expect.poll(() => server.entryDeletes).toEqual(['e1']);
     await expect(page.locator('.agent-chat__request-text')).toHaveText([
         'старый запрос',
     ]);
-    await expect(checkpoint(page)).toHaveCount(0);
+    // рядом с редактором есть «Выполнить»: после отката документ сам не собирается
+    expect(server.compiles).toBe(0);
 });
 
 test('checkpoint-mode-survives-a-reload', async ({ page }) => {

@@ -415,6 +415,8 @@ test('short-chat-still-follows-the-next-run-after-a-toggle', async ({
     const manySteps = Array.from({ length: 30 }, () =>
         toolCall('read_segment')
     );
+    // лента должна остаться короткой и над рядом файлов: помощь не отнимает у неё место
+    await new RouteSetup(page).collapseHelp();
     await openChat(page, [
         FIRST_RUN,
         [finished('Done', 'второй ответ')],

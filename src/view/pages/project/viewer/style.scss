@@ -236,13 +236,6 @@
         justify-content: flex-end;
     }
 
-    // вкладок нет, вход в режим стоит в шапке колонки рядом с очисткой истории
-    .viewer-tabs__agent-mode {
-        position: static;
-        transform: none;
-        padding: 0 12px;
-    }
-
     .viewer-tabs__clear {
         position: static;
         height: auto;

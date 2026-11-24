@@ -642,7 +642,8 @@ test.describe('на телефоне', () => {
         await page.getByLabel('Open in agent mode').check();
         await page.getByRole('button', { name: 'Create project' }).tap();
 
-        await expect(page).toHaveURL(`/project/${uuid}/agent`);
+        // GH-279: на телефоне агентского режима нет, адрес обычный
+        await expect(page).toHaveURL(`/project/${uuid}`);
         // не пустая вкладка агента, а PDF, который уже собирается
         await expect(
             page
@@ -654,6 +655,23 @@ test.describe('на телефоне', () => {
         build.release();
 
         await expect(pdfPage(page)).toBeVisible();
+    });
+
+    test('пустой проект с агентом открывается на экране агента', async ({
+        page,
+    }) => {
+        await openNewProject(page);
+
+        await page.getByRole('textbox').fill('Отчёт с агентом');
+        await page.getByLabel('Open in agent mode').check();
+        await page.getByRole('button', { name: 'Create project' }).tap();
+
+        await expect(page).toHaveURL(`/project/${uuid}`);
+        await expect(page.locator('.agent-chat')).toBeVisible();
+        await expect(page.locator('.agent-files__row')).toBeVisible();
+        await expect(
+            page.locator('.mobile-view-switcher-bar__label')
+        ).toHaveText('AI agent');
     });
 });
 

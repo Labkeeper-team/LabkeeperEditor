@@ -49,10 +49,20 @@ const measurePromptBounds = (
             'agent-chat__transcript'
         );
         // в пустом чате лента занимает только свой спиннер или подсказку
-        others +=
-            isTranscript && !isEmpty
-                ? TRANSCRIPT_MIN_HEIGHT
-                : sibling.offsetHeight;
+        if (isTranscript && !isEmpty) {
+            others += TRANSCRIPT_MIN_HEIGHT;
+        } else if (
+            sibling.classList.contains('agent-files__drop') &&
+            sibling.offsetHeight > 0
+        ) {
+            // GH-279: зона загрузки ужимается до своего минимума, место над ним поле может забрать
+            others += Math.min(
+                sibling.offsetHeight,
+                parseFloat(getComputedStyle(sibling).minHeight) || 0
+            );
+        } else {
+            others += sibling.offsetHeight;
+        }
     }
     const chrome = field.offsetHeight - (input?.offsetHeight ?? 0);
     const editorMin = editor
@@ -66,12 +76,48 @@ const measurePromptBounds = (
     return { min, max };
 };
 
+/**
+ * Свободное место пустого чата. Его делят поровну отступ над группой с полем
+ * и отступ над предупреждением, поэтому верхний край поля идёт вдвое
+ * медленнее роста высоты
+ */
+const measureCenteredSlack = (field: HTMLElement): number => {
+    const chat = field.parentElement as HTMLElement;
+    const chatStyle = getComputedStyle(chat);
+    const inner =
+        chat.clientHeight -
+        parseFloat(chatStyle.paddingTop) -
+        parseFloat(chatStyle.paddingBottom);
+    const gap = parseFloat(chatStyle.rowGap) || 0;
+    const shown = (Array.from(chat.children) as HTMLElement[]).filter(
+        (child) => getComputedStyle(child).display !== 'none'
+    );
+    const used =
+        shown.reduce((sum, child) => sum + child.offsetHeight, 0) +
+        gap * Math.max(0, shown.length - 1);
+    return Math.max(0, inner - used);
+};
+
+/**
+ * Насколько вырасти полю, чтобы верхний край ушёл за указателем на shift.
+ * В пустом чате поле стоит посередине, пока есть свободное место. GH-279:
+ * когда оно кончается, рост забирает зона загрузки над полем, и край
+ * дальше идёт за высотой один к одному
+ */
+const growthForShift = (shift: number, slack: number | null): number => {
+    if (slack === null) {
+        return shift;
+    }
+    return shift * 2 <= slack ? shift * 2 : shift + slack / 2;
+};
+
 type Drag = {
     pointerId: number;
     startY: number;
     startHeight: number;
     scale: number;
-    factor: number;
+    /** Свободное место пустого чата на начало перетаскивания, у чата с лентой null */
+    slack: number | null;
     bounds: PromptBounds;
     last: number;
     moved: boolean;
@@ -199,8 +245,7 @@ export const usePromptFieldResize = ({
             startY: event.clientY,
             startHeight,
             scale: field.getBoundingClientRect().height / startHeight || 1,
-            // пустой чат держит поле посередине, и верхний край уходит вдвое медленнее роста высоты
-            factor: isEmpty ? 2 : 1,
+            slack: isEmpty ? measureCenteredSlack(field) : null,
             bounds: next,
             last: startHeight,
             moved: false,
@@ -225,7 +270,8 @@ export const usePromptFieldResize = ({
         }
         current.moved = true;
         current.last = clamp(
-            current.startHeight + (shift / current.scale) * current.factor,
+            current.startHeight +
+                growthForShift(shift / current.scale, current.slack),
             current.bounds
         );
         setLiveHeight(current.last);

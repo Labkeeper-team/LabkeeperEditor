@@ -22,24 +22,14 @@
         flex: 0 0 auto;
     }
 
-    .agent-chat__field,
+    // над полем зона загрузки и ряд файлов: по центру встаёт вся группа
+    .agent-files__drop,
     .agent-chat__disclaimer {
         margin-top: auto;
     }
-
-    // над полем зона загрузки и ряд файлов: по центру встаёт вся группа
-    &.agent-chat--files {
-        .agent-files__drop {
-            margin-top: auto;
-        }
-
-        .agent-chat__field {
-            margin-top: 0;
-        }
-    }
 }
 
-// Файлы в чате агентского режима: зона загрузки в пустом чате и ряд над запросом
+// Файлы в чате: зона загрузки в пустом чате и ряд над запросом
 .agent-files__drop {
     // высота как у поля запроса без ручной подгонки, на низком экране зона ужимается первой
     flex: 0 1 152px;
@@ -1196,7 +1186,7 @@ body.agent-chat-resizing {
             display: none;
         }
 
-        .agent-chat--empty.agent-chat--files .agent-files__row {
+        .agent-chat--empty .agent-files__row {
             margin-top: auto;
         }
     }
@@ -1213,7 +1203,7 @@ body.agent-chat-resizing {
     }
 
     // без зоны группу над полем центрирует ряд файлов
-    .agent-chat--empty.agent-chat--files .agent-files__row {
+    .agent-chat--empty .agent-files__row {
         margin-top: auto;
     }
 }
@@ -1229,8 +1219,7 @@ body.agent-chat-resizing {
         display: none;
     }
 
-    .agent-chat--empty .agent-chat__field,
-    .agent-chat--empty.agent-chat--files .agent-chat__field {
+    .agent-chat--empty .agent-chat__field {
         margin-top: auto;
     }
 }

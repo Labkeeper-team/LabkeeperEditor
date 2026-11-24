@@ -1,6 +1,8 @@
 import '../polyfills/textEncoder.ts';
 import { act, render } from '@testing-library/react';
+import { configureStore } from '@reduxjs/toolkit';
 import { useEffect } from 'react';
+import { Provider } from 'react-redux';
 import {
     MemoryRouter,
     Outlet,
@@ -43,19 +45,24 @@ const ProjectProbe = () => {
 
 // как в приложении: обе страницы под общим маршрутом, и при смене режима
 // страница проекта не пересоздаётся
+// хук режима на телефоне переключает экран через хранилище, здесь окно широкое
+const store = configureStore({ reducer: () => ({}) });
+
 const renderAt = (initial: string) =>
     render(
-        <MemoryRouter initialEntries={[initial]}>
-            <Routes>
-                <Route path="/" element={<Outlet />}>
-                    <Route path="project/:id" element={<ProjectProbe />} />
-                    <Route
-                        path="project/:id/agent"
-                        element={<ProjectProbe />}
-                    />
-                </Route>
-            </Routes>
-        </MemoryRouter>
+        <Provider store={store}>
+            <MemoryRouter initialEntries={[initial]}>
+                <Routes>
+                    <Route path="/" element={<Outlet />}>
+                        <Route path="project/:id" element={<ProjectProbe />} />
+                        <Route
+                            path="project/:id/agent"
+                            element={<ProjectProbe />}
+                        />
+                    </Route>
+                </Routes>
+            </MemoryRouter>
+        </Provider>
     );
 
 const events = () =>

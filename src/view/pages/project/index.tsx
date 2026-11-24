@@ -27,6 +27,7 @@ import { useHunkActionHandler } from '../../hooks/useHunkEditorSync';
 import {
     useAgentModeNavigation,
     useAgentModeTracking,
+    useMobileAgentModeRedirect,
 } from '../../hooks/useAgentMode';
 import { AgentModePane } from './agentMode';
 import { useProjectHotkeys } from './hotkeys/useProjectHotkeys.ts';
@@ -39,6 +40,7 @@ export const ProjectPage = () => {
     const isMobile = useIsMobile();
     const { isAgentMode, leaveAgentMode } = useAgentModeNavigation();
     useAgentModeTracking();
+    useMobileAgentModeRedirect();
     const mobileView = useSelector(useMobileView);
     const activeTextFile = useSelector(
         (state: StorageState) => state.ide.activeTextFile
@@ -204,33 +206,30 @@ export const ProjectPage = () => {
     );
 
     // В агентском режиме редактор и файлы не показываем: экран делят чат и PDF.
-    // На телефоне колонки те же, но видна одна за раз, как и в обычном режиме
+    // GH-279: режим только на компьютере, на телефоне агент это четвёртый экран
     if (isAgentMode) {
         return (
             <div
                 className={classNames(
                     'project-container',
-                    'project-container--agent',
-                    { 'project-container--mobile': isMobile }
+                    'project-container--agent'
                 )}
             >
                 <div
                     className={classNames(
                         'project-pane',
                         'project-pane--agent',
-                        {
-                            'project-pane--active':
-                                !isMobile || mobileView !== 'pdf',
-                        }
+                        'project-pane--active'
                     )}
                 >
                     <AgentModePane />
                 </div>
                 <div
-                    className={classNames('project-pane', 'project-pane--pdf', {
-                        'project-pane--active':
-                            !isMobile || mobileView === 'pdf',
-                    })}
+                    className={classNames(
+                        'project-pane',
+                        'project-pane--pdf',
+                        'project-pane--active'
+                    )}
                 >
                     <Viewer />
                 </div>

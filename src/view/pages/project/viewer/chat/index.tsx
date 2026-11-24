@@ -9,8 +9,13 @@ import { PromptField } from './PromptField';
 import { AgentFiles } from './AgentFiles.tsx';
 import './style.scss';
 
-/** withFiles: файлы прямо в чате, они нужны там, где нет файлового менеджера, то есть в агентском режиме. Там же и откат правок (GH-189): редактора с его кнопками в этом режиме нет */
-export const AgentChat = ({ withFiles = false }: { withFiles?: boolean }) => {
+/**
+ * Чат агента. Файлы прямо в чате и откат правок (GH-189) появились в
+ * агентском режиме, где нет файлового менеджера и кнопок редактора. GH-279:
+ * чат везде один и тот же, полный: и во вкладке рядом с редактором, и на
+ * экране агента телефона
+ */
+export const AgentChat = () => {
     const dispatch = useDispatch<AppDispatch>();
     const dictionary = useSelector(useDictionary);
     const messages = useSelector((state: StorageState) => state.chat.messages);
@@ -34,11 +39,10 @@ export const AgentChat = ({ withFiles = false }: { withFiles?: boolean }) => {
         <div
             className={classNames('agent-chat', {
                 'agent-chat--empty': isEmpty,
-                'agent-chat--files': withFiles,
             })}
         >
-            <Transcript withCheckpoint={withFiles} />
-            {withFiles && <AgentFiles isEmpty={isEmpty} />}
+            <Transcript />
+            <AgentFiles isEmpty={isEmpty} />
             <PromptField isEmpty={isEmpty} />
             {isEmpty && (
                 <div className="agent-chat__disclaimer">

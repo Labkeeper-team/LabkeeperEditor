@@ -8,6 +8,7 @@ import { useAgentModeNavigation } from '../../../hooks/useAgentMode';
 import { ClearHistoryButton } from './chat/ClearHistoryButton.tsx';
 import { useSelectViewerTab } from './useSelectViewerTab.ts';
 import { hotkeyHint } from '../hotkeys/hint.ts';
+import { useIsMobile } from '../../../hooks/useMobile';
 
 export const ViewerTabs = () => {
     const dictionary = useSelector(useDictionary);
@@ -17,6 +18,7 @@ export const ViewerTabs = () => {
     const selectViewerTab = useSelectViewerTab();
     const isReadonly = useSelector(useIsProjectReadonly);
     const { enterAgentMode } = useAgentModeNavigation();
+    const isMobile = useIsMobile();
 
     // на чужом проекте агента запускать некуда: сервер правок не примет
     if (isReadonly) {
@@ -48,16 +50,21 @@ export const ViewerTabs = () => {
                 </button>
             ))}
             {/* вход в агентский режим лежит на вкладке агента, у левого края, как в
-                макете, и виден при любой открытой вкладке */}
-            <button
-                type="button"
-                className="viewer-tabs__agent-mode"
-                {...hotkeyHint('agent_mode', dictionary.agent_mode.enter_hint)}
-                aria-label={dictionary.agent_mode.enter}
-                onClick={() => enterAgentMode('viewer_tab')}
-            >
-                <FullScreenIcon />
-            </button>
+                макете, и виден при любой открытой вкладке. GH-279: на телефоне режима нет */}
+            {isMobile ? null : (
+                <button
+                    type="button"
+                    className="viewer-tabs__agent-mode"
+                    {...hotkeyHint(
+                        'agent_mode',
+                        dictionary.agent_mode.enter_hint
+                    )}
+                    aria-label={dictionary.agent_mode.enter}
+                    onClick={() => enterAgentMode('viewer_tab')}
+                >
+                    <FullScreenIcon />
+                </button>
+            )}
             {/* очистка лежит на самой вкладке агента и в раскладку не входит:
                 иначе вкладки меняли бы ширину при переключении */}
             {viewerTab === 'chat' && (

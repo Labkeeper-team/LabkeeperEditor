@@ -296,12 +296,7 @@ const HistoryPair = ({ entry }: { entry: AgentHistoryEntry }) => (
     </div>
 );
 
-/** withCheckpoint: подсветка и кнопки отката, они есть только в агентском режиме */
-export const Transcript = ({
-    withCheckpoint = false,
-}: {
-    withCheckpoint?: boolean;
-}) => {
+export const Transcript = () => {
     const dispatch = useDispatch<AppDispatch>();
     const dictionary = useSelector(useDictionary);
     const messages = useSelector((state: StorageState) => state.chat.messages);
@@ -318,7 +313,7 @@ export const Transcript = ({
     const links = useSelector(
         (state: StorageState) => state.chat.entryIdByRequestId
     );
-    const checkpoint = useAgentCheckpointView(withCheckpoint);
+    const checkpoint = useAgentCheckpointView();
     // запись, привязанная к запросу ленты, рисуется там, вторая копия над лентой не нужна
     const shownHistory = useMemo(() => {
         const linked = new Set(Object.values(liveLinks(messages, links)));
