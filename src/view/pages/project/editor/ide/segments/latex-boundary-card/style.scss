@@ -83,6 +83,7 @@
         color: $blue-20;
         background: rgba(62, 116, 255, 0.1);
         border: 1px solid rgba(62, 116, 255, 0.2);
+        white-space: nowrap;
     }
 
     .latex-boundary-hint {
@@ -97,10 +98,25 @@
     .latex-boundary-content {
         margin: 0;
         white-space: pre-wrap;
+        // GH-281: строка без пробелов вроде \geometry{a4paper,top=3mm,...} иначе
+        // задаёт ширину всей колонки редактора и уводит правую колонку за край окна
+        overflow-wrap: anywhere;
         font-family: monospace;
         font-size: 12px;
         line-height: 1.4;
         color: $gray-20;
+
+        // метка «LaTeX заголовок» стоит поверх первой строки: в узкой колонке
+        // строка доходит до неё, поэтому первая строка её обходит, остальные
+        // идут во всю ширину. На телефоне место под меткой у всех строк
+        @media screen and (min-width: $mobile-breakpoint + 1) {
+            &::before {
+                content: '';
+                float: right;
+                width: 124px;
+                height: 1em;
+            }
+        }
     }
 
     @media screen and (max-width: $mobile-breakpoint) {
@@ -115,8 +131,6 @@
             max-width: 100%;
             min-width: 0;
             box-sizing: border-box;
-            /* Как soft-wrap в сегментах (CM lineWrapping): ломаем длинные \usepackage{...} без пробелов */
-            overflow-wrap: anywhere;
             word-break: break-word;
             /* Место под badge справа, чтобы строки не уезжали под плашку */
             padding-right: 88px;

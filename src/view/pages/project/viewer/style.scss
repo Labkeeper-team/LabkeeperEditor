@@ -6,10 +6,13 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-    flex: 1;
+    // GH-281: половина ширины, пока редактору хватает места. Когда его нет
+    // (узкое окно, открытый файловый менеджер), колонка уступает редактору,
+    // а не уезжает за правый край окна
+    flex: 1 1 50%;
     gap: 8px;
     max-width: 50%;
-    min-width: 50%;
+    min-width: 0;
 
     @media screen and (max-width: $mobile-breakpoint) {
         max-width: none;
@@ -117,7 +120,10 @@
     border: none;
     background: transparent;
     border-bottom: 2px solid transparent;
-    padding: 0 8px;
+    // GH-281: слева на вкладке агента вход в агентский режим, справа очистка
+    // истории. В узкой колонке подпись не заходит под них, а обрезается.
+    // Отступ одинаковый у обеих вкладок, иначе они разошлись бы по ширине
+    padding: 0 48px;
     font-size: 14px;
     line-height: 18px;
     color: $gray-20;

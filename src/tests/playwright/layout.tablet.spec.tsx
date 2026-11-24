@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { readFileSync } from 'node:fs';
 import { RouteSetup } from './mock.routeSetUp.tsx';
 import { Program } from '../../model/domain.ts';
 
@@ -124,3 +125,165 @@ for (const viewport of [
         });
     });
 }
+
+/**
+ * GH-281: в LaTeX-проекте без своей преамбулы редактор показывает карточку
+ * заголовка, и строка \geometry{...} без пробелов распирала колонку редактора.
+ * Правая колонка уезжала за край окна вместе с кнопками агента и PDF, а в
+ * узкой колонке кнопки поля агента наезжали друг на друга
+ */
+const VIRTUAL_PREAMBLE_PROGRAM: Program = {
+    segments: [
+        {
+            id: 1,
+            type: 'md',
+            text: '$$\n\\int_a^b f(x)\\,\\mathrm{d}x = F(b) - F(a)\n$$',
+            parameters: { visible: true },
+        },
+        {
+            id: 2,
+            type: 'latex',
+            text: 'Hello',
+            parameters: { visible: true },
+        },
+    ],
+    parameters: { roundStrategy: 'noRound' },
+};
+
+const pdf = readFileSync(
+    new URL('./fixtures/pdf-links-selection.pdf', import.meta.url)
+);
+
+async function openLatexProject(page: Page) {
+    const routeSetup = await signedIn(page);
+    routeSetup.setupLatexProject();
+    await routeSetup.setupGetProjectRequest(
+        200,
+        'default',
+        VIRTUAL_PREAMBLE_PROGRAM
+    );
+    await routeSetup.setupSaveProgramRequest();
+    await routeSetup.setupListFilesRequest(200, 'emptyFiles');
+    await routeSetup.setupAgentHistoryRequest([]);
+    await page.route('**/files/narrow.pdf', (route) =>
+        route.fulfill({ contentType: 'application/pdf', body: pdf })
+    );
+    await page.route(
+        `**/api/v4/public/project/${uuid}/compile/pdf**`,
+        (route) => route.fulfill({ json: { pdfUri: '/files/narrow.pdf' } })
+    );
+    await page.goto(`/project/${uuid}`);
+    await page.locator('.latex-header-segment').waitFor();
+}
+
+/** Правый край правой колонки внутри окна */
+async function expectViewerInsideWindow(page: Page) {
+    const right = await page
+        .locator('.viewer-container')
+        .evaluate((viewer) => viewer.getBoundingClientRect().right);
+    expect(right).toBeLessThanOrEqual(page.viewportSize()!.width);
+}
+
+/** Кнопки поля агента внутри поля и не накладываются друг на друга */
+async function expectPromptControlsApart(page: Page) {
+    const boxes = await page.evaluate(() =>
+        [
+            // сами кнопки 100k, 200k и 300k: их блок ужимается, а кнопки вылезают из него
+            '.agent-chat__setting .segmented-control__item',
+            '.agent-chat__mode',
+            '.agent-settings__toggle',
+            '.agent-voice',
+            '.agent-chat__submit',
+        ].flatMap((selector) =>
+            [...document.querySelectorAll(selector)].map((element) => {
+                const rect = element.getBoundingClientRect();
+                return {
+                    selector: `${selector} «${element.textContent}»`,
+                    left: rect.left,
+                    right: rect.right,
+                    top: rect.top,
+                    bottom: rect.bottom,
+                };
+            })
+        )
+    );
+    expect(boxes).toHaveLength(7);
+    const field = (await page.locator('.agent-chat__field').boundingBox())!;
+    for (const box of boxes) {
+        expect(box.left, box.selector).toBeGreaterThanOrEqual(field.x);
+        expect(box.right, box.selector).toBeLessThanOrEqual(
+            field.x + field.width
+        );
+    }
+    for (const [index, a] of boxes.entries()) {
+        for (const b of boxes.slice(index + 1)) {
+            const apart =
+                a.right <= b.left ||
+                b.right <= a.left ||
+                a.bottom <= b.top ||
+                b.bottom <= a.top;
+            expect(apart, `${a.selector} и ${b.selector}`).toBe(true);
+        }
+    }
+}
+
+for (const viewport of [
+    { width: 768, height: 1024 },
+    { width: 800, height: 768 },
+    { width: 900, height: 800 },
+    { width: 1023, height: 800 },
+]) {
+    test.describe(`GH-281 ${viewport.width}x${viewport.height}`, () => {
+        test.use({ viewport });
+
+        test('правая колонка с кнопками агента и PDF целиком в окне', async ({
+            page,
+        }) => {
+            await openLatexProject(page);
+            await page.getByRole('tab', { name: 'AI agent' }).click();
+
+            await expectViewerInsideWindow(page);
+            // без файлового менеджера колонки делят ширину пополам, как и раньше
+            const editor = (await page
+                .locator('.editor-container')
+                .boundingBox())!;
+            const viewerBox = (await page
+                .locator('.viewer-container')
+                .boundingBox())!;
+            expect(
+                Math.abs(editor.width - viewerBox.width)
+            ).toBeLessThanOrEqual(8);
+            await expectPromptControlsApart(page);
+
+            await page.locator('.run-button').click();
+            await page.getByRole('tab', { name: 'Final document' }).click();
+            const viewer = (await page
+                .locator('.viewer-container')
+                .boundingBox())!;
+            const sheet = page.locator('[data-pdf-page] canvas').first();
+            await expect(sheet).toBeVisible();
+            const box = (await sheet.boundingBox())!;
+            expect(box.x).toBeGreaterThanOrEqual(viewer.x);
+            expect(box.x + box.width).toBeLessThanOrEqual(
+                viewer.x + viewer.width
+            );
+        });
+    });
+}
+
+// открытый файловый менеджер отнимает у редактора 260px, и правая колонка уезжала даже на 1280
+test.describe('GH-281 1100x800 с файловым менеджером', () => {
+    test.use({ viewport: { width: 1100, height: 800 } });
+
+    test('правая колонка уступает место, а не уходит за край', async ({
+        page,
+    }) => {
+        await openLatexProject(page);
+        await page.locator('.file-manager-button').click();
+        await page.locator('.manager-container').waitFor();
+        await page.getByRole('tab', { name: 'AI agent' }).click();
+
+        await expectViewerInsideWindow(page);
+        await expectPromptControlsApart(page);
+    });
+});

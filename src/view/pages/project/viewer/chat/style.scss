@@ -1248,18 +1248,16 @@ body.agent-chat-resizing {
     }
 }
 
-@media screen and (max-width: $mobile-breakpoint) {
-    .agent-chat {
-        border-radius: 0;
-        padding: 12px;
-    }
-
+// Узкая колонка: контекст, режим, настройки, микрофон и отправка не помещаются
+// в ряд полностью. Так на телефоне и, GH-281, в колонке уже 520px на любом
+// экране: в 768–1023px режим наезжал на размер контекста
+@mixin narrow-prompt-controls {
     .agent-chat__controls {
         flex-wrap: wrap;
         gap: 8px;
     }
 
-    // в узкой колонке подпись режима не помещается в ряд с контекстом, настройками и отправкой; режим виден по значку, цвету и плейсхолдеру
+    // подпись режима не помещается в ряд с контекстом, настройками и отправкой; режим виден по значку, цвету и плейсхолдеру
     .agent-chat__mode {
         width: 36px;
         height: 36px;
@@ -1272,15 +1270,13 @@ body.agent-chat-resizing {
         display: none;
     }
 
-    // ниже 16px айфон зумит страницу при фокусе, и тап по полю дёргал бы весь экран
+    // текст не уходит под кнопку микрофона в углу поля
     .agent-chat__input .cm-content {
-        font-size: 16px;
-        // текст не уходит под кнопку микрофона в углу поля
         padding-right: 48px;
     }
 
-    // GH-271: в ряду кнопок на телефоне места нет, отправка уехала бы на
-    // вторую строку. Микрофон стоит в углу поля, как в мессенджерах
+    // GH-271: в ряду кнопок места нет, отправка уехала бы на вторую строку.
+    // Микрофон стоит в углу поля, как в мессенджерах
     .agent-voice {
         position: absolute;
         top: 8px;
@@ -1292,6 +1288,25 @@ body.agent-chat-resizing {
         .agent-chat__input
         .cm-content {
         padding-right: 120px;
+    }
+}
+
+// полный ряд занимает до 504px чата (WebKit, китайская подпись режима)
+@container agent-chat (max-width: 519.98px) {
+    @include narrow-prompt-controls;
+}
+
+@media screen and (max-width: $mobile-breakpoint) {
+    @include narrow-prompt-controls;
+
+    .agent-chat {
+        border-radius: 0;
+        padding: 12px;
+    }
+
+    // ниже 16px айфон зумит страницу при фокусе, и тап по полю дёргал бы весь экран
+    .agent-chat__input .cm-content {
+        font-size: 16px;
     }
 
     // строка в 18px мала для пальца: зона нажатия как у остальных кнопок на телефоне
