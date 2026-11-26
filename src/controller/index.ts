@@ -452,6 +452,30 @@ export class Controller {
         }
     );
 
+    onIncludeTextFileInSegmentsRequest = createAsyncThunk(
+        'onIncludeTextFileInSegmentsRequest',
+        async ({ file }: { file: string }) => {
+            await this.wrapper('onIncludeTextFileInSegmentsRequest', () =>
+                this.programEditorService.includeTextFileInSegments(file)
+            );
+        }
+    );
+
+    onShowSegmentLineRequest = createAsyncThunk(
+        'onShowSegmentLineRequest',
+        async ({
+            segmentIndex,
+            line,
+        }: {
+            segmentIndex: number;
+            line: number;
+        }) => {
+            await this.wrapper('onShowSegmentLineRequest', () =>
+                this.programEditorService.showSegmentLine(segmentIndex, line)
+            );
+        }
+    );
+
     onSyncEditorToPdfRequest = createAsyncThunk(
         'onSyncEditorToPdfRequest',
         async () => {

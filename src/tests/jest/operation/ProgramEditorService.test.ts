@@ -14,6 +14,7 @@ import {
     CompileSuccessResult,
     LabkeeperFile,
     TextOutputSegment,
+    SegmentType,
 } from '../../../model/domain.ts';
 import { EditorState, TransactionSpec } from '@codemirror/state';
 import { InMemoryProgramRepository } from '../../../model/repository/ProgramRepository.ts';
@@ -1022,5 +1023,129 @@ describe('файл .tex и таблица .csv в сегменте', () => {
         expect(programService.getCurrentProgram().segments[0].text).toBe(
             'Схема: ![схема](https://files.test/uploaded)'
         );
+    });
+});
+
+// GH-246: файл .tex попадает в PDF, только если сегмент подключает его через \input
+describe('подключение файла .tex к сегментам', () => {
+    function setup(...segments: { type: SegmentType; text: string }[]) {
+        const ctx = mockContext();
+        const { programService, repository, rpi } = ctx;
+        repository.projectViewModelRepository.setProject({
+            projectId: PROJECT_ID,
+            userId: USER_ID,
+            title: PROJECT_TITLE,
+            lastModified: '2026-11-27T12:00:00Z',
+            isPublic: false,
+            projectType: 'latex',
+            program: { segments: [], parameters: { roundStrategy: 'noRound' } },
+        });
+        const program = {
+            segments: segments.map((segment) => ({
+                ...segment,
+                parameters: { visible: true },
+            })),
+            parameters: { roundStrategy: 'noRound' as const },
+        };
+        programService.setNewProgram(program);
+        repository.projectViewModelRepository.setCurrentProgram(
+            structuredClone(program)
+        );
+        repository.projectViewModelRepository.setReadOnly(false);
+        mockSaveProgramRequest(rpi);
+        return ctx;
+    }
+
+    const texts = (ctx: ReturnType<typeof setup>) =>
+        ctx.programService
+            .getCurrentProgram()
+            .segments.map((segment) => segment.text);
+
+    test('строка встаёт перед \\end{document}', async () => {
+        const ctx = setup(
+            { type: 'latex', text: '\\begin{document}\nВведение' },
+            { type: 'latex', text: 'Итог\n\\end{document}' },
+            { type: 'md', text: 'заметки' }
+        );
+
+        await ctx.programEditorService.includeTextFileInSegments(
+            'parts/intro.tex'
+        );
+
+        expect(texts(ctx)).toEqual([
+            '\\begin{document}\nВведение',
+            'Итог\n\\input{parts/intro.tex}\n\\end{document}',
+            'заметки',
+        ]);
+    });
+
+    test('после \\end{document} TeX ничего не читает, поэтому строка встаёт перед ним', async () => {
+        const ctx = setup(
+            { type: 'latex', text: 'Текст\n\\end{document}' },
+            { type: 'latex', text: 'Черновик после конца' }
+        );
+
+        await ctx.programEditorService.includeTextFileInSegments('chapter.tex');
+
+        expect(texts(ctx)).toEqual([
+            'Текст\n\\input{chapter.tex}\n\\end{document}',
+            'Черновик после конца',
+        ]);
+    });
+
+    test('без \\end{document} строка встаёт в конец последнего LaTeX-сегмента', async () => {
+        const ctx = setup(
+            { type: 'latex', text: 'Первый' },
+            { type: 'latex', text: 'Второй' },
+            { type: 'computational', text: 'a = 1' }
+        );
+
+        await ctx.programEditorService.includeTextFileInSegments('chapter.tex');
+
+        expect(texts(ctx)).toEqual([
+            'Первый',
+            'Второй\n\\input{chapter.tex}',
+            'a = 1',
+        ]);
+    });
+
+    test('без LaTeX-сегментов подключение встаёт новым сегментом', async () => {
+        const ctx = setup({ type: 'md', text: 'заметки' });
+
+        await ctx.programEditorService.includeTextFileInSegments('chapter.tex');
+
+        const segments = ctx.programService.getCurrentProgram().segments;
+        expect(segments.map((segment) => [segment.type, segment.text])).toEqual(
+            [
+                ['md', 'заметки'],
+                ['latex', '\\input{chapter.tex}'],
+            ]
+        );
+    });
+
+    test('в проекте только для чтения ничего не меняется', async () => {
+        const ctx = setup({ type: 'latex', text: 'текст' });
+        ctx.repository.projectViewModelRepository.setReadOnly(true);
+
+        await ctx.programEditorService.includeTextFileInSegments('chapter.tex');
+
+        expect(texts(ctx)).toEqual(['текст']);
+    });
+
+    test('«Показать» закрывает файл и ведёт к строке сегмента', async () => {
+        const ctx = setup(
+            { type: 'md', text: 'заметки' },
+            { type: 'latex', text: 'a\n\\input{chapter}' }
+        );
+        ctx.repository.ideViewModelRepository.setActiveTextFile('chapter.tex');
+
+        await ctx.programEditorService.showSegmentLine(1, 2);
+
+        expect(
+            ctx.repository.ideViewModelRepository.activeTextFile()
+        ).toBeNull();
+        expect(
+            ctx.repository.ideViewModelRepository.editorNavigationTarget()
+        ).toEqual({ segmentIndex: 1, line: 2, focus: true });
     });
 });

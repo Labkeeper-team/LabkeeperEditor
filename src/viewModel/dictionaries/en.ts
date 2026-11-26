@@ -62,6 +62,18 @@ export const en: Translations = {
         insert_hint: 'Click to insert an editable segment',
     },
 
+    tex_entry_note: {
+        replaced_by_main:
+            'This file never reaches the PDF: the server builds main.tex from the segments. Move the text into segments, or rename the file and include it with \\input.',
+        included:
+            'The PDF is built from the segments. This file is included in segment №{segment}.',
+        not_included:
+            'The PDF is built from the segments, and they do not include this file. A line {input} in a segment adds it to the document.',
+        include: 'Include',
+        include_hint: 'Add {input} at the end of the document',
+        show: 'Show',
+    },
+
     interface_tour: {
         label: 'Interface tour',
         info_history_button:

@@ -82,6 +82,18 @@ export interface Translations {
         insert_hint: string;
     };
 
+    /** GH-246: подсказка над файлом .tex о том, что PDF собирается из сегментов */
+    tex_entry_note: {
+        replaced_by_main: string;
+        /** {segment}: номер сегмента, который подключает файл */
+        included: string;
+        /** {input}: строка \input с путём файла */
+        not_included: string;
+        include: string;
+        include_hint: string;
+        show: string;
+    };
+
     interface_tour: {
         label: string;
         info_history_button: string;

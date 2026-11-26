@@ -32,7 +32,9 @@ import {
 import { resolveSegmentId } from '../utils/segmentId.ts';
 import { segmentCreateEvent, trackEvent } from '../utils/observerContext.ts';
 import { createRateLimiter } from '../utils/rateLimit.ts';
+import { texIncludeLine } from '../utils/texEntryPoint.ts';
 import {
+    insertOnOwnLine,
     insertSegmentFile,
     segmentAcceptedFileKinds,
     segmentFileKind,
@@ -47,6 +49,8 @@ export type AgentPdfScrollResult =
     | { outcome: 'scrolled' }
     | { outcome: 'skipped' }
     | { outcome: 'failed'; code: number };
+
+const LATEX_DOCUMENT_END = '\\end{document}';
 
 export class ProgramEditorService {
     repository: ViewModelRepository;
@@ -653,6 +657,59 @@ export class ProgramEditorService {
             return;
         }
         await this.onSegmentTextEdited(targetSegmentIndex, text);
+    };
+
+    /**
+     * GH-246: подключает файл .tex к документу строкой \input. Она встаёт перед
+     * \end{document}, если он есть в сегментах, иначе в конец последнего
+     * LaTeX-сегмента, а без них новым сегментом в конце. Человек остаётся в файле:
+     * подсказка над ним сама покажет, в каком сегменте файл теперь подключён
+     */
+    includeTextFileInSegments = async (filePath: string) => {
+        if (
+            this.repository.projectViewModelRepository.projectIsReadonly() ||
+            this.editingLock.rejectEdit()
+        ) {
+            return;
+        }
+        const line = texIncludeLine(filePath);
+        const segments = this.programService.getCurrentProgram().segments;
+        const withEnd = segments.findIndex(
+            (segment) =>
+                segment.type === 'latex' &&
+                segment.text.includes(LATEX_DOCUMENT_END)
+        );
+        const lastLatex = segments
+            .map((segment) => segment.type)
+            .lastIndexOf('latex');
+        const target = withEnd >= 0 ? withEnd : lastLatex;
+        if (target < 0) {
+            this.onAddSegmentClicked('latex', 'tex_entry_note');
+            await this.onSegmentTextEdited(
+                this.programService.getCurrentProgram().segments.length - 1,
+                line
+            );
+            return;
+        }
+        const text = segments[target].text;
+        const end = text.lastIndexOf(LATEX_DOCUMENT_END);
+        const inserted = insertOnOwnLine(
+            text,
+            end >= 0 ? end : text.length,
+            line
+        );
+        await this.onSegmentTextEdited(target, inserted.text, inserted.cursor);
+    };
+
+    /** GH-246: из подсказки над файлом .tex к строке сегмента, которая его подключает */
+    showSegmentLine = async (segmentIndex: number, line: number) => {
+        const segments =
+            this.repository.projectViewModelRepository.currentProgram()
+                ?.segments ?? [];
+        await this.navigateToSegmentLine(
+            resolveSegmentId(segments, segmentIndex),
+            line
+        );
     };
 
     onFocusSegment = async (segmentIndex: number) => {
