@@ -1,5 +1,7 @@
 import {
     insertOnOwnLine,
+    insertSegmentFile,
+    isInsideImageArgument,
     segmentAcceptedFileKinds,
     segmentFileKind,
     segmentFileSnippet,
@@ -99,4 +101,44 @@ test('cursor-beyond-the-text-inserts-at-the-end', () => {
         text: 'one\nX',
         cursor: 5,
     });
+});
+
+/** GH-289: внутри аргумента, который ждёт адрес картинки, вставляется только адрес */
+test.each([
+    ['latex', '\\includegraphics{', true],
+    ['latex', '\\includegraphics[width=\\textwidth]{', true],
+    ['latex', '\\includegraphics*[scale=0.5] {old', true],
+    ['latex', 'текст\n\\includegraphics{a.png} и дальше ', false],
+    ['latex', '\\includegraphics[width=', false],
+    ['latex', '\\input{', false],
+    ['md', '![схема](', true],
+    ['md', '![схема](https://a.test/x.png) и дальше ', false],
+    ['md', '[ссылка](', false],
+    ['computational', 'image("', false],
+] as const)(
+    '%s-before-cursor-%j-is-inside-%s',
+    (segmentType, before, inside) => {
+        expect(
+            isInsideImageArgument(segmentType, `${before}}`, before.length)
+        ).toBe(inside);
+    }
+);
+
+test('image-inside-includegraphics-gets-only-its-url', () => {
+    const url = 'https://files.labkeeper.test/a.png';
+    const text = '\\includegraphics[width=\\textwidth]{}';
+    expect(
+        insertSegmentFile('image', 'latex', text, text.length - 1, url, 'a.png')
+    ).toEqual({
+        text: `\\includegraphics[width=\\textwidth]{${url}}`,
+        cursor: text.length - 1 + url.length,
+    });
+});
+
+test('tex-file-inside-includegraphics-still-gets-its-own-line', () => {
+    const text = '\\includegraphics{}';
+    expect(
+        insertSegmentFile('tex', 'latex', text, text.length - 1, 'u', 'c.tex')
+            .text
+    ).toBe('\\includegraphics{\n\\input{c.tex}\n}');
 });

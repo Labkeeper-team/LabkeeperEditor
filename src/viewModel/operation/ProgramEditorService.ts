@@ -33,10 +33,9 @@ import { resolveSegmentId } from '../utils/segmentId.ts';
 import { segmentCreateEvent, trackEvent } from '../utils/observerContext.ts';
 import { createRateLimiter } from '../utils/rateLimit.ts';
 import {
-    insertOnOwnLine,
+    insertSegmentFile,
     segmentAcceptedFileKinds,
     segmentFileKind,
-    segmentFileSnippet,
     type SegmentFileKind,
 } from '../utils/segmentFileInsertion.ts';
 
@@ -231,23 +230,20 @@ export class ProgramEditorService {
                     );
 
                     if (res.isOk) {
-                        const itemToInsert = segmentFileSnippet(
-                            kind,
-                            pastedInto,
-                            // по спеке тело ответа это адрес строкой, а не UploadFileResponse
-                            String(res.body),
-                            filename
-                        );
                         await thisCopy.loaderService.loadFiles(
                             project.projectId
                         );
                         const segmentText =
                             thisCopy.programService.getCurrentProgram()
                                 ?.segments[segmentIndex]?.text ?? '';
-                        const inserted = insertOnOwnLine(
+                        const inserted = insertSegmentFile(
+                            kind,
+                            pastedInto,
                             segmentText,
                             cursorPosition,
-                            itemToInsert
+                            // по спеке тело ответа это адрес строкой, а не UploadFileResponse
+                            String(res.body),
+                            filename
                         );
                         await thisCopy.onSegmentTextEdited(
                             segmentIndex,

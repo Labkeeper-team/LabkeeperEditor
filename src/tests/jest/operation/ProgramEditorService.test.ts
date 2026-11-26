@@ -968,4 +968,59 @@ describe('файл .tex и таблица .csv в сегменте', () => {
             'a = 1\nload_csv("file_seg1_tok123.csv")'
         );
     });
+
+    // GH-289: блок center внутри \includegraphics{} ломал компиляцию
+    test('картинка в пустом месте LaTeX-сегмента встаёт блоком center', async () => {
+        const { programEditorService, programService } = setup('latex');
+
+        await programEditorService.onAddedFilesToSegmentEditor(
+            fileClipboard('shot.png', 'image/png'),
+            0,
+            0
+        );
+        await afterUpload();
+
+        expect(programService.getCurrentProgram().segments[0].text).toBe(
+            '\\begin{center}\n\\includegraphics{https://files.test/uploaded}\n\\end{center}'
+        );
+    });
+
+    test('картинка в скобках \\includegraphics встаёт одним адресом', async () => {
+        const text = 'До\n\\includegraphics[width=\\textwidth]{}\nПосле';
+        const { programEditorService, programService } = setup(
+            'latex',
+            'latex',
+            text
+        );
+
+        await programEditorService.onAddedFilesToSegmentEditor(
+            fileClipboard('shot.png', 'image/png'),
+            0,
+            text.indexOf('{}') + 1
+        );
+        await afterUpload();
+
+        expect(programService.getCurrentProgram().segments[0].text).toBe(
+            'До\n\\includegraphics[width=\\textwidth]{https://files.test/uploaded}\nПосле'
+        );
+    });
+
+    test('картинка в скобках картинки Markdown встаёт одним адресом', async () => {
+        const { programEditorService, programService } = setup(
+            'md',
+            'markdown',
+            'Схема: ![схема]()'
+        );
+
+        await programEditorService.onAddedFilesToSegmentEditor(
+            fileClipboard('shot.png', 'image/png'),
+            0,
+            'Схема: ![схема]('.length
+        );
+        await afterUpload();
+
+        expect(programService.getCurrentProgram().segments[0].text).toBe(
+            'Схема: ![схема](https://files.test/uploaded)'
+        );
+    });
 });
