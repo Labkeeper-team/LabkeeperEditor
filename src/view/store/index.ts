@@ -61,6 +61,8 @@ import {
     setEditorNavigationTarget,
     setHunks,
     setPendingHunkIds,
+    setAgentPdfMarks,
+    setAgentPdfMarksLoading,
 } from './slices/ide';
 import {
     clearLastProgram,
@@ -284,6 +286,9 @@ export const createViewModelStateFromStore = (
                 store.getState().ide.editorNavigationTarget,
             hunks: () => store.getState().ide.hunks,
             pendingHunkIds: () => store.getState().ide.pendingHunkIds,
+            agentPdfMarks: () => store.getState().ide.agentPdfMarks,
+            agentPdfMarksLoading: () =>
+                store.getState().ide.agentPdfMarksLoading,
 
             setPdfUpdated: (v) => store.dispatch(setPdfUpdated(v)),
             setCloneRequestState: (v: CloneRequestState) =>
@@ -343,6 +348,10 @@ export const createViewModelStateFromStore = (
                 store.dispatch(setEditorNavigationTarget(target)),
             setHunks: (hunks) => store.dispatch(setHunks(hunks)),
             setPendingHunkIds: (ids) => store.dispatch(setPendingHunkIds(ids)),
+            setAgentPdfMarks: (marks) =>
+                store.dispatch(setAgentPdfMarks(marks)),
+            setAgentPdfMarksLoading: (loading) =>
+                store.dispatch(setAgentPdfMarksLoading(loading)),
         },
         chatViewModelRepository: {
             messages: () => store.getState().chat.messages,

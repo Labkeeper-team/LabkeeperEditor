@@ -306,6 +306,7 @@ export const en: Translations = {
         no_pdf: 'Click the "Run" button to display the PDF file.',
         compiling: 'Building the document…',
         pdf_loading: 'Loading PDF…',
+        agent_marks_loading: 'Marking agent edits…',
         mode: {
             label: 'Project type',
             markdown: 'markdown',

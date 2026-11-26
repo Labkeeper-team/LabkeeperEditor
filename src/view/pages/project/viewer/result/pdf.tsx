@@ -8,7 +8,7 @@ import {
     AnnotationType,
     TextLayer,
 } from 'pdfjs-dist/legacy/build/pdf.mjs';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { PdfPosition } from '../../../../../model/rpi';
 import {
     setPdfClickPosition,
@@ -29,6 +29,14 @@ import {
 import { createPdfLinkService } from './linkService';
 import { useIsAgentMode } from '../../../../hooks/useAgentMode';
 import { PdfTextSelection } from './textSelection';
+import { controller } from '../../../../../main.tsx';
+import { useIsAgentRunning } from '../../../../store/selectors/program';
+import {
+    agentMarkRects,
+    type PageTextBand,
+    type PdfPageGeometry,
+} from './agentMarkRects';
+import type { AgentPdfMark } from '../../../../../viewModel/domain/AgentPdfMarkLocator.ts';
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
     pdfjsWorkerSrc,
@@ -85,6 +93,31 @@ async function renderLinkLayer(
     });
 }
 
+const NO_AGENT_MARKS: AgentPdfMark[] = [];
+
+/**
+ * Строки текста страницы в pt от её верха: к ним прижимается отметка правки,
+ * край которой вышел за страницу
+ */
+function textBandsOf(
+    textContent: Awaited<ReturnType<pdfjs.PDFPageProxy['getTextContent']>>,
+    viewport: pdfjs.PageViewport
+): PageTextBand[] {
+    const pageTop = viewport.viewBox[3];
+    return textContent.items.flatMap((item) => {
+        if (!('str' in item) || !item.str.trim() || item.height <= 0) {
+            return [];
+        }
+        const baseline = pageTop - item.transform[5];
+        return [
+            {
+                top: baseline - item.height,
+                bottom: baseline + item.height / 4,
+            },
+        ];
+    });
+}
+
 /** Страницы из DOM: ссылка срабатывает и до того, как эффект перенесёт их в pageElementsRef */
 const renderedPages = (container: HTMLElement) =>
     Array.from(
@@ -111,6 +144,20 @@ export const PdfResultViewer = () => {
     const pdfNavigationTarget = useSelector(
         (state: StorageState) => state.ide.pdfNavigationTarget
     );
+    const agentPdfMarks = useSelector(
+        (state: StorageState) => state.ide.agentPdfMarks
+    );
+    const agentPdfMarksLoading = useSelector(
+        (state: StorageState) => state.ide.agentPdfMarksLoading
+    );
+    const hunks = useSelector((state: StorageState) => state.ide.hunks);
+    const isAgentRunning = useSelector(useIsAgentRunning);
+    const projectMode = useSelector(
+        (state: StorageState) => state.project.mode
+    );
+    const isAuthenticated = useSelector(
+        (state: StorageState) => state.user.isAuthenticated
+    );
 
     const containerRef = useRef<HTMLDivElement>(null);
     const pdfRef = useRef<pdfjs.PDFDocumentProxy | null>(null);
@@ -128,6 +175,8 @@ export const PdfResultViewer = () => {
     const [pageElements, setPageElements] = useState<HTMLDivElement[]>([]);
     const pageElementsRef = useRef<HTMLDivElement[]>([]);
     const textSelectionRef = useRef<PdfTextSelection | null>(null);
+    /** Высота и строки текста каждой страницы в pt: по ним встают отметки правок агента */
+    const pageGeometryRef = useRef<PdfPageGeometry[]>([]);
 
     useEffect(() => {
         pageElementsRef.current = pageElements;
@@ -289,6 +338,45 @@ export const PdfResultViewer = () => {
         isPdfRendering,
     ]);
 
+    // GH-190: после сборки, при входе в проект и после прогона агента места его правок ищутся заново
+    useEffect(() => {
+        void dispatch(controller.onAgentPdfMarksRequest());
+    }, [dispatch, pdfUri, hunks, isAgentRunning, projectMode, isAuthenticated]);
+
+    const agentMarks = useMemo(
+        () =>
+            agentPdfMarks && agentPdfMarks.pdfUri === pdfUri
+                ? agentPdfMarks.marks
+                : NO_AGENT_MARKS,
+        [agentPdfMarks, pdfUri]
+    );
+
+    // отметки ложатся под текстовый слой: выделение текста и ссылки работают сквозь них
+    useEffect(() => {
+        for (const page of pageElements) {
+            page.querySelectorAll(':scope > .pdf-agent-mark').forEach((mark) =>
+                mark.remove()
+            );
+        }
+        if (isPdfRendering || agentMarks.length === 0) {
+            return;
+        }
+        const geometry = pageGeometryRef.current;
+        for (const rect of agentMarkRects(agentMarks, geometry)) {
+            const page = pageElements[rect.pageIndex];
+            const pageGeometry = geometry[rect.pageIndex];
+            if (!page?.isConnected || !pageGeometry) {
+                continue;
+            }
+            const scale = page.offsetHeight / pageGeometry.height;
+            const mark = document.createElement('div');
+            mark.className = 'pdf-agent-mark';
+            mark.style.top = `${rect.top * scale}px`;
+            mark.style.height = `${(rect.bottom - rect.top) * scale}px`;
+            page.insertBefore(mark, page.querySelector(':scope > .textLayer'));
+        }
+    }, [agentMarks, pageElements, isPdfRendering]);
+
     const handlePdfClick = useCallback(
         (event: React.MouseEvent<HTMLDivElement>) => {
             // страницы уже в DOM, даже если эффект ещё не перенёс их в pageElementsRef: ранний клик не должен теряться
@@ -443,6 +531,7 @@ export const PdfResultViewer = () => {
                     new PdfTextSelection());
                 textSelection.clear();
                 container.innerHTML = '';
+                pageGeometryRef.current = [];
 
                 const pages: HTMLDivElement[] = [];
                 const scaledCss = scale * dpr;
@@ -519,11 +608,16 @@ export const PdfResultViewer = () => {
                         viewport: scaledViewport,
                     }).promise;
 
+                    const textContent = await page.getTextContent({
+                        includeMarkedContent: true,
+                        disableNormalization: true,
+                    });
+                    pageGeometryRef.current[page.pageNumber - 1] = {
+                        height: viewport.viewBox[3] - viewport.viewBox[1],
+                        text: textBandsOf(textContent, viewport),
+                    };
                     const textLayerRenderer = new TextLayer({
-                        textContentSource: await page.getTextContent({
-                            includeMarkedContent: true,
-                            disableNormalization: true,
-                        }),
+                        textContentSource: textContent,
                         container: textLayer,
                         viewport,
                     });
@@ -667,6 +761,15 @@ export const PdfResultViewer = () => {
                 </div>
             ) : (
                 <>
+                    {agentPdfMarksLoading && !showPdfLoading ? (
+                        <div className="pdf-agent-marks-loading" role="status">
+                            <span
+                                className="pdf-agent-marks-loading__spinner"
+                                aria-hidden
+                            />
+                            {dictionary.viewer.agent_marks_loading}
+                        </div>
+                    ) : null}
                     {showPdfLoading ? (
                         <div
                             style={{

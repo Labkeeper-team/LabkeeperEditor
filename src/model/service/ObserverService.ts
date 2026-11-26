@@ -112,6 +112,8 @@ export const Events = {
     EVENT_AGENT_MODE_LEFT: 'agent_mode_left',
     // PDF после прогона агента не встал на его правку: навигация не удалась
     EVENT_AGENT_PDF_SCROLL_FAILED: 'agent_pdf_scroll_failed',
+    // GH-190: поиск мест правок агента в PDF: сколько правок, сколько отмечено, запросов и времени
+    EVENT_AGENT_PDF_MARKS: 'agent_pdf_marks',
     // клик по файлу в ряду над запросом агента дописал его в запрос
     EVENT_AGENT_FILE_MENTIONED: 'agent_file_mentioned',
     EVENT_MOBILE_VIEW_CHANGED: 'mobile_view_changed',
@@ -251,6 +253,7 @@ export const OPENPANEL_EVENT_NAMES: Record<string, string> = {
     [Events.EVENT_AGENT_MODE_ENTERED]: 'Agent mode entered',
     [Events.EVENT_AGENT_MODE_LEFT]: 'Agent mode left',
     [Events.EVENT_AGENT_PDF_SCROLL_FAILED]: 'Agent PDF scroll failed',
+    [Events.EVENT_AGENT_PDF_MARKS]: 'Agent PDF marks',
     [Events.EVENT_AGENT_FILE_MENTIONED]: 'Agent file mentioned',
     [Events.EVENT_MOBILE_VIEW_CHANGED]: 'Mobile view changed',
     [Events.EVENT_HOTKEY_USED]: 'Hotkey used',

@@ -328,6 +328,7 @@ export const zh: Translations = {
         no_pdf: '\u70B9\u51FB\u201C\u8FD0\u884C\u201D\u6309\u94AE\u4EE5\u663E\u793A PDF \u6587\u4EF6\u3002',
         compiling: '\u6B63\u5728\u6784\u5EFA\u6587\u6863\u2026',
         pdf_loading: '\u6B63\u5728\u52A0\u8F7D PDF\u2026',
+        agent_marks_loading: '正在标记智能体的修改…',
         mode: {
             label: '\u9879\u76EE\u7C7B\u578B',
             markdown: 'markdown',

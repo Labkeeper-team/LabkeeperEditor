@@ -29,6 +29,7 @@ import {
     UserInfo,
 } from '../../model/domain.ts';
 import { BillingPricingResponse } from '../../model/rpi';
+import type { AgentPdfMarks } from '../domain/AgentPdfMarkLocator.ts';
 
 import { Language, Translations } from '../dictionaries';
 
@@ -322,6 +323,9 @@ export const mockViewModelState = (): MockViewModelRepository => {
     let guestAgentHunks: Hunk[] = [];
     let guestAgentHistory: AgentHistoryEntry[] = [];
     let programChangeRevision = 0;
+    // в замыкании, а не в MockViewModelRepositoryState: снимки jest снимают состояние целиком
+    let agentPdfMarks: AgentPdfMarks | null = null;
+    let agentPdfMarksLoading = false;
     let savedProgramRevision = 0;
     let textFileChangeRevision = 0;
     let savedTextFileRevision = 0;
@@ -400,6 +404,8 @@ export const mockViewModelState = (): MockViewModelRepository => {
                 mockViewModelState.editorNavigationTarget,
             hunks: () => mockViewModelState.hunks,
             pendingHunkIds: () => mockViewModelState.pendingHunkIds,
+            agentPdfMarks: () => agentPdfMarks,
+            agentPdfMarksLoading: () => agentPdfMarksLoading,
 
             setPdfUpdated: (v) => (mockViewModelState.pdfUpdated = v),
             setGetProjectsRequestState: (v: GetProjectsRequestState) =>
@@ -474,6 +480,9 @@ export const mockViewModelState = (): MockViewModelRepository => {
             setHunks: (hunks) => (mockViewModelState.hunks = hunks),
             setPendingHunkIds: (ids) =>
                 (mockViewModelState.pendingHunkIds = ids),
+            setAgentPdfMarks: (marks) => (agentPdfMarks = marks),
+            setAgentPdfMarksLoading: (loading) =>
+                (agentPdfMarksLoading = loading),
         },
         chatViewModelRepository: {
             messages: () => mockViewModelState.chatMessages,
@@ -834,6 +843,8 @@ export interface IdeViewModelRepository {
     editorNavigationTarget: () => EditorNavigationTarget | null;
     hunks: () => Hunk[];
     pendingHunkIds: () => string[];
+    agentPdfMarks: () => AgentPdfMarks | null;
+    agentPdfMarksLoading: () => boolean;
 
     setPdfUpdated: (v: number) => void;
     setRedoEnabled: (v: boolean) => void;
@@ -858,6 +869,8 @@ export interface IdeViewModelRepository {
     setEditorNavigationTarget: (target: EditorNavigationTarget | null) => void;
     setHunks: (hunks: Hunk[]) => void;
     setPendingHunkIds: (ids: string[]) => void;
+    setAgentPdfMarks: (marks: AgentPdfMarks | null) => void;
+    setAgentPdfMarksLoading: (loading: boolean) => void;
     setCloneRequestState: (state: CloneRequestState) => void;
     setGetProjectRequestState: (state: GetProjectRequestState) => void;
     setGetFilesRequestState: (state: GetFilesRequestState) => void;

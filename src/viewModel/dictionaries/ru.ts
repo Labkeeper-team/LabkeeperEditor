@@ -311,6 +311,7 @@ export const ru: Translations = {
         no_pdf: 'Нажмите кнопку  "Выполнить", для отображения PDF файла',
         compiling: 'Собираем документ…',
         pdf_loading: 'Загрузка PDF…',
+        agent_marks_loading: 'Отмечаем правки агента…',
         mode: {
             label: 'Тип проекта',
             markdown: 'markdown',
