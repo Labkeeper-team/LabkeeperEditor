@@ -45,7 +45,10 @@ const AGENT_HUNK: Hunk = {
 /** Базовые линии строк сегмента в PDF, pt от верха первой страницы */
 const BASELINES: Record<number, number> = { 2: 46, 3: 60, 4: 400 };
 
-async function openProjectWithAgentChange(page: Page) {
+async function openProjectWithAgentChange(
+    page: Page,
+    path = `/project/${uuid}`
+) {
     const routeSetup = new RouteSetup(page);
     await routeSetup.setupGetUserInfoRequest();
     routeSetup.setupLatexProject();
@@ -83,7 +86,7 @@ async function openProjectWithAgentChange(page: Page) {
         }
     );
 
-    await page.goto(`/project/${uuid}`);
+    await page.goto(path);
     await page.waitForLoadState('domcontentloaded');
     return { release, lines };
 }
@@ -151,4 +154,98 @@ test('accepted-agent-change-loses-its-mark-without-new-requests', async ({
 
     await expect(firstPageMark(page)).toHaveCount(0);
     expect(lines).toHaveLength(requests);
+});
+
+/** Середина отметки на экране */
+async function markCenter(page: Page) {
+    const box = await firstPageMark(page).boundingBox();
+    expect(box).not.toBeNull();
+    return { x: box!.x + box!.width / 2, y: box!.y + box!.height / 2 };
+}
+
+/** Строка сегмента, в которой стоит курсор редактора, или null без фокуса в редакторе */
+const focusedEditorLine = (page: Page) =>
+    page.evaluate(() => {
+        if (!document.activeElement?.closest('.cm-content')) {
+            return null;
+        }
+        const anchor = window.getSelection()?.anchorNode;
+        const element =
+            anchor instanceof Element ? anchor : anchor?.parentElement;
+        return element?.closest('.cm-line')?.textContent ?? null;
+    });
+
+const MARK_HINT =
+    'Not part of the PDF: this marks an agent edit. Click to open it in the editor';
+
+test('agent-mark-explains-itself-on-hover-and-opens-the-change-on-click', async ({
+    page,
+}) => {
+    const { release } = await openProjectWithAgentChange(page);
+    release();
+    await expect(firstPageMark(page)).toHaveCount(1, PDF_RENDER);
+    const center = await markCenter(page);
+    // строка правки в текстовом слое, он лежит поверх отметки
+    const line = (await page
+        .locator('[data-pdf-page="0"] .textLayer span')
+        .filter({ hasText: 'Short line for selection' })
+        .boundingBox())!;
+    const overText = {
+        x: line.x + line.width / 2,
+        y: line.y + line.height / 2,
+    };
+
+    await page.mouse.move(overText.x, overText.y);
+
+    await expect(firstPageMark(page)).toHaveClass(/pdf-agent-mark--hover/);
+    await expect(page.getByRole('tooltip')).toHaveText(MARK_HINT);
+    // над текстом правки указатель «рука», а не текстовый курсор
+    expect(
+        await page.evaluate(({ x, y }) => {
+            const element = document.elementFromPoint(x, y)!;
+            return `${element.tagName} ${getComputedStyle(element).cursor}`;
+        }, overText)
+    ).toBe('SPAN pointer');
+
+    // выделение текста сквозь отметку работает и правку не открывает
+    await page.mouse.move(line.x + 2, line.y + line.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(line.x + line.width - 2, line.y + line.height / 2, {
+        steps: 5,
+    });
+    await page.mouse.up();
+    expect(
+        await page.evaluate(() => window.getSelection()?.toString() ?? '')
+    ).toContain('line for');
+    expect(await focusedEditorLine(page)).toBeNull();
+    const box = (await firstPageMark(page).boundingBox())!;
+
+    // ушёл с отметки: подсказки нет
+    await page.mouse.move(center.x, box.y - 40);
+    await expect(page.getByRole('tooltip')).toHaveCount(0);
+    await expect(firstPageMark(page)).not.toHaveClass(/pdf-agent-mark--hover/);
+
+    await page.mouse.click(center.x, center.y);
+
+    await expect(page.getByRole('tooltip')).toHaveCount(0);
+    await expect
+        .poll(() => focusedEditorLine(page))
+        .toBe('Short line for selection');
+});
+
+test('agent-mark-click-leaves-agent-mode-for-the-editor', async ({ page }) => {
+    const { release } = await openProjectWithAgentChange(
+        page,
+        `/project/${uuid}/agent`
+    );
+    release();
+    await expect(firstPageMark(page)).toHaveCount(1, PDF_RENDER);
+
+    const center = await markCenter(page);
+    await page.mouse.click(center.x, center.y);
+
+    await expect(page).toHaveURL(new RegExp(`/project/${uuid}$`));
+    await expect
+        .poll(() => focusedEditorLine(page))
+        .toBe('Short line for selection');
 });

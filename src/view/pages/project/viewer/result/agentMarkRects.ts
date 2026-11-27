@@ -18,6 +18,8 @@ export interface PdfPageGeometry {
 
 /** Отметка на одной странице, pt от верха страницы */
 export interface AgentMarkRect {
+    /** Правка, которую открывает щелчок: у слитых отметок верхняя */
+    hunkId: string;
     pageIndex: number;
     top: number;
     bottom: number;
@@ -52,7 +54,7 @@ export function agentMarkRects(
     pages: ReadonlyArray<PdfPageGeometry | undefined>
 ): AgentMarkRect[] {
     const rects: AgentMarkRect[] = [];
-    for (const { top, bottom: rawBottom } of marks) {
+    for (const { hunkId, top, bottom: rawBottom } of marks) {
         // низ выше верха: сервер ответил про строки не по порядку, показываем одну строку
         const bottom =
             rawBottom.page < top.page ||
@@ -78,6 +80,7 @@ export function agentMarkRects(
             to = Math.min(to, page.height);
             if (to - from >= 1) {
                 rects.push({
+                    hunkId,
                     pageIndex: pageNumber - 1,
                     top: from,
                     bottom: to,

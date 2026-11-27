@@ -228,8 +228,8 @@ describe('отметки на страницах', () => {
                 [page(842), page(842)]
             )
         ).toEqual([
-            { pageIndex: 0, top: 700, bottom: 842 },
-            { pageIndex: 1, top: 0, bottom: 120 },
+            { hunkId: 'a', pageIndex: 0, top: 700, bottom: 842 },
+            { hunkId: 'a', pageIndex: 1, top: 0, bottom: 120 },
         ]);
     });
 
@@ -243,21 +243,22 @@ describe('отметки на страницах', () => {
         ];
 
         expect(agentMarkRects([mark('a', [1, 290], [1, 867])], pages)).toEqual([
-            { pageIndex: 0, top: 290, bottom: 416 },
+            { hunkId: 'a', pageIndex: 0, top: 290, bottom: 416 },
         ]);
     });
 
     test('соседние правки сливаются, а правка без текста на странице пропадает', () => {
+        // слитая отметка открывает верхнюю правку, в каком бы порядке они ни пришли
         expect(
             agentMarkRects(
                 [
-                    mark('a', [1, 100], [1, 150]),
                     mark('b', [1, 151], [1, 200]),
+                    mark('a', [1, 100], [1, 150]),
                     mark('c', [1, 851], [1, 867]),
                 ],
                 [page(842)]
             )
-        ).toEqual([{ pageIndex: 0, top: 100, bottom: 200 }]);
+        ).toEqual([{ hunkId: 'a', pageIndex: 0, top: 100, bottom: 200 }]);
     });
 });
 
@@ -398,6 +399,31 @@ describe('сервис отметок', () => {
         expect(ctx.rpi.navigationDocToPdfRequest).not.toHaveBeenCalled();
         expect(
             ctx.repository.ideViewModelRepository.agentPdfMarks()
+        ).toBeNull();
+    });
+
+    test('щелчок по отметке открывает правку в редакторе с её первой строки', async () => {
+        const ctx = setup(POSITIONS);
+        const onEvent = jest.spyOn(ctx.observerService, 'onEvent');
+
+        expect(await ctx.agentPdfMarksService.openChange('b')).toBe(true);
+
+        expect(
+            ctx.repository.ideViewModelRepository.editorNavigationTarget()
+        ).toEqual({ segmentIndex: 1, line: 1, focus: true });
+        expect(onEvent).toHaveBeenCalledWith(
+            Events.EVENT_AGENT_CHANGE_CLICKED,
+            expect.objectContaining({ source: 'pdf_mark', segment_index: 1 })
+        );
+    });
+
+    test('принятую правку отметка уже не открывает', async () => {
+        const ctx = setup(POSITIONS);
+        ctx.repository.ideViewModelRepository.setHunks([]);
+
+        expect(await ctx.agentPdfMarksService.openChange('b')).toBe(false);
+        expect(
+            ctx.repository.ideViewModelRepository.editorNavigationTarget()
         ).toBeNull();
     });
 });

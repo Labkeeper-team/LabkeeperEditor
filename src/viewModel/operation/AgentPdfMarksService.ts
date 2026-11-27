@@ -12,6 +12,13 @@ import type {
     AgentPdfMark,
     AgentPdfMarkLocator,
 } from '../domain/AgentPdfMarkLocator.ts';
+import type { ProgramEditorService } from './ProgramEditorService.ts';
+
+/** Кто открывает правку в редакторе: тот же переход, что из чата */
+export type AgentChangeNavigator = Pick<
+    ProgramEditorService,
+    'navigateToAgentChange'
+>;
 
 /**
  * Свежих правок больше этого не ищем: на каждую уходит до трёх запросов
@@ -41,8 +48,30 @@ export class AgentPdfMarksService {
     constructor(
         private repository: ViewModelRepository,
         private locator: AgentPdfMarkLocator,
-        private observerService: ObserverService
+        private observerService: ObserverService,
+        private changeNavigator: AgentChangeNavigator
     ) {}
+
+    /**
+     * Щелчок по отметке в PDF открывает правку в редакторе, с первой её
+     * строки. Правку могли принять, пока отметка ещё на экране: тогда ничего
+     */
+    openChange = async (hunkId: string): Promise<boolean> => {
+        const range = agentChangeRanges(
+            this.repository.ideViewModelRepository.hunks(),
+            this.repository.projectViewModelRepository.currentProgram()
+                ?.segments ?? []
+        ).find((item) => item.hunkId === hunkId);
+        if (!range) {
+            return false;
+        }
+        return this.changeNavigator.navigateToAgentChange({
+            segmentIndex: range.file ? -1 : (range.segmentId ?? 0) - 1,
+            line: range.startLine,
+            file: range.file,
+            source: 'pdf_mark',
+        });
+    };
 
     /**
      * Звать при любой смене PDF, правок или прогона агента. Вызовы во время

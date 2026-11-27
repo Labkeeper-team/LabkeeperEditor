@@ -76,6 +76,38 @@
     border-radius: 2px;
     background: rgba(28, 168, 82, 0.1);
     pointer-events: none;
+    transition:
+        background-color 0.12s,
+        box-shadow 0.12s;
+
+    // под указателем: отметка это часть интерфейса, её можно нажать
+    &--hover {
+        border-style: solid;
+        background: rgba(28, 168, 82, 0.2);
+        box-shadow: 0 0 0 3px rgba(28, 168, 82, 0.2);
+    }
+}
+
+// отметка лежит под текстовым слоем, поэтому «руку» над ней ставит контейнер
+.pdf-result-scroll--agent-mark {
+    [data-pdf-page],
+    .textLayer,
+    .textLayer span {
+        cursor: pointer;
+    }
+}
+
+.pdf-agent-mark-hint {
+    position: fixed;
+    z-index: 1000;
+    max-width: min(280px, calc(100vw - 16px));
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: #222;
+    font-size: 12px;
+    line-height: 16px;
+    color: $white;
+    pointer-events: none;
 }
 
 .pdf-agent-marks-loading {

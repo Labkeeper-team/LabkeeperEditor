@@ -94,6 +94,15 @@ export class Controller {
         }
     );
 
+    onAgentPdfMarkClickedRequest = createAsyncThunk(
+        'onAgentPdfMarkClickedRequest',
+        async ({ hunkId }: { hunkId: string }) => {
+            await this.wrapper('onAgentPdfMarkClickedRequest', () =>
+                this.agentPdfMarksService.openChange(hunkId)
+            );
+        }
+    );
+
     onFormLoginClickedRequest = createAsyncThunk(
         'onFormLoginClicked',
         async ({

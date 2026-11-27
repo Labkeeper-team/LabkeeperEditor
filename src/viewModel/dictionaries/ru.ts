@@ -312,6 +312,8 @@ export const ru: Translations = {
         compiling: 'Собираем документ…',
         pdf_loading: 'Загрузка PDF…',
         agent_marks_loading: 'Отмечаем правки агента…',
+        agent_mark_hint:
+            'Это не часть PDF: так отмечена правка агента. Нажмите, чтобы открыть её в редакторе',
         mode: {
             label: 'Тип проекта',
             markdown: 'markdown',

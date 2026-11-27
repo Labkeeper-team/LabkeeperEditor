@@ -200,7 +200,8 @@ export function setupContext(
     const agentPdfMarksService = new AgentPdfMarksService(
         repository,
         new NavigationMarkLocator(rpi),
-        observerService
+        observerService,
+        programEditorService
     );
     const projectsPageService: ProjectsPageService = new ProjectsPageService(
         repository,
