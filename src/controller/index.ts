@@ -461,21 +461,6 @@ export class Controller {
         }
     );
 
-    onShowSegmentLineRequest = createAsyncThunk(
-        'onShowSegmentLineRequest',
-        async ({
-            segmentIndex,
-            line,
-        }: {
-            segmentIndex: number;
-            line: number;
-        }) => {
-            await this.wrapper('onShowSegmentLineRequest', () =>
-                this.programEditorService.showSegmentLine(segmentIndex, line)
-            );
-        }
-    );
-
     onSyncEditorToPdfRequest = createAsyncThunk(
         'onSyncEditorToPdfRequest',
         async () => {

@@ -11,8 +11,7 @@ import {
 } from '../../../../store/selectors/program.ts';
 import { InfoIcon, WarningIcon } from '../../../../icons';
 import {
-    isTexDocumentPart,
-    texEntryPointStatus,
+    texEntryNoteKind,
     texIncludeLine,
 } from '../../../../../viewModel/utils/texEntryPoint.ts';
 
@@ -28,14 +27,16 @@ const withInputCode = (text: string, input: string) =>
     ));
 
 /**
- * GH-246: над файлом .tex строка о том, что PDF собирается из сегментов, и
- * подключён ли в них этот файл. Без неё человек правил файл, в том числе свой
- * main.tex, и не понимал, почему PDF не меняется
+ * GH-246: полоса над файлом .tex для новичка, который правит файл и не
+ * понимает, почему PDF не меняется. Над main.tex в корне она предупреждает,
+ * что сегменты при нём не учитываются. Над другим файлом она предлагает
+ * подключить его, пока сегменты не подключают ни одного файла
  */
 export const TexEntryNote = ({ file }: { file: string }) => {
     const dispatch = useDispatch<AppDispatch>();
     const dictionary = useSelector(useDictionary);
     const program = useSelector(useCurrentProgram);
+    const files = useSelector((state: StorageState) => state.project.files);
     const isLatexMode = useSelector(
         (state: StorageState) => state.project.mode === 'latex'
     );
@@ -45,13 +46,18 @@ export const TexEntryNote = ({ file }: { file: string }) => {
     const isReadonly = useSelector(useIsProjectReadonly);
     const isAgentRunning = useSelector(useIsAgentRunning);
 
-    const status = useMemo(
-        () => texEntryPointStatus(program?.segments ?? [], file),
-        [program, file]
+    const kind = useMemo(
+        () =>
+            texEntryNoteKind(
+                program?.segments ?? [],
+                files.map((item) => item.fileName),
+                file
+            ),
+        [program, files, file]
     );
 
     // в проекте Markdown LaTeX не компилируется, сегментам там нечего подключать
-    if (!isLatexMode || !isTexDocumentPart(file)) {
+    if (!isLatexMode || !kind) {
         return null;
     }
 
@@ -61,46 +67,22 @@ export const TexEntryNote = ({ file }: { file: string }) => {
 
     return (
         <div
-            className={classNames(
-                'tex-entry-note',
-                `tex-entry-note--${status.kind}`
-            )}
+            className={classNames('tex-entry-note', `tex-entry-note--${kind}`)}
             role="note"
         >
             <span className="tex-entry-note__icon" aria-hidden>
-                {status.kind === 'replacedByMain' ? (
+                {kind === 'mainIgnoresSegments' ? (
                     <WarningIcon />
                 ) : (
                     <InfoIcon />
                 )}
             </span>
             <span className="tex-entry-note__text">
-                {status.kind === 'replacedByMain'
-                    ? texts.replaced_by_main
-                    : status.kind === 'included'
-                      ? texts.included.replace(
-                            '{segment}',
-                            String(status.segmentIndex + 1)
-                        )
-                      : withInputCode(texts.not_included, input)}
+                {kind === 'mainIgnoresSegments'
+                    ? texts.main_ignores_segments
+                    : withInputCode(texts.not_included, input)}
             </span>
-            {status.kind === 'included' ? (
-                <button
-                    type="button"
-                    className="tex-entry-note__action"
-                    onClick={() =>
-                        dispatch(
-                            controller.onShowSegmentLineRequest({
-                                segmentIndex: status.segmentIndex,
-                                line: status.line,
-                            })
-                        )
-                    }
-                >
-                    {texts.show}
-                </button>
-            ) : null}
-            {status.kind === 'notIncluded' && canEdit ? (
+            {kind === 'suggestInclude' && canEdit ? (
                 <button
                     type="button"
                     className="tex-entry-note__action"

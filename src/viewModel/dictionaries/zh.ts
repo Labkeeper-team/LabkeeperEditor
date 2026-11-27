@@ -66,14 +66,12 @@ export const zh: Translations = {
     },
 
     tex_entry_note: {
-        replaced_by_main:
-            '此文件不会进入 PDF：服务器根据片段生成 main.tex。请把文本移到片段中，或重命名文件并用 \\input 引入。',
-        included: 'PDF 由片段生成。此文件已在片段 №{segment} 中引入。',
+        main_ignores_segments:
+            '不建议使用 main.tex：只要项目中有它，PDF 就由它生成，片段会被忽略。',
         not_included:
             'PDF 由片段生成，而片段没有引入此文件。在片段中写入 {input} 即可把它加入文档。',
         include: '引入',
         include_hint: '在文档末尾添加 {input}',
-        show: '查看',
     },
 
     interface_tour: {

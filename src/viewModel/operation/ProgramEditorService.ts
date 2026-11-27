@@ -662,8 +662,8 @@ export class ProgramEditorService {
     /**
      * GH-246: подключает файл .tex к документу строкой \input. Она встаёт перед
      * \end{document}, если он есть в сегментах, иначе в конец последнего
-     * LaTeX-сегмента, а без них новым сегментом в конце. Человек остаётся в файле:
-     * подсказка над ним сама покажет, в каком сегменте файл теперь подключён
+     * LaTeX-сегмента, а без них новым сегментом в конце. Человек остаётся в файле,
+     * а подсказка над ним пропадает: сегменты теперь подключают файл
      */
     includeTextFileInSegments = async (filePath: string) => {
         if (
@@ -699,17 +699,6 @@ export class ProgramEditorService {
             line
         );
         await this.onSegmentTextEdited(target, inserted.text, inserted.cursor);
-    };
-
-    /** GH-246: из подсказки над файлом .tex к строке сегмента, которая его подключает */
-    showSegmentLine = async (segmentIndex: number, line: number) => {
-        const segments =
-            this.repository.projectViewModelRepository.currentProgram()
-                ?.segments ?? [];
-        await this.navigateToSegmentLine(
-            resolveSegmentId(segments, segmentIndex),
-            line
-        );
     };
 
     onFocusSegment = async (segmentIndex: number) => {

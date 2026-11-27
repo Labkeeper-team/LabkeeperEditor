@@ -1131,21 +1131,4 @@ describe('подключение файла .tex к сегментам', () => {
 
         expect(texts(ctx)).toEqual(['текст']);
     });
-
-    test('«Показать» закрывает файл и ведёт к строке сегмента', async () => {
-        const ctx = setup(
-            { type: 'md', text: 'заметки' },
-            { type: 'latex', text: 'a\n\\input{chapter}' }
-        );
-        ctx.repository.ideViewModelRepository.setActiveTextFile('chapter.tex');
-
-        await ctx.programEditorService.showSegmentLine(1, 2);
-
-        expect(
-            ctx.repository.ideViewModelRepository.activeTextFile()
-        ).toBeNull();
-        expect(
-            ctx.repository.ideViewModelRepository.editorNavigationTarget()
-        ).toEqual({ segmentIndex: 1, line: 2, focus: true });
-    });
 });
