@@ -62,6 +62,15 @@ export const en: Translations = {
         insert_hint: 'Click to insert an editable segment',
     },
 
+    tex_entry_note: {
+        main_ignores_segments:
+            'We do not recommend using main.tex: while it is in the project, the PDF is built from it and the segments are ignored.',
+        not_included:
+            'The PDF is built from the segments, and they do not include this file. A line {input} in a segment adds it to the document.',
+        include: 'Include',
+        include_hint: 'Add {input} at the end of the document',
+    },
+
     interface_tour: {
         label: 'Interface tour',
         info_history_button:

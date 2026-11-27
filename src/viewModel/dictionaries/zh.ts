@@ -65,6 +65,15 @@ export const zh: Translations = {
         insert_hint: '\u70B9\u51FB\u63D2\u5165\u53EF\u7F16\u8F91\u7247\u6BB5',
     },
 
+    tex_entry_note: {
+        main_ignores_segments:
+            '不建议使用 main.tex：只要项目中有它，PDF 就由它生成，片段会被忽略。',
+        not_included:
+            'PDF 由片段生成，而片段没有引入此文件。在片段中写入 {input} 即可把它加入文档。',
+        include: '引入',
+        include_hint: '在文档末尾添加 {input}',
+    },
+
     interface_tour: {
         label: '\u754C\u9762\u5BFC\u89C8',
         info_history_button:

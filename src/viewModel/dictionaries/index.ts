@@ -82,6 +82,15 @@ export interface Translations {
         insert_hint: string;
     };
 
+    /** GH-246: подсказка над файлом .tex о том, откуда собирается PDF */
+    tex_entry_note: {
+        main_ignores_segments: string;
+        /** {input}: строка \input с путём файла */
+        not_included: string;
+        include: string;
+        include_hint: string;
+    };
+
     interface_tour: {
         label: string;
         info_history_button: string;

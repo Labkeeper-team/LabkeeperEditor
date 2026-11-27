@@ -452,6 +452,15 @@ export class Controller {
         }
     );
 
+    onIncludeTextFileInSegmentsRequest = createAsyncThunk(
+        'onIncludeTextFileInSegmentsRequest',
+        async ({ file }: { file: string }) => {
+            await this.wrapper('onIncludeTextFileInSegmentsRequest', () =>
+                this.programEditorService.includeTextFileInSegments(file)
+            );
+        }
+    );
+
     onSyncEditorToPdfRequest = createAsyncThunk(
         'onSyncEditorToPdfRequest',
         async () => {

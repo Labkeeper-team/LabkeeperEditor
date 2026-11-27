@@ -54,3 +54,4 @@ export const ShareIcon = _ShareIcon;
 export const LinkIcon = _LinkIcon;
 export const GithubIcon = _GithubLogo;
 export const SparkleIcon = _SparkleIcon;
+export { InfoIcon } from './InfoIcon.tsx';

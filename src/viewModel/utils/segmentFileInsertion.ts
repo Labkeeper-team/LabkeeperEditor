@@ -85,6 +85,60 @@ export function segmentFileSnippet(
 }
 
 /**
+ * GH-289: аргументы, которые ждут адрес картинки, по тексту до курсора: фигурные
+ * скобки \includegraphics (с необязательными [параметрами]) и круглые скобки
+ * картинки Markdown. Закрывающей скобки между началом аргумента и курсором нет
+ */
+const IMAGE_ARGUMENT_BEFORE_CURSOR: Partial<Record<SegmentType, RegExp>> = {
+    latex: /\\includegraphics\*?\s*(?:\[[^\]]*\]\s*)?\{[^{}]*$/,
+    md: /!\[[^\]]*\]\([^()\s]*$/,
+};
+
+/** Стоит ли курсор внутри аргумента, куда пишут адрес картинки */
+export function isInsideImageArgument(
+    segmentType: SegmentType | undefined,
+    text: string,
+    cursor: number
+): boolean {
+    const pattern = segmentType
+        ? IMAGE_ARGUMENT_BEFORE_CURSOR[segmentType]
+        : undefined;
+    if (!pattern) {
+        return false;
+    }
+    const at = Math.min(Math.max(cursor, 0), text.length);
+    return pattern.test(text.slice(0, at));
+}
+
+/**
+ * Куда и чем лёг загруженный файл. Картинка внутри аргумента, который ждёт её
+ * адрес, встаёт одним адресом в месте курсора: целый блок с center внутри
+ * \includegraphics{} давал вложенную конструкцию, и компиляция падала с
+ * непонятными человеку ошибками. Остальное встаёт разметкой на своей строке
+ */
+export function insertSegmentFile(
+    kind: SegmentFileKind,
+    segmentType: SegmentType | undefined,
+    text: string,
+    cursor: number,
+    url: string,
+    fileName: string
+): { text: string; cursor: number } {
+    if (kind === 'image' && isInsideImageArgument(segmentType, text, cursor)) {
+        const at = Math.min(Math.max(cursor, 0), text.length);
+        return {
+            text: `${text.slice(0, at)}${url}${text.slice(at)}`,
+            cursor: at + url.length,
+        };
+    }
+    return insertOnOwnLine(
+        text,
+        cursor,
+        segmentFileSnippet(kind, segmentType, url, fileName)
+    );
+}
+
+/**
  * Вставка отдельной строкой: перевод строки добавляется, только если курсор
  * стоит посреди строки. Раньше разметка всегда обрамлялась двумя переводами,
  * и в пустом сегменте оставались пустые строки сверху и снизу

@@ -24,6 +24,7 @@ import {
     syncCodeMirrorLayout,
 } from '../../../../utils/refreshCodeMirrorLayout';
 import { textFileEditorWheelScroll } from './textFileEditorWheelScroll';
+import { TexEntryNote } from './TexEntryNote.tsx';
 import { isLatexTextFilePath } from '../../fileManager/svarFileTreeAdapter.ts';
 import { RunButton } from '../runButton';
 import { HunkGlobalButtons } from '../../../../components/hunkGlobalButtons';
@@ -466,6 +467,7 @@ export const TextFileEditor = () => {
                     </button>
                 </div>
             </div>
+            <TexEntryNote file={activeTextFile} />
             <div className="ide-flexibility-container">
                 <div
                     ref={bodyRef}

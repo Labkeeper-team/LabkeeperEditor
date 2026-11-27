@@ -64,6 +64,15 @@ export const ru: Translations = {
         insert_hint: 'Нажмите, чтобы вставить редактируемый сегмент',
     },
 
+    tex_entry_note: {
+        main_ignores_segments:
+            'Не рекомендуем использовать main.tex: пока он есть в проекте, PDF собирается из него, а сегменты не учитываются.',
+        not_included:
+            'PDF собирается из сегментов, а этот файл в них не подключён. В документ его добавляет строка {input} в сегменте.',
+        include: 'Подключить',
+        include_hint: 'Добавить {input} в конец документа',
+    },
+
     interface_tour: {
         label: 'Тур по интерфейсу',
         info_history_button:
