@@ -25,10 +25,16 @@ const PDFLATEX_ENCODING_LINES = String.raw`\usepackage[T2A]{fontenc}
 
 // Same as the server's XeLaTeX auto-preamble: cmap, fontenc and inputenc are pdfTeX-only,
 // XeLaTeX reads Unicode itself and takes OpenType fonts through fontspec. CMU covers Cyrillic.
+// The math fonts have no Cyrillic, so letters from Ё to ё in formulas (v_{ср}) come from
+// the italic of the main font, as mathtext does for pdfLaTeX.
 const XELATEX_FONT_LINES = String.raw`\usepackage{fontspec}
 \setmainfont{CMU Serif}
 \setsansfont{CMU Sans Serif}
 \setmonofont{CMU Typewriter Text}
+\DeclareSymbolFont{cyrletters}{TU}{\rmdefault}{m}{it}
+\count255="0401
+\loop\Umathcode\count255="7 \symcyrletters\count255
+\ifnum\count255<"0451 \advance\count255 1 \repeat
 `;
 
 const XELATEX_HEADER_TEXT = PDFLATEX_HEADER_TEXT.replace(

@@ -12,6 +12,7 @@ describe('latexHeaderFor', () => {
         expect(header).toContain('\\usepackage[utf8]{inputenc}');
         expect(header).toContain('cmap');
         expect(header).not.toContain('fontspec');
+        expect(header).not.toContain('Umathcode');
     });
 
     test('XeLaTeX header loads fontspec instead of pdfTeX-only packages', () => {
@@ -21,6 +22,8 @@ describe('latexHeaderFor', () => {
         expect(header).toContain('\\setmainfont{CMU Serif}');
         expect(header).toContain('\\setsansfont{CMU Sans Serif}');
         expect(header).toContain('\\setmonofont{CMU Typewriter Text}');
+        // Cyrillic letters in formulas come from the main font
+        expect(header).toContain('\\Umathcode\\count255="7 \\symcyrletters');
         expect(header).not.toContain('fontenc');
         expect(header).not.toContain('inputenc');
         expect(header).not.toContain('cmap');
