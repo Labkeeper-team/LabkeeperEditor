@@ -2,6 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Hunk } from '../../../../model/domain.ts';
 import { EditorNavigationTarget } from '../../../../viewModel/repository';
 import { PdfPosition } from '../../../../model/rpi';
+import type { AgentPdfMarks } from '../../../../viewModel/domain/AgentPdfMarkLocator.ts';
 import { ideInitialState } from '../index.ts';
 import {
     CloneRequestState,
@@ -182,6 +183,18 @@ export const ideSlice = createSlice({
         setHunks: (state, { payload }: PayloadAction<Hunk[]>) => {
             state.hunks = payload;
         },
+        setAgentPdfMarks: (
+            state,
+            { payload }: PayloadAction<AgentPdfMarks | null>
+        ) => {
+            state.agentPdfMarks = payload;
+        },
+        setAgentPdfMarksLoading: (
+            state,
+            { payload }: PayloadAction<boolean>
+        ) => {
+            state.agentPdfMarksLoading = payload;
+        },
         setPendingHunkIds: (state, { payload }: PayloadAction<string[]>) => {
             state.pendingHunkIds = payload;
         },
@@ -220,5 +233,7 @@ export const {
     setPdfNavigationTarget,
     setEditorNavigationTarget,
     setHunks,
+    setAgentPdfMarks,
+    setAgentPdfMarksLoading,
     setPendingHunkIds,
 } = ideSlice.actions;

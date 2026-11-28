@@ -22,6 +22,8 @@ import {
 } from '../model/repository/ProgramRepository.ts';
 import { ResetService } from './domain/ResetService.ts';
 import { SearchService } from './domain/SearchService.ts';
+import { AgentPdfMarksService } from './operation/AgentPdfMarksService.ts';
+import { NavigationMarkLocator } from './domain/AgentPdfMarkLocator.ts';
 import { HunkService } from './operation/HunkService.ts';
 import { Controller } from '../controller/index.ts';
 import { AgentSocket } from '../model/rpi/agentSocket.ts';
@@ -195,6 +197,12 @@ export function setupContext(
         tokenPageService,
         observerService
     );
+    const agentPdfMarksService = new AgentPdfMarksService(
+        repository,
+        new NavigationMarkLocator(rpi),
+        observerService,
+        programEditorService
+    );
     const projectsPageService: ProjectsPageService = new ProjectsPageService(
         repository,
         rpi,
@@ -223,7 +231,8 @@ export function setupContext(
         hunkService,
         agentChatService,
         agentFilesService,
-        voiceInputService
+        voiceInputService,
+        agentPdfMarksService
     );
 
     return {
@@ -239,6 +248,7 @@ export function setupContext(
         agentChatService,
         agentFilesService,
         voiceInputService,
+        agentPdfMarksService,
         startupService,
         authService,
         fileManagerService,

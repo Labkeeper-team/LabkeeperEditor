@@ -1044,25 +1044,30 @@ export class ProgramEditorService {
     };
 
     /**
-     * Скролл к изменению агента. focus не трогаем: фокус должен остаться в поле промпта.
+     * Скролл к изменению агента. Из чата focus не трогаем: фокус должен
+     * остаться в поле промпта. GH-190: щелчок по отметке в PDF ставит курсор
+     * в начало правки, source отличает его в аналитике
      */
     navigateToAgentChange = async (target: {
         segmentIndex: number;
         line: number;
         file?: string;
+        source?: 'pdf_mark';
     }): Promise<boolean> => {
         this.track(Events.EVENT_AGENT_CHANGE_CLICKED, {
             has_file: Boolean(target.file),
             segment_index: target.segmentIndex,
+            ...(target.source ? { source: target.source } : {}),
         });
+        const focus = target.source === 'pdf_mark';
         if (target.file) {
-            return this.navigateToProjectFile(target.file, target.line, false);
+            return this.navigateToProjectFile(target.file, target.line, focus);
         }
         // id сегмента всегда равен позиции в списке (см. withSegmentIds)
         return this.navigateToSegmentLine(
             target.segmentIndex + 1,
             target.line,
-            false
+            focus
         );
     };
 

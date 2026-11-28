@@ -300,6 +300,10 @@ export interface Translations {
         /** Пока идёт сборка, а документа ещё нет: проект из шаблона собирается сам */
         compiling: string;
         pdf_loading: string;
+        /** GH-190: плашка на панели PDF, пока ищутся места правок агента */
+        agent_marks_loading: string;
+        /** GH-190: подсказка при наведении на отметку правки агента */
+        agent_mark_hint: string;
         mode: {
             label: string;
             markdown: string;

@@ -46,6 +46,7 @@ import {
     AgentRunMode,
 } from '../../../model/rpi/agentSocket.ts';
 import { PdfPosition } from '../../../model/rpi';
+import type { AgentPdfMarks } from '../../../viewModel/domain/AgentPdfMarkLocator.ts';
 import { BillingPricingResponse } from '../../../model/rpi';
 import {
     AgentRequestState,
@@ -157,6 +158,10 @@ interface IdeState {
     searchCurrentMatch: SearchCurrentMatch | null;
     hunks: Hunk[];
     pendingHunkIds: string[];
+    /** GH-190: места правок агента в PDF, по адресу PDF, для которого найдены */
+    agentPdfMarks: AgentPdfMarks | null;
+    /** Места правок ищутся: на панели PDF плашка загрузки */
+    agentPdfMarksLoading: boolean;
 }
 
 interface PersistenceState {
@@ -262,6 +267,8 @@ export const ideInitialState: IdeState = {
     searchCurrentMatch: null,
     hunks: [],
     pendingHunkIds: [],
+    agentPdfMarks: null,
+    agentPdfMarksLoading: false,
 };
 
 /** Язык по браузеру: русский и китайский узнаём, иначе английский */

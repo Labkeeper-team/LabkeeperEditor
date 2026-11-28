@@ -149,7 +149,11 @@ test('after-the-run-the-pdf-shows-the-last-agent-change', async ({ page }) => {
         }, PDF_RENDER)
         .toBe(true);
     // спросили место первой строки последней правки
-    expect(navigation).toEqual([{ segmentId: 1, line: 3 }]);
+    expect(navigation).toContainEqual({ segmentId: 1, line: 3 });
+    // GH-190: правка отмечена на той странице, куда встал PDF
+    await expect(
+        page.locator('[data-pdf-page="2"] > .pdf-agent-mark')
+    ).toHaveCount(1);
 });
 
 test('failed-navigation-leaves-the-pdf-at-the-top-without-a-message', async ({
@@ -159,7 +163,8 @@ test('failed-navigation-leaves-the-pdf-at-the-top-without-a-message', async ({
 
     // третья страница отрисована и навигация ответила, значит прокрутка уже случилась бы
     await expect(page.getByText(THIRD_PAGE_LINE)).toBeAttached(PDF_RENDER);
-    await expect.poll(() => navigation.length).toBe(1);
+    // GH-190: о той же правке спрашивают и отметки в PDF
+    await expect.poll(() => navigation.length).toBeGreaterThan(0);
     // ТЗ: человеку ничего не говорим, PDF остаётся где был
     expect(await pdfPlacement(page, 0, FIRST_PAGE_LINE)).toMatchObject({
         pageOffset: 0,

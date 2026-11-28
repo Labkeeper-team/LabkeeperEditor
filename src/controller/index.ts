@@ -33,6 +33,7 @@ import { HunkService } from '../viewModel/operation/HunkService.ts';
 import { AgentChatService } from '../viewModel/operation/AgentChatService.ts';
 import { AgentFilesService } from '../viewModel/operation/AgentFilesService.ts';
 import { VoiceInputService } from '../viewModel/operation/VoiceInputService.ts';
+import { AgentPdfMarksService } from '../viewModel/operation/AgentPdfMarksService.ts';
 import { logBreadcrumb } from '../viewModel/utils/logBreadcrumb.ts';
 import { trackEvent } from '../viewModel/utils/observerContext.ts';
 
@@ -50,6 +51,7 @@ export class Controller {
     agentChatService: AgentChatService;
     agentFilesService: AgentFilesService;
     voiceInputService: VoiceInputService;
+    agentPdfMarksService: AgentPdfMarksService;
 
     constructor(
         authService: AuthService,
@@ -64,7 +66,8 @@ export class Controller {
         hunkService: HunkService,
         agentChatService: AgentChatService,
         agentFilesService: AgentFilesService,
-        voiceInputService: VoiceInputService
+        voiceInputService: VoiceInputService,
+        agentPdfMarksService: AgentPdfMarksService
     ) {
         this.observerService = observerService;
         this.authService = authService;
@@ -79,7 +82,26 @@ export class Controller {
         this.agentChatService = agentChatService;
         this.agentFilesService = agentFilesService;
         this.voiceInputService = voiceInputService;
+        this.agentPdfMarksService = agentPdfMarksService;
     }
+
+    onAgentPdfMarksRequest = createAsyncThunk(
+        'onAgentPdfMarksRequest',
+        async () => {
+            await this.wrapper('onAgentPdfMarksRequest', () =>
+                this.agentPdfMarksService.refresh()
+            );
+        }
+    );
+
+    onAgentPdfMarkClickedRequest = createAsyncThunk(
+        'onAgentPdfMarkClickedRequest',
+        async ({ hunkId }: { hunkId: string }) => {
+            await this.wrapper('onAgentPdfMarkClickedRequest', () =>
+                this.agentPdfMarksService.openChange(hunkId)
+            );
+        }
+    );
 
     onFormLoginClickedRequest = createAsyncThunk(
         'onFormLoginClicked',
